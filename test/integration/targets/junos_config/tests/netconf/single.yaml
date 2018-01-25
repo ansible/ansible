@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/single.yaml"
+- debug: msg="START netconf/single.yaml on connection={{ ansible_connection }}"
 
 # Ensure that when we change the hostname to `localhost` we cause a change
 - name: setup
@@ -57,8 +57,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *file test1")
-      - result.diff.prepared | search("\+ *any any")
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
 
 - name: Rollback junos config
   junos_config:
@@ -69,8 +69,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\+ *file test1")
-      - result.diff.prepared | search("\+ *any any")
+      - result.diff.prepared is search("\+ *file test1")
+      - result.diff.prepared is search("\+ *any any")
 
 - name: teardown
   junos_config:
@@ -79,4 +79,4 @@
     provider: "{{ netconf }}"
 
 
-- debug: msg="END netconf/single.yaml"
+- debug: msg="END netconf/single.yaml on connection={{ ansible_connection }}"

@@ -5,6 +5,7 @@ python_versions=(
     2.7
     3.5
     3.6
+    3.7
 )
 
 requirements=()
@@ -32,7 +33,9 @@ for python_version in "${python_versions[@]}"; do
     echo "==> Installing pip for python ${python_version} ..."
 
     set -x
+    "python${python_version}" --version
     "python${python_version}" /tmp/get-pip.py -c constraints.txt
+    "pip${python_version}" --version --disable-pip-version-check
     set +x
 
     echo "==> Installing requirements for python ${python_version} ..."

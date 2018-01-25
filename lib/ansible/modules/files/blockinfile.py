@@ -41,7 +41,8 @@ options:
   marker:
     description:
       - The marker line template.
-        "{mark}" will be replaced with "BEGIN" or "END".
+        "{mark}" will be replaced with the values in marker_begin
+        (default="BEGIN") and marker_end (default="END").
     default: '# {mark} ANSIBLE MANAGED BLOCK'
   block:
     description:
@@ -77,16 +78,23 @@ options:
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: 'no'
-  follow:
+  marker_begin:
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-    type: bool
-    default: 'no'
-    version_added: "2.1"
+      - This will be inserted at {mark} in the opening ansible block marker.
+    default: 'BEGIN'
+    version_added: "2.5"
+  marker_end:
+    required: false
+    description:
+      - This will be inserted at {mark} in the closing ansible block marker.
+    default: 'END'
+    version_added: "2.5"
+
 notes:
   - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
+  - Option I(follow) has been removed in version 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
 """
 
 EXAMPLES = r"""
@@ -186,15 +194,17 @@ def check_file_attrs(module, changed, message, diff):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
-            state=dict(default='present', choices=['absent', 'present']),
-            marker=dict(default='# {mark} ANSIBLE MANAGED BLOCK', type='str'),
-            block=dict(default='', type='str', aliases=['content']),
-            insertafter=dict(default=None),
-            insertbefore=dict(default=None),
-            create=dict(default=False, type='bool'),
-            backup=dict(default=False, type='bool'),
-            validate=dict(default=None, type='str'),
+            path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            marker=dict(type='str', default='# {mark} ANSIBLE MANAGED BLOCK'),
+            block=dict(type='str', default='', aliases=['content']),
+            insertafter=dict(type='str'),
+            insertbefore=dict(type='str'),
+            create=dict(type='bool', default=False),
+            backup=dict(type='bool', default=False),
+            validate=dict(type='str'),
+            marker_begin=dict(type='str', default='BEGIN'),
+            marker_end=dict(type='str', default='END'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
@@ -203,8 +213,6 @@ def main():
 
     params = module.params
     path = params['path']
-    if module.boolean(params.get('follow', None)):
-        path = os.path.realpath(path)
 
     if os.path.isdir(path):
         module.fail_json(rc=256,
@@ -250,8 +258,8 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b('BEGIN'), marker)
-    marker1 = re.sub(b(r'{mark}'), b('END'), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
     if present and block:
         # Escape seqeuences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
@@ -278,7 +286,7 @@ def main():
             elif insertafter is not None:
                 n0 += 1
         elif insertbefore is not None:
-            n0 = 0           # insertbefore=BOF
+            n0 = 0  # insertbefore=BOF
         else:
             n0 = len(lines)  # insertafter=EOF
     elif n0 < n1:
@@ -315,7 +323,9 @@ def main():
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
             module.backup_local(path)
-        write_changes(module, result, path)
+        # We should always follow symlinks so that we change the real file
+        real_path = os.path.realpath(params['path'])
+        write_changes(module, result, real_path)
 
     if module.check_mode and not path_exists:
         module.exit_json(changed=changed, msg=msg, diff=diff)

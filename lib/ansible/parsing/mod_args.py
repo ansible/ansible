@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
@@ -98,7 +98,8 @@ class ModuleArgsParser:
     def __init__(self, task_ds=None):
         task_ds = {} if task_ds is None else task_ds
 
-        assert isinstance(task_ds, dict), "the type of 'task_ds' should be a dict, but is a %s" % type(task_ds)
+        if not isinstance(task_ds, dict):
+            raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
 
     def _split_module_string(self, module_string):
@@ -114,21 +115,6 @@ class ModuleArgsParser:
             return (tokens[0], " ".join(tokens[1:]))
         else:
             return (tokens[0], "")
-
-    def _handle_shell_weirdness(self, action, args):
-        '''
-        given an action name and an args dictionary, return the
-        proper action name and args dictionary.  This mostly is due
-        to shell/command being treated special and nothing else
-        '''
-
-        # the shell module really is the command module with an additional
-        # parameter
-        if action == 'shell':
-            action = 'command'
-            args['_uses_shell'] = True
-
-        return (action, args)
 
     def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
@@ -317,8 +303,5 @@ class ModuleArgsParser:
                 raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
                                                                                                                                   ", ".join(RAW_PARAM_MODULES)),
                                          obj=self._task_ds)
-
-        # shell modules require special handling
-        (action, args) = self._handle_shell_weirdness(action, args)
 
         return (action, args, delegate_to)

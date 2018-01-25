@@ -199,10 +199,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
             cmd.append('-h')
 
     if default:
-        if mode == 'rm':
-            cmd.insert(1, '-k')
-        else:  # mode == 'set' or mode == 'get'
-            cmd.insert(1, '-d')
+        cmd.insert(1, '-d')
 
     cmd.append(path)
     return cmd

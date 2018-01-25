@@ -67,7 +67,7 @@ for new users.
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-With Ansible 2, you can set a `ProxyCommand` in the
+You can set a `ProxyCommand` in the
 `ansible_ssh_common_args` inventory variable. Any arguments specified in
 this variable are added to the sftp/scp/ssh command line when connecting
 to the relevant host(s). Consider the following inventory group:
@@ -269,7 +269,7 @@ environment variable on the management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Starting with Ansible 1.4, remote environment variables are available via facts in the 'ansible_env' variable:
+Remote environment variables are available via facts in the 'ansible_env' variable:
 
 .. code-block:: jinja
 
@@ -298,7 +298,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
 .. code-block:: shell-session
 
-    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.using(rounds=5000).hash(getpass.getpass())"
+    python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
 You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
@@ -348,7 +348,7 @@ How do I keep secret data in my playbook?
 
 If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
-In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
     - name: secret task
       shell: /usr/bin/do_something --value={{ secret_value }}
@@ -374,11 +374,11 @@ the :envvar:`ANSIBLE_DEBUG` environment variable.
 When should I use {{ }}? Also, how to interpolate variables or dynamic variable names
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-A steadfast rule is 'always use {{ }} except when `when:`'.
+A steadfast rule is 'always use ``{{ }}`` except when ``when:``'.
 Conditionals are always run through Jinja2 as to resolve the expression,
-so `when:`, `failed_when:` and `changed_when:` are always templated and you should avoid adding `{{}}`.
+so ``when:``, ``failed_when:`` and ``changed_when:`` are always templated and you should avoid adding ``{{ }}``.
 
-In most other cases you should always use the brackets, even if previously you could use variables without specifying (like `loop` or `with_` clauses),
+In most other cases you should always use the brackets, even if previously you could use variables without specifying (like ``loop`` or ``with_`` clauses),
 as this made it hard to distinguish between an undefined variable and a string.
 
 Another rule is 'moustaches don't stack'. We often see this:
@@ -393,16 +393,13 @@ The above DOES NOT WORK, if you need to use a dynamic variable use the hostvars 
 
     {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
 
-
-.. _i_dont_see_my_question:
-
-
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
 
+.. _i_dont_see_my_question:
 
 I don't see my question here
 ++++++++++++++++++++++++++++

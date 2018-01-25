@@ -1,9 +1,11 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_snapshot sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: snapshot_run="true"
 - set_fact: snapshot_run="false"
-  when: titanium and (connection.transport | match('nxapi'))
+  when: titanium and ( connection.transport is match('nxapi'))
 
 - block:
   - name: create snapshot
@@ -43,4 +45,4 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_snapshot sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_snapshot sanity test"

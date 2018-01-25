@@ -55,7 +55,7 @@ class HPUXHardware(Hardware):
         cpu_facts = {}
         collected_facts = collected_facts or {}
 
-        if collected_facts.get('ansible_architecture') == '9000/800':
+        if collected_facts.get('ansible_architecture') in ['9000/800', '9000/785']:
             rc, out, err = self.module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
             cpu_facts['processor_count'] = int(out.strip())
         # Working with machinfo mess
@@ -111,7 +111,7 @@ class HPUXHardware(Hardware):
         rc, out, err = self.module.run_command("/usr/bin/vmstat | tail -1", use_unsafe_shell=True)
         data = int(re.sub(' +', ' ', out).split(' ')[5].strip())
         memory_facts['memfree_mb'] = pagesize * data // 1024 // 1024
-        if collected_facts.get('ansible_architecture') == '9000/800':
+        if collected_facts.get('ansible_architecture') in ['9000/800', '9000/785']:
             try:
                 rc, out, err = self.module.run_command("grep Physical /var/adm/syslog/syslog.log")
                 data = re.search('.*Physical: ([0-9]*) Kbytes.*', out).groups()[0].strip()
@@ -127,7 +127,7 @@ class HPUXHardware(Hardware):
                         memory_facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
-            data = re.search('Memory[\ :=]*([0-9]*).*MB.*', out).groups()[0].strip()
+            data = re.search(r'Memory[\ :=]*([0-9]*).*MB.*', out).groups()[0].strip()
             memory_facts['memtotal_mb'] = int(data)
         rc, out, err = self.module.run_command("/usr/sbin/swapinfo -m -d -f -q")
         memory_facts['swaptotal_mb'] = int(out.strip())
@@ -161,3 +161,5 @@ class HPUXHardware(Hardware):
 class HPUXHardwareCollector(HardwareCollector):
     _fact_class = HPUXHardware
     _platform = 'HP-UX'
+
+    required_facts = set(['platform', 'distribution'])

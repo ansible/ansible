@@ -125,7 +125,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Create Lambda functions
-tasks:
 - name: looped creation
   lambda:
     name: '{{ item.name }}'
@@ -154,7 +153,6 @@ tasks:
         key2: "2"
 
 # Basic Lambda function deletion
-tasks:
 - name: Delete Lambda functions HelloWorld and ByeBye
   lambda:
     name: '{{ item }}'
@@ -238,7 +236,7 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
                 except_msg = to_native(e.message)
-                account_id = except_msg.search("arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
+                account_id = except_msg.search(r"arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
             if account_id is None:
                 module.fail_json_aws(e, msg="getting account information")
         except Exception as e:

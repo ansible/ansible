@@ -16,15 +16,11 @@ module: aci_epg
 short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:AEPg) at U(https://developer.cisco.com/media/mim-ref/MO-fvAEPg.html).
+- More information from the internal APIC class I(fv:AEPg) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob Mcgill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
@@ -37,7 +33,7 @@ options:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
     required: yes
-    aliases: [ app_proifle, app_profile_name ]
+    aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - Name of the end point group.
@@ -80,7 +76,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -89,8 +85,8 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
 
-  aci_epg:
-    hostname: apic
+- aci_epg:
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -109,7 +105,7 @@ EXAMPLES = r'''
 
 - name: Remove an EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false
@@ -120,7 +116,7 @@ EXAMPLES = r'''
 
 - name: Query an EPG
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -130,14 +126,14 @@ EXAMPLES = r'''
 
 - name: Query all EPGs
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false
@@ -146,7 +142,7 @@ EXAMPLES = r'''
 
 - name: Query all EPGs of an App Profile
   aci_epg:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     validate_certs: false
@@ -158,12 +154,12 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         epg=dict(type='str', aliases=['name', 'epg_name']),
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
@@ -175,6 +171,7 @@ def main():
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -193,9 +190,32 @@ def main():
     intra_epg_isolation = module.params['intra_epg_isolation']
     fwd_control = module.params['fwd_control']
     state = module.params['state']
+    tenant = module.params['tenant']
+    ap = module.params['ap']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant", subclass_1="ap", subclass_2="epg", child_classes=['fvRsBd'])
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
+            module_object=ap,
+        ),
+        subclass_2=dict(
+            aci_class='fvAEPg',
+            aci_rn='epg-{0}'.format(epg),
+            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
+            module_object=epg,
+        ),
+        child_classes=['fvRsBd'],
+    )
+
     aci.get_existing()
 
     if state == 'present':

@@ -16,15 +16,11 @@ module: aci_ap
 short_description: Manage top level Application Profile (AP) objects on Cisco ACI fabrics (fv:Ap)
 description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
-- More information from the internal APIC class
-  I(fv:Ap) at U(https://developer.cisco.com/media/mim-ref/MO-fvAp.html).
+- More information from the internal APIC class I(fv:Ap) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - This module does not manage EPGs, see M(aci_epg) to do this.
 - The C(tenant) used must exist before using this module in your playbook.
@@ -40,9 +36,10 @@ options:
      - The name of the application network profile.
      required: yes
      aliases: [ app_profile, app_profile_name, name ]
-   descr:
+   description:
      description:
      - Description for the AP.
+     aliases: [ descr ]
    state:
      description:
      - Use C(present) or C(absent) for adding or removing.
@@ -55,7 +52,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new AP
   aci_ap:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -65,7 +62,7 @@ EXAMPLES = r'''
 
 - name: Remove an AP
   aci_ap:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -74,7 +71,7 @@ EXAMPLES = r'''
 
 - name: Query an AP
   aci_ap:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -83,7 +80,7 @@ EXAMPLES = r'''
 
 - name: Query all APs
   aci_ap:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -93,18 +90,19 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all APs
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -120,9 +118,24 @@ def main():
     ap = module.params['ap']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='ap')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
+            module_object=ap,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

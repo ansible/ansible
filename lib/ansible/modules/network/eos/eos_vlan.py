@@ -45,7 +45,8 @@ options:
     required: true
   interfaces:
     description:
-      - List of interfaces that should be associated to the VLAN.
+      - List of interfaces that should be associated to the VLAN. The name of interface
+        should be in expanded format and not abbreviated.
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
@@ -61,6 +62,7 @@ options:
       - State of the VLAN configuration.
     default: present
     choices: ['present', 'absent', 'active', 'suspend']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
@@ -110,9 +112,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(vlan_id, lst):
@@ -140,7 +142,8 @@ def map_obj_to_commands(updates, module):
         elif state == 'present':
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                commands.append('name %s' % w['name'])
+                if w['name']:
+                    commands.append('name %s' % w['name'])
 
                 if w['interfaces']:
                     for i in w['interfaces']:
@@ -172,13 +175,15 @@ def map_obj_to_commands(updates, module):
         else:
             if not obj_in_have:
                 commands.append('vlan %s' % w['vlan_id'])
-                commands.append('name %s' % w['name'])
+                if w['name']:
+                    commands.append('name %s' % w['name'])
                 commands.append('state %s' % w['state'])
-            elif obj_in_have['name'] != w['name'] or obj_in_have['state'] != w['state']:
+            elif (w['name'] and obj_in_have['name'] != w['name']) or obj_in_have['state'] != w['state']:
                 commands.append('vlan %s' % w['vlan_id'])
 
-                if obj_in_have['name'] != w['name']:
-                    commands.append('name %s' % w['name'])
+                if w['name']:
+                    if obj_in_have['name'] != w['name']:
+                        commands.append('name %s' % w['name'])
 
                 if obj_in_have['state'] != w['state']:
                     commands.append('state %s' % w['state'])
@@ -211,7 +216,7 @@ def map_config_to_obj(module):
         if len(splitted_line) > 3:
 
             for i in splitted_line[3].split(','):
-                obj['interfaces'].append(i.strip().replace('Et', 'Ethernet'))
+                obj['interfaces'].append(i.strip().replace('Et', 'ethernet'))
 
         objs.append(obj)
 
@@ -227,6 +232,9 @@ def map_params_to_obj(module):
                 if item.get(key) is None:
                     item[key] = module.params[key]
 
+            if item.get('interfaces'):
+                item['interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('interfaces') if intf]
+
             d = item.copy()
             d['vlan_id'] = str(d['vlan_id'])
 
@@ -236,7 +244,7 @@ def map_params_to_obj(module):
             'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'state': module.params['state'],
-            'interfaces': module.params['interfaces']
+            'interfaces': [intf.replace(" ", "").lower() for intf in module.params['interfaces']] if module.params['interfaces'] else []
         })
 
     return obj
@@ -314,6 +322,7 @@ def main():
         check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

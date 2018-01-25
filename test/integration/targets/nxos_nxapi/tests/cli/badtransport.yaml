@@ -12,6 +12,6 @@
 
 - assert:
      that:
-        - result.failed and result.msg | search('transport')
+        - result.failed and result.msg is search('transport')
 
 - debug: msg="END cli/badtransport.yaml"

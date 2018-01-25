@@ -57,6 +57,7 @@ class PullCLI(CLI):
 
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
+    REPO_CHOICES = ('git', 'subversion', 'hg', 'bzr')
     PLAYBOOK_ERRORS = {
         1: 'File does not exist',
         2: 'File is not readable',
@@ -113,7 +114,8 @@ class PullCLI(CLI):
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
                                help='adds the hostkey for the repo url if not already added')
         self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
-                               help='Repository module name, which ansible will use to check out the repo. Default is %s.' % self.DEFAULT_REPO_TYPE)
+                               help='Repository module name, which ansible will use to check out the repo. Choices are %s. Default is %s.'
+                                    % (self.REPO_CHOICES, self.DEFAULT_REPO_TYPE))
         self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
                                help='verify GPG signature of checked out commit, if it fails abort running the playbook. '
                                     'This needs the corresponding VCS module to support such an operation')
@@ -176,7 +178,7 @@ class PullCLI(CLI):
         if not inv_opts:
             inv_opts = " -i localhost, "
 
-        # FIXME: enable more repo modules hg/svn?
+        # SCM specific options
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
             if self.options.checkout:
@@ -191,14 +193,31 @@ class PullCLI(CLI):
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
 
-            if self.options.clean:
-                repo_opts += ' force=yes'
-
             if self.options.tracksubs:
                 repo_opts += ' track_submodules=yes'
 
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
+        elif self.options.module_name == 'subversion':
+            repo_opts = "repo=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' revision=%s' % self.options.checkout
+            if not self.options.fullclone:
+                repo_opts += ' export=yes'
+        elif self.options.module_name == 'hg':
+            repo_opts = "repo=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' revision=%s' % self.options.checkout
+        elif self.options.module_name == 'bzr':
+            repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
+            if self.options.checkout:
+                repo_opts += ' version=%s' % self.options.checkout
+        else:
+            raise AnsibleOptionsError('Unsupported (%s) SCM module for pull, choices are: %s' % (self.options.module_name, ','.join(self.REPO_CHOICES)))
+
+        # options common to all supported SCMS
+        if self.options.clean:
+            repo_opts += ' force=yes'
 
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
@@ -239,6 +258,9 @@ class PullCLI(CLI):
         if self.options.vault_password_files:
             for vault_password_file in self.options.vault_password_files:
                 cmd += " --vault-password-file=%s" % vault_password_file
+        if self.options.vault_ids:
+            for vault_id in self.options.vault_ids:
+                cmd += " --vault-id=%s" % vault_id
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev

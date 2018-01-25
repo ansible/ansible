@@ -53,7 +53,7 @@ options:
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
-      - path of the file to link to (applies only to C(state=link)). Will accept absolute,
+      - path of the file to link to (applies only to C(state=link) and C(state=hard)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
   recurse:
     description:
@@ -71,8 +71,9 @@ options:
   follow:
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+      - 'Previous to Ansible 2.5, this was C(no) by default.'
     type: bool
-    default: "no"
+    default: 'yes'
     version_added: "1.8"
 '''
 
@@ -176,6 +177,7 @@ def main():
             original_basename=dict(required=False),  # Internal use only, for recursive ops
             recurse=dict(default=False, type='bool'),
             force=dict(required=False, default=False, type='bool'),
+            follow=dict(required=False, default=False, type='bool'),
             diff_peek=dict(default=None),  # Internal use only, for internal checks in the action plugins
             validate=dict(required=False, default=None),  # Internal use only, for template and copy
             src=dict(required=False, default=None, type='path'),
@@ -438,7 +440,7 @@ def main():
             if prev_state == 'absent':
                 try:
                     open(b_path, 'wb').close()
-                except OSError as e:
+                except (OSError, IOError) as e:
                     module.fail_json(path=path, msg='Error, could not touch target: %s' % to_native(e, nonstring='simplerepr'))
             elif prev_state in ('file', 'directory', 'hard'):
                 try:

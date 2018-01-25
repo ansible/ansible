@@ -56,10 +56,10 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 PARAM_TO_COMMAND_KEYMAP = {
     'anycast_gateway_mac': 'fabric forwarding anycast-gateway-mac',
@@ -134,7 +134,7 @@ def normalize_mac(proposed_mac, module):
                 else:
                     octect_len = len(octect)
                     padding = 4 - octect_len
-                    splitted_mac.append(octect.zfill(padding+1))
+                    splitted_mac.append(octect.zfill(padding + 1))
 
         elif ':' in proposed_mac:
             splitted_mac = proposed_mac.split(':')
@@ -150,7 +150,7 @@ def normalize_mac(proposed_mac, module):
         module.fail_json(msg='Invalid MAC address format', proposed_mac=proposed_mac)
 
     joined_mac = ''.join(splitted_mac)
-    mac = [joined_mac[i:i+4] for i in range(0, len(joined_mac), 4)]
+    mac = [joined_mac[i:i + 4] for i in range(0, len(joined_mac), 4)]
     return '.'.join(mac).upper()
 
 
@@ -172,7 +172,7 @@ def main():
 
     existing = get_existing(module, args)
     proposed = dict((k, v) for k, v in module.params.items()
-                     if v is not None and k in args)
+                    if v is not None and k in args)
 
     candidate = CustomNetworkConfig(indent=3)
     get_commands(module, existing, proposed, candidate)

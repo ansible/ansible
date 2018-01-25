@@ -16,16 +16,11 @@ module: aci_epg_to_contract
 short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
-- More information from the internal APIC classes
-  I(fv:RsCons) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsCons.html) and
-  I(fv:RsProv) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsProv.html).
+- More information from the internal APIC classes I(fv:RsCons) and I(fv:RsProv) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob Mcgill (@jmcgill298)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
@@ -76,15 +71,15 @@ EXAMPLES = r''' # '''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-ACI_CLASS_MAPPING = {"consumer": "fvRsCons", "provider": "fvRsProv"}
+ACI_CLASS_MAPPING = {"consumer": {"class": "fvRsCons", "rn": "rscons-"}, "provider": {"class": "fvRsProv", "rn": "rsprov-"}}
 PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_one": "AtmostOne", "none": "None"}
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         epg=dict(type='str', aliases=['epg_name']),
@@ -95,6 +90,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -106,22 +102,51 @@ def main():
         ],
     )
 
+    ap = module.params['ap']
     contract = module.params['contract']
     contract_type = module.params['contract_type']
-    aci_class = ACI_CLASS_MAPPING[contract_type]
+    epg = module.params['epg']
     priority = module.params['priority']
     provider_match = module.params['provider_match']
+    if provider_match is not None:
+        provider_match = PROVIDER_MATCH_MAPPING[provider_match]
     state = module.params['state']
+    tenant = module.params['tenant']
+
+    aci_class = ACI_CLASS_MAPPING[contract_type]["class"]
+    aci_rn = ACI_CLASS_MAPPING[contract_type]["rn"]
 
     if contract_type == "consumer" and provider_match is not None:
         module.fail_json(msg="the 'provider_match' is only configurable for Provided Contracts")
 
-    # Construct contract_class key and add to module.params for building URL
-    contract_class = 'epg_' + contract_type
-    module.params[contract_class] = contract
-
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='ap', subclass_2='epg', subclass_3=contract_class)
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvAp',
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
+            module_object=ap,
+        ),
+        subclass_2=dict(
+            aci_class='fvAEPg',
+            aci_rn='epg-{0}'.format(epg),
+            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
+            module_object=epg,
+        ),
+        subclass_3=dict(
+            aci_class=aci_class,
+            aci_rn='{0}{1}'.format(aci_rn, contract),
+            filter_target='eq({0}.tnVzBrCPName, "{1}'.format(aci_class, contract),
+            module_object=contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -143,9 +168,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove contract_class that is used to build URL from module.params
-    module.params.pop(contract_class)
 
     module.exit_json(**aci.result)
 

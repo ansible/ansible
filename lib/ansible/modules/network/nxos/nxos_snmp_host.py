@@ -46,6 +46,10 @@ options:
         required: false
         default: v2c
         choices: ['v2c', 'v3']
+    v3:
+        description:
+            - Use this when verion is v3. SNMPv3 Security level.
+        choices: ['noauth', 'auth', 'priv']
     community:
         description:
             - Community string or v3 username.
@@ -56,11 +60,11 @@ options:
             - UDP port number (0-65535).
         required: false
         default: null
-    type:
+    snmp_type:
         description:
             - type of message to send to host.
         required: false
-        default: traps
+        default: trap
         choices: ['trap', 'inform']
     vrf:
         description:
@@ -102,8 +106,9 @@ commands:
 '''
 
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+import re
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -173,7 +178,9 @@ def get_snmp_host(host, module):
                 host_resource = apply_key_map(host_map, each)
 
                 if src:
-                    host_resource['src_intf'] = src.split(':')[1].strip()
+                    host_resource['src_intf'] = src
+                    if re.search(r'interface:', src):
+                        host_resource['src_intf'] = src.split(':')[1].strip()
 
                 vrf_filt = each.get('TABLE_vrf_filters')
                 if vrf_filt:
@@ -199,7 +206,9 @@ def get_snmp_host(host, module):
                     host_resource = apply_key_map(host_map_5k, each)
 
                     if src:
-                        host_resource['src_intf'] = src.split(':')[1].strip()
+                        host_resource['src_intf'] = src
+                        if re.search(r'interface:', src):
+                            host_resource['src_intf'] = src.split(':')[1].strip()
 
                     vrf_filt = each.get('TABLE_filter_vrf')
                     if vrf_filt:

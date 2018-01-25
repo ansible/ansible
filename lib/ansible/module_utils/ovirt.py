@@ -227,7 +227,7 @@ def search_by_attributes(service, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{}={}'.format(k, v) for k, v in kwargs.items())
+            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items())
         )
     else:
         res = [
@@ -712,7 +712,7 @@ class BaseModule(object):
 
         if entity is None:
             self._module.fail_json(
-                msg="Entity not found, can't run action '{}'.".format(
+                msg="Entity not found, can't run action '{0}'.".format(
                     action
                 )
             )
@@ -746,14 +746,14 @@ class BaseModule(object):
             'diff': self._diff,
         }
 
-    def wait_for_import(self):
+    def wait_for_import(self, condition=lambda e: True):
         if self._module.params['wait']:
             start = time.time()
             timeout = self._module.params['timeout']
             poll_interval = self._module.params['poll_interval']
             while time.time() < start + timeout:
                 entity = self.search_entity()
-                if entity:
+                if entity and condition(entity):
                     return entity
                 time.sleep(poll_interval)
 

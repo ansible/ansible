@@ -62,6 +62,11 @@ The module formatter is a script used to generate manpages and online
 module documentation.  This is used by the system makefiles and rarely
 needs to be run directly.
 
+fix_test_syntax.py
+------------------
+
+A script to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format for the 2.5 release. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks.
+
 Authors
 -------
 'authors' is a simple script that generates a list of everyone who has

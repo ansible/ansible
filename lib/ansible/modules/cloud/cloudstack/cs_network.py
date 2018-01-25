@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -40,160 +27,129 @@ options:
     description:
       - Display text of the network.
       - If not specified, C(name) will be used as C(display_text).
-    required: false
-    default: null
   network_offering:
     description:
       - Name of the offering for the network.
       - Required if C(state=present).
-    required: false
-    default: null
   start_ip:
     description:
       - The beginning IPv4 address of the network belongs to.
       - Only considered on create.
-    required: false
-    default: null
   end_ip:
     description:
       - The ending IPv4 address of the network belongs to.
       - If not specified, value of C(start_ip) is used.
       - Only considered on create.
-    required: false
-    default: null
   gateway:
     description:
       - The gateway of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
-    required: false
-    default: null
   netmask:
     description:
       - The netmask of the network.
       - Required for shared networks and isolated networks when it belongs to a VPC.
       - Only considered on create.
-    required: false
-    default: null
   start_ipv6:
     description:
       - The beginning IPv6 address of the network belongs to.
       - Only considered on create.
-    required: false
-    default: null
   end_ipv6:
     description:
       - The ending IPv6 address of the network belongs to.
       - If not specified, value of C(start_ipv6) is used.
       - Only considered on create.
-    required: false
-    default: null
   cidr_ipv6:
     description:
       - CIDR of IPv6 network, must be at least /64.
       - Only considered on create.
-    required: false
-    default: null
   gateway_ipv6:
     description:
       - The gateway of the IPv6 network.
       - Required for shared networks.
       - Only considered on create.
-    required: false
-    default: null
   vlan:
     description:
       - The ID or VID of the network.
-    required: false
-    default: null
   vpc:
     description:
       - Name of the VPC of the network.
-    required: false
-    default: null
   isolated_pvlan:
     description:
       - The isolated private VLAN for this network.
-    required: false
-    default: null
   clean_up:
     description:
       - Cleanup old network elements.
       - Only considered on C(state=restarted).
-    required: false
-    default: false
+    default: no
+    type: bool
   acl_type:
     description:
       - Access control type.
       - Only considered on create.
-    required: false
     default: account
-    choices: [ 'account', 'domain' ]
+    choices: [ account, domain ]
+  subdomain_access:
+    description:
+      - Defines whether to allow subdomains to use networks dedicated to their parent domain(s).
+      - Should be used with C(acl_type=domain).
+      - Only considered on create.
+    type: bool
+    version_added: "2.5"
   network_domain:
     description:
       - The network domain.
-    required: false
-    default: null
   state:
     description:
       - State of the network.
-    required: false
     default: present
-    choices: [ 'present', 'absent', 'restarted' ]
+    choices: [ present, absent, restarted ]
   zone:
     description:
       - Name of the zone in which the network should be deployed.
       - If not set, default zone is used.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the network to be deployed in.
-    required: false
-    default: null
   domain:
     description:
       - Domain the network is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the network is related to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a network
-- local_action:
+- name: Create a network
+  local_action:
     module: cs_network
     name: my network
     zone: gva-01
     network_offering: DefaultIsolatedNetworkOfferingWithSourceNatService
     network_domain: example.com
 
-# update a network
-- local_action:
+- name: Update a network
+  local_action:
     module: cs_network
     name: my network
     display_text: network of domain example.local
     network_domain: example.local
 
-# restart a network with clean up
-- local_action:
+- name: Restart a network with clean up
+  local_action:
     module: cs_network
     name: my network
     clean_up: yes
     state: restared
 
-# remove a network
-- local_action:
+- name: Remove a network
+  local_action:
     module: cs_network
     name: my network
     state: absent
@@ -251,11 +207,6 @@ gateway_ipv6:
   returned: success
   type: string
   sample: 2001:db8::1
-state:
-  description: State of the network.
-  returned: success
-  type: string
-  sample: Implemented
 zone:
   description: Name of zone.
   returned: success
@@ -508,6 +459,7 @@ def main():
         isolated_pvlan=dict(),
         clean_up=dict(type='bool', default=False),
         network_domain=dict(),
+        subdomain_access=dict(type='bool'),
         state=dict(choices=['present', 'absent', 'restarted'], default='present'),
         acl_type=dict(choices=['account', 'domain']),
         project=dict(),
@@ -529,10 +481,10 @@ def main():
     acs_network = AnsibleCloudStackNetwork(module)
 
     state = module.params.get('state')
-    if state in ['absent']:
+    if state == 'absent':
         network = acs_network.absent_network()
 
-    elif state in ['restarted']:
+    elif state == 'restarted':
         network = acs_network.restart_network()
 
     else:

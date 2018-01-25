@@ -29,6 +29,9 @@ version_added: "2.1"
 short_description: Tests reachability using ping from Nexus switch.
 description:
     - Tests reachability using ping from switch to a remote destination.
+    - For a general purpose network module, see the M(net_ping) module.
+    - For Windows targets, use the M(win_ping) module instead.
+    - For targets running Python, use the M(ping) module instead.
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
@@ -57,6 +60,10 @@ options:
             - Determines if the expected result is success or fail.
         choices: [ absent, present ]
         default: present
+notes:
+    - For a general purpose network module, see the M(net_ping) module.
+    - For Windows targets, use the M(win_ping) module instead.
+    - For targets running Python, use the M(ping) module instead.
 '''
 
 EXAMPLES = '''
@@ -104,13 +111,13 @@ packet_loss:
     type: string
     sample: "0.00%"
 '''
-from ansible.module_utils.nxos import run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
 def get_summary(results_list, reference_point):
-    summary_string = results_list[reference_point+1]
+    summary_string = results_list[reference_point + 1]
     summary_list = summary_string.split(',')
 
     summary = dict(
@@ -119,7 +126,7 @@ def get_summary(results_list, reference_point):
         packet_loss=summary_list[2].split('packet')[0].strip(),
     )
 
-    if 'bytes from' not in results_list[reference_point-2]:
+    if 'bytes from' not in results_list[reference_point - 2]:
         ping_pass = False
     else:
         ping_pass = True
@@ -168,7 +175,7 @@ def get_ping_results(command, module):
         splitted_ping = ping.split('\n')
         reference_point = get_statistics_summary_line(splitted_ping)
         summary, ping_pass = get_summary(splitted_ping, reference_point)
-        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point+2)
+        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point + 2)
 
     return (summary, rtt, ping_pass)
 

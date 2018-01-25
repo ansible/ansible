@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/sysmtu.yaml"
+- debug: msg="START connection={{ ansible_connection }}/sysmtu.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:
@@ -55,4 +57,4 @@
     match: none
     provider: "{{ connection }}"
 
-- debug: msg="END {{ connection.transport }}/sysmtu.yaml"
+- debug: msg="END connection={{ ansible_connection }}/sysmtu.yaml"

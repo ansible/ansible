@@ -7,7 +7,7 @@
 - name: Validate results of rax_cbs_attachments with no args
   assert:
     that:
-      - rax_cbs_attachments|failed
+      - rax_cbs_attachments is failed
       - 'rax_cbs_attachments.msg == "missing required arguments: server,volume,device"'
 # ============================================================
 
@@ -25,7 +25,7 @@
 - name: Validate results of rax_cbs_attachments with server, volume and device
   assert:
     that:
-      - rax_cbs_attachments|failed
+      - rax_cbs_attachments is failed
       - rax_cbs_attachments.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -45,7 +45,7 @@
 - name: Validate results of rax_cbs_attachments with credentials, server, volume and device
   assert:
     that:
-      - rax_cbs_attachments|failed
+      - rax_cbs_attachments is failed
       - rax_cbs_attachments.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -66,7 +66,7 @@
 - name: Validate rax_cbs_attachments creds, region, invalid server, invalid volume and device
   assert:
     that:
-      - rax_cbs_attachments|failed
+      - rax_cbs_attachments is failed
       - rax_cbs_attachments.msg == 'No matching storage volumes were found'
 # ============================================================
 
@@ -86,8 +86,8 @@
 - name: Validate volume build
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
       - rax_cbs.volume.display_name == "{{ resource_prefix }}-rax_cbs_attachments"
 # ============================================================
 
@@ -109,8 +109,8 @@
 - name: Validate CloudServer build
   assert:
     that:
-      - rax|success
-      - rax|changed
+      - rax is successful
+      - rax is changed
       - rax.action == 'create'
       - rax.instances|length == 1
       - rax.instances[0].name == "{{ resource_prefix }}-rax_cbs_attachments"
@@ -133,7 +133,7 @@
 - name: Validate rax_cbs_attachments creds, region, invalid server, volume and device
   assert:
     that:
-      - rax_cbs_attachments|failed
+      - rax_cbs_attachments is failed
       - rax_cbs_attachments.msg == 'No Server was matched by name, try using the Server ID instead'
 # ============================================================
 
@@ -155,8 +155,8 @@
 - name: Validate rax_cbs_attachments creds, region, server, volume and device (valid)
   assert:
     that:
-      - rax_cbs_attachments|success
-      - rax_cbs_attachments|changed
+      - rax_cbs_attachments is successful
+      - rax_cbs_attachments is changed
       - rax_cbs_attachments.volume.attachments.0.device == '/dev/xvde'
       - rax_cbs_attachments.volume.attachments.0.server_id == "{{ rax.instances[0].id }}"
 
@@ -175,8 +175,8 @@
 - name: Validate idempotent present test
   assert:
     that:
-      - rax_cbs_attachments|success
-      - not rax_cbs_attachments|changed
+      - rax_cbs_attachments is successful
+      - rax_cbs_attachments is not changed
 
 - name: Unattach volume
   rax_cbs_attachments:
@@ -194,8 +194,8 @@
 - name: Validate unattach volume
   assert:
     that:
-      - rax_cbs_attachments|success
-      - rax_cbs_attachments|changed
+      - rax_cbs_attachments is successful
+      - rax_cbs_attachments is changed
       - rax_cbs_attachments.volume.attachments == []
 
 - name: Idempotent absent test
@@ -214,8 +214,8 @@
 - name: Validate idempotent absent test
   assert:
     that:
-      - rax_cbs_attachments|success
-      - not rax_cbs_attachments|changed
+      - rax_cbs_attachments is successful
+      - rax_cbs_attachments is not changed
 # ============================================================
 
 
@@ -233,8 +233,8 @@
 - name: Validate delete integration 6
   assert:
     that:
-      - rax_cbs|success
-      - rax_cbs|changed
+      - rax_cbs is successful
+      - rax_cbs is changed
 # ============================================================
 
 
@@ -254,7 +254,7 @@
 - name: "Validate delete"
   assert:
     that:
-      - rax|changed
-      - rax|success
+      - rax is changed
+      - rax is successful
       - rax.action == 'delete'
 # ============================================================

@@ -57,7 +57,8 @@ options:
     default: null
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
-       The C(command) module is much more secure as it's not affected by the user's environment.
+       Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
+       use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
@@ -127,14 +128,27 @@ def check_command(module, commandline):
     commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
+                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
                 'dnf': 'dnf', 'zypper': 'zypper'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun']
     command = os.path.basename(commandline.split()[0])
+
+    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
+                     " warn=False to this command task or set command_warnings=False in" \
+                     " ansible.cfg to get rid of this message."
+    substitutions = {'mod': None, 'cmd': command}
+
     if command in arguments:
-        module.warn("Consider using file module with %s rather than running %s" % (arguments[command], command))
+        msg = "Consider using the {mod} module with {subcmd} rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = 'file'
+        substitutions['subcmd'] = arguments[command]
+        module.warn(msg.format(**substitutions))
+
     if command in commands:
-        module.warn("Consider using %s module rather than running %s" % (commands[command], command))
+        msg = "Consider using the {mod} module rather than running {cmd}.  " + disable_suffix
+        substitutions['mod'] = commands[command]
+        module.warn(msg.format(**substitutions))
+
     if command in become:
         module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
 
@@ -151,6 +165,7 @@ def main():
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
+            # The default for this really comes from the action plugin
             warn=dict(type='bool', default=True),
             stdin=dict(required=False),
         )

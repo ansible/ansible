@@ -80,6 +80,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._build_command.return_value = 'ssh something something'
         conn._run = MagicMock()
         conn._run.return_value = (0, 'stdout', 'stderr')
+        conn.get_option = MagicMock()
+        conn.get_option.return_value = True
 
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
@@ -457,6 +459,7 @@ class TestSSHConnectionRun(object):
         self.mock_selector.get_map.side_effect = lambda: True
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
+        self.mock_popen_res.stdin.flush.assert_called_once_with()
         assert return_code == 0
         assert b_stdout == b'abc'
         assert b_stderr == b'123'
@@ -538,6 +541,8 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
+        self.conn.get_option = MagicMock()
+        self.conn.get_option.return_value = True
 
         return_code, b_stdout, b_stderr = self.conn.exec_command('ssh', 'some data')
         assert return_code == 0
@@ -563,6 +568,8 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
+        self.conn.get_option = MagicMock()
+        self.conn.get_option.return_value = True
 
         pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
         assert self.mock_popen.call_count == 10
@@ -575,6 +582,8 @@ class TestSSHConnectionRetries(object):
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
+        self.conn.get_option = MagicMock()
+        self.conn.get_option.return_value = True
 
         self.mock_popen.side_effect = [Exception('bad')] * 10
         pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')

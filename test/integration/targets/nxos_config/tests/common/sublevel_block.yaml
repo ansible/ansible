@@ -1,13 +1,11 @@
 ---
-- debug: msg='START {{ connection.transport }}/sublevel_block.yaml'
+- debug: msg='START connection={{ ansible_connection }}/sublevel_block.yaml'
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: setup
-  nxos_config:
-    lines:
-      - 10 permit ip 1.1.1.1/32 any log
-      - 20 permit ip 2.2.2.2/32 any log
-      - 30 permit ip 3.3.3.3/32 any log
-    parents: ip access-list test
+  nxos_config: &clear
+    lines: no ip access-list test
     provider: "{{ connection }}"
     match: none
 
@@ -49,9 +47,6 @@
       - "result.changed == false"
 
 - name: teardown
-  nxos_config:
-    lines: no ip access-list test
-    provider: "{{ connection }}"
-    match: none
+  nxos_config: *clear
 
-- debug: msg='END {{ connection.transport }}/sublevel_block.yaml'
+- debug: msg='END connection={{ ansible_connection }}/sublevel_block.yaml'

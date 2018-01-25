@@ -16,15 +16,11 @@ module: aci_tenant_ep_retention_policy
 short_description: Manage End Point (EP) retention protocol policies on Cisco ACI fabrics (fv:EpRetPol)
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:EpRetPol) at U(https://developer.cisco.com/media/mim-ref/MO-fvEpRetPol.html).
+- More information from the internal APIC class I(fv:EpRetPol) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -82,7 +78,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -97,7 +93,7 @@ EXAMPLES = r'''
 
 - name: Remove an EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -106,7 +102,7 @@ EXAMPLES = r'''
 
 - name: Query an EPR policy
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -115,7 +111,7 @@ EXAMPLES = r'''
 
 - name: Query all EPR policies
   aci_epr_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -125,14 +121,14 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # not required for querying all EPRs
         epr_policy=dict(type='str', aliases=['epr_name', 'name']),
@@ -145,6 +141,7 @@ def main():
         move_frequency=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -185,9 +182,24 @@ def main():
     if remote_ep_interval == 0:
         remote_ep_interval = "infinite"
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='epr_policy')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvEpRetPol',
+            aci_rn='epRPol-{0}'.format(epr_policy),
+            filter_target='eq(fvEpRetPol.name, "{0}")'.format(epr_policy),
+            module_object=epr_policy,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

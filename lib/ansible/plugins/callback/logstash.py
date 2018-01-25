@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     type: notification
     short_description: Sends events to Logstash
     description:
-      - This callback will report facts and task events to Foreman https://theforeman.org/
+      - This callback will report facts and task events to Logstash https://www.elastic.co/products/logstash
     version_added: "2.3"
     requirements:
       - whitelisting in configuration

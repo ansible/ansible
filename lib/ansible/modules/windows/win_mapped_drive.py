@@ -23,6 +23,9 @@ notes:
 - This can only map a network drive for the current executing user and does not
   allow you to set a default drive for all users of a system. Use other
   Microsoft tools like GPOs to achieve this goal.
+- You cannot use this module to access a mapped drive in another Ansible task,
+  drives mapped with this module are only accessible when logging in
+  interactively with the user through the console or RDP.
 options:
   letter:
     description:

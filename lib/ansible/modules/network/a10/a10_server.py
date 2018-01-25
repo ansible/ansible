@@ -25,7 +25,9 @@ description:
 author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
   partition:
     version_added: "2.3"
@@ -59,6 +61,7 @@ options:
         required when C(state) is C(present).
     required: false
     default: null
+    aliases: ['port']
   state:
     description:
       - This is to specify the operation to create, update or remove SLB server.
@@ -102,8 +105,8 @@ content:
 '''
 import json
 
-from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_get_port_protocol, axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS)
+from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_get_port_protocol,
+                                                  axapi_enabled_disabled, AXAPI_PORT_PROTOCOLS)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 

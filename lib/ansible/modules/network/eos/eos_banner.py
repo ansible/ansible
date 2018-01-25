@@ -90,8 +90,8 @@ session_name:
   sample: ansible_1479315771
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 
@@ -126,13 +126,12 @@ def map_obj_to_commands(updates, module):
 
     return commands
 
+
 def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        if module.params['transport'] == 'cli':
-            obj['text'] = output[0]
-        else:
+        if module.params['transport'] == 'eapi':
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
             if module.params['banner'] == 'login':
@@ -141,8 +140,11 @@ def map_config_to_obj(module):
                 banner_response_key = 'motd'
             if isinstance(output[0], dict) and banner_response_key in output[0].keys():
                 obj['text'] = output[0]
+        else:
+            obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
+
 
 def map_params_to_obj(module):
     text = module.params['text']
@@ -154,6 +156,7 @@ def map_params_to_obj(module):
         'text': text,
         'state': module.params['state']
     }
+
 
 def main():
     """ main entry point for module execution

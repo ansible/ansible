@@ -83,7 +83,7 @@ options:
             - Disables all plugins ( see --no-plugins ).
         default: false
         choices: [ true, false]
-        aliases: [ no-plugin ]
+        aliases: [ no-plugins ]
     optimize_autoloader:
         description:
             - Optimize autoloader during autoloader dump (see --optimize-autoloader).
@@ -137,7 +137,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def parse_out(string):
-    return re.sub("\s+", " ", string).strip()
+    return re.sub(r"\s+", " ", string).strip()
 
 
 def has_changed(string):

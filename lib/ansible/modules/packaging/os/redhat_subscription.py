@@ -231,10 +231,10 @@ import os
 import re
 import shutil
 import tempfile
-import types
+import functools
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves import configparser
 
 
@@ -314,7 +314,7 @@ class Rhsm(RegistrationBase):
             else:
                 return default
 
-        cp.get_option = types.MethodType(get_option_default, cp, configparser.ConfigParser)
+        cp.get_option = functools.partial(get_option_default, cp)
 
         return cp
 
@@ -766,9 +766,8 @@ def main():
                         result = rhsm.update_subscriptions_by_pool_ids(pool_ids)
                     else:
                         result = rhsm.update_subscriptions(pool)
-                except Exception:
-                    e = get_exception()
-                    module.fail_json(msg="Failed to update subscriptions for '%s': %s" % (server_hostname, e))
+                except Exception as e:
+                    module.fail_json(msg="Failed to update subscriptions for '%s': %s" % (server_hostname, to_native(e)))
                 else:
                     module.exit_json(**result)
             else:
@@ -785,9 +784,8 @@ def main():
                     subscribed_pool_ids = rhsm.subscribe_by_pool_ids(pool_ids)
                 else:
                     subscribed_pool_ids = rhsm.subscribe(pool)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
+            except Exception as e:
+                module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, to_native(e)))
             else:
                 module.exit_json(changed=True,
                                  msg="System successfully registered to '%s'." % server_hostname,
@@ -800,9 +798,8 @@ def main():
             try:
                 rhsm.unsubscribe()
                 rhsm.unregister()
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to unregister: %s" % e)
+            except Exception as e:
+                module.fail_json(msg="Failed to unregister: %s" % to_native(e))
             else:
                 module.exit_json(changed=True, msg="System successfully unregistered from %s." % server_hostname)
 

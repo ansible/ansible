@@ -166,7 +166,7 @@ end_state:
     type: dict
     sample: {"process_id": "1", "area": "0.0.0.100", "interface": "10GE1/0/30",
              "cost": "100", "dead_interval": "40", "hello_interval": "10",
-             "process_id": "6", "silent_interface": "false", "auth_mode": "none"}
+             "silent_interface": "false", "auth_mode": "none"}
 updates:
     description: commands sent to the device
     returned: always
@@ -183,7 +183,7 @@ changed:
 
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_OSPF = """
     <filter type="subtree">

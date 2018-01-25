@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/default_facts.yaml"
+- debug: msg="START connection={{ ansible_connection }}/default_facts.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 
 - name: test getting default facts

@@ -16,11 +16,9 @@ module: aci_contract_subject_to_filter
 short_description: Bind Contract Subjects to Filters on Cisco ACI fabrics (vz:RsSubjFiltAtt)
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:RsSubjFiltAtt) at U(https://developer.cisco.com/media/mim-ref/MO-vzRsSubjFiltAtt.html).
+- More information from the internal APIC class I(vz:RsSubjFiltAtt) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
@@ -36,6 +34,7 @@ options:
   filter:
     description:
     - The name of the Filter to bind to the Subject.
+    aliases: [ filter_name ]
   log:
     description:
     - Determines if the binding should be set to log.
@@ -64,7 +63,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_subject_filter_binding:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     tenant: '{{ tenant }}'
@@ -78,12 +77,12 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),
         filter=dict(type='str', aliases=['filter_name']),
@@ -92,6 +91,7 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -103,11 +103,11 @@ def main():
         ],
     )
 
-    # contract = module.params['contract']
+    contract = module.params['contract']
     filter_name = module.params['filter']
     log = module.params['log']
-    # subject = module.params['subject']
-    # tenant = module.params['tenant']
+    subject = module.params['subject']
+    tenant = module.params['tenant']
     state = module.params['state']
 
     # Add subject_filter key to modul.params for building the URL
@@ -118,7 +118,33 @@ def main():
         log = ''
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract', subclass_2='subject', subclass_3='subject_filter')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
+            module_object=contract,
+        ),
+        subclass_2=dict(
+            aci_class='vzSubj',
+            aci_rn='subj-{0}'.format(subject),
+            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
+            module_object=subject,
+        ),
+        subclass_3=dict(
+            aci_class='vzRsSubjFiltAtt',
+            aci_rn='rssubjFiltAtt-{0}'.format(filter_name),
+            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{0}")'.format(filter_name),
+            module_object=filter_name,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

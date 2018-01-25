@@ -17,15 +17,11 @@ short_description: Provides rollback and rollback preview functionality for Cisc
 description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabric.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
-- More information from the internal APIC class
-  I(config:ImportP) at U(https://developer.cisco.com/media/mim-ref/MO-configImportP.html).
+- More information from the internal APIC class I(config:ImportP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   compare_export_policy:
     description:
@@ -80,7 +76,7 @@ EXAMPLES = r'''
 ---
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: present
@@ -88,7 +84,7 @@ EXAMPLES = r'''
 
 - name: Query Existing Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -96,7 +92,7 @@ EXAMPLES = r'''
 
 - name: Compare Snapshot Files
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: preview
@@ -107,7 +103,7 @@ EXAMPLES = r'''
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: rollback
@@ -117,7 +113,7 @@ EXAMPLES = r'''
 
 - name: Rollback Configuration
   aci_config_rollback:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: rollback
@@ -134,7 +130,7 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.urls import fetch_url
@@ -149,7 +145,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         compare_export_policy=dict(type='str'),
         compare_snapshot=dict(type='str'),
@@ -196,7 +192,15 @@ def main():
 
         filename = 'ce2_{0}-{1}'.format(export_policy, snapshot)
 
-        aci.construct_url(root_class="import_policy")
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configImportP',
+                aci_rn='fabric/configimp-{0}'.format(import_policy),
+                filter_target='eq(configImportP.name, "{0}")'.format(import_policy),
+                module_object=import_policy,
+            ),
+        )
+
         aci.get_existing()
 
         # Filter out module parameters with null values
@@ -221,7 +225,7 @@ def main():
         aci.post_config()
 
     elif state == 'preview':
-        aci.result['url'] = '%(protocol)s://%(hostname)s/mqapi2/snapshots.diff.xml' % module.params
+        aci.result['url'] = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
         aci.result['filter_string'] = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
             's2dn=uni/backupst/snapshots-[uni/fabric/configexp-%(compare_export_policy)s]/snapshot-%(compare_snapshot)s'

@@ -21,7 +21,7 @@ description:
     standard levels of Dedicated, Nominal, and Minimum.
 version_added: "2.4"
 options:
-  module:
+  name:
     description:
       - The module to provision in BIG-IP.
     required: true
@@ -40,13 +40,15 @@ options:
       - sam
       - swg
       - vcmp
+    aliases:
+      - module
   level:
     description:
       - Sets the provisioning level for the requested modules. Changing the
         level for one module may require modifying the level of another module.
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
-        the module is not run.
+        the module is not activated.
     default: nominal
     choices:
       - dedicated
@@ -63,11 +65,6 @@ options:
     choices:
       - present
       - absent
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -105,14 +102,41 @@ level:
 
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from f5.sdk_exception import LazyAttributesRequired
+from ansible.module_utils.basic import AnsibleModule
+
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
+except ImportError:
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
+try:
+    from f5.bigip.contexts import TransactionContextManager
+    from f5.sdk_exception import LazyAttributesRequired
 except ImportError:
     HAS_F5SDK = False
 
@@ -134,16 +158,6 @@ class Parameters(AnsibleF5Parameters):
         except Exception:
             return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def level(self):
         if self._values['level'] is None:
@@ -152,10 +166,11 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _update_changed_options(self):
@@ -167,7 +182,7 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -205,13 +220,18 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
+
         self.update_on_device()
         self._wait_for_module_provisioning()
+
         if self.want.module == 'vcmp':
             self._wait_for_reboot()
             self._wait_for_module_provisioning()
+
+        if self.want.module == 'asm':
+            self._wait_for_asm_ready()
         return True
 
     def should_update(self):
@@ -221,6 +241,27 @@ class ModuleManager(object):
         return False
 
     def update_on_device(self):
+        if self.want.level == 'dedicated':
+            self.provision_dedicated_on_device()
+        else:
+            self.provision_non_dedicated_on_device()
+
+    def provision_dedicated_on_device(self):
+        params = self.want.api_params()
+        tx = self.client.api.tm.transactions.transaction
+        collection = self.client.api.tm.sys.provision.get_collection()
+        resources = [x['name'] for x in collection if x['name'] != self.want.module]
+        with TransactionContextManager(tx) as api:
+            provision = api.tm.sys.provision
+            for resource in resources:
+                resource = getattr(provision, resource)
+                resource = resource.load()
+                resource.update(level='none')
+            resource = getattr(provision, self.want.module)
+            resource = resource.load()
+            resource.update(**params)
+
+    def provision_non_dedicated_on_device(self):
         params = self.want.api_params()
         provision = self.client.api.tm.sys.provision
         resource = getattr(provision, self.want.module)
@@ -232,7 +273,7 @@ class ModuleManager(object):
         resource = getattr(provision, str(self.want.module))
         resource = resource.load()
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def absent(self):
         if self.exists():
@@ -240,7 +281,7 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         self._wait_for_module_provisioning()
@@ -279,30 +320,77 @@ class ModuleManager(object):
                     nops = 0
             except Exception:
                 # This can be caused by restjavad restarting.
-                pass
+                try:
+                    self.client.reconnect()
+                except Exception:
+                    pass
             time.sleep(5)
 
     def _is_mprov_running_on_device(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "ps aux | grep \'[m]prov\'"'
-        )
+        # /usr/libexec/qemu-kvm is added here to prevent vcmp provisioning
+        # from never allowing the mprov provisioning to succeed.
+        #
+        # It turns out that the 'mprov' string is found when enabling vcmp. The
+        # qemu-kvm command that is run includes it.
+        #
+        # For example,
+        #   /usr/libexec/qemu-kvm -rt-usecs 880 ... -mem-path /dev/mprov/vcmp -f5-tracing ...
+        #
         try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "ps aux | grep \'[m]prov\' | grep -v /usr/libexec/qemu-kvm"'
+            )
             if hasattr(output, 'commandResult'):
                 return True
-        except LazyAttributesRequired:
+        except Exception:
             pass
         return False
 
-    def _get_last_reboot(self):
-        output = self.client.api.tm.util.bash.exec_cmd(
-            'run',
-            utilCmdArgs='-c "/usr/bin/last reboot | head - 1"'
-        )
+    def _wait_for_asm_ready(self):
+        """Waits specifically for ASM
+
+        On older versions, ASM can take longer to actually start up than
+        all the previous checks take. This check here is specifically waiting for
+        the Policies API to stop raising errors
+        :return:
+        """
+        nops = 0
+        restarted_asm = False
+        while nops < 3:
+            try:
+                policies = self.client.api.tm.asm.policies_s.get_collection()
+                if len(policies) >= 0:
+                    nops += 1
+                else:
+                    nops = 0
+            except Exception as ex:
+                if not restarted_asm:
+                    self._restart_asm()
+                    restarted_asm = True
+            time.sleep(5)
+
+    def _restart_asm(self):
         try:
+            self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "bigstart restart asm"'
+            )
+            time.sleep(60)
+            return True
+        except Exception:
+            pass
+        return None
+
+    def _get_last_reboot(self):
+        try:
+            output = self.client.api.tm.util.bash.exec_cmd(
+                'run',
+                utilCmdArgs='-c "/usr/bin/last reboot | head -1"'
+            )
             if hasattr(output, 'commandResult'):
                 return str(output.commandResult)
-        except LazyAttributesRequired:
+        except Exception:
             pass
         return None
 
@@ -316,6 +404,7 @@ class ModuleManager(object):
 
         while nops < 6:
             try:
+                self.client.reconnect()
                 next_reboot = self._get_last_reboot()
                 if next_reboot is None:
                     nops = 0
@@ -323,7 +412,7 @@ class ModuleManager(object):
                     nops = 0
                 else:
                     nops += 1
-            except Exception:
+            except Exception as ex:
                 # This can be caused by restjavad restarting.
                 pass
             time.sleep(10)
@@ -332,49 +421,53 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             module=dict(
                 required=True,
                 choices=[
                     'afm', 'am', 'sam', 'asm', 'avr', 'fps',
                     'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
                     'apm', 'vcmp'
-                ]
+                ],
+                aliases=['name']
             ),
             level=dict(
                 default='nominal',
-                choices=['nominal', 'dedicated', 'minimal']
+                choices=['nominal', 'dedicated', 'minimum']
             ),
             state=dict(
                 default='present',
                 choices=['present', 'absent']
             )
         )
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
         self.mutually_exclusive = [
             ['parameters', 'parameters_src']
         ]
-        self.f5_product_name = 'bigip'
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        mutually_exclusive=spec.mutually_exclusive,
         supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        mutually_exclusive=spec.mutually_exclusive
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

@@ -16,15 +16,11 @@ module: aci_taboo_contract
 short_description: Manage taboo contracts on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage taboo contracts on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
+- More information from the internal APIC class I(vz:BrCP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -61,7 +57,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_taboo_contract:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     taboo_contract: '{{ taboo_contract }}'
@@ -73,12 +69,12 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         taboo_contract=dict(type='str', required=False, aliases=['name']),  # Not required for querying all contracts
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all contracts
@@ -86,6 +82,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -101,9 +98,24 @@ def main():
     description = module.params['description']
     scope = module.params['scope']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='taboo_contract')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzTaboo',
+            aci_rn='taboo-{0}'.format(taboo_contract),
+            filter_target='eq(vzTaboo.name, "{0}")'.format(taboo_contract),
+            module_object=taboo_contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

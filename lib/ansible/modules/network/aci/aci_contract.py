@@ -16,15 +16,11 @@ module: aci_contract
 short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:BrCP) at U(https://developer.cisco.com/media/mim-ref/MO-vzBrCP.html).
+- More information from the internal APIC class I(vz:BrCP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
   Contract Subjects can still be removed using this module.
@@ -73,7 +69,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_contract:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     contract: '{{ contract }}'
@@ -88,12 +84,12 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         contract=dict(type='str', required=False, aliases=['contract_name', 'name']),  # Not required for querying all objects
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
@@ -106,6 +102,7 @@ def main():
                   aliases=['target']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -123,9 +120,24 @@ def main():
     priority = module.params['priority']
     dscp = module.params['dscp']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
+            module_object=contract,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

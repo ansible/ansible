@@ -129,7 +129,6 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import VirtualNetwork, AddressSpace, DhcpOptions
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -195,7 +194,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         self.dns_servers = None
         self.purge_dns_servers = None
 
-        self.results=dict(
+        self.results = dict(
             changed=False,
             state=dict()
         )
@@ -295,14 +294,14 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     self.log("Create virtual network {0}".format(self.name))
                     if not self.address_prefixes_cidr:
                         self.fail('Parameter error: address_prefixes_cidr required when creating a virtual network')
-                    vnet = VirtualNetwork(
+                    vnet = self.network_models.VirtualNetwork(
                         location=self.location,
-                        address_space=AddressSpace(
+                        address_space=self.network_models.AddressSpace(
                             address_prefixes=self.address_prefixes_cidr
                         )
                     )
                     if self.dns_servers:
-                        vnet.dhcp_options = DhcpOptions(
+                        vnet.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=self.dns_servers
                         )
                     if self.tags:
@@ -311,22 +310,21 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                 else:
                     # update existing virtual network
                     self.log("Update virtual network {0}".format(self.name))
-                    vnet = VirtualNetwork(
+                    vnet = self.network_models.VirtualNetwork(
                         location=results['location'],
-                        address_space=AddressSpace(
+                        address_space=self.network_models.AddressSpace(
                             address_prefixes=results['address_prefixes']
                         ),
                         tags=results['tags']
                     )
                     if results.get('dns_servers'):
-                        vnet.dhcp_options = DhcpOptions(
+                        vnet.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=results['dns_servers']
                         )
                     self.results['state'] = self.create_or_update_vnet(vnet)
             elif self.state == 'absent':
                 self.delete_virtual_network()
                 self.results['state']['status'] = 'Deleted'
-
 
         return self.results
 

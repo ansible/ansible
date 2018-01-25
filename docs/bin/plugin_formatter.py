@@ -26,11 +26,13 @@ import datetime
 import glob
 import optparse
 import os
-from pprint import PrettyPrinter
 import re
 import sys
 import warnings
 from collections import defaultdict
+from distutils.version import LooseVersion
+from pprint import PrettyPrinter
+
 try:
     from html import escape as html_escape
 except ImportError:
@@ -40,12 +42,14 @@ except ImportError:
     def html_escape(text, quote=True):
         return cgi.escape(text, quote)
 
+import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
+from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
 
@@ -55,7 +59,7 @@ from ansible.utils.display import Display
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.3
+TOO_OLD_TO_BE_NOTABLE = 1.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
@@ -85,7 +89,7 @@ def rst_ify(text):
     try:
         t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
         t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-        t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
+        t = _MODULE.sub(r':ref:`module_docs/' + r"\1 <\1>" + r"`", t)
         t = _URL.sub(r"\1", t)
         t = _CONST.sub(r'``' + r"\1" + r"``", t)
     except Exception as e:
@@ -232,7 +236,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
             primary_category = module_categories[0]
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, verbose=verbose)
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
         # save all the information
         module_info[module] = {'path': module_path,
@@ -316,7 +320,7 @@ def too_old(added):
     except ValueError as e:
         warnings.warn("Could not parse %s: %s" % (added, str(e)))
         return False
-    return added_float < TO_OLD_TO_BE_NOTABLE
+    return added_float < TOO_OLD_TO_BE_NOTABLE
 
 
 def process_plugins(module_map, templates, outputname, output_dir, ansible_version, plugin_type):
@@ -444,6 +448,10 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
         display.v('about to template %s' % module)
         display.vvvvv(pp.pformat(doc))
         text = templates['plugin'].render(doc)
+        if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+            # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
+            text = re.sub(' +\n', '\n', text)
+
         write_data(text, output_dir, outputname, module)
 
 

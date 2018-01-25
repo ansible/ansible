@@ -42,9 +42,10 @@ options:
             - "Name of the storage domain to manage. (Not required when state is I(imported))"
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported/update_ovf_store"
             - "I(imported) is supported since version 2.4."
-        choices: ['present', 'absent', 'maintenance', 'unattached']
+            - "I(update_ovf_store) is supported since version 2.5, currently if C(wait) is (true), we don't wait for update."
+        choices: ['present', 'absent', 'maintenance', 'unattached', 'update_ovf_store']
         default: present
     description:
         description:
@@ -80,6 +81,7 @@ options:
             - "C(version) - NFS version. One of: I(auto), I(v3), I(v4) or I(v4_1)."
             - "C(timeout) - The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535."
             - "C(retrans) - The number of times to retry a request before attempting further recovery actions. Range 0 to 65535."
+            - "C(mount_options) - Option which will be passed when mounting storage."
             - "Note that these parameters are not idempotent."
     iscsi:
         description:
@@ -113,6 +115,22 @@ options:
             - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
             - "Note that these parameters are not idempotent."
+    wipe_after_delete:
+        description:
+            - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
+        version_added: "2.5"
+    backup:
+        description:
+            - "Boolean flag which indicates whether the storage domain is configured as backup or not."
+        version_added: "2.5"
+    critical_space_action_blocker:
+        description:
+            - "Inidcates the minimal free space the storage domain should contain in percentages."
+        version_added: "2.5"
+    warning_low_space:
+        description:
+            - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
+        version_added: "2.5"
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -121,6 +139,12 @@ options:
         description:
             - "If I(True) storage domain will be formatted after removing it from oVirt/RHV."
             - "This parameter is relevant only when C(state) is I(absent)."
+    discard_after_delete:
+        description:
+            - "If I(True) storage domain blocks will be discarded upon deletion. Enabled by default."
+            - "This parameter is relevant only for block based storage domains."
+        version_added: 2.5
+
 extends_documentation_fragment: ovirt
 '''
 
@@ -145,6 +169,7 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/data
+      mount_options: noexec,nosuid
 
 # Add data localfs storage domain
 - ovirt_storage_domains:
@@ -165,6 +190,10 @@ EXAMPLES = '''
        - 1IET_000d0001
        - 1IET_000d0002
       address: 10.34.63.204
+    discard_after_delete: True
+    backup: False
+    critical_space_action_blocker: 5
+    warning_low_space: 10
 
 # Add data glusterfs storage domain
 -  ovirt_storage_domains:
@@ -184,6 +213,10 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+    wipe_after_delete: False
+    backup: True
+    critical_space_action_blocker: 2
+    warning_low_space: 5
 
 # Import export NFS storage domain:
 - ovirt_storage_domains:
@@ -194,6 +227,11 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+
+# Update OVF_STORE:
+- ovirt_storage_domains:
+    state: update_ovf_store
+    name: domain
 
 # Create ISO NFS storage domain
 - ovirt_storage_domains:
@@ -230,6 +268,7 @@ try:
 
     from ovirtsdk4.types import StorageDomainStatus as sdstate
     from ovirtsdk4.types import HostStatus as hoststate
+    from ovirtsdk4.types import DataCenterStatus as dcstatus
 except ImportError:
     pass
 
@@ -284,6 +323,10 @@ class StorageDomainModule(BaseModule):
             name=self._module.params['name'],
             description=self._module.params['description'],
             comment=self._module.params['comment'],
+            wipe_after_delete=self._module.params['wipe_after_delete'],
+            backup=self._module.params['backup'],
+            critical_space_action_blocker=self._module.params['critical_space_action_blocker'],
+            warning_low_space_indicator=self._module.params['warning_low_space'],
             import_=(
                 True
                 if self._module.params['state'] == 'imported' else None
@@ -298,13 +341,15 @@ class StorageDomainModule(BaseModule):
             host=otypes.Host(
                 name=self._module.params['host'],
             ),
+            discard_after_delete=self._module.params['discard_after_delete']
+            if storage_type in ['iscsi', 'fcp'] else False,
             storage=otypes.HostStorage(
                 type=otypes.StorageType(storage_type),
                 logical_units=[
                     otypes.LogicalUnit(
                         id=lun_id,
                         address=storage.get('address'),
-                        port=storage.get('port', 3260),
+                        port=int(storage.get('port', 3260)),
                         target=storage.get('target'),
                         username=storage.get('username'),
                         password=storage.get('password'),
@@ -330,6 +375,38 @@ class StorageDomainModule(BaseModule):
             ) if storage_type is not None else None
         )
 
+    def _find_attached_datacenter_name(self, sd_name):
+        """
+        Finds the name of the datacenter that a given
+        storage domain is attached to.
+
+        Args:
+            sd_name (str): Storage Domain name
+
+        Returns:
+            str: Data Center name
+
+        Raises:
+            Exception: In case storage domain in not attached to
+                an active Datacenter
+        """
+        dcs_service = self._connection.system_service().data_centers_service()
+        dc = search_by_attributes(dcs_service, storage=sd_name)
+        if dc is None:
+            raise Exception(
+                "Can't bring storage to state `%s`, because it seems that"
+                "it is not attached to any datacenter"
+                % self._module.params['state']
+            )
+        else:
+            if dc.status == dcstatus.UP:
+                return dc.name
+            else:
+                raise Exception(
+                    "Can't bring storage to state `%s`, because Datacenter "
+                    "%s is not UP"
+                )
+
     def _attached_sds_service(self, dc_name):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
@@ -346,13 +423,9 @@ class StorageDomainModule(BaseModule):
 
     def _attached_sd_service(self, storage_domain):
         dc_name = self._module.params['data_center']
-        # Find the DC, where the storage we want to remove reside:
-        if not dc_name and self._module.params['state'] == 'absent':
-            dcs_service = self._connection.system_service().data_centers_service()
-            dc = search_by_attributes(dcs_service, storage=storage_domain.name, status='up')
-            if dc is None:
-                raise Exception("Can't remove storage, because no active datacenter found for it's removal")
-            dc_name = dc.name
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         attached_sds_service = self._attached_sds_service(dc_name)
         attached_sd_service = attached_sds_service.storage_domain_service(storage_domain.id)
         return attached_sd_service
@@ -405,6 +478,9 @@ class StorageDomainModule(BaseModule):
     def post_create_check(self, sd_id):
         storage_domain = self._service.service(sd_id).get()
         dc_name = self._module.params['data_center']
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         self._service = self._attached_sds_service(dc_name)
 
         # If storage domain isn't attached, attach it:
@@ -426,6 +502,9 @@ class StorageDomainModule(BaseModule):
 
     def unattached_pre_action(self, storage_domain):
         dc_name = self._module.params['data_center']
+        if not dc_name:
+            # Find the DC, where the storage resides:
+            dc_name = self._find_attached_datacenter_name(storage_domain.name)
         self._service = self._attached_sds_service(storage_domain, dc_name)
         self._maintenance(self._service, storage_domain)
 
@@ -478,7 +557,7 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
             default='present',
         ),
         id=dict(default=None),
@@ -494,8 +573,13 @@ def main():
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
+        wipe_after_delete=dict(type='bool', default=None),
+        backup=dict(type='bool', default=None),
+        critical_space_action_blocker=dict(type='int', default=None),
+        warning_low_space=dict(type='int', default=None),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
+        discard_after_delete=dict(type='bool', default=True)
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -520,7 +604,12 @@ def main():
             host_param = module.params['host']
             if not host_param:
                 host = search_by_attributes(connection.system_service().hosts_service(), status='up')
-                host_param = host.name if host is not None else None
+                if host is None:
+                    raise Exception(
+                        "Not possible to remove storage domain '%s' "
+                        "because no host found with status `up`." % module.params['name']
+                    )
+                host_param = host.name
             ret = storage_domains_module.remove(
                 destroy=module.params['destroy'],
                 format=module.params['format'],
@@ -551,7 +640,10 @@ def main():
                 storage_domain=storage_domains_service.service(ret['id']).get()
             )
             ret['changed'] = storage_domains_module.changed
-
+        elif state == 'update_ovf_store':
+            ret = storage_domains_module.action(
+                action='update_ovf_store'
+            )
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

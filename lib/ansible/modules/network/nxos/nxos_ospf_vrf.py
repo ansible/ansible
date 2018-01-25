@@ -120,6 +120,11 @@ options:
     required: false
     choices: ['true','false']
     default: null
+  state:
+    description:
+      - State of ospf vrf configuration.
+    default: present
+    choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
@@ -145,10 +150,10 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -356,10 +361,7 @@ def main():
         timer_throttle_spf_max=dict(required=False, type='str'),
         auto_cost=dict(required=False, type='str'),
         passive_interface=dict(required=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

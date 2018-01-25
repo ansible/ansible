@@ -81,6 +81,7 @@ class NotSupportedError(Exception):
 
 # module specific functions
 
+
 def get_schema_facts(cursor, schema=''):
     facts = {}
     cursor.execute("""
@@ -121,6 +122,7 @@ def get_schema_facts(cursor, schema=''):
                 facts[schema_key]['usage_roles'].append(row.role_name)
     return facts
 
+
 def get_user_facts(cursor, user=''):
     facts = {}
     cursor.execute("""
@@ -155,6 +157,7 @@ def get_user_facts(cursor, user=''):
                 facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_role_facts(cursor, role=''):
     facts = {}
     cursor.execute("""
@@ -175,6 +178,7 @@ def get_role_facts(cursor, role=''):
                 facts[role_key]['assigned_roles'] = row.assigned_roles.replace(' ', '').split(',')
     return facts
 
+
 def get_configuration_facts(cursor, parameter=''):
     facts = {}
     cursor.execute("""
@@ -193,6 +197,7 @@ def get_configuration_facts(cursor, parameter=''):
                 'current_value': row.current_value,
                 'default_value': row.default_value}
     return facts
+
 
 def get_node_facts(cursor, schema=''):
     facts = {}
@@ -216,6 +221,7 @@ def get_node_facts(cursor, schema=''):
 
 # module logic
 
+
 def main():
 
     module = AnsibleModule(
@@ -225,7 +231,7 @@ def main():
             db=dict(default=None),
             login_user=dict(default='dbadmin'),
             login_password=dict(default=None, no_log=True),
-        ), supports_check_mode = True)
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
         module.fail_json(msg="The python pyodbc module is required.")
@@ -243,8 +249,8 @@ def main():
             "User=%s;"
             "Password=%s;"
             "ConnectionLoadBalance=%s"
-            ) % (module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ) % (module.params['cluster'], module.params['port'], db,
+             module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
     except Exception as e:
@@ -257,11 +263,11 @@ def main():
         configuration_facts = get_configuration_facts(cursor)
         node_facts = get_node_facts(cursor)
         module.exit_json(changed=False,
-            ansible_facts={'vertica_schemas': schema_facts,
-                           'vertica_users': user_facts,
-                           'vertica_roles': role_facts,
-                           'vertica_configuration': configuration_facts,
-                           'vertica_nodes': node_facts})
+                         ansible_facts={'vertica_schemas': schema_facts,
+                                        'vertica_users': user_facts,
+                                        'vertica_roles': role_facts,
+                                        'vertica_configuration': configuration_facts,
+                                        'vertica_nodes': node_facts})
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except SystemExit:

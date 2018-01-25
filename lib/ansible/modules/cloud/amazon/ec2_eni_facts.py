@@ -26,6 +26,7 @@ description:
     - Gather facts about ec2 ENI interfaces in AWS
 version_added: "2.0"
 author: "Rob White (@wimnat)"
+requirements: [ boto3 ]
 options:
   filters:
     description:
@@ -52,28 +53,151 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import boto.ec2
-    from boto.exception import BotoServerError
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+RETURN = '''
+network_interfaces:
+  description: List of matching elastic network interfaces
+  returned: always
+  type: complex
+  contains:
+    association:
+      description: Info of associated elastic IP (EIP)
+      returned: always, empty dict if no association exists
+      type: dict
+      sample: {
+          allocation_id: "eipalloc-5sdf123",
+          association_id: "eipassoc-8sdf123",
+          ip_owner_id: "4415120123456",
+          public_dns_name: "ec2-52-1-0-63.compute-1.amazonaws.com",
+          public_ip: "52.1.0.63"
+        }
+    attachment:
+      description: Infor about attached ec2 instance
+      returned: always, empty dict if ENI is not attached
+      type: dict
+      sample: {
+        attach_time: "2017-08-05T15:25:47+00:00",
+        attachment_id: "eni-attach-149d21234",
+        delete_on_termination: false,
+        device_index: 1,
+        instance_id: "i-15b8d3cadbafa1234",
+        instance_owner_id: "4415120123456",
+        status: "attached"
+      }
+    availability_zone:
+      description: Availability zone of ENI
+      returned: always
+      type: string
+      sample: "us-east-1b"
+    description:
+      description: Description text for ENI
+      returned: always
+      type: string
+      sample: "My favourite network interface"
+    groups:
+      description: List of attached security groups
+      returned: always
+      type: list
+      sample: [
+        {
+          group_id: "sg-26d0f1234",
+          group_name: "my_ec2_security_group"
+        }
+      ]
+    id:
+      description: The id of the ENI (alias for network_interface_id)
+      returned: always
+      type: string
+      sample: "eni-392fsdf"
+    interface_type:
+      description: Type of the network interface
+      returned: always
+      type: string
+      sample: "interface"
+    ipv6_addresses:
+      description: List of IPv6 addresses for this interface
+      returned: always
+      type: list
+      sample: []
+    mac_address:
+      description: MAC address of the network interface
+      returned: always
+      type: string
+      sample: "0a:f8:10:2f:ab:a1"
+    network_interface_id:
+      description: The id of the ENI
+      returned: always
+      type: string
+      sample: "eni-392fsdf"
+    owner_id:
+      description: AWS account id of the owner of the ENI
+      returned: always
+      type: string
+      sample: "4415120123456"
+    private_dns_name:
+      description: Private DNS name for the ENI
+      returned: always
+      type: string
+      sample: "ip-172-16-1-180.ec2.internal"
+    private_ip_address:
+      description: Private IP address for the ENI
+      returned: always
+      type: string
+      sample: "172.16.1.180"
+    private_ip_addresses:
+      description: List of private IP addresses attached to the ENI
+      returned: always
+      type: list
+      sample: []
+    requester_id:
+      description: The ID of the entity that launched the ENI
+      returned: always
+      type: string
+      sample: "AIDAIONYVJQNIAZFT3ABC"
+    requester_managed:
+      description:  Indicates whether the network interface is being managed by an AWS service.
+      returned: always
+      type: bool
+      sample: false
+    source_dest_check:
+      description: Indicates whether the network interface performs source/destination checking.
+      returned: always
+      type: bool
+      sample: false
+    status:
+      description: Indicates if the network interface is attached to an instance or not
+      returned: always
+      type: string
+      sample: "in-use"
+    subnet_id:
+      description: Subnet ID the ENI is in
+      returned: always
+      type: string
+      sample: "subnet-7bbf01234"
+    tag_set:
+      description: Dictionary of tags added to the ENI
+      returned: always
+      type: dict
+      sample: {}
+    vpc_id:
+      description: ID of the VPC the network interface it part of
+      returned: always
+      type: string
+      sample: "vpc-b3f1f123"
+'''
 
 try:
-    import boto3
     from botocore.exceptions import ClientError, NoCredentialsError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError,
-        ansible_dict_to_boto3_filter_list, boto3_conn,
-        boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-        connect_to_aws, ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_conn
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
-def list_ec2_eni_boto3(connection, module):
+def list_eni(connection, module):
 
     if module.params.get("filters") is None:
         filters = []
@@ -89,6 +213,8 @@ def list_ec2_eni_boto3(connection, module):
     camel_network_interfaces = []
     for network_interface in network_interfaces_result:
         network_interface['TagSet'] = boto3_tag_list_to_ansible_dict(network_interface['TagSet'])
+        # Added id to interface info to be compatible with return values of ec2_eni module:
+        network_interface['Id'] = network_interface['NetworkInterfaceId']
         camel_network_interfaces.append(camel_dict_to_snake_dict(network_interface))
 
     module.exit_json(network_interfaces=camel_network_interfaces)
@@ -99,7 +225,7 @@ def get_eni_info(interface):
     # Private addresses
     private_addresses = []
     for ip in interface.private_ip_addresses:
-        private_addresses.append({ 'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary })
+        private_addresses.append({'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary})
 
     interface_info = {'id': interface.id,
                       'subnet_id': interface.subnet_id,
@@ -132,56 +258,24 @@ def get_eni_info(interface):
     return interface_info
 
 
-def list_eni(connection, module):
-
-    filters = module.params.get("filters")
-    interface_dict_array = []
-
-    try:
-        all_eni = connection.get_all_network_interfaces(filters=filters)
-    except BotoServerError as e:
-        module.fail_json(msg=e.message)
-
-    for interface in all_eni:
-        interface_dict_array.append(get_eni_info(interface))
-
-    module.exit_json(interfaces=interface_dict_array)
-
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
-    if HAS_BOTO3:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-        if region:
-            connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-        else:
-            module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 
-        list_ec2_eni_boto3(connection, module)
-    else:
-        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
-        if region:
-            try:
-                connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-            except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
-                module.fail_json(msg=str(e))
-        else:
-            module.fail_json(msg="region must be specified")
-
-        list_eni(connection, module)
+    list_eni(connection, module)
 
 
 if __name__ == '__main__':

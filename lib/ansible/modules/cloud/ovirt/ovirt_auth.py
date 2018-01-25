@@ -42,18 +42,26 @@ options:
         description:
             - "Specifies if a token should be created or revoked."
     username:
-        required: True
+        required: False
         description:
-            - "The name of the user. For example: I(admin@internal)."
+            - "The name of the user. For example: I(admin@internal)
+               Default value is set by I(OVIRT_USERNAME) environment variable."
     password:
-        required: True
+        required: False
         description:
-            - "The password of the user."
+            - "The password of the user. Default value is set by I(OVIRT_PASSWORD) environment variable."
+    token:
+        required: False
+        description:
+            - "SSO token to be used instead of login with username/password.
+               Default value is set by I(OVIRT_TOKEN) environment variable."
+        version_added: 2.5
     url:
-        required: True
+        required: False
         description:
             - "A string containing the base URL of the server.
-               For example: I(https://server.example.com/ovirt-engine/api)."
+               For example: I(https://server.example.com/ovirt-engine/api).
+               Default value is set by I(OVIRT_URL) environment variable."
     insecure:
         required: False
         description:
@@ -64,7 +72,8 @@ options:
             - "A PEM file containing the trusted CA certificates. The
                certificate presented by the server will be verified using these CA
                certificates. If C(ca_file) parameter is not set, system wide
-               CA certificate store is used."
+               CA certificate store is used.
+               Default value is set by I(OVIRT_CAFILE) environment variable."
     timeout:
         required: False
         description:
@@ -107,7 +116,6 @@ notes:
 '''
 
 EXAMPLES = '''
-tasks:
   - block:
        # Create a vault with `ovirt_password` variable which store your
        # oVirt/RHV user's password, and include that yaml file with variable:
@@ -132,6 +140,18 @@ tasks:
         ovirt_auth:
           state: absent
           ovirt_auth: "{{ ovirt_auth }}"
+
+# When user will set following environment variables:
+#   OVIRT_URL = https://fqdn/ovirt-engine/api
+#   OVIRT_USERNAME = admin@internal
+#   OVIRT_PASSWORD = the_password
+# He can login the oVirt using environment variable instead of variables
+# in yaml file.
+# This is mainly usefull when using Ansible Tower or AWX, as it will work
+# for Red Hat Virtualization creadentials type.
+  - name: Obtain SSO token
+    ovirt_auth:
+      state: present
 '''
 
 RETURN = '''
@@ -181,6 +201,7 @@ ovirt_auth:
             type: dict
 '''
 
+import os
 import traceback
 
 try:
@@ -205,11 +226,11 @@ def main():
             kerberos=dict(required=False, type='bool', default=False),
             headers=dict(required=False, type='dict'),
             state=dict(default='present', choices=['present', 'absent']),
+            token=dict(default=None),
             ovirt_auth=dict(required=None, type='dict'),
         ),
         required_if=[
             ('state', 'absent', ['ovirt_auth']),
-            ('state', 'present', ['username', 'password', 'url']),
         ],
         supports_check_mode=True,
     )
@@ -221,17 +242,23 @@ def main():
     elif state == 'absent':
         params = module.params['ovirt_auth']
 
+    url = params.get('url') or os.environ.get('OVIRT_URL')
+    username = params.get('username') or os.environ.get('OVIRT_USERNAME')
+    password = params.get('password') or os.environ.get('OVIRT_PASSWORD')
+    ca_file = params.get('ca_file') or os.environ.get('OVIRT_CAFILE')
+    insecure = params.get('insecure') or ca_file is None
+    token = params.get('token') or os.environ.get('OVIRT_TOKEN')
     connection = sdk.Connection(
-        url=params.get('url'),
-        username=params.get('username'),
-        password=params.get('password'),
-        ca_file=params.get('ca_file'),
-        insecure=params.get('insecure'),
+        url=url,
+        username=username,
+        password=password,
+        ca_file=ca_file,
+        insecure=insecure,
         timeout=params.get('timeout'),
         compress=params.get('compress'),
         kerberos=params.get('kerberos'),
         headers=params.get('headers'),
-        token=params.get('token'),
+        token=token,
     )
     try:
         token = connection.authenticate()
@@ -240,9 +267,9 @@ def main():
             ansible_facts=dict(
                 ovirt_auth=dict(
                     token=token,
-                    url=params.get('url'),
-                    ca_file=params.get('ca_file'),
-                    insecure=params.get('insecure'),
+                    url=url,
+                    ca_file=ca_file,
+                    insecure=insecure,
                     timeout=params.get('timeout'),
                     compress=params.get('compress'),
                     kerberos=params.get('kerberos'),

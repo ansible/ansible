@@ -1,21 +1,50 @@
-# (c) 2014, Chris Church <chris@ninemoreminutes.com>
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014, Chris Church <chris@ninemoreminutes.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    name: powershell
+    plugin_type: shell
+    version_added: ""
+    short_description: Windows Powershell
+    description:
+      - The only option when using 'winrm' as a connection plugin
+    options:
+      remote_temp:
+        description:
+        - Temporary directory to use on targets when copying files to the host.
+        default: '%TEMP%'
+        ini:
+        - section: powershell
+          key: remote_tmp
+        vars:
+        - name: ansible_remote_tmp
+      admin_users:
+        description:
+        - List of users to be expected to have admin privileges, this is unused
+          in the PowerShell plugin
+        type: list
+        default: []
+      set_module_language:
+        description:
+        - Controls if we set the locale for moduels when executing on the
+          target.
+        - Windows only supports C(no) as an option.
+        type: bool
+        default: 'no'
+        choices:
+        - 'no'
+      environment:
+        description:
+        - Dictionary of environment variables and their values to use when
+          executing commands.
+        type: dict
+        default: {}
+'''
+# FIXME: admin_users and set_module_language don't belong here but must be set
+# so they don't failk when someone get_option('admin_users') on this plugin
 
 import base64
 import os
@@ -23,7 +52,8 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
+from ansible.plugins.shell import ShellBase
 
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
@@ -171,9 +201,12 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
 $helper_def = @"
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -201,20 +234,15 @@ namespace Ansible
         public IntPtr lpReserved;
         public IntPtr lpDesktop;
         public IntPtr lpTitle;
-        public Int32 dwX;
-        public Int32 dwY;
-        public Int32 dwXSize;
-        public Int32 dwYSize;
-        public Int32 dwXCountChars;
-        public Int32 dwYCountChars;
-        public Int32 dwFillAttribute;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 28)]
+        public byte[] _data1;
         public Int32 dwFlags;
         public Int16 wShowWindow;
         public Int16 cbReserved2;
         public IntPtr lpReserved2;
-        public IntPtr hStdInput;
-        public IntPtr hStdOutput;
-        public IntPtr hStdError;
+        public SafeFileHandle hStdInput;
+        public SafeFileHandle hStdOutput;
+        public SafeFileHandle hStdError;
         public STARTUPINFO()
         {
             cb = Marshal.SizeOf(this);
@@ -254,6 +282,30 @@ namespace Ansible
         public SID_AND_ATTRIBUTES User;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    {
+        public UInt64 PerProcessUserTimeLimit;
+        public UInt64 PerJobUserTimeLimit;
+        public LimitFlags LimitFlags;
+        public UIntPtr MinimumWorkingSetSize;
+        public UIntPtr MaximumWorkingSetSize;
+        public UInt32 ActiveProcessLimit;
+        public UIntPtr Affinity;
+        public UInt32 PriorityClass;
+        public UInt32 SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public class JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    {
+        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation = new JOBOBJECT_BASIC_LIMIT_INFORMATION();
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst=48)]
+        public byte[] IO_COUNTERS_BLOB;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst=4)]
+        public UIntPtr[] LIMIT_BLOB;
+    }
+
     [Flags]
     public enum StartupInfoFlags : uint
     {
@@ -263,10 +315,9 @@ namespace Ansible
     [Flags]
     public enum CreationFlags : uint
     {
+        CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
         CREATE_DEFAULT_ERROR_MODE = 0x04000000,
         CREATE_NEW_CONSOLE = 0x00000010,
-        CREATE_NEW_PROCESS_GROUP = 0x00000200,
-        CREATE_SEPARATE_WOW_VDM = 0x00000800,
         CREATE_SUSPENDED = 0x00000004,
         CREATE_UNICODE_ENVIRONMENT = 0x00000400,
         EXTENDED_STARTUPINFO_PRESENT = 0x00080000
@@ -299,9 +350,6 @@ namespace Ansible
     public enum LogonProvider
     {
         LOGON32_PROVIDER_DEFAULT = 0,
-        LOGON32_PROVIDER_WINNT35 = 1,
-        LOGON32_PROVIDER_WINNT40 = 2,
-        LOGON32_PROVIDER_WINNT50 = 3
     }
 
     public enum TokenInformationClass
@@ -323,28 +371,12 @@ namespace Ansible
     [Flags]
     public enum ProcessAccessFlags : uint
     {
-        PROCESS_ALL_ACCESS = 0x001F0FFF,
-        PROCESS_TERMINATE = 0x00000001,
-        PROCESS_CREATE_THREAD = 0x00000002,
-        PROCESS_VM_OPERATION = 0x00000008,
-        PROCESS_VM_READ = 0x00000010,
-        PROCESS_VM_WRITE = 0x00000020,
-        PROCESS_DUP_HANDLE = 0x00000040,
-        PROCESS_CREATE_PROCESS = 0x000000080,
-        PROCESS_SET_QUOTA = 0x00000100,
-        PROCESS_SET_INFORMATION = 0x00000200,
         PROCESS_QUERY_INFORMATION = 0x00000400,
-        PROCESS_SUSPEND_RESUME = 0x00000800,
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
-        SYNCHRONIZE = 0x00100000
     }
 
     public enum SECURITY_IMPERSONATION_LEVEL
     {
-        SecurityAnoynmous,
-        SecurityIdentification,
         SecurityImpersonation,
-        SecurityDelegation
     }
 
     public enum TOKEN_TYPE
@@ -353,11 +385,29 @@ namespace Ansible
         TokenImpersonation
     }
 
+    enum JobObjectInfoType
+    {
+        ExtendedLimitInformation = 9,
+    }
+
+    [Flags]
+    enum ThreadAccessRights : uint
+    {
+        SUSPEND_RESUME = 0x0002
+    }
+
+    [Flags]
+    public enum LimitFlags : uint
+    {
+        JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x00000800,
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
+    }
+
     class NativeWaitHandle : WaitHandle
     {
         public NativeWaitHandle(IntPtr handle)
         {
-            this.Handle = handle;
+            this.SafeWaitHandle = new SafeWaitHandle(handle, false);
         }
     }
 
@@ -378,6 +428,63 @@ namespace Ansible
         public string StandardOut { get; internal set; }
         public string StandardError { get; internal set; }
         public uint ExitCode { get; internal set; }
+    }
+
+    public class Job : IDisposable
+    {
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr CreateJobObject(
+            IntPtr lpJobAttributes,
+            string lpName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetInformationJobObject(
+            IntPtr hJob,
+            JobObjectInfoType JobObjectInfoClass,
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInfo,
+            int cbJobObjectInfoLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool AssignProcessToJobObject(
+            IntPtr hJob,
+            IntPtr hProcess);
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CloseHandle(
+            IntPtr hObject);
+
+        private IntPtr handle;
+
+        public Job()
+        {
+            handle = CreateJobObject(IntPtr.Zero, null);
+            if (handle == IntPtr.Zero)
+                throw new Win32Exception("CreateJobObject() failed");
+
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION extendedJobInfo = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
+            // on OSs that support nested jobs, one of the jobs must allow breakaway for async to work properly under WinRM
+            extendedJobInfo.BasicLimitInformation.LimitFlags = LimitFlags.JOB_OBJECT_LIMIT_BREAKAWAY_OK | LimitFlags.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+
+            if (!SetInformationJobObject(handle, JobObjectInfoType.ExtendedLimitInformation, extendedJobInfo, Marshal.SizeOf(extendedJobInfo)))
+                throw new Win32Exception("SetInformationJobObject() failed");
+        }
+
+        public void AssignProcess(IntPtr processHandle)
+        {
+            if (!AssignProcessToJobObject(handle, processHandle))
+                throw new Win32Exception("AssignProcessToJobObject() failed");
+        }
+
+        public void Dispose()
+        {
+            if (handle != IntPtr.Zero)
+            {
+                CloseHandle(handle);
+                handle = IntPtr.Zero;
+            }
+
+            GC.SuppressFinalize(this);
+        }
     }
 
     public class BecomeUtil
@@ -407,14 +514,14 @@ namespace Ansible
 
         [DllImport("kernel32.dll")]
         private static extern bool CreatePipe(
-            out IntPtr hReadPipe,
-            out IntPtr hWritePipe,
+            out SafeFileHandle hReadPipe,
+            out SafeFileHandle hWritePipe,
             SECURITY_ATTRIBUTES lpPipeAttributes,
             uint nSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool SetHandleInformation(
-            IntPtr hObject,
+            SafeFileHandle hObject,
             HandleFlags dwMask,
             int dwFlags);
 
@@ -431,7 +538,8 @@ namespace Ansible
         private static extern IntPtr GetProcessWindowStation();
 
         [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetThreadDesktop(int dwThreadId);
+        private static extern IntPtr GetThreadDesktop(
+            int dwThreadId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int GetCurrentThreadId();
@@ -480,17 +588,30 @@ namespace Ansible
             out IntPtr phNewToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool ImpersonateLoggedOnUser(
+        private static extern bool ImpersonateLoggedOnUser(
             IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool RevertToSelf();
+        private static extern bool RevertToSelf();
 
-        public static CommandResult RunAsUser(string username, string password, string lpCommandLine, string lpCurrentDirectory, string stdinInput)
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern SafeFileHandle OpenThread(
+            ThreadAccessRights dwDesiredAccess,
+            bool bInheritHandle,
+            int dwThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern int ResumeThread(
+            SafeHandle hThread);
+
+        public static CommandResult RunAsUser(string username, string password, string lpCommandLine,
+            string lpCurrentDirectory, string stdinInput, LogonFlags logonFlags, LogonType logonType)
         {
-            SecurityIdentifier account = GetBecomeSid(username);
-
-            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT;
+            SecurityIdentifier account = null;
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
+            {
+                account = GetBecomeSid(username);
+            }
 
             STARTUPINFOEX si = new STARTUPINFOEX();
             si.startupInfo.dwFlags = (int)StartupInfoFlags.USESTDHANDLES;
@@ -499,7 +620,7 @@ namespace Ansible
             pipesec.bInheritHandle = true;
 
             // Create the stdout, stderr and stdin pipes used in the process and add to the startupInfo
-            IntPtr stdout_read, stdout_write, stderr_read, stderr_write, stdin_read, stdin_write = IntPtr.Zero;
+            SafeFileHandle stdout_read, stdout_write, stderr_read, stderr_write, stdin_read, stdin_write;
             if (!CreatePipe(out stdout_read, out stdout_write, pipesec, 0))
                 throw new Win32Exception("STDOUT pipe setup failed");
             if (!SetHandleInformation(stdout_read, HandleFlags.INHERIT, 0))
@@ -521,23 +642,26 @@ namespace Ansible
 
             // Setup the stdin buffer
             UTF8Encoding utf8_encoding = new UTF8Encoding(false);
-            FileStream stdin_fs = new FileStream(stdin_write, FileAccess.Write, true, 32768);
+            FileStream stdin_fs = new FileStream(stdin_write, FileAccess.Write, 32768);
             StreamWriter stdin = new StreamWriter(stdin_fs, utf8_encoding, 32768);
 
             // Create the environment block if set
             IntPtr lpEnvironment = IntPtr.Zero;
 
+            // To support async + become, we have to do some job magic later, which requires both breakaway and starting suspended
+            CreationFlags startup_flags = CreationFlags.CREATE_UNICODE_ENVIRONMENT | CreationFlags.CREATE_BREAKAWAY_FROM_JOB | CreationFlags.CREATE_SUSPENDED;
+
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
 
             // Get the user tokens to try running processes with
-            List<IntPtr> tokens = GetUserTokens(account, username, password);
+            List<IntPtr> tokens = GetUserTokens(account, username, password, logonType);
 
             bool launch_success = false;
             foreach (IntPtr token in tokens)
             {
                 if (CreateProcessWithTokenW(
                     token,
-                    LogonFlags.LOGON_WITH_PROFILE,
+                    logonFlags,
                     null,
                     new StringBuilder(lpCommandLine),
                     startup_flags,
@@ -554,26 +678,44 @@ namespace Ansible
             if (!launch_success)
                 throw new Win32Exception("Failed to start become process");
 
-            // Setup the output buffers and get stdout/stderr
-            FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, true, 4096);
-            StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
-            CloseHandle(stdout_write);
-
-            FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, true, 4096);
-            StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
-            CloseHandle(stderr_write);
-
-            stdin.WriteLine(stdinInput);
-            stdin.Close();
-
-            string stdout_str, stderr_str = null;
-            GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
-            uint rc = GetProcessExitCode(pi.hProcess);
+            // If 2012/8+ OS, create new job with JOB_OBJECT_LIMIT_BREAKAWAY_OK
+            // so that async can work
+            Job job = null;
+            if (Environment.OSVersion.Version >= new Version("6.2"))
+            {
+                job = new Job();
+                job.AssignProcess(pi.hProcess);
+            }
+            ResumeProcessById(pi.dwProcessId);
 
             CommandResult result = new CommandResult();
-            result.StandardOut = stdout_str;
-            result.StandardError = stderr_str;
-            result.ExitCode = rc;
+            try
+            {
+                // Setup the output buffers and get stdout/stderr
+                FileStream stdout_fs = new FileStream(stdout_read, FileAccess.Read, 4096);
+                StreamReader stdout = new StreamReader(stdout_fs, utf8_encoding, true, 4096);
+                stdout_write.Close();
+
+                FileStream stderr_fs = new FileStream(stderr_read, FileAccess.Read, 4096);
+                StreamReader stderr = new StreamReader(stderr_fs, utf8_encoding, true, 4096);
+                stderr_write.Close();
+
+                stdin.WriteLine(stdinInput);
+                stdin.Close();
+
+                string stdout_str, stderr_str = null;
+                GetProcessOutput(stdout, stderr, out stdout_str, out stderr_str);
+                UInt32 rc = GetProcessExitCode(pi.hProcess);
+
+                result.StandardOut = stdout_str;
+                result.StandardError = stderr_str;
+                result.ExitCode = rc;
+            }
+            finally
+            {
+                if (job != null)
+                    job.Dispose();
+            }
 
             return result;
         }
@@ -592,7 +734,7 @@ namespace Ansible
             }
         }
 
-        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password)
+        private static List<IntPtr> GetUserTokens(SecurityIdentifier account, string username, string password, LogonType logonType)
         {
             List<IntPtr> tokens = new List<IntPtr>();
             List<String> service_sids = new List<String>()
@@ -602,108 +744,119 @@ namespace Ansible
                 "S-1-5-20"  // NT AUTHORITY\NetworkService
             };
 
-            GrantAccessToWindowStationAndDesktop(account);
-            string account_sid = account.ToString();
-
-            if (service_sids.Contains(account_sid))
+            IntPtr hSystemToken = IntPtr.Zero;
+            string account_sid = "";
+            if (logonType != LogonType.LOGON32_LOGON_NEW_CREDENTIALS)
             {
-                // We are trying to become to a service account
-                IntPtr hToken = GetUserHandle();
-                if (hToken == IntPtr.Zero)
-                    throw new Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
+                GrantAccessToWindowStationAndDesktop(account);
+                // Try to get SYSTEM token handle so we can impersonate to get full admin token
+                hSystemToken = GetSystemUserHandle();
+                account_sid = account.ToString();
+            }
+            bool impersonated = false;
 
-                IntPtr hTokenDup = IntPtr.Zero;
-                try
+            try
+            {
+                IntPtr hSystemTokenDup = IntPtr.Zero;
+                if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
-                    if (!DuplicateTokenEx(
-                        hToken,
+                    // We need the SYSTEM token if we want to become one of those accounts, fail here
+                    throw new Win32Exception("Failed to get token for NT AUTHORITY\\SYSTEM");
+                }
+                else if (hSystemToken != IntPtr.Zero)
+                {
+                    // We have the token, need to duplicate and impersonate
+                    bool dupResult = DuplicateTokenEx(
+                        hSystemToken,
                         TokenAccessLevels.MaximumAllowed,
                         IntPtr.Zero,
                         SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
                         TOKEN_TYPE.TokenPrimary,
-                        out hTokenDup))
+                        out hSystemTokenDup);
+                    int lastError = Marshal.GetLastWin32Error();
+                    CloseHandle(hSystemToken);
+
+                    if (!dupResult && service_sids.Contains(account_sid))
+                        throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
+                    else if (dupResult && account_sid != "S-1-5-18")
                     {
-                        throw new Win32Exception("Failed to duplicate the SYSTEM account token");
+                        if (ImpersonateLoggedOnUser(hSystemTokenDup))
+                            impersonated = true;
+                        else if (service_sids.Contains(account_sid))
+                            throw new Win32Exception("Failed to impersonate as SYSTEM account");
+                    }
+                    // If SYSTEM impersonation failed but we're trying to become a regular user, just proceed;
+                    // might get a limited token in UAC-enabled cases, but better than nothing...
+                }
+
+                string domain = null;
+
+                if (service_sids.Contains(account_sid))
+                {
+                    // We're using a well-known service account, do a service logon instead of the actual flag set
+                    logonType = LogonType.LOGON32_LOGON_SERVICE;
+                    domain = "NT AUTHORITY";
+                    password = null;
+                    switch (account_sid)
+                    {
+                        case "S-1-5-18":
+                            tokens.Add(hSystemTokenDup);
+                            return tokens;
+                        case "S-1-5-19":
+                            username = "LocalService";
+                            break;
+                        case "S-1-5-20":
+                            username = "NetworkService";
+                            break;
                     }
                 }
-                finally
-                {
-                    CloseHandle(hToken);
-                }
-
-                string lpszDomain = "NT AUTHORITY";
-                string lpszUsername = null;
-                switch (account_sid)
-                {
-                    case "S-1-5-18":
-                        tokens.Add(hTokenDup);
-                        return tokens;
-                    case "S-1-5-19":
-                        lpszUsername = "LocalService";
-                        break;
-                    case "S-1-5-20":
-                        lpszUsername = "NetworkService";
-                        break;
-                }
-
-                if (!ImpersonateLoggedOnUser(hTokenDup))
-                    throw new Win32Exception("Failed to impersonate as SYSTEM account");
-
-                IntPtr newToken = IntPtr.Zero;
-                if (!LogonUser(
-                    lpszUsername,
-                    lpszDomain,
-                    null,
-                    LogonType.LOGON32_LOGON_SERVICE,
-                    LogonProvider.LOGON32_PROVIDER_DEFAULT,
-                    out newToken))
-                {
-                    throw new Win32Exception("LogonUser failed");
-                }
-
-                RevertToSelf();
-                tokens.Add(newToken);
-                return tokens;
-            }
-            else
-            {
-                // We are trying to become a local or domain account
-                string domain = null;
-                if (username.Contains(@"\"))
-                {
-                    var user_split = username.Split(Convert.ToChar(@"\"));
-                    domain = user_split[0];
-                    username = user_split[1];
-                }
-                else if (username.Contains("@"))
-                    domain = null;
                 else
-                    domain = ".";
+                {
+                    // We are trying to become a local or domain account
+                    if (username.Contains(@"\"))
+                    {
+                        var user_split = username.Split(Convert.ToChar(@"\"));
+                        domain = user_split[0];
+                        username = user_split[1];
+                    }
+                    else if (username.Contains("@"))
+                        domain = null;
+                    else
+                        domain = ".";
+                }
 
-                // Logon and get the token
                 IntPtr hToken = IntPtr.Zero;
                 if (!LogonUser(
                     username,
                     domain,
                     password,
-                    LogonType.LOGON32_LOGON_INTERACTIVE,
+                    logonType,
                     LogonProvider.LOGON32_PROVIDER_DEFAULT,
                     out hToken))
                 {
                     throw new Win32Exception("LogonUser failed");
                 }
 
-                // Get the elevate token
-                IntPtr hTokenElevated = GetElevatedToken(hToken);
+                if (!service_sids.Contains(account_sid))
+                {
+                    // Try and get the elevated token for local/domain account
+                    IntPtr hTokenElevated = GetElevatedToken(hToken);
+                    tokens.Add(hTokenElevated);
+                }
 
-                tokens.Add(hTokenElevated);
+                // add the original token as a fallback
                 tokens.Add(hToken);
-
-                return tokens;
             }
+            finally
+            {
+                if (impersonated)
+                    RevertToSelf();
+            }
+
+            return tokens;
         }
 
-        private static IntPtr GetUserHandle()
+        private static IntPtr GetSystemUserHandle()
         {
             uint array_byte_size = 1024 * sizeof(uint);
             IntPtr[] pids = new IntPtr[1024];
@@ -730,7 +883,6 @@ namespace Ansible
                         TokenAccessLevels.AssignPrimary |
                         TokenAccessLevels.Impersonate;
 
-                    // TODO: Find out why I can't see processes from Network Service and Local Service
                     if (OpenProcessToken(hProcess, desired_access, out hToken))
                     {
                         string sid = GetTokenUserSID(hToken);
@@ -864,6 +1016,44 @@ namespace Ansible
             security.Persist(safeHandle, AccessControlSections.Access);
         }
 
+        private static void ResumeThreadById(int threadId)
+        {
+            var threadHandle = OpenThread(ThreadAccessRights.SUSPEND_RESUME, false, threadId);
+            if (threadHandle.IsInvalid)
+                throw new Win32Exception(String.Format("Thread ID {0} is invalid", threadId));
+
+            try
+            {
+                if (ResumeThread(threadHandle) == -1)
+                    throw new Win32Exception(String.Format("Thread ID {0} cannot be resumed", threadId));
+            }
+            finally
+            {
+                threadHandle.Dispose();
+            }
+        }
+
+        private static void ResumeProcessById(int pid)
+        {
+            var proc = Process.GetProcessById(pid);
+
+            // wait for at least one suspended thread in the process (this handles possible slow startup race where
+            // primary thread of created-suspended process has not yet become runnable)
+            var retryCount = 0;
+            while (!proc.Threads.OfType<ProcessThread>().Any(t => t.ThreadState == System.Diagnostics.ThreadState.Wait &&
+                 t.WaitReason == ThreadWaitReason.Suspended))
+            {
+                proc.Refresh();
+                Thread.Sleep(50);
+                if (retryCount > 100)
+                    throw new InvalidOperationException(String.Format("No threads were suspended in target PID {0} after 5s", pid));
+            }
+
+            foreach (var thread in proc.Threads.OfType<ProcessThread>().Where(t => t.ThreadState == System.Diagnostics.ThreadState.Wait &&
+                 t.WaitReason == ThreadWaitReason.Suspended))
+                ResumeThreadById(thread.Id);
+        }
+
         private class GenericSecurity : NativeObjectSecurity
         {
             public GenericSecurity(bool isContainer, ResourceType resType, SafeHandle objectHandle, AccessControlSections sectionsRequested)
@@ -960,17 +1150,84 @@ Function Dump-Error ($excep) {
     $eo.exception = $excep | Out-String
     $host.SetShouldExit(1)
 
-    $eo | ConvertTo-Json -Depth 10
+    $eo | ConvertTo-Json -Depth 10 -Compress
+}
+
+Function Parse-EnumValue($enum, $flag_type, $value, $prefix) {
+    $raw_enum_value = "$prefix$($value.ToUpper())"
+    try {
+        $enum_value = [Enum]::Parse($enum, $raw_enum_value)
+    } catch [System.ArgumentException] {
+        $valid_options = [Enum]::GetNames($enum) | ForEach-Object { $_.Substring($prefix.Length).ToLower() }
+        throw "become_flags $flag_type value '$value' is not valid, valid values are: $($valid_options -join ", ")"
+    }
+    return $enum_value
+}
+
+Function Parse-BecomeFlags($flags) {
+    $logon_type = [Ansible.LogonType]::LOGON32_LOGON_INTERACTIVE
+    $logon_flags = [Ansible.LogonFlags]::LOGON_WITH_PROFILE
+
+    if ($flags -eq $null -or $flags -eq "") {
+        $flag_split = @()
+    } elseif ($flags -is [string]) {
+        $flag_split = $flags.Split(" ")
+    } else {
+        throw "become_flags must be a string, was $($flags.GetType())"
+    }
+
+    foreach ($flag in $flag_split) {
+        $split = $flag.Split("=")
+        if ($split.Count -ne 2) {
+            throw "become_flags entry '$flag' is in an invalid format, must be a key=value pair"
+        }
+        $flag_key = $split[0]
+        $flag_value = $split[1]
+        if ($flag_key -eq "logon_type") {
+            $enum_details = @{
+                enum = [Ansible.LogonType]
+                flag_type = $flag_key
+                value = $flag_value
+                prefix = "LOGON32_LOGON_"
+            }
+            $logon_type = Parse-EnumValue @enum_details
+        } elseif ($flag_key -eq "logon_flags") {
+            $logon_flag_values = $flag_value.Split(",")
+            $logon_flags = 0 -as [Ansible.LogonFlags]
+            foreach ($logon_flag_value in $logon_flag_values) {
+                if ($logon_flag_value -eq "") {
+                    continue
+                }
+                $enum_details = @{
+                    enum = [Ansible.LogonFlags]
+                    flag_type = $flag_key
+                    value = $logon_flag_value
+                    prefix = "LOGON_"
+                }
+                $logon_flag = Parse-EnumValue @enum_details
+                $logon_flags = $logon_flags -bor $logon_flag
+            }
+        } else {
+            throw "become_flags key '$flag_key' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
+        }
+    }
+
+    return $logon_type, [Ansible.LogonFlags]$logon_flags
 }
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
 
+    Add-Type -TypeDefinition $helper_def -Debug:$false
+
     $username = $payload.become_user
     $password = $payload.become_password
-
-    # FUTURE: convert to SafeHandle so we can stop ignoring warnings?
-    Add-Type -TypeDefinition $helper_def -Debug:$false -IgnoreWarnings
+    try {
+        $logon_type, $logon_flags = Parse-BecomeFlags -flags $payload.become_flags
+    } catch {
+        Dump-Error -excep $_
+        return $null
+    }
 
     # NB: CreateProcessWithTokenW commandline maxes out at 1024 chars, must bootstrap via filesystem
     $temp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), [System.IO.Path]::GetRandomFileName() + ".ps1")
@@ -978,24 +1235,29 @@ Function Run($payload) {
     $rc = 0
 
     Try {
-        # allow (potentially unprivileged) target user access to the tempfile (NB: this likely won't work if traverse checking is enabled)
-        $acl = Get-Acl $temp
+        # do not modify the ACL if the logon_type is LOGON32_LOGON_NEW_CREDENTIALS
+        # as this results in the local execution running under the same user's token,
+        # otherwise we need to allow (potentially unprivileges) the become user access
+        # to the tempfile (NB: this likely won't work if traverse checking is enaabled).
+        if ($logon_type -ne [Ansible.LogonType]::LOGON32_LOGON_NEW_CREDENTIALS) {
+            $acl = Get-Acl -Path $temp
 
-        Try {
-            $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+            Try {
+                $acl.AddAccessRule($(New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "Allow")))
+            } Catch [System.Security.Principal.IdentityNotMappedException] {
+                throw "become_user '$username' is not recognized on this host"
+            } Catch {
+                throw "failed to set ACL on temp become execution script: $($_.Exception.Message)"
+            }
+            Set-Acl -Path $temp -AclObject $acl | Out-Null
         }
-        Catch [System.Security.Principal.IdentityNotMappedException] {
-            throw "become_user '$username' is not recognized on this host"
-        }
-
-        Set-Acl $temp $acl | Out-Null
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
         $lp_command_line = New-Object System.Text.StringBuilder @("powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -File $temp")
         $lp_current_directory = "$env:SystemRoot"
 
-        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string)
+        $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string, $logon_flags, $logon_type)
         $stdout = $result.StandardOut
         $stderr = $result.StandardError
         $rc = $result.ExitCode
@@ -1540,8 +1802,10 @@ Function Run($payload) {
 
 '''  # end async_watchdog
 
+from ansible.plugins import AnsiblePlugin
 
-class ShellModule(object):
+
+class ShellModule(ShellBase):
 
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
@@ -1615,12 +1879,20 @@ class ShellModule(object):
         else:
             return self._encode_script('''Remove-Item "%s" -Force;''' % path)
 
-    def mkdtemp(self, basefile, system=False, mode=None, tmpdir=None):
+    def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
+        # Windows does not have an equivalent for the system temp files, so
+        # the param is ignored
         basefile = self._escape(self._unquote(basefile))
-        # FIXME: Support system temp path and passed in tmpdir!
-        return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_temp')
 
-    def expand_user(self, user_home_path):
+        script = '''
+        $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')
+        $tmp = New-Item -Type Directory -Path $tmp_path -Name '%s'
+        $tmp.FullName | Write-Host -Separator ''
+        ''' % (basetmpdir, basefile)
+        return self._encode_script(script.strip())
+
+    def expand_user(self, user_home_path, username=''):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
         # not seem to work remotely, though by default we are always starting
         # in the user's home directory.
@@ -1670,7 +1942,7 @@ class ShellModule(object):
         ''' % dict(path=path)
         return self._encode_script(script)
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # pipelining bypass
         if cmd == '':
             return '-'
@@ -1725,10 +1997,6 @@ class ShellModule(object):
                 Exit 1
             }
         ''' % (env_string, ' '.join(cmd_parts))
-        if rm_tmp:
-            rm_tmp = self._escape(self._unquote(rm_tmp))
-            rm_cmd = 'Remove-Item "%s" -Force -Recurse -ErrorAction SilentlyContinue' % rm_tmp
-            script = '%s\nFinally { %s }' % (script, rm_cmd)
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):

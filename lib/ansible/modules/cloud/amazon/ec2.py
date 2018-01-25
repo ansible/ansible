@@ -596,19 +596,23 @@ EXAMPLES = '''
 #
 
     # instances with tag foo
+- ec2:
     count_tag:
         foo:
 
     # instances with tag foo=bar
+- ec2:
     count_tag:
         foo: bar
 
     # instances with tags foo=bar & baz
+- ec2:
     count_tag:
         foo: bar
         baz:
 
     # instances with tags foo & bar & baz=bang
+- ec2:
     count_tag:
         - foo
         - bar
@@ -688,6 +692,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
             except:
                 pass
 
+        # if not a string type, convert and make sure it's a text string
+        if isinstance(tags, int):
+            tags = to_text(tags)
+
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
             filters.update({"tag-key": tags})
@@ -705,6 +713,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
             filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
+
+        # lets check to see if the filters dict is empty, if so then stop
+        if not filters:
+            module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -833,6 +845,9 @@ def create_block_device(module, ec2, volume):
     # we add handling for either/or but not both
     if all(key in volume for key in ['device_type', 'volume_type']):
         module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if 'device_type' in volume:
+        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                         version=2.9)
 
     # get whichever one is set, or NoneType if neither are set
     volume_type = volume.get('device_type') or volume.get('volume_type')
@@ -989,9 +1004,9 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
-        warn_if_public_ip_assignment_changed(module, inst)
 
         if not isinstance(inst, dict):
+            warn_if_public_ip_assignment_changed(module, inst)
             inst = get_instance_info(inst)
         all_instances.append(inst)
 

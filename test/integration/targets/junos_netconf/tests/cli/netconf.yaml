@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf/netconf.yaml"
+- debug: msg="START netconf/netconf.yaml on connection={{ ansible_connection }}"
 
 
 - name: Ensure netconf is enabled
@@ -18,13 +18,14 @@
 
 ###################################
 
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
 - name: Ensure we can communicate over netconf
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
 
 # Disable netconf
-
 - name: Disable netconf
   junos_netconf:
     state: absent
@@ -48,21 +49,15 @@
     seconds: 120
 
 - name: Ensure we can NOT talk via netconf
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
-  register: result
-  ignore_errors: true
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
 
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
 
 - name: re-enable netconf
   junos_netconf:
     state: present
   register: result
 
-
-- debug: msg="END netconf/netconfg.yaml"
+- debug: msg="END netconf/netconfg.yaml on connection={{ ansible_connection }}"

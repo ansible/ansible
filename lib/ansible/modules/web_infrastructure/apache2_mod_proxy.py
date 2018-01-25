@@ -249,9 +249,7 @@ class BalancerMember(object):
 
         balancer_member_page = fetch_url(self.module, self.management_url)
 
-        try:
-            assert balancer_member_page[1]['status'] == 200
-        except AssertionError:
+        if balancer_member_page[1]['status'] != 200:
             self.module.fail_json(msg="Could not get balancer_member_page, check for connectivity! " + balancer_member_page[1])
         else:
             try:
@@ -296,9 +294,7 @@ class BalancerMember(object):
                 request_body = request_body + str(values_mapping[k]) + '=0'
 
         response = fetch_url(self.module, self.management_url, data=str(request_body))
-        try:
-            assert response[1]['status'] == 200
-        except AssertionError:
+        if response[1]['status'] != 200:
             self.module.fail_json(msg="Could not set the member status! " + self.host + " " + response[1]['status'])
 
     attributes = property(get_member_attributes)
@@ -323,9 +319,7 @@ class Balancer(object):
     def fetch_balancer_page(self):
         """ Returns the balancer management html page as a string for later parsing."""
         page = fetch_url(self.module, str(self.url))
-        try:
-            assert page[1]['status'] == 200
-        except AssertionError:
+        if page[1]['status'] != 200:
             self.module.fail_json(msg="Could not get balancer page! HTTP status response: " + str(page[1]['status']))
         else:
             content = page[0].read()
@@ -343,9 +337,7 @@ class Balancer(object):
         else:
             for element in soup.findAll('a')[1::1]:
                 balancer_member_suffix = str(element.get('href'))
-                try:
-                    assert balancer_member_suffix is not ''
-                except AssertionError:
+                if not balancer_member_suffix:
                     self.module.fail_json(msg="Argument 'balancer_member_suffix' is empty!")
                 else:
                     yield BalancerMember(str(self.base_url + balancer_member_suffix), str(self.url), self.module)

@@ -48,6 +48,7 @@ from lib.util import (
     find_pip,
     find_executable,
     raw_command,
+    get_coverage_path,
 )
 
 from lib.ansible_util import (
@@ -102,6 +103,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '2.7',
     '3.5',
     '3.6',
+    '3.7',
 )
 
 COMPILE_PYTHON_VERSIONS = SUPPORTED_PYTHON_VERSIONS
@@ -317,10 +319,12 @@ def command_network_integration(args):
 
     all_targets = tuple(walk_network_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=network_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.platform:
+        get_coverage_path(args)  # initialize before starting threads
+
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
-        instances = []  # type: list [lib.thread.WrappedThread]
 
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
@@ -346,7 +350,15 @@ def command_network_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-    command_integration_filtered(args, internal_targets, all_targets)
+    success = False
+
+    try:
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
+    finally:
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
 def network_init(args, internal_targets):
@@ -371,7 +383,7 @@ def network_init(args, internal_targets):
         platform, version = platform_version.split('/', 1)
         platform_target = 'network/%s/' % platform
 
-        if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+        if platform_target not in platform_targets:
             display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
                 platform_version, platform))
             continue
@@ -394,7 +406,7 @@ def network_start(args, platform, version):
     :type version: str
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
     core_ci.start()
 
     return core_ci.save()
@@ -408,7 +420,7 @@ def network_run(args, platform, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, load=False)
+    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider, load=False)
     core_ci.load(config)
     core_ci.wait()
 
@@ -424,12 +436,13 @@ def network_inventory(remotes):
     :rtype: str
     """
     groups = dict([(remote.platform, []) for remote in remotes])
+    net = []
 
     for remote in remotes:
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
-            ansible_ssh_private_key_file=remote.ssh_key.key,
+            ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
             ansible_network_os=remote.platform,
             ansible_connection='local'
         )
@@ -440,6 +453,10 @@ def network_inventory(remotes):
                 ' '.join('%s="%s"' % (k, options[k]) for k in sorted(options)),
             )
         )
+
+        net.append(remote.platform)
+
+    groups['net:children'] = net
 
     template = ''
 
@@ -467,10 +484,12 @@ def command_windows_integration(args):
 
     all_targets = tuple(walk_windows_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets, init_callback=windows_init)
+    instances = []  # type: list [lib.thread.WrappedThread]
 
     if args.windows:
+        get_coverage_path(args)  # initialize before starting threads
+
         configs = dict((config['platform_version'], config) for config in args.metadata.instance_config)
-        instances = []  # type: list [lib.thread.WrappedThread]
 
         for version in args.windows:
             config = configs['windows/%s' % version]
@@ -492,7 +511,15 @@ def command_windows_integration(args):
             with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
 
-    command_integration_filtered(args, internal_targets, all_targets)
+    success = False
+
+    try:
+        command_integration_filtered(args, internal_targets, all_targets)
+        success = True
+    finally:
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            for instance in instances:
+                instance.result.stop()
 
 
 def windows_init(args, internal_targets):  # pylint: disable=locally-disabled, unused-argument
@@ -526,7 +553,7 @@ def windows_start(args, version):
     :type version: str
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, provider=args.remote_provider)
     core_ci.start()
 
     return core_ci.save()
@@ -539,7 +566,7 @@ def windows_run(args, version, config):
     :type config: dict[str, str]
     :rtype: AnsibleCoreCI
     """
-    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, load=False)
+    core_ci = AnsibleCoreCI(args, 'windows', version, stage=args.remote_stage, provider=args.remote_provider, load=False)
     core_ci.load(config)
     core_ci.wait()
 
@@ -750,7 +777,12 @@ def command_integration_filtered(args, targets, all_targets):
                     display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
                     display.verbosity = args.verbosity = 6
 
+            start_time = time.time()
             original_environment.validate(target.name, throw=True)
+            end_time = time.time()
+
+            results[target.name]['validation_seconds'] = int(end_time - start_time)
+
             passed.append(target)
         except Exception as ex:
             failed.append(target)

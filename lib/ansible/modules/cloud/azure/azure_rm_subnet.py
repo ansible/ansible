@@ -126,11 +126,9 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import Subnet, NetworkSecurityGroup
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
 
 
 def subnet_to_dict(subnet):
@@ -235,28 +233,28 @@ class AzureRMSubnet(AzureRMModuleBase):
                 if not subnet:
                     # create new subnet
                     self.log('Creating subnet {0}'.format(self.name))
-                    subnet = Subnet(
+                    subnet = self.network_models.Subnet(
                         address_prefix=self.address_prefix_cidr
                     )
                     if nsg:
-                        subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
+                                                                                                 location=nsg.location,
+                                                                                                 resource_guid=nsg.resource_guid)
 
                 else:
                     # update subnet
                     self.log('Updating subnet {0}'.format(self.name))
-                    subnet = Subnet(
+                    subnet = self.network_models.Subnet(
                         address_prefix=results['address_prefix']
                     )
                     if results['network_security_group'].get('id'):
                         nsg = self.get_security_group(results['network_security_group']['name'])
-                        subnet.network_security_group = NetworkSecurityGroup(id=nsg.id,
-                                                                             location=nsg.location,
-                                                                             resource_guid=nsg.resource_guid)
+                        subnet.network_security_group = self.network_models.NetworkSecurityGroup(id=nsg.id,
+                                                                                                 location=nsg.location,
+                                                                                                 resource_guid=nsg.resource_guid)
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
-            elif self.state == 'absent':
+            elif self.state == 'absent' and changed:
                 # delete subnet
                 self.delete_subnet()
                 # the delete does not actually return anything. if no exception, then we'll assume

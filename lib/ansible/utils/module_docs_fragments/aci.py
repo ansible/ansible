@@ -23,11 +23,16 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = '''
 options:
-  hostname:
+  host:
     description:
     - IP Address or hostname of APIC resolvable by Ansible control host.
     required: yes
-    aliases: [ host ]
+    aliases: [ hostname ]
+  port:
+    description:
+    - Port number to be used for REST connection.
+    default: 443 (for https) and 80 (for http)
+    type: int
   username:
     description:
     - The username to use for authentication.
@@ -38,6 +43,17 @@ options:
     description:
     - The password to use for authentication.
     required: yes
+  private_key:
+    description:
+    - PEM formatted file that contains your private key to be used for client certificate authentication.
+    - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
+    aliases: [ cert_key ]
+  certificate_name:
+    description:
+    - The X.509 certificate name attached to the APIC AAA user.
+    - It defaults to the C(private_key) basename, without extension.
+    aliases: [ cert_name ]
+    default: C(private_key) basename
   timeout:
     description:
     - The socket level timeout in seconds.

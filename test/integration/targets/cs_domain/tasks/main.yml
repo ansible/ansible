@@ -7,7 +7,7 @@
 - name: verify setup
   assert:
     that:
-    - dom|success
+    - dom is successful
 
 - name: test fail if missing name
   action: cs_domain
@@ -16,7 +16,7 @@
 - name: verify results of fail if missing params
   assert:
     that:
-    - dom|failed
+    - dom is failed
     - 'dom.msg == "missing required arguments: path"'
 
 - name: test fail if ends with /
@@ -27,7 +27,7 @@
 - name: verify results of fail if ends with /
   assert:
     that:
-    - dom|failed
+    - dom is failed
     - dom.msg == "Path '{{ cs_resource_prefix }}_domain/' must not end with /"
 
 - name: test create a domain in check mode
@@ -38,7 +38,7 @@
 - name: verify results of test create a domain in check mode
   assert:
     that:
-    - dom|changed
+    - dom is changed
 
 - name: test create a domain
   cs_domain:
@@ -47,7 +47,7 @@
 - name: verify results of test create a domain
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
@@ -58,7 +58,7 @@
 - name: verify results of test create a domain idempotence
   assert:
     that:
-    - not dom|changed
+    - dom is not changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
@@ -69,7 +69,7 @@
 - name: verify results of test create a domain idempotence2
   assert:
     that:
-    - not dom|changed
+    - dom is not changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
@@ -81,7 +81,7 @@
 - name: test fail to create a subdomain for inexistent domain
   assert:
     that:
-    - dom|failed
+    - dom is failed
     - dom.msg == "Parent domain path ROOT/inexistent does not exist"
 
 - name: test create a subdomain in check mode
@@ -92,7 +92,7 @@
 - name: verify results of test create a domain in check mode
   assert:
     that:
-    - dom|changed
+    - dom is changed
 
 - name: test create a subdomain
   cs_domain:
@@ -101,7 +101,7 @@
 - name: verify results of test create a domain
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 
@@ -112,7 +112,7 @@
 - name: verify results of test create a subdomain idempotence
   assert:
     that:
-    - not dom|changed
+    - dom is not changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 
@@ -125,7 +125,7 @@
 - name: verify results of test update a subdomain in check mode
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.network_domain is undefined
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
@@ -138,7 +138,7 @@
 - name: verify results of test update a subdomain
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.network_domain == "domain.example.com"
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
@@ -151,7 +151,7 @@
 - name: verify results of test update a subdomain idempotence
   assert:
     that:
-    - not dom|changed
+    - dom is not changed
     - dom.network_domain == "domain.example.com"
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
@@ -165,7 +165,7 @@
 - name: verify results of test delete a subdomain in check mode
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 
@@ -177,7 +177,7 @@
 - name: verify results of test delete a subdomain
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 
@@ -189,7 +189,7 @@
 - name: verify results of test delete a subdomain idempotence
   assert:
     that:
-    - not dom|changed
+    - dom is not changed
 
 - name: test create a subdomain 2
   cs_domain:
@@ -198,7 +198,7 @@
 - name: verify results of test create a subdomain 2
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 
@@ -212,7 +212,7 @@
 - name: verify results of test delete a domain with clean up in check mode
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
@@ -225,7 +225,7 @@
 - name: verify results of test delete a domain with clean up
   assert:
     that:
-    - dom|changed
+    - dom is changed
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
     - dom.name == "{{ cs_resource_prefix }}_domain"
 
@@ -238,4 +238,4 @@
 - name: verify results of test delete a domain with clean up idempotence
   assert:
     that:
-    - not dom|changed
+    - dom is not changed

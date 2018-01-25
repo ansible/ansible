@@ -30,6 +30,8 @@ options:
   resource_id:
     description:
     - The ID of the resource to operate on.
+    - The data type of resource_id is changed from integer to string, from version 2.5.
+    aliases: ['droplet_id']
   resource_type:
     description:
     - The type of resource to operate on. Currently, only tagging of
@@ -64,7 +66,7 @@ EXAMPLES = '''
 - name: tag a resource; creating the tag if it does not exists
   digital_ocean_tag:
     name: "{{ item }}"
-    resource_id: YYY
+    resource_id: "73333005"
     state: present
   with_items:
     - staging
@@ -73,7 +75,7 @@ EXAMPLES = '''
 - name: untag a resource
   digital_ocean_tag:
     name: staging
-    resource_id: YYY
+    resource_id: "73333005"
     state: absent
 
 # Deleting a tag also untags all the resources that have previously been
@@ -198,7 +200,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            resource_id=dict(aliases=['droplet_id'], type='int'),
+            resource_id=dict(aliases=['droplet_id'], type='str'),
             resource_type=dict(choices=['droplet'], default='droplet'),
             state=dict(choices=['present', 'absent'], default='present'),
             api_token=dict(aliases=['API_TOKEN'], no_log=True),

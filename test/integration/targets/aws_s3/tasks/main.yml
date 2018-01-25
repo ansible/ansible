@@ -1,13 +1,20 @@
 ---
 # tasks file for test_s3
 # ============================================================
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+# ============================================================
 - name: test create bucket
   aws_s3:
     bucket: "{{ bucket_name }}"
     mode: create
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
+    <<: *aws_connection_info
   register: result
 - name: assert changed is True
   assert:
@@ -18,9 +25,7 @@
   aws_s3:
     bucket: "{{ bucket_name }}"
     mode: create
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
+    <<: *aws_connection_info
   register: result
 - name: assert changed is False since the bucket already exists
   assert:
@@ -50,9 +55,7 @@
     mode: put
     src: "{{ tmp1.path }}"
     object: delete.txt
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
-    security_token: "{{security_token}}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -61,6 +64,31 @@
     that:
       - result.changed == True
       - result.msg == "PUT operation complete"
+# ============================================================
+- name: check that roles file lookups work as expected
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: put
+    src: hello.txt
+    object: hello.txt
+    <<: *aws_connection_info
+  retries: 3
+  delay: 3
+  register: result
+- name: assert object exists
+  assert:
+    that:
+      - result.changed == True
+      - result.msg == "PUT operation complete"
+- name: remove hello.txt (deletion tests are later)
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: delobj
+    object: hello.txt
+    <<: *aws_connection_info
+  retries: 3
+  delay: 3
+  register: result
 # ============================================================
 - name: create a second temp file to download the object from the bucket
   tempfile:
@@ -71,9 +99,7 @@
     mode: get
     dest: "{{ tmp2.path }}"
     object: delete.txt
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -93,9 +119,7 @@
     bucket: "{{ bucket_name }}"
     mode: geturl
     object: delete.txt
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -111,9 +135,7 @@
     bucket: "{{ bucket_name }}"
     mode: getstr
     object: delete.txt
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -127,9 +149,7 @@
   aws_s3:
     bucket: "{{ bucket_name }}"
     mode: list
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -144,9 +164,7 @@
     bucket: "{{ bucket_name }}"
     mode: delobj
     object: delete.txt
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -166,9 +184,7 @@
     bucket: "{{ bucket_name }}"
     mode: create
     object: foo/bar/baz/
-    security_token: "{{ security_token }}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
   register: result
@@ -182,9 +198,7 @@
     bucket: "{{ bucket_name }}"
     mode: delobj
     object: foo/bar/baz/
-    security_token: "{{ security_token }}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   retries: 3
   delay: 3
 # ============================================================
@@ -192,9 +206,7 @@
   aws_s3:
     bucket: "{{ bucket_name }}"
     mode: delete
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   register: result
   retries: 3
   delay: 3
@@ -217,9 +229,7 @@
   aws_s3:
     bucket: "{{ bucket_name + '.bucket' }}"
     mode: create
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   register: result
 - name: assert that changed is True
   assert:
@@ -230,9 +240,7 @@
   aws_s3:
     bucket: "{{ bucket_name + '.bucket' }}"
     mode: delete
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   register: result
 - name: assert that changed is True
   assert:
@@ -243,12 +251,91 @@
   aws_s3:
     bucket: "{{ bucket_name + '.bucket' }}"
     mode: delete
-    security_token: "{{security_token}}"
-    aws_access_key: "{{ ec2_access_key }}"
-    aws_secret_key: "{{ ec2_secret_key }}"
+    <<: *aws_connection_info
   register: result
 - name: assert that changed is False
   assert:
     that:
       - result.changed == False
+# ============================================================
+- name: create a tempfile for the path
+  tempfile:
+  register: tmp1
+
+- name: make tempfile 4 GB for OSX
+  command:
+    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
+  when: ansible_distribution == 'MacOSX'
+
+- name: make tempfile 4 GB for linux
+  command:
+    _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1M count=4096"
+  when: ansible_distribution == 'Linux'
+
+- name: test multipart download - platform specific
+  block:
+    - name: make a bucket to upload the file
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: create
+        <<: *aws_connection_info
+
+    - name: upload the file to the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: put
+        src: "{{ tmp1.path }}"
+        object: multipart.txt
+        <<: *aws_connection_info
+
+    - name: download file once
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: /tmp/multipart_download.txt
+        object: multipart.txt
+        overwrite: different
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      until: "result.msg == 'GET operation complete'"
+      register: result
+
+    - name: assert the file was downloaded once
+      assert:
+        that:
+          - result.changed
+
+    - name: download file again
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: /tmp/multipart_download.txt
+        object: multipart.txt
+        overwrite: different
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert the file was not redownloaded
+      assert:
+        that:
+          - not result.changed
+
+    - name: delete file used for upload
+      file:
+        state: absent
+        path: "{{ tmp1.path }}"
+
+    - name: delete downloaded file
+      file:
+        state: absent
+        path: /tmp/multipart_download.txt
+
+    - name: delete the bucket
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: delete
+        <<: *aws_connection_info
+
+  when: ansible_distribution in ['MacOSX', 'Linux']
 # ============================================================

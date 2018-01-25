@@ -22,7 +22,7 @@ version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     details:
         description:
@@ -124,14 +124,7 @@ services:
 '''  # NOQA
 
 try:
-    import boto
     import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-try:
-    import boto3
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -146,14 +139,9 @@ class EcsServiceManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            # self.ecs = boto3.client('ecs')
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        # self.ecs = boto3.client('ecs')
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     # def list_clusters(self):
     #   return self.client.list_clusters()
@@ -170,17 +158,17 @@ class EcsServiceManager:
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
         response = self.ecs.list_services(**fn_args)
-        relevant_response = dict(services = response['serviceArns'])
+        relevant_response = dict(services=response['serviceArns'])
         return relevant_response
 
     def describe_services(self, cluster, services):
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        fn_args['services']=services.split(",")
+        fn_args['services'] = services.split(",")
         response = self.ecs.describe_services(**fn_args)
-        relevant_response = dict(services = map(self.extract_service_from, response['services']))
-        if 'failures' in response and len(response['failures'])>0:
+        relevant_response = dict(services=map(self.extract_service_from, response['services']))
+        if 'failures' in response and len(response['failures']) > 0:
             relevant_response['services_not_running'] = response['failures']
         return relevant_response
 
@@ -199,19 +187,17 @@ class EcsServiceManager:
                     e['createdAt'] = str(e['createdAt'])
         return service
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        details=dict(required=False, type='bool', default=False ),
-        cluster=dict(required=False, type='str' ),
-        service=dict(required=False, type='str' )
+        details=dict(required=False, type='bool', default=False),
+        cluster=dict(required=False, type='str'),
+        service=dict(required=False, type='str')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')

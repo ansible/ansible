@@ -63,7 +63,7 @@ def parse_args():
 
 def query_database():
     if not os.path.exists(DATABASE_PATH):
-        exit('error: Database not found. Did you run `report.py populate` first?')
+        sys.exit('error: Database not found. Did you run `report.py populate` first?')
 
     os.execvp('sqlite3', ('sqlite3', DATABASE_PATH))
 

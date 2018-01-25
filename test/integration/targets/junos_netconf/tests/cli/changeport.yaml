@@ -1,18 +1,16 @@
 ---
-- debug: msg="START netconf/changeport.yaml"
-
+- debug: msg="START netconf/changeport.yaml on connection={{ ansible_connection }}"
 
 - name: Setup
   junos_netconf:
     state: present
   register: result
 
-
 ###################################
 - name: Change port
   junos_netconf:
     state: present
-    netconf_port: 22
+    netconf_port: 8022
   register: result
 
 - assert:
@@ -22,50 +20,43 @@
 - name: idempotent tests
   junos_netconf:
     state: present
-    netconf_port: 22
+    netconf_port: 8022
   register: result
 
 - assert:
     that:
       - "result.changed == false"
 
-- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
+- name: wait for netconf server to come up
+  pause:
+    seconds: 10
+
+- name: Ensure we can communicate over 8022
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=8022 is_ignore_errors=false"
+
+- name: wait for persistent socket to timeout
   pause:
     seconds: 120
 
-- name: Ensure we can communicate over 22
-  junos_command:
-    rpcs:
-    - get-software-information
-    provider: "{{ netconf }}"
-    port: 22
 
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
-  register: result
-  ignore_errors: true
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
 
 - assert:
     that:
       - "result.failed == true"
-      - "'unable to open shell' in result.msg"
-
-- name: wait for persistent socket to timeout, this ensures new socket creation with connection type netconf
-  pause:
-    seconds: 120
 
 - name: Set back netconf to default port
   junos_netconf:
     state: present
   register: result
 
-- name: Ensure we can communicate over netconf
-  junos_command:
-    rpcs:
-    - get-software-information
-    provider: "{{ netconf }}"
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 120
 
-- debug: msg="END netconf/changeport.yaml"
+- name: Ensure we can communicate over netconf
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
+
+- debug: msg="END netconf/changeport.yaml on connection={{ ansible_connection }}"

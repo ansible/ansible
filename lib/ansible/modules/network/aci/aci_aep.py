@@ -13,16 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_aep
-short_description: Manage attachable Access Entity Profile (AEP) on Cisco ACI fabrics (infra:AttEntityP)
+short_description: Manage attachable Access Entity Profile (AEP) on Cisco ACI fabrics (infra:AttEntityP|infra:ProvAcc)
 description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(infra:AttEntityP) at U(https://developer.cisco.com/media/mim-ref/MO-infraAttEntityP.html).
+- More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -35,6 +33,16 @@ options:
   description:
     description:
     - Description for the AEP.
+    aliases: [ descr ]
+  infra_vlan:
+    description:
+    - Enable infrastructure VLAN.
+    - The hypervisor functions of the AEP.
+    - C(no) will disable the infrastructure vlan if it is enabled.
+    type: bool
+    default: 'no'
+    aliases: [ infrastructure_vlan ]
+    version_added: '2.5'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -47,7 +55,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -56,7 +64,7 @@ EXAMPLES = r'''
 
 - name: Remove an existing AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -64,7 +72,7 @@ EXAMPLES = r'''
 
 - name: Query an AEP
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     aep: ACI-AEP
@@ -72,7 +80,7 @@ EXAMPLES = r'''
 
 - name: Query all AEPs
   aci_aep:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -82,15 +90,16 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         aep=dict(type='str', aliases=['name', 'aep_name']),  # not required for querying all AEPs
         description=dict(type='str', aliases=['descr']),
+        infra_vlan=dict(type='bool', aliases=['infrastructure_vlan']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -105,10 +114,25 @@ def main():
 
     aep = module.params['aep']
     description = module.params['description']
+    infra_vlan = module.params['infra_vlan']
     state = module.params['state']
 
+    if infra_vlan:
+        child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]
+    elif infra_vlan is False:
+        child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc', status='deleted')))]
+    else:
+        child_configs = []
+
     aci = ACIModule(module)
-    aci.construct_url(root_class="aep")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='infraAttEntityP',
+            aci_rn='infra/attentp-{0}'.format(aep),
+            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
+            module_object=aep,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':
@@ -119,6 +143,7 @@ def main():
                 name=aep,
                 descr=description,
             ),
+            child_configs=child_configs,
         )
 
         # Generate config diff which will be used as POST request body

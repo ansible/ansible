@@ -16,15 +16,11 @@ module: aci_bd_to_l3out
 short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:RsBDToOut) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsBDToOut.html).
+- More information from the internal APIC class I(fv:RsBDToOut) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
   The M(aci_bd) and M(aci_l3out) can be used for these.
@@ -46,6 +42,7 @@ options:
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
     default: present
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r''' # '''
@@ -55,18 +52,19 @@ RETURN = ''' # '''
 SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
 
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -79,14 +77,33 @@ def main():
         ],
     )
 
+    bd = module.params['bd']
     l3out = module.params['l3out']
     state = module.params['state']
-
-    # Add bd_l3out key to module.params for building the URL
-    module.params['bd_l3out'] = l3out
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='bd', subclass_2='bd_l3out')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='fvBD',
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
+            module_object=bd,
+        ),
+        subclass_2=dict(
+            aci_class='fvRsBDToOut',
+            aci_rn='rsBDToOut-{0}'.format(l3out),
+            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{0}")'.format(l3out),
+            module_object=l3out,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -104,9 +121,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove bd_l3out key used for URL building from module.params
-    module.params.pop('bd_l3out')
 
     module.exit_json(**aci.result)
 

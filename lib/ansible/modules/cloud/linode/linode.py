@@ -144,7 +144,6 @@ options:
 requirements:
     - python >= 2.6
     - linode-python
-    - pycurl
 author:
 - Vincent Viallet (@zbal)
 notes:
@@ -190,7 +189,6 @@ EXAMPLES = '''
      alert_bwin_threshold: 10
      alert_cpu_enabled: True
      alert_cpu_threshold: 210
-     alert_diskio_enabled: True
      alert_bwout_enabled: True
      alert_bwout_threshold: 10
      alert_diskio_enabled: True
@@ -247,12 +245,6 @@ EXAMPLES = '''
 
 import os
 import time
-
-try:
-    import pycurl
-    HAS_PYCURL = True
-except ImportError:
-    HAS_PYCURL = False
 
 try:
     from linode import api as linode_api
@@ -319,7 +311,6 @@ def linodeServers(module, api, state, name,
     disks = []
     configs = []
     jobs = []
-    disk_size = 0
 
     # See if we can match an existing server details with the provided linode_id
     if linode_id:
@@ -597,8 +588,6 @@ def main():
         ),
     )
 
-    if not HAS_PYCURL:
-        module.fail_json(msg='pycurl required for this module')
     if not HAS_LINODE:
         module.fail_json(msg='linode-python required for this module')
 

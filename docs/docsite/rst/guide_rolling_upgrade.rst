@@ -176,7 +176,7 @@ Here's another example, from the same template:
    {% endfor %}
 
 This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for 
-each monitoring hosts' default IPV4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
+each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
 You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you 
 can read more about Ansible variables in general in the :doc:`playbooks_variables` section.
@@ -219,6 +219,11 @@ Here is the next part of the update play::
     shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
     loop: "{{ groups.lbservers }}"
+
+
+.. note::
+   - The ``serial`` keyword forces the play to be executed in 'batches'. Each batch counts as a full play with a subselection of hosts.
+     This has some consequences on play behavior. For example, if all hosts in a batch fails, the play fails, which in turn fails the entire run. You should consider this when combining with ``max_fail_percentage``.
 
 The ``pre_tasks`` keyword just lets you list tasks to run before the roles are called. This will make more sense in a minute. If you look at the names of these tasks, you can see that we are disabling Nagios alerts and then removing the webserver that we are currently updating from the HAProxy load balancing pool.
 

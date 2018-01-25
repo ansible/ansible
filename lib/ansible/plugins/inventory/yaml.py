@@ -18,10 +18,19 @@ DOCUMENTATION = '''
         - It takes the place of the previously hardcoded YAML inventory.
         - To function it requires being whitelisted in configuration.
     options:
-        yaml_extensions:
-            description: list of 'valid' extensions for files containing YAML
-            type: list
-            default: ['.yaml', '.yml', '.json']
+      yaml_extensions:
+        description: list of 'valid' extensions for files containing YAML
+        type: list
+        default: ['.yaml', '.yml', '.json']
+        env:
+          - name: ANSIBLE_YAML_FILENAME_EXT
+          - name: ANSIBLE_INVENTORY_PLUGIN_EXTS
+        ini:
+          - key: yaml_valid_extensions
+            section: defaults
+          - section: inventory_plugin_yaml
+            key: yaml_valid_extensions
+
 '''
 EXAMPLES = '''
 all: # keys must be unique, i.e. only one 'hosts' per group
@@ -52,7 +61,6 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 import os
 from collections import MutableMapping
 
-from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
@@ -73,7 +81,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         valid = False
         if super(InventoryModule, self).verify_file(path):
             file_name, ext = os.path.splitext(path)
-            if not ext or ext in C.YAML_FILENAME_EXTENSIONS:
+            if not ext or ext in self.get_option('yaml_extensions'):
                 valid = True
         return valid
 
@@ -131,7 +139,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                 elif key == 'hosts':
                     for host_pattern in group_data['hosts']:
                         hosts, port = self._parse_host(host_pattern)
-                        self.populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
+                        self._populate_host_vars(hosts, group_data['hosts'][host_pattern] or {}, group, port)
                 else:
                     self.display.warning('Skipping unexpected key (%s) in group (%s), only "vars", "children" and "hosts" are valid' % (key, group))
 

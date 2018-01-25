@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -34,6 +21,16 @@ short_description: Download and install Windows updates
 description:
     - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client
 options:
+    blacklist:
+        description:
+        - A list of update titles or KB numbers that can be used to specify
+          which updates are to be excluded from installation.
+        - If an available update does match one of the entries, then it is
+          skipped and not installed.
+        - Each entry can either be the KB article or Update title as a regex
+          according to the PowerShell regex rules.
+        required: false
+        version_added: '2.5'
     category_names:
         description:
         - A scalar or list of categories to install updates from
@@ -52,6 +49,23 @@ options:
         - Tools
         - UpdateRollups
         - Updates
+    reboot:
+        description:
+        - Ansible will automatically reboot the remote host if it is required
+          and continue to install updates after the reboot.
+        - This can be used instead of using a M(win_reboot) task after this one
+          and ensures all updates for that category is installed in one go.
+        - Async does not work when C(reboot=True).
+        type: bool
+        default: 'no'
+        version_added: '2.5'
+    reboot_timeout:
+        description:
+        - The time in seconds to wait until the host is back online from a
+          reboot.
+        - This is only used if C(reboot=True) and a reboot is required.
+        default: 1200
+        version_added: '2.5'
     state:
         description:
         - Controls whether found updates are returned as a list or actually installed.
@@ -65,35 +79,103 @@ options:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
-author: "Matt Davis (@mattdavispdx)"
+    whitelist:
+        description:
+        - A list of update titles or KB numbers that can be used to specify
+          which updates are to be searched or installed.
+        - If an available update does not match one of the entries, then it
+          is skipped and not installed.
+        - Each entry can either be the KB article or Update title as a regex
+          according to the PowerShell regex rules.
+        - The whitelist is only validated on updates that were found based on
+          I(category_names). It will not force the module to install an update
+          if it was not in the category specified.
+        required: false
+        version_added: '2.5'
+author: "Matt Davis (@nitzmahone)"
 notes:
-- C(win_updates) must be run by a user with membership in the local Administrators group
-- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
-- C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
+- C(win_updates) must be run by a user with membership in the local Administrators group.
+- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
+- By default C(win_updates) does not manage reboots, but will signal when a
+  reboot is required with the I(reboot_required) return value, as of Ansible 2.5
+  C(reboot) can be used to reboot the host if required in the one task.
 - C(win_updates) can take a significant amount of time to complete (hours, in some cases).
   Performance depends on many factors, including OS version, number of updates, system load, and update server load.
-- C(win_updates) runs the module as a scheduled task, this task is set to start and continue to run even if the Windows host
-  swaps to battery power. This behaviour was changed from Ansible 2.4, before this the scheduled task would fail to start on
-  battery power.
+- More information about PowerShell and how it handles RegEx strings can be
+  found at U(https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx).
 '''
 
 EXAMPLES = r'''
-# Install all security, critical, and rollup updates
-- win_updates:
+- name: Install all security, critical, and rollup updates
+  win_updates:
     category_names:
       - SecurityUpdates
       - CriticalUpdates
       - UpdateRollups
 
-# Install only security updates
-- win_updates:
+- name: Install only security updates
+  win_updates:
     category_names: SecurityUpdates
 
-# Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
-- win_updates:
+- name: Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+  win_updates:
     category_names: SecurityUpdates
     state: searched
     log_path: c:\ansible_wu.txt
+
+- name: Install all security updates with automatic reboots
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    reboot: yes
+
+- name: Install only particular updates based on the KB numbers
+  win_updates:
+    category_name:
+    - SecurityUpdates
+    whitelist:
+    - KB4056892
+    - KB4073117
+
+- name: Exlude updates based on the update title
+  win_updates:
+    category_name:
+    - SecurityUpdates
+    - CriticalUpdates
+    blacklist:
+    - Windows Malicious Software Removal Tool for Windows
+    - \d{4}-\d{2} Cumulative Update for Windows Server 2016
+
+# Note async works on Windows Server 2012 or newer - become must be explicitly set on the task for this to work
+- name: Search for Windows updates asynchronously
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    state: searched
+  async: 180
+  poll: 10
+  register: updates_to_install
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
+
+# Async can also be run in the background in a fire and forget fashion
+- name: Search for Windows updates asynchronously (poll and forget)
+  win_updates:
+    category_names:
+    - SecurityUpdates
+    state: searched
+  async: 180
+  poll: 0
+  register: updates_to_install_async
+
+- name: get status of Windows Update async job
+  async_status:
+    jid: '{{ updates_to_install_async.ansible_job_id }}'
+  register: updates_to_install_result
+  become: yes
+  become_method: runas
+  become_user: SYSTEM
 '''
 
 RETURN = r'''
@@ -134,6 +216,15 @@ updates:
             returned: on install failure
             type: boolean
             sample: 2147942402
+
+filtered_updates:
+    description: List of updates that were found but were filtered based on
+      I(blacklist) or I(whitelist). The return value is in the same form as
+      I(updates).
+    returned: success
+    type: complex
+    sample: see the updates return value
+    contains: {}
 
 found_update_count:
     description: The number of updates found needing to be applied

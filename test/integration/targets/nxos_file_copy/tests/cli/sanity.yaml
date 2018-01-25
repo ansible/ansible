@@ -1,5 +1,7 @@
 ---
 - debug: msg="START TRANSPORT:CLI nxos_file_copy sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup - Remove existing file"
   nxos_command: &remove_file
@@ -21,9 +23,10 @@
       local_file: "./nxos.yaml"
       file_system: "bootflash:"
       provider: "{{ cli }}"
-      username: "{{ nxos_cli_user | default('admin') }}"
-      password: "{{ nxos_cli_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
+      host: "{{ ansible_host }}"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
   - assert: &true
@@ -48,9 +51,10 @@
       remote_file: "nxos.yaml"
       file_system: "bootflash:"
       provider: "{{ cli }}"
-      username: "{{ nxos_cli_user | default('admin') }}"
-      password: "{{ nxos_cli_pass | default('admin') }}"
-      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_ssh_user }}"
+      password: "{{ ansible_ssh_pass }}"
+      host: "{{ ansible_host }}"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
   - assert: *true

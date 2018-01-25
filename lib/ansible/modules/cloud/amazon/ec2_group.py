@@ -289,6 +289,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import HAS_BOTO3
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.network.common.utils import to_ipv6_network, to_subnet
 import traceback
 
 try:
@@ -368,7 +369,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     group_id or a non-None ip range.
     """
 
-    FOREIGN_SECURITY_GROUP_REGEX = '^(\S+)/(sg-\S+)/(\S+)'
+    FOREIGN_SECURITY_GROUP_REGEX = r'^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
     ip = None
@@ -521,7 +522,22 @@ def update_rules_description(module, client, rule_type, group_id, ip_permissions
 def authorize_ip(type, changed, client, group, groupRules,
                  ip, ip_permission, module, rule, ethertype):
     # If rule already exists, don't later delete it
-    for thisip in ip:
+    for this_ip in ip:
+
+        split_addr = this_ip.split('/')
+        if len(split_addr) == 2:
+            # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
+            # Get the network bits.
+            try:
+                thisip = to_subnet(split_addr[0], split_addr[1])
+            except ValueError:
+                thisip = to_ipv6_network(split_addr[0]) + "/" + split_addr[1]
+            if thisip != this_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(this_ip, thisip))
+        else:
+            thisip = this_ip
+
         rule_id = make_rule_key(type, rule, group['GroupId'], thisip)
         if rule_id in groupRules:
 
@@ -680,11 +696,8 @@ def main():
 
     changed = False
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg="The AWS region must be specified as an "
-                             "environment variable or in the AWS credentials "
-                             "profile.")
-    client = boto3_conn(module, conn_type='client', resource='ec2', endpoint=ec2_url, region=region, **aws_connect_params)
+    client = boto3_conn(module, conn_type='client', resource='ec2',
+                        endpoint=ec2_url, region=region, **aws_connect_params)
 
     if not has_rule_description_attr(client):
         all_rules = rules if rules else [] + rules_egress if rules_egress else []
@@ -944,7 +957,7 @@ def main():
                 del groupRules[default_egress_rule]
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        if purge_rules_egress and vpc_id is not None:
+        if purge_rules_egress and 'VpcId' in group:
             for (rule, grant) in groupRules.values():
                 # we shouldn't be revoking 0.0.0.0 egress
                 if grant != '0.0.0.0/0':

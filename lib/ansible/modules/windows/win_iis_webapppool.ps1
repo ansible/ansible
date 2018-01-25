@@ -256,18 +256,6 @@ if ($state -eq "absent") {
     }
 
     # Set the state of the pool
-    if (($state -eq "stopped") -and ($pool.State -eq "Started")) {
-        if (-not $check_mode) {
-            try {
-                Stop-WebAppPool -Name $name
-            } catch {
-                Fail-Json $result "Failed to stop Web App Pool $($name): $($_.Exception.Message)"
-            }
-        }
-        $result.changed = $true
-    }
-
-    
     if ($pool.State -eq "Stopped") {
         if ($state -eq "started" -or $state -eq "restarted") {
             if (-not $check_mode) {
@@ -317,9 +305,11 @@ foreach ($element in $elements)  {
 
     foreach ($attribute in $attribute_collection) {
         $attribute_name = $attribute.Name
-        $attribute_value = $attribute_parent.$attribute_name
+        if ($attribute_name -notlike "*password*") {
+            $attribute_value = $attribute_parent.$attribute_name
 
-        $result.info.$element.Add($attribute_name, $attribute_value)
+            $result.info.$element.Add($attribute_name, $attribute_value)
+        }
     }
 }
 

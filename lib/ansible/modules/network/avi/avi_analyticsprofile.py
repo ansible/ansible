@@ -1,26 +1,12 @@
 #!/usr/bin/python
 #
-# Created on Aug 25, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
 # Avi Version: 17.1.1
 #
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -43,7 +29,19 @@ options:
         description:
             - The state that should be applied on the entity.
         default: present
-        choices: ["absent","present"]
+        choices: ["absent", "present"]
+    avi_api_update_method:
+        description:
+            - Default method for object update is HTTP PUT.
+            - Setting to patch will override that behavior to use HTTP PATCH.
+        version_added: "2.5"
+        default: put
+        choices: ["put", "patch"]
+    avi_api_patch_op:
+        description:
+            - Patch operation to use when using avi_api_update_method as patch.
+        version_added: "2.5"
+        choices: ["add", "replace", "delete"]
     apdex_response_threshold:
         description:
             - If a client receives an http response in less than the satisfactory latency threshold, the request is considered satisfied.
@@ -51,6 +49,7 @@ options:
             - Greater than this number and the client's request is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 500.
+            - Units(MILLISECONDS).
     apdex_response_tolerated_factor:
         description:
             - Client tolerated response latency factor.
@@ -62,6 +61,7 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 250.
+            - Units(MILLISECONDS).
     apdex_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -76,6 +76,7 @@ options:
             - A pageload includes the time for dns lookup, download of all http objects, and page render time.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
+            - Units(MILLISECONDS).
     apdex_rum_tolerated_factor:
         description:
             - Virtual service threshold factor for tolerated page load time (plt) as multiple of apdex_rum_threshold.
@@ -88,6 +89,7 @@ options:
             - Greater than this number and the server response is considered frustrated.
             - Allowed values are 1-30000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 400.
+            - Units(MILLISECONDS).
     apdex_server_response_tolerated_factor:
         description:
             - Server tolerated response latency factor.
@@ -99,6 +101,7 @@ options:
             - Satisfactory client to avi round trip time(rtt).
             - Allowed values are 1-2000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 125.
+            - Units(MILLISECONDS).
     apdex_server_rtt_tolerated_factor:
         description:
             - Tolerated client to avi round trip time(rtt) factor.
@@ -118,41 +121,49 @@ options:
             - A connection between client and avi is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_lossy_timeo_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+            - Units(PERCENT).
     conn_lossy_total_rexmt_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_lossy_zero_win_size_event_threshold:
         description:
             - A client connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+            - Units(PERCENT).
     conn_server_lossy_ooo_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of out of order packets are received.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_server_lossy_timeo_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted due to timeout.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
+            - Units(PERCENT).
     conn_server_lossy_total_rexmt_threshold:
         description:
             - A connection between avi and server is considered lossy when more than this percentage of packets are retransmitted.
             - Allowed values are 1-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
+            - Units(PERCENT).
     conn_server_lossy_zero_win_size_event_threshold:
         description:
             - A server connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Allowed values are 0-100.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+            - Units(PERCENT).
     description:
         description:
             - User defined description for the object.
@@ -169,6 +180,12 @@ options:
         description:
             - Exclude client closed connection before an http request could be completed from being classified as an error.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+    exclude_dns_policy_drop_as_significant:
+        description:
+            - Exclude dns policy drops from the list of errors.
+            - Field introduced in 17.2.2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.5"
     exclude_gs_down_as_error:
         description:
             - Exclude queries to gslb services that are operationally down from the list of errors.
@@ -369,13 +386,12 @@ extends_documentation_fragment:
     - avi
 '''
 
-
-EXAMPLES = '''
+EXAMPLES = """
   - name: Create a custom Analytics profile object
     avi_analyticsprofile:
-      controller: ''
-      username: ''
-      password: ''
+      controller: '{{ controller }}'
+      username: '{{ username }}'
+      password: '{{ password }}'
       apdex_response_threshold: 500
       apdex_response_tolerated_factor: 4.0
       apdex_rtt_threshold: 250
@@ -429,7 +445,8 @@ EXAMPLES = '''
       hs_security_weak_signature_algo_penalty: 1.0
       name: jason-analytics-profile
       tenant_ref: Demo
-'''
+"""
+
 RETURN = '''
 obj:
     description: AnalyticsProfile (api/analyticsprofile) object
@@ -439,7 +456,7 @@ obj:
 
 from ansible.module_utils.basic import AnsibleModule
 try:
-    from ansible.module_utils.avi import (
+    from ansible.module_utils.network.avi.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
@@ -449,6 +466,9 @@ def main():
     argument_specs = dict(
         state=dict(default='present',
                    choices=['absent', 'present']),
+        avi_api_update_method=dict(default='put',
+                                   choices=['put', 'patch']),
+        avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         apdex_response_threshold=dict(type='int',),
         apdex_response_tolerated_factor=dict(type='float',),
         apdex_rtt_threshold=dict(type='int',),
@@ -473,6 +493,7 @@ def main():
         disable_se_analytics=dict(type='bool',),
         disable_server_analytics=dict(type='bool',),
         exclude_client_close_before_request_as_error=dict(type='bool',),
+        exclude_dns_policy_drop_as_significant=dict(type='bool',),
         exclude_gs_down_as_error=dict(type='bool',),
         exclude_http_error_codes=dict(type='list',),
         exclude_invalid_dns_domain_as_error=dict(type='bool',),

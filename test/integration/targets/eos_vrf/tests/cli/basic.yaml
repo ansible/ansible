@@ -6,6 +6,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove vrf
   eos_vrf:
@@ -13,6 +14,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: setup - remove vrf
   eos_vrf:
@@ -20,6 +22,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Create vrf
   eos_vrf:
@@ -28,6 +31,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -45,6 +49,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -61,6 +66,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -78,6 +84,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -96,12 +103,13 @@
     interfaces:
       - Ethernet2
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-      - "'interface Ethernet2' in result.commands"
+      - "'interface ethernet2' in result.commands"
       - "'vrf forwarding test' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
@@ -113,8 +121,9 @@
     state: present
     authorize: yes
     interfaces:
-      - Ethernet2
+      - ethernet 2  # interface name modified to test case insensitive and space scenario
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -132,6 +141,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -152,6 +162,7 @@
     state: present
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -170,6 +181,7 @@
     purge: yes
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -191,6 +203,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Delete VRFs again (idempotent)
   eos_vrf:
@@ -198,6 +211,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Delete aggregate of VRFs
   eos_vrf:
@@ -209,6 +223,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 - name: Delete VRFs again (idempotent)
   eos_vrf:
@@ -220,6 +235,7 @@
     state: absent
     authorize: yes
     provider: "{{ cli }}"
+  become: yes
 
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:

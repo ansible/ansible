@@ -7,15 +7,15 @@ Ansible 2.2, 2.3, and 2.4 feature a tech preview of Python 3 support. This topic
 .. note:: Ansible supports Python version 3.5 and above only.
 
 
-.. note:: Technology preview features provide early access to upcoming product innovations, 
+.. note:: Technology preview features provide early access to upcoming product innovations,
    enabling you to test functionality and provide feedback during the development process.
-   Please be aware that tech preview features may not be functionally complete and are not    
+   Please be aware that tech preview features may not be functionally complete and are not
    intended for production use. To report a Python 3 bug, please see `Community Information & Contributing <http://docs.ansible.com/ansible/community.html#i-d-like-to-report-a-bug>`_.
 
 Testing Python 3 with commands and playbooks
 --------------------------------------------
 
-* Run Ansible 2.2+ :ref:`from source <from_source>`
+* Run Ansible 2.2+ - See :ref:`from_source`
 * To test Python 3 on the controller, run your ansible command via
   ``python3``. For example:
 
@@ -65,7 +65,7 @@ Testing Python 3 module support
     [py3-hosts:vars]
     ansible_python_interpreter=/usr/bin/python3
 
-See the :ref:`inventory documentation <inventory>` for more information.
+See :doc:`intro_inventory` for more information.
 
 * Run your command or playbook:
 

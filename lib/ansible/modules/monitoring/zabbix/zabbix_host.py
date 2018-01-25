@@ -25,6 +25,7 @@ author:
     - "Tony Minfei Ding"
     - "Harrison Gu (@harrisongu)"
     - "Werner Dijkerman"
+    - "Eike Frost (@eikef)"
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -37,12 +38,10 @@ options:
     visible_name:
         description:
             - Visible name of the host in Zabbix.
-        required: false
         version_added: '2.3'
     description:
         description:
             - Description of the host in Zabbix.
-        required: false
         version_added: '2.5'
     host_groups:
         description:
@@ -51,37 +50,30 @@ options:
     link_templates:
         description:
             - List of templates linked to the host.
-        required: false
         default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
         choices: ['automatic', 'manual', 'disabled']
-        required: false
-        default: None
         version_added: '2.1'
     inventory_zabbix:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory'
-        required: false
-        default: None
         version_added: '2.5'
     status:
         description:
             - Monitoring status of the host.
-        required: false
         choices: ['enabled', 'disabled']
-        default: "enabled"
+        default: 'enabled'
     state:
         description:
             - State of the host.
             - On C(present), it will create if host does not exist or update the host if the associated data is different.
             - On C(absent) will remove a host if it exists.
-        required: false
         choices: ['present', 'absent']
-        default: "present"
+        default: 'present'
     proxy:
         description:
             - The name of the Zabbix Proxy to be used
@@ -92,7 +84,6 @@ options:
             - 'Available values are: dns, ip, main, port, type and useip.'
             - Please review the interface documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
-        required: false
         default: []
     tls_connect:
         description:
@@ -102,7 +93,7 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.5"
+        version_added: '2.5'
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -111,41 +102,65 @@ options:
             - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
-        version_added: "2.5"
+        version_added: '2.5'
     tls_psk_identity:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_issuer:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
     tls_subject:
         description:
             - Required certificate subject.
             - Works only with >= Zabbix 3.0
-        required: false
-        version_added: "2.5"
+        version_added: '2.5'
+    ipmi_authtype:
+        description:
+            - IPMI authentication algorithm.
+            - Please review the Host object documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
+            - Possible values are, C(0) (none), C(1) (MD2), C(2) (MD5), C(4) (straight), C(5) (OEM), C(6) (RMCP+),
+              with -1 being the API default.
+            - Please note that the Zabbix API will treat absent settings as default when updating
+              any of the I(ipmi_)-options; this means that if you attempt to set any of the four
+              options individually, the rest will be reset to default values.
+        version_added: '2.5'
+    ipmi_privilege:
+        description:
+            - IPMI privilege level.
+            - Please review the Host object documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object'
+            - Possible values are C(1) (callback), C(2) (user), C(3) (operator), C(4) (admin), C(5) (OEM), with C(2)
+              being the API default.
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
+    ipmi_username:
+        description:
+            - IPMI username.
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
+    ipmi_password:
+        description:
+            - IPMI password.
+            - also see the last note in the I(ipmi_authtype) documentation
+        version_added: '2.5'
     force:
         description:
             - Overwrite the host configuration, even if already present
-        required: false
-        default: "yes"
-        choices: [ "yes", "no" ]
-        version_added: "2.0"
-
+        default: 'yes'
+        choices: [ 'yes', 'no' ]
+        version_added: '2.0'
 extends_documentation_fragment:
     - zabbix
 '''
@@ -177,6 +192,10 @@ EXAMPLES = '''
       site_rack: "{{ your_site_rack }}"
       os: "{{ your_os }}"
       hardware: "{{ your_hardware }}"
+    ipmi_authtype: 2
+    ipmi_privilege: 4
+    ipmi_username: username
+    ipmi_password: password
     interfaces:
       - type: 1
         main: 1
@@ -191,8 +210,7 @@ EXAMPLES = '''
         dns: ""
         port: 12345
     proxy: a.zabbix.proxy
-
-- name: Create a new host or update an existing host's tls settings
+- name: Update an existing host's TLS settings
   local_action:
     module: zabbix_host
     server_url: http://monitor.example.com
@@ -205,7 +223,6 @@ EXAMPLES = '''
     tls_psk_identity: test
     tls_connect: 2
     tls_psk: 123456789abcdef123456789abcdef12
-
 '''
 
 import copy
@@ -263,7 +280,8 @@ class Host(object):
         return template_ids
 
     def add_host(self, host_name, group_ids, status, interfaces, proxy_id, visible_name, description, tls_connect,
-                 tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject):
+                 tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                 ipmi_username, ipmi_password):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -273,16 +291,24 @@ class Host(object):
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
                 parameters['name'] = visible_name
-            if tls_psk_identity:
+            if tls_psk_identity is not None:
                 parameters['tls_psk_identity'] = tls_psk_identity
-            if tls_psk:
+            if tls_psk is not None:
                 parameters['tls_psk'] = tls_psk
-            if tls_issuer:
+            if tls_issuer is not None:
                 parameters['tls_issuer'] = tls_issuer
-            if tls_subject:
+            if tls_subject is not None:
                 parameters['tls_subject'] = tls_subject
             if description:
                 parameters['description'] = description
+            if ipmi_authtype is not None:
+                parameters['ipmi_authtype'] = ipmi_authtype
+            if ipmi_privilege is not None:
+                parameters['ipmi_privilege'] = ipmi_privilege
+            if ipmi_username is not None:
+                parameters['ipmi_username'] = ipmi_username
+            if ipmi_password is not None:
+                parameters['ipmi_password'] = ipmi_password
 
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
@@ -291,7 +317,8 @@ class Host(object):
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
     def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id,
-                    visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject):
+                    visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype,
+                    ipmi_privilege, ipmi_username, ipmi_password):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -311,6 +338,14 @@ class Host(object):
                 parameters['tls_subject'] = tls_subject
             if description:
                 parameters['description'] = description
+            if ipmi_authtype:
+                parameters['ipmi_authtype'] = ipmi_authtype
+            if ipmi_privilege:
+                parameters['ipmi_privilege'] = ipmi_privilege
+            if ipmi_username:
+                parameters['ipmi_username'] = ipmi_username
+            if ipmi_password:
+                parameters['ipmi_password'] = ipmi_password
 
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
@@ -352,7 +387,7 @@ class Host(object):
 
     # get host by host name
     def get_host_by_host_name(self, host_name):
-        host_list = self._zapi.host.get({'output': 'extend', 'filter': {'host': [host_name]}})
+        host_list = self._zapi.host.get({'output': 'extend', 'selectInventory': 'extend', 'filter': {'host': [host_name]}})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -428,7 +463,10 @@ class Host(object):
 
     # check all the properties before link or clear template
     def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
-                             exist_interfaces, host, proxy_id, visible_name, description, host_name):
+                             exist_interfaces, host, proxy_id, visible_name, description, host_name,
+                             inventory_mode, inventory_zabbix, tls_accept, tls_psk_identity, tls_psk,
+                             tls_issuer, tls_subject, tls_connect, ipmi_authtype, ipmi_privilege,
+                             ipmi_username, ipmi_password):
         # get the existing host's groups
         exist_host_groups = self.get_host_groups_by_host_id(host_id)
         if set(host_groups) != set(exist_host_groups):
@@ -452,20 +490,69 @@ class Host(object):
             return True
 
         # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
-        if host['name'] != visible_name and host['name'] != host_name:
-            return True
+        if visible_name:
+            if host['name'] != visible_name and host['name'] != host_name:
+                return True
 
-        # The Zabbbix API returns an empty description as an empty string
-        if description is None:
-            description = ''
-        if host['description'] != description:
-            return True
+        # Only compare description if it is given as a module parameter
+        if description:
+            if host['description'] != description:
+                return True
+
+        if inventory_mode:
+            if host['inventory']:
+                if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    return True
+            elif inventory_mode != 'disabled':
+                return True
+
+        if inventory_zabbix:
+            proposed_inventory = copy.deepcopy(host['inventory'])
+            proposed_inventory.update(inventory_zabbix)
+            if proposed_inventory != host['inventory']:
+                return True
+
+        if tls_accept is not None:
+            if int(host['tls_accept']) != tls_accept:
+                return True
+
+        if tls_psk_identity is not None:
+            if host['tls_psk_identity'] != tls_psk_identity:
+                return True
+
+        if tls_psk is not None:
+            if host['tls_psk'] != tls_psk:
+                return True
+
+        if tls_issuer is not None:
+            if host['tls_issuer'] != tls_issuer:
+                return True
+
+        if tls_subject is not None:
+            if host['tls_subject'] != tls_subject:
+                return True
+
+        if tls_connect is not None:
+            if int(host['tls_connect']) != tls_connect:
+                return True
+        if ipmi_authtype is not None:
+            if int(host['ipmi_authtype']) != ipmi_authtype:
+                return True
+        if ipmi_privilege is not None:
+            if int(host['ipmi_privilege']) != ipmi_privilege:
+                return True
+        if ipmi_username is not None:
+            if host['ipmi_username'] != ipmi_username:
+                return True
+        if ipmi_password is not None:
+            if host['ipmi_password'] != ipmi_password:
+                return True
 
         return False
 
     # link or clear template of the host
     def link_or_clear_template(self, host_id, template_id_list, tls_connect, tls_accept, tls_psk_identity, tls_psk,
-                               tls_issuer, tls_subject):
+                               tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
         # get host's exist template ids
         exist_template_id_list = self.get_host_templates_by_host_id(host_id)
 
@@ -477,14 +564,15 @@ class Host(object):
         templates_clear = exist_template_ids.difference(template_ids)
         templates_clear_list = list(templates_clear)
         request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list,
-                       'tls_connect': tls_connect, 'tls_accept': tls_accept}
-        if tls_psk_identity:
+                       'tls_connect': tls_connect, 'tls_accept': tls_accept, 'ipmi_authtype': ipmi_authtype,
+                       'ipmi_privilege': ipmi_privilege, 'ipmi_username': ipmi_username, 'ipmi_password': ipmi_password}
+        if tls_psk_identity is not None:
             request_str['tls_psk_identity'] = tls_psk_identity
-        if tls_psk:
+        if tls_psk is not None:
             request_str['tls_psk'] = tls_psk
-        if tls_issuer:
+        if tls_issuer is not None:
             request_str['tls_issuer'] = tls_issuer
-        if tls_subject:
+        if tls_subject is not None:
             request_str['tls_subject'] = tls_subject
         try:
             if self._module.check_mode:
@@ -493,6 +581,15 @@ class Host(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to link template to host: %s" % e)
 
+    def inventory_mode_numeric(self, inventory_mode):
+        if inventory_mode == "automatic":
+            return int(1)
+        elif inventory_mode == "manual":
+            return int(0)
+        elif inventory_mode == "disabled":
+            return int(-1)
+        return inventory_mode
+
     # Update the host inventory_mode
     def update_inventory_mode(self, host_id, inventory_mode):
 
@@ -500,12 +597,7 @@ class Host(object):
         if not inventory_mode:
             return
 
-        if inventory_mode == "automatic":
-            inventory_mode = int(1)
-        elif inventory_mode == "manual":
-            inventory_mode = int(0)
-        elif inventory_mode == "disabled":
-            inventory_mode = int(-1)
+        inventory_mode = self.inventory_mode_numeric(inventory_mode)
 
         # watch for - https://support.zabbix.com/browse/ZBX-6033
         request_str = {'hostid': host_id, 'inventory_mode': inventory_mode}
@@ -545,6 +637,10 @@ def main():
             status=dict(default="enabled", choices=['enabled', 'disabled']),
             state=dict(default="present", choices=['present', 'absent']),
             inventory_mode=dict(required=False, choices=['automatic', 'manual', 'disabled']),
+            ipmi_authtype=dict(type='int', default=None),
+            ipmi_privilege=dict(type='int', default=None),
+            ipmi_username=dict(type='str', required=False, default=None),
+            ipmi_password=dict(type='str', required=False, default=None, no_log=True),
             tls_connect=dict(type='int', default=1),
             tls_accept=dict(type='int', default=1),
             tls_psk_identity=dict(type='str', required=False),
@@ -577,6 +673,10 @@ def main():
     host_groups = module.params['host_groups']
     link_templates = module.params['link_templates']
     inventory_mode = module.params['inventory_mode']
+    ipmi_authtype = module.params['ipmi_authtype']
+    ipmi_privilege = module.params['ipmi_privilege']
+    ipmi_username = module.params['ipmi_username']
+    ipmi_password = module.params['ipmi_password']
     tls_connect = module.params['tls_connect']
     tls_accept = module.params['tls_accept']
     tls_psk_identity = module.params['tls_psk_identity']
@@ -620,36 +720,47 @@ def main():
             if interface['type'] == 1:
                 ip = interface['ip']
 
+    # Use proxy specified, or set to 0
+    if proxy:
+        proxy_id = host.get_proxyid_by_proxy_name(proxy)
+    else:
+        proxy_id = 0
+
     # check if host exist
     is_host_exist = host.is_host_exist(host_name)
 
     if is_host_exist:
-        # Use proxy specified, or set to None when updating host
-        if proxy:
-            proxy_id = host.get_proxyid_by_proxy_name(proxy)
-        else:
-            proxy_id = 0
-
         # get host id by host name
         zabbix_host_obj = host.get_host_by_host_name(host_name)
         host_id = zabbix_host_obj['hostid']
+
+        # If proxy is not specified as a module parameter, use the existing setting
+        if proxy is None:
+            proxy_id = zabbix_host_obj['proxy_hostid']
 
         if state == "absent":
             # remove host
             host.delete_host(host_id, host_name)
             module.exit_json(changed=True, result="Successfully delete host %s" % host_name)
         else:
-            if not group_ids:
-                module.fail_json(msg="Specify at least one group for updating host '%s'." % host_name)
+            if not host_groups:
+                # if host_groups have not been specified when updating an existing host, just
+                # get the group_ids from the existing host without updating them.
+                host_groups = host.get_host_groups_by_host_id(host_id)
+                group_ids = host.get_group_ids_by_group_names(host_groups)
 
-            if not force:
-                # get existing groups, interfaces and templates and merge them with ones provided as an argument
-                # we do not want to overwrite anything if force: no is explicitly used, we just want to add new ones
-                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
-                    if group_id not in group_ids:
-                        group_ids.append(group_id)
+            # get existing host's interfaces
+            exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
 
-                for interface in host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id}):
+            # if no interfaces were specified with the module, start with an empty list
+            if not interfaces:
+                interfaces = []
+
+            # When force=no is specified, append existing interfaces to interfaces to update. When
+            # no interfaces have been specified, copy existing interfaces as specified from the API.
+            # Do the same with templates and host groups.
+            if not force or not interfaces:
+                for interface in copy.deepcopy(exist_interfaces):
                     # remove values not used during hostinterface.add/update calls
                     for key in interface.keys():
                         if key in ['interfaceid', 'hostid', 'bulk']:
@@ -662,53 +773,39 @@ def main():
                     if interface not in interfaces:
                         interfaces.append(interface)
 
+            if not force or link_templates is None:
                 template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
-            # get exist host's interfaces
-            exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
-            exist_interfaces_copy = copy.deepcopy(exist_interfaces)
+            if not force:
+                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
+                    if group_id not in group_ids:
+                        group_ids.append(group_id)
 
             # update host
-            interfaces_len = len(interfaces) if interfaces else 0
+            if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
+                                         exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
+                                         description, host_name, inventory_mode, inventory_zabbix,
+                                         tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
+                                         ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                            ipmi_username, ipmi_password)
+                host.update_host(host_name, group_ids, status, host_id,
+                                 interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
+                                 tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+                host.update_inventory_mode(host_id, inventory_mode)
+                host.update_inventory_zabbix(host_id, inventory_zabbix)
 
-            if len(exist_interfaces) > interfaces_len:
-                if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces, zabbix_host_obj, proxy_id, visible_name, description, host_name):
-                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
-                    host.update_host(host_name, group_ids, status, host_id,
-                                     interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
-                                     tls_psk_identity, tls_psk, tls_issuer, tls_subject)
-                    module.exit_json(changed=True,
-                                     result="Successfully update host %s (%s) and linked with template '%s'"
-                                            % (host_name, ip, link_templates))
-                else:
-                    module.exit_json(changed=False)
+                module.exit_json(changed=True,
+                                 result="Successfully update host %s (%s) and linked with template '%s'"
+                                        % (host_name, ip, link_templates))
             else:
-                if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, description, host_name):
-                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id,
-                                     visible_name, description, tls_connect, tls_accept, tls_psk_identity, tls_psk, tls_issuer,
-                                     tls_subject)
-                    host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                                tls_psk, tls_issuer, tls_subject)
-                    host.update_inventory_mode(host_id, inventory_mode)
-                    host.update_inventory_zabbix(host_id, inventory_zabbix)
-                    module.exit_json(changed=True,
-                                     result="Successfully update host %s (%s) and linked with template '%s'"
-                                            % (host_name, ip, link_templates))
-                else:
-                    module.exit_json(changed=False)
+                module.exit_json(changed=False)
+
     else:
         if state == "absent":
             # the host is already deleted.
             module.exit_json(changed=False)
-
-        # Use proxy specified, or set to 0 when adding new host
-        if proxy:
-            proxy_id = host.get_proxyid_by_proxy_name(proxy)
-        else:
-            proxy_id = 0
 
         if not group_ids:
             module.fail_json(msg="Specify at least one group for creating host '%s'." % host_name)
@@ -718,9 +815,10 @@ def main():
 
         # create host
         host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name, description, tls_connect,
-                                tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject)
+                                tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                ipmi_username, ipmi_password)
         host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                    tls_psk, tls_issuer, tls_subject)
+                                    tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
         host.update_inventory_mode(host_id, inventory_mode)
         host.update_inventory_zabbix(host_id, inventory_zabbix)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (

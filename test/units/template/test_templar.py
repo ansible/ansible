@@ -307,7 +307,7 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
 class TestTemplarLookup(BaseTemplar, unittest.TestCase):
     def test_lookup_missing_plugin(self):
         self.assertRaisesRegexp(AnsibleError,
-                                'lookup plugin \(not_a_real_lookup_plugin\) not found',
+                                r'lookup plugin \(not_a_real_lookup_plugin\) not found',
                                 self.templar._lookup,
                                 'not_a_real_lookup_plugin',
                                 'an_arg', a_keyword_arg='a_keyword_arg_value')

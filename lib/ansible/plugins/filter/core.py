@@ -35,7 +35,7 @@ import uuid
 import yaml
 
 from collections import MutableMapping, MutableSequence
-from datetime import datetime
+import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
@@ -47,7 +47,7 @@ try:
 except:
     HAS_PASSLIB = False
 
-from ansible import errors
+from ansible.errors import AnsibleFilterError
 from ansible.module_utils.six import iteritems, string_types, integer_types
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
@@ -69,6 +69,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, HostVars):
             return dict(o)
+        elif isinstance(o, (datetime.date, datetime.datetime)):
+            return o.isoformat()
         else:
             return super(AnsibleJSONEncoder, self).default(o)
 
@@ -126,7 +128,7 @@ def to_bool(a):
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
-    return datetime.strptime(string, format)
+    return datetime.datetime.strptime(string, format)
 
 
 def strftime(string_format, second=None):
@@ -135,13 +137,13 @@ def strftime(string_format, second=None):
         try:
             second = int(second)
         except:
-            raise errors.AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+            raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
 
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return shlex_quote(a)
+    return shlex_quote(to_text(a))
 
 
 def fileglob(pathname):
@@ -184,7 +186,7 @@ def regex_search(value, regex, *args, **kwargs):
             match = int(re.match(r'\\(\d+)', arg).group(1))
             groups.append(match)
         else:
-            raise errors.AnsibleFilterError('Unknown argument')
+            raise AnsibleFilterError('Unknown argument')
 
     flags = 0
     if kwargs.get('ignorecase'):
@@ -236,10 +238,10 @@ def rand(environment, end, start=None, step=None, seed=None):
         return r.randrange(start, end, step)
     elif hasattr(end, '__iter__'):
         if start or step:
-            raise errors.AnsibleFilterError('start and step can only be used with integer values')
+            raise AnsibleFilterError('start and step can only be used with integer values')
         return r.choice(end)
     else:
-        raise errors.AnsibleFilterError('random can only be used on sequences and integers')
+        raise AnsibleFilterError('random can only be used on sequences and integers')
 
 
 def randomize_list(mylist, seed=None):
@@ -288,7 +290,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
-                raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
+                raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
             saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
@@ -313,23 +315,28 @@ def mandatory(a):
 
     ''' Make a variable mandatory '''
     if isinstance(a, Undefined):
-        raise errors.AnsibleFilterError('Mandatory variable not defined.')
+        raise AnsibleFilterError('Mandatory variable not defined.')
     return a
 
 
 def combine(*terms, **kwargs):
     recursive = kwargs.get('recursive', False)
     if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
-        raise errors.AnsibleFilterError("'recursive' is the only valid keyword argument")
+        raise AnsibleFilterError("'recursive' is the only valid keyword argument")
 
+    dicts = []
     for t in terms:
-        if not isinstance(t, dict):
-            raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
+        if isinstance(t, MutableMapping):
+            dicts.append(t)
+        elif isinstance(t, list):
+            dicts.append(combine(*t, **kwargs))
+        else:
+            raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
 
     if recursive:
-        return reduce(merge_hash, terms)
+        return reduce(merge_hash, dicts)
     else:
-        return dict(itertools.chain(*map(iteritems, terms)))
+        return dict(itertools.chain(*map(iteritems, dicts)))
 
 
 def comment(text, style='plain', **kw):
@@ -460,6 +467,43 @@ def b64decode(string):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')))
 
 
+def flatten(mylist, levels=None):
+
+    ret = []
+    for element in mylist:
+        if element in (None, 'None', 'null'):
+            # ignore undefined items
+            break
+        elif isinstance(element, MutableSequence):
+            if levels is None:
+                ret.extend(flatten(element))
+            elif levels >= 1:
+                levels = int(levels) - 1
+                ret.extend(flatten(element, levels=levels))
+            else:
+                ret.append(element)
+        else:
+            ret.append(element)
+
+    return ret
+
+
+def dict_slice(mydict, keys):
+    ''' takes a dictionary and a list of keys and returns a list of values corresponding to those keys, if they exist '''
+
+    if not isinstance(mydict, MutableMapping):
+        raise AnsibleFilterError("The slice filter requires a mapping to operate on, got a %s." % type(mydict))
+
+    if not isinstance(keys, MutableSequence):
+
+        if isinstance(keys, string_types):
+            keys = [keys]
+        else:
+            AnsibleFilterError("The slice filter requires a key or list of keys, got %s instead." % type(keys))
+
+    return [mydict[key] for key in keys if key in mydict]
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -485,9 +529,6 @@ class FilterModule(object):
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
 
-            # date
-            'to_datetime': to_datetime,
-
             # path
             'basename': partial(unicode_wrap, os.path.basename),
             'dirname': partial(unicode_wrap, os.path.dirname),
@@ -499,8 +540,12 @@ class FilterModule(object):
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
 
-            # value as boolean
+            # file glob
+            'fileglob': fileglob,
+
+            # types
             'bool': to_bool,
+            'to_datetime': to_datetime,
 
             # date formating
             'strftime': strftime,
@@ -519,9 +564,6 @@ class FilterModule(object):
             'password_hash': get_encrypted_password,
             'hash': get_hash,
 
-            # file glob
-            'fileglob': fileglob,
-
             # regex
             'regex_replace': regex_replace,
             'regex_escape': regex_escape,
@@ -531,22 +573,22 @@ class FilterModule(object):
             # ? : ;
             'ternary': ternary,
 
-            # list
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+
             # undefined
             'mandatory': mandatory,
-
-            # merge dicts
-            'combine': combine,
 
             # comment-style decoration
             'comment': comment,
 
-            # array and dict lookups
-            'extract': extract,
-
             # debug
             'type_debug': lambda o: o.__class__.__name__,
+
+            # Data structures
+            'combine': combine,
+            'extract': extract,
+            'flatten': flatten,
+            'slice': dict_slice,
         }

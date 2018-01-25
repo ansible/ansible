@@ -139,7 +139,7 @@ Installing multiple roles from multiple files
 
 At a basic level, including requirements files allows you to break up bits of roles into smaller files. Role includes pull in roles from other files.
 
-Use the following command to install roles includes in *requirements.yml*  + *webserver,yml*
+Use the following command to install roles includes in *requirements.yml*  + *webserver.yml*
 
 ::
 
@@ -152,7 +152,7 @@ Content of the *requirements.yml* file:
     # from galaxy
     - src: yatesr.timezone
 
-    - import_tasks: <path_to_requirements>/webserver.yml
+    - include: <path_to_requirements>/webserver.yml
 
 
 Content of the *webserver.yml* file:
@@ -169,7 +169,7 @@ Content of the *webserver.yml* file:
 Dependencies
 ============
 
-Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependenices will automatically be installed.
+Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
 
 You specify role dependencies in the ``meta/main.yml`` file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in
 the format ``username.role_name``. The more complex format used in ``requirements.yml`` is also supported, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.

@@ -27,7 +27,7 @@ DOCUMENTATION = """
 ---
 module: nxos_banner
 version_added: "2.4"
-author: "Trishna Guha (@trishnag)"
+author: "Trishna Guha (@trishnaguha)"
 short_description: Manage multiline banners on Cisco NXOS devices
 description:
   - This will configure both exec and motd banners on remote devices
@@ -53,6 +53,7 @@ options:
         devices active running configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """
@@ -88,8 +89,8 @@ commands:
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 import re
 
 
@@ -116,7 +117,17 @@ def map_config_to_obj(module):
         module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
 
     if isinstance(output, dict):
-        output = list(output.values())[0]
+        output = list(output.values())
+        if output != []:
+            output = output[0]
+        else:
+            output = ''
+        if isinstance(output, dict):
+            output = list(output.values())
+            if output != []:
+                output = output[0]
+            else:
+                output = ''
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:

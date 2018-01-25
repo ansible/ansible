@@ -65,7 +65,7 @@ import re
 from collections import MutableSequence
 from io import StringIO
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.lookup import LookupBase
@@ -129,7 +129,8 @@ class LookupModule(LookupBase):
             try:
                 for param in params[1:]:
                     name, value = param.split('=')
-                    assert(name in paramvals)
+                    if name not in paramvals:
+                        raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
                 raise AnsibleError(e)

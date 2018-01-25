@@ -5,13 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# upcoming features:
-# - Ted's multifile YAML concatenation
-# - changesets (and blocking/waiting for them)
-# - finish AWSRetry conversion
-# - move create/update code out of main
-# - unit tests
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -55,8 +48,9 @@ options:
       - The local path of the cloudformation template.
       - This must be the full path to the file, relative to the working directory. If using roles this may look
         like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
-        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
     required: false
     default: null
   notification_arns:
@@ -82,8 +76,9 @@ options:
     description:
       - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
         as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
-        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
   create_changeset:
@@ -121,6 +116,14 @@ options:
   termination_protection:
     description:
     - enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
+    version_added: "2.5"
+  template_body:
+    description:
+      - Template body. Use this to pass in the actual body of the Cloudformation template.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
+        must be specified (but only one of them). If 'state' ispresent, the stack does exist, and neither 'template',
+        'template_body' nor 'template_url' are specified, the previous template will be reused.
+    required: false
     version_added: "2.5"
 
 author: "James S. Martin (@jsmartin)"
@@ -170,6 +173,23 @@ EXAMPLES = '''
     region: us-east-1
     disable_rollback: true
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
+    tags:
+      Stack: ansible-cloudformation
+
+# Create a stack, passing in template body using lookup of Jinja2 template, disable rollback if stack creation fails,
+# pass in some parameters to the template, provide tags for resources created
+- name: create a stack, pass in the template body via lookup template
+  cloudformation:
+    stack_name: "ansible-cloudformation"
+    state: present
+    region: us-east-1
+    disable_rollback: true
+    template_body: "{{ lookup('template', 'cloudformation.j2') }}"
     template_parameters:
       KeyName: jmartin
       DiskType: ephemeral
@@ -243,7 +263,7 @@ from ansible.module_utils._text import to_bytes, to_native
 
 def get_stack_events(cfn, stack_name, token_filter=None):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
-    ret = {'events':[], 'log':[]}
+    ret = {'events': [], 'log': []}
 
     try:
         pg = cfn.get_paginator(
@@ -256,7 +276,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
                 "StackEvents[?ClientRequestToken == '{0}']".format(token_filter)
             ))
         else:
-            events = list(pg)
+            events = list(pg.search("StackEvents[*]"))
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
@@ -279,7 +299,7 @@ def get_stack_events(cfn, stack_name, token_filter=None):
 
 def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
-        module.fail_json(msg="Either 'template' or 'template_url' is required when the stack does not exist.")
+        module.fail_json(msg="Either 'template', 'template_body' or 'template_url' is required when the stack does not exist.")
 
     # 'disablerollback' and 'EnableTerminationProtection' only
     # apply on creation, not update.
@@ -292,7 +312,7 @@ def create_stack(module, stack_params, cfn):
 
     try:
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg="Failed to create stack {0}: {1}.".format(stack_params.get('StackName'), error_msg), exception=traceback.format_exc())
@@ -326,10 +346,29 @@ def create_changeset(module, stack_params, cfn):
             result = dict(changed=False, output='ChangeSet %s already exists.' % changeset_name, warnings=[warning])
         else:
             cs = cfn.create_change_set(**stack_params)
+            # Make sure we don't enter an infinite loop
+            time_end = time.time() + 600
+            while time.time() < time_end:
+                try:
+                    newcs = cfn.describe_change_set(ChangeSetName=cs['Id'])
+                except botocore.exceptions.BotoCoreError as err:
+                    error_msg = boto_exception(err)
+                    module.fail_json(msg=error_msg)
+                if newcs['Status'] == 'CREATE_PENDING' or newcs['Status'] == 'CREATE_IN_PROGRESS':
+                    time.sleep(1)
+                elif newcs['Status'] == 'FAILED' and "The submitted information didn't contain changes" in newcs['StatusReason']:
+                    cfn.delete_change_set(ChangeSetName=cs['Id'])
+                    result = dict(changed=False,
+                                  output='Stack is already up-to-date, Change Set refused to create due to lack of changes.')
+                    module.exit_json(**result)
+                else:
+                    break
+                # Lets not hog the cpu/spam the AWS API
+                time.sleep(1)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET')
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
-                'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
-                'NOTE that dependencies on this stack might fail due to pending changes!']
+                                  'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
+                                  'NOTE that dependencies on this stack might fail due to pending changes!']
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -351,7 +390,7 @@ def update_stack(module, stack_params, cfn):
     # don't need to be updated.
     try:
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params['ClientRequestToken'])
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', stack_params.get('ClientRequestToken', None))
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -393,7 +432,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
         except:
             # If the stack previously existed, and now can't be found then it's
             # been deleted successfully.
-            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
+            if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
@@ -401,12 +440,12 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
                 return {'changed': True, 'failed': True, 'output': 'Stack Not Found', 'exception': traceback.format_exc()}
         ret = get_stack_events(cfn, stack_name, op_token)
         if not stack:
-            if 'yes' in existed or operation == 'DELETE': # stacks may delete fast, look in a few ways.
+            if 'yes' in existed or operation == 'DELETE':  # stacks may delete fast, look in a few ways.
                 ret = get_stack_events(cfn, stack_name, op_token)
                 ret.update({'changed': True, 'output': 'Stack Deleted'})
                 return ret
             else:
-                ret.update({'changed': False, 'failed': True, 'output' : 'Stack not found.'})
+                ret.update({'changed': False, 'failed': True, 'output': 'Stack not found.'})
                 return ret
         # it covers ROLLBACK_COMPLETE and UPDATE_ROLLBACK_COMPLETE
         # Possible states: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-describing-stacks.html#w1ab2c15c17c21c13
@@ -415,7 +454,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
             return ret
         # note the ordering of ROLLBACK_COMPLETE and COMPLETE, because otherwise COMPLETE will match both cases.
         elif stack['StackStatus'].endswith('_COMPLETE'):
-            ret.update({'changed': True, 'output' : 'Stack %s complete' % operation })
+            ret.update({'changed': True, 'output': 'Stack %s complete' % operation})
             return ret
         elif stack['StackStatus'].endswith('_ROLLBACK_FAILED'):
             ret.update({'changed': True, 'failed': True, 'output': 'Stack %s rollback failed' % operation})
@@ -427,7 +466,7 @@ def stack_operation(cfn, stack_name, operation, op_token=None):
         else:
             # this can loop forever :/
             time.sleep(5)
-    return {'failed': True, 'output':'Failed for unknown reasons.'}
+    return {'failed': True, 'output': 'Failed for unknown reasons.'}
 
 
 def build_changeset_name(stack_params):
@@ -450,7 +489,7 @@ def check_mode_changeset(module, stack_params, cfn):
 
     try:
         change_set = cfn.create_change_set(**stack_params)
-        for i in range(60): # total time 5 min
+        for i in range(60):  # total time 5 min
             description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
             if description['Status'] in ('CREATE_COMPLETE', 'FAILED'):
                 break
@@ -476,7 +515,7 @@ def get_stack_facts(cfn, stack_name):
     try:
         stack_response = cfn.describe_stacks(StackName=stack_name)
         stack_info = stack_response['Stacks'][0]
-    except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
             # missing stack, don't bail.
@@ -504,6 +543,7 @@ def main():
         stack_policy=dict(default=None, required=False),
         disable_rollback=dict(default=False, type='bool'),
         template_url=dict(default=None, required=False),
+        template_body=dict(default=None, require=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),
@@ -515,7 +555,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive=[['template_url', 'template']],
+        mutually_exclusive=[['template_url', 'template', 'template_body']],
         supports_check_mode=True
     )
     if not HAS_BOTO3:
@@ -531,6 +571,8 @@ def main():
 
     if module.params['template'] is not None:
         stack_params['TemplateBody'] = open(module.params['template'], 'r').read()
+    elif module.params['template_body'] is not None:
+        stack_params['TemplateBody'] = module.params['template_body']
     elif module.params['template_url'] is not None:
         stack_params['TemplateURL'] = module.params['template_url']
 
@@ -540,12 +582,11 @@ def main():
         stack_params['NotificationARNs'] = []
 
     # can't check the policy when verifying.
-    if module.params['stack_policy'] is not None and not module.check_mode:
+    if module.params['stack_policy'] is not None and not module.check_mode and not module.params['create_changeset']:
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
-
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey':k, 'ParameterValue':str(v)} for k, v in template_parameters.items()]
+    stack_params['Parameters'] = [{'ParameterKey': k, 'ParameterValue': str(v)} for k, v in template_parameters.items()]
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
@@ -615,7 +656,7 @@ def main():
                 "resource_type": res['ResourceType'],
                 "last_updated_time": res['LastUpdatedTimestamp'],
                 "status": res['ResourceStatus'],
-                "status_reason": res.get('ResourceStatusReason') # can be blank, apparently
+                "status_reason": res.get('ResourceStatusReason')  # can be blank, apparently
             })
         result['stack_resources'] = stack_resources
 
@@ -629,15 +670,18 @@ def main():
             if not stack:
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
-                cfn.delete_stack(StackName=stack_params['StackName'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params['ClientRequestToken'])
+                if stack_params.get('RoleARN') is None:
+                    cfn.delete_stack(StackName=stack_params['StackName'])
+                else:
+                    cfn.delete_stack(StackName=stack_params['StackName'], RoleARN=stack_params['RoleARN'])
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', stack_params.get('ClientRequestToken', None))
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
     if module.params['template_format'] is not None:
         result['warnings'] = [('Argument `template_format` is deprecated '
-            'since Ansible 2.3, JSON and YAML templates are now passed '
-            'directly to the CloudFormation API.')]
+                               'since Ansible 2.3, JSON and YAML templates are now passed '
+                               'directly to the CloudFormation API.')]
     module.exit_json(**result)
 
 

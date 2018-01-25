@@ -104,9 +104,13 @@ class AWSRetry(CloudRetry):
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
-    except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
-                             'parameter in the boto3_conn function call')
+    except ValueError as e:
+        module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+        module.fail_json(msg=to_native(e))
+    except botocore.exceptions.NoRegionError as e:
+        module.fail_json(msg="The %s module requires a region and none was found in configuration, "
+                         "environment variables or module parameters" % module._name)
 
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -128,6 +132,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
+
 
 boto3_inventory_conn = _boto3_conn
 
@@ -237,7 +242,10 @@ def get_aws_connection_info(module, boto3=False):
                     module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                try:
+                    region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                except botocore.exceptions.ProfileNotFound as e:
+                    pass
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
@@ -338,19 +346,26 @@ def ec2_connect(module):
     return ec2
 
 
-def _camel_to_snake(name):
+def _camel_to_snake(name, reversible=False):
 
     def prepend_underscore_and_lower(m):
         return '_' + m.group(0).lower()
 
     import re
-    # Cope with pluralized abbreviations such as TargetGroupARNs
-    # that would otherwise be rendered target_group_ar_ns
-    plural_pattern = r'[A-Z]{3,}s$'
-    s1 = re.sub(plural_pattern, prepend_underscore_and_lower, name)
+    if reversible:
+        upper_pattern = r'[A-Z]'
+    else:
+        # Cope with pluralized abbreviations such as TargetGroupARNs
+        # that would otherwise be rendered target_group_ar_ns
+        upper_pattern = r'[A-Z]{3,}s$'
+
+    s1 = re.sub(upper_pattern, prepend_underscore_and_lower, name)
     # Handle when there was nothing before the plural_pattern
     if s1.startswith("_") and not name.startswith("_"):
         s1 = s1[1:]
+    if reversible:
+        return s1
+
     # Remainder of solution seems to be https://stackoverflow.com/a/1176023
     first_cap_pattern = r'(.)([A-Z][a-z]+)'
     all_cap_pattern = r'([a-z0-9])([A-Z]+)'
@@ -358,14 +373,26 @@ def _camel_to_snake(name):
     return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
 
 
-def camel_dict_to_snake_dict(camel_dict):
+def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
+    """
+    reversible allows two way conversion of a camelized dict
+    such that snake_dict_to_camel_dict(camel_dict_to_snake_dict(x)) == x
+
+    This is achieved through mapping e.g. HTTPEndpoint to h_t_t_p_endpoint
+    where the default would be simply http_endpoint, which gets turned into
+    HttpEndpoint if recamelized.
+
+    ignore_list is used to avoid converting a sub-tree of a dict. This is
+    particularly important for tags, where keys are case-sensitive. We convert
+    the 'Tags' key but nothing below.
+    """
 
     def value_is_list(camel_list):
 
         checked_list = []
         for item in camel_list:
             if isinstance(item, dict):
-                checked_list.append(camel_dict_to_snake_dict(item))
+                checked_list.append(camel_dict_to_snake_dict(item, reversible))
             elif isinstance(item, list):
                 checked_list.append(value_is_list(item))
             else:
@@ -375,36 +402,45 @@ def camel_dict_to_snake_dict(camel_dict):
 
     snake_dict = {}
     for k, v in camel_dict.items():
-        if isinstance(v, dict):
-            snake_dict[_camel_to_snake(k)] = camel_dict_to_snake_dict(v)
-        elif isinstance(v, list):
-            snake_dict[_camel_to_snake(k)] = value_is_list(v)
+        if isinstance(v, dict) and k not in ignore_list:
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
+        elif isinstance(v, list) and k not in ignore_list:
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
-            snake_dict[_camel_to_snake(k)] = v
+            snake_dict[_camel_to_snake(k, reversible=reversible)] = v
 
     return snake_dict
 
 
-def snake_dict_to_camel_dict(snake_dict):
+def _snake_to_camel(snake, capitalize_first=False):
+    if capitalize_first:
+        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
+    else:
+        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
 
-    def camelize(complex_type):
+
+def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
+    """
+    Perhaps unexpectedly, snake_dict_to_camel_dict returns dromedaryCase
+    rather than true CamelCase. Passing capitalize_first=True returns
+    CamelCase. The default remains False as that was the original implementation
+    """
+
+    def camelize(complex_type, capitalize_first=False):
         if complex_type is None:
             return
         new_type = type(complex_type)()
         if isinstance(complex_type, dict):
             for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
+                new_type[_snake_to_camel(key, capitalize_first)] = camelize(complex_type[key], capitalize_first)
         elif isinstance(complex_type, list):
             for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
+                new_type.append(camelize(complex_type[i], capitalize_first))
         else:
             return complex_type
         return new_type
 
-    def camel(words):
-        return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
-
-    return camelize(snake_dict)
+    return camelize(snake_dict, capitalize_first)
 
 
 def ansible_dict_to_boto3_filter_list(filters_dict):

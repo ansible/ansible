@@ -16,15 +16,11 @@ module: aci_tenant
 short_description: Manage tenants on Cisco ACI fabrics (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:Tenant) at U(https://developer.cisco.com/media/mim-ref/MO-fvTenant.html).
+- More information from the internal APIC class I(fv:Tenant) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   tenant:
     description:
@@ -47,7 +43,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -56,7 +52,7 @@ EXAMPLES = r'''
 
 - name: Remove a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -64,7 +60,7 @@ EXAMPLES = r'''
 
 - name: Query a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -72,7 +68,7 @@ EXAMPLES = r'''
 
 - name: Query all tenants
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -82,17 +78,18 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -109,7 +106,14 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class="tenant")
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+    )
     aci.get_existing()
 
     if state == 'present':

@@ -81,10 +81,10 @@ commands:
     type: list
     sample: ["vrf context ntc", "address-family ipv4 unicast"]
 '''
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.network.common.config import NetworkConfig
 
 
 def main():
@@ -93,8 +93,6 @@ def main():
         afi=dict(required=True, choices=['ipv4', 'ipv6']),
         route_target_both_auto_evpn=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present'),
-
-        m_facts=dict(default=False, type='bool', removed_in_version="2.4"),
         safi=dict(choices=['unicast', 'multicast'], removed_in_version="2.4"),
     )
 

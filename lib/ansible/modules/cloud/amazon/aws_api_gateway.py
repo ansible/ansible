@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: aws_api_gateway
 short_description: Manage AWS API Gateway APIs
 description:
-     - Allows for the management of API Gatway APIs
+     - Allows for the management of API Gateway APIs
      - Normally you should give the api_id since there is no other
        stable guaranteed unique identifier for the API.  If you do
        not give api_id then a new API will be create each time
@@ -63,6 +63,7 @@ author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
     - aws
+    - ec2
 notes:
    - A future version of this module will probably use tags or another
      ID so that an API can be create only once.
@@ -73,7 +74,6 @@ notes:
 
 EXAMPLES = '''
 # Update API resources for development
-tasks:
 - name: update API
   aws_api_gateway:
     api_id: 'abc123321cba'
@@ -81,7 +81,6 @@ tasks:
     swagger_file: my_api.yml
 
 # update definitions and deploy API to production
-tasks:
 - name: deploy API
   aws_api_gateway:
     api_id: 'abc123321cba'

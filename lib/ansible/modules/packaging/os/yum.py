@@ -24,19 +24,17 @@ description:
 options:
   name:
     description:
-      - Package name, or package specifier with version, like C(name-1.0).
-        If a previous version is specified, the task also needs to turn
-        C(allow_downgrade) on. See the C(allow_downgrade) documentation for
-        caveats with downgrading packages. When using state=latest, this can
-        be '*' which means run C(yum -y update).  You can also pass a url
-        or a local path to a rpm file (using state=present). To operate on
-        several packages this can accept a comma separated list of packages
-        or (as of 2.0) a list of packages.
+      - A package name , or package specifier with version, like C(name-1.0).
+      - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
+        See the C(allow_downgrade) documentation for caveats with downgrading packages.
+      - When using state=latest, this can be '*' which means run C(yum -y update).
+      - You can also pass a url or a local path to a rpm file (using state=present).
+        To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
     required: true
     aliases: [ pkg ]
   exclude:
     description:
-      - "Package name(s) to exclude when state=present, or latest"
+      - Package name(s) to exclude when state=present, or latest
     version_added: "2.0"
   list:
     description:
@@ -129,11 +127,21 @@ options:
     type: bool
     default: "no"
     version_added: "2.4"
+  enable_plugin:
+    description:
+      - I(Plugin) name to enable for the install/update operation.
+        The enabled plugin will not persist beyond the transaction.
+    required: false
+    version_added: "2.5"
+  disable_plugin:
+    description:
+      - I(Plugin) name to disable for the install/update operation.
+        The disabled plugins will not persist beyond the transaction.
+    required: false
+    version_added: "2.5"
 notes:
-  - When used with a loop of package names in a playbook, ansible optimizes
-    the call to the yum module.  Instead of calling the module with a single
-    package each time through the loop, ansible calls the module once with all
-    of the package names from the loop.
+  - When used with a `loop:` each package will be processed individually,
+    it is much more efficient to pass the list directly to the `name` option.
   - In versions prior to 1.9.2 this module installed and removed each package
     given to the yum module separately. This caused problems when packages
     specified by filename or url had to be installed or removed together. In
@@ -157,9 +165,9 @@ requirements:
 author:
     - Ansible Core Team
     - Seth Vidal
-    - Eduard Snesarev (github.com/verm666)
-    - Berend De Schouwer (github.com/berenddeschouwer)
-    - Abhijeet Kasurde (github.com/akasurde)
+    - Eduard Snesarev (@verm666)
+    - Berend De Schouwer (@berenddeschouwer)
+    - Abhijeet Kasurde (@Akasurde)
 '''
 
 EXAMPLES = '''
@@ -219,6 +227,16 @@ EXAMPLES = '''
   yum:
     list: ansible
   register: result
+
+- name: Install package with multiple repos enabled
+  yum:
+    name: sos
+    enablerepo: "epel,ol7_latest"
+
+- name: Install package with multiple repos disabled
+  yum:
+    name: sos
+    disablerepo: "epel,ol7_latest"
 '''
 
 import os
@@ -260,7 +278,7 @@ def yum_base(conf_file=None, installroot='/'):
     my.preconf.debuglevel = 0
     my.preconf.errorlevel = 0
     my.preconf.plugins = True
-    #my.preconf.releasever = '/'
+    # my.preconf.releasever = '/'
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -322,10 +340,10 @@ def po_to_envra(po):
     return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
 
-def is_group_env_installed(name):
+def is_group_env_installed(name, conf_file, installroot='/'):
     name_lower = name.lower()
 
-    my = yum_base()
+    my = yum_base(conf_file, installroot)
     if yum.__version__ >= '3.4':
         groups_list = my.doGroupLists(return_evgrps=True)
     else:
@@ -347,11 +365,13 @@ def is_group_env_installed(name):
     return False
 
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
+def is_installed(module, repoq, pkgspec, conf_file, qf=None, en_repos=None, dis_repos=None, is_pkg=False, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
         dis_repos = []
+    if qf is None:
+        qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}\n"
 
     if not repoq:
         pkgs = []
@@ -604,6 +624,8 @@ def local_envra(path):
     fd = os.open(path, os.O_RDONLY)
     try:
         header = ts.hdrFromFdno(fd)
+    except rpm.error as e:
+        return None
     finally:
         os.close(fd)
 
@@ -664,15 +686,18 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
 
     if stuff == 'installed':
         return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'updates':
+
+    if stuff == 'updates':
         return [pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'available':
+
+    if stuff == 'available':
         return [pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip()]
-    elif stuff == 'repos':
+
+    if stuff == 'repos':
         return [dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip()]
-    else:
-        return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
-                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+
+    return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) +
+                                           is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
 
 def exec_install(module, items, action, pkgs, res, yum_basecmd):
@@ -739,6 +764,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
             # most common case is the pkg is already installed
             envra = local_envra(package)
+            if envra is None:
+                module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
             installed_pkgs = is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             if installed_pkgs:
                 res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], package))
@@ -746,6 +773,18 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
             (name, ver, rel, epoch, arch) = splitFilename(envra)
             installed_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+
+            # case for two same envr but differrent archs like x86_64 and i686
+            if len(installed_pkgs) == 2:
+                (cur_name0, cur_ver0, cur_rel0, cur_epoch0, cur_arch0) = splitFilename(installed_pkgs[0])
+                (cur_name1, cur_ver1, cur_rel1, cur_epoch1, cur_arch1) = splitFilename(installed_pkgs[1])
+                cur_epoch0 = cur_epoch0 or '0'
+                cur_epoch1 = cur_epoch1 or '0'
+                compare = compareEVR((cur_epoch0, cur_ver0, cur_rel0), (cur_epoch1, cur_ver1, cur_rel1))
+                if compare == 0 and cur_arch0 != cur_arch1:
+                    for installed_pkg in installed_pkgs:
+                        if installed_pkg.endswith(arch):
+                            installed_pkgs = [installed_pkg]
 
             if len(installed_pkgs) == 1:
                 installed_pkg = installed_pkgs[0]
@@ -768,7 +807,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
         # groups
         elif spec.startswith('@'):
-            if is_group_env_installed(spec):
+            if is_group_env_installed(spec, conf_file, installroot=installroot):
                 continue
 
             pkg = spec
@@ -874,7 +913,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     for pkg in items:
         if pkg.startswith('@'):
-            installed = is_group_env_installed(pkg)
+            installed = is_group_env_installed(pkg, conf_file, installroot=installroot)
         else:
             installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
@@ -907,7 +946,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         # at this point we check to see if the pkg is no longer present
         for pkg in pkgs:
             if pkg.startswith('@'):
-                installed = is_group_env_installed(pkg)
+                installed = is_group_env_installed(pkg, conf_file, installroot=installroot)
             else:
                 installed = is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
 
@@ -1021,6 +1060,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 # get the pkg e:name-v-r.arch
                 envra = local_envra(spec)
 
+                if envra is None:
+                    module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
+
                 # local rpm files can't be updated
                 if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     pkgs['install'].append(spec)
@@ -1031,6 +1073,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                 # download package so that we can check if it's already installed
                 package = fetch_rpm_from_url(spec, module=module)
                 envra = local_envra(package)
+
+                if envra is None:
+                    module.fail_json(msg="Failed to get nevra information from RPM package: %s" % spec)
 
                 # local rpm files can't be updated
                 if not is_installed(module, repoq, envra, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
@@ -1115,7 +1160,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
         res['changed'] = True
     elif pkgs['install'] or will_update:
         cmd = yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
-        rc, out, err = module.run_command(cmd)
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(cmd, environ_update=lang_env)
         out_lower = out.strip().lower()
         if not out_lower.endswith("no packages marked for update") and \
                 not out_lower.endswith("nothing to do"):
@@ -1135,7 +1181,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
-           installroot='/', allow_downgrade=False):
+           installroot='/', allow_downgrade=False, disable_plugin='', enable_plugin=''):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1167,6 +1213,12 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         en_repos = enablerepo.split(',')
         r_cmd = ['--enablerepo=%s' % enablerepo]
         yum_basecmd.extend(r_cmd)
+
+    if enable_plugin:
+        yum_basecmd.extend(['--enableplugin', enable_plugin])
+
+    if disable_plugin:
+        yum_basecmd.extend(['--disableplugin', disable_plugin])
 
     if exclude:
         e_cmd = ['--exclude=%s' % exclude]
@@ -1277,6 +1329,8 @@ def main():
             install_repoquery=dict(type='bool', default=True),
             allow_downgrade=dict(type='bool', default=False),
             security=dict(type='bool', default=False),
+            enable_plugin=dict(type='list', default=[]),
+            disable_plugin=dict(type='list', default=[]),
         ),
         required_one_of=[['name', 'list']],
         mutually_exclusive=[['name', 'list']],
@@ -1293,6 +1347,12 @@ def main():
         module.fail_json(msg='. '.join(error_msgs))
 
     params = module.params
+    enable_plugin = params.get('enable_plugin', '')
+    if enable_plugin:
+        enable_plugin = ','.join(enable_plugin)
+    disable_plugin = params.get('disable_plugin', '')
+    if disable_plugin:
+        disable_plugin = ','.join(disable_plugin)
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
@@ -1335,10 +1395,13 @@ def main():
         allow_downgrade = params['allow_downgrade']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, update_only, security, params['installroot'], allow_downgrade)
+                         skip_broken, update_only, security, params['installroot'], allow_downgrade,
+                         disable_plugin=disable_plugin, enable_plugin=enable_plugin)
         if repoquery:
-            results['msg'] = '%s %s' % (results.get('msg', ''),
-                             'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+            results['msg'] = '%s %s' % (
+                results.get('msg', ''),
+                'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.'
+            )
 
     module.exit_json(**results)
 

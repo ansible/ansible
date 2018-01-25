@@ -435,7 +435,7 @@ def _slurp(path):
     return data
 
 
-def _get_shebang(interpreter, task_vars, args=tuple()):
+def _get_shebang(interpreter, task_vars, templar, args=tuple()):
     """
     Note not stellar API:
        Returns None instead of always returning a shebang line.  Doing it this
@@ -448,7 +448,7 @@ def _get_shebang(interpreter, task_vars, args=tuple()):
     if interpreter_config not in task_vars:
         return (None, interpreter)
 
-    interpreter = task_vars[interpreter_config].strip()
+    interpreter = templar.template(task_vars[interpreter_config].strip())
     shebang = u'#!' + interpreter
 
     if args:
@@ -598,8 +598,8 @@ def _is_binary(b_module_data):
     return bool(start.translate(None, textchars))
 
 
-def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, environment):
+def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
+                       become_method, become_user, become_password, become_flags, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -627,9 +627,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         module_style = 'new'
         module_substyle = 'powershell'
         b_module_data = b_module_data.replace(REPLACER_WINDOWS, b'#Requires -Module Ansible.ModuleUtils.Legacy')
-    elif re.search(b'#Requires \-Module', b_module_data, re.IGNORECASE) \
-            or re.search(b'#Requires \-Version', b_module_data, re.IGNORECASE)\
-            or re.search(b'#AnsibleRequires \-OSVersion', b_module_data, re.IGNORECASE):
+    elif re.search(b'#Requires -Module', b_module_data, re.IGNORECASE) \
+            or re.search(b'#Requires -Version', b_module_data, re.IGNORECASE)\
+            or re.search(b'#AnsibleRequires -OSVersion', b_module_data, re.IGNORECASE):
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -732,7 +732,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                        'Look at traceback for that process for debugging information.')
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
-        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars)
+        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars, templar)
         if shebang is None:
             shebang = u'#!/usr/bin/python'
 
@@ -787,6 +787,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = become_user
             exec_manifest["become_password"] = become_password
+            exec_manifest['become_flags'] = become_flags
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         lines = b_module_data.split(b'\n')
@@ -796,9 +797,9 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         min_ps_version = None
 
         requires_module_list = re.compile(to_bytes(r'(?i)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'))
-        requires_ps_version = re.compile(to_bytes('(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_os_version = re.compile(to_bytes('(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
-        requires_become = re.compile(to_bytes('(?i)^#ansiblerequires\s+\-become$'))
+        requires_ps_version = re.compile(to_bytes(r'(?i)^#requires\s+\-version\s+([0-9]+(\.[0-9]+){0,3})$'))
+        requires_os_version = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-osversion\s+([0-9]+(\.[0-9]+){0,3})$'))
+        requires_become = re.compile(to_bytes(r'(?i)^#ansiblerequires\s+\-become$'))
 
         for line in lines:
             module_util_line_match = requires_module_list.match(line)
@@ -842,6 +843,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = "SYSTEM"
             exec_manifest["become_password"] = None
+            exec_manifest['become_flags'] = None
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
@@ -871,8 +873,8 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
-def modify_module(module_name, module_path, module_args, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, environment=None):
+def modify_module(module_name, module_path, module_args, task_vars=None, templar=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -901,9 +903,9 @@ def modify_module(module_name, module_path, module_args, task_vars=None, module_
         # read in the module source
         b_module_data = f.read()
 
-    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, module_compression,
+    (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password,
+                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
                                                                 environment=environment)
 
     if module_style == 'binary':
@@ -916,7 +918,7 @@ def modify_module(module_name, module_path, module_args, task_vars=None, module_
             interpreter = args[0]
             interpreter = to_bytes(interpreter)
 
-            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, args[1:])[0], errors='surrogate_or_strict', nonstring='passthru')
+            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0], errors='surrogate_or_strict', nonstring='passthru')
             if new_shebang:
                 lines[0] = shebang = new_shebang
 

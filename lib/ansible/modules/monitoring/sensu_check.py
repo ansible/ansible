@@ -281,12 +281,12 @@ def sensu_check(module, path, name, state='present', backup=False):
         if module.params['custom']:
             # Convert to json
             custom_params = module.params['custom']
-            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
+            overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type', 'subdue', 'subdue_begin', 'subdue_end'])
             if overwrited_fields:
                 msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
                 module.fail_json(msg=msg)
 
-            for k,v in custom_params.items():
+            for k, v in custom_params.items():
                 if k in config['checks'][name]:
                     if not config['checks'][name][k] == v:
                         changed = True
@@ -298,7 +298,7 @@ def sensu_check(module, path, name, state='present', backup=False):
             simple_opts += custom_params.keys()
 
         # Remove obsolete custom params
-        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue','subdue_begin','subdue_end']):
+        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type', 'subdue', 'subdue_begin', 'subdue_end']):
             changed = True
             reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
             del check[opt]
@@ -345,30 +345,30 @@ def sensu_check(module, path, name, state='present', backup=False):
 
 def main():
 
-    arg_spec = {'name':         {'type': 'str', 'required': True},
-                'path':         {'type': 'str', 'default': '/etc/sensu/conf.d/checks.json'},
-                'state':        {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
-                'backup':       {'type': 'bool', 'default': 'no'},
-                'command':      {'type': 'str'},
-                'handlers':     {'type': 'list'},
-                'subscribers':  {'type': 'list'},
-                'interval':     {'type': 'int'},
-                'timeout':      {'type': 'int'},
-                'ttl':          {'type': 'int'},
-                'handle':       {'type': 'bool'},
+    arg_spec = {'name': {'type': 'str', 'required': True},
+                'path': {'type': 'str', 'default': '/etc/sensu/conf.d/checks.json'},
+                'state': {'type': 'str', 'default': 'present', 'choices': ['present', 'absent']},
+                'backup': {'type': 'bool', 'default': 'no'},
+                'command': {'type': 'str'},
+                'handlers': {'type': 'list'},
+                'subscribers': {'type': 'list'},
+                'interval': {'type': 'int'},
+                'timeout': {'type': 'int'},
+                'ttl': {'type': 'int'},
+                'handle': {'type': 'bool'},
                 'subdue_begin': {'type': 'str'},
-                'subdue_end':   {'type': 'str'},
+                'subdue_end': {'type': 'str'},
                 'dependencies': {'type': 'list'},
-                'metric':       {'type': 'bool', 'default': 'no'},
-                'standalone':   {'type': 'bool'},
-                'publish':      {'type': 'bool'},
-                'occurrences':  {'type': 'int'},
-                'refresh':      {'type': 'int'},
-                'aggregate':    {'type': 'bool'},
-                'low_flap_threshold':  {'type': 'int'},
+                'metric': {'type': 'bool', 'default': 'no'},
+                'standalone': {'type': 'bool'},
+                'publish': {'type': 'bool'},
+                'occurrences': {'type': 'int'},
+                'refresh': {'type': 'int'},
+                'aggregate': {'type': 'bool'},
+                'low_flap_threshold': {'type': 'int'},
                 'high_flap_threshold': {'type': 'int'},
-                'custom':   {'type': 'dict'},
-                'source':   {'type': 'str'},
+                'custom': {'type': 'dict'},
+                'source': {'type': 'str'},
                 }
 
     required_together = [['subdue_begin', 'subdue_end']]

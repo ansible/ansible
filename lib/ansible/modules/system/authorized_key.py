@@ -225,7 +225,6 @@ from operator import itemgetter
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.urls import fetch_url
 
 
@@ -312,11 +311,10 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     try:
         user_entry = pwd.getpwnam(user)
-    except KeyError:
-        e = get_exception()
+    except KeyError as e:
         if module.check_mode and path is None:
             module.fail_json(msg="Either user must exist or you must provide full path to key file in check mode")
-        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, to_native(e)))
     if path is None:
         homedir = user_entry.pw_dir
         sshdir = os.path.join(homedir, ".ssh")
@@ -404,7 +402,7 @@ def parsekey(module, raw_key, rank=None):
     type_index = None   # index of keytype in key string|list
 
     # remove comment yaml escapes
-    raw_key = raw_key.replace('\#', '#')
+    raw_key = raw_key.replace(r'\#', '#')
 
     # split key safely
     lex = shlex.shlex(raw_key)
@@ -475,9 +473,8 @@ def writefile(module, filename, content):
 
     try:
         f.write(content)
-    except IOError:
-        e = get_exception()
-        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+    except IOError as e:
+        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
 

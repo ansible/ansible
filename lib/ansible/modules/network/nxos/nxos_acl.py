@@ -172,7 +172,7 @@ options:
     required: false
     default: null
     choices: ['enable']
-  time-range:
+  time_range:
     description:
       - Name of time-range to apply.
     required: false
@@ -220,8 +220,8 @@ commands:
     type: list
     sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
 '''
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -428,14 +428,7 @@ def main():
                                            'cs1', 'cs2', 'cs3', 'cs4',
                                            'cs5', 'cs6', 'cs7', 'default',
                                            'ef']),
-        state=dict(choices=['absent', 'present', 'delete_acl'], default='present'),
-        protocol=dict(choices=['http', 'https'], default='http'),
-        host=dict(required=True),
-        username=dict(type='str'),
-        password=dict(no_log=True, type='str'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present', 'delete_acl'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

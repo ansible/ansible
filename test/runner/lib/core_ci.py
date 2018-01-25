@@ -36,7 +36,7 @@ AWS_ENDPOINTS = {
 
 class AnsibleCoreCI(object):
     """Client for Ansible Core CI services."""
-    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None):
+    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None, provider=None):
         """
         :type args: EnvironmentConfig
         :type platform: str
@@ -57,23 +57,42 @@ class AnsibleCoreCI(object):
         self.max_threshold = 1
         self.name = name if name else '%s-%s' % (self.platform, self.version)
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
+        self.resource = 'jobs'
 
-        aws_platforms = (
-            'aws',
-            'azure',
-            'windows',
-            'freebsd',
-            'rhel',
-            'vyos',
-            'junos',
-            'ios',
+        # Assign each supported platform to one provider.
+        # This is used to determine the provider from the platform when no provider is specified.
+        providers = dict(
+            aws=(
+                'aws',
+                'windows',
+                'freebsd',
+                'vyos',
+                'junos',
+                'ios',
+            ),
+            azure=(
+                'azure',
+                'rhel',
+            ),
+            parallels=(
+                'osx',
+            ),
         )
 
-        osx_platforms = (
-            'osx',
-        )
+        if provider:
+            # override default provider selection (not all combinations are valid)
+            self.provider = provider
+        else:
+            for candidate in providers:
+                if platform in providers[candidate]:
+                    # assign default provider based on platform
+                    self.provider = candidate
+                    break
 
-        if self.platform in aws_platforms:
+        if self.provider in ('aws', 'azure'):
+            if self.provider != 'aws':
+                self.resource = self.provider
+
             if args.remote_aws_region:
                 # permit command-line override of region selection
                 region = args.remote_aws_region
@@ -97,7 +116,7 @@ class AnsibleCoreCI(object):
             else:
                 self.ssh_key = SshKey(args)
                 self.port = 22
-        elif self.platform in osx_platforms:
+        elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
             self.max_threshold = 6
 
@@ -106,7 +125,7 @@ class AnsibleCoreCI(object):
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 
-        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s' % (self.name, self.stage))
+        self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if persist and load and self._load():
             try:
@@ -292,7 +311,7 @@ class AnsibleCoreCI(object):
 
     @property
     def _uri(self):
-        return '%s/%s/jobs/%s' % (self.endpoint, self.stage, self.instance_id)
+        return '%s/%s/%s/%s' % (self.endpoint, self.stage, self.resource, self.instance_id)
 
     def _start(self, auth):
         """Start instance."""

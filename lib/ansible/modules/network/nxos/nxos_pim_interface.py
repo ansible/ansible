@@ -54,6 +54,9 @@ options:
     required: false
     default: true
     choices: ['true', 'false']
+  dr_prio:
+    description:
+      - Configures priority for PIM DR election on interface.
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.
@@ -149,8 +152,8 @@ commands:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.six import string_types
 
 

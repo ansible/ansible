@@ -1,26 +1,24 @@
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch
-from ansible.module_utils import basic
+import pytest
 
 from ansible.modules.packaging.language import pip
 
-from ..utils import (set_module_args, AnsibleFailJson, exit_json, fail_json)
+
+pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 
 
-class TestPip(unittest.TestCase):
+@pytest.mark.parametrize('patch_ansible_module', [{'name': 'six'}], indirect=['patch_ansible_module'])
+def test_failure_when_pip_absent(mocker, capfd):
+    get_bin_path = mocker.patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
+    get_bin_path.return_value = None
 
-    def setUp(self):
-        self.mock_ansible_module = patch.multiple(basic.AnsibleModule, exit_json=exit_json, fail_json=fail_json)
-        self.mock_ansible_module.start()
-        self.addCleanup(self.mock_ansible_module.stop)
+    with pytest.raises(SystemExit):
+        pip.main()
 
-    @patch.object(basic.AnsibleModule, 'get_bin_path')
-    def test_failure_when_pip_absent(self, mock_get_bin_path):
-
-        mock_get_bin_path.return_value = None
-
-        with self.assertRaises(AnsibleFailJson):
-            set_module_args({'name': 'six'})
-            pip.main()
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results['failed']
+    assert 'pip needs to be installed' in results['msg']

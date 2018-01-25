@@ -171,13 +171,13 @@ There are other places where variables can come from, but these are a type of va
 
 Facts are information derived from speaking with your remote systems.
 
-An example of this might be the ip address of the remote host, or what the operating system is. 
+An example of this might be the IP address of the remote host, or what the operating system is. 
 
 To see what information is available, try the following::
 
     ansible hostname -m setup
 
-This will return a ginormous amount of variable data, which may look like this, as taken from Ansible 1.4 on a Ubuntu 12.04 system
+This will return a large amount of variable data, which may look like this, as taken from Ansible 1.4 running on a Ubuntu 12.04 system
 
 .. code-block: json
 
@@ -850,21 +850,20 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
  * connection variables (``ansible_user``, etc.)
  * extra vars (``-e`` in the command line) always win
 
-.. note:: 
-
-    In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
-
-In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+In Ansible version 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
   * inventory file or script group vars [2]_
-  * inventory group_vars/all
-  * playbook group_vars/all
-  * inventory group_vars/*
-  * playbook group_vars/*
+  * inventory group_vars/all [3]_
+  * playbook group_vars/all [3]_
+  * inventory group_vars/* [3]_
+  * playbook group_vars/* [3]_
   * inventory file or script host vars [2]_
   * inventory host_vars/*
   * playbook host_vars/*
+  * host facts / cached set_facts [4]_
+  * inventory host_vars/* [3]_
+  * playbook host_vars/* [3]_
   * host facts
   * play vars
   * play vars_prompt
@@ -884,6 +883,9 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 
 .. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
+.. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
+.. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
+       but will be the same as a host facts precedence when they come from the cache.
 
 .. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
@@ -923,7 +925,7 @@ You can also override as a normal variable in a play::
 Variable Scopes
 ````````````````
 
-Ansible has 3 main scopes:
+Ansible has three main scopes:
 
  * Global: this is set by config, environment variables and the command line
  * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
@@ -934,9 +936,9 @@ Ansible has 3 main scopes:
 Variable Examples
 `````````````````
 
-That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
+ Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
-First off, group variables are super powerful.
+First off, group variables are powerful.
 
 Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
@@ -968,8 +970,8 @@ Next up: learning about role variable precedence.
 We'll pretty much assume you are using roles at this point.  You should be using roles for sure.  Roles are great.  You are using
 roles aren't you?  Hint hint.  
 
-Ok, so if you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
-the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
+If you are writing a redistributable role with reasonable defaults, put those in the ``roles/x/defaults/main.yml`` file.  This means
+the role will bring along a default value but ANYTHING in Ansible will override it. 
 See :doc:`playbooks_reuse_roles` for more info about this::
 
     ---
@@ -985,7 +987,7 @@ by inventory, you should put it in ``roles/x/vars/main.yml`` like so, and invent
     # this will absolutely be used in this role
     http_port: 80
 
-So the above is a great way to plug in constants about the role that are always true.  If you are not sharing your role with others,
+This is one way to plug in constants about the role that are always true.  If you are not sharing your role with others,
 app specific behaviors like ports is fine to put in here.  But if you are sharing roles with others, putting variables in here might
 be bad. Nobody will be able to override them with inventory, but they still can by passing a parameter to the role.
 
@@ -1000,8 +1002,7 @@ This makes it clear to the playbook reader that you've made a conscious choice t
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
 role you are sharing with others.
 
-This can often be used for things that might apply to some hosts multiple times,
-like so::
+This can often be used for things that might apply to some hosts multiple times. For example::
 
     roles:
        - { role: app_user, name: Ian    }
@@ -1009,12 +1010,10 @@ like so::
        - { role: app_user, name: Graham }
        - { role: app_user, name: John   }
 
-That's a bit arbitrary, but you can see how the same role was invoked multiple times.  In that example it's quite likely there was
-no default for 'name' supplied at all.  Ansible can yell at you when variables aren't defined -- it's the default behavior in fact.
+In this example, the same role was invoked multiple times.  It's quite likely there was
+no default for 'name' supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
 
-So that's a bit about roles.
-
-There are a few bonus things that go on with roles.
+There are a few other things that go on with roles.
 
 Generally speaking, variables set in one role are available to others.  This means if you have a ``roles/common/vars/main.yml`` you
 can set variables in there and make use of them in other roles and elsewhere in your playbook::
