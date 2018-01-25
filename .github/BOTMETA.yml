@@ -898,6 +898,14 @@ files:
     labels:
     - cloud
     - openstack
+  contrib/inventory/infoblox.py:
+    keywords:
+      - infoblox dynamic inventory script
+    labels:
+      - ipam
+      - infoblox
+      - networking
+    maintainers: $team_networking
   contrib/inventory/azure_rm.py:
     keywords:
     - azure inventory
