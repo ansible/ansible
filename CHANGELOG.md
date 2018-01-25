@@ -25,6 +25,8 @@ Ansible Changes By Release
 * fix vxlan idempotent issue in nxos_vxlan_vtep: https://github.com/ansible/ansible/pull/34750
 * Fix win_dns_client to allow setting dynamic IP from static IP
   (https://github.com/ansible/ansible/pull/35149)
+* Fix azure_rm_subnet absent idempotency issues
+  (https://github.com/ansible/ansible/pull/35037)
 
 
 <a id="2.4.3"></a>
