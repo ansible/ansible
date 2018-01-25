@@ -8,6 +8,16 @@
     authorize: yes
   register: result
 
+- name: Setup - Ensure interfaces are switchport
+  ios_config:
+    lines:
+      - no shutdown
+    parents:
+      - "interface {{ item }}"
+  loop:
+    - "{{ test_interface }}"
+    - "{{ test_interface2 }}"
+
 - name: Configure interface ipv4 address
   ios_l3_interface:
     name: "{{ test_interface }}"
