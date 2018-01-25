@@ -36,6 +36,7 @@ lib/ansible/modules/cloud/amazon/sts_assume_role.py E317
 lib/ansible/modules/cloud/atomic/atomic_container.py E317
 lib/ansible/modules/cloud/azure/azure_rm_availabilityset_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E322
+lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E322
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_functionapp.py E322
 lib/ansible/modules/cloud/azure/azure_rm_managed_disk_facts.py E322
