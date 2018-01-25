@@ -10,15 +10,15 @@ Set-StrictMode -Version 2.0
 
 # Functions
 function Test-Admin {
-        $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-        $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+    $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+    $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
 
-        return $IsAdmin
+    return $IsAdmin
 }
 
 # Check admin rights
 if (-not (Test-Admin)) {
-    Fail-Json -message "Cmdlet was not started with elevated rights"
+    Fail-Json -obj @{} -message "Module was not started with elevated rights"
 }
 
 # Create a new result object
