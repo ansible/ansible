@@ -4,8 +4,8 @@
   ios_banner:
     banner: motd
     state: absent
-    provider: "{{ cli }}"
     authorize: yes
+
 
 - name: Set motd
   ios_banner:
@@ -16,7 +16,7 @@
       string
     state: present
     authorize: yes
-    provider: "{{ cli }}"
+
   register: result
 
 - debug:
@@ -36,7 +36,7 @@
       string
     state: present
     authorize: yes
-    provider: "{{ cli }}"
+
   register: result
 
 - assert:

@@ -5,15 +5,16 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.ArgvParser
 
 $ErrorActionPreference = 'Stop'
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str"
+$arguments = Get-AnsibleParam -obj $params -name "arguments"
 $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
 $name = Get-AnsibleParam -obj $params -name "name" -type "str"
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
@@ -32,9 +33,26 @@ $result = @{
     restart_required = $false # deprecate in 2.6
 }
 
+if ($arguments -ne $null) {
+    # convert a list to a string and escape the values
+    if ($arguments -is [array]) {
+        $arguments = Argv-ToString -arguments $arguments
+    }
+}
+
 if (-not $validate_certs) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 }
+
+# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
+$security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
+if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
+    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
+}
+if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
+    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
+}
+[Net.ServicePointManager]::SecurityProtocol = $security_protcols
 
 $credential = $null
 if ($username -ne $null) {
@@ -70,42 +88,6 @@ if ($path -eq $null) {
 if ($creates_version -ne $null -and $creates_path -eq $null) {
     Fail-Json -obj $result -Message "creates_path must be set when creates_version is set"
 }
-
-# run module
-# used when installing a local process
-$process_util = @"
-using System;
-using System.IO;
-using System.Threading;
-
-namespace Ansible {
-    public static class ProcessUtil {
-
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr) {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            string so = null, se = null;
-
-            ThreadPool.QueueUserWorkItem((s) => {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) => {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach (var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
-        }
-    }
-}
-"@
 
 $msi_tools = @"
 using System;
@@ -161,36 +143,6 @@ Function Download-File($url, $path) {
     }
 }
 
-Function Run-Process($executable, $arguments) {
-    Add-Type -TypeDefinition $process_util
-    $proc = New-Object -TypeName System.Diagnostics.Process
-    $psi = $proc.StartInfo
-    $psi.FileName = $executable
-    $psi.Arguments = $arguments
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-
-    try {
-        $proc.Start() | Out-Null
-    } catch [System.ComponentModel.Win32Exception] {
-        Fail-Json $result "failed to start executable $($executable): $($_.Exception.Message)"
-    }
-
-    $stdout = [string]$null
-    $stderr = [string]$null
-    [Ansible.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-    $proc.WaitForExit() | Out-Null
-
-    $process_result = @{
-        stdout = $stdout
-        stderr = $stderr
-        rc = $proc.ExitCode
-    }
-
-    return $process_result
-}
-
 Function Test-RegistryProperty($path, $name) {
     # will validate if the registry key contains the property, returns true
     # if the property exists and false if the property does not
@@ -221,7 +173,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, $credential, $creates_p
 
     # set the location type and validate the path
     if ($path -ne $null) {
-        if ($path.EndsWith(".msi")) {
+        if ($path.EndsWith(".msi", [System.StringComparison]::CurrentCultureIgnoreCase)) {
             $metadata.msi = $true
         } else {
             $metadata.msi = $false
@@ -384,8 +336,7 @@ if ($state -eq "absent") {
             }
 
             if ($program_metadata.msi -eq $true) {
-                # we are installing an msi
-                $uninstall_exe = "$env:windir\system32\msiexec.exe"
+                # we are uninstalling an msi
                 $temp_path = [System.IO.Path]::GetTempPath()
                 $log_file = [System.IO.Path]::GetRandomFileName()
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
@@ -394,28 +345,27 @@ if ($state -eq "absent") {
                 if ($program_metadata.product_id -ne $null) {
                     $id = $program_metadata.product_id
                 } else {
-                    $id = "`"$local_path`""`
+                    $id = $local_path
                 }
 
-                $uninstall_arguments = @("/x", $id, "/L*V", "`"$log_path`"", "/qn", "/norestart")
-                if ($arguments -ne $null) {
-                    $uninstall_arguments += $arguments
-                }
-                $uninstall_arguments = $uninstall_arguments -join " "
+                $uninstall_arguments = @("$env:windir\system32\msiexec.exe", "/x", $id, "/L*V", $log_path, "/qn", "/norestart")
             } else {
                 $log_path = $null
-
-                $uninstall_exe = $local_path
-                if ($arguments -ne $null) {
-                    $uninstall_arguments = $arguments
-                } else {
-                    $uninstall_arguments = ""
-                }
+                $uninstall_arguments = @($local_path)
             }
 
             if (-not $check_mode) {
-                $process_result = Run-Process -executable $uninstall_exe -arguments $uninstall_arguments
+                $uninstall_command = Argv-ToString -arguments $uninstall_arguments
+                if ($arguments -ne $null) {
+                    $uninstall_command += " $arguments"
+                }
                 
+                try {
+                    $process_result = Run-Command -command $uninstall_command
+                } catch {
+                    Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
+                }
+
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
@@ -430,7 +380,7 @@ if ($state -eq "absent") {
                     if ($log_content -ne $null) {
                         $result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see exit_code, stdout and stderr for more details"
+                    Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details"
                 } else {
                     $result.failed = $false
                 }
@@ -474,32 +424,30 @@ if ($state -eq "absent") {
                 $local_path = $path
             }
 
-
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                $install_exe = "$env:windir\system32\msiexec.exe"
                 $temp_path = [System.IO.Path]::GetTempPath()
                 $log_file = [System.IO.Path]::GetRandomFileName()
                 $log_path = Join-Path -Path $temp_path -ChildPath $log_file
                 
                 $cleanup_artifacts += $log_path
-                $install_arguments = @("/i", "`"$($local_path)`"", "/L*V", "`"$log_path`"", "/qn", "/norestart")
-                if ($arguments -ne $null) {
-                    $install_arguments += $arguments
-                }
-                $install_arguments = $install_arguments -join " "
+                $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
                 $log_path = $null                
-                $install_exe = $local_path
-                if ($arguments -ne $null) {
-                    $install_arguments = $arguments
-                } else {
-                    $install_arguments = ""
-                }
+                $install_arguments = @($local_path)
             }
 
             if (-not $check_mode) {
-                $process_result = Run-Process -executable $install_exe -arguments $install_arguments
+                $install_command = Argv-ToString -arguments $install_arguments
+                if ($arguments -ne $null) {
+                    $install_command += " $arguments"
+                }
+                
+                try {
+                    $process_result = Run-Command -command $install_command
+                } catch {
+                    Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
+                }
                 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
@@ -515,7 +463,7 @@ if ($state -eq "absent") {
                     if ($log_content -ne $null) {
                         $result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see exit_code, stdout and stderr for more details"
+                    Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details"
                 } else {
                     $result.failed = $false
                 }

@@ -26,7 +26,7 @@ description:
 options:
   free_form:
     description:
-      - path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
+      - Path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
     required: true
     default: null
     aliases: []
@@ -53,6 +53,7 @@ notes:
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
   - This module is also supported for Windows targets.
+  - If the path to the local script contains spaces, it needs to be quoted.
 author:
     - Ansible Core Team
     - Michael DeHaan

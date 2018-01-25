@@ -83,10 +83,21 @@ options:
     type: bool
     default: 'yes'
     version_added: '2.4'
+  hive:
+    description:
+    - A path to a hive key like C:\Users\Default\NTUSER.DAT to load in the
+      registry.
+    - This hive is loaded under the HKLM:\ANSIBLE key which can then be used
+      in I(name) like any other path.
+    - This can be used to load the default user profile registry hive or any
+      other hive saved as a file.
+    - Using this function requires the user to have the C(SeRestorePrivilege)
+      and C(SeBackupPrivilege) privileges enabled.
+    version_added: '2.5'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
-- Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths.
+- Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths in the root folder.
 - Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
 author:
 - Adam Keech (@smadam813)
@@ -178,6 +189,15 @@ EXAMPLES = r'''
     path: HKCU:\Software\MyCompany
     name: hello
     state: absent
+
+- name: Change default mouse trailing settings for new users
+  win_regedit:
+    path: HKLM:\ANSIBLE\Control Panel\Mouse
+    name: MouseTrails
+    data: 10
+    type: string
+    state: present
+    hive: C:\Users\Default\NTUSER.dat
 '''
 
 RETURN = r'''

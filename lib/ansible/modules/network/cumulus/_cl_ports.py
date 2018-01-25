@@ -99,7 +99,7 @@ def hash_existing_ports_conf(module):
     except IOError as e:
         _msg = "Failed to open %s: %s" % (PORTS_CONF, to_native(e))
         module.fail_json(msg=_msg)
-        return # for testing only should return on module.fail_json
+        return  # for testing only should return on module.fail_json
 
     for _line in existing_ports_conf:
         _m0 = re.match(r'^(\d+)=(\w+)', _line)
@@ -129,7 +129,7 @@ def generate_new_ports_conf_hash(module):
                         port_setting
                 else:
                     int_range = map(int, port_range_str)
-                    portnum_range = range(int_range[0], int_range[1]+1)
+                    portnum_range = range(int_range[0], int_range[1] + 1)
                     for i in portnum_range:
                         new_ports_conf_hash[i] = port_setting
     module.new_ports_hash = new_ports_conf_hash
@@ -159,6 +159,7 @@ def make_copy_of_orig_ports_conf(module):
         _msg = "Failed to save the original %s: %s" % (PORTS_CONF, to_native(e))
         module.fail_json(msg=_msg)
         return  # for testing only
+
 
 def write_to_ports_conf(module):
     """

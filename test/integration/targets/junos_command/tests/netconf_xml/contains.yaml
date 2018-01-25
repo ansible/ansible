@@ -1,5 +1,5 @@
 ---
-- debug: msg="START netconf_xml/contains.yaml"
+- debug: msg="START netconf_xml/contains.yaml on connection={{ ansible_connection }}"
 
 - name: test contains operator with xml encoding
   junos_command:
@@ -18,4 +18,4 @@
       - "result.stdout is defined"
       - "result.stdout_lines is defined"
 
-- debug: msg="END netconf_xml/contains.yaml"
+- debug: msg="END netconf_xml/contains.yaml on connection={{ ansible_connection }}"

@@ -45,6 +45,9 @@ options:
     default: null
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements:
     - boto3
     - botocore
@@ -117,7 +120,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry,
-                                      sort_json_policy_dict, camel_dict_to_snake_dict, HAS_BOTO3)
+                                      camel_dict_to_snake_dict, HAS_BOTO3, compare_policies)
 from ansible.module_utils._text import to_native
 
 
@@ -174,8 +177,8 @@ def get_or_create_policy_version(module, iam, policy, policy_document):
             module.fail_json(msg="Couldn't get policy version %s: %s" % (v['VersionId'], str(e)),
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
-        if sort_json_policy_dict(document) == sort_json_policy_dict(
-                json.loads(policy_document)):
+        # If the current policy matches the existing one
+        if not compare_policies(document, json.loads(to_native(policy_document))):
             return v, False
 
     # No existing version so create one

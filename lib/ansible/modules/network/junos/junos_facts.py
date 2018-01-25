@@ -56,6 +56,7 @@ requirements:
 notes:
   - Ensure I(config_format) used to retrieve configuration from device
     is supported by junos version running on device.
+  - With I(config_format = json), configuration in the results will be a dictionary(and not a JSON string)
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
@@ -77,10 +78,10 @@ ansible_facts:
   type: dict
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args, get_param
-from ansible.module_utils.junos import get_configuration
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import get_configuration, get_connection
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import iteritems
 
 
@@ -116,7 +117,7 @@ class FactsBase(object):
         return str(output.text).strip()
 
     def rpc(self, rpc):
-        return send_request(self.module, Element(rpc))
+        return exec_rpc(self.module, tostring(Element(rpc)))
 
     def get_text(self, ele, tag):
         try:
@@ -155,7 +156,7 @@ class Config(FactsBase):
             config = self.get_text(reply, 'configuration-text')
 
         elif config_format == 'json':
-            config = str(reply.text).strip()
+            config = self.module.from_json(reply.text.strip())
 
         elif config_format == 'set':
             config = self.get_text(reply, 'configuration-set')
@@ -221,7 +222,7 @@ class Interfaces(FactsBase):
     def populate(self):
         ele = Element('get-interface-information')
         SubElement(ele, 'detail')
-        reply = send_request(self.module, ele)
+        reply = exec_rpc(self.module, tostring(ele))
 
         interfaces = {}
 
@@ -308,9 +309,8 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    get_connection(module)
     warnings = list()
-    check_args(module, warnings)
-
     gather_subset = module.params['gather_subset']
     ofacts = False
 
@@ -370,7 +370,6 @@ def main():
         else:
             warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
                          'It can be installed using `pip  install junos-eznc`']
-
     module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 

@@ -44,7 +44,7 @@ results:
     description: List of module results,
     returned: when using a loop.
     type: list
-    sample:[ {changed: True, msg: 'first item changed'}, {changed: False, msg: 'second item ok'}]
+    sample: [{changed: True, msg: 'first item changed'}, {changed: False, msg: 'second item ok'}]
 exception:
     description: Optional information from a handled error.
     returned: on some errors

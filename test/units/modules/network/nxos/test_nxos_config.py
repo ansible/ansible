@@ -21,8 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.compat.tests.mock import patch
 from ansible.modules.network.nxos import nxos_config
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
@@ -33,15 +31,23 @@ class TestNxosConfigModule(TestNxosModule):
     module = nxos_config
 
     def setUp(self):
+        super(TestNxosConfigModule, self).setUp()
+
         self.mock_get_config = patch('ansible.modules.network.nxos.nxos_config.get_config')
         self.get_config = self.mock_get_config.start()
 
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_config.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_config.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N9K-NXOSV'}}
+
     def tearDown(self):
+        super(TestNxosConfigModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.get_config.return_value = load_fixture('nxos_config', 'config.cfg')
@@ -61,6 +67,11 @@ class TestNxosConfigModule(TestNxosModule):
                   'description test interface', 'no shutdown', 'ip routing']
 
         self.assertEqual(sorted(config), sorted(result['commands']), result['commands'])
+
+    def test_nxos_config_replace_src(self):
+        set_module_args(dict(replace_src='config.txt', replace='config'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['config replace config.txt'])
 
     def test_nxos_config_lines(self):
         args = dict(lines=['hostname switch01', 'ip domain-name eng.ansible.com'])
@@ -106,6 +117,11 @@ class TestNxosConfigModule(TestNxosModule):
 
     def test_nxos_config_src_and_lines_fails(self):
         args = dict(src='foo', lines='foo')
+        set_module_args(args)
+        result = self.execute_module(failed=True)
+
+    def test_nxos_config_src_and_parents_fails(self):
+        args = dict(src='foo', parents='foo')
         set_module_args(args)
         result = self.execute_module(failed=True)
 

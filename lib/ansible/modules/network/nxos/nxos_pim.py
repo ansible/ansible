@@ -34,7 +34,8 @@ options:
   ssm_range:
     description:
       - Configure group ranges for Source Specific Multicast (SSM).
-        Valid values are multicast addresses or the keyword 'none'.
+        Valid values are multicast addresses or the keyword 'none'
+        or keyword 'default'
     required: true
 '''
 EXAMPLES = '''
@@ -53,10 +54,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 PARAM_TO_COMMAND_KEYMAP = {
@@ -75,7 +76,9 @@ def get_existing(module, args):
         value = ''
         if has_command:
             value = has_command.group('value')
-        existing[arg] = value
+            if value == '232.0.0.0/8':
+                value = ''  # remove the reserved value
+        existing[arg] = value.split()
     return existing
 
 
@@ -93,8 +96,13 @@ def get_commands(module, existing, proposed, candidate):
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
 
     for key, value in proposed_commands.items():
-        command = '{0} {1}'.format(key, value)
-        commands.append(command)
+        if key == 'ip pim ssm range' and value == 'default':
+            # no cmd needs a value but the actual value does not matter
+            command = 'no ip pim ssm range none'
+            commands.append(command)
+        else:
+            command = '{0} {1}'.format(key, value)
+            commands.append(command)
 
     if commands:
         candidate.add(commands, parents=[])
@@ -102,7 +110,7 @@ def get_commands(module, existing, proposed, candidate):
 
 def main():
     argument_spec = dict(
-        ssm_range=dict(required=True, type='str'),
+        ssm_range=dict(required=True, type='list'),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -114,16 +122,29 @@ def main():
     check_args(module, warnings)
     result = {'changed': False, 'commands': [], 'warnings': warnings}
 
-    splitted_ssm_range = module.params['ssm_range'].split('.')
-    if len(splitted_ssm_range) != 4 and module.params['ssm_range'] != 'none':
-        module.fail_json(msg="Valid ssm_range values are multicast addresses "
-                             "or the keyword 'none'.")
+    ssm_range_list = module.params['ssm_range']
+    for item in ssm_range_list:
+        splitted_ssm_range = item.split('.')
+        if len(splitted_ssm_range) != 4 and item != 'none' and item != 'default':
+            module.fail_json(msg="Valid ssm_range values are multicast addresses "
+                                 "or the keyword 'none' or the keyword 'default'.")
 
     args = PARAM_TO_COMMAND_KEYMAP.keys()
 
     existing = get_existing(module, args)
-    proposed = dict((k, v) for k, v in module.params.items()
-                    if k in args and v != existing[k])
+    proposed_args = dict((k, v) for k, v in module.params.items() if k in args)
+
+    proposed = {}
+    for key, value in proposed_args.items():
+        if key == 'ssm_range':
+            if value[0] == 'default':
+                if existing.get(key):
+                    proposed[key] = 'default'
+            else:
+                v = sorted(set([str(i) for i in value]))
+                ex = sorted(set([str(i) for i in existing.get(key)]))
+                if v != ex:
+                    proposed[key] = ' '.join(str(s) for s in v)
 
     candidate = CustomNetworkConfig(indent=3)
     get_commands(module, existing, proposed, candidate)

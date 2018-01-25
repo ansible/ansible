@@ -21,7 +21,7 @@
   check_mode: yes
 
 - name: get result of task with password principal (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_password_result_check
@@ -29,7 +29,7 @@
 - name: assert results of task with password principal (check mode)
   assert:
     that:
-    - task_with_password_check|changed
+    - task_with_password_check is changed
     - task_with_password_result_check.task_exists == False
 
 - name: task with password principal
@@ -45,7 +45,7 @@
   register: task_with_password
 
 - name: get result of task with password principal
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_password_result
@@ -53,12 +53,12 @@
 - name: assert results of task with password principal
   assert:
     that:
-    - task_with_password|changed
+    - task_with_password is changed
     - task_with_password_result.task_exists == True
-    - task_with_password_result.task.principal.GroupId == None
-    - task_with_password_result.task.principal.LogonType == "TASK_LOGON_PASSWORD"
-    - task_with_password_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_password_result.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_password_result.principal.group_id == None
+    - task_with_password_result.principal.logon_type == "TASK_LOGON_PASSWORD"
+    - task_with_password_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_password_result.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with password principal (idempotent)
   win_scheduled_task:
@@ -75,7 +75,7 @@
 - name: assert results of task with password principal (idempotent)
   assert:
     that:
-    - not task_with_password_again|changed
+    - task_with_password_again is not changed
 
 - name: task with password principal force pass change
   win_scheduled_task:
@@ -92,7 +92,7 @@
 - name: assert results of task with password principal force pass change
   assert:
     that:
-    - task_with_password_force_update|changed
+    - task_with_password_force_update is changed
 
 - name: task with s4u principal (check mode)
   win_scheduled_task:
@@ -108,7 +108,7 @@
   check_mode: yes
 
 - name: get result of task with s4u principal (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_s4u_result_check
@@ -116,12 +116,12 @@
 - name: assert results of task with s4u principal (check mode)
   assert:
     that:
-    - task_with_s4u_check|changed
+    - task_with_s4u_check is changed
     - task_with_s4u_result_check.task_exists == True
-    - task_with_s4u_result_check.task.principal.GroupId == None
-    - task_with_s4u_result_check.task.principal.LogonType == "TASK_LOGON_PASSWORD"
-    - task_with_s4u_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_s4u_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_s4u_result_check.principal.group_id == None
+    - task_with_s4u_result_check.principal.logon_type == "TASK_LOGON_PASSWORD"
+    - task_with_s4u_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_s4u_result_check.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with s4u principal
   win_scheduled_task:
@@ -136,7 +136,7 @@
   register: task_with_s4u
 
 - name: get result of task with s4u principal
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_s4u_result
@@ -144,12 +144,12 @@
 - name: assert results of task with s4u principal
   assert:
     that:
-    - task_with_s4u|changed
+    - task_with_s4u is changed
     - task_with_s4u_result.task_exists == True
-    - task_with_s4u_result.task.principal.GroupId == None
-    - task_with_s4u_result.task.principal.LogonType == "TASK_LOGON_S4U"
-    - task_with_s4u_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_s4u_result.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_s4u_result.principal.group_id == None
+    - task_with_s4u_result.principal.logon_type == "TASK_LOGON_S4U"
+    - task_with_s4u_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_s4u_result.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with s4u principal (idempotent)
   win_scheduled_task:
@@ -166,7 +166,7 @@
 - name: assert results of task with s4u principal (idempotent)
   assert:
     that:
-    - not task_with_s4u_again|changed
+    - task_with_s4u_again is not changed
 
 - name: task with interactive principal (check mode)
   win_scheduled_task:
@@ -180,7 +180,7 @@
   check_mode: yes
 
 - name: get result of task with interactive principal (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_interactive_result_check
@@ -188,12 +188,12 @@
 - name: assert results of task with interactive principal (check mode)
   assert:
     that:
-    - task_with_interactive_check|changed
+    - task_with_interactive_check is changed
     - task_with_interactive_result_check.task_exists == True
-    - task_with_interactive_result_check.task.principal.GroupId == None
-    - task_with_interactive_result_check.task.principal.LogonType == "TASK_LOGON_S4U"
-    - task_with_interactive_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_interactive_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_interactive_result_check.principal.group_id == None
+    - task_with_interactive_result_check.principal.logon_type == "TASK_LOGON_S4U"
+    - task_with_interactive_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_interactive_result_check.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with interactive principal
   win_scheduled_task:
@@ -206,7 +206,7 @@
   register: task_with_interactive
 
 - name: get result of task with interactive principal
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_interactive_result
@@ -214,12 +214,12 @@
 - name: assert results of task with interactive principal
   assert:
     that:
-    - task_with_interactive|changed
+    - task_with_interactive is changed
     - task_with_interactive_result.task_exists == True
-    - task_with_interactive_result.task.principal.GroupId == None
-    - task_with_interactive_result.task.principal.LogonType == "TASK_LOGON_INTERACTIVE_TOKEN"
-    - task_with_interactive_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_interactive_result.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_interactive_result.principal.group_id == None
+    - task_with_interactive_result.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_interactive_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_interactive_result.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with interactive principal (idempotent)
   win_scheduled_task:
@@ -234,7 +234,7 @@
 - name: assert results of task with interactive principal (idempotent)
   assert:
     that:
-    - not task_with_interactive_again|changed
+    - task_with_interactive_again is not changed
 
 - name: task with group principal (check mode)
   win_scheduled_task:
@@ -248,7 +248,7 @@
   check_mode: yes
 
 - name: get result of task with group principal (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_group_result_check
@@ -256,12 +256,12 @@
 - name: assert results of task with group principal (check mode)
   assert:
     that:
-    - task_with_group_check|changed
+    - task_with_group_check is changed
     - task_with_group_result_check.task_exists == True
-    - task_with_group_result_check.task.principal.GroupId == None
-    - task_with_group_result_check.task.principal.LogonType == "TASK_LOGON_INTERACTIVE_TOKEN"
-    - task_with_group_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_group_result_check.task.principal.UserId.endswith(test_scheduled_task_user)
+    - task_with_group_result_check.principal.group_id == None
+    - task_with_group_result_check.principal.logon_type == "TASK_LOGON_INTERACTIVE_TOKEN"
+    - task_with_group_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_group_result_check.principal.user_id.endswith(test_scheduled_task_user)
 
 - name: task with group principal
   win_scheduled_task:
@@ -274,7 +274,7 @@
   register: task_with_group
 
 - name: get result of task with group principal
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_group_result
@@ -282,12 +282,12 @@
 - name: assert results of task with group principal
   assert:
     that:
-    - task_with_group|changed
+    - task_with_group is changed
     - task_with_group_result.task_exists == True
-    - task_with_group_result.task.principal.GroupId == "BUILTIN\\Administrators"
-    - task_with_group_result.task.principal.LogonType == "TASK_LOGON_GROUP"
-    - task_with_group_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_group_result.task.principal.UserId == None
+    - task_with_group_result.principal.group_id == "BUILTIN\\Administrators"
+    - task_with_group_result.principal.logon_type == "TASK_LOGON_GROUP"
+    - task_with_group_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_group_result.principal.user_id == None
 
 - name: task with group principal (idempotent)
   win_scheduled_task:
@@ -302,7 +302,7 @@
 - name: assert results of task with group principal (idempotent)
   assert:
     that:
-    - not task_with_group_again|changed
+    - task_with_group_again is not changed
 
 - name: task with service account principal (check mode)
   win_scheduled_task:
@@ -316,7 +316,7 @@
   check_mode: yes
 
 - name: get result of task with service account principal (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_service_result_check
@@ -324,12 +324,12 @@
 - name: assert results of task with service account principal (check mode)
   assert:
     that:
-    - task_with_service_check|changed
+    - task_with_service_check is changed
     - task_with_service_result_check.task_exists == True
-    - task_with_service_result_check.task.principal.GroupId == "BUILTIN\\Administrators"
-    - task_with_service_result_check.task.principal.LogonType == "TASK_LOGON_GROUP"
-    - task_with_service_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_service_result_check.task.principal.UserId == None
+    - task_with_service_result_check.principal.group_id == "BUILTIN\\Administrators"
+    - task_with_service_result_check.principal.logon_type == "TASK_LOGON_GROUP"
+    - task_with_service_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_service_result_check.principal.user_id == None
 
 - name: task with service account principal
   win_scheduled_task:
@@ -342,7 +342,7 @@
   register: task_with_service
 
 - name: get result of task with service account principal
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_service_result
@@ -350,12 +350,12 @@
 - name: assert results of task with service account principal
   assert:
     that:
-    - task_with_service|changed
+    - task_with_service is changed
     - task_with_service_result.task_exists == True
-    - task_with_service_result.task.principal.GroupId == None
-    - task_with_service_result.task.principal.LogonType == "TASK_LOGON_SERVICE_ACCOUNT"
-    - task_with_service_result.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
-    - task_with_service_result.task.principal.UserId == "NT AUTHORITY\\SYSTEM"
+    - task_with_service_result.principal.group_id == None
+    - task_with_service_result.principal.logon_type == "TASK_LOGON_SERVICE_ACCOUNT"
+    - task_with_service_result.principal.run_level == "TASK_RUNLEVEL_LUA"
+    - task_with_service_result.principal.user_id == "NT AUTHORITY\\SYSTEM"
 
 - name: task with service account principal (idempotent)
   win_scheduled_task:
@@ -370,7 +370,7 @@
 - name: assert results of task with service account principal (idempotent)
   assert:
     that:
-    - not task_with_service_again|changed
+    - task_with_service_again is not changed
 
 - name: task with highest privilege (check mode)
   win_scheduled_task:
@@ -385,7 +385,7 @@
   check_mode: yes
 
 - name: get result of task with highest privilege (check mode)
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_highest_privilege_result_check
@@ -393,8 +393,8 @@
 - name: assert results of task with highest privilege (check mode)
   assert:
     that:
-    - task_with_highest_privilege_check|changed
-    - task_with_highest_privilege_result_check.task.principal.RunLevel == "TASK_RUNLEVEL_LUA"
+    - task_with_highest_privilege_check is changed
+    - task_with_highest_privilege_result_check.principal.run_level == "TASK_RUNLEVEL_LUA"
 
 - name: task with highest privilege
   win_scheduled_task:
@@ -408,7 +408,7 @@
   register: task_with_highest_privilege
 
 - name: get result of task with highest privilege
-  test_task_stat:
+  win_scheduled_task_stat:
     path: \
     name: '{{test_scheduled_task_name}}'
   register: task_with_highest_privilege_result
@@ -416,8 +416,8 @@
 - name: assert results of task with highest privilege
   assert:
     that:
-    - task_with_highest_privilege|changed
-    - task_with_highest_privilege_result.task.principal.RunLevel == "TASK_RUNLEVEL_HIGHEST"
+    - task_with_highest_privilege is changed
+    - task_with_highest_privilege_result.principal.run_level == "TASK_RUNLEVEL_HIGHEST"
 
 - name: task with highest privilege (idempotent)
   win_scheduled_task:
@@ -433,4 +433,4 @@
 - name: assert results of task with highest privilege (idempotent)
   assert:
     that:
-    - not task_with_highest_privilege_again|changed
+    - task_with_highest_privilege_again is not changed

@@ -6,11 +6,10 @@ Conditionals
 
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), or previous task result.
 In some cases, the values of variables may depend on other variables.
-Further, additional groups can be created to manage hosts based on whether the hosts match other criteria.
-There are many options to control execution flow in Ansible.
-More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons
+Additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks.
 
-Let's dig into what they are.
+.. note:: There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
+
 
 .. _the_when_statement:
 
@@ -58,21 +57,20 @@ decide to do something conditionally based on success or failure::
         ignore_errors: True
 
       - command: /bin/something
-        when: result|failed
+        when: result is failed
 
-      # In older versions of ansible use |success, now both are valid but succeeded uses the correct tense.
+      # In older versions of ansible use ``success``, now both are valid but succeeded uses the correct tense.
       - command: /bin/something_else
-        when: result|succeeded
+        when: result is succeeded
 
       - command: /bin/still/something_else
-        when: result|skipped
+        when: result is skipped
 
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
 
-Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
-As a reminder, to see what facts are available on a particular system, you can do::
+As a reminder, to see what facts are available on a particular system, you can do the following::
 
     ansible hostname.example.com -m setup
 
@@ -117,24 +115,24 @@ As the examples show, you don't need to use `{{ }}` to use variables inside cond
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining `when` with loops (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
-          with_items: [ 0, 2, 4, 6, 8, 10 ]
+          loop: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
 If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
 
         - command: echo {{ item }}
-          with_items: "{{ mylist|default([]) }}"
+          loop: "{{ mylist|default([]) }}"
           when: item > 5
 
 
-If using `with_dict` which does not take a list::
+If using a dict in a loop::
 
         - command: echo {{ item.key }}
-          with_dict: "{{ mydict|default({}) }}"
+          loop: "{{ lookup('dict', mydict|default({})) }}"
           when: item.value > 5
 
 .. _loading_in_custom_facts:
@@ -197,7 +195,7 @@ instead, the tasks are executed as expected because the conditional is not appli
 Conditional Imports
 ```````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This is an advanced topic that is infrequently used.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -259,13 +257,12 @@ The following example shows how to template out a configuration file that was ve
 
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
-      with_first_found:
-        - files:
-           - {{ ansible_distribution }}.conf
-           - default.conf
-          paths:
-           - search_location_one/somedir/
-           - /opt/other_location/somedir/
+      loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
+      vars:
+        myfiles:
+          - "{{ansible_distribution}}.conf"
+          -  default.conf
+        mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
 Register Variables
 ``````````````````
@@ -288,14 +285,13 @@ The 'register' keyword decides what variable to save a result in.  The resulting
             when: motd_contents.stdout.find('hi') != -1
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
-The registered result can be used in the "with_items" of a task if it is converted into
+The registered result can be used in the loop of a task if it is converted into
 a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
 well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
 fields::
 
-    - name: registered variable usage as a with_items list
+    - name: registered variable usage as a loop list
       hosts: all
-
       tasks:
 
           - name: retrieve the list of home directories
@@ -304,8 +300,8 @@ fields::
 
           - name: add home dirs to the backup spooler
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-            with_items: "{{ home_dirs.stdout_lines }}"
-            # same as with_items: "{{ home_dirs.stdout.split() }}"
+            loop: "{{ home_dirs.stdout_lines }}"
+            # same as loop: "{{ home_dirs.stdout.split() }}"
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 You may check the registered variable's string contents for emptiness::
@@ -323,6 +319,69 @@ You may check the registered variable's string contents for emptiness::
             debug: msg="Directory is empty"
             when: contents.stdout == ""
 
+Commonly Used Facts
+```````````````````
+
+The following Facts (see :ref:`_vars_and_facts`) are frequently used in Conditionals - see above for examples.
+
+.. _ansible_distribution:
+
+ansible_distribution
+--------------------
+
+Possible values::
+
+    Alpine
+    Altlinux
+    Amazon
+    Archlinux
+    ClearLinux
+    Coreos
+    Debian
+    Gentoo
+    Mandriva
+    NA
+    OpenWrt
+    OracleLinux
+    RedHat
+    Slackware
+    SMGL
+    SUSE
+    VMwareESX
+
+.. See `OSDIST_LIST`
+
+.. _ansible_distribution_major_version:
+
+ansible_distribution_major_version
+----------------------------------
+
+This will be the major version of the operating system. For example, the value will be `16` for Ubuntu 16.04.
+
+.. _ansible_os_family:
+
+ansible_os_family
+-----------------
+
+Possible values::
+
+    AIX
+    Alpine
+    Altlinux
+    Archlinux
+    Darwin
+    Debian
+    FreeBSD
+    Gentoo
+    HP-UX
+    Mandrake
+    RedHat
+    SGML
+    Slackware
+    Solaris
+    Suse
+
+.. See `OS_FAMILY_MAP`
 
 .. seealso::
 

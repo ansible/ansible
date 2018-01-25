@@ -1,78 +1,75 @@
 ---
 # Remove old logging entries so that they don't conflict with tests
-- name: Remove host logging
+- name: remove host logging
   iosxr_logging:
-    dest: hostnameprefix
+    dest: host
     name: 172.16.0.1
     state: absent
+    provider: "{{ cli }}"
 
-- name: Remove console logging
+- name: remove console logging
   iosxr_logging:
     dest: console
-    level: warning
     state: absent
+    provider: "{{ cli }}"
   register: result
 
-- name: Remove buffer
+- name: remove buffered logging
   iosxr_logging:
     dest: buffered
-    size: 4800000
+    size: 2097155
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 # Start tests
-- name: Set up host logging
-  iosxr_logging:
-    dest: hostnameprefix
+- name: set up syslog host logging
+  iosxr_logging: &addhostlog
+    dest: host
     name: 172.16.0.1
+    level: errors
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"logging hostnameprefix 172.16.0.1" in result.commands'
-      - '"logging facility local7" in result.commands'
+      - '"logging 172.16.0.1 vrf default severity error" in result.commands'
 
-- name: Set up host logging again (idempotent)
-  iosxr_logging:
-    dest: hostnameprefix
-    name: 172.16.0.1
-    state: present
+- name: set up syslog host logging (idempotent)
+  iosxr_logging: *addhostlog
   register: result
 
-- assert:
+- assert: &false
     that:
       - 'result.changed == false'
 
-- name: Delete/disable host logging
-  iosxr_logging:
-    dest: hostnameprefix
+- name: delete/disable syslog host logging
+  iosxr_logging: &delhostlog
+    dest: host
     name: 172.16.0.1
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
-      - '"no logging hostnameprefix 172.16.0.1" in result.commands'
+      - '"no logging 172.16.0.1 vrf default" in result.commands'
 
-- name: Delete/disable host logging (idempotent)
-  iosxr_logging:
-    dest: hostnameprefix
-    name: 172.16.0.1
-    state: absent
+- name: delete/disable syslog host logging (idempotent)
+  iosxr_logging: *delhostlog
   register: result
 
-- assert:
-    that:
-      - 'result.changed == false'
+- assert: *false
 
-- name: Console logging with level warning
-  iosxr_logging:
+- name: add console logging with level warning
+  iosxr_logging: &consolelog
     dest: console
     level: warning
     state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -80,10 +77,30 @@
       - 'result.changed == true'
       - '"logging console warning" in result.commands'
 
-- name: Configure Buffer size
-  iosxr_logging:
+- name: console logging with level warning (idempotent)
+  iosxr_logging: *consolelog
+  register: result
+
+- assert: *false
+
+- name: remove console logging with level warning
+  iosxr_logging: 
+    dest: console
+    level: warning
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert: &true
+    that:
+      - 'result.changed == true'
+
+- name: configure buffered logging size
+  iosxr_logging: &bufferlog
     dest: buffered
     size: 4800000
+    state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -91,11 +108,29 @@
       - 'result.changed == true'
       - '"logging buffered 4800000" in result.commands'
 
-- name: Change logging parameters using aggregate
+- name: configure buffered logging size (idempotence)
+  iosxr_logging: *bufferlog
+  register: result
+
+- assert: *false
+
+- name: remove buffered logging size
+  iosxr_logging:
+    dest: buffered
+    size: 4800000
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
+- assert: *true
+
+- name: change logging parameters using aggregate
   iosxr_logging:
     aggregate:
       - { dest: console, level: notifications }
       - { dest: buffered, size: 4700000 }
+    state: present
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -104,12 +139,13 @@
       - '"logging buffered 4700000" in result.commands'
       - '"logging console notifications" in result.commands'
 
-- name: remove logging as collection tearDown
+- name: remove logging parameters using aggregate
   iosxr_logging:
     aggregate:
       - { dest: console, level: notifications }
       - { dest: buffered, size: 4700000 }
     state: absent
+    provider: "{{ cli }}"
   register: result
 
 - assert:

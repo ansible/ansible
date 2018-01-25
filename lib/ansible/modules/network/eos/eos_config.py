@@ -45,6 +45,7 @@ options:
         command syntax as some commands are automatically modified by the
         device config parser.
     required: false
+    aliases: ['commands']
     default: null
   parents:
     description:
@@ -184,8 +185,8 @@ options:
     version_added: "2.4"
   diff_against:
     description:
-      - When using the C(ansible-playbook --diff) command line argument the i
-        module can generate diffs against different sources.
+      - When using the C(ansible-playbook --diff) command line argument
+        the module can generate diffs against different sources.
       - When this option is configure as I(startup), the module will return
         the diff of the running-config against the startup-config.
       - When this option is configured as I(intended), the module will
@@ -270,11 +271,11 @@ backup_path:
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.eos import get_config, load_config
-from ansible.module_utils.eos import run_commands
-from ansible.module_utils.eos import eos_argument_spec
-from ansible.module_utils.eos import check_args
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+from ansible.module_utils.network.eos.eos import get_config, load_config
+from ansible.module_utils.network.eos.eos import run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec
+from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
@@ -336,6 +337,7 @@ def main():
     argument_spec.update(eos_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src'),
                           ('save', 'save_when')]
 
     required_if = [('match', 'strict', ['lines']),
@@ -403,7 +405,6 @@ def main():
 
             result['changed'] = True
 
-
     running_config = None
     startup_config = None
 
@@ -457,9 +458,16 @@ def main():
             base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
+                if module.params['diff_against'] == 'intended':
+                    before = running_config
+                    after = base_config
+                elif module.params['diff_against'] in ('startup', 'running'):
+                    before = base_config
+                    after = running_config
+
                 result.update({
                     'changed': True,
-                    'diff': {'before': str(base_config), 'after': str(running_config)}
+                    'diff': {'before': str(before), 'after': str(after)}
                 })
 
     module.exit_json(**result)

@@ -16,15 +16,11 @@ module: aci_tenant_span_src_group
 short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(span:SrcGrp) at U(https://developer.cisco.com/media/mim-ref/MO-spanSrcGrp.html).
+- More information from the internal APIC class I(span:SrcGrp) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -60,26 +56,26 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_tenant_span_src_group:
+    host:"{{ inventory_hostname }}"
+    username:"{{ username }}"
+    password:"{{ password }}"
     tenant:"{{ tenant }}"
     src_group:"{{ src_group }}"
     dst_group:"{{ dst_group }}"
     admin_state:"{{ admin_state }}"
     description:"{{ description }}"
-    host:"{{ inventory_hostname }}"
-    username:"{{ username }}"
-    password:"{{ password }}"
 '''
 
 RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         admin_state=dict(type='str', choices=['enabled', 'disabled']),
         description=dict(type='str', aliases=['descr']),
@@ -88,6 +84,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -104,12 +101,25 @@ def main():
     dst_group = module.params['dst_group']
     src_group = module.params['src_group']
     state = module.params['state']
-
-    # Add tenant_span_dst_grp to module.params for URL building
-    module.params['tenant_span_src_grp'] = src_group
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='tenant_span_src_grp', child_classes=['spanSpanLbl'])
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='spanSrcGrp',
+            aci_rn='srcgrp-{0}'.format(src_group),
+            filter_target='eq(spanSrcGrp.name, "{0}")'.format(src_group),
+            module_object=src_group,
+        ),
+        child_classes=['spanSpanLbl'],
+    )
+
     aci.get_existing()
 
     if state == 'present':
@@ -132,9 +142,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
-    # Remove tenant_span_src_grp that was used to build URL from module.params
-    module.params.pop('tenant_span_src_grp')
 
     module.exit_json(**aci.result)
 

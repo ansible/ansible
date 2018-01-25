@@ -61,7 +61,7 @@
   assert:
     that:
     - "actual_location.stdout_lines[0] == '12'" # Corresponds to en-AU
-    - "check_location|changed"
+    - "check_location is changed"
     - "check_location.restart_required == False"
 
 - name: set location to United States
@@ -77,7 +77,7 @@
   assert:
     that:
     - "actual_location.stdout_lines[0] == '244'" # Corresponds to en-US
-    - "location|changed"
+    - "location is changed"
     - "location.restart_required == False"
 
 - name: set location to United States again
@@ -88,7 +88,7 @@
 - name: check that the result did not change
   assert:
     that:
-    - "not location_again|changed"
+    - "location_again is not changed"
     - "location_again.restart_required == False"
 
 - name: set format to English United States in check mode
@@ -105,7 +105,7 @@
   assert:
     that:
     - "actual_format.stdout_lines[0] == 'en-AU'"
-    - "check_format|changed"
+    - "check_format is changed"
     - "check_format.restart_required == False"
 
 - name: set format to English United States
@@ -121,7 +121,7 @@
   assert:
     that:
     - "actual_format.stdout_lines[0] == 'en-US'"
-    - "format|changed"
+    - "format is changed"
     - "format.restart_required == False"
 
 - name: set format to English United States again
@@ -132,7 +132,7 @@
 - name: check that the result did not change
   assert:
     that:
-    - "not format_again|changed"
+    - "format_again is not changed"
     - "format_again.restart_required == False"
 
 - name: set unicode_language to English United States in check mode
@@ -149,7 +149,7 @@
   assert:
     that:
     - "actual_unicode.stdout_lines[0] == '0c09'"
-    - "check_unicode|changed"
+    - "check_unicode is changed"
     - "check_unicode.restart_required == True"
 
 - name: set unicode_language to English United States
@@ -169,7 +169,7 @@
   assert:
     that:
     - "actual_unicode.stdout_lines[0] == '0409'" # corresponds to en-US
-    - "unicode|changed"
+    - "unicode is changed"
     - "unicode.restart_required == True"
 
 - name: set unicode_language to English United States again
@@ -180,7 +180,7 @@
 - name: check that the result did not change
   assert:
     that:
-    - "not unicode_again|changed"
+    - "unicode_again is not changed"
     - "unicode_again.restart_required == False"
 
 - name: copy settings when setting to the same format check mode
@@ -193,7 +193,7 @@
 - name: check that the result did not change in check mode
   assert:
     that:
-    - "not check_copy_same|changed"
+    - "check_copy_same is not changed"
     - "check_copy_same.restart_required == False"
 
 - name: copy settings when setting to the same format
@@ -205,7 +205,7 @@
 - name: check that the result did not change
   assert:
     that:
-    - "not copy_same|changed"
+    - "copy_same is not changed"
     - "copy_same.restart_required == False"
 
 - name: copy setting when setting to a different format
@@ -248,5 +248,5 @@
     - "actual_network.stdout_lines[0] == 'en-GB'"
     - "actual_temp.stdout_lines[0] == 'en-GB'"
     - "actual_default.stdout_lines[0] == 'en-GB'"
-    - "copy|changed"
+    - "copy is changed"
     - "copy.restart_required == False"

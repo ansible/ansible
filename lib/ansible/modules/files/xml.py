@@ -21,7 +21,7 @@ module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
 - A CRUD-like interface to managing bits of XML files.
-- You might also be interested in a brief tutorial from U(http://www.w3schools.com/xpath/)
+- You might also be interested in a brief tutorial from U(https://www.w3schools.com/xml/xpath_intro.asp)
   and U(https://developer.mozilla.org/en-US/docs/Web/XPath).
 version_added: '2.4'
 options:
@@ -274,7 +274,7 @@ from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
 
-_IDENT = "[a-zA-Z-][a-zA-Z0-9_\-\.]*"
+_IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
 _NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
 # Note: we can't reasonably support the 'if you need to put both ' and " in a string, concatenate
 # strings wrapped by the other delimiter' XPath trick, especially as simple XPath.
@@ -456,9 +456,9 @@ def nsnameToClark(name, namespaces):
         (nsname, rawname) = name.split(":")
         # return "{{%s}}%s" % (namespaces[nsname], rawname)
         return "{{{0}}}{1}".format(namespaces[nsname], rawname)
-    else:
-        # no namespace name here
-        return name
+
+    # no namespace name here
+    return name
 
 
 def check_or_make_target(module, tree, xpath, namespaces):
@@ -548,7 +548,7 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
         missing_namespace = ""
         # NOTE: This checks only the namespaces defined in root element!
         # TODO: Implement a more robust check to check for child namespaces' existance
-        if len(tree.getroot().nsmap) > 0 and ":" not in xpath:
+        if tree.getroot().nsmap and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
         module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
                              (missing_namespace, xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc())

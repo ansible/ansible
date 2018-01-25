@@ -61,6 +61,10 @@ options:
       - HSRP priority.
     required: false
     default: null
+  preempt:
+    description:
+      - Enable/Disable preempt.
+    choices: ['enabled', 'disabled']
   vip:
     description:
       - HSRP virtual IP address.
@@ -123,17 +127,20 @@ commands:
     sample: ["interface vlan10", "hsrp version 2", "hsrp 30", "ip 10.30.1.1"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module):
-    if module.params['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 
@@ -381,7 +388,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = dict(changed=False, warnings=warnings)
 
     interface = module.params['interface'].lower()
@@ -394,7 +400,8 @@ def main():
     auth_type = module.params['auth_type']
     auth_string = module.params['auth_string']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
@@ -404,7 +411,7 @@ def main():
             validate_params(param, module)
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -462,7 +469,7 @@ def main():
             load_config(module, commands)
 
             # validate IP
-            if transport == 'cli' and state == 'present':
+            if network_api == 'cliconf' and state == 'present':
                 commands.insert(0, 'config t')
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)

@@ -189,11 +189,10 @@ import re
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import get_diff, load_config, get_configuration
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import get_diff, load_config, get_configuration
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec, load_configuration, get_connection, tostring
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 
@@ -217,18 +216,16 @@ DEFAULT_COMMENT = 'configured by junos_config'
 
 
 def check_args(module, warnings):
-    junos_check_args(module, warnings)
-
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
 
-def zeroize(ele):
-    return send_request(ele, Element('request-system-zeroize'))
+def zeroize(module):
+    return exec_rpc(module, tostring(Element('request-system-zeroize')), ignore_warning=False)
 
 
-def rollback(ele):
-    return get_diff(ele)
+def rollback(ele, id='0'):
+    return get_diff(ele, id)
 
 
 def guess_format(config):
@@ -346,9 +343,16 @@ def main():
 
         result['__backup__'] = match.text.strip()
 
-    if module.params['rollback']:
+    rollback_id = module.params['rollback']
+    if rollback_id:
+        diff = rollback(module, rollback_id)
         if commit:
-            diff = rollback(module)
+            kwargs = {
+                'comment': module.params['comment']
+            }
+            with locked_config(module):
+                load_configuration(module, rollback=rollback_id)
+                commit_configuration(module, **kwargs)
             if module._diff:
                 result['diff'] = {'prepared': diff}
         result['changed'] = True

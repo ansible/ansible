@@ -1,16 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = r'''
 ---
@@ -21,6 +23,7 @@ description:
 version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
+- Abhijeet Kasurde (@akasurde)
 notes:
 - Tested on vSphere 5.5 and vSphere 6.5
 requirements:
@@ -51,63 +54,80 @@ virtual_machines:
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, get_all_objs, vmware_argument_spec
+from ansible.module_utils.vmware import PyVmomi, get_all_objs, vmware_argument_spec, _get_vm_prop
 
 
-# https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/getallvms.py
-def get_all_virtual_machines(content):
-    virtual_machines = get_all_objs(content, [vim.VirtualMachine])
-    _virtual_machines = {}
+class VmwareVmFacts(PyVmomi):
+    def __init__(self, module):
+        super(VmwareVmFacts, self).__init__(module)
 
-    for vm in virtual_machines:
-        _ip_address = ""
-        summary = vm.summary
-        if summary.guest is not None:
-            _ip_address = summary.guest.ipAddress
-            if _ip_address is None:
-                _ip_address = ""
-        _mac_address = []
-        for dev in vm.config.hardware.device:
-            if isinstance(dev, vim.vm.device.VirtualEthernetCard):
-                _mac_address.append(dev.macAddress)
+    # https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/getallvms.py
+    def get_all_virtual_machines(self):
+        """
+        Function to get all virtual machines and related configurations information
+        """
+        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine])
+        _virtual_machines = {}
 
-        virtual_machine = {
-            summary.config.name: {
-                "guest_fullname": summary.config.guestFullName,
-                "power_state": summary.runtime.powerState,
-                "ip_address": _ip_address,
-                "mac_address": _mac_address,
-                "uuid": summary.config.uuid
+        for vm in virtual_machines:
+            _ip_address = ""
+            summary = vm.summary
+            if summary.guest is not None:
+                _ip_address = summary.guest.ipAddress
+                if _ip_address is None:
+                    _ip_address = ""
+            _mac_address = []
+            all_devices = _get_vm_prop(vm, ('config', 'hardware', 'device'))
+            if all_devices:
+                for dev in all_devices:
+                    if isinstance(dev, vim.vm.device.VirtualEthernetCard):
+                        _mac_address.append(dev.macAddress)
+
+            net_dict = {}
+            vmnet = _get_vm_prop(vm, ('guest', 'net'))
+            if vmnet:
+                for device in vmnet:
+                    net_dict[device.macAddress] = dict()
+                    net_dict[device.macAddress]['ipv4'] = []
+                    net_dict[device.macAddress]['ipv6'] = []
+                    for ip_addr in device.ipAddress:
+                        if "::" in ip_addr:
+                            net_dict[device.macAddress]['ipv6'].append(ip_addr)
+                        else:
+                            net_dict[device.macAddress]['ipv4'].append(ip_addr)
+
+            esxi_hostname = None
+            if summary.runtime.host:
+                esxi_hostname = summary.runtime.host.summary.config.name
+
+            virtual_machine = {
+                summary.config.name: {
+                    "guest_fullname": summary.config.guestFullName,
+                    "power_state": summary.runtime.powerState,
+                    "ip_address": _ip_address,  # Kept for backward compatibility
+                    "mac_address": _mac_address,  # Kept for backward compatibility
+                    "uuid": summary.config.uuid,
+                    "vm_network": net_dict,
+                    "esxi_hostname": esxi_hostname,
+                }
             }
-        }
 
-        _virtual_machines.update(virtual_machine)
-    return _virtual_machines
+            _virtual_machines.update(virtual_machine)
+        return _virtual_machines
 
 
 def main():
-
     argument_spec = vmware_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    vmware_vm_facts = VmwareVmFacts(module)
+    _virtual_machines = vmware_vm_facts.get_all_virtual_machines()
 
-    try:
-        content = connect_to_api(module)
-        _virtual_machines = get_all_virtual_machines(content)
-        module.exit_json(changed=False, virtual_machines=_virtual_machines)
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    module.exit_json(changed=False, virtual_machines=_virtual_machines)
 
 
 if __name__ == '__main__':

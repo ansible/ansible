@@ -25,8 +25,15 @@ description:
 author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
+  state:
+    description:
+      - If the specified virtual server should exist.
+    choices: ['present', 'absent']
+    default: present
   partition:
     version_added: "2.3"
     description:
@@ -101,8 +108,8 @@ content:
 '''
 import json
 
-from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_enabled_disabled, axapi_get_vport_protocol, AXAPI_VPORT_PROTOCOLS)
+from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
+                                                  axapi_enabled_disabled, axapi_get_vport_protocol, AXAPI_VPORT_PROTOCOLS)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 
@@ -145,6 +152,7 @@ def validate_ports(module, ports):
         # ensure the service_group field is at least present
         if 'service_group' not in item:
             item['service_group'] = ''
+
 
 def main():
     argument_spec = a10_argument_spec()

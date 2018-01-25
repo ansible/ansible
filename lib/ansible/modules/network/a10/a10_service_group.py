@@ -26,8 +26,15 @@ author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
 notes:
     - Requires A10 Networks aXAPI 2.1.
     - When a server doesn't exist and is added to the service-group the server will be created.
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
+  state:
+    description:
+      - If the specified service group should exists.
+    default: present
+    choices: ['present', 'absent']
   partition:
     version_added: "2.3"
     description:
@@ -72,6 +79,7 @@ options:
         specify the C(status:). See the examples below for details.
     required: false
     default: null
+    aliases: ['server', 'member']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
@@ -112,8 +120,7 @@ content:
 '''
 import json
 
-from ansible.module_utils.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure,
-                                      axapi_enabled_disabled)
+from ansible.module_utils.network.a10.a10 import (axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 

@@ -1,18 +1,10 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -255,12 +247,17 @@ import time
 from distutils.version import LooseVersion
 
 try:
+    import boto
     import boto.ec2
+    import boto.exception
     from boto.exception import BotoServerError
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
-    HAS_BOTO = True
 except ImportError:
-    HAS_BOTO = False
+    pass  # Taken care of by ec2.HAS_BOTO
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO, AnsibleAWSError, connect_to_aws, ec2_argument_spec,
+                                      get_aws_connection_info)
 
 
 def get_volume(module, ec2):
@@ -283,7 +280,7 @@ def get_volume(module, ec2):
     try:
         vols = ec2.get_all_volumes(volume_ids=volume_ids, filters=filters)
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     if not vols:
         if id:
@@ -309,7 +306,7 @@ def get_volumes(module, ec2):
         else:
             vols = ec2.get_all_volumes(filters={'attachment.instance-id': instance})
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
     return vols
 
 
@@ -333,6 +330,7 @@ def boto_supports_volume_encryption():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
+
 def boto_supports_kms_key_id():
     """
     Check if Boto library supports kms_key_ids (added in 2.39.0)
@@ -341,6 +339,7 @@ def boto_supports_kms_key_id():
         True if version is equal to or higher then the version needed, else False
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.39.0')
+
 
 def create_volume(module, ec2, zone):
     changed = False
@@ -378,7 +377,7 @@ def create_volume(module, ec2, zone):
             if tags:
                 ec2.create_tags([volume.id], tags)
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     return volume, changed
 
@@ -403,12 +402,12 @@ def attach_volume(module, ec2, volume, instance):
             else:
                 device_name = '/dev/xvdf'
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     if volume.attachment_state() is not None:
         adata = volume.attach_data
         if adata.instance_id != instance.id:
-            module.fail_json(msg = "Volume %s is already attached to another instance: %s"
+            module.fail_json(msg="Volume %s is already attached to another instance: %s"
                              % (volume.id, adata.instance_id))
         else:
             # Volume is already attached to right instance
@@ -421,7 +420,7 @@ def attach_volume(module, ec2, volume, instance):
                 volume.update()
             changed = True
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
         modify_dot_attribute(module, ec2, instance, device_name)
 
@@ -438,7 +437,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
         instance.update()
         dot = instance.block_device_mapping[device_name].delete_on_termination
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     if delete_on_termination != dot:
         try:
@@ -453,7 +452,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
                 instance.update()
             changed = True
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     return changed
 
@@ -509,20 +508,20 @@ def get_volume_info(volume, state):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        instance = dict(),
-        id = dict(),
-        name = dict(),
-        volume_size = dict(),
-        volume_type = dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
-        iops = dict(),
-        encrypted = dict(type='bool', default=False),
-        kms_key_id = dict(),
-        device_name = dict(),
-        delete_on_termination = dict(type='bool', default=False),
-        zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
-        snapshot = dict(),
-        state = dict(choices=['absent', 'present', 'list'], default='present'),
-        tags = dict(type='dict', default={})
+        instance=dict(),
+        id=dict(),
+        name=dict(),
+        volume_size=dict(),
+        volume_type=dict(choices=['standard', 'gp2', 'io1', 'st1', 'sc1'], default='standard'),
+        iops=dict(),
+        encrypted=dict(type='bool', default=False),
+        kms_key_id=dict(),
+        device_name=dict(),
+        delete_on_termination=dict(type='bool', default=False),
+        zone=dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
+        snapshot=dict(),
+        state=dict(choices=['absent', 'present', 'list'], default='present'),
+        tags=dict(type='dict', default={})
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -635,9 +634,6 @@ def main():
     elif state == 'absent':
         delete_volume(module, ec2)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

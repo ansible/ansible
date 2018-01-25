@@ -5,64 +5,66 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: cartesian
+    lookup: consul_kv
     version_added: "1.9"
-    short_description: grab metadata from a consul key value store.
+    short_description: Fetch  metadata from a Consul key value store.
     description:
-      - lookup metadata for a playbook from the key value store in a consul cluster.
+      - Lookup metadata for a playbook from the key value store in a Consul cluster.
         Values can be easily set in the kv store with simple rest commands
-      - "curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata"
+      - C(curl -X PUT -d 'some-value' http://localhost:8500/v1/kv/ansible/somedata)
     requirements:
-      - 'python-consul (python library http://python-consul.readthedocs.org/en/latest/#installation)'
+      - 'python-consul python library U(http://python-consul.readthedocs.org/en/latest/#installation)'
     options:
       _raw:
-        description: key(s) to retrieve
+        description: List of key(s) to retrieve.
         type: list
         required: True
       recurse:
         type: boolean
-        description: if true, will retrieve all the values that have the given key as prefix
+        description: If true, will retrieve all the values that have the given key as prefix.
         default: False
       index:
-        description: if the key has a value with the specified index then this is returned allowing access to historical values.
+        description: If the key has a value with the specified index then this is returned allowing access to historical values.
       token:
-        description: acl token to allow access to restricted values.
+        description: The acl token to allow access to restricted values.
       host:
         default: localhost
         description:
-           - the target to connect to, must be a resolvable address.
+           - The target to connect to, must be a resolvable address.
         env:
           - name: ANSIBLE_CONSUL_URL
       port:
-        description: the port of the target host to connect to.
+        description: The port of the target host to connect to.
         default: 8500
 """
 
 EXAMPLES = """
-  - debug: msg='key contains {{item}}'
+  - debug:
+      msg: 'key contains {{item}}'
     with_consul_kv:
       - 'key/to/retrieve'
 
   - name: Parameters can be provided after the key be more specific about what to retrieve
-    debug: msg='key contains {{item}}'
+    debug:
+      msg: 'key contains {{item}}'
     with_consul_kv:
-      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98')}}'
+      - 'key/to recurse=true token=E6C060A9-26FB-407A-B83E-12DDAFCB4D98'
 
   - name: retrieving a KV from a remote cluster on non default port
     debug:
-      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000')
+      msg: "{{ lookup('consul_kv', 'my/key', host='10.10.10.10', port='2000') }}"
 """
 
 RETURN = """
   _raw:
     description:
-      - value(s) stored in consul
+      - Value(s) stored in consul.
 """
 
 import os
 import sys
-from urlparse import urlparse
-from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
 
 try:
@@ -129,7 +131,8 @@ class LookupModule(LookupBase):
             for param in params[1:]:
                 if param and len(param) > 0:
                     name, value = param.split('=')
-                    assert name in paramvals, "%s not a valid consul lookup parameter" % name
+                    if name not in paramvals:
+                        raise AnsibleAssertionError("%s not a valid consul lookup parameter" % name)
                     paramvals[name] = value
         except (ValueError, AssertionError) as e:
             raise AnsibleError(e)

@@ -18,7 +18,7 @@ author:
   - "Jens Carl (@j-carl), Hothead Games Inc."
 module: redshift_subnet_group
 version_added: "2.2"
-short_description: mange Redshift cluster subnet groups
+short_description: manage Redshift cluster subnet groups
 description:
   - Create, modifies, and deletes Redshift cluster subnet groups.
 options:
@@ -45,7 +45,9 @@ options:
     default: null
     aliases: ['subnets']
 requirements: [ 'boto' ]
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''

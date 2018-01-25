@@ -401,7 +401,7 @@ class DME2(object):
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
         self.all_records = None
-        self.contactList_map = None # ["contactList_name"] => ID
+        self.contactList_map = None  # ["contactList_name"] => ID
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -494,7 +494,7 @@ class DME2(object):
         return self.query(self.record_url, 'GET')['data']
 
     def _instMap(self, type):
-        #@TODO cache this call so it's executed only once per ansible execution
+        # @TODO cache this call so it's executed only once per ansible execution
         map = {}
         results = {}
 
@@ -512,15 +512,15 @@ class DME2(object):
         return json.dumps(data, separators=(',', ':'))
 
     def createRecord(self, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url, 'POST', data)
 
     def updateRecord(self, record_id, data):
-        #@TODO update the cache w/ resultant record + id when impleneted
+        # @TODO update the cache w/ resultant record + id when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'PUT', data)
 
     def deleteRecord(self, record_id):
-        #@TODO remove record from the cache when impleneted
+        # @TODO remove record from the cache when impleneted
         return self.query(self.record_url + '/' + str(record_id), 'DELETE')
 
     def getMonitor(self, record_id):
@@ -550,6 +550,7 @@ class DME2(object):
 # ===========================================
 # Module execution.
 #
+
 
 def main():
 
@@ -581,7 +582,7 @@ def main():
             ip3=dict(required=False),
             ip4=dict(required=False),
             ip5=dict(required=False),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']
@@ -675,7 +676,7 @@ def main():
     # Follow Keyword Controlled Behavior
     if state == 'present':
         # return the record if no value is specified
-        if not "value" in new_record:
+        if "value" not in new_record:
             if not current_record:
                 module.fail_json(
                     msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))

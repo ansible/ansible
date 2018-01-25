@@ -63,12 +63,17 @@ The variable value will be used as is, but the template evaluation will raise an
 Defaulting Undefined Variables
 ``````````````````````````````
 
-Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined::
+Jinja2 provides a useful 'default' filter that is often a better approach to failing if a variable is not defined::
 
     {{ some_variable | default(5) }}
 
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
+
+If the variable evaluates to an empty string, the second parameter of the filter should be set to
+`true`::
+
+    {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
 
 .. _omitting_undefined_variables:
@@ -80,7 +85,7 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 
     - name: touch files with an optional mode
       file: dest={{item.path}} state=touch mode={{item.mode|default(omit)}}
-      with_items:
+      loop:
         - path: /tmp/foo
         - path: /tmp/bar
         - path: /tmp/baz
@@ -110,6 +115,19 @@ To get the minimum value from list of numbers::
 To get the maximum value from a list of numbers::
 
     {{ [3, 4, 2] | max }}
+
+.. versionadded:: 2.5
+
+Flatten a list (same thing the `flatten` lookup does)::
+
+    {{ [3, [4, 2] ]|flatten }}
+
+Flatten only the first level of a list (akin to the `items` lookup)::
+
+    {{ [3, [4, [2]] ]|flatten(level=1) }}
+
+
+To get the minimum value from list of numbers::
 
 .. _set_theory_filters:
 
@@ -155,26 +173,26 @@ To get a random item from a list::
     "{{ ['a','b','c']|random }}"
     # => 'c'
 
-To get a random number from 0 to supplied end::
+To get a random number between 0 and a specified number::
 
-    "{{ 59 |random}} * * * * root /script/from/cron"
+    "{{ 60 |random}} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
 Get a random number from 0 to 100 but in steps of 10::
 
-    {{ 100 |random(step=10) }}
+    {{ 101 |random(step=10) }}
     # => 70
 
 Get a random number from 1 to 100 but in steps of 10::
 
-    {{ 100 |random(1, 10) }}
+    {{ 101 |random(1, 10) }}
     # => 31
-    {{ 100 |random(start=1, step=10) }}
+    {{ 101 |random(start=1, step=10) }}
     # => 51
 
 As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
-    "{{ 59 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
+    "{{ 60 |random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 
 Shuffle Filter
@@ -234,7 +252,7 @@ JSON Query Filter
 
 .. versionadded:: 2.2
 
-Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a with_items structure.
+Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
 .. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
@@ -268,19 +286,19 @@ To extract all clusters from this structure, you can use the following query::
 
     - name: "Display all cluster names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.cluster[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.cluster[*].name')}}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
       debug: var=item
-      with_items: "{{domain_definition|json_query('domain.server[*].name')}}"
+      loop: "{{domain_definition|json_query('domain.server[*].name')}}"
 
 This example shows ports from cluster1::
 
     - name: "Display all server names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
@@ -291,7 +309,7 @@ Or, alternatively::
     - name: "Display all server names from cluster1"
       debug:
         var: item
-      with_items: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
+      loop: "{{domain_definition|json_query('domain.server[?cluster=`cluster1`].port')}}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
@@ -299,7 +317,7 @@ In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug: var=item
-      with_items: "{{domain_definition|json_query(server_name_cluster1_query)}}"
+      loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
@@ -340,8 +358,7 @@ output, use the ``parse_cli`` filter::
   {{ output | parse_cli('path/to/spec') }}
 
 The ``parse_cli`` filter will load the spec file and pass the command output
-through, it returning JSON output.  The spec file is a YAML yaml that defines
-how to parse the CLI output.
+through it, returning JSON output. The YAML spec file defines how to parse the CLI output.
 
 The spec file should be valid formatted YAML.  It defines how to parse the CLI
 output and return JSON data.  Below is an example of a valid spec file that
@@ -357,7 +374,6 @@ will parse the output from the ``show vlan`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
       state_static:
@@ -382,14 +398,13 @@ value using the same ``show vlan`` command.::
 
     keys:
       vlans:
-        type: list
         value: "{{ vlan }}"
         items: "^(?P<vlan_id>\\d+)\\s+(?P<name>\\w+)\\s+(?P<state>active|act/lshut|suspended)"
       state_static:
         value: present
 
 Another common use case for parsing CLI commands is to break a large command
-into blocks that can parsed.  This can be done using the ``start_block`` and
+into blocks that can be parsed.  This can be done using the ``start_block`` and
 ``end_block`` directives to break the command into blocks that can be parsed.::
 
     ---
@@ -420,6 +435,101 @@ filter::
   {{ output | parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
+
+Network XML filters
+```````````````````
+
+.. versionadded:: 2.5
+
+To convert the XML output of a network device command into structured JSON
+output, use the ``parse_xml`` filter::
+
+  {{ output | parse_xml('path/to/spec') }}
+
+The ``parse_xml`` filter will load the spec file and pass the command output
+through formatted as JSON.
+
+The spec file should be valid formatted YAML. It defines how to parse the XML
+output and return JSON data.
+
+Below is an example of a valid spec file that
+will parse the output from the ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        vlan_id: "{{ item.vlan_id }}"
+        name: "{{ item.name }}"
+        desc: "{{ item.desc }}"
+        enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+        state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+The spec file above will return a JSON data structure that is a list of hashes
+with the parsed VLAN information.
+
+The same command could be parsed into a hash by using the key and values
+directives.  Here is an example of how to parse the output into a hash
+value using the same ``show vlan | display xml`` command.::
+
+    ---
+    vars:
+      vlan:
+        key: "{{ item.vlan_id }}"
+        values:
+            vlan_id: "{{ item.vlan_id }}"
+            name: "{{ item.name }}"
+            desc: "{{ item.desc }}"
+            enabled: "{{ item.state.get('inactive') != 'inactive' }}"
+            state: "{% if item.state.get('inactive') == 'inactive'%} inactive {% else %} active {% endif %}"
+
+    keys:
+      vlans:
+        value: "{{ vlan }}"
+        top: configuration/vlans/vlan
+        items:
+          vlan_id: vlan-id
+          name: name
+          desc: description
+          state: ".[@inactive='inactive']"
+
+
+The value of ``top`` is the XPath relative to the XML root node.
+In the example XML output given below, the value of ``top`` is ``configuration/vlans/vlan``,
+which is an XPath expression relative to the root node (<rpc-reply>).
+``configuration`` in the value of ``top`` is the outer most container node, and ``vlan``
+is the inner-most container node.
+
+``items`` is a dictionary of key-value pairs that map user-defined names to XPath expressions
+that select elements. The Xpath expression is relative to the value of the XPath value contained in ``top``.
+For example, the ``vlan_id`` in the spec file is a user defined name and its value ``vlan-id`` is the
+relative to the value of XPath in ``top``
+
+Attributes of XML tags can be extracted using XPath expressions. The value of ``state`` in the spec
+is an XPath expression used to get the attributes of the ``vlan`` tag in output XML.::
+
+    <rpc-reply>
+      <configuration>
+        <vlans>
+          <vlan inactive="inactive">
+           <name>vlan-1</name>
+           <vlan-id>200</vlan-id>
+           <description>This is vlan-1</description>
+          </vlan>
+        </vlans>
+      </configuration>
+    </rpc-reply>
+
+.. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
 .. _hash_filters:
 
@@ -452,6 +562,9 @@ To get a sha256 password hash with a specific salt::
 
     {{ 'secretpassword'|password_hash('sha256', 'mysecretsalt') }}
 
+An idempotent method to generate unique hashes per system is to use a salt that is consistent between runs::
+
+    {{ 'secretpassword'|password_hash('sha512', 65534|random(seed=inventory_hostname)|string) }}
 
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on passlib (http://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
@@ -552,6 +665,17 @@ Similar way can be applied style for C (``//...``), C block
     {{ "C block style" | comment('cblock') }}
     {{ "Erlang style" | comment('erlang') }}
     {{ "XML style" | comment('xml') }}
+
+If you need a specific comment character that is not included by any of the
+above, you can customize it with::
+
+  {{ "My Special Case" | comment(decoration="! ") }}
+
+producing::
+
+  !
+  ! My Special Case
+  !
 
 It is also possible to fully customize the comment style::
 
@@ -704,11 +828,11 @@ To add quotes for shell usage::
 
 To use one value on true and another on false (new in version 1.9)::
 
-   {{ (name == "John") | ternary('Mr','Ms') }}
+    {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 
-   {{ list | join(" ") }}
+    {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -744,7 +868,7 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
 To get the real path of a link (new in version 1.8)::
 
-   {{ path | realpath }}
+    {{ path | realpath }}
 
 To get the relative path of a link, from a start point (new in version 1.7)::
 

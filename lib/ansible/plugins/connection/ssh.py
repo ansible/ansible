@@ -22,14 +22,23 @@ DOCUMENTATION = '''
                - name: ansible_host
                - name: ansible_ssh_host
       host_key_checking:
-          #constant: HOST_KEY_CHECKING
           description: Determines if ssh should check host keys
           type: boolean
           ini:
               - section: defaults
                 key: 'host_key_checking'
+              - section: ssh_connection
+                key: 'host_key_checking'
+                version_added: '2.5'
           env:
               - name: ANSIBLE_HOST_KEY_CHECKING
+              - name: ANSIBLE_SSH_HOST_KEY_CHECKING
+                version_added: '2.5'
+          vars:
+              - name: ansible_host_key_checking
+                version_added: '2.5'
+              - name: ansible_ssh_host_key_checking
+                version_added: '2.5'
       password:
           description: Authentication password for the C(remote_user). Can be supplied as CLI option.
           vars:
@@ -116,11 +125,18 @@ DOCUMENTATION = '''
             - However this conflicts with privilege escalation (become).
               For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
               which is why this feature is disabled by default.
-          env: [{name: ANSIBLE_SSH_PIPELINING}]
+          env:
+            - name: ANSIBLE_PIPELINING
+            #- name: ANSIBLE_SSH_PIPELINING
           ini:
-          - {key: pipelining, section: ssh_connection}
+            - section: defaults
+              key: pipelining
+            #- section: ssh_connection
+            #  key: pipelining
           type: boolean
-          vars: [{name: ansible_ssh_pipelining}]
+          vars:
+            - name: ansible_pipelining
+            - name: ansible_ssh_pipelining
       private_key_file:
           description:
               - Path to private key file to use for authentication
@@ -169,6 +185,15 @@ DOCUMENTATION = '''
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
+      use_tty:
+        version_added: '2.5'
+        default: True
+        description: add -tt to ssh commands to force tty allocation
+        env: [{name: ANSIBLE_SSH_USETTY}]
+        ini:
+        - {key: usetty, section: ssh_connection}
+        type: boolean
+        yaml: {key: connection.usetty}
 '''
 
 import errno
@@ -290,11 +315,13 @@ class Connection(ConnectionBase):
         return self
 
     @staticmethod
-    def _create_control_path(host, port, user, connection=None):
+    def _create_control_path(host, port, user, connection=None, pid=None):
         '''Make a hash for the controlpath based on con attributes'''
         pstring = '%s-%s-%s' % (host, port, user)
         if connection:
             pstring += '-%s' % connection
+        if pid:
+            pstring += '-%s' % to_text(pid)
         m = hashlib.sha1()
         m.update(to_bytes(pstring))
         digest = m.hexdigest()
@@ -636,7 +663,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if b'ssh' in cmd:
+        if b'ssh' in cmd and sudoable:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -753,6 +780,9 @@ class Connection(ConnectionBase):
                     if self._flags['become_prompt']:
                         display.debug('Sending become_pass in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
+                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
+                        # that the write will happen without a flush
+                        stdin.flush()
                         self._flags['become_prompt'] = False
                         state += 1
                     elif self._flags['become_success']:
@@ -763,23 +793,23 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
-                        display.debug('Escalation succeeded')
+                        display.vvv('Escalation succeeded')
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.debug('Escalation failed')
+                        display.vvv('Escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
                     elif self._flags['become_nopasswd_error']:
-                        display.debug('Escalation requires password')
+                        display.vvv('Escalation requires password')
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
                         raise AnsibleError('Missing %s password' % self._play_context.become_method)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
-                        display.debug('Escalation prompt repeated')
+                        display.vvv('Escalation prompt repeated')
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
                         raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
@@ -845,7 +875,7 @@ class Connection(ConnectionBase):
     def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         """Wrapper around _bare_run that retries the connection
         """
-        return self._bare_run(cmd, in_data, sudoable, checkrc)
+        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
 
     @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
@@ -906,7 +936,7 @@ class Connection(ConnectionBase):
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
@@ -941,7 +971,11 @@ class Connection(ConnectionBase):
 
         ssh_executable = self._play_context.ssh_executable
 
-        if not in_data and sudoable:
+        # -tt can cause various issues in some environments so allow the user
+        # to disable it as a troubleshooting method.
+        use_tty = self.get_option('use_tty')
+
+        if not in_data and sudoable and use_tty:
             args = (ssh_executable, '-tt', self.host, cmd)
         else:
             args = (ssh_executable, self.host, cmd)

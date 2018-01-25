@@ -1,24 +1,24 @@
 """Sanity test for ansible-doc."""
 from __future__ import absolute_import, print_function
 
+import re
+
 from lib.sanity import (
     SanityMultipleVersion,
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SanityMessage,
 )
 
 from lib.util import (
     SubprocessError,
     display,
+    intercept_command,
 )
 
 from lib.ansible_util import (
     ansible_environment,
-)
-
-from lib.executor import (
-    intercept_command,
 )
 
 from lib.config import (
@@ -45,6 +45,8 @@ class AnsibleDocTest(SanityMultipleVersion):
         if not modules:
             return SanitySkipped(self.name, python_version=python_version)
 
+        module_paths = dict((t.module, t.path) for t in targets.targets if t.module)
+
         env = ansible_environment(args, color=False)
         cmd = ['ansible-doc'] + modules
 
@@ -55,6 +57,13 @@ class AnsibleDocTest(SanityMultipleVersion):
             stdout = ex.stdout
             stderr = ex.stderr
             status = ex.status
+
+        if stderr:
+            errors = stderr.strip().splitlines()
+            messages = [self.parse_error(e, module_paths) for e in errors]
+
+            if messages and all(messages):
+                return SanityFailure(self.name, messages=messages, python_version=python_version)
 
         if status:
             summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
@@ -68,3 +77,30 @@ class AnsibleDocTest(SanityMultipleVersion):
             return SanityFailure(self.name, summary=summary, python_version=python_version)
 
         return SanitySuccess(self.name, python_version=python_version)
+
+    @staticmethod
+    def parse_error(error, module_paths):
+        """
+        :type error: str
+        :type module_paths: dict[str, str]
+        :rtype: SanityMessage | None
+        """
+        # example error messages from lib/ansible/cli/doc.py:
+        #   ERROR! module ping missing documentation (or could not parse documentation): expected string or buffer
+        #   [ERROR]: module ping has a documentation error formatting or is missing documentation.
+        match = re.search(r'^[^ ]*ERROR[^ ]* (?P<type>[^ ]+) (?P<name>[^ ]+) (?P<text>.*)$', error)
+
+        if match:
+            groups = match.groupdict()
+
+            error_type = groups['type']
+            error_name = groups['name']
+            error_text = groups['text']
+
+            if error_type == 'module' and error_name in module_paths:
+                return SanityMessage(
+                    message=error_text,
+                    path=module_paths[error_name],
+                )
+
+        return None

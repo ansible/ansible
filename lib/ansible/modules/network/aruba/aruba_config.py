@@ -48,7 +48,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
   before:
@@ -125,10 +125,12 @@ options:
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config
+        startup-config.  If the argument is set to I(changed), then the running-config
+        will only be copied to the startup-config if the task has made a change.
     required: false
     default: never
-    choices: ['always', 'never', 'modified']
+    choices: ['always', 'never', 'modified', 'changed']
+    version_added: "2.5"
   diff_against:
     description:
       - When using the C(ansible-playbook --diff) command line argument
@@ -160,6 +162,15 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     required: false
+  encrypt:
+    description:
+      - This allows an Aruba controller's passwords and keys to be displayed in plain
+        text when set to I(false) or encrypted when set to I(true).
+        If set to I(false), the setting will re-encrypt at the end of the module run.
+        Backups are still encrypted even when set to I(false).
+    required: false
+    default: true
+    version_added: "2.5"
 """
 
 EXAMPLES = """
@@ -208,11 +219,11 @@ backup_path:
 """
 
 
-from ansible.module_utils.aruba import run_commands, get_config, load_config
-from ansible.module_utils.aruba import aruba_argument_spec
-from ansible.module_utils.aruba import check_args as aruba_check_args
+from ansible.module_utils.network.aruba.aruba import run_commands, get_config, load_config
+from ansible.module_utils.network.aruba.aruba import aruba_argument_spec
+from ansible.module_utils.network.aruba.aruba import check_args as aruba_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def get_running_config(module, config=None):
@@ -222,11 +233,11 @@ def get_running_config(module, config=None):
             contents = config
         else:
             contents = get_config(module)
-    return NetworkConfig(indent=1, contents=contents)
+    return NetworkConfig(contents=contents)
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=1)
+    candidate = NetworkConfig()
 
     if module.params['src']:
         candidate.load(module.params['src'])
@@ -266,15 +277,18 @@ def main():
 
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['running', 'startup', 'intended']),
         diff_ignore_lines=dict(type='list'),
+
+        encrypt=dict(type='bool', default=True),
     )
 
     argument_spec.update(aruba_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -294,9 +308,12 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=1, contents=contents)
+        config = NetworkConfig(contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
+
+    if not module.params['encrypt']:
+        run_commands(module, 'encrypt disable')
 
     if any((module.params['src'], module.params['lines'])):
         match = module.params['match']
@@ -338,10 +355,13 @@ def main():
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show startup-config'])
 
-        running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
-        startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(contents=output[0], ignore_lines=diff_ignore_lines)
+        startup_config = NetworkConfig(contents=output[1], ignore_lines=diff_ignore_lines)
 
         if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+    elif module.params['save_when'] == 'changed':
+        if result['changed']:
             save_config(module, result)
 
     if module._diff:
@@ -352,7 +372,7 @@ def main():
             contents = running_config.config_text
 
         # recreate the object in order to process diff_ignore_lines
-        running_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+        running_config = NetworkConfig(contents=contents, ignore_lines=diff_ignore_lines)
 
         if module.params['diff_against'] == 'running':
             if module.check_mode:
@@ -372,7 +392,7 @@ def main():
             contents = module.params['intended_config']
 
         if contents is not None:
-            base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
+            base_config = NetworkConfig(contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
                 result.update({
@@ -380,6 +400,9 @@ def main():
                     'diff': {'before': str(base_config), 'after': str(running_config)}
                 })
 
+    # make sure 'encrypt enable' is applied if it was ever disabled
+    if not module.params['encrypt']:
+        run_commands(module, 'encrypt enable')
     module.exit_json(**result)
 
 

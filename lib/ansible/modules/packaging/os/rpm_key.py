@@ -2,48 +2,42 @@
 # -*- coding: utf-8 -*-
 
 # Ansible module to import third party repo keys to your rpm db
-# (c) 2013, Héctor Acosta <hector.acosta@gazzang.com>
-#
+# Copyright: (c) 2013, Héctor Acosta <hector.acosta@gazzang.com>
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = '''
 ---
 module: rpm_key
-author: "Hector Acosta (@hacosta) <hector.acosta@gazzang.com>"
+author:
+- Hector Acosta (@hacosta) <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
     - Adds or removes (rpm --import) a gpg key to your rpm database.
 version_added: "1.3"
 options:
     key:
-      required: true
-      default: null
-      aliases: []
       description:
           - Key that will be modified. Can be a url, a file, or a keyid if the key already exists in the database.
+      required: true
     state:
-      required: false
-      default: "present"
-      choices: [present, absent]
       description:
           - If the key will be imported or removed from the rpm db.
+      default: present
+      choices: [ absent, present ]
     validate_certs:
       description:
           - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated. This should only be used
             on personally controlled sites using self-signed certificates.
-      required: false
+      type: bool
       default: 'yes'
-      choices: ['yes', 'no']
-
 '''
 
 EXAMPLES = '''
@@ -92,7 +86,7 @@ class RpmKey(object):
 
         self.gpg = self.module.get_bin_path('gpg')
         if not self.gpg:
-            self.gpg = self.module.get_bin_path('gpg2',required=True)
+            self.gpg = self.module.get_bin_path('gpg2', required=True)
 
         if '://' in key:
             keyfile = self.fetch_key(key)
@@ -170,11 +164,15 @@ class RpmKey(object):
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
+        cmd = self.rpm + ' -q  gpg-pubkey'
+        rc, stdout, stderr = self.module.run_command(cmd)
+        if rc != 0:  # No key is installed on system
+            return False
+        cmd += ' --qf "%{description}" | ' + self.gpg + ' --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
             if keyid in line.split(':')[4]:
-                    return True
+                return True
         return False
 
     def import_key(self, keyfile):
@@ -183,18 +181,18 @@ class RpmKey(object):
 
     def drop_key(self, keyid):
         if not self.module.check_mode:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[8:].lower()])
+            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % keyid[-8:].lower()])
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            key=dict(required=True, type='str'),
-            validate_certs=dict(default='yes', type='bool'),
-            ),
-        supports_check_mode=True
-        )
+        argument_spec=dict(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            key=dict(type='str', required=True),
+            validate_certs=dict(type='bool', default=True),
+        ),
+        supports_check_mode=True,
+    )
 
     RpmKey(module)
 

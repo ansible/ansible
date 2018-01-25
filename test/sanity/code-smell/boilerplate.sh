@@ -21,7 +21,6 @@ future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
 # Eventually we want metaclass3 and future3 to get down to 0
 metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
-        -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
@@ -40,7 +39,6 @@ metaclass3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -pru
 
 future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune \
         -o -path ./lib/ansible/modules/cloud/ovirt -prune \
-        -o -path ./lib/ansible/modules/cloud/openstack -prune \
         -o -path ./lib/ansible/modules/cloud/cloudstack -prune \
         -o -path ./lib/ansible/modules/cloud/amazon -prune \
         -o -path ./lib/ansible/modules/network/aos -prune \
@@ -64,7 +62,7 @@ future3=$(find ./lib/ansible/modules -path ./lib/ansible/modules/windows -prune 
 
 ### TODO:
 ### - module_utils  <=== these are important but not well organized so we'd
-###                      have to construct the teset file by file
+###                      have to construct the test file by file
 ### - contrib/  <=== Not a priority as these will move to inventory plugins over time
 
 
@@ -73,13 +71,13 @@ printf "\n== Missing __metaclass__ = type ==\n"
 fi
 
 if test -n "$metaclass1" ; then
-  printf "$metaclass1\n"
+  printf "%s\n" "$metaclass1"
 fi
 if test -n "$metaclass2" ; then
-  printf "$metaclass2\n"
+  printf "%s\n" "$metaclass2"
 fi
 if test -n "$metaclass3" ; then
-  printf "$metaclass3\n"
+  printf "%s\n" "$metaclass3"
 fi
 
 if test -n "$future1" -o -n "$future2" -o -n "$future3" ; then
@@ -87,18 +85,16 @@ if test -n "$future1" -o -n "$future2" -o -n "$future3" ; then
 fi
 
 if test -n "$future1" ; then
-  printf "$future1\n"
+  printf "%s\n" "$future1"
 fi
 if test -n "$future2" ; then
-  printf "$future2\n"
+  printf "%s\n" "$future2"
 fi
 if test -n "$future3" ; then
-  printf "$future3\n"
+  printf "%s\n" "$future3"
 fi
 
 if test -n "$future1$future2$future3$metaclass1$metaclass2$metaclass3" ; then
-  failures=$(printf "$future1$future2$future3$metaclass1$metaclass2$metaclass3"| wc -l)
-  failures=$(expr $failures + 2)
-  exit $failures
+  exit 2
 fi
 exit 0

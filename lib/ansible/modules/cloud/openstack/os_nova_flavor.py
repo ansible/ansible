@@ -1,19 +1,11 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -187,6 +179,9 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def _system_state_change(module, flavor):
     state = module.params['state']
@@ -199,21 +194,21 @@ def _system_state_change(module, flavor):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        state        = dict(required=False, default='present',
-                            choices=['absent', 'present']),
-        name         = dict(required=False),
+        state=dict(required=False, default='present',
+                   choices=['absent', 'present']),
+        name=dict(required=False),
 
         # required when state is 'present'
-        ram          = dict(required=False, type='int'),
-        vcpus        = dict(required=False, type='int'),
-        disk         = dict(required=False, type='int'),
+        ram=dict(required=False, type='int'),
+        vcpus=dict(required=False, type='int'),
+        disk=dict(required=False, type='int'),
 
-        ephemeral    = dict(required=False, default=0, type='int'),
-        swap         = dict(required=False, default=0, type='int'),
-        rxtx_factor  = dict(required=False, default=1.0, type='float'),
-        is_public    = dict(required=False, default=True, type='bool'),
-        flavorid     = dict(required=False, default="auto"),
-        extra_specs  = dict(required=False, default=None, type='dict'),
+        ephemeral=dict(required=False, default=0, type='int'),
+        swap=dict(required=False, default=0, type='int'),
+        rxtx_factor=dict(required=False, default=1.0, type='float'),
+        is_public=dict(required=False, default=True, type='bool'),
+        flavorid=dict(required=False, default="auto"),
+        extra_specs=dict(required=False, default=None, type='dict'),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -252,9 +247,9 @@ def main():
                     rxtx_factor=module.params['rxtx_factor'],
                     is_public=module.params['is_public']
                 )
-                changed=True
+                changed = True
             else:
-                changed=False
+                changed = False
 
             old_extra_specs = flavor['extra_specs']
             new_extra_specs = dict([(k, str(v)) for k, v in extra_specs.items()])
@@ -282,8 +277,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()

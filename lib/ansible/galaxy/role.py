@@ -22,6 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import datetime
 import os
 import tarfile
@@ -233,7 +234,14 @@ class GalaxyRole(object):
                     # of the master branch
                     if len(role_versions) > 0:
                         loose_versions = [LooseVersion(a.get('name', None)) for a in role_versions]
-                        loose_versions.sort()
+                        try:
+                            loose_versions.sort()
+                        except TypeError:
+                            raise AnsibleError(
+                                'Unable to compare role versions (%s) to determine the most recent version due to incompatible version formats. '
+                                'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
+                                'install.' % ', '.join([v.vstring for v in loose_versions])
+                            )
                         self.version = str(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
@@ -325,11 +333,10 @@ class GalaxyRole(object):
                         installed = True
                     except OSError as e:
                         error = True
-                        if e[0] == 13 and len(self.paths) > 1:
+                        if e.errno == errno.EACCES and len(self.paths) > 1:
                             current = self.paths.index(self.path)
-                            nextidx = current + 1
-                            if len(self.paths) >= current:
-                                self.path = self.paths[nextidx]
+                            if len(self.paths) > current:
+                                self.path = self.paths[current + 1]
                                 error = False
                         if error:
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))

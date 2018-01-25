@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
+# Copyright: (c) 2017, Sébastien DA ROCHA <sebastien@da-rocha.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,6 +19,7 @@ short_description: Modify the systems iptables
 version_added: "2.0"
 author:
 - Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+- Sébastien DA ROCHA (@sebastiendarocha)
 description:
   - Iptables is used to set up, maintain, and inspect the tables of IP packet
     filter rules in the Linux kernel.
@@ -50,6 +52,11 @@ options:
     choices: [ append, insert ]
     default: append
     version_added: "2.2"
+  rule_num:
+    description:
+      - Insert the rule as the given rule number. This works only with
+        action = 'insert'.
+    version_added: "2.5"
   ip_version:
     description:
       - Which version of the IP protocol this rule should apply to.
@@ -235,7 +242,8 @@ options:
     version_added: "2.1"
   reject_with:
     description:
-      - Specifies the error packet type to return while rejecting.
+      - 'Specifies the error packet type to return while rejecting. It implies
+        "jump: REJECT"'
     version_added: "2.1"
   icmp_type:
     description:
@@ -313,10 +321,25 @@ EXAMPLES = '''
     set_dscp_mark_class: CS1
     protocol: tcp
 
+# Insert a rule on line 5
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 8080
+    jump: ACCEPT
+    rule_num: 5
+
 # Set the policy for the INPUT chain to DROP
 - iptables:
     chain: INPUT
     policy: DROP
+
+# Reject tcp with tcp-reset
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    reject_with: tcp-reset
+    ip_version: ipv4
 '''
 
 import re
@@ -346,10 +369,12 @@ def append_param(rule, param, flag, is_list):
             else:
                 rule.extend([flag, param])
 
+
 def append_tcp_flags(rule, param, flag):
     if param:
         if 'flags' in param and 'flags_set' in param:
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+
 
 def append_match_flag(rule, param, flag, negatable):
     if param == 'match':
@@ -413,7 +438,8 @@ def construct_rule(params):
     append_param(rule, params['limit_burst'], '--limit-burst', False)
     append_match(rule, params['uid_owner'], 'owner')
     append_param(rule, params['uid_owner'], '--uid-owner', False)
-    append_jump(rule, params['reject_with'], 'REJECT')
+    if params['jump'] is None:
+        append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
     append_param(
         rule,
@@ -427,6 +453,8 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
+    if action == '-I' and params['rule_num']:
+        cmd.extend([params['rule_num']])
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
@@ -483,6 +511,7 @@ def main():
             action=dict(type='str', default='append', choices=['append', 'insert']),
             ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
             chain=dict(type='str'),
+            rule_num=dict(type='str'),
             protocol=dict(type='str'),
             source=dict(type='str'),
             to_source=dict(type='str'),
@@ -534,7 +563,7 @@ def main():
 
     # Check if chain option is required
     if args['flush'] is False and args['chain'] is None:
-        module.fail_json( msg="Either chain or flush parameter must be specified.")
+        module.fail_json(msg="Either chain or flush parameter must be specified.")
 
     # Flush the table
     if args['flush'] is True:
@@ -572,21 +601,7 @@ def main():
                 else:
                     append_rule(iptables_path, module, module.params)
             else:
-                insert = (module.params['action'] == 'insert')
-                rule_is_present = check_present(iptables_path, module, module.params)
-                should_be_present = (args['state'] == 'present')
-
-                # Check if target is up to date
-                args['changed'] = (rule_is_present != should_be_present)
-
-                if args['changed'] and not module.check_mode:
-                    if should_be_present:
-                        if insert:
-                            insert_rule(iptables_path, module, module.params)
-                        else:
-                            append_rule(iptables_path, module, module.params)
-                    else:
-                        remove_rule(iptables_path, module, module.params)
+                remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
 

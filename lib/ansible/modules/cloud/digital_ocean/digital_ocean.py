@@ -39,6 +39,7 @@ options:
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+    aliases: ['droplet_id']
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
@@ -201,7 +202,7 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 
 class TimeoutError(Exception):
@@ -237,7 +238,8 @@ class Droplet(JsonfyMixIn):
                 self.update_attr(json)
 
     def power_on(self):
-        assert self.status == 'off', 'Can only power on a closed one.'
+        if self.status != 'off':
+            raise AssertionError('Can only power on a closed one.')
         json = self.manager.power_on_droplet(self.id)
         self.update_attr(json)
 
@@ -345,11 +347,7 @@ def core(module):
             module.fail_json(msg='Unable to load %s' % k)
         return v
 
-    try:
-        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
+    api_token = module.params['api_token']
     changed = True
     command = module.params['command']
     state = module.params['state']
@@ -431,7 +429,11 @@ def main():
         argument_spec=dict(
             command=dict(choices=['droplet', 'ssh'], default='droplet'),
             state=dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            api_token=dict(
+                aliases=['API_TOKEN'],
+                no_log=True,
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY'])
+            ),
             name=dict(type='str'),
             size_id=dict(),
             image_id=dict(),

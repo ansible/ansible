@@ -95,6 +95,8 @@ class CallbackModule(CallbackBase):
         else:
 
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if result._task.action == 'debug' and 'changed' in result._result:
+                    del result._result['changed']
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -293,8 +295,8 @@ class CallbackModule(CallbackBase):
                     if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
                         continue
                     val = getattr(self._options, option)
-                    if val:
-                        self._display.vvvv('%s: %s' % (option, val))
+                    if val and self._display.verbosity > 3:
+                        self._display.display('%s: %s' % (option, val), color=C.COLOR_VERBOSE, screen_only=True)
 
     def v2_runner_retry(self, result):
         task_name = result.task_name or result._task
@@ -302,3 +304,7 @@ class CallbackModule(CallbackBase):
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
+
+    def v2_playbook_on_notify(self, handler, host):
+        if self._display.verbosity > 1:
+            self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)

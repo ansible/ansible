@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 module: rax_clb_ssl
 short_description: Manage SSL termination for a Rackspace Cloud Load Balancer.
 description:
@@ -67,7 +67,9 @@ options:
     - How long before "wait" gives up, in seconds.
     default: 300
 author: Ash Wilson
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -100,7 +102,8 @@ from ansible.module_utils.rax import (rax_argument_spec,
                                       rax_required_together,
                                       rax_to_dict,
                                       setup_rax_module,
-                                     )
+                                      )
+
 
 def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
                             certificate, intermediate_certificate, secure_port,
@@ -221,6 +224,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         module.exit_json(**result)
     else:
         module.fail_json(**result)
+
 
 def main():
     argument_spec = rax_argument_spec()

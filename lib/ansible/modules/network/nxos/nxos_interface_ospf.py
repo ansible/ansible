@@ -137,10 +137,10 @@ commands:
 
 
 import re
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 BOOL_PARAMS = [
     'passive_interface',
@@ -296,6 +296,8 @@ def state_present(module, existing, proposed, candidate):
             if existing_commands[key] == proposed_commands[key]:
                 continue
 
+        if key == 'ip ospf passive-interface' and module.params.get('interface').upper().startswith('LO'):
+            module.fail_json(msg='loopback interface does not support passive_interface')
         if value is True:
             commands.append(key)
         elif value is False:
@@ -379,10 +381,7 @@ def main():
         message_digest_algorithm_type=dict(required=False, type='str', choices=['md5']),
         message_digest_encryption_type=dict(required=False, type='str', choices=['cisco_type_7', '3des']),
         message_digest_password=dict(required=False, type='str', no_log=True),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

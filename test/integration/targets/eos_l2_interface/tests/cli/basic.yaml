@@ -1,0 +1,140 @@
+---
+- debug: msg="START eos_l2_interface cli/basic.yaml on connection={{ ansible_connection }}"
+
+- name: Delete test interface switchports
+  eos_l2_interface:
+    name: Ethernet1
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- name: Set switchport mode to access on vlan 4000
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: access
+    access_vlan: 4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Set switchport mode to access on vlan 4000 again (idempotent)
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: access
+    access_vlan: 4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Change access vlan to 4001
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: access
+    access_vlan: 4001
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Change access vlan to 4001 again (idempotent)
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: access
+    access_vlan: 4001
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Change switchport mode to trunk and set native vlan to 4001
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: trunk
+    native_vlan: 4001
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Change switchport mode to trunk and set native vlan to 4001 again (idempotent)
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: trunk
+    native_vlan: 4001
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Set trunk allowed vlans to 20 and 4000
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: trunk
+    trunk_allowed_vlans: 20,4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+
+- name: Set trunk allowed vlans to 20 and 4000 again (idempotent)
+  eos_l2_interface:
+    name: Ethernet1
+    state: present
+    mode: trunk
+    trunk_allowed_vlans: 20,4000
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Tear down switchports
+  eos_l2_interface:
+    name: Ethernet1
+    state: absent
+    authorize: yes
+    provider: "{{ cli }}"
+  become: yes
+
+- debug: msg="END eos_l3_interface cli/basic.yaml on connection={{ ansible_connection }}"

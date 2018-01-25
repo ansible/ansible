@@ -1,0 +1,37 @@
+---
+- debug: msg="START cli/nxos_banner motd test"
+
+- name: setup - remove motd
+  nxos_banner: &remove
+    banner: motd
+    state: absent
+    provider: "{{ cli }}"
+
+- name: Set motd
+  nxos_banner: &motd
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner motd @\nthis is my motd banner\nthat has a multiline\nstring\n@' in result.commands"
+
+- name: Set motd again (idempotent)
+  nxos_banner: *motd
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown - remove motd
+  nxos_banner: *remove
+
+- debug: msg="END cli/nxos_banner motd test"

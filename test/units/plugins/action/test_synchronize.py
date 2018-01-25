@@ -46,7 +46,7 @@ class TaskMock(object):
     args = {'src': u'/tmp/deleteme',
             'dest': '/tmp/deleteme',
             'rsync_path': 'rsync'}
-    async = None
+    async_val = None
     become = None
     become_user = None
     become_method = None
@@ -62,6 +62,11 @@ class ConnectionMock(object):
     # transport = 'ssh'
     transport = None
     _new_stdin = StdinMock()
+
+    # my shell
+    _shell = MagicMock()
+    _shell.mkdtemp.return_value = 'mkdir command'
+    _shell.join_path.side_effect = os.path.join
 
 
 class PlayContextMock(object):

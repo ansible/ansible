@@ -76,6 +76,7 @@
 - name: Check the stat results of the file
   stat:
     path: "{{ remote_file }}"
+    get_md5: yes
   register: stat_results
 
 - debug:
@@ -102,17 +103,19 @@
   copy:
     src: foo.txt
     dest: "{{ remote_file }}"
+    decrypt: no
   register: copy_result2
 
 - name: Assert that the file was not changed
   assert:
     that:
-      - "not copy_result2|changed"
+      - "copy_result2 is not changed"
 
 - name: Overwrite the file using the content system
   copy:
     content: "modified"
     dest: "{{ remote_file }}"
+    decrypt: no
   register: copy_result3
 
 - name: Check the stat results of the file
@@ -127,7 +130,7 @@
 - name: Assert that the file has changed
   assert:
      that:
-       - "copy_result3|changed"
+       - "copy_result3 is changed"
        - "'content' not in copy_result3"
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "stat_results.stat.mode != '0700'"
@@ -137,6 +140,7 @@
     content: "modified"
     dest: "{{ remote_file }}"
     mode: 0700
+    decrypt: no
   register: copy_result4
 
 - name: Check the stat results of the file
@@ -151,7 +155,7 @@
 - name: Assert that the file has changed
   assert:
      that:
-       - "copy_result3|changed"
+       - "copy_result3 is changed"
        - "'content' not in copy_result3"
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "stat_results.stat.mode == '0700'"
@@ -167,6 +171,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0700
+    decrypt: no
   register: copy_results
 
 - name: Check the stat results of the file
@@ -191,6 +196,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0404
+    decrypt: no
   register: copy_results
 
 - name: Check the stat results of the file
@@ -264,7 +270,7 @@
 - name: Assert that empty source failed
   assert:
     that:
-      - failed_copy | failed
+      - failed_copy is failed
       - "'src (or content) is required' in failed_copy.msg"
 
 - name: Try without destination to ensure it fails
@@ -280,7 +286,7 @@
 - name: Assert that missing destination failed
   assert:
     that:
-      - failed_copy | failed
+      - failed_copy is failed
       - "'dest is required' in failed_copy.msg"
 
 - name: Try without source to ensure it fails
@@ -296,7 +302,7 @@
 - name: Assert that missing source failed
   assert:
     that:
-      - failed_copy | failed
+      - failed_copy is failed
       - "'src (or content) is required' in failed_copy.msg"
 
 - name: Try with both src and content to ensure it fails
@@ -310,7 +316,7 @@
 - name: Assert that mutually exclusive parameters failed
   assert:
     that:
-      - failed_copy | failed
+      - failed_copy is failed
       - "'mutually exclusive' in failed_copy.msg"
 
 - name: Try with content and directory as destination to ensure it fails
@@ -327,7 +333,7 @@
 - name: Assert that content and directory as destination failed
   assert:
     that:
-      - failed_copy | failed
+      - failed_copy is failed
       - "'can not use content with a dir as dest' in failed_copy.msg"
 
 - name: Clean up
@@ -354,7 +360,7 @@
 - name: Assert that the file has changed
   assert:
      that:
-       - "copy_results|changed"
+       - "copy_results is changed"
        - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0500'"
 
@@ -381,7 +387,7 @@
 - name: Assert that the file has changed and has correct mode
   assert:
      that:
-       - "copy_results|changed"
+       - "copy_results is changed"
        - "copy_results.mode == '0547'"
        - "stat_results.stat.checksum == ('foo.txt\n'|hash('sha1'))"
        - "stat_results.stat.mode == '0547'"
@@ -432,7 +438,7 @@
 - name: Assert that the recursive copy did something
   assert:
     that:
-      - "recursive_copy_result|changed"
+      - "recursive_copy_result is changed"
 
 - name: Check that a file in a directory was transferred
   stat:
@@ -542,7 +548,7 @@
 - name: Assert that the second copy did not change anything
   assert:
     that:
-      - "not recursive_copy_result|changed"
+      - "recursive_copy_result is not changed"
 
 - name: Cleanup the recursive copy subdir
   file:
@@ -589,7 +595,7 @@
 - name: Assert that the recursive copy did something
   assert:
     that:
-      - "recursive_copy_result|changed"
+      - "recursive_copy_result is changed"
 
 - name: Check that a file in a directory was transferred
   stat:
@@ -697,7 +703,7 @@
 - name: Assert that the second copy did not change anything
   assert:
     that:
-      - "not recursive_copy_result|changed"
+      - "recursive_copy_result is not changed"
 
 - name: Cleanup the recursive copy subdir
   file:
@@ -744,7 +750,7 @@
 - name: Assert that the recursive copy did something
   assert:
     that:
-      - "recursive_copy_result|changed"
+      - "recursive_copy_result is changed"
 
 - name: Check that a file in a directory was transferred
   stat:
@@ -862,7 +868,7 @@
 - name: Assert that the second copy did not change anything
   assert:
     that:
-      - "not recursive_copy_result|changed"
+      - "recursive_copy_result is not changed"
 
 - name: Cleanup the recursive copy subdir
   file:
@@ -1148,7 +1154,7 @@
 - name: Assert that the file has changed and is not a link
   assert:
      that:
-       - "copy_results|changed"
+       - "copy_results is changed"
        - "'content' not in copy_results"
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "not stat_results.stat.islnk"

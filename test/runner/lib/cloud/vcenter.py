@@ -39,7 +39,11 @@ class VcenterProvider(CloudProvider):
         """
         super(VcenterProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'ansible/ansible:vcenter-simulator'
+        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
+        if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+            self.image = os.environ.get('ANSIBLE_VCSIM_CONTAINER')
+        else:
+            self.image = 'ansible/ansible:vcenter-simulator@sha256:7b7cd213219dc09ae528a8e226804e662c2fae0c1d7d7e2ee3aa9e9c08d4059a'
         self.container_name = ''
 
     def filter(self, targets, exclude):
@@ -117,7 +121,9 @@ class VcenterProvider(CloudProvider):
             else:
                 publish_ports = []
 
-            docker_pull(self.args, self.image)
+            if not os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
+                docker_pull(self.args, self.image)
+
             docker_run(
                 self.args,
                 self.image,

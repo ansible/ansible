@@ -34,6 +34,7 @@ options:
     description:
       - A list of subnet IDs to gather facts for.
     version_added: "2.5"
+    aliases: [subnet_id]
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
@@ -223,7 +224,7 @@ def describe_subnets(connection, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        subnet_ids=dict(type='list', default=[]),
+        subnet_ids=dict(type='list', default=[], aliases=['subnet_id']),
         filters=dict(type='dict', default={})
     ))
 

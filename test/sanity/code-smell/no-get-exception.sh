@@ -10,7 +10,6 @@ get_exception=$(find . -path ./test/runner/.tox -prune \
         -o -path ./lib/ansible/modules/storage/netapp -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \
         -o -path ./lib/ansible/modules/network/panos -prune \
-        -o -path ./lib/ansible/modules/network/nxos -prune \
         -o -path ./lib/ansible/modules/network/junos -prune \
         -o -path ./lib/ansible/modules/network/vyos -prune \
         -o -path ./lib/ansible/modules/network/fortios -prune \

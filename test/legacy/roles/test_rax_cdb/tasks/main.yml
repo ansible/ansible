@@ -7,7 +7,7 @@
 - name: Validate results of rax_cdb with no args
   assert:
     that:
-      - rax_cdb|failed
+      - rax_cdb is failed
       - 'rax_cdb.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -23,7 +23,7 @@
 - name: Validate results of rax_cdb with only creds
   assert:
     that:
-      - rax_cdb|failed
+      - rax_cdb is failed
       - rax_cdb.msg == 'No credentials supplied!'
 # ============================================================
 
@@ -41,7 +41,7 @@
 - name: Validate results of rax_cdb with only creds
   assert:
     that:
-      - rax_cdb|failed
+      - rax_cdb is failed
       - rax_cdb.msg.startswith('None is not a valid region')
 # ============================================================
 
@@ -59,7 +59,7 @@
 - name: Validate rax_cdb creds and region
   assert:
     that:
-      - rax_cdb|failed
+      - rax_cdb is failed
       - 'rax_cdb.msg == "missing required arguments: name"'
 # ============================================================
 
@@ -79,8 +79,8 @@
 - name: Validate rax_cdb with creds, region and name
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == '{{ resource_prefix }}-1'
       - rax_cdb.cdb.hostname
       - rax_cdb.cdb.status == 'ACTIVE'
@@ -99,8 +99,8 @@
 - name: "Validate delete integration 1"
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-1"
 
 # ============================================================
@@ -121,8 +121,8 @@
 - name: Validate rax_cdb idempotent test 1
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -139,8 +139,8 @@
 - name: Validate rax_cdb idempotent test 2
   assert:
     that:
-      - rax_cdb|success
-      - not rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is not changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -158,7 +158,7 @@
 - name: "Validate delete integration 2"
   assert:
     that:
-      - rax_cdb|changed
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-2"
 # ============================================================
 
@@ -178,8 +178,8 @@
 - name: Validate rax_cdb resize volume 1
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -197,8 +197,8 @@
 - name: Validate rax_cdb resize volume 2
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -216,7 +216,7 @@
 - name: "Validate delete integration 3"
   assert:
     that:
-      - rax_cdb|changed
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-3"
 # ============================================================
 
@@ -236,8 +236,8 @@
 - name: Validate rax_cdb resize flavor 1
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -255,8 +255,8 @@
 - name: Validate rax_cdb resize flavor 2
   assert:
     that:
-      - rax_cdb|success
-      - rax_cdb|changed
+      - rax_cdb is successful
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
       - rax_cdb.cdb.status == 'ACTIVE'
 
@@ -274,6 +274,6 @@
 - name: "Validate delete integration 4"
   assert:
     that:
-      - rax_cdb|changed
+      - rax_cdb is changed
       - rax_cdb.cdb.name == "{{ resource_prefix }}-4"
 # ============================================================

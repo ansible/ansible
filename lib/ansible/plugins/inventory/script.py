@@ -9,10 +9,21 @@ DOCUMENTATION = '''
     inventory: script
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
+    options:
+      cache:
+        description: Toggle the usage of the configured Cache plugin.
+        default: False
+        type: boolean
+        ini:
+           - section: inventory_plugin_script
+             key: cache
+        env:
+           - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
     description:
         - The source provided must an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
-          C(--host) will only be used if no C(_meta) key is present (performance optimization)
+          C(--host) will only be used if no C(_meta) key is present.
+          This is a performance optimization as the script would be called per host otherwise.
     notes:
         - It takes the place of the previously hardcoded script inventory.
         - To function it requires being whitelisted in configuration, which is true by default.
@@ -26,10 +37,10 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Cacheable):
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
     NAME = 'script'
@@ -61,9 +72,12 @@ class InventoryModule(BaseInventoryPlugin):
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory, loader, path, cache=None):
 
         super(InventoryModule, self).parse(inventory, loader, path)
+
+        if cache is None:
+            cache = self.get_option('cache')
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -71,8 +85,8 @@ class InventoryModule(BaseInventoryPlugin):
         cmd = [path, "--list"]
 
         try:
-            cache_key = self.get_cache_prefix(path)
-            if not cache or cache_key not in inventory.cache:
+            cache_key = self._get_cache_prefix(path)
+            if not cache or cache_key not in self._cache:
                 try:
                     sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except OSError as e:
@@ -80,8 +94,7 @@ class InventoryModule(BaseInventoryPlugin):
                 (stdout, stderr) = sp.communicate()
 
                 path = to_native(path)
-                if stderr:
-                    err = to_native(stderr) + "\n"
+                err = to_native(stderr or "") + "\n"
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
@@ -94,11 +107,11 @@ class InventoryModule(BaseInventoryPlugin):
                     raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
                 try:
-                    inventory.cache[cache_key] = self.loader.load(data, file_name=path)
+                    self._cache[cache_key] = self.loader.load(data, file_name=path)
                 except Exception as e:
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 
-            processed = inventory.cache[cache_key]
+            processed = self._cache[cache_key]
             if not isinstance(processed, Mapping):
                 raise AnsibleError("failed to parse executable inventory script results from {0}: needs to be a json dict\n{1}".format(path, err))
 
@@ -126,7 +139,7 @@ class InventoryModule(BaseInventoryPlugin):
                     except AttributeError as e:
                         raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
 
-                self.populate_host_vars([host], got)
+                self._populate_host_vars([host], got)
 
         except Exception as e:
             raise AnsibleParserError(to_native(e))

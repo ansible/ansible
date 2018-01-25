@@ -45,8 +45,10 @@ options:
       - Route distinguisher of the VRF
   interfaces:
     description:
-      - List of interfaces to check the VRF has been
-        configured correctly.
+      - Identifies the set of interfaces that
+        should be configured in the VRF. Interfaces must be routed
+        interfaces in order to be placed into a VRF. The name of interface
+        should be in expanded format and not abbreviated.
   aggregate:
     description: List of VRFs definitions
   purge:
@@ -63,6 +65,7 @@ options:
       - State of the VRF configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: eos
 """
 
 EXAMPLES = """
@@ -114,9 +117,9 @@ import time
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import remove_default_spec
-from ansible.module_utils.eos import load_config, run_commands
-from ansible.module_utils.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.eos.eos import load_config, run_commands
+from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
 
 
 def search_obj_in_list(name, lst):
@@ -195,13 +198,13 @@ def map_config_to_obj(module):
             obj = {}
             obj['name'] = splitted_line[0]
             obj['rd'] = splitted_line[1]
-            obj['interfaces'] = None
+            obj['interfaces'] = []
 
             if len(splitted_line) > 4:
                 obj['interfaces'] = []
 
                 for i in splitted_line[4].split(','):
-                    obj['interfaces'].append(i.strip())
+                    obj['interfaces'].append(i.strip().lower())
 
             objs.append(obj)
 
@@ -216,13 +219,17 @@ def map_params_to_obj(module):
             for key in item:
                 if item.get(key) is None:
                     item[key] = module.params[key]
+
+            if item.get('interfaces'):
+                item['interfaces'] = [intf.replace(" ", "").lower() for intf in item.get('interfaces') if intf]
+
             obj.append(item.copy())
     else:
         obj.append({
             'name': module.params['name'],
             'state': module.params['state'],
             'rd': module.params['rd'],
-            'interfaces': module.params['interfaces']
+            'interfaces': [intf.replace(" ", "").lower() for intf in module.params['interfaces']] if module.params['interfaces'] else []
         })
 
     return obj
@@ -237,8 +244,10 @@ def check_declarative_intent_params(want, module):
             for i in w['interfaces']:
                 obj_in_have = search_obj_in_list(w['name'], have)
 
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
+                if obj_in_have:
+                    interfaces = obj_in_have.get('interfaces')
+                    if interfaces is not None and i not in interfaces:
+                        module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
 def main():

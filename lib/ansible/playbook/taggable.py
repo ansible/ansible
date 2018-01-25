@@ -30,7 +30,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int))
+    _tags = FieldAttribute(isa='list', default=[], listof=(string_types, int), extend=True)
 
     def __init__(self):
         super(Taggable, self).__init__()
@@ -46,17 +46,6 @@ class Taggable:
                 return [ds]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
-
-    def _get_attr_tags(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        tags = self._attributes['tags']
-        if tags is None:
-            tags = []
-        if hasattr(self, '_get_parent_attribute'):
-            tags = self._get_parent_attribute('tags', extend=True)
-        return tags
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''

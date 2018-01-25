@@ -10,9 +10,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -32,15 +34,15 @@ requirements:
 options:
     local_user_name:
         description:
-            - The local user name to be changed
+            - The local user name to be changed.
         required: True
     local_user_password:
         description:
-            - The password to be set
+            - The password to be set.
         required: False
     local_user_description:
         description:
-            - Description for the user
+            - Description for the user.
         required: False
     state:
         description:
@@ -65,22 +67,27 @@ RETURN = '''# '''
 
 try:
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import HAS_PYVMOMI, connect_to_api, vmware_argument_spec
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
-class VMwareLocalUserManager(object):
+class VMwareLocalUserManager(PyVmomi):
+
     def __init__(self, module):
-        self.module = module
-        self.content = connect_to_api(self.module)
+        super(VMwareLocalUserManager, self).__init__(module)
         self.local_user_name = self.module.params['local_user_name']
         self.local_user_password = self.module.params['local_user_password']
         self.local_user_description = self.module.params['local_user_description']
         self.state = self.module.params['state']
+
+        if self.is_vcenter():
+            self.module.fail_json(msg="Failed to get local account manager settings "
+                                      "from ESXi server: %s" % self.module.params['hostname'],
+                                  details="It seems that %s is a vCenter server instead of an "
+                                          "ESXi server" % self.module.params['hostname'])
 
     def process_state(self):
         try:
@@ -103,14 +110,12 @@ class VMwareLocalUserManager(object):
         except Exception as e:
             self.module.fail_json(msg=str(e))
 
-
     def check_local_user_manager_state(self):
         user_account = self.find_user_account()
         if not user_account:
             return 'absent'
         else:
             return 'present'
-
 
     def find_user_account(self):
         searchStr = self.local_user_name
@@ -120,14 +125,12 @@ class VMwareLocalUserManager(object):
         user_account = self.content.userDirectory.RetrieveUserGroups(None, searchStr, None, None, exactMatch, findUsers, findGroups)
         return user_account
 
-
     def create_account_spec(self):
         account_spec = vim.host.LocalAccountManager.AccountSpecification()
         account_spec.id = self.local_user_name
         account_spec.password = self.local_user_password
         account_spec.description = self.local_user_description
         return account_spec
-
 
     def state_create_user(self):
         account_spec = self.create_account_spec()
@@ -151,7 +154,6 @@ class VMwareLocalUserManager(object):
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
 
-
     def state_remove_user(self):
         try:
             self.content.accountManager.RemoveUser(self.local_user_name)
@@ -161,24 +163,19 @@ class VMwareLocalUserManager(object):
         except vmodl.MethodFault as method_fault:
             self.module.fail_json(msg=method_fault.msg)
 
-
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
 
 
-
 def main():
-
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(local_user_name=dict(required=True, type='str'),
-                              local_user_password=dict(required=False, type='str', no_log=True),
-                              local_user_description=dict(required=False, type='str'),
+                              local_user_password=dict(type='str', no_log=True),
+                              local_user_description=dict(type='str'),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=False)
 
     vmware_local_user_manager = VMwareLocalUserManager(module)
     vmware_local_user_manager.process_state()

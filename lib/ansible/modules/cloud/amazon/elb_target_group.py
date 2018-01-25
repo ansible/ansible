@@ -13,11 +13,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: elb_target_group
-short_description: Manage a target group for an Application load balancer
+short_description: Manage a target group for an Application or Network load balancer
 description:
-    - Manage an AWS Application Elastic Load Balancer target group. See
-      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
+    - Manage an AWS Elastic Load Balancer target group. See
+      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) or
+      U(http://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html) for details.
 version_added: "2.4"
+requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   deregistration_delay_timeout:
@@ -28,10 +30,11 @@ options:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
+        Can be set to 'traffic-port' to match target port.
     required: false
     default: "The port on which each target receives traffic from the load balancer."
   health_check_path:
@@ -68,7 +71,7 @@ options:
     description:
       - The protocol to use for routing traffic to the targets. Required when I(state) is C(present).
     required: false
-    choices: [ 'http', 'https' ]
+    choices: [ 'http', 'https', 'tcp' ]
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the tag parameter is not set then
@@ -95,14 +98,25 @@ options:
     default: lb_cookie
   successful_response_codes:
     description:
-      - >
-        The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, "200,202") or a range of
+      - The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, "200,202") or a range of
         values (for example, "200-299").
     required: false
   tags:
     description:
       - A dictionary of one or more tags to assign to the target group.
     required: false
+  target_type:
+    description:
+      - The type of target that you must specify when registering targets with this target group. The possible values are
+        C(instance) (targets are specified by instance ID) or C(ip) (targets are specified by IP address).
+        Note that you can't specify targets for a target group using both instance IDs and IP addresses.
+        If the target type is ip, specify IP addresses from the subnets of the virtual private cloud (VPC) for the target
+        group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10).
+        You can't specify publicly routable IP addresses.
+    required: false
+    default: instance
+    choices: ['instance', 'ip']
+    version_added: 2.5
   targets:
     description:
       - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
@@ -149,22 +163,42 @@ EXAMPLES = '''
     name: mytargetgroup
     state: absent
 
-# Create a target group with targets
+# Create a target group with instance targets
 - elb_target_group:
-  name: mytargetgroup
-  protocol: http
-  port: 81
-  vpc_id: vpc-01234567
-  health_check_path: /
-  successful_response_codes: "200,250-260"
-  targets:
-    - Id: i-01234567
-      Port: 80
-    - Id: i-98765432
-      Port: 80
-  state: present
-  wait_timeout: 200
-  wait: True
+    name: mytargetgroup
+    protocol: http
+    port: 81
+    vpc_id: vpc-01234567
+    health_check_path: /
+    successful_response_codes: "200,250-260"
+    targets:
+      - Id: i-01234567
+        Port: 80
+      - Id: i-98765432
+        Port: 80
+    state: present
+    wait_timeout: 200
+    wait: True
+
+# Create a target group with IP address targets
+- elb_target_group:
+    name: mytargetgroup
+    protocol: http
+    port: 81
+    vpc_id: vpc-01234567
+    health_check_path: /
+    successful_response_codes: "200,250-260"
+    target_type: ip
+    targets:
+      - Id: 10.0.0.10
+        Port: 80
+        AvailabilityZone: all
+      - Id: 10.0.0.20
+        Port: 80
+    state: present
+    wait_timeout: 200
+    wait: True
+
 '''
 
 RETURN = '''
@@ -339,6 +373,7 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
 def create_or_update_target_group(connection, module):
 
     changed = False
+    new_target_group = False
     params = dict()
     params['Name'] = module.params.get("name")
     params['Protocol'] = module.params.get("protocol").upper()
@@ -359,7 +394,7 @@ def create_or_update_target_group(connection, module):
             params['HealthCheckProtocol'] = module.params.get("health_check_protocol").upper()
 
         if module.params.get("health_check_port") is not None:
-            params['HealthCheckPort'] = str(module.params.get("health_check_port"))
+            params['HealthCheckPort'] = module.params.get("health_check_port")
 
         if module.params.get("health_check_interval") is not None:
             params['HealthCheckIntervalSeconds'] = module.params.get("health_check_interval")
@@ -377,10 +412,19 @@ def create_or_update_target_group(connection, module):
             params['Matcher'] = {}
             params['Matcher']['HttpCode'] = module.params.get("successful_response_codes")
 
+    # Get target type
+    if module.params.get("target_type") is not None:
+        params['TargetType'] = module.params.get("target_type")
+
     # Get target group
     tg = get_target_group(connection, module)
 
     if tg:
+        diffs = [param for param in ('Port', 'Protocol', 'VpcId')
+                 if tg.get(param) != params.get(param)]
+        if diffs:
+            module.fail_json(msg="Cannot modify %s parameter(s) for a target group" %
+                             ", ".join(diffs))
         # Target group exists so check health check parameters match what has been passed
         health_check_params = dict()
 
@@ -458,7 +502,7 @@ def create_or_update_target_group(connection, module):
                     instances_to_add = []
                     for target in params['Targets']:
                         if target['Id'] in add_instances:
-                            instances_to_add.append(target)
+                            instances_to_add.append({'Id': target['Id'], 'Port': int(target['Port'])})
 
                     changed = True
                     try:
@@ -549,7 +593,7 @@ def create_or_update_target_group(connection, module):
     if stickiness_lb_cookie_duration is not None:
         if str(stickiness_lb_cookie_duration) != current_tg_attributes['stickiness_lb_cookie_duration_seconds']:
             update_attributes.append({'Key': 'stickiness.lb_cookie.duration_seconds', 'Value': str(stickiness_lb_cookie_duration)})
-    if stickiness_type is not None:
+    if stickiness_type is not None and "stickiness_type" in current_tg_attributes:
         if stickiness_type != current_tg_attributes['stickiness_type']:
             update_attributes.append({'Key': 'stickiness.type', 'Value': stickiness_type})
 
@@ -620,8 +664,8 @@ def main():
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
-            health_check_port=dict(type='int'),
+            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
+            health_check_port=dict(),
             health_check_path=dict(default=None, type='str'),
             health_check_interval=dict(type='int'),
             health_check_timeout=dict(type='int'),
@@ -629,7 +673,7 @@ def main():
             modify_targets=dict(default=True, type='bool'),
             name=dict(required=True, type='str'),
             port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP'], type='str'),
             purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie', type='str'),
@@ -637,6 +681,7 @@ def main():
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             successful_response_codes=dict(type='str'),
             tags=dict(default={}, type='dict'),
+            target_type=dict(type='str', default='instance', choices=['instance', 'ip']),
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
             vpc_id=dict(type='str'),

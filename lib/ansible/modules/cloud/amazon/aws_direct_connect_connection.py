@@ -17,6 +17,9 @@ description:
     The connection may later be associated or disassociated with a link aggregation group.
 version_added: "2.4"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements:
   - boto3
   - botocore
@@ -36,7 +39,7 @@ options:
     description:
       - The ID of the Direct Connect connection. I(name) or I(connection_id) is
         required to recreate or delete a connection. Modifying attributes of a
-        connection with I(force_update) will result in a new Direct Connect connection ID.
+        connection with I(forced_update) will result in a new Direct Connect connection ID.
   location:
     description:
       -  Where the Direct Connect connection is located. Required when I(state=present).
@@ -50,7 +53,7 @@ options:
     description:
       - The ID of the link aggregation group you want to associate with the connection.
         This is optional in case a stand-alone connection is desired.
-  force_update:
+  forced_update:
     description:
       - To modify bandwidth or location the connection will need to be deleted and recreated.
         By default this will not happen - this option must be set to True.
@@ -59,33 +62,33 @@ options:
 EXAMPLES = """
 
 # create a Direct Connect connection
-aws_direct_connect_connection:
-  name: ansible-test-connection
-  state: present
-  location: EqDC2
-  link_aggregation_group: dxlag-xxxxxxxx
-  bandwidth: 1Gbps
-register: dc
+- aws_direct_connect_connection:
+    name: ansible-test-connection
+    state: present
+    location: EqDC2
+    link_aggregation_group: dxlag-xxxxxxxx
+    bandwidth: 1Gbps
+  register: dc
 
 # disassociate the LAG from the connection
-aws_direct_connect_connection:
-  state: present
-  connection_id: dc.connection.connection_id
-  location: EqDC2
-  bandwidth: 1Gbps
+- aws_direct_connect_connection:
+    state: present
+    connection_id: dc.connection.connection_id
+    location: EqDC2
+    bandwidth: 1Gbps
 
 # replace the connection with one with more bandwidth
-aws_direct_connect_connection:
-  state: present
-  name: ansible-test-connection
-  location: EqDC2
-  bandwidth: 10Gbps
-  force_update: True
+- aws_direct_connect_connection:
+    state: present
+    name: ansible-test-connection
+    location: EqDC2
+    bandwidth: 10Gbps
+    forced_update: True
 
 # delete the connection
-aws_direct_connect_connection:
-  state: absent
-  name: ansible-test-connection
+- aws_direct_connect_connection:
+    state: absent
+    name: ansible-test-connection
 """
 
 RETURN = """

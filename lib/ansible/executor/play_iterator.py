@@ -153,8 +153,6 @@ class PlayIterator:
         self._blocks = []
         self._variable_manager = variable_manager
 
-        self._task_uuid_cache = dict()
-
         # Default options to gather
         gather_subset = play_context.gather_subset
         gather_timeout = play_context.gather_timeout
@@ -203,7 +201,9 @@ class PlayIterator:
 
         self._host_states = {}
         start_at_matched = False
-        for host in inventory.get_hosts(self._play.hosts):
+        batch = inventory.get_hosts(self._play.hosts)
+        self.batch_size = len(batch)
+        for host in batch:
             self._host_states[host.name] = HostState(blocks=self._blocks)
             # if we're looking to start at a specific task, iterate through
             # the tasks for this host until we find the specified task
@@ -240,16 +240,10 @@ class PlayIterator:
         return self._host_states[host.name].copy()
 
     def cache_block_tasks(self, block):
-        def _cache_portion(p):
-            for t in p:
-                if isinstance(t, Block):
-                    self.cache_block_tasks(t)
-                elif t._uuid not in self._task_uuid_cache:
-                    self._task_uuid_cache[t._uuid] = t
-
-        for portion in (block.block, block.rescue, block.always):
-            if portion is not None:
-                _cache_portion(portion)
+        # now a noop, we've changed the way we do caching and finding of
+        # original task entries, but just in case any 3rd party strategies
+        # are using this we're leaving it here for now
+        return
 
     def get_next_task_for_host(self, host, peek=False):
 
@@ -370,6 +364,9 @@ class PlayIterator:
             elif state.run_state == self.ITERATING_RESCUE:
                 # The process here is identical to ITERATING_TASKS, except instead
                 # we move into the always portion of the block.
+                if host.name in self._play._removed_hosts:
+                    self._play._removed_hosts.remove(host.name)
+
                 if state.rescue_child_state:
                     (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek, in_child=True)
                     if self._check_failed_state(state.rescue_child_state):
@@ -426,7 +423,7 @@ class PlayIterator:
 
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
-                            if block._eor and host.name in block._role._had_task_run and not in_child:
+                            if block._eor and host.name in block._role._had_task_run and not in_child and not peek:
                                 block._role._completed[host.name] = True
                     else:
                         task = block.always[state.cur_always_task]
@@ -515,19 +512,8 @@ class PlayIterator:
         return self._check_failed_state(s)
 
     def get_original_task(self, host, task):
-        '''
-        Finds the task in the task list which matches the UUID of the given task.
-        The executor engine serializes/deserializes objects as they are passed through
-        the different processes, and not all data structures are preserved. This method
-        allows us to find the original task passed into the executor engine.
-        '''
-
-        if isinstance(task, Task):
-            the_uuid = task._uuid
-        else:
-            the_uuid = task
-
-        return self._task_uuid_cache.get(the_uuid, None)
+        # now a noop because we've changed the way we do caching
+        return (None, None)
 
     def _insert_tasks_into_state(self, state, task_list):
         # if we've failed at all, or if the task list is empty, just return the current state
@@ -564,6 +550,4 @@ class PlayIterator:
         return state
 
     def add_tasks(self, host, task_list):
-        for b in task_list:
-            self.cache_block_tasks(b)
         self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)

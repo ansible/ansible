@@ -13,7 +13,7 @@
 - name: test path shape validation
   testpath:
     path: "{{ item.path }}"
-  failed_when: path_shapes | failed != (item.should_fail | default(false))
+  failed_when: path_shapes is failed != (item.should_fail | default(false))
   register: path_shapes
   with_items:
   - path: C:\Windows
@@ -26,7 +26,7 @@
   testlist:
     value: '{{item.value}}'
   register: list_tests
-  failed_when: list_tests|failed or list_tests.count != item.count
+  failed_when: list_tests is failed or list_tests.count != item.count
   with_items:
   - value: []
     count: 0

@@ -4,7 +4,6 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
 # Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-# Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -47,7 +46,7 @@ options:
     default: 'yes'
   creates:
     description:
-      - A filename, when it already exists, this step will B(not) be run.
+      - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
     version_added: "1.6"
   list_files:
     description:
@@ -85,7 +84,7 @@ options:
     type: 'bool'
     default: 'yes'
     version_added: "2.2"
-author: Dag Wieers (@dagwieers)
+author: Michael DeHaan
 todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.

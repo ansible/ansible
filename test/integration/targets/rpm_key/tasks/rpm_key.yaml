@@ -1,4 +1,24 @@
 ---
+#
+# Save initial state
+#
+- name: Retrieve a list of gpg keys are installed for package checking
+  shell: 'rpm -q gpg-pubkey | sort'
+  register: list_of_pubkeys
+
+- name: Retrieve the gpg keys used to verify packages
+  command: 'rpm -q --qf %{description} gpg-pubkey'
+  register: pubkeys
+
+- name: Save gpg keys to a file
+  copy:
+    content: "{{ pubkeys['stdout'] }}\n"
+    dest: '{{ output_dir }}/pubkeys'
+    mode: 0600
+
+#
+# Tests start
+#
 - name: download EPEL GPG key
   get_url:
     url: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
@@ -6,7 +26,7 @@
 
 - name: download sl rpm
   get_url:
-    url: https://download.fedoraproject.org/pub/epel/7/x86_64/s/sl-5.02-1.el7.x86_64.rpm
+    url: https://download.fedoraproject.org/pub/epel/7/x86_64/Packages/s/sl-5.02-1.el7.x86_64.rpm
     dest: /tmp/sl.rpm
 
 - name: download Mono key
@@ -101,3 +121,37 @@
 - name: confirm that signature check succeeded
   assert:
     that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout"
+
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: add very first key on system
+  rpm_key:
+    state: present
+    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout"
+
+#
+# Cleanup
+#
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: Restore the gpg keys normally installed on the system
+  command: 'rpm --import {{ output_dir }}/pubkeys'
+
+- name: Retrieve a list of gpg keys are installed for package checking
+  shell: 'rpm -q gpg-pubkey | sort'
+  register: new_list_of_pubkeys
+
+- name: Confirm that we've restored all the pubkeys
+  assert:
+    that:
+      - 'list_of_pubkeys["stdout"] == new_list_of_pubkeys["stdout"]'

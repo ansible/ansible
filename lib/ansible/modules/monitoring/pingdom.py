@@ -98,7 +98,7 @@ def pause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "paused":             # api output buggy - accept raw exception for now
+    # if result != "paused":             # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -110,7 +110,7 @@ def unpause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "up":                 # api output buggy - accept raw exception for now
+    # if result != "up":                 # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 

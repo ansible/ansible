@@ -18,16 +18,11 @@ description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes
-  I(config:Snapshot) at U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html) and
-  I(config:ExportP) at U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
+- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
@@ -74,7 +69,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: present
@@ -84,14 +79,14 @@ EXAMPLES = r'''
 
 - name: Query all Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: Query Snapshots associated with a particular Export Policy
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -99,7 +94,7 @@ EXAMPLES = r'''
 
 - name: Delete a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent
@@ -109,12 +104,12 @@ EXAMPLES = r'''
 
 RETURN = r''' # '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
         export_policy=dict(type='str', aliases=['name']),
@@ -147,13 +142,20 @@ def main():
     snapshot = module.params['snapshot']
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
-        module.params['snapshot'] = snapshot
     state = module.params['state']
 
     aci = ACIModule(module)
 
     if state == 'present':
-        aci.construct_url(root_class='export_policy')
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configExportP',
+                aci_rn='fabric/configexp-{0}'.format(export_policy),
+                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
+                module_object=export_policy,
+            ),
+        )
+
         aci.get_existing()
 
         # Filter out module params with null values
@@ -176,13 +178,25 @@ def main():
         aci.post_config()
 
     else:
-        # Add snapshot_container to module.params to build URL
+        # Prefix the proper url to export_policy
         if export_policy is not None:
-            module.params['snapshot_container'] = 'uni/fabric/configexp-{}'.format(module.params['export_policy'])
-        else:
-            module.params['snapshot_container'] = None
+            export_policy = 'uni/fabric/configexp-{0}'.format(export_policy)
 
-        aci.construct_url(root_class='snapshot_container', subclass_1='snapshot')
+        aci.construct_url(
+            root_class=dict(
+                aci_class='configSnapshotCont',
+                aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
+                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
+                module_object=export_policy,
+            ),
+            subclass_1=dict(
+                aci_class='configSnapshot',
+                aci_rn='snapshot-{0}'.format(snapshot),
+                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
+                module_object=snapshot,
+            ),
+        )
+
         aci.get_existing()
 
         if state == 'absent':
@@ -200,9 +214,6 @@ def main():
 
                 # Mark Snapshot for Deletion
                 aci.post_config()
-
-        # Remove snapshot used to build URL from module.params
-        module.params.pop('snapshot_container')
 
     module.exit_json(**aci.result)
 

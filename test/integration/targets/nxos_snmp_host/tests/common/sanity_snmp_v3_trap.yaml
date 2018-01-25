@@ -1,0 +1,63 @@
+---
+- set_fact: snmp_type="trap"
+- set_fact: snmp_version="v3"
+- set_fact: snmp_auth="noauth"
+
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }}sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup - Remove snmp_host if configured
+  nxos_snmp_host: &remove
+    snmp_host: 3.3.3.3
+    community: TESTING
+    v3: "{{ snmp_auth|default(omit) }}"
+    version: "{{ snmp_version }}" 
+    snmp_type: "{{ snmp_type }}" 
+    vrf: management
+    vrf_filter: management
+    state: absent 
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure snmp host 
+    nxos_snmp_host: &config
+      snmp_host: 3.3.3.3
+      community: TESTING
+      v3: "{{ snmp_auth|default(omit) }}"
+      version: "{{ snmp_version }}" 
+      snmp_type: "{{ snmp_type }}" 
+      vrf: management
+      vrf_filter: management
+      state: present 
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_snmp_host: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: Cleanup
+    nxos_snmp_host: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Cleanup Idempotence
+    nxos_snmp_host: *remove
+    register: result
+
+  - assert: *false
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }}sanity test"

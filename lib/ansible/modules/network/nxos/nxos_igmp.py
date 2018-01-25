@@ -70,18 +70,15 @@ EXAMPLES = '''
 - name: Default igmp global params (all params except restart)
   nxos_igmp:
     state: default
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure the following igmp global config exists on the device
   nxos_igmp:
     flush_routes: true
     enforce_rtr_alert: true
-    host: "{{ inventory_hostname }}"
 
 - name: Restart the igmp process
   nxos_igmp:
     restart: true
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
@@ -91,9 +88,10 @@ updates:
     type: list
     sample: ["ip igmp flush-routes"]
 '''
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+
 
 def get_current(module):
     output = run_commands(module, {'command': 'show running-config', 'output': 'text'})
@@ -115,22 +113,16 @@ def main():
         flush_routes=dict(type='bool'),
         enforce_rtr_alert=dict(type='bool'),
         restart=dict(type='bool', default=False),
-
-        state=dict(choices=['present', 'default'], default='present'),
-
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'default'], default='present')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     current = get_current(module)
     desired = get_desired(module)

@@ -127,8 +127,8 @@ options:
         description:
         - The time to delay the task from running once the trigger has been
           fired.
-        - Optional when C(type) is C(event), C(logon), C(registration),
-          C(session_state_change).
+        - Optional when C(type) is C(boot), C(event), C(logon),
+          C(registration), C(session_state_change).
         - Is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
       random_delay:
         description:
@@ -193,6 +193,14 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+      repetition:
+        description:
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
+          after the task is started.
+        - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
+        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
   days_of_week:
     description:
@@ -331,7 +339,7 @@ options:
       task after it expires.
     - A task expires after the end_boundary has been exceeded for all triggers
       associated with the task.
-    - This is in ISO 8601 DateTime format C(YYYY-MM-DDThh:mm:ss).
+    - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     version_added: '2.5'
   disallow_start_if_on_batteries:
     description:
@@ -348,14 +356,14 @@ options:
     description:
     - The amount of time allowed to complete the task.
     - When not set, the time limit is infinite.
-    - This is in ISO 8601 DateTime format C(YYYY-MM-DDThh:mm:ss).
+    - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     version_added: '2.5'
   hidden:
     description:
     - Whether the task will be hidden in the UI.
     type: bool
     version_added: '2.5'
-  mutliple_instances:
+  multiple_instances:
     description:
     - An integer that indicates the behaviour when starting a task that is
       already running.
@@ -367,7 +375,7 @@ options:
     - C(3) will stop other instances of the task and start the new one.
     choices: [ 0, 1, 2, 3 ]
     version_added: '2.5'
-  priortiy:
+  priority:
     description:
     - The priority level (0-10) of the task.
     - When creating a new task the default if C(7).
@@ -385,7 +393,7 @@ options:
     - If this is set then C(restart_count) must also be set.
     - The maximum allowed time is 31 days.
     - The minimum allowed time is 1 minute.
-    - This is in ISO 8601 DateTime format C(YYYY-MM-DDThh:mm:ss).
+    - This is in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     version_added: '2.5'
   run_only_if_idle:
     description:
@@ -488,6 +496,20 @@ EXAMPLES = r'''
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
+
+- name: create a task that will be repeated every minute for five minutes
+  win_scheduled_task:
+    name: RepeatedTask
+    description: open command prompt
+    actions:
+    - path: cmd.exe
+      arguments: /c hostname
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
 '''
 
 RETURN = r'''

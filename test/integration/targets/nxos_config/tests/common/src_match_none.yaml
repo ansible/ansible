@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/src_match_none.yaml"
+- debug: msg="START connection={{ ansible_connection }}/src_match_none.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -50,4 +52,4 @@
       - "result.changed == false"
       - "result.updates is not defined"
 
-- debug: msg="END {{ connection.transport }}/src_match_none.yaml"
+- debug: msg="END connection={{ ansible_connection }}/src_match_none.yaml"

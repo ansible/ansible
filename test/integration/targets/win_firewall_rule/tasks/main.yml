@@ -251,7 +251,7 @@
     that:
     - add_firewall_rule_with_multiple_ports.changed == true
 
-- name: Add firewall rule with interface types
+- name: Add firewall rule with interface types in string format
   win_firewall_rule:
     name: http
     enabled: yes
@@ -261,12 +261,29 @@
     direction: in
     protocol: tcp
     interfacetypes: 'ras,lan,wireless'
-  register: add_firewall_rule_with_interface_types
+  register: add_firewall_rule_with_string_interface_types
 
-- name: Check that creating firewall rule with interface types succeeds with a change
+- name: Check that creating firewall rule with interface types in string format succeeds with a change
   assert:
     that:
-    - add_firewall_rule_with_interface_types.changed == true
+    - add_firewall_rule_with_string_interface_types.changed == true
+
+- name: Add firewall rule with interface types in list format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    interfacetypes: [ras, lan]
+  register: add_firewall_rule_with_list_interface_types
+
+- name: Check that creating firewall rule with interface types in list format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_list_interface_types.changed == true
 
 - name: Add firewall rule with interface type 'any'
   win_firewall_rule:
@@ -305,7 +322,7 @@
     that:
     - add_firewall_rule_with_edge_traversal.changed == true
   # Works on windows >= Windows 7/Windows Server 2008 R2
-  when: ansible_distribution_version | version_compare('6.1', '>=')
+  when: ansible_distribution_version is version('6.1', '>=')
 
 - name: Add firewall rule with 'authenticate' secure flag
   win_firewall_rule:
@@ -324,4 +341,55 @@
     that:
     - add_firewall_rule_with_secure_flags.changed == true
   # Works on windows >= Windows 8/Windows Server 2012
-  when: ansible_distribution_version | version_compare('6.2', '>=')
+  when: ansible_distribution_version is version('6.2', '>=')
+
+- name: Add firewall rule with profiles in string format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: 'domain,public'
+  register: add_firewall_rule_with_string_profiles
+
+- name: Check that creating firewall rule with profiles in string format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_profiles.changed == true
+
+- name: Set firewall rule profile back to 'all'
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: [Domain, Public, Private]
+  register: add_firewall_rule_with_string_profiles
+
+- name: Check that setting firewall rule profile back to 'all' succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_string_profiles.changed == true
+
+- name: Add firewall rule with profiles in list format
+  win_firewall_rule:
+    name: http
+    enabled: yes
+    state: present
+    localport: 80
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: [Domain, Private]
+  register: add_firewall_rule_with_list_profiles
+
+- name: Check that creating firewall rule with profiles in list format succeeds with a change
+  assert:
+    that:
+    - add_firewall_rule_with_list_profiles.changed == true

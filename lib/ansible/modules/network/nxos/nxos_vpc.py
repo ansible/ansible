@@ -125,8 +125,8 @@ commands:
             "auto-recovery", "peer-gateway"]
 '''
 
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -181,7 +181,7 @@ def get_vpc(module):
         pkl_vrf = None
         peer_gw = False
 
-        run = get_config(module, flags=['section vpc'])
+        run = get_config(module, flags=['vpc'])
         if run:
             vpc_list = run.split('\n')
             for each in vpc_list:

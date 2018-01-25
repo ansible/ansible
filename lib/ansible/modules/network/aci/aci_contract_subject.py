@@ -16,15 +16,11 @@ module: aci_contract_subject
 short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:Subj) at U(https://developer.cisco.com/media/mim-ref/MO-vzSubj.html).
+- More information from the internal APIC class I(vz:Subj) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
 - The M(aci_tenant) and M(aci_contract) modules can be used for this.
@@ -65,6 +61,7 @@ options:
   description:
     description:
     - Description for the contract subject.
+    aliases: [ descr ]
   consumer_match:
     description:
     - The match criteria across consumers.
@@ -89,7 +86,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -103,7 +100,7 @@ EXAMPLES = r'''
 
 - name: Remove a contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -113,7 +110,7 @@ EXAMPLES = r'''
 
 - name: Query a contract subject
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -123,7 +120,7 @@ EXAMPLES = r'''
 
 - name: Query all contract subjects
   aci_contract_subject:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -133,12 +130,14 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+
+MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOne', none='None')
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         contract=dict(type='str', aliases=['contract_name']),
         subject=dict(type='str', aliases=['contract_subject', 'name', 'subject_name']),
@@ -150,9 +149,10 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -167,19 +167,45 @@ def main():
     subject = module.params['subject']
     priority = module.params['priority']
     reverse_filter = module.params['reverse_filter']
+    contract = module.params['contract']
     dscp = module.params['dscp']
     description = module.params['description']
     filter_name = module.params['filter']
     directive = module.params['directive']
     consumer_match = module.params['consumer_match']
+    if consumer_match is not None:
+        consumer_match = MATCH_MAPPING[consumer_match]
     provider_match = module.params['provider_match']
+    if provider_match is not None:
+        provider_match = MATCH_MAPPING[provider_match]
     state = module.params['state']
+    tenant = module.params['tenant']
 
     if directive is not None or filter_name is not None:
-        module.fail_json(msg='Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter)')
+        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='contract', subclass_2='subject')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='vzBrCP',
+            aci_rn='brc-{0}'.format(contract),
+            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
+            module_object=contract,
+        ),
+        subclass_2=dict(
+            aci_class='vzSubj',
+            aci_rn='subj-{0}'.format(subject),
+            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
+            module_object=subject,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

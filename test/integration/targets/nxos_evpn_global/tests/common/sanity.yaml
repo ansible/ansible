@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_evpn_global sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_evpn_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_config: &remove_evpn_config
@@ -55,10 +57,10 @@
 
   - assert: *false
 
-  when: not (platform | search('N3K'))
+  when: not ( platform is search('N3K'))
 
   rescue:
-  - debug: msg="TRANSPORT:{{ connection.transport }} nxos_evpn_global sanity test - FALURE ENCOUNTERED"
+  - debug: msg="connection={{ ansible_connection }} nxos_evpn_global sanity test - FALURE ENCOUNTERED"
 
   always:
 
@@ -70,4 +72,4 @@
     nxos_feature: *disable_feature_nv_overlay
     ignore_errors: yes
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_evpn_global sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_evpn_global sanity test"

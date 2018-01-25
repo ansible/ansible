@@ -52,14 +52,8 @@ class IncludedFile:
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, inventory, loader, variable_manager):
+    def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
-
-        def get_original_host(host):
-            if host.name in inventory._hosts_cache:
-                return inventory._hosts_cache[host.name]
-            else:
-                return inventory.get_host(host.name)
 
         for res in results:
 
@@ -85,7 +79,7 @@ class IncludedFile:
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
                     if original_task.loop_control:
-                        loop_var = original_task.loop_control.loop_var or 'item'
+                        loop_var = original_task.loop_control.loop_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 
@@ -134,6 +128,17 @@ class IncludedFile:
                         include_file = templar.template(include_file)
                         inc_file = IncludedFile(include_file, include_variables, original_task)
                     else:
+                        # template the included role's name here
+                        role_name = include_variables.get('name', include_variables.get('role', None))
+                        if role_name is not None:
+                            role_name = templar.template(role_name)
+
+                        original_task._role_name = role_name
+                        for from_arg in original_task.FROM_ARGS:
+                            if from_arg in include_variables:
+                                from_key = from_arg.replace('_from', '')
+                                original_task._from_files[from_key] = templar.template(include_variables[from_arg])
+
                         inc_file = IncludedFile("role", include_variables, original_task, is_role=True)
 
                     try:

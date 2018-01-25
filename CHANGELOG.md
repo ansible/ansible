@@ -7,23 +7,490 @@ Ansible Changes By Release
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
+* New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will be deprecated in the near future and eventually removed.
+* Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansible_` prefix.
+  They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
+  currently on by default, in the future it will be off.
+* Add a configuration file to filter modules that a site administrator wants to exclude from being used.
 
 ### Deprecations
-* previouslly deprecated 'hostfile' config settings have been 're-deprecated' as previouslly code did not warn about deprecated configuration settings.
-
-#### Deprecated Modules (to be removed in 2.9):
-
-#### Removed Modules (previously deprecated):
-* accelerate
+* Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
+* Using Ansible provided Jinja tests as filters is deprecated and will be removed in Ansible 2.9
+* `stat` and `win_stat` have deprecated `get_md5` and the `md5` return value
+  and these options will become undocumented in Ansible 2.9 and removed in a
+  later version.
+* The `redis_kv` lookup in favor of new `redis` lookup
+* Passing arbitrary parameters that begin with `HEADER_` to the uri module,
+  used for passing http headers, is deprecated.  Use the ``headers`` parameter
+  with a dictionary of header names to value instead.  This will be removed in
+  Ansible-2.9
+* Passing arbitrary parameters to the zfs module to set zfs properties is
+  deprecated.  Use the ``extra_zfs_properties`` parameter with a dictionary of
+  property names to values instead.  This will be removed in Ansible-2.9.
+* Use of the AnsibleModule parameter, check_invalid_arguments, in custom modules
+  is deprecated.  In the future, all parameters will be checked to see whether
+  they are listed in the arg spec and an error raised if they are not listed.
+  This behaviour is the current and future default so most custom modules can
+  simply remove check_invalid_arguments if they set it to the default of True.
+  check_invalid_arguments will be removed in Ansible-2.9.
+* nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
+* nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
+* nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
-  ansible_diff_mode, ansible_inventory_sources, ansible_limit, ansible_run_tags , ansible_forks and ansible_skip_tags
+  `ansible_diff_mode`, `ansible_inventory_sources`, `ansible_limit`, `ansible_run_tags` , `ansible_forks` and `ansible_skip_tags`
 * Updated the bundled copy of the six library to 1.11.0
+* Added support to `become` `NT AUTHORITY\System`, `NT AUTHORITY\LocalService`, and `NT AUTHORITY\NetworkService` on Windows hosts
+* Fixed `become` to work with async on Windows hosts
+* Improved `become` elevation process to work on standard Administrator users without disabling UAC on Windows hosts
+* The jenkins_plugin and yum_repository plugins had their `params` option
+  removed due to circumventing Ansible's option processing.
+* combine filter now accepts a list of dicts as well as dicts directly
+* New CLI options for ansible-inventory, ansible-console and ansible to allow
+  specifying a playbook_dir to be used for relative search paths.
+* `stat` and `win_stat` have changed the default value of `get_md5` to `False` which will result
+  in the `md5` return value not being returned. This option will be removed altogether in Ansible
+  2.9. use `get_checksum: True` with `checksum_algorithm: md5` to return an md5 hash of the file
+  under the `checksum` return value.
+* `osx_say` module was renamed into `say`.
+* Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
+  The `debug` strategy is still functional, and is now just a trigger to enable this functionality
+
+#### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find: replaced by ec2_ami_facts
+
+#### Removed Modules (previously deprecated):
+* accelerate
+* boundary_meter: There was no deprecation period for this but the hosted
+  service it relied on has gone away so the module has been removed.
+  https://github.com/ansible/ansible/issues/29387
+
+### New Plugins
+
+## Lookups
+* aws_ssm: Query AWS ssm data
+* aws_account_attribute: Query AWS account attributes such as EC2-Classic
+    availability
+* config: Lookup Ansible settings
+* openshift: Return info from Openshift installation
+* redis: look up date from Redis DB, deprecates the redis_kv one.
+
+## Callbacks
+* yaml
+
+### New Modules
+
+#### Cloud
+- amazon
+  * aws_acm_facts
+  * aws_application_scaling_policy
+  * aws_direct_connect_gateway
+  * aws_kms_facts
+  * aws_s3_cors
+  * aws_ssm_parameter_store
+  * cloudfront_distribution
+  * ec2_ami_facts
+  * ec2_asg_lifecycle_hook
+  * ec2_customer_gateway_facts
+  * ec2_placement_group
+  * ec2_placement_group_facts
+  * ecs_taskdefinition_facts
+  * elasticache_facts
+  * iam_role_facts
+- azure
+  * azure_rm_containerinstance
+  * azure_rm_containerregistry
+  * azure_rm_image
+  * azure_rm_mysqldatabase
+  * azure_rm_mysqlserver
+  * azure_rm_postgresqldatabase
+  * azure_rm_postgresqlserver
+  * azure_rm_sqlserver
+  * azure_rm_sqlserver_facts
+- cloudscale
+  * cloudscale_floating_ip
+- cloudstack
+  * cs_network_offering
+  * cs_service_offering
+  * cs_vpc_offering
+  * cs_vpn_connection
+  * cs_vpn_customer_gateway
+- digital_ocean
+  * digital_ocean_certificate
+  * digital_ocean_floating_ip_facts
+  * digital_ocean_sshkey_facts
+- misc
+  * terraform
+- oneandone
+  * oneandone_server
+- openstack
+  * os_keystone_endpoint
+- ovirt
+  * ovirt_api_facts
+  * ovirt_disk_facts
+- spotinst
+  * spotinst_aws_elastigroup
+- vmware
+  * vmware_cfg_backup
+  * vmware_datastore_facts
+  * vmware_guest_file_operation
+  * vmware_guest_powerstate
+  * vmware_host_config_facts
+  * vmware_host_config_manager
+  * vmware_host_facts
+  * vmware_host_ntp
+  * vmware_host_service_facts
+  * vmware_host_service_manager
+  * vmware_local_role_manager
+- vultr
+  * vr_account_facts
+  * vr_dns_domain
+  * vr_dns_record
+  * vr_firewall_group
+  * vr_firewall_rule
+  * vr_server
+  * vr_ssh_key
+  * vr_startup_script
+  * vr_user
+
+#### Clustering
+- k8s
+  * k8s_raw
+  * k8s_scale
+- openshift
+  * openshift_raw
+  * openshift_scale
+
+#### Database
+- influxdb
+  * influxdb_query
+  * influxdb_user
+  * influxdb_write
+
+#### Identity
+- ipa
+  * ipa_dnszone
+  * ipa_subca
+- keycloak
+  * keycloak_client
+
+#### Monitoring
+  * grafana_dashboard
+  * grafana_datasource
+  * grafana_plugin
+  * icinga2_host
+- zabbix
+  * zabbix_proxy
+  * zabbix_template
+
+#### Net Tools
+  * ip_netns
+
+#### Network
+- aci
+  * aci_aaa_user_certificate
+  * aci_access_port_to_interface_policy_leaf_profile
+  * aci_aep_to_domain
+  * aci_domain
+  * aci_domain_to_encap_pool
+  * aci_domain_to_vlan_pool
+  * aci_encap_pool
+  * aci_encap_pool_range
+  * aci_firmware_source
+  * aci_interface_policy_leaf_policy_group
+  * aci_interface_policy_leaf_profile
+  * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_switch_leaf_selector
+  * aci_switch_policy_leaf_profile
+  * aci_vlan_pool
+  * aci_vlan_pool_encap_block
+- avi
+  * avi_api_version
+  * avi_customipamdnsprofile
+  * avi_errorpagebody
+  * avi_errorpageprofile
+  * avi_gslbservice_patch_member
+  * avi_wafpolicy
+- enos
+  * enos_command
+  * enos_config
+  * enos_facts
+- eos
+  * eos_interface
+  * eos_l3_interface
+  * eos_linkagg
+  * eos_lldp
+  * eos_static_route
+- f5
+  * bigip_asm_policy
+  * bigip_device_connectivity
+  * bigip_device_group
+  * bigip_device_group_member
+  * bigip_device_httpd
+  * bigip_device_trust
+  * bigip_gtm_server
+  * bigip_iapplx_package
+  * bigip_monitor_https
+  * bigip_monitor_snmp_dca
+  * bigip_monitor_udp
+  * bigip_partition
+  * bigip_policy
+  * bigip_policy_rule
+  * bigip_profile_client_ssl
+  * bigip_remote_syslog
+  * bigip_security_address_list
+  * bigip_security_port_list
+  * bigip_software_update
+  * bigip_ssl_key
+  * bigip_static_route
+  * bigip_traffic_group
+  * bigip_ucs_fetch
+  * bigip_vcmp_guest
+  * bigip_wait
+  * bigiq_regkey_license
+  * bigiq_regkey_pool
+- ios
+  * ios_l2_interface
+  * ios_l3_interface
+  * ios_linkagg
+  * ios_lldp
+  * ios_vlan
+- iosxr
+  * iosxr_netconf
+- ironware
+  * ironware_command
+  * ironware_config
+  * ironware_facts
+- junos
+  * junos_scp
+- netscaler
+  * netscaler_nitro_request
+- nso
+  * nso_action
+  * nso_config
+  * nso_query
+  * nso_show
+  * nso_verify
+- nxos
+  * nxos_l2_interface
+  * nxos_l3_interface
+  * nxos_linkagg
+  * nxos_lldp
+- onyx
+  * onyx_bgp
+  * onyx_command
+  * onyx_config
+  * onyx_facts
+  * onyx_interface
+  * onyx_l2_interface
+  * onyx_l3_interface
+  * onyx_linkagg
+  * onyx_lldp
+  * onyx_lldp_interface
+  * onyx_magp
+  * onyx_mlag_ipl
+  * onyx_mlag_vip
+  * onyx_ospf
+  * onyx_pfc_interface
+  * onyx_protocol
+  * onyx_vlan
+- radware
+  * vdirect_commit
+  * vdirect_runnable
+- vyos
+  * vyos_vlan
+
+#### Notification
+  * logentries_msg
+  * say
+  * snow_record
+
+#### Packaging
+- os
+  * package_facts
+
+#### Remote Management
+- manageiq
+  * manageiq_alert_profiles
+  * manageiq_policies
+  * manageiq_tags
+- oneview
+  * oneview_datacenter_facts
+  * oneview_enclosure_facts
+  * oneview_logical_interconnect_group
+  * oneview_logical_interconnect_group_facts
+  * oneview_san_manager_facts
+- ucs
+  * ucs_ip_pool
+  * ucs_mac_pool
+  * ucs_san_connectivity
+  * ucs_vhba_template
+  * ucs_vsans
+  * ucs_wwn_pool
+
+#### System
+  * mksysb
+  * nosh
+  * service_facts
+
+#### Windows
+  * win_audit_policy_system
+  * win_audit_rule
+  * win_certificate_store
+  * win_disk_facts
+  * win_scheduled_task_stat
+  * win_whoami
+
+<a id="2.4.1"></a>
+
+## 2.4.1 "Dancing Days" - 2017-10-25
+
+### Bugfixes
+
+* Security fix for CVE-2017-7550 the jenkins_plugin module was logging the jenkins
+  server password if the url_password was passed via the params field:
+  https://github.com/ansible/ansible/pull/30875
+* Update openssl\* module documentation to show openssl-0.16 is the minimum version
+* Fix openssl_certificate's csr handling
+* Python-3 fixes
+  * Fix openssl_certificate parameter assertion on Python3
+  * Fix for python3 and nonascii strings in inventory plugins (https://github.com/ansible/ansible/pull/30666)
+  * Fix missing urllib in iam_policy
+  * Fix crypttab module for bytes<=>text string mismatch ( https://github.com/ansible/ansible/pull/30457 )
+  * Fix lxc_container module combining bytes with text ( https://github.com/ansible/ansible/pull/30572 )
+  * Fix map doesn't return a list on python3 in ec2_snapshot_facts module (https://github.com/ansible/ansible/pull/30606)
+  * Fix uri (and other url retrieving) modules when used with a proxy. (https://github.com/ansible/ansible/issues/31109)
+  * Fix azure_rm dynamic inventory script ConfigParser usage.
+* Fix for win_file to respect check mode when deleting directories
+* Fix for Ansible.ModuleUtils.Legacy.psm1 to return list params correctly
+* Fix for a proper logout in the module ovirt_vms
+* Fixed docs for 'password' lookup
+* Corrected and added missing feature and porting docs for 2.4
+* Fix for Ansible.ModuleUtils.CamelConversion to handle empty lists and lists with one entry
+* Fix nxos terminal regex to parse username correctly.
+* Fix colors for selective callback
+* Fix for 'New password' prompt on 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30491)
+* Fix for 'ansible-vault encrypt' with vault_password_file in config and --ask-vault-pass cli (https://github.com/ansible/ansible/pull/30514#pullrequestreview-63395903)
+* updated porting guide with notes for callbacks and config
+* Added backwards compatiblity shim for callbacks that do not inherit from CallbackBase
+* Corrected issue with configuration and multiple ini entries being overwriten even when not set.
+* backported fix for doc generation (plugin_formatter)
+* Fix ec2_lc module for an unknown parameter name (https://github.com/ansible/ansible/pull/30573)
+* Change configuration of defaults to use standard jinja2 instead of custom
+  eval() for using variables in the default field of config (https://github.com/ansible/ansible/pull/30650)
+* added missing entry in chlog deprecation
+* Fixed precedence and values for become flags and executable settings
+* Fix for win_domain_membership to throw more helpful error messages and check/fix when calling WMI function after changing workgroup
+* Fix for win_power_plan to compare the OS version's correctly and work on Windows 10/Server 2016
+* Fix module doc for typo in telnet command option
+* Fix OpenBSD pkg_mgr fact (https://github.com/ansible/ansible/issues/30623)
+* Fix encoding error when there are nonascii values in the path to the ssh binary
+* removed YAML inventory group name validation, broke existing setups and should be global in any case, and configurable
+* performance improvment for inventory, had slown down considerably from 2.3
+* Fix cpu facts on sparc64 (https://github.com/ansible/ansible/pull/30261)
+* Fix ansible_distribution fact for Arch linux (https://github.com/ansible/ansible/issues/30600)
+* remove print statements from play_context/become
+* Fix vault errors after 'ansible-vault edit' (https://github.com/ansible/ansible/issues/30575)
+* updated api doc example to match api changes
+* corrected issues with slack callback plugin
+* it is import_playbook .. not import_plays .. docs now reflect this
+* fixed typo and missed include/import conversion in import_tasks docs
+* updated porting docs with note about inventory_dir
+* removed extension requirement for yaml inventory plugin to restore previous behaviour
+* fixed ansible-pull to now correctly deal with inventory
+* corrected dig lookup docs
+* fix type handling for sensu_silence so the module works
+* added fix for win_iis_webapppool to correctly handle array elements
+* Fix bugs caused by lack of collector ordering like service_mgr being incorrect (https://github.com/ansible/ansible/issues/30753)
+* Fix os_image when the id parameter is not set in the task. ( https://github.com/ansible/ansible/pull/29147 )
+* Fix for the winrm connection to use proper task vars
+* removed typo from dig lookup docs
+* Updated win_chocolatey example to be clearer around what should be used with become
+* Fix for copy module when permissions are changed but the file contents are not ( https://github.com/ansible/ansible/issues/30556 )
+* corrected YAML_FILENAME_EXTENSIONS ini setter as key/section were swapped
+* Better error message when a yaml inventory is invalid
+* avoid include_Xs conflating vars with options
+* Fix aws_s3 module handling `encrypt` option (https://github.com/ansible/ansible/pull/31203)
+* Fix for win_msg to document and show error when message is greater than 255 characters
+* Fix for win_dotnet_ngen to work after recent regression
+* fixed backwards compat method for config
+* removed docs for prematurely added ssh specific pipelining settings
+* fixed redis cache typo
+* Fix AttributeError during inventory group deserialization (https://github.com/ansible/ansible/issues/30903)
+* Fix 'ansible-vault encrypt --output=-' (https://github.com/ansible/ansible/issues/30550)
+* restore pre 2.4 pipeline configuration options (env and ini)
+* Fix win_copy regression: handling of vault-encrypted source files (https://github.com/ansible/ansible/pull/31084)
+* Updated return values for win_reg_stat to correctly show what is being returned (https://github.com/ansible/ansible/pull/31252)
+* reduced normal error redundancy and verbosity, display on increased and when needed
+* Give an informative error instead of a traceback if include_vars dir is file instead of directory (https://github.com/ansible/ansible/pull/31157)
+* Fix monit module's version check for color support (https://github.com/ansible/ansible/pull/31212)
+* Make `elasticsearch_plugin` module work with both 2.x and 5.x (https://github.com/ansible/ansible/issues/21989)
+* Fix for become on Windows to handle ignored errors (https://github.com/ansible/ansible/issues/30468)
+* Fix removal of newlines when writing SELinux config (https://github.com/ansible/ansible/issues/30618)
+* clarified extension requirement for constructed inv plugin
+* really turn off inventory caching, toggle will be added in 2.5
+* for inventory sources, dont follow symlinks to calculate base directory, used for group/host_vars
+* Port the uptime.py example script to the new inventory API.
+* inventory_file variable again returns full path, not just basename
+* added info about cwd group/host vars to porting guide
+* Fix name parsing out of envra in the yum module
+* give user friendly error on badly formatted yaml inventory source
+* Fix any_errors_fatal setting in playbooks.
+* Fix setting of ssh-extra-args from the cli (https://github.com/ansible/ansible/pull/31326)
+* Change SELinux fact behavior to always return a dictionary. (https://github.com/ansible/ansible/issues/18692)
+* Revert a fix for using non /bin/sh shells for modules' running commands as
+  this was causing output from commands to change, thus breaking playbooks.
+  See the original bug for details and links to the eventual fix:
+  https://github.com/ansible/ansible/issues/24169
+* Do not log data field in `docker_secrets` module (https://github.com/ansible/ansible/pull/31366)
+* Fix rpm_key taking the wrong 8 chars from the keyid (https://github.com/ansible/ansible/pull/31045)
+* chown errors now more informative
+* Fix for win_copy to copy a source file that has invalid windows characters in the filename, the dest still must be have valid windows characters (https://github.com/ansible/ansible/issues/31336#issuecomment-334649927)
+* Fix systemd module to not run daemon-reload in check mode.
+* fixed some parsing and selection issues with inventory manager, fixed minor bugs in yaml and constructed plugins
+* Fix the ping module documentation to reference win_ping instead of itself: https://github.com/ansible/ansible/pull/31444
+* Fix for ec2_win_password to allow blank key_passphrase again (https://github.com/ansible/ansible/pull/28791)
+* added toggle for vars_plugin behaviour to execute relative to playbook, set default to revert to previous way.
+* Fix for win_copy to not remove destination file on change when in check mode (https://github.com/ansible/ansible/pull/31469)
+* Fix include_role usage of role_name (https://github.com/ansible/ansible/pull/31463)
+* Fix service and package forcing a second run of the setup module to function (https://github.com/ansible/ansible/issues/31485)
+* Better error message when attempting to use include or import with /usr/bin/ansible (https://github.com/ansible/ansible/pull/31492/)
+* Fix `sysctl` module to remove etries when `state=absent` (https://github.com/ansible/ansible/issues/29920)
+* Fix for ec2_group to avoid trying to iterate over None (https://github.com/ansible/ansible/pull/31531)
+* Fix for ec2_group for a possible KeyError bug (https://github.com/ansible/ansible/pull/31540)
+* Fix for the rpm_key module when importing the first gpg key on a system (https://github.com/ansible/ansible/pull/31514)
+* Fix for aws_s3 metadata to use the correct parameters when uploading a file (https://github.com/ansible/ansible/issues/31232)
+* Fix for the yum module when installing from file/url crashes (https://github.com/ansible/ansible/pull/31529)
+* Improved error messaging for Windows become/runas when username is bogus (https://github.com/ansible/ansible/pull/31551)
+* Fix rollback feature in junos_config to now allow configuration rollback on device (https://github.com/ansible/ansible/pull/31424)
+* Remove command executed log from ansible-connection (https://github.com/ansible/ansible/pull/31581)
+* Fix relative paths to be relative to config file when there is no playbook available (https://github.com/ansible/ansible/issues/31533)
+* Fix Inventory plugins to use the configured inventory plugin path (https://github.com/ansible/ansible/issues/31605)
+* Fix include task to be dynamic (https://github.com/ansible/ansible/issues/31593)
+* A couple fixes to the test process to account for new testing resources in
+  our ci system and an upstream cryptography update that didn't work with
+  pip-8.x
+* Document backup_path in a few dellos modules and vyos_config (https://github.com/ansible/ansible/issues/31844)
+* Fix for vmware_vm_facts with dangling inaccessible VM which don't have MAC addresses (https://github.com/ansible/ansible/pull/31629)
+* Fix for win_regedit sending extra data that could confuse ansible's result parsing (https://github.com/ansible/ansible/pull/31813)
+* Fix git module to correctly cleanup temporary dirs (https://github.com/ansible/ansible/pull/31541)
+* Fix for modules which use atomic_move() to rename files raising an exception
+  if a file could not be opened.  Fix will return a nice error message instead:
+  https://github.com/ansible/ansible/issues/31786
+* Fix ansible-doc and ansible-console module-path option (https://github.com/ansible/ansible/pull/31744)
+* Fix for hostname module on RHEL 7.5 (https://github.com/ansible/ansible/issues/31811)
+* Fix provider password leak in logs for asa modules (https://github.com/ansible/ansible/issues/32343)
+* Fix tagging for dynamodb_table if region is not explicitly passed to the module (https://github.com/ansible/ansible/pull/32557)
+* Fix Python 3 decode error in `cloudflare_dns` (https://github.com/ansible/ansible/pull/32065)
+
+### Known Bugs
+* Implicit localhost is getting ansible_connection from all:vars instead of
+  from the implicit localhost definition (https://github.com/ansible/ansible/issues/31420)
 
 <a id="2.4"></a>
 
-## 2.4 "Dancing Days" - RELEASE CANDIDATE
+## 2.4 "Dancing Days" - 2017/09/18
 
 ### Major Changes
 
@@ -42,10 +509,10 @@ Ansible Changes By Release
   - New inventory plugins for creating inventory
   - Old inventory formats are still supported via plugins
   - Inline host_list is also an inventory plugin, an example alternative `advanced_host_list` is also provided (it supports ranges)
-  - New configuration option to list enabled plugins and precedence order: `whitelist_inventory` in ansible.cfg
+  - New configuration option to list enabled plugins and precedence order `[inventory]enable_plugins` in ansible.cfg
   - vars_plugins have been reworked, they are now run from Vars manager and API has changed (need docs)
   - Loading group_vars/host_vars is now a vars plugin and can be overridden
-  - It is now possible to specify mulitple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
+  - It is now possible to specify multiple inventory sources in the command line (-i /etc/hosts1 -i /opt/hosts2)
   - Inventory plugins can use the cache plugin (i.e. virtualbox) and is affected by `meta: refresh_inventory`
   - Group variable precedence is now configurable via new 'precedence' option in ansible.cfg (needs docs)
   - Improved warnings and error messages across the board
@@ -54,6 +521,7 @@ Ansible Changes By Release
   - TODO: build upon this to add many features detailed in ansible-config proposal https://github.com/ansible/proposals/issues/35
 * Windows modules now support the use of multiple shared module_utils files in the form of Powershell modules (.psm1), via `#Requires -Module Ansible.ModuleUtils.Whatever.psm1`
 * Python module argument_spec now supports custom validation logic by accepting a callable as the `type` argument.
+* Windows become_method: runas is no longer marked `experimental`
 * Windows become_method: runas now works across all authtypes and will auto-elevate under UAC if WinRM user has "Act as part of the operating system" privilege
 
 ### Deprecations
@@ -69,6 +537,7 @@ Ansible Changes By Release
   moved to `ansible.utils.unsafe_proxy` to avoid a circular import.
 * The win_get_url module has the dictionary 'win_get_url' in its results deprecated,
   its content is now also available directly in the resulting output, like other modules.
+* Previously deprecated 'hostfile' config settings have been 're-deprecated' as before the code did not warn about deprecated configuration settings, but it does now.
 
 #### Deprecated Modules (to be removed in 2.8):
 * azure: use M(azure_rm_virtualmachine) instead
@@ -82,7 +551,7 @@ Ansible Changes By Release
 * s3: replaced by aws_s3
 * win_msi: use M(win_package) instead
 
-#### Removed Modules (previouslly deprecated):
+#### Removed Modules (previously deprecated):
 * eos_template: use eos_config instead
 * ios_template: use ios_config instead
 * iosxr_template: use iosxr_config instead
@@ -96,7 +565,7 @@ Ansible Changes By Release
 * Now deprecated configuration options issue warnings when set.
 * Removed unused and deprecated config option `pattern`
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
-* The `include_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
+* The `inventory_dir` var is not a global anymore, as we now allow multiple inventory sources, it is now host dependant.
   This means it cannot be used wherever host vars are not permitted, for example in task/handler names.
 * Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
   was a quoted string with hash marks ("#") in it then the parsed string
@@ -142,14 +611,14 @@ Ansible Changes By Release
   so they may want to base their efforts off the code we were using:
     * https://github.com/ansible/ansible/blob/2fff690caab6a1c6a81973f704be3fbd0bde2c2f/lib/ansible/module_utils/six/__init__.py
 * Update ipaddr Jinja filters to replace existing non RFC compliant ones. Added additional filters for easier use
-  of handling IP addresses. (PR# 26566)
+  of handling IP addresses. (PR #26566)
 * datetime filter updated to use default format of datetime.datetime (ISO8601)
 * The junit plugin now has an option to report a junit test failure on changes for idempotent testing.
 * New 'diff' keyword allows setting diff mode on playbook objects, overriding command line option and config.
 * New config settings for inventory to:
 	- control inventory plugins used
     - extensions of files to ignore when using inventory directory
-	- patterns of flies to ignore when using inventory directory
+	- patterns of files to ignore when using inventory directory
 	- option to toggle failed inventory source parsing between an error or a warning
 * More fixes for Python 3 across the code base.
 * win_shell and win_command modules now properly preserve quoted arguments passed on the command-line. Tasks that attempted to work around the issue by adding extra quotes/escaping may need to be reworked. See https://github.com/ansible/ansible/issues/23019 for additional detail.
@@ -179,8 +648,8 @@ Ansible Changes By Release
 - lxd
 
 #### New: Tests
-- any : true if any element is true
-- all: true if all elements are true
+- `any`: true if any element is true
+- `all`: true if all elements are true
 
 ### Module Notes
 - The docker_container module has gained a new option, `working_dir` which allows
@@ -1781,7 +2250,7 @@ Module fixes:
 * Fix a bug with the dnf module where state=latest could only upgrade, not install.
 * Fix to make implicit fact gathering task correctly inherit settings from play,
   this might cause an error if settings environment on play depending on 'ansible_env'
-  which was previouslly ignored
+  which was previously ignored
 
 <a id="2.0"></a>
 
@@ -2304,7 +2773,7 @@ Major changes:
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
 * new 'wantlist' option to lookups allows for selecting a list typed variable vs a comma delimited string as the return.
-* the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
+* the shared module code for file backups now uses a timestamp resolution of seconds (previously minutes).
 * allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
 * sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
 

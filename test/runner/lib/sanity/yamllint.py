@@ -1,8 +1,8 @@
 """Sanity test using yamllint."""
 from __future__ import absolute_import, print_function
 
+import json
 import os
-import re
 
 from lib.sanity import (
     SanitySingleVersion,
@@ -30,14 +30,42 @@ class YamllintTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: SanityResult
         """
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml'))
+        paths = [
+            [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
+
+            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
+             os.path.basename(i.path) != '__init__.py' and
+             i.path.startswith('lib/ansible/modules/')],
+
+            [i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and
+             os.path.basename(i.path) != '__init__.py' and
+             i.path.startswith('lib/ansible/utils/module_docs_fragments/')],
+        ]
+
+        paths = [sorted(p) for p in paths if p]
 
         if not paths:
             return SanitySkipped(self.name)
 
+        results = []
+
+        for test_paths in paths:
+            results += self.test_paths(args, test_paths)
+
+        if results:
+            return SanityFailure(self.name, messages=results)
+
+        return SanitySuccess(self.name)
+
+    def test_paths(self, args, paths):
+        """
+        :type args: SanityConfig
+        :type paths: list[str]
+        :rtype: list[SanityMessage]
+        """
         cmd = [
-            'yamllint',
-            '--format', 'parsable',
+            'python%s' % args.python_version,
+            'test/sanity/yamllint/yamllinter.py',
         ] + paths
 
         try:
@@ -52,13 +80,12 @@ class YamllintTest(SanitySingleVersion):
             raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
         if args.explain:
-            return SanitySuccess(self.name)
+            return []
 
-        pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): \[(?P<level>warning|error)\] (?P<message>.*)$'
-
-        results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+        results = json.loads(stdout)['messages']
 
         results = [SanityMessage(
+            code=r['code'],
             message=r['message'],
             path=r['path'],
             line=int(r['line']),
@@ -66,7 +93,4 @@ class YamllintTest(SanitySingleVersion):
             level=r['level'],
         ) for r in results]
 
-        if results:
-            return SanityFailure(self.name, messages=results)
-
-        return SanitySuccess(self.name)
+        return results

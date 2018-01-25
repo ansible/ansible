@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import optparse
-import yaml
+import re
+from distutils.version import LooseVersion
 
+import jinja2
+import yaml
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.playbook import Play
@@ -18,7 +21,7 @@ class_list = [Play, Role, Block, Task]
 p = optparse.OptionParser(
     version='%prog 1.0',
     usage='usage: %prog [options]',
-    description='Generate module documentation from metadata',
+    description='Generate playbook keyword documentation from code and descriptions',
 )
 p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="../templates", help="directory containing Jinja2 templates")
 p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
@@ -49,14 +52,15 @@ for aclass in class_list:
 
     # loop is really with_ for users
     if name == 'Task':
-        oblist[name]['with_<lookup_plugin>'] = 'with_ is how loops are defined, it can use any available lookup plugin to generate the item list'
+        oblist[name]['with_<lookup_plugin>'] = 'DEPRECATED: use ``loop`` instead, ``with_`` used to be how loops were defined, '
+        'it can use any available lookup plugin to generate the item list'
 
     # local_action is implicit with action
     if 'action' in oblist[name]:
         oblist[name]['local_action'] = 'Same as action but also implies ``delegate_to: localhost``'
 
     # remove unusable (used to be private?)
-    for nouse in ('loop', 'loop_args'):
+    for nouse in ('loop_args'):
         if nouse in oblist[name]:
             del oblist[name][nouse]
 
@@ -65,5 +69,10 @@ template = env.get_template(template_file)
 outputname = options.output_dir + template_file.replace('.j2', '')
 tempvars = {'oblist': oblist, 'clist': clist}
 
+keyword_page = template.render(tempvars)
+if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
+    # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
+    keyword_page = re.sub(' +\n', '\n', keyword_page)
+
 with open(outputname, 'w') as f:
-    f.write(template.render(tempvars))
+    f.write(keyword_page)

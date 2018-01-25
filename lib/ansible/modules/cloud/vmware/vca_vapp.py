@@ -165,6 +165,7 @@ def get_instance(module):
     except VcaError:
         return inst
 
+
 def create(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
@@ -187,10 +188,12 @@ def create(module):
 
     module.vca.block_until_completed(task)
 
+
 def delete(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
     module.vca.delete_vapp(vdc_name, vapp_name)
+
 
 def do_operation(module):
     vapp_name = module.params['vapp_name']
@@ -208,6 +211,7 @@ def do_operation(module):
 
     cmd = 'power:%s' % operation
     module.get_vapp(vapp_name).execute(cmd, 'post', targetVM=vm)
+
 
 def set_state(module):
     state = module.params['state']

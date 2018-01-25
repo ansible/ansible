@@ -30,11 +30,15 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w]*\(.+\) ?#(?:\s*)$")
+        re.compile(br"[\r\n]?[\w]*\(.+\) ?#(?:\s*)$"),
+        re.compile(br"[pP]assword:$"),
+        re.compile(br"(?<=\s)[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\s*#\s*$"),
     ]
 
     terminal_stderr_re = [
         re.compile(br"% ?Error"),
+        re.compile(br"Error:", re.M),
+        re.compile(br"^% \w+", re.M),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
@@ -45,6 +49,6 @@ class TerminalModule(TerminalBase):
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command(b'no paging')
+            self._exec_cli_command(b'no pag')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')

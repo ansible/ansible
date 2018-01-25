@@ -13,12 +13,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: archive
-version_added: 2.3
-short_description: Creates a compressed archive of one or more files or trees.
+version_added: '2.3'
+short_description: Creates a compressed archive of one or more files or trees
 extends_documentation_fragment: files
 description:
     - Packs an archive. It is the opposite of M(unarchive). By default, it assumes the compression source exists on the target. It will not copy the
@@ -31,70 +30,72 @@ options:
   format:
     description:
       - The type of compression to use.
-    choices: [ 'gz', 'bz2', 'zip' ]
-    default: 'gz'
+      - Support for xz was added in version 2.5.
+    choices: [ bz2, gz, tar, xz, zip ]
+    default: gz
   dest:
     description:
       - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or
         multiple paths in a list.
-    required: false
-    default: null
   exclude_path:
-    version_added: 2.4
+    version_added: '2.4'
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive
-    required: false
   remove:
     description:
       - Remove any added source files and trees after adding to archive.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 
-author: "Ben Doherty (@bendoh)"
+author:
+- Ben Doherty (@bendoh)
 notes:
-    - requires tarfile, zipfile, gzip, and bzip2 packages on target host
-    - can produce I(gzip), I(bzip2) and I(zip) compressed files or archives
+    - requires tarfile, zipfile, gzip and bzip2 packages on target host
+    - requires lzma or backports.lzma if using xz format
+    - can produce I(gzip), I(bzip2), I(lzma) and I(zip) compressed files or archives
 '''
 
 EXAMPLES = '''
-# Compress directory /path/to/foo/ into /path/to/foo.tgz
-- archive:
+- name: Compress directory /path/to/foo/ into /path/to/foo.tgz
+  archive:
     path: /path/to/foo
     dest: /path/to/foo.tgz
 
-# Compress regular file /path/to/foo into /path/to/foo.gz and remove it
-- archive:
+- name: Compress regular file /path/to/foo into /path/to/foo.gz and remove it
+  archive:
     path: /path/to/foo
-    remove: True
+    remove: yes
 
-# Create a zip archive of /path/to/foo
-- archive:
+- name: Create a zip archive of /path/to/foo
+  archive:
     path: /path/to/foo
     format: zip
 
-# Create a bz2 archive of multiple files, rooted at /path
-- archive:
+- name: Create a bz2 archive of multiple files, rooted at /path
+  archive:
     path:
-        - /path/to/foo
-        - /path/wong/foo
+    - /path/to/foo
+    - /path/wong/foo
     dest: /path/file.tar.bz2
     format: bz2
 
-# Create a bz2 archive of a globbed path, while excluding specific dirnames - archive:
+- name: Create a bz2 archive of a globbed path, while excluding specific dirnames
+  archive:
     path:
-        - /path/to/foo/*
+    - /path/to/foo/*
     dest: /path/file.tar.bz2
     exclude_path:
-        - /path/to/foo/bar
-        - /path/to/foo/baz
+    - /path/to/foo/bar
+    - /path/to/foo/baz
     format: bz2
 
-# Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+- name: Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+  archive:
     path:
-        - /path/to/foo/*
+    - /path/to/foo/*
     dest: /path/file.tar.bz2
     exclude_path:
-        - /path/to/foo/ba*
+    - /path/to/foo/ba*
     format: bz2
 '''
 
@@ -130,28 +131,44 @@ expanded_exclude_paths:
     returned: always
 '''
 
-import os
-import re
-import glob
-import shutil
-import gzip
 import bz2
 import filecmp
-import zipfile
+import glob
+import gzip
+import io
+import os
+import re
+import shutil
 import tarfile
+import zipfile
 from traceback import format_exc
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
+
+if PY3:
+    try:
+        import lzma
+        HAS_LZMA = True
+    except ImportError:
+        HAS_LZMA = False
+else:
+    try:
+        from backports import lzma
+        HAS_LZMA = True
+    except ImportError:
+        HAS_LZMA = False
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(type='list', required=True),
-            format = dict(choices=['gz', 'bz2', 'zip', 'tar'], default='gz', required=False),
-            dest = dict(required=False, type='path'),
-            exclude_path = dict(type='list', required=False),
-            remove = dict(required=False, default=False, type='bool'),
+        argument_spec=dict(
+            path=dict(type='list', required=True),
+            format=dict(type='str', default='gz', choices=['bz2', 'gz', 'tar', 'xz', 'zip']),
+            dest=dict(type='path'),
+            exclude_path=dict(type='list'),
+            remove=dict(type='bool', default=False),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -175,7 +192,11 @@ def main():
     archive = False
     successes = []
 
-    for i, path in enumerate(paths):
+    # Fail early
+    if not HAS_LZMA and format == 'xz':
+        module.fail_json(msg="lzma or backports.lzma is required when using xz format.")
+
+    for path in paths:
         path = os.path.expanduser(os.path.expandvars(path))
 
         # Expand any glob characters. If found, add the expanded glob to the
@@ -191,7 +212,7 @@ def main():
 
     # Only attempt to expand the exclude paths if it exists
     if exclude_paths:
-        for i, exclude_path in enumerate(exclude_paths):
+        for exclude_path in exclude_paths:
             exclude_path = os.path.expanduser(os.path.expandvars(exclude_path))
 
             # Expand any glob characters. If found, add the expanded glob to the
@@ -204,7 +225,7 @@ def main():
             else:
                 expanded_exclude_paths.append(exclude_path)
 
-    if len(expanded_paths) == 0:
+    if not expanded_paths:
         return module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
 
     # If we actually matched multiple files or TRIED to, then
@@ -235,7 +256,7 @@ def main():
                     break
 
             if i < len(arcroot):
-                arcroot = os.path.dirname(arcroot[0:i+1])
+                arcroot = os.path.dirname(arcroot[0:i + 1])
 
             arcroot += os.sep
 
@@ -251,18 +272,18 @@ def main():
     # No source files were found but the named archive exists: are we 'compress' or 'archive' now?
     if len(missing) == len(expanded_paths) and dest and os.path.exists(dest):
         # Just check the filename to know if it's an archive or simple compressed file
-        if re.search(r'(\.tar|\.tar\.gz|\.tgz|.tbz2|\.tar\.bz2|\.zip)$', os.path.basename(dest), re.IGNORECASE):
+        if re.search(r'(\.tar|\.tar\.gz|\.tgz|\.tbz2|\.tar\.bz2|\.tar\.xz|\.zip)$', os.path.basename(dest), re.IGNORECASE):
             state = 'archive'
         else:
             state = 'compress'
 
     # Multiple files, or globbiness
     elif archive:
-        if len(archive_paths) == 0:
+        if not archive_paths:
             # No source files were found, but the archive is there.
             if os.path.lexists(dest):
                 state = 'archive'
-        elif len(missing) > 0:
+        elif missing:
             # SOME source files were found, but not all of them
             state = 'incomplete'
 
@@ -286,6 +307,12 @@ def main():
                     # Easier compression using tarfile module
                     elif format == 'gz' or format == 'bz2':
                         arcfile = tarfile.open(dest, 'w|' + format)
+
+                    # python3 tarfile module allows xz format but for python2 we have to create the tarfile
+                    # in memory and then compress it with lzma.
+                    elif format == 'xz':
+                        arcfileIO = io.BytesIO()
+                        arcfile = tarfile.open(fileobj=arcfileIO, mode='w')
 
                     # Or plain tar archiving
                     elif format == 'tar':
@@ -342,7 +369,12 @@ def main():
                     arcfile.close()
                     state = 'archive'
 
-                if len(errors) > 0:
+                if format == 'xz':
+                    with lzma.open(dest, 'wb') as f:
+                        f.write(arcfileIO.getvalue())
+                    arcfileIO.close()
+
+                if errors:
                     module.fail_json(msg='Errors when writing archive at %s: %s' % (dest, '; '.join(errors)))
 
         if state in ['archive', 'incomplete'] and remove:
@@ -355,14 +387,14 @@ def main():
                 except OSError as e:
                     errors.append(path)
 
-            if len(errors) > 0:
+            if errors:
                 module.fail_json(dest=dest, msg='Error deleting some source files: ' + str(e), files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
         if not check_mode and os.path.getsize(dest) != size:
             changed = True
 
-        if len(successes) and state != 'incomplete':
+        if successes and state != 'incomplete':
             state = 'archive'
 
     # Simple, single-file compression
@@ -393,7 +425,7 @@ def main():
                         arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
                         arcfile.write(path, path[len(arcroot):])
                         arcfile.close()
-                        state = 'archive' # because all zip files are archives
+                        state = 'archive'  # because all zip files are archives
 
                     else:
                         f_in = open(path, 'rb')
@@ -402,6 +434,8 @@ def main():
                             f_out = gzip.open(dest, 'wb')
                         elif format == 'bz2':
                             f_out = bz2.BZ2File(dest, 'wb')
+                        elif format == 'xz':
+                            f_out = lzma.LZMAFile(dest, 'wb')
                         else:
                             raise OSError("Invalid format")
 
@@ -446,6 +480,7 @@ def main():
                      missing=missing,
                      expanded_paths=expanded_paths,
                      expanded_exclude_paths=expanded_exclude_paths)
+
 
 if __name__ == '__main__':
     main()

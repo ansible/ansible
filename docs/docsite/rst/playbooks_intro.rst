@@ -177,11 +177,6 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-.. note::
-
-    The ``remote_user`` parameter for tasks was added in 1.4.
-
-
 Support for running things as another user is also available (see :doc:`become`)::
 
     ---
@@ -201,9 +196,6 @@ You can also use become on a particular task instead of the whole play::
           become: yes
           become_method: sudo
 
-.. note::
-
-    The become syntax deprecates the old sudo/su specific syntax beginning in 1.9.
 
 You can also login as you, and then become a user different than root::
 
@@ -368,15 +360,16 @@ Action Shorthand
 
 .. versionadded:: 0.8
 
-Ansible prefers listing modules like this in 0.8 and later::
+Ansible prefers listing modules like this::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    template:
+        src: templates/foo.j2
+        dest: /etc/foo.conf
 
-You will notice in earlier versions, this was only available as::
+Early versions of Ansible used the following format, which still works::
 
     action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-The old form continues to work in newer versions without any plan of deprecation.
 
 .. _handlers:
 
@@ -461,7 +454,7 @@ Roles are described later on, but it's worthwhile to point out that:
 * handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
 * handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
 
-If you ever want to flush all the handler commands immediately though, in 1.2 and later, you can::
+If you ever want to flush all the handler commands immediately you can do this::
 
     tasks:
        - shell: some tasks go here
@@ -514,8 +507,6 @@ kept separate in the counts.
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
 
-Ansible playbook output is vastly upgraded if the cowsay
-package is installed.  Try it!
 
 To see what hosts would be affected by a playbook before you run it, you
 can do this::

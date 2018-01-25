@@ -35,12 +35,6 @@ options:
       - Specify the number of seconds that LLDP information is held before it is
         discarded. The multiplier value is used in combination with the
         C(interval) value.
-  enable:
-    description:
-      - If value is C(True) it enable LLDP protocol on remote device, if value
-        is C(False) it disables LLDP protocol.
-    default: present
-    choices: [True, False]
   state:
     description:
       - Value of C(present) ensures given LLDP configuration
@@ -62,6 +56,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """
@@ -104,9 +99,9 @@ diff.prepared:
 import collections
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import junos_argument_spec, check_args
-from ansible.module_utils.junos import load_config, map_params_to_obj, map_obj_to_ele
-from ansible.module_utils.junos import commit_configuration, discard_changes, locked_config
+from ansible.module_utils.network.junos.junos import junos_argument_spec
+from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
+from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config
 
 try:
     from lxml.etree import tostring
@@ -156,8 +151,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
-
     result = {'changed': False}
 
     if warnings:

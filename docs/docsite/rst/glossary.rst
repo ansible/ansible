@@ -255,22 +255,22 @@ when a term comes up on the mailing list.
         that we are managing the local host and not a remote machine.
 
     Lookup Plugin
-        A lookup plugin is a way to get data into Ansible from the outside
-        world.  These are how such things as ``with_items``, a basic looping
-        plugin, are implemented.  There are also lookup plugins like
-        ``with_file`` which load data from a file and ones for querying
-        environment variables, DNS text records, or key value stores.  Lookup
-        plugins can also be accessed in templates, e.g.,
+        A lookup plugin is a way to get data into Ansible from the outside world.
+        Lookup plugins are an extension of Jinja2 and can be accessed in templates, e.g.,
         ``{{ lookup('file','/path/to/file') }}``.
+        These are how such things as ``with_items``, are implemented.
+        There are also lookup plugins like ``file`` which loads data from
+        a file and ones for querying environment variables, DNS text records,
+        or key value stores.
 
     Loops
         Generally, Ansible is not a programming language. It prefers to be
-        more declarative, though various constructs like ``with_items`` allow
+        more declarative, though various constructs like ``loop`` allow
         a particular task to be repeated for multiple items in a list.
-        Certain modules, like :ref:`yum <yum>` and :ref:`apt <apt>`, are actually
-        optimized for this, and can install all packages given in those lists
+        Certain modules, like :ref:`yum <yum>` and :ref:`apt <apt>`, actually take
+        lists directly, and can install all packages given in those lists
         within a single transaction, dramatically speeding up total time to
-        configuration.
+        configuration, so they can be used without loops.
 
     Modules
         Modules are the units of work that Ansible ships out to remote

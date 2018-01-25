@@ -26,6 +26,10 @@ options:
         description:
           - Name of a profile.
         required: true
+    description:
+        description:
+          - Description of the profile.
+        version_added: "2.5"
     config:
         description:
           - 'The config for the container (e.g. {"limits.memory": "4GB"}).
@@ -147,7 +151,7 @@ EXAMPLES = '''
         state: present
 '''
 
-RETURN='''
+RETURN = '''
 old_state:
   description: The old state of the profile
   returned: success
@@ -356,7 +360,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict( type='str', no_log=True)
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )

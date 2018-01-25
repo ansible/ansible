@@ -166,7 +166,7 @@ firewall_policy:
 __version__ = '${version}'
 
 import os
-import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from time import sleep
 from distutils.version import LooseVersion
 
@@ -288,7 +288,7 @@ class ClcFirewallPolicy:
         :return: policy_id: firewall policy id from creation call
         """
         url = response.get('links')[0]['href']
-        path = urlparse.urlparse(url).path
+        path = urlparse(url).path
         path_list = os.path.split(path)
         policy_id = path_list[-1]
         return policy_id

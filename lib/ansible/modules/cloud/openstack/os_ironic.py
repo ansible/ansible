@@ -2,19 +2,11 @@
 # coding: utf-8 -*-
 
 # (c) 2014, Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -151,16 +143,19 @@ EXAMPLES = '''
 '''
 
 try:
+    import jsonpatch
+    HAS_JSONPATCH = True
+except ImportError:
+    HAS_JSONPATCH = False
+
+try:
     import shade
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
 
-try:
-    import jsonpatch
-    HAS_JSONPATCH = True
-except ImportError:
-    HAS_JSONPATCH = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _parse_properties(module):
@@ -195,8 +190,6 @@ def _choose_id_value(module):
     if module.params['name']:
         return module.params['name']
     return None
-
-
 
 
 def _choose_if_password_only(module, patch):
@@ -356,10 +349,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == "__main__":
     main()

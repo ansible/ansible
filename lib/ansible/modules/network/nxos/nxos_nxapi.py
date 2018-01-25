@@ -79,7 +79,7 @@ options:
         the NXAPI feature is configured for the first time.  When the
         C(sandbox) argument is set to True, the developer sandbox URL
         will accept requests and when the value is set to False, the
-        sandbox URL is unavailable.
+        sandbox URL is unavailable. This is supported on NX-OS 7K series.
     required: false
     default: no
     choices: ['yes', 'no']
@@ -124,19 +124,23 @@ updates:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands, load_config
-from ansible.module_utils.nxos import nxos_argument_spec
-from ansible.module_utils.nxos import check_args as nxos_check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_capabilities
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
-def check_args(module, warnings):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    if 'nxapi' in (transport, provider_transport):
-        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
 
-    nxos_check_args(module, warnings)
+def check_args(module, warnings):
+    device_info = get_capabilities(module)
+
+    network_api = device_info.get('network_api', 'nxapi')
+    if network_api == 'nxapi':
+        module.fail_json(msg='module not supported over nxapi transport')
+
+    os_platform = device_info['device_info']['network_os_platform']
+    if '7K' not in os_platform and module.params['sandbox']:
+        module.fail_json(msg='sandbox or enable_sandbox is supported on NX-OS 7K series of switches')
 
     state = module.params['state']
 
@@ -149,13 +153,6 @@ def check_args(module, warnings):
         warnings.append('state=stopped is deprecated and will be removed in a '
                         'a future release.  Please use state=absent instead')
 
-    if module.params['transport'] == 'nxapi':
-        module.fail_json(msg='module not supported over nxapi transport')
-
-    for key in ['config']:
-        if module.params[key]:
-            warnings.append('argument %s is deprecated and will be ignored' % key)
-
     for key in ['http_port', 'https_port']:
         if module.params[key] is not None:
             if not 1 <= module.params[key] <= 65535:
@@ -163,10 +160,12 @@ def check_args(module, warnings):
 
     return warnings
 
+
 def map_obj_to_commands(want, have, module):
     commands = list()
 
-    needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
+    def needs_update(x):
+        return want.get(x) is not None and (want.get(x) != have.get(x))
 
     if needs_update('state'):
         if want['state'] == 'absent':
@@ -195,6 +194,7 @@ def map_obj_to_commands(want, have, module):
 
     return commands
 
+
 def parse_http(data):
     http_res = [r'nxapi http port (\d+)']
     http_port = None
@@ -206,6 +206,7 @@ def parse_http(data):
             break
 
     return {'http': http_port is not None, 'http_port': http_port}
+
 
 def parse_https(data):
     https_res = [r'nxapi https port (\d+)']
@@ -219,12 +220,14 @@ def parse_https(data):
 
     return {'https': https_port is not None, 'https_port': https_port}
 
+
 def parse_sandbox(data):
     sandbox = [item for item in data.split('\n') if re.search(r'.*sandbox.*', item)]
     value = False
     if sandbox and sandbox[0] == 'nxapi sandbox':
         value = True
     return {'sandbox': value}
+
 
 def map_config_to_obj(module):
     out = run_commands(module, ['show run all | inc nxapi'], check_rc=False)[0]
@@ -244,6 +247,7 @@ def map_config_to_obj(module):
 
     return obj
 
+
 def map_params_to_obj(module):
     obj = {
         'http': module.params['http'],
@@ -256,21 +260,16 @@ def map_params_to_obj(module):
 
     return obj
 
+
 def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
         http=dict(aliases=['enable_http'], type='bool'),
         http_port=dict(type='int'),
-
         https=dict(aliases=['enable_https'], type='bool'),
         https_port=dict(type='int'),
-
         sandbox=dict(aliases=['enable_sandbox'], type='bool'),
-
-        # deprecated (Ansible 2.3) arguments
-        config=dict(),
-
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
     )
 
@@ -278,8 +277,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-
-
 
     warnings = list()
     check_args(module, warnings)

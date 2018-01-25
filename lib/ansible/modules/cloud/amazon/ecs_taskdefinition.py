@@ -27,7 +27,7 @@ description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
 version_added: "2.0"
 author: Mark Chance(@Java1Guy)
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     state:
         description:
@@ -46,6 +46,11 @@ options:
         description:
             - A revision number for the task definition
         required: False
+    force_create:
+        description:
+            - Always create new task definition
+        required: False
+        version_added: 2.5
     containers:
         description:
             - A list of containers definitions
@@ -87,6 +92,11 @@ EXAMPLES = '''
       portMappings:
       - containerPort: 80
         hostPort: 80
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: ecs
+          awslogs-region: us-west-2
     - name: busybox
       command:
         - >
@@ -114,21 +124,17 @@ taskdefinition:
     type: dict
     returned: always
 '''
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
 
 try:
-    import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils._text import to_text
+
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -136,13 +142,8 @@ class EcsTaskManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg="Can't authorize connection - " % str(e))
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def describe_task(self, task_name):
         try:
@@ -182,7 +183,7 @@ class EcsTaskManager:
     def describe_task_definitions(self, family):
         data = {
             "taskDefinitionArns": [],
-            "nextToken":  None
+            "nextToken": None
         }
 
         def fetch():
@@ -224,15 +225,13 @@ def main():
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
+        force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
         volumes=dict(required=False, type='list')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO:
-        module.fail_json(msg='boto is required.')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
@@ -241,10 +240,9 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    for container in module.params['containers']:
-        if 'environment' in container:
-            for environment in container['environment']:
-                environment['value'] = str(environment['value'])
+    for container in module.params.get('containers', []):
+        for environment in container.get('environment', []):
+            environment['value'] = to_text(environment['value'])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
@@ -351,7 +349,7 @@ def main():
                 if existing:
                     break
 
-        if existing:
+        if existing and not module.params.get('force_create'):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
@@ -371,7 +369,7 @@ def main():
             if 'arn' in module.params and module.params['arn'] is not None:
                 task_to_describe = module.params['arn']
             elif 'family' in module.params and module.params['family'] is not None and 'revision' in module.params and \
-                            module.params['revision'] is not None:
+                    module.params['revision'] is not None:
                 task_to_describe = module.params['family'] + ":" + str(module.params['revision'])
             else:
                 module.fail_json(msg="To use task definitions, an arn or family and revision must be specified")

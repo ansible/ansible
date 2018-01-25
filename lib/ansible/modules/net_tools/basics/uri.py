@@ -101,8 +101,8 @@ options:
       - Any parameter starting with "HEADER_" is a sent with your request as a header.
         For example, HEADER_Content-Type="application/json" would send the header
         "Content-Type" along with your request with a value of "application/json".
-        This option is deprecated as of C(2.1) and may be removed in a future
-        release. Use I(headers) instead.
+        This option is deprecated as of C(2.1) and will be removed in Ansible-2.9.
+        Use I(headers) instead.
   headers:
     description:
         - Add custom HTTP headers to a request in the format of a YAML hash. As
@@ -236,6 +236,8 @@ import ansible.module_utils.six as six
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
+JSON_CANDIDATES = ('text', 'json', 'javascript')
+
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
@@ -326,7 +328,6 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # we'll reset back to the supplied value soon
         follow_redirects = module.params['follow_redirects']
         module.params['follow_redirects'] = False
-        dest = os.path.expanduser(dest)
         if os.path.isdir(dest):
             # first check if we are redirected to a file download
             _, redir_info = fetch_url(module, url, data=body,
@@ -385,6 +386,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        # TODO: Remove check_invalid_arguments in 2.9
         check_invalid_arguments=False,
         add_file_common_args=True
     )
@@ -410,15 +412,16 @@ def main():
         if 'content-type' not in lower_header_keys:
             dict_headers['Content-Type'] = 'application/json'
 
+    # TODO: Deprecated section.  Remove in Ansible 2.9
     # Grab all the http headers. Need this hack since passing multi-values is
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
     for key, value in six.iteritems(module.params):
         if key.startswith("HEADER_"):
-            module.deprecate('Supplying headers via HEADER_* is deprecated and '
-                             'will be removed in a future version. Please use '
-                             '`headers` to supply headers for the request')
+            module.deprecate('Supplying headers via HEADER_* is deprecated. Please use `headers` to'
+                             ' supply headers for the request', version='2.9')
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
+    # End deprecated section
 
     if creates is not None:
         # do not run the command if the line contains creates=filename
@@ -476,7 +479,7 @@ def main():
         if 'charset' in params:
             content_encoding = params['charset']
         u_content = to_text(content, encoding=content_encoding)
-        if 'application/json' in content_type or 'text/json' in content_type:
+        if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
                 js = json.loads(u_content)
                 uresp['json'] = js
@@ -486,7 +489,7 @@ def main():
         u_content = to_text(content, encoding=content_encoding)
 
     if resp['status'] not in status_code:
-        uresp['msg'] = 'Status code was not %s: %s' % (status_code, uresp.get('msg', ''))
+        uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
         module.fail_json(content=u_content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=u_content, **uresp)

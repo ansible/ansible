@@ -54,6 +54,9 @@ options:
     required: false
     default: true
     choices: ['true', 'false']
+  dr_prio:
+    description:
+      - Configures priority for PIM DR election on interface.
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.
@@ -149,8 +152,8 @@ commands:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.six import string_types
 
 
@@ -298,12 +301,14 @@ def get_pim_interface(module, interface):
         pim_interface['hello_interval'] = str(hello_interval_msec)
 
     border = get_data.get('is-border')
+    border = border.lower() if border else border
     if border == 'true':
         pim_interface['border'] = True
     elif border == 'false':
         pim_interface['border'] = False
 
     isauth = get_data.get('isauth-config')
+    isauth = isauth.lower() if isauth else isauth
     if isauth == 'true':
         pim_interface['isauth'] = True
     elif isauth == 'false':

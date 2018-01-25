@@ -60,7 +60,9 @@ options:
       - how long before wait gives up, in seconds
     default: 300
 author: "Simon JAILLET (@jails)"
-extends_documentation_fragment: rackspace
+extends_documentation_fragment:
+  - rackspace
+  - rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -148,7 +150,7 @@ def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
                 module.fail_json(changed=False, action=action,
                                  msg='The new volume size must be larger than '
                                      'the current volume size',
-                                cdb=rax_to_dict(instance))
+                                 cdb=rax_to_dict(instance))
             instance.resize_volume(volume)
             changed = True
 

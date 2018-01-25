@@ -45,4 +45,15 @@ options:
     api_version:
         description:
             - Avi API version of to use for Avi API and objects.
+    avi_credentials:
+        description:
+            - Avi Credentials dictionary which can be used in lieu of enumerating Avi Controller login details.
+        version_added: "2.5"
+    api_context:
+        description:
+            - Avi API context that includes current session ID and CSRF Token.
+            - This allows user to perform single login and re-use the session.
+        version_added: "2.5"
+notes:
+  - For more information on using Ansible to manage Avi Network devices see U(https://www.ansible.com/ansible-avi-networks).
 """

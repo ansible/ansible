@@ -225,8 +225,8 @@ changed:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_config, load_config
-from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
 def get_interface_type(interface):

@@ -1,5 +1,5 @@
 ---
-- debug: msg="START junos_user netconf/basic.yaml"
+- debug: msg="START junos_user netconf/basic.yaml on connection={{ ansible_connection }}"
 
 - name: setup - remove user
   junos_user:
@@ -189,5 +189,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - result.diff.prepared | search("\- *user test_user1")
-      - result.diff.prepared | search("\- *user test_user2")
+      - result.diff.prepared is search("\- *user test_user1")
+      - result.diff.prepared is search("\- *user test_user2")
+
+- debug: msg="END junos_user netconf/basic.yaml on connection={{ ansible_connection }}"

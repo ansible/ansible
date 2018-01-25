@@ -14,9 +14,9 @@
             access: Deny
             priority: 100
             direction: Inbound
-          - name: 'AllowSSH'
+          - name: AllowSSH
             protocol: Tcp
-            source_address_prefix: '174.109.158.0/24'
+            source_address_prefix: 174.109.158.0/24
             destination_port_range: 22
             access: Allow
             priority: 101
@@ -41,33 +41,38 @@
       resource_group: "{{ resource_group }}"
       name: mysecgroup
       rules:
-          - name: DenySSH
+          - name: AllowSSH
             protocol: Tcp
-            destination_port_range: 22-23
-            access: Deny
-            priority: 100
+            source_address_prefix: 174.108.158.0/24
+            destination_port_range: 22
+            access: Allow
+            priority: 101
           - name: AllowSSHFromHome
             protocol: Tcp
-            source_address_prefix: '174.109.158.0/24'
+            source_address_prefix: 174.109.158.0/24
             destination_port_range: 22-23
             priority: 102
   register: output
 
-- assert: { that: "{{ output.state.rules | length }} == 3" }
+- assert: 
+      that:
+          - "{{ output.state.rules | length }} == 3"
+          - output.state.rules[1].source_address_prefix == '174.108.158.0/24'
 
 - name: Test idempotence
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
       name: mysecgroup
       rules:
-          - name: DenySSH
+          - name: AllowSSH
             protocol: Tcp
-            destination_port_range: 22-23
-            access: Deny
-            priority: 100
+            source_address_prefix: 174.108.158.0/24
+            destination_port_range: 22
+            access: Allow
+            priority: 101
           - name: AllowSSHFromHome
             protocol: Tcp
-            source_address_prefix: '174.109.158.0/24'
+            source_address_prefix: 174.109.158.0/24
             destination_port_range: 22-23
             priority: 102
   register: output

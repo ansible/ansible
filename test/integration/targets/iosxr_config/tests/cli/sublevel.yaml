@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel.yaml"
+- debug: msg="START cli/sublevel.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -34,4 +34,4 @@
     commands: ['no ipv4 access-list test']
     match: none
 
-- debug: msg="END cli/sublevel.yaml"
+- debug: msg="END cli/sublevel.yaml on connection={{ ansible_connection }}"

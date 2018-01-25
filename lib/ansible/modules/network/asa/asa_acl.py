@@ -30,6 +30,7 @@ options:
         command syntax as some commands are automatically modified by the
         device config parser.
     required: true
+    aliases: [commands]
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -133,10 +134,10 @@ updates:
   sample: ['access-list ACL-OUTSIDE extended permit tcp any any eq www']
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.asa import asa_argument_spec, check_args
-from ansible.module_utils.asa import get_config, load_config, run_commands
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
 
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
 def get_acl_config(module, acl_name):
@@ -150,6 +151,7 @@ def get_acl_config(module, acl_name):
             filtered_config.append(item)
 
     return NetworkConfig(indent=1, contents='\n'.join(filtered_config))
+
 
 def parse_acl_name(module):
     first_line = True
@@ -167,6 +169,7 @@ def parse_acl_name(module):
         first_line = False
 
     return acl_name
+
 
 def main():
 

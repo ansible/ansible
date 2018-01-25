@@ -6,80 +6,16 @@
 #
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com>, 2015
-# All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 #
 # The match_hostname function and supporting code is under the terms and
 # conditions of the Python Software Foundation License.  They were taken from
 # the Python3 standard library and adapted for use in Python2.  See comments in the
-# source for which code precisely is under this License.  PSF License text
-# follows:
+# source for which code precisely is under this License.
 #
-# PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
-# --------------------------------------------
-#
-# 1. This LICENSE AGREEMENT is between the Python Software Foundation
-# ("PSF"), and the Individual or Organization ("Licensee") accessing and
-# otherwise using this software ("Python") in source or binary form and
-# its associated documentation.
-#
-# 2. Subject to the terms and conditions of this License Agreement, PSF hereby
-# grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
-# analyze, test, perform and/or display publicly, prepare derivative works,
-# distribute, and otherwise use Python alone or in any derivative version,
-# provided, however, that PSF's License Agreement and PSF's notice of copyright,
-# i.e., "Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-# 2011, 2012, 2013, 2014 Python Software Foundation; All Rights Reserved" are
-# retained in Python alone or in any derivative version prepared by Licensee.
-#
-# 3. In the event Licensee prepares a derivative work that is based on
-# or incorporates Python or any part thereof, and wants to make
-# the derivative work available to others as provided herein, then
-# Licensee hereby agrees to include in any such work a brief summary of
-# the changes made to Python.
-#
-# 4. PSF is making Python available to Licensee on an "AS IS"
-# basis.  PSF MAKES NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR
-# IMPLIED.  BY WAY OF EXAMPLE, BUT NOT LIMITATION, PSF MAKES NO AND
-# DISCLAIMS ANY REPRESENTATION OR WARRANTY OF MERCHANTABILITY OR FITNESS
-# FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF PYTHON WILL NOT
-# INFRINGE ANY THIRD PARTY RIGHTS.
-#
-# 5. PSF SHALL NOT BE LIABLE TO LICENSEE OR ANY OTHER USERS OF PYTHON
-# FOR ANY INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS AS
-# A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING PYTHON,
-# OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE POSSIBILITY THEREOF.
-#
-# 6. This License Agreement will automatically terminate upon a material
-# breach of its terms and conditions.
-#
-# 7. Nothing in this License Agreement shall be deemed to create any
-# relationship of agency, partnership, or joint venture between PSF and
-# Licensee.  This License Agreement does not grant permission to use PSF
-# trademarks or trade name in a trademark sense to endorse or promote
-# products or services of Licensee, or any third party.
-#
-# 8. By copying, installing or otherwise using Python, Licensee
-# agrees to be bound by the terms and conditions of this License
-# Agreement.
+# PSF License (see licenses/PSF-license.txt or https://opensource.org/licenses/Python-2.0)
+
 
 '''
 The **urls** utils module offers a replacement for the urllib2 python library.
@@ -428,13 +364,28 @@ class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
         return httplib.HTTPSConnection(host, **kwargs)
 
 
+class ParseResultDottedDict(dict):
+    '''
+    A dict that acts similarly to the ParseResult named tuple from urllib
+    '''
+    def __init__(self, *args, **kwargs):
+        super(ParseResultDottedDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+    def as_list(self):
+        '''
+        Generate a list from this dict, that looks like the ParseResult named tuple
+        '''
+        return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
+
+
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
     but accounts for the fact that older versions of that
     library do not support named attributes (ie. .netloc)
     '''
-    generic_parts = dict()
+    generic_parts = ParseResultDottedDict()
     if hasattr(parts, 'netloc'):
         # urlparse is newer, just read the fields straight
         # from the parts object
@@ -677,7 +628,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         valid_codes = [200] if valid_codes is None else valid_codes
 
         try:
-            (http_version, resp_code, msg) = re.match(r'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
+            (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
         except:
@@ -700,10 +651,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        if HAS_URLLIB3_PYOPENSSLCONTEXT:
+        if HAS_SSLCONTEXT:
+            context = create_default_context()
+        elif HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = PyOpenSSLContext(PROTOCOL)
         else:
-            context = create_default_context()
+            raise NotImplementedError('Host libraries are too old to support creating an sslcontext')
+
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -712,8 +666,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
+        try:
             context = self._make_context(to_add_ca_cert_path)
+        except Exception:
+            # We'll make do with no context below
+            pass
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -728,7 +685,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 port = proxy_parts.get('port') or 443
                 s = socket.create_connection((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
-                    s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
+                    s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username', ''), proxy_parts.get('password', ''))
                         s.sendall(b'Proxy-Authorization: Basic %s\r\n' % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
@@ -787,16 +744,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
 
 def maybe_add_ssl_handler(url, validate_certs):
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] == 'https' and validate_certs:
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False,'
                              ' however this is unsafe and not recommended')
 
         # do the cert validation
-        netloc = parsed[1]
+        netloc = parsed.netloc
         if '@' in netloc:
             netloc = netloc.split('@', 1)[1]
         if ':' in netloc:
@@ -825,10 +780,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if ssl_handler:
         handlers.append(ssl_handler)
 
-    # FIXME: change the following to use the generic_urlparse function
-    #        to remove the indexed references for 'parsed'
-    parsed = urlparse(url)
-    if parsed[0] != 'ftp':
+    parsed = generic_urlparse(urlparse(url))
+    if parsed.scheme != 'ftp':
         username = url_username
 
         if headers is None:
@@ -836,20 +789,20 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
         if username:
             password = url_password
-            netloc = parsed[1]
-        elif '@' in parsed[1]:
-            credentials, netloc = parsed[1].split('@', 1)
+            netloc = parsed.netloc
+        elif '@' in parsed.netloc:
+            credentials, netloc = parsed.netloc.split('@', 1)
             if ':' in credentials:
                 username, password = credentials.split(':', 1)
             else:
                 username = credentials
                 password = ''
 
-            parsed = list(parsed)
-            parsed[1] = netloc
+            parsed_list = parsed.as_list()
+            parsed_list[1] = netloc
 
             # reconstruct url without credentials
-            url = urlunparse(parsed)
+            url = urlunparse(parsed_list)
 
         if username and not force_basic_auth:
             passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
@@ -873,7 +826,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         else:
             try:
                 rc = netrc.netrc(os.environ.get('NETRC'))
-                login = rc.authenticators(parsed[1])
+                login = rc.authenticators(parsed.hostname)
             except IOError:
                 login = None
 
@@ -999,7 +952,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
 
-    :returns: A tuple of (**response**, **info**). Use ``response.body()`` to read the data.
+    :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
         occurred then ``info['body']`` contains the error response data::
 
@@ -1019,6 +972,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
+
+    # ensure we use proper tempdir
+    tempfile.tempdir = module.tempdir
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)

@@ -40,14 +40,15 @@ options:
       - The set of username objects to be configured on the remote
         Cisco Nexus device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
-        exclusive with the C(name) argument. alias C(users).
+        exclusive with the C(name) argument.
+    aliases: ['users', 'collection']
     version_added: "2.4"
     required: false
     default: null
   name:
     description:
       - The username to be configured on the remote Cisco Nexus
-        device.  This argument accepts a stringv value and is mutually
+        device.  This argument accepts a string value and is mutually
         exclusive with the C(aggregate) argument.
     required: false
     default: null
@@ -76,6 +77,7 @@ options:
         has been configured on the device.
     required: false
     default: null
+    aliases: ['roles']
   sshkey:
     description:
       - The C(sshkey) argument defines the SSH public key to configure
@@ -147,13 +149,14 @@ delta:
 """
 import re
 
+from copy import deepcopy
 from functools import partial
 
-from ansible.module_utils.nxos import run_commands, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network.common.utils import remove_default_spec, to_list
 
 VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',
                'priv-15', 'priv-14', 'priv-13', 'priv-12', 'priv-11', 'priv-10',
@@ -166,6 +169,7 @@ def validate_roles(value, module):
         if item not in VALID_ROLES:
             module.fail_json(msg='invalid role specified')
 
+
 def map_obj_to_commands(updates, module):
     commands = list()
     state = module.params['state']
@@ -174,9 +178,14 @@ def map_obj_to_commands(updates, module):
     for update in updates:
         want, have = update
 
-        needs_update = lambda x: want.get(x) and (want.get(x) != have.get(x))
-        add = lambda x: commands.append('username %s %s' % (want['name'], x))
-        remove = lambda x: commands.append('no username %s %s' % (want['name'], x))
+        def needs_update(x):
+            return want.get(x) and (want.get(x) != have.get(x))
+
+        def add(x):
+            return commands.append('username %s %s' % (want['name'], x))
+
+        def remove(x):
+            return commands.append('no username %s %s' % (want['name'], x))
 
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
@@ -192,7 +201,6 @@ def map_obj_to_commands(updates, module):
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
 
-
         if want['roles']:
             if have:
                 for item in set(have['roles']).difference(want['roles']):
@@ -204,12 +212,13 @@ def map_obj_to_commands(updates, module):
                 for item in want['roles']:
                     add('role %s' % item)
 
-
     return commands
+
 
 def parse_password(data):
     if not data.get('remote_login'):
         return '<PASSWORD>'
+
 
 def parse_roles(data):
     configured_roles = data.get('TABLE_role')['ROW_role']
@@ -218,6 +227,7 @@ def parse_roles(data):
         for item in to_list(configured_roles):
             roles.append(item['role'])
     return roles
+
 
 def map_config_to_obj(module):
     out = run_commands(module, ['show user-account | json'])
@@ -235,6 +245,7 @@ def map_config_to_obj(module):
         })
     return objects
 
+
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
     if not item.get(key):
@@ -248,6 +259,7 @@ def get_param_value(key, item, module):
         value = item[key]
 
     return value
+
 
 def map_params_to_obj(module):
     aggregate = module.params['aggregate']
@@ -290,6 +302,7 @@ def map_params_to_obj(module):
 
     return objects
 
+
 def update_objects(want, have):
     updates = list()
     for entry in want:
@@ -302,24 +315,30 @@ def update_objects(want, have):
                     updates.append((entry, item))
     return updates
 
+
 def main():
     """ main entry point for module execution
     """
-    argument_spec = dict(
-        aggregate=dict(type='list', no_log=True, aliases=['collection', 'users']),
+    element_spec = dict(
         name=dict(),
-
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
-
         roles=dict(type='list', aliases=['role']),
-
         sshkey=dict(),
-
-        purge=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    aggregate_spec = deepcopy(element_spec)
+
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
+
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec, aliases=['collection', 'users']),
+        purge=dict(type='bool', default=False)
+    )
+
+    argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
     mutually_exclusive = [('name', 'aggregate')]
@@ -328,9 +347,6 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-
-    result = {'changed': False}
-
     warnings = list()
     if module.params['password'] and not module.params['configured_password']:
         warnings.append(
@@ -338,7 +354,7 @@ def main():
             'To set a user password use "configured_password" instead.'
         )
 
-    check_args(module, warnings)
+    result = {'changed': False}
     result['warnings'] = warnings
 
     want = map_params_to_obj(module)

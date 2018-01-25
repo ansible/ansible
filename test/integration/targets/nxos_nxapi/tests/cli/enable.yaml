@@ -22,7 +22,7 @@
 
 - name: Assert NXAPI is enabled
   assert:
-      that: result.stdout[0] | search('enabled')
+      that: result.stdout[0]  is search('enabled')
 
 - name: Enable NXAPI again
   nxos_nxapi:

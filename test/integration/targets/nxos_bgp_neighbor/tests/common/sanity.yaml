@@ -1,13 +1,15 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 
 - set_fact: log_neighbor_changes="enable"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - set_fact: remove_private_as="all"
-  when: (titanium is defined) and not ((titanium | search('true')))
+  when: not titanium
 
 - name: "Enable feature BGP"
   nxos_feature:
@@ -200,4 +202,4 @@
       state: disabled
       provider: "{{ connection }}"
 
-- debug: msg="END TRANSPORT:{{ connection.transport}} nxos_bgp_neighbor sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

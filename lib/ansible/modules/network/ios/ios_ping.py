@@ -13,9 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ios_ping
-short_description: Tests reachability using ping from IOS switch
+short_description: Tests reachability using ping from Cisco IOS network devices
 description:
 - Tests reachability using ping from switch to a remote destination.
+- For a general purpose network module, see the M(net_ping) module.
+- For Windows targets, use the M(win_ping) module instead.
+- For targets running Python, use the M(ping) module instead.
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -45,6 +48,10 @@ options:
     - The VRF to use for forwarding.
     required: false
     default: default
+notes:
+  - For a general purpose network module, see the M(net_ping) module.
+  - For Windows targets, use the M(win_ping) module instead.
+  - For targets running Python, use the M(ping) module instead.
 '''
 
 EXAMPLES = r'''
@@ -108,8 +115,8 @@ rtt:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ios import run_commands
-from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 import re
 
 
@@ -188,8 +195,8 @@ def parse_ping(ping_stats):
     Example: "Success rate is 100 percent (5/5), round-trip min/avg/max = 1/2/8 ms"
     Returns the percent of packet loss, recieved packets, transmitted packets, and RTT dict.
     """
-    rate_re = re.compile("^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)\/(?P<tx>\d+)\)")
-    rtt_re = re.compile(".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)\/(?P<avg>\d+)\/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
+    rate_re = re.compile(r"^\w+\s+\w+\s+\w+\s+(?P<pct>\d+)\s+\w+\s+\((?P<rx>\d+)/(?P<tx>\d+)\)")
+    rtt_re = re.compile(r".*,\s+\S+\s+\S+\s+=\s+(?P<min>\d+)/(?P<avg>\d+)/(?P<max>\d+)\s+\w+\s*$|.*\s*$")
 
     rate = rate_re.match(ping_stats)
     rtt = rtt_re.match(ping_stats)

@@ -1,37 +1,29 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2017 F5 Networks Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2017 F5 Networks Inc.
+# GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'metadata_version': '1.1'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-DOCUMENTATION = '''
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
 module: bigip_partition
-short_description: Manage BIG-IP partitions.
+short_description: Manage BIG-IP partitions
 description:
   - Manage BIG-IP partitions.
 version_added: "2.5"
 options:
+  name:
+    description:
+      - Name of the partition
+    required: True
   description:
     description:
       - The description to attach to the Partition.
@@ -48,86 +40,102 @@ options:
       - present
       - absent
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP software version >= 12
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create partition "foo" using the default route domain
   bigip_partition:
-      name: "foo"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Create partition "bar" using a custom route domain
   bigip_partition:
-      name: "bar"
-      route_domain: 3
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: bar
+    route_domain: 3
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Change route domain of partition "foo"
   bigip_partition:
-      name: "foo"
-      route_domain: 8
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    route_domain: 8
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Set a description for partition "foo"
   bigip_partition:
-      name: "foo"
-      description: "Tenant CompanyA"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
+    name: foo
+    description: Tenant CompanyA
+    password: secret
+    server: lb.mydomain.com
+    user: admin
   delegate_to: localhost
 
 - name: Delete the "foo" partition
   bigip_partition:
-      name: "foo"
-      password: "secret"
-      server: "lb.mydomain.com"
-      user: "admin"
-      state: "absent"
+    name: foo
+    password: secret
+    server: lb.mydomain.com
+    user: admin
+    state: absent
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 route_domain:
-    description: Name of the route domain associated with the partition.
-    returned: changed and success
-    type: int
-    sample: 0
+  description: Name of the route domain associated with the partition.
+  returned: changed and success
+  type: int
+  sample: 0
 description:
-    description: The description of the partition.
-    returned: changed and success
-    type: string
-    sample: "Example partition"
+  description: The description of the partition.
+  returned: changed and success
+  type: string
+  sample: Example partition
 '''
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import iteritems
-from ansible.module_utils.f5_utils import defaultdict
+from ansible.module_utils.basic import AnsibleModule
+
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import HAS_F5SDK
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -147,36 +155,6 @@ class Parameters(AnsibleF5Parameters):
         'description', 'route_domain'
     ]
 
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
-
     def to_return(self):
         result = {}
         try:
@@ -186,16 +164,6 @@ class Parameters(AnsibleF5Parameters):
             return result
         except Exception:
             return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
 
     @property
     def partition(self):
@@ -207,6 +175,10 @@ class Parameters(AnsibleF5Parameters):
         if self._values['route_domain'] is None:
             return None
         return int(self._values['route_domain'])
+
+
+class Changes(Parameters):
+    pass
 
 
 class Difference(object):
@@ -233,11 +205,12 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.want = Parameters(params=self.module.params)
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -245,7 +218,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -258,7 +231,7 @@ class ModuleManager(object):
             else:
                 changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -287,7 +260,7 @@ class ModuleManager(object):
             return self.create()
 
     def create(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if not self.exists():
@@ -304,7 +277,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -315,7 +288,7 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -327,7 +300,7 @@ class ModuleManager(object):
             name=self.want.name
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def exists(self):
         result = self.client.api.tm.auth.partitions.partition.exists(
@@ -360,32 +333,39 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(required=True),
             description=dict(),
             route_domain=dict(type='int'),
+            state=dict(
+                choices=['absent', 'present'],
+                default='present'
+            )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
+    spec = ArgumentSpec()
+
+    module = AnsibleModule(
+        argument_spec=spec.argument_spec,
+        supports_check_mode=spec.supports_check_mode
+    )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+
     try:
-        spec = ArgumentSpec()
-
-        client = AnsibleF5Client(
-            argument_spec=spec.argument_spec,
-            supports_check_mode=spec.supports_check_mode,
-            f5_product_name=spec.f5_product_name
-        )
-
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

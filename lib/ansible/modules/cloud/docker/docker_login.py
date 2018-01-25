@@ -68,7 +68,7 @@ options:
   state:
     version_added: '2.3'
     description:
-      - This controls the current state of the user. C(present) will login in a user, C(absent) will log him out.
+      - This controls the current state of the user. C(present) will login in a user, C(absent) will log them out.
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
       - docker does not support 'logout' with a custom config file.
@@ -204,9 +204,9 @@ class LoginManager(DockerBaseClass):
         '''
 
         cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
-        #TODO: docker does not support config file in logout, restore this when they do
-        #if self.config_path and self.config_file_exists(self.config_path):
-        #    cmd += "--config '%s' " % self.config_path
+        # TODO: docker does not support config file in logout, restore this when they do
+        # if self.config_path and self.config_file_exists(self.config_path):
+        #     cmd += "--config '%s' " % self.config_path
         cmd += "'%s'" % self.registry_url
 
         (rc, out, err) = self.client.module.run_command(cmd)
@@ -250,7 +250,7 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
-        path = os.path.expanduser(self.config_path)
+        path = self.config_path
         if not self.config_file_exists(path):
             self.create_config_file(path)
 
@@ -291,14 +291,14 @@ class LoginManager(DockerBaseClass):
 
 def main():
 
-    argument_spec=dict(
+    argument_spec = dict(
         registry_url=dict(type='str', required=False, default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
         username=dict(type='str', required=False),
         password=dict(type='str', required=False, no_log=True),
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        config_path=dict(type='str', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
+        config_path=dict(type='path', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
     )
 
     required_if = [

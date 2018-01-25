@@ -71,7 +71,7 @@ def colorize(msg, color):
     if DONT_COLORIZE:
         return msg
     else:
-        return '{}{}{}'.format(COLORS[color], msg, COLORS['endc'])
+        return '{0}{1}{2}'.format(COLORS[color], msg, COLORS['endc'])
 
 
 class CallbackModule(CallbackBase):
@@ -88,12 +88,12 @@ class CallbackModule(CallbackBase):
         self.last_task_name = None
         self.printed_last_task = False
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         global DONT_COLORIZE
-        DONT_COLORIZE = self._plugin_options['nocolor']
+        DONT_COLORIZE = self.get_option('nocolor')
 
     def _print_task(self, task_name=None):
         if task_name is None:
@@ -104,15 +104,15 @@ class CallbackModule(CallbackBase):
             line_length = 120
             if self.last_skipped:
                 print()
-            msg = colorize("# {} {}".format(task_name,
-                                            '*' * (line_length - len(task_name))), 'bold')
+            msg = colorize("# {0} {1}".format(task_name,
+                                              '*' * (line_length - len(task_name))), 'bold')
             print(msg)
 
     def _indent_text(self, text, indent_level):
         lines = text.splitlines()
         result_lines = []
         for l in lines:
-            result_lines.append("{}{}".format(' ' * indent_level, l))
+            result_lines.append("{0}{1}".format(' ' * indent_level, l))
         return '\n'.join(result_lines)
 
     def _print_diff(self, diff, indent_level):

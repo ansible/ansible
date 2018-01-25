@@ -32,8 +32,8 @@
 - name: Check that url was downloaded
   assert:
     that:
-      - not win_get_url_result|failed
-      - win_get_url_result|changed
+      - win_get_url_result is not failed
+      - win_get_url_result is changed
       - win_get_url_result.url
       - win_get_url_result.dest
 
@@ -46,8 +46,8 @@
 - name: Check that url was downloaded again
   assert:
     that:
-      - not win_get_url_result_again|failed
-      - win_get_url_result_again|changed
+      - win_get_url_result_again is not failed
+      - win_get_url_result_again is changed
 
 - name: Test win_get_url module again with force=no
   win_get_url:
@@ -59,8 +59,8 @@
 - name: Check that url was not downloaded again
   assert:
     that:
-      - not win_get_url_result_noforce|failed
-      - not win_get_url_result_noforce|changed
+      - win_get_url_result_noforce is not failed
+      - win_get_url_result_noforce is not changed
 
 - name: Test win_get_url module with url that returns a 404
   win_get_url:
@@ -72,7 +72,7 @@
 - name: Check that the download failed for an invalid url
   assert:
     that:
-      - win_get_url_result_invalid_link|failed
+      - win_get_url_result_invalid_link is failed
       - win_get_url_result_invalid_link.status_code == 404
 
 - name: Test win_get_url module with an invalid path
@@ -85,7 +85,7 @@
 - name: Check that the download failed for an invalid path
   assert:
     that:
-      - win_get_url_result_invalid_path|failed
+      - win_get_url_result_invalid_path is failed
 
 - name: Test win_get_url module with a valid path that is a directory
   win_get_url:
@@ -97,7 +97,7 @@
 - name: Check that the download did NOT fail, even though dest was directory
   assert:
     that:
-      - win_get_url_result_dir_path|changed
+      - win_get_url_result_dir_path is changed
 
 - name: Test win_get_url with a valid url path and a dest that is a directory (from 2.4 should use url path as filename)
   win_get_url:
@@ -113,7 +113,7 @@
 - name: Check that the download succeeded (changed) and dest is as expected
   assert:
     that:
-      - win_get_url_result_dir_path_urlpath|changed
+      - win_get_url_result_dir_path_urlpath is changed
       - win_get_url_result_dir_path_urlpath.dest == expected_dest_path
 
 - name: Check you get a helpful message if the parent folder of the dest doesn't exist
@@ -126,7 +126,7 @@
 - name: Check if dest parent dir does not exist, module fails and you get a specific error message
   assert:
     that:
-      - win_get_url_result_invalid_dest|failed
+      - win_get_url_result_invalid_dest is failed
       - win_get_url_result_invalid_dest.msg is search('does not exist, or is not visible to the current user')
 
 - name: Check you get a helpful message if the parent folder of the dest doesn't exist
@@ -139,5 +139,5 @@
 - name: Check if dest parent dir does not exist, module fails and you get a specific error message
   assert:
     that:
-      - win_get_url_result_invalid_dest2|failed
+      - win_get_url_result_invalid_dest2 is failed
       - win_get_url_result_invalid_dest2.msg is search('does not exist')

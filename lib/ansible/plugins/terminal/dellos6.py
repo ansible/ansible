@@ -1,4 +1,7 @@
-#  2016 Red Hat Inc.
+#
+# (c) 2016 Red Hat Inc.
+#
+# (c) 2017 Dell EMC.
 #
 # This file is part of Ansible
 #
@@ -37,12 +40,19 @@ class TerminalModule(TerminalBase):
         re.compile(br"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
         re.compile(br"% ?Bad secret"),
         re.compile(br"invalid input", re.I),
+        re.compile(br"Cannot add a dynamic member to a LAG with static members", re.I),
+        re.compile(br"VLAN ID not found", re.I),
+        re.compile(br"The maximum number of users have already been created.", re.I),
+        re.compile(br"Invalid access level. Access level can be either 0, 1 or 15", re.I),
+        re.compile(br"An invalid interface has been used for this function.", re.I),
+        re.compile(br"Error:Community does not exist.", re.I),
+        re.compile(br"Value is out of range.", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
         re.compile(br"'[^']' +returned error code: ?\d+"),
     ]
 
-    def on_authorize(self, passwd=None):
+    def on_become(self, passwd=None):
         if self._get_prompt().endswith('#'):
             return
 
@@ -60,7 +70,7 @@ class TerminalModule(TerminalBase):
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt

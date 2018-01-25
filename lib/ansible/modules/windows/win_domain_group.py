@@ -1,21 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# this is a windows documentation stub, actual code lives in the .ps1
-# file of the same name
+# This file is part of Ansible
+
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -57,6 +45,13 @@ options:
   domain_password:
     description:
     - The password for C(username).
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    version_added: '2.5'
   ignore_protection:
     description:
     - Will ignore the C(ProtectedFromAccidentalDeletion) flag when deleting or
@@ -147,6 +142,14 @@ EXAMPLES = r'''
   win_domain_group:
     name: Group Name Here
     managed_by: Domain Admins
+
+- name: add group and specify the AD domain services to use for the create
+  win_domain_group:
+    name: Test Group
+    domain_username: user@CORP.ANSIBLE.COM
+    domain_password: Password01!
+    domain_server: corp-DC12.corp.ansible.com
+    scope: domainlocal
 '''
 
 RETURN = r'''

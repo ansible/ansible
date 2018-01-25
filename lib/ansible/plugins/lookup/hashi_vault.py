@@ -33,6 +33,14 @@ DOCUMENTATION = """
       description: authentication user name
     password:
       description: authentication password
+    role_id:
+      description: Role id for a vault AppRole auth
+      env:
+        - name: VAULT_ROLE_ID
+    secret_id:
+      description: Secret id for a vault AppRole auth
+      env:
+        - name: VAULT_SECRET_ID
     auth_method:
       description: authentication method used
     mount_point:
@@ -47,16 +55,28 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+- debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
 
-- name: Vault that requires authentication via ldap
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
+- name: Return all secrets from a path
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}"
+
+- name: Vault that requires authentication via LDAP
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
 
 - name: Using an ssl vault
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hola:value token=c975b780-d1be-8016-866b-01d0f9b688a5 url=https://myvault:8200 validate_certs=False')}}"
 
 - name: using certificate auth
-  debug: msg="{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hi:value token=xxxx-xxx-xxx url=https://myvault:8200 validate_certs=True cacert=/cacert/path/ca.pem')}}"
+
+- name: authenticate with a Vault app role
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=approle role_id=myroleid secret_id=mysecretid url=http://myvault:8200')}}"
 """
 
 RETURN = """
@@ -100,18 +120,18 @@ class HashiVault:
         if len(s_f) >= 2:
             self.secret_field = s_f[1]
         else:
-            self.secret_field = 'value'
+            self.secret_field = ''
 
-        # if a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
-        # token auth.   this means if a particular auth backend is requested and a token is also given, then we
+        # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
+        # token auth. This means if a particular auth backend is requested and a token is also given, then we
         # ignore the token and attempt authentication against the specified backend.
         #
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
-        if self.auth_method:
+        if self.auth_method and self.auth_method != 'token':
             try:
-                self.client = hvac.Client(url=self.url)
+                self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
@@ -143,7 +163,7 @@ class HashiVault:
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
-        if self.secret_field == '':  # secret was specified with trailing ':'
+        if self.secret_field == '':
             return data['data']
 
         if self.secret_field not in data['data']:
@@ -176,6 +196,17 @@ class HashiVault:
                 return True
         else:
             return False
+
+    def auth_approle(self, **kwargs):
+        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
+        if role_id is None:
+            raise AnsibleError("Authentication method app role requires a role_id")
+
+        secret_id = kwargs.get('secret_id', os.environ.get('VAULT_SECRET_ID', None))
+        if secret_id is None:
+            raise AnsibleError("Authentication method app role requires a secret_id")
+
+        self.client.auth_approle(role_id, secret_id)
 
 
 class LookupModule(LookupBase):

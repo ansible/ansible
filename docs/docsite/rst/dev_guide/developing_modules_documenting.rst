@@ -30,6 +30,7 @@ All modules must have the following sections defined in this order:
   If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
 
+.. _copyright:
 
 Copyright
 ----------------------
@@ -41,15 +42,15 @@ code.
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 Ansible Project
+    
+    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file should have a copyright line with the original copyright holder.
-Major additions to the module (for instance, rewrites)  may add additional
-copyright lines. Code from the Ansible community should typically be assigned
-as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
-legal questions need to review the source control history, so an exhaustive
-copyright header is not necessary.
+Every file should have a copyright line (see `The copyright notice <https://www.gnu.org/licenses/gpl-howto.en.html>`_)
+with the original copyright holder. Major additions to the module (for
+instance, rewrites) may add additional copyright lines. Any legal questions
+need to review the source control history, so an exhaustive copyright header is
+not necessary.
 
 The license declaration should be ONLY one line, not the full GPL prefix. If
 you notice a module with the full prefix, feel free to switch it to the
@@ -61,8 +62,9 @@ add the newer line above the older one, like so:
 .. code-block:: python
 
     #!/usr/bin/python
-    # Copyright (c) 2017 [New Contributor(s)]
-    # Copyright (c) 2015 [Original Contributor(s)]
+    
+    # Copyright: (c) 2017, [New Contributor(s)]
+    # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
@@ -84,11 +86,11 @@ For new modules, the following block can be simply added into your module
    * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
    * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
-.. note:: Pre-released metdata version
+.. note:: Pre-released metadata version
 
     During development of Ansible-2.3, modules had an initial version of the
     metadata.  This version was modified slightly after release to fix some
-    points of confusion.  You may occassionally see PRs for modules where the
+    points of confusion.  You may occasionally see PRs for modules where the
     ANSIBLE_METADATA doesn't look quite right because of this.  Module
     metadata should be fixed before checking it into the repository.
 
@@ -379,8 +381,8 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
    The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
-Formatting options
-------------------
+Formatting functions
+--------------------
 
 These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.

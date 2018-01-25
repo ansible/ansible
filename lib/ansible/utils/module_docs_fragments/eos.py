@@ -120,6 +120,14 @@ options:
             on personally controlled sites using self-signed certificates.  If the transport
             argument is not eapi, this value is ignored.
         choices: ['yes', 'no']
+      use_proxy:
+        description:
+          - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: "2.5"
 
+notes:
+  - For more information on using Ansible to manage Arista EOS devices see U(https://www.ansible.com/ansible-arista-networks).
 
 """

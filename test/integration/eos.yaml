@@ -15,6 +15,7 @@
     - set_fact:
         test_failed: false
         failed_modules: []
+
     - block:
       - include_role:
           name: eos_banner
@@ -103,8 +104,50 @@
             failed_modules: "{{ failed_modules }} + [ 'eos_logging' ]"
             test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_static_route
+        when: "limit_to in ['*', 'eos_static_route']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_static_route' ]"
+            test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_linkagg
+        when: "limit_to in ['*', 'eos_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_linkagg' ]"
+            test_failed: true
 
+    - block:
+      - include_role:
+          name: eos_l3_interface
+        when: "limit_to in ['*', 'eos_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_l3_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_interface
+        when: "limit_to in ['*', 'eos_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: eos_lldp
+        when: "limit_to in ['*', 'eos_lldp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'eos_lldp' ]"
+            test_failed: true
 ###########
     - debug: var=failed_modules
       when: test_failed

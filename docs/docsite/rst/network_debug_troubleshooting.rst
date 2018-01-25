@@ -32,7 +32,7 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delegate_to``, instead of ``ProxyCommand``
+  * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
   * Not using ``connection: local``
 
 
@@ -51,7 +51,9 @@ Enabling Networking logging and how to read the logfile
 
 Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options on the ansible-controller, that is the machine running ansible-playbook.
+
+Before running ``ansible-playbook`` run the following commands to enable logging::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -61,9 +63,11 @@ Because logging is very verbose it is disabled by default. It can be enabled via
    # Run with 4*v for connection level verbosity
    ansible-playbook -vvvv ...
 
-After Ansible has finished running you can inspect the log file:
+After Ansible has finished running you can inspect the log file which has been created on the ansible-controller:
 
 .. code::
+
+  less $ANSIBLE_LOG_PATH
 
   2017-03-30 13:19:52,740 p=28990 u=fred |  creating new control socket for host veos01:22 as user admin
   2017-03-30 13:19:52,741 p=28990 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
@@ -410,10 +414,10 @@ For example:
 
 Suggestions to resolve:
 
-Increase value of presistent connection idle timeout.
-Note: This value should be greater than SSH timeout ie. timeout value under defaults
-section in configuration file and less than the value of the persistent
-connection idle timeout (connect_timeout)
+Increase the value of the persistent connection idle timeout.
+Note: This value should be greater than the SSH timeout value (the timeout value under the defaults
+section in the configuration file) and less than the value of the persistent
+connection idle timeout (connect_timeout).
 
 .. code-block:: yaml
 
@@ -493,7 +497,7 @@ Add ``authorize: yes`` to the task. For example:
 If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
-Add `authorize: yes` to the task. For example:
+Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
@@ -506,40 +510,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-.. delete_to not honoured
-   ----------------------
+Proxy Issues
+============
 
-   FIXME Do we get an error message
+ .. _network_delegate_to_vs_ProxyCommand:
 
-   FIXME Link to howto
+delegate_to vs ProxyCommand
+---------------------------
+
+The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
+no longer supports the use of the ``delegate_to`` directive.
+In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
+transport, network modules now support the use of ``ProxyCommand``.
+
+To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory
+file to specify the proxy host.
+
+.. code-block:: ini
+
+    [nxos]
+    nxos01
+    nxos02
+
+    [nxos:vars]
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
+With the configuration above, simply build and run the playbook as normal with
+no additional changes necessary.  The network module will now connect to the
+network device by first connecting to the host specified in
+``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
 
-   fixmes
-   ======
+.. note:: Using ``ProxyCommand`` with passwords via variables
 
-   Error: "number of connection attempts exceeded, unable to connect to control socket"
-   ------------------------------------------------------------------------------------
+   By design, SSH doesn't support providing passwords via environment variables.
+   This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
-   **Platforms:** Any
-
-   This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-
-
-   This information is available when :ref:`DEFAULT_LOG_PATH` is set see (FIXMELINKTOSECTION):
-
-   .. code-block:: yaml
-
-     less $ANSIBLE_LOG_PATH
-     2017-03-10 15:32:06,173 p=19677 u=fred |  connect retry timeout expired, unable to connect to control socket
-     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_retry_timeout is 15 secs
-     2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-
-   Suggestions to resolve:
-
-   Do stuff For example:
-
-   .. code-block:: yaml
-
-   	Example stuff
+   We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible.

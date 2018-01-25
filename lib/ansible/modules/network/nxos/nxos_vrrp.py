@@ -54,6 +54,10 @@ options:
             - VRRP priority.
         required: false
         default: null
+    preempt:
+        description:
+            - Enable/Disable preempt.
+        choices: ['True', 'False']
     vip:
         description:
             - VRRP virtual IP address.
@@ -70,7 +74,6 @@ options:
         required: false
         choices: ['shutdown', 'no shutdown']
         default: no shutdown
-        version_added: "2.2"
     state:
         description:
             - Specify desired state of the resource.
@@ -113,8 +116,8 @@ commands:
             "authentication text testing", "no shutdown"]
 '''
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -333,17 +336,13 @@ def main():
                          choices=['shutdown', 'no shutdown'],
                          default='no shutdown'),
         authentication=dict(required=False, type='str'),
-        state=dict(choices=['absent', 'present'], required=False, default='present'),
-        include_defaults=dict(default=False),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
@@ -355,13 +354,14 @@ def main():
     authentication = module.params['authentication']
     admin_state = module.params['admin_state']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)

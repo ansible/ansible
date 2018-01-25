@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 ---
 module: bundler
 short_description: Manage Ruby Gem dependencies with Bundler
@@ -104,7 +104,7 @@ options:
 author: "Tim Hoiberg (@thoiberg)"
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Installs gems from a Gemfile in the current directory
 - bundler:
     state: present
@@ -136,9 +136,10 @@ from ansible.module_utils.basic import AnsibleModule
 
 def get_bundler_executable(module):
     if module.params.get('executable'):
-        return module.params.get('executable').split(' ')
+        result = module.params.get('executable').split(' ')
     else:
-        return [ module.get_bin_path('bundle', True) ]
+        result = [module.get_bin_path('bundle', True)]
+    return result
 
 
 def main():
@@ -158,7 +159,7 @@ def main():
             extra_args=dict(default=None, required=False),
         ),
         supports_check_mode=True
-        )
+    )
 
     state = module.params.get('state')
     chdir = module.params.get('chdir')

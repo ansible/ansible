@@ -180,7 +180,7 @@ import sys
 import socket
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 
 CE_NC_GET_BFD = """
@@ -225,26 +225,6 @@ def is_valid_ip_vpn(vpname):
 
     if len(vpname) < 1 or len(vpname) > 31:
         return False
-
-    return True
-
-
-def check_ip_addr(ipaddr):
-    """check ip address, Supports IPv4 and IPv6"""
-
-    if not ipaddr or '\x00' in ipaddr:
-        return False
-
-    try:
-        res = socket.getaddrinfo(ipaddr, 0, socket.AF_UNSPEC,
-                                 socket.SOCK_STREAM,
-                                 0, socket.AI_NUMERICHOST)
-        return bool(res)
-    except socket.gaierror:
-        err = sys.exc_info()[1]
-        if err.args[0] == socket.EAI_NONAME:
-            return False
-        raise
 
     return True
 

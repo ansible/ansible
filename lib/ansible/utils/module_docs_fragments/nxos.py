@@ -95,5 +95,13 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
+  use_proxy:
+    description:
+      - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: "2.5"
 
+notes:
+  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
 """

@@ -5,7 +5,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from copy import deepcopy
+
 from ansible.parsing.dataloader import DataLoader
+from ansible.vars.clean import strip_internal_keys
+
+_IGNORE = tuple()
+_PRESERVE = ('attempts', 'changed', 'retries', 'failed', 'unreachable', 'skipped')
 
 
 class TaskResult:
@@ -58,6 +64,26 @@ class TaskResult:
     def is_unreachable(self):
         return self._check_key('unreachable')
 
+    def needs_debugger(self, globally_enabled=False):
+        _debugger = self._task_fields.get('debugger')
+
+        ret = False
+        if globally_enabled and (self.is_failed() or self.is_unreachable()):
+            ret = True
+
+        if _debugger in ('always',):
+            ret = True
+        elif _debugger in ('never',):
+            ret = False
+        elif _debugger in ('on_failed',) and self.is_failed():
+            ret = True
+        elif _debugger in ('on_unreachable',) and self.is_unreachable():
+            ret = True
+        elif _debugger in('on_skipped',) and self.is_skipped():
+            ret = True
+
+        return ret
+
     def _check_key(self, key):
         '''get a specific key from the result or its items'''
 
@@ -69,3 +95,36 @@ class TaskResult:
                 if isinstance(res, dict):
                     flag |= res.get(key, False)
             return flag
+
+    def clean_copy(self):
+
+        ''' returns 'clean' taskresult object '''
+
+        # FIXME: clean task_fields, _task and _host copies
+        result = TaskResult(self._host, self._task, {}, self._task_fields)
+
+        # statuses are already reflected on the event type
+        if result._task and result._task.action in ['debug']:
+            # debug is verbose by default to display vars, no need to add invocation
+            ignore = _IGNORE + ('invocation',)
+        else:
+            ignore = _IGNORE
+
+        if self._result.get('_ansible_no_log', False):
+            x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
+            for preserve in _PRESERVE:
+                if preserve in self._result:
+                    x[preserve] = self._result[preserve]
+            result._result = x
+        elif self._result:
+            result._result = deepcopy(self._result)
+
+            # actualy remove
+            for remove_key in ignore:
+                if remove_key in result._result:
+                    del result._result[remove_key]
+
+            # remove almost ALL internal keys, keep ones relevant to callback
+            strip_internal_keys(result._result, exceptions=('_ansible_verbose_always', '_ansible_item_label', '_ansible_no_log'))
+
+        return result

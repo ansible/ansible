@@ -16,10 +16,10 @@ DOCUMENTATION = '''
 ---
 module: panos_security_rule
 short_description: Create security rule policy on PAN-OS devices or Panorama management console.
-description: >
-    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed. The
-    policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the
-    traffic is applied, the more specific rules must precede the more general ones.
+description:
+    - Security policies allow you to enforce rules and take action, and can be as general or specific as needed.
+      The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches the traffic is applied,
+      the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer), Robert Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
@@ -291,7 +291,7 @@ def find_rule(rulebase, rule_name):
 
 def rule_is_match(propose_rule, current_rule):
 
-    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability'
+    match_check = ['name', 'description', 'group_profile', 'antivirus', 'vulnerability',
                    'spyware', 'url_filtering', 'file_blocking', 'data_filtering',
                    'wildfire_analysis', 'type', 'action', 'tag', 'log_start', 'log_end']
     list_check = ['tozone', 'fromzone', 'source', 'source_user', 'destination', 'category',

@@ -103,7 +103,7 @@ EXAMPLES = '''
     action: latest_release
 
 - name: Create a new release
-  github:
+  github_release:
     token: tokenabc1234567890
     user: testuser
     repo: testrepo
@@ -116,6 +116,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+create_release:
+    description:
+    - Version of the created release
+    - "For Ansible version 2.5 and later, if specified release version already exists, then State is unchanged"
+    - "For Ansible versions prior to 2.5, if specified release version already exists, then State is skipped"
+    type: string
+    returned: success
+    sample: 1.1.0
+
 latest_release:
     description: Version of the latest release
     type: string
@@ -201,15 +210,14 @@ def main():
     if action == 'create_release':
         release_exists = repository.release_from_tag(tag)
         if release_exists:
-            module.exit_json(
-                skipped=True, msg="Release for tag %s already exists." % tag)
+            module.exit_json(changed=False, msg="Release for tag %s already exists." % tag)
 
         release = repository.create_release(
             tag, target, name, body, draft, prerelease)
         if release:
-            module.exit_json(tag=release.tag_name)
+            module.exit_json(changed=True, tag=release.tag_name)
         else:
-            module.exit_json(tag=None)
+            module.exit_json(changed=False, tag=None)
 
 
 if __name__ == '__main__':

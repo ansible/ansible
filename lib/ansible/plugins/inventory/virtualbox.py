@@ -12,6 +12,9 @@ DOCUMENTATION = '''
         - Get inventory hosts from the local virtualbox installation.
         - Uses a <name>.vbox.yaml (or .vbox.yml) YAML configuration file.
         - The inventory_hostname is always the 'Name' of the virtualbox instance.
+    extends_documentation_fragment:
+      - constructed
+      - inventory_cache
     options:
         running_only:
             description: toggles showing all vms vs only those currently running
@@ -24,14 +27,6 @@ DOCUMENTATION = '''
             default: "/VirtualBox/GuestInfo/Net/0/V4/IP"
         query:
             description: create vars from virtualbox properties
-            type: dictionary
-            default: {}
-        compose:
-            description: create vars from jinja2 expressions, these are created AFTER the query block
-            type: dictionary
-            default: {}
-        groups:
-            description: add hosts to group based on Jinja2 conditionals, these also run after query block
             type: dictionary
             default: {}
 '''
@@ -54,10 +49,10 @@ from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
-class InventoryModule(BaseInventoryPlugin):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     ''' Host inventory parser for ansible using local virtualbox. '''
 
     NAME = 'virtualbox'
@@ -76,35 +71,61 @@ class InventoryModule(BaseInventoryPlugin):
             pass
         return ret
 
-    def _set_variables(self, hostvars, data):
+    def _set_variables(self, hostvars):
 
         # set vars in inventory from hostvars
         for host in hostvars:
 
+            query = self.get_option('query')
             # create vars from vbox properties
-            if data.get('query') and isinstance(data['query'], MutableMapping):
-                for varname in data['query']:
-                    hostvars[host][varname] = self._query_vbox_data(host, data['query'][varname])
+            if query and isinstance(query, MutableMapping):
+                for varname in query:
+                    hostvars[host][varname] = self._query_vbox_data(host, query[varname])
 
             # create composite vars
-            self._set_composite_vars(data.get('compose'), hostvars, host)
+            self._set_composite_vars(self.get_option('compose'), hostvars, host)
 
             # actually update inventory
             for key in hostvars[host]:
                 self.inventory.set_variable(host, key, hostvars[host][key])
 
             # constructed groups based on conditionals
-            self._add_host_to_composed_groups(data.get('groups'), hostvars, host)
+            self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host)
 
-    def _populate_from_source(self, source_data, config_data):
+    def _populate_from_cache(self, source_data):
+        hostvars = source_data.pop('_meta', {}).get('hostvars', {})
+        for group in source_data:
+            if group == 'all':
+                continue
+            else:
+                self.inventory.add_group(group)
+                hosts = source_data[group].get('hosts', [])
+                for host in hosts:
+                    self._populate_host_vars([host], hostvars.get(host, {}), group)
+                self.inventory.add_child('all', group)
+        if not source_data:
+            for host in hostvars:
+                self.inventory.add_host(host)
+                self._populate_host_vars([host], hostvars.get(host, {}))
+
+    def _populate_from_source(self, source_data, using_current_cache=False):
+        if using_current_cache:
+            self._populate_from_cache(source_data)
+            return source_data
+
+        cacheable_results = {'_meta': {'hostvars': {}}}
+
         hostvars = {}
         prevkey = pref_k = ''
         current_host = None
 
         # needed to possibly set ansible_host
-        netinfo = config_data.get('network_info_path', "/VirtualBox/GuestInfo/Net/0/V4/IP")
+        netinfo = self.get_option('network_info_path')
 
         for line in source_data:
+            line = to_text(line)
+            if ':' not in line:
+                continue
             try:
                 k, v = line.split(':', 1)
             except:
@@ -132,8 +153,11 @@ class InventoryModule(BaseInventoryPlugin):
             elif k == 'Groups':
                 for group in v.split('/'):
                     if group:
+                        if group not in cacheable_results:
+                            cacheable_results[group] = {'hosts': []}
                         self.inventory.add_group(group)
                         self.inventory.add_child(group, current_host)
+                        cacheable_results[group]['hosts'].append(current_host)
                 continue
 
             else:
@@ -146,10 +170,32 @@ class InventoryModule(BaseInventoryPlugin):
                 else:
                     if v != '':
                         hostvars[current_host][pref_k] = v
+                if self._ungrouped_host(current_host, cacheable_results):
+                    if 'ungrouped' not in cacheable_results:
+                        cacheable_results['ungrouped'] = {'hosts': []}
+                    cacheable_results['ungrouped']['hosts'].append(current_host)
 
                 prevkey = pref_k
 
-        self._set_variables(hostvars, config_data)
+        self._set_variables(hostvars)
+        for host in hostvars:
+            h = self.inventory.get_host(host)
+            cacheable_results['_meta']['hostvars'][h.name] = h.vars
+
+        return cacheable_results
+
+    def _ungrouped_host(self, host, inventory):
+        def find_host(host, inventory):
+            for k, v in inventory.items():
+                if k == '_meta':
+                    continue
+                if isinstance(v, dict):
+                    yield self._ungrouped_host(host, v)
+                elif isinstance(v, list):
+                    yield host not in v
+            yield True
+
+        return all([found_host for found_host in find_host(host, inventory)])
 
     def verify_file(self, path):
 
@@ -163,28 +209,27 @@ class InventoryModule(BaseInventoryPlugin):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        cache_key = self.get_cache_prefix(path)
+        cache_key = self.get_cache_key(path)
 
-        # file is config file
-        try:
-            config_data = self.loader.load_from_file(path)
-        except Exception as e:
-            raise AnsibleParserError(to_native(e))
+        config_data = self._read_config_data(path)
 
-        if not config_data or config_data.get('plugin') != self.NAME:
-            # this is not my config file
-            return False
+        # set _options from config data
+        self._consume_options(config_data)
 
         source_data = None
-        if cache and cache_key in inventory.cache:
+        if cache:
+            cache = self._options.get('cache')
+
+        update_cache = False
+        if cache:
             try:
-                source_data = inventory.cache[cache_key]
+                source_data = self.cache.get(cache_key)
             except KeyError:
-                pass
+                update_cache = True
 
         if not source_data:
-            b_pwfile = to_bytes(config_data.get('settings_password_file'), errors='surrogate_or_strict')
-            running = config_data.get('running_only', False)
+            b_pwfile = to_bytes(self.get_option('settings_password_file'), errors='surrogate_or_strict')
+            running = self.get_option('running_only')
 
             # start getting data
             cmd = [self.VBOX, b'list', b'-l']
@@ -202,7 +247,10 @@ class InventoryModule(BaseInventoryPlugin):
             except Exception as e:
                 AnsibleParserError(to_native(e))
 
-            source_data = p.stdout.read()
-            inventory.cache[cache_key] = to_text(source_data, errors='surrogate_or_strict')
+            source_data = p.stdout.read().splitlines()
 
-        self._populate_from_source(source_data.splitlines(), config_data)
+        using_current_cache = cache and not update_cache
+        cacheable_results = self._populate_from_source(source_data, using_current_cache)
+
+        if update_cache:
+            self.cache.set(cache_key, cacheable_results)

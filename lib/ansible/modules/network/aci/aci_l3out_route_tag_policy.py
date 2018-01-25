@@ -16,15 +16,11 @@ module: aci_l3out_route_tag_policy
 short_description: Manage route tag policies on Cisco ACI fabrics (l3ext:RouteTagPol)
 description:
 - Manage route tag policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(l3ext:RouteTagPol) at U(https://developer.cisco.com/media/mim-ref/MO-l3extRouteTagPol.html).
+- More information from the internal APIC class I(l3ext:RouteTagPol) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -59,7 +55,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_l3out_route_tag_policy:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     rtp: '{{ rtp_name }}'
@@ -72,12 +68,12 @@ RETURN = r'''
 #
 '''
 
-from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         rtp=dict(type='str', required=False, aliases=['name', 'rtp_name']),  # Not required for querying all objects
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for quering all objects
@@ -85,6 +81,7 @@ def main():
         tag=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -100,9 +97,24 @@ def main():
     description = module.params['description']
     tag = module.params['tag']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
-    aci.construct_url(root_class='tenant', subclass_1='rtp')
+    aci.construct_url(
+        root_class=dict(
+            aci_class='fvTenant',
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
+            module_object=tenant,
+        ),
+        subclass_1=dict(
+            aci_class='l3extRouteTagPol',
+            aci_rn='rttag-{0}'.format(rtp),
+            filter_target='eq(l3extRouteTagPol.name, "{0}")'.format(rtp),
+            module_object=rtp,
+        ),
+    )
+
     aci.get_existing()
 
     if state == 'present':

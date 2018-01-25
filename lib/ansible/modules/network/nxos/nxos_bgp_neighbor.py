@@ -212,10 +212,10 @@ commands:
 
 import re
 
-from ansible.module_utils.nxos import get_config, load_config
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import get_config, load_config
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
+from ansible.module_utils.network.common.config import CustomNetworkConfig
 
 
 BOOL_PARAMS = [
@@ -308,7 +308,7 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+(\.\d+)?).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
 
     if match_asn:
@@ -446,8 +446,7 @@ def main():
         timers_holdtime=dict(required=False, type='str'),
         transport_passive_only=dict(required=False, type='bool'),
         update_source=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
     argument_spec.update(nxos_argument_spec)
 
@@ -493,7 +492,7 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        warnings.extend(load_config(module, candidate))
+        load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

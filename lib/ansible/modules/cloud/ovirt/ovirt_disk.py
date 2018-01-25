@@ -40,6 +40,10 @@ options:
         description:
             - "Name of the disk to manage. Either C(id) or C(name)/C(alias) is required."
         aliases: ['alias']
+    description:
+        description:
+            - "Description of the disk image to manage."
+        version_added: "2.5"
     vm_name:
         description:
             - "Name of the Virtual Machine to manage. Either C(vm_id) or C(vm_name) is required if C(state) is I(attached) or I(detached)."
@@ -83,10 +87,15 @@ options:
     format:
         description:
             - Specify format of the disk.
-            - If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
-            - If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
+    sparse:
+        required: False
+        version_added: "2.5"
+        description:
+            - "I(True) if the disk should be sparse (also known as I(thin provision)).
+              If the parameter is omitted, cow disks will be created as sparse and raw disks as I(preallocated)"
+            - Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
     storage_domain:
         description:
             - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
@@ -108,6 +117,10 @@ options:
     profile:
         description:
             - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
+    quota_id:
+        description:
+            - "Disk quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
+        version_added: "2.5"
     bootable:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
@@ -205,6 +218,18 @@ EXAMPLES = '''
     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     image_provider: myglance
     state: exported
+
+# Defining a specific quota while creating a disk image:
+# Since Ansible 2.5
+- ovirt_quotas_facts:
+    data_center: Default
+    name: myquota
+- ovirt_disk:
+    name: mydisk
+    size: 10GiB
+    storage_domain: data
+    description: somedescriptionhere
+    quota_id: "{{ ovirt_quotas[0]['id'] }}"
 '''
 
 
@@ -233,14 +258,8 @@ import time
 import traceback
 import ssl
 
-from httplib import HTTPSConnection
-from httplib import IncompleteRead
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
+from ansible.module_utils.six.moves.http_client import HTTPSConnection, IncompleteRead
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 try:
     import ovirtsdk4.types as otypes
@@ -424,7 +443,11 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
-            sparse=self._module.params.get('format') != 'raw',
+            sparse=self._module.params.get(
+                'sparse'
+            ) if self._module.params.get(
+                'sparse'
+            ) is not None else self._module.params.get('format') != 'raw',
             openstack_volume_type=otypes.OpenStackVolumeType(
                 name=self.param('openstack_volume_type')
             ) if self.param('openstack_volume_type') else None,
@@ -436,6 +459,7 @@ class DisksModule(BaseModule):
                     name=self._module.params.get('storage_domain'),
                 ),
             ],
+            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') else None,
             shareable=self._module.params.get('shareable'),
             lun_storage=otypes.HostStorage(
                 type=otypes.StorageType(
@@ -504,6 +528,7 @@ class DisksModule(BaseModule):
     def _update_check(self, entity):
         return (
             equal(self._module.params.get('description'), entity.description) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
             equal(convert_to_bytes(self._module.params.get('size')), entity.provisioned_size) and
             equal(self._module.params.get('shareable'), entity.shareable)
         )
@@ -537,6 +562,7 @@ def main():
         ),
         id=dict(default=None),
         name=dict(default=None, aliases=['alias']),
+        description=dict(default=None),
         vm_name=dict(default=None),
         vm_id=dict(default=None),
         size=dict(default=None),
@@ -544,7 +570,9 @@ def main():
         storage_domain=dict(default=None),
         storage_domains=dict(default=None, type='list'),
         profile=dict(default=None),
+        quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
+        sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
         logical_unit=dict(default=None, type='dict'),
@@ -588,6 +616,7 @@ def main():
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])

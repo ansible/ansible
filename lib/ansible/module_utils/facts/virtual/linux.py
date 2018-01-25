@@ -144,9 +144,9 @@ class LinuxVirtual(Virtual):
 
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
-                if re.match('^VxID: \d+', line):
+                if re.match(r'^VxID: \d+', line):
                     virtual_facts['virtualization_type'] = 'linux_vserver'
-                    if re.match('^VxID: 0', line):
+                    if re.match(r'^VxID: 0', line):
                         virtual_facts['virtualization_role'] = 'host'
                     else:
                         virtual_facts['virtualization_role'] = 'guest'
@@ -160,6 +160,8 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'uml'
                 elif re.match('^model name.*UML', line):
                     virtual_facts['virtualization_type'] = 'uml'
+                elif re.match('^machine.*CHRP IBM pSeries .emulated by qemu.', line):
+                    virtual_facts['virtualization_type'] = 'kvm'
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
                     virtual_facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
@@ -219,6 +221,17 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'kvm'
                 virtual_facts['virtualization_role'] = 'guest'
                 return virtual_facts
+
+        # In older Linux Kernel versions, /sys filesystem is not available
+        # dmidecode is the safest option to parse virtualization related values
+        dmi_bin = self.module.get_bin_path('dmidecode')
+        (rc, out, err) = self.module.run_command('%s -s system-product-name' % dmi_bin)
+        if rc == 0:
+            # Strip out commented lines (specific dmidecode output)
+            vendor_name = ''.join([line.strip() for line in out.splitlines() if not line.startswith('#')])
+            if vendor_name in ['VMware Virtual Platform', 'VMware7,1']:
+                virtual_facts['virtualization_type'] = 'VMware'
+                virtual_facts['virtualization_role'] = 'guest'
 
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.
