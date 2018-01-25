@@ -20,6 +20,10 @@ ansible-config -c ./ansible-non-existent.cfg view && exit 1 || echo 'Failure is 
 # BEGIN: Test case for ansible-galaxy
 #
 
+# Prep git, becuase it doesn't work inside a docker container without it
+git config --global user.email "tester@ansible.com"
+git config --global user.name "Ansible Tester"
+
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 
