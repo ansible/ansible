@@ -75,6 +75,43 @@ def get_connector(*args, **kwargs):
     return Connector(kwargs)
 
 
+def normalize_extattrs(value):
+    ''' Normalize extattrs field to expected format
+
+    The module accepts extattrs as key/value pairs.  This method will
+    transform the key/value pairs into a structure suitable for
+    sending across WAPI in the format of:
+
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+    '''
+    return dict([(k, {'value': v}) for k, v in iteritems(value)])
+
+
+def flatten_extattrs(value):
+    ''' Flatten the key/value struct for extattrs
+
+    WAPI returns extattrs field as a dict in form of:
+
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+
+    This method will flatten the structure to:
+
+        extattrs: {
+            key: value
+        }
+
+    '''
+    return dict([(k, v['value']) for k, v in iteritems(value)])
+
+
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
 
@@ -134,7 +171,7 @@ class Wapi(WapiBase):
         if ib_obj:
             current_object = ib_obj[0]
             if 'extattrs' in current_object:
-                current_object['extattrs'] = self.flatten_extattrs(current_object['extattrs'])
+                current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
             ref = current_object.pop('_ref')
         else:
             current_object = obj_filter
@@ -151,7 +188,7 @@ class Wapi(WapiBase):
         modified = not self.compare_objects(current_object, proposed_object)
 
         if 'extattrs' in proposed_object:
-            proposed_object['extattrs'] = self.normalize_extattrs(proposed_object['extattrs'])
+            proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
 
         if state == 'present':
             if ref is None:
@@ -205,41 +242,6 @@ class Wapi(WapiBase):
             self.module.fail_json(msg='Network view %s does not exist, please create '
                                       'it using nios_network_view first' % name)
         return res
-
-    def normalize_extattrs(self, value):
-        ''' Normalize extattrs field to expected format
-
-        The module accepts extattrs as key/value pairs.  This method will
-        transform the key/value pairs into a structure suitable for
-        sending across WAPI in the format of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-        '''
-        return dict([(k, {'value': v}) for k, v in iteritems(value)])
-
-    def flatten_extattrs(self, value):
-        ''' Flatten the key/value struct for extattrs
-
-        WAPI returns extattrs field as a dict in form of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-
-        This method will flatten the structure to:
-
-            extattrs: {
-                key: value
-            }
-
-        '''
-        return dict([(k, v['value']) for k, v in iteritems(value)])
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects
