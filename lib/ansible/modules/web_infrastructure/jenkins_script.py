@@ -46,14 +46,26 @@ options:
     default: True
   user:
     description:
-      - The username to connect to the jenkins server with.
+      - The username to connect to the jenkins server with. This is deprecated, use C(url_username) instead.
     required: false
     default: null
+  url_username:
+    description:
+       - The username to connect to the jenkins server with.
+    required: false
+    default: null
+    version_added: 2.5
   password:
+    description:
+      - The password to connect to the jenkins server with. This is deprecated, use c(url_password) instead.
+    required: false
+    default: null
+  url_password:
     description:
       - The password to connect to the jenkins server with.
     required: false
     default: null
+    version_added: 2.5
   timeout:
     description:
       - The request timeout in seconds
@@ -65,6 +77,13 @@ options:
       - A dict of key-value pairs used in formatting the script using string.Template (see https://docs.python.org/2/library/string.html#template-strings).
     required: false
     default: null
+  params:
+    required: false
+    default: null
+    description:
+      - Option used to allow the user to overwrite any of the other options (except C(url_password)). To
+        remove an option, set the value of the option to C(null).
+    version_added: 2.5
 
 notes:
     - Since the script can do anything this does not report on changes.
@@ -97,10 +116,24 @@ EXAMPLES = '''
 - name: interacting with an untrusted HTTPS connection
   jenkins_script:
     script: "println(Jenkins.instance.pluginManager.plugins)"
-    user: admin
-    password: admin
+    url_username: admin
+    url_password: admin
     url: https://localhost
     validate_certs: no
+#
+# Example of how to use the params
+#
+# Define a variable and specify all default parameters you want to use across
+# all jenkins_plugin calls:
+#
+# my_jenkins_params:
+#   url_username: admin
+#
+- name: Say Hello!
+  jenkins_script:
+    script: "println('Hello, Jenkins!')"
+    url_password: p4ssw0rd
+    params: "{{ my_jenkins_params }}"
 '''
 
 RETURN = '''
@@ -116,6 +149,8 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import url_argument_spec
 
 
 def is_csrf_protection_enabled(module):
@@ -125,7 +160,7 @@ def is_csrf_protection_enabled(module):
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content).get('useCrumbs', False)
 
 
@@ -136,30 +171,52 @@ def get_crumb(module):
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    content = resp.read()
+    content = to_native(resp.read())
     return json.loads(content)
 
 
 def main():
 
+    argument_spec = url_argument_spec()
+    argument_spec.update(
+        script=dict(required=True, type="str"),
+        url=dict(required=False, type="str", default="http://localhost:8080"),
+        validate_certs=dict(required=False, type="bool", default=True),
+        user=dict(required=False, type="str", default=None),
+        password=dict(required=False, no_log=True, type="str", default=None),
+        timeout=dict(required=False, type="int", default=10),
+        args=dict(required=False, type="dict", default=None),
+        params=dict(type='dict')
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            script=dict(required=True, type="str"),
-            url=dict(required=False, type="str", default="http://localhost:8080"),
-            validate_certs=dict(required=False, type="bool", default=True),
-            user=dict(required=False, no_log=True, type="str", default=None),
-            password=dict(required=False, no_log=True, type="str", default=None),
-            timeout=dict(required=False, type="int", default=10),
-            args=dict(required=False, type="dict", default=None)
-        )
+        argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['user', 'url_username'],
+            ['password', 'url_password'],
+        ],
     )
 
-    if module.params['user'] is not None:
-        if module.params['password'] is None:
-            module.fail_json(msg="password required when user provided")
-        module.params['url_username'] = module.params['user']
-        module.params['url_password'] = module.params['password']
-        module.params['force_basic_auth'] = True
+    # Update module parameters by user's parameters if defined
+    if 'params' in module.params and isinstance(module.params['params'], dict):
+        if 'url_password' in module.params['params']:
+            # The params argument should be removed eventually.  Until then, raise an error if
+            # url_password is specified there as it can lead to the password being logged
+            module.fail_json(msg='Do not specify url_password in params as it may get logged')
+
+        module.params.update(module.params['params'])
+        # Remove the params
+        module.params.pop('params', None)
+
+    # Translocate the old deprecated param values to the correct params.
+    module.params["url_username"] = module.params.get("url_username") or module.params.get("user")
+    module.params["url_password"] = module.params.get("url_password") or module.params.get("password")
+
+    auth_params_specified = [module.params.get(k) is not None for k in ("url_username", "url_password")]
+    if any(auth_params_specified) and not all(auth_params_specified):
+        module.fail_json(msg="Both user (user/url_username param) and password (password/url_password param) must exist for authentication")
+    if any(auth_params_specified):
+        # Force basic authentication
+        module.params["force_basic_auth"] = True
 
     if module.params['args'] is not None:
         from string import Template
@@ -182,7 +239,7 @@ def main():
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
 
-    result = resp.read()
+    result = to_native(resp.read())
 
     if 'Exception:' in result and 'at java.lang.Thread' in result:
         module.fail_json(msg="script failed with stacktrace:\n " + result)
