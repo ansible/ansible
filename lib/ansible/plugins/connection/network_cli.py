@@ -380,6 +380,8 @@ class Connection(ConnectionBase):
         handled = False
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
+        matched_prompt_window = window_count = 0
 
         while True:
             data = self._ssh_shell.recv(256)
@@ -393,12 +395,17 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            window_count += 1
+
             if prompts and not handled:
                 handled = self._handle_prompt(window, prompts, answer, newline)
-            elif prompts and handled:
-                # check again even when handled, a sub-prompt could be
-                # repeating (like in the case of a wrong enable password, etc)
-                self._handle_prompt(window, prompts, answer, newline)
+                matched_prompt_window = window_count
+            elif prompts and handled and matched_prompt_window + 1 == window_count:
+                # check again even when handled, if same prompt repeats
+                # (like in the case of a wrong enable password, etc) indicates
+                # value of answer is wrong, report this as error.
+               if self._handle_prompt(window, prompts, answer, newline):
+                   raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
@@ -447,6 +454,7 @@ class Connection(ConnectionBase):
                 self._ssh_shell.sendall(b'%s' % answer)
                 if newline:
                     self._ssh_shell.sendall(b'\r')
+                self._matched_cmd_prompt = match.group()
                 return True
         return False
 
