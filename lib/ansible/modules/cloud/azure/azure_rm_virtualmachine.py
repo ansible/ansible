@@ -1467,11 +1467,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             # Find a virtual network
             no_vnets_msg = "Error: unable to find virtual network in resource group {0}. A virtual network " \
                            "with at least one subnet must exist in order to create a NIC for the virtual " \
-                           "machine.".format(self.resource_group)
+                           "machine.".format(virtual_network_resource_group)
 
             virtual_network_name = None
             try:
-                vnets = self.network_client.virtual_networks.list(self.resource_group)
+                vnets = self.network_client.virtual_networks.list(virtual_network_resource_group)
             except CloudError:
                 self.log('cloud error!')
                 self.fail(no_vnets_msg)
@@ -1486,7 +1486,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.subnet_name:
             try:
-                subnet = self.network_client.subnets.get(self.resource_group, virtual_network_name, self.subnet_name)
+                subnet = self.network_client.subnets.get(virtual_network_resource_group, virtual_network_name, self.subnet_name)
                 subnet_id = subnet.id
             except Exception as exc:
                 self.fail("Error: fetching subnet {0} - {1}".format(self.subnet_name, str(exc)))
