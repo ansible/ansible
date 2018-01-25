@@ -43,6 +43,7 @@ CONFIG_FILES = [
     '/etc/ansible/infoblox.yml'
 ]
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -74,7 +75,6 @@ def main():
         sys.stdout.write(to_text(exc))
         sys.exit(-1)
 
-
     if args.host:
         host_filter = {'name': args.host}
     else:
@@ -91,7 +91,7 @@ def main():
         extattrs = {}
 
     hostvars = {}
-    inventory =  {
+    inventory = {
         '_meta': {
             'hostvars': hostvars
         }

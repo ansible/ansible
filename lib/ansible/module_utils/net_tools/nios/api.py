@@ -74,6 +74,7 @@ def get_connector(*args, **kwargs):
 
     return Connector(kwargs)
 
+
 def normalize_extattrs(value):
     ''' Normalize extattrs field to expected format
 
@@ -88,6 +89,7 @@ def normalize_extattrs(value):
         }
     '''
     return dict([(k, {'value': v}) for k, v in iteritems(value)])
+
 
 def flatten_extattrs(value):
     ''' Flatten the key/value struct for extattrs
