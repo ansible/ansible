@@ -101,6 +101,7 @@
         state: absent
         vpc_id: "{{ vpc_result.vpc.id }}"
         <<: *aws_connection_info
+      ignore_errors: true
 
     - name: tidy up VPC
       ec2_vpc_net:
@@ -108,3 +109,4 @@
         state: absent
         cidr_block: "10.232.232.128/26"
         <<: *aws_connection_info
+      ignore_errors: true
