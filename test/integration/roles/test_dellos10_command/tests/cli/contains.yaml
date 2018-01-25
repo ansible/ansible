@@ -1,0 +1,20 @@
+---
+- debug: msg="START cli/contains.yaml"
+
+- name: test contains operator
+  dellos10_command:
+    commands:
+      - show version
+      - show interface ethernet 1/1/1
+    wait_for:
+      - "result[0] contains OS10-Premium"
+      - "result[1] contains Ethernet "
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END cli/contains.yaml"

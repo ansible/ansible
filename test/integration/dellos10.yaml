@@ -5,9 +5,9 @@
 
   vars:
     limit_to: "*"
-    debug: false
+    test_items: ""
 
   roles:
-   - { role: dellos10_command, when: "limit_to in ['*', 'dellos10_command']" }
-   - { role: dellos10_config, when: "limit_to in ['*', 'dellos10_config']" }
-   - { role: dellos10_facts, when: "limit_to in ['*', 'dellos10_facts']" }
+   - { role: test_dellos10_command, when: "limit_to in ['*', 'dellos10_command']" }
+   - { role: test_dellos10_config, when: "limit_to in ['*', 'dellos10_config']" }
+   - { role: test_dellos10_facts, when: "limit_to in ['*', 'dellos10_facts']" }
