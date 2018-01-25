@@ -72,6 +72,7 @@ options:
   mode:
     description:
       - Manage Layer 2 or Layer 3 state of the interface.
+        This option is supported for ethernet and portchannel interface.
     required: false
     default: null
     choices: ['layer2','layer3']
