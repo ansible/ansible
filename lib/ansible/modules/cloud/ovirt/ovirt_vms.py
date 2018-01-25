@@ -1500,7 +1500,7 @@ def main():
             module=module,
             service=vms_service,
         )
-        vm = vms_module.search_entity()
+        vm = vms_module.search_entity(list_params={'all_content': True})
 
         control_state(vm, vms_service, module)
         if state in ('present', 'running', 'next_run'):
