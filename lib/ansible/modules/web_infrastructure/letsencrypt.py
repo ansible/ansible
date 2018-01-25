@@ -318,7 +318,7 @@ def get_cert_days(module, cert_file):
 
     openssl_bin = module.get_bin_path('openssl', True)
     openssl_cert_cmd = [openssl_bin, "x509", "-in", cert_file, "-noout", "-text"]
-    _, out, _ = module.run_command(openssl_cert_cmd, check_rc=True, encoding=None)
+    dummy, out, dummy = module.run_command(openssl_cert_cmd, check_rc=True, encoding=None)
     try:
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
         not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
@@ -418,7 +418,7 @@ class ACMEDirectory(object):
         url = self.directory_root if self.version == 1 else self.directory['newNonce']
         if resource is not None:
             url = resource
-        _, info = fetch_url(self.module, url, method='HEAD')
+        dummy, info = fetch_url(self.module, url, method='HEAD')
         if info['status'] not in (200, 204):
             self.module.fail_json(msg="Failed to get replay-nonce, got status {0}".format(info['status']))
         return info['replay-nonce']
@@ -495,7 +495,7 @@ class ACMEAccount(object):
             return 'unknown key type "%s" % account_key_type', {}
 
         openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
-        _, out, _ = self.module.run_command(openssl_keydump_cmd, check_rc=True)
+        dummy, out, dummy = self.module.run_command(openssl_keydump_cmd, check_rc=True)
 
         if account_key_type == 'rsa':
             pub_hex, pub_exp = re.search(
@@ -579,10 +579,10 @@ class ACMEAccount(object):
 
             openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
             sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
-            _, out, _ = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
+            dummy, out, dummy = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
 
             if self.key_data['type'] == 'ec':
-                _, der_out, _ = self.module.run_command(
+                dummy, der_out, dummy = self.module.run_command(
                     [self._openssl_bin, "asn1parse", "-inform", "DER"],
                     data=out, binary_data=True)
                 expected_len = 2 * self.key_data['point_size']
@@ -696,7 +696,7 @@ class ACMEAccount(object):
         # if this is not a new registration (e.g. existing account)
         if not self._new_reg(contact):
             # pre-existing account, get account data...
-            result, _ = self.send_signed_request(self.uri, {'resource': 'reg'})
+            result, dummy = self.send_signed_request(self.uri, {'resource': 'reg'})
 
             # ...and check if update is necessary
             do_update = False
@@ -709,7 +709,7 @@ class ACMEAccount(object):
             if do_update:
                 upd_reg = result
                 upd_reg['contact'] = contact
-                result, _ = self.send_signed_request(self.uri, upd_reg)
+                result, dummy = self.send_signed_request(self.uri, upd_reg)
                 self.changed = True
 
 
@@ -745,7 +745,7 @@ class ACMEClient(object):
         Parse the CSR and return the list of requested domains
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-noout", "-text"]
-        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         domains = set([])
         common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
@@ -896,7 +896,7 @@ class ACMEClient(object):
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         new_cert = {
             "csr": nopad_b64(to_bytes(out)),
@@ -977,7 +977,7 @@ class ACMEClient(object):
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
         openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-outform", "DER"]
-        _, out, _ = self.module.run_command(openssl_csr_cmd, check_rc=True)
+        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
 
         new_cert = {
             "resource": "new-cert",
