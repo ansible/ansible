@@ -230,7 +230,7 @@ DEFAULTS = {
     'route53_excluded_zones': '',
     'route53_hostnames': None,
     'stack_filters': 'False',
-    'vpc_destination_variable':'ip_address',
+    'vpc_destination_variable': 'ip_address',
     'windows_password_retrieve': 'False',
     'windows_password_private_key_path_pattern': '"~/.ssh/" + instance_vars["ec2_key_name"] + ".pem"',
     'windows_password_variable': 'ansible_password'
@@ -473,7 +473,7 @@ class Ec2Inventory(object):
         # Get windows password settings.
         self.windows_password_retrieve = config.getboolean('ec2', 'windows_password_retrieve')
         self.windows_password_private_key_path_pattern = os.environ.get('WINDOWS_PASSWORD_PRIVATE_KEY_PATH_PATTERN') or \
-                                                         config.get('ec2', 'windows_password_private_key_path_pattern')
+            config.get('ec2', 'windows_password_private_key_path_pattern')
 
         self.windows_password_variable = config.get('ec2', 'windows_password_variable')
 
