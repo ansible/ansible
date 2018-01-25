@@ -1,0 +1,15 @@
+---
+# set the provider arguments for authenticating to the Infoblox server.
+provider:
+  host: <SERVER_IP>
+  username: <USERNAME>
+  password: <PASSWORD>
+
+filters:
+  # restrict returned hosts by extensible attributes
+  extattrs: {}
+
+  # restrict returned hosts to a specified view
+  view: null
+
+
