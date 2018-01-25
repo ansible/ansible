@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #
 # (c) 2018, Red Hat, Inc.
 #
@@ -62,14 +62,13 @@ def main():
         if os.path.exists(config_file):
             break
     else:
-        sys.stdout.write('unable to locate config file\n')
+        sys.stdout.write('unable to locate config file at /etc/ansible/infoblox.yaml\n')
         sys.exit(-1)
 
     try:
         loader = DataLoader()
         config = loader.load_from_file(config_file)
-        provider = config.get('provider')
-        provider['ssl_verify'] = False
+        provider = config.get('provider') or {}
         connector = get_connector(**provider)
     except Exception as exc:
         sys.stdout.write(to_text(exc))
