@@ -159,6 +159,8 @@ from boto import elasticache
 from boto import route53
 from boto import sts
 import six
+from Crypto.Cipher import PKCS1_v1_5
+from Crypto.PublicKey import RSA
 
 from ansible.module_utils import ec2 as ec2_utils
 
@@ -228,7 +230,10 @@ DEFAULTS = {
     'route53_excluded_zones': '',
     'route53_hostnames': None,
     'stack_filters': 'False',
-    'vpc_destination_variable': 'ip_address'
+    'vpc_destination_variable':'ip_address',
+    'windows_password_retrieve': 'False',
+    'windows_password_private_key_path_pattern': '"~/.ssh/" + instance_vars["ec2_key_name"] + ".pem"',
+    'windows_password_variable': 'ansible_password'
 }
 
 
@@ -298,7 +303,6 @@ class Ec2Inventory(object):
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
-
         scriptbasename = __file__
         scriptbasename = os.path.basename(scriptbasename)
         scriptbasename = scriptbasename.replace('.py', '')
@@ -465,6 +469,13 @@ class Ec2Inventory(object):
 
         # Configure nested groups instead of flat namespace.
         self.nested_groups = config.getboolean('ec2', 'nested_groups')
+
+        # Get windows password settings.
+        self.windows_password_retrieve = config.getboolean('ec2', 'windows_password_retrieve')
+        self.windows_password_private_key_path_pattern = os.environ.get('WINDOWS_PASSWORD_PRIVATE_KEY_PATH_PATTERN') or \
+                                                         config.get('ec2', 'windows_password_private_key_path_pattern')
+
+        self.windows_password_variable = config.get('ec2', 'windows_password_variable')
 
         # Replace dash or not in group names
         self.replace_dash_in_groups = config.getboolean('ec2', 'replace_dash_in_groups')
@@ -1478,6 +1489,14 @@ class Ec2Inventory(object):
 
         return list(name_list)
 
+    def decrypt(self, ciphertext, keyfile):
+        input = open(keyfile)
+        key = RSA.importKey(input.read())
+        input.close()
+        cipher = PKCS1_v1_5.new(key)
+        plaintext = cipher.decrypt(ciphertext, None)
+        return plaintext
+
     def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
         for key in vars(instance):
@@ -1526,6 +1545,11 @@ class Ec2Inventory(object):
                 # print key
                 # print type(value)
                 # print value
+
+        if self.windows_password_retrieve and 'ec2_platform' in instance_vars and instance_vars['ec2_platform'] == "windows":
+            private_key_path = os.path.expanduser(eval(self.windows_password_private_key_path_pattern))
+            conn = self.connect(instance.region.name)
+            instance_vars[self.windows_password_variable] = self.decrypt(conn.get_password_data(instance.id).decode('base64'), private_key_path)
 
         instance_vars[self.to_safe('ec2_account_id')] = self.aws_account_id
 
