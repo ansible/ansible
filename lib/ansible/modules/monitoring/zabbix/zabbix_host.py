@@ -716,40 +716,39 @@ def main():
     if host_groups:
         group_ids = host.get_group_ids_by_group_names(host_groups)
 
-    # ensure interfaces are well-formed
-    for interface in interfaces:
-        if 'type' not in interface:
-            module.fail_json(msg="(interface) type needs to be specified for interface '%s'." % interface)
-        interfacetypes = {'agent': 1, 'snmp': 2, 'ipmi': 3, 'jmx': 4}
-        if interface['type'] in interfacetypes.keys():
-            interface['type'] = interfacetypes[interface['type']]
-        if interface['type'] < 1 or interface['type'] > 4:
-            module.fail_json(msg="Interface type can only be 1-4 for interface '%s'." % interface)
-        if 'useip' not in interface:
-            interface['useip'] = 0
-        if 'dns' not in interface:
-            if interface['useip'] == 0:
-                module.fail_json(msg="dns needs to be set if useip is 0 on interface '%s'." % interface)
-            interface['dns'] = ''
-        if 'ip' not in interface:
-            if interface['useip'] == 1:
-                module.fail_json(msg="ip needs to be set if useip is 1 on interface '%s'." % interface)
-            interface['ip'] = ''
-        if 'main' not in interface:
-            interface['main'] = 0
-        if 'port' not in interface:
-            if interface['type'] == 1:
-                interface['port'] = "10050"
-            elif interface['type'] == 2:
-                interface['port'] = "161"
-            elif interface['type'] == 3:
-                interface['port'] = "623"
-            elif interface['type'] == 4:
-                interface['port'] = "12345"
-
     ip = ""
     if interfaces:
+        # ensure interfaces are well-formed
         for interface in interfaces:
+            if 'type' not in interface:
+                module.fail_json(msg="(interface) type needs to be specified for interface '%s'." % interface)
+            interfacetypes = {'agent': 1, 'snmp': 2, 'ipmi': 3, 'jmx': 4}
+            if interface['type'] in interfacetypes.keys():
+                interface['type'] = interfacetypes[interface['type']]
+            if interface['type'] < 1 or interface['type'] > 4:
+                module.fail_json(msg="Interface type can only be 1-4 for interface '%s'." % interface)
+            if 'useip' not in interface:
+                interface['useip'] = 0
+            if 'dns' not in interface:
+                if interface['useip'] == 0:
+                    module.fail_json(msg="dns needs to be set if useip is 0 on interface '%s'." % interface)
+                interface['dns'] = ''
+            if 'ip' not in interface:
+                if interface['useip'] == 1:
+                    module.fail_json(msg="ip needs to be set if useip is 1 on interface '%s'." % interface)
+                interface['ip'] = ''
+            if 'main' not in interface:
+                interface['main'] = 0
+            if 'port' not in interface:
+                if interface['type'] == 1:
+                    interface['port'] = "10050"
+                elif interface['type'] == 2:
+                    interface['port'] = "161"
+                elif interface['type'] == 3:
+                    interface['port'] = "623"
+                elif interface['type'] == 4:
+                    interface['port'] = "12345"
+
             if interface['type'] == 1:
                 ip = interface['ip']
 
