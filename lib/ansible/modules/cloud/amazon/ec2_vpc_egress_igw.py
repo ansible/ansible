@@ -125,8 +125,10 @@ def create_eigw(module, conn, vpc_id):
         # We need to catch the error and return something valid
         if e.response.get('Error', {}).get('Code') == "DryRunOperation":
             changed = True
+        elif e.response.get('Error', {}).get('Code') == "InvalidVpcID.NotFound":
+            module.fail_json_aws(e, msg="invalid vpc ID '{0}' provided".format(vpc_id))
         else:
-            module.fail_json_aws(e, msg="Could not create Egress-Only Internet Gateway for VPC {1}".format(vpc_id))
+            module.fail_json_aws(e, msg="Could not create Egress-Only Internet Gateway for vpc ID {0}".format(vpc_id))
 
     if not module.check_mode:
         gateway = response.get('EgressOnlyInternetGateway', {})
