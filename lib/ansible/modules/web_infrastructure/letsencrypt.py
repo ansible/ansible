@@ -270,10 +270,21 @@ authorizations:
         description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.4
         returned: success
         type: dict
+order_uri:
+  description: ACME order URI.
+  returned: changed
+  type: string
+  version_added: "2.5"
 finalization_uri:
   description: ACME finalization URI.
   returned: changed
   type: string
+  version_added: "2.5"
+account_uri:
+  description: ACME account URI.
+  returned: changed
+  type: string
+  version_added: "2.5"
 '''
 
 import base64
@@ -770,6 +781,7 @@ class ACMEClient(object):
         self.authorizations = None
         self.cert_days = -1
         self.changed = self.account.changed
+        self.order_uri = self.data.get('order_uri') if self.data else None
         self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
         if not os.path.exists(self.csr):
@@ -1059,6 +1071,7 @@ class ACMEClient(object):
             auth_data['uri'] = auth_uri
             self.authorizations[domain] = auth_data
 
+        self.order_uri = info['location']
         self.finalize_uri = result['finalize']
 
     def do_challenges(self):
@@ -1182,6 +1195,8 @@ def main():
                 changed=client.changed,
                 authorizations=client.authorizations,
                 finalize_uri=client.finalize_uri,
+                order_uri=client.order_uri,
+                account_uri=client.account.uri,
                 challenge_data=data,
                 cert_days=client.cert_days
             )
