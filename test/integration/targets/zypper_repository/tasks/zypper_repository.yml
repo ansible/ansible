@@ -123,7 +123,7 @@
     repo: "{{ item }}"
   with_items:
     - http://download.opensuse.org/repositories/science/openSUSE_Leap_{{ ansible_distribution_version }}/
-    - http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_{{ ansible_distribution_version }}/
+    - http://download.opensuse.org/repositories/devel:/languages:/ruby/openSUSE_Leap_{{ ansible_distribution_version }}/
 
 - name: check repo is updated by name
   command: zypper lr samename
@@ -132,11 +132,11 @@
 - assert:
     that:
       - "'/science/' not in zypper_result.stdout"
-      - "'/devel:/languages:/python/' in zypper_result.stdout"
+      - "'/devel:/languages:/ruby/' in zypper_result.stdout"
 
 - name: remove last added repos (by URL to test that)
   zypper_repository:
-    repo: http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_{{ ansible_distribution_version }}/
+    repo: http://download.opensuse.org/repositories/devel:/languages:/ruby/openSUSE_Leap_{{ ansible_distribution_version }}/
     state: absent
 
 - name: ensure zypper ref still works
