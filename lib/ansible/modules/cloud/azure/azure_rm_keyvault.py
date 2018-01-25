@@ -36,6 +36,7 @@ options:
     vault_tenant:
         description:
             - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
+            - Current tenant will be used as default if not specified.
     sku:
         description:
             - SKU details
@@ -59,11 +60,13 @@ options:
             tenant_id:
                 description:
                     - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
+                    - Current tenant id will be used if not specified.
                 required: True
             object_id:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
                        unique for the list of access policies."
+                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
                 required: True
             application_id:
                 description:
@@ -302,7 +305,7 @@ class AzureRMVaults(AzureRMModuleBase):
                 elif key == "recover_mode":
                     self.parameters.setdefault("properties", {})["create_mode"] = 'recover' if kwargs[key] else 'default'
 
-        if self.parameters['properties'].get('tenant_id') is None:
+        if self.parameters.setdefault("properties", {}).setdefault('tenant_id', None) is None:
             self.parameters['properties']['tenant_id'] = self.credentials['tenant']
 
         old_response = None
