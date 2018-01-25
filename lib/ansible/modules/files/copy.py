@@ -87,6 +87,7 @@ options:
     description:
       - SHA1 checksum of the file being transferred. Used to valdiate that the copy of the file was successful.
       - If this is not provided, ansible will use the local calculated checksum of the src file.
+    version_added: '2.5'
 extends_documentation_fragment:
     - files
     - validate
