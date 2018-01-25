@@ -4,6 +4,7 @@
 egrep -r '[‘’“”]' . \
     --exclude-dir .git \
     --exclude-dir .tox \
+    --exclude-dir __pycache__ \
     | grep -v \
     -e './test/sanity/code-smell/no-smart-quotes.sh' \
     -e './docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst' \
