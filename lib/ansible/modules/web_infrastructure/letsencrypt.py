@@ -911,9 +911,7 @@ class ACMEClient(object):
             for challenge in result['challenges']:
                 if challenge['status'] == 'invalid':
                     error_details += ' CHALLENGE: {0}'.format(challenge['type'])
-                    if 'errors' in challenge:
-                        error_details += ' DETAILS: {0};'.format('; '.join([error['detail'] for error in challenge['errors']]))
-                    elif 'error' in challenge:
+                    if 'error' in challenge:
                         error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
                     else:
                         error_details += ';'
