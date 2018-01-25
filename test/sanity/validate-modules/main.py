@@ -1011,11 +1011,11 @@ class ModuleValidator(Validator):
 
         try:
             spec, args, kwargs = get_argument_spec(self.path)
-        except AnsibleModuleImportError:
+        except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
                 code=321,
-                msg='Exception attempting to import module for argument_spec introspection'
+                msg="Exception attempting to import module for argument_spec introspection, '%s'" % e
             )
             self.reporter.trace(
                 path=self.object_path,
