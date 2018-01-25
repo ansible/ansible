@@ -29,12 +29,14 @@ notes:
 EXAMPLES = r'''
 - name: get disk facts
   win_disk_facts:
+
 - name: output first disk size
   debug:
     var: ansible_facts.disks[0].size
 
 - name: get disk facts
   win_disk_facts:
+
 - name: output second disk serial number
   debug:
     var: ansible_facts.disks[0].serial_number
@@ -46,12 +48,7 @@ ansible_facts:
     returned: always
     type: complex
     contains:
-        total_disks:
-            description: Count of found disks on the target.
-            returned: if disks were found
-            type: int
-            sample: 3
-        disks:
+        ansible_disks:
             description: Detailed information about one particular disk.
             returned: if disks were found
             type: list

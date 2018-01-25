@@ -8,15 +8,6 @@
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 
-# Create a new result object
-$result = @{
-    changed = $false
-    ansible_facts = @{
-        total_disks = 0
-        disks = @()
-    }
-}
-
 # Functions 
 function Test-Admin {
         $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -27,9 +18,15 @@ function Test-Admin {
 
 # Check admin rights
 if (-not (Test-Admin)) {
-    $result.Remove("total_disks")
-    $result.Remove("disks")
-    Fail-Json -obj $result -message "Cmdlet was not started with elevated rights"
+    Fail-Json -message "Cmdlet was not started with elevated rights"
+}
+
+# Create a new result object
+$result = @{
+    changed = $false
+    ansible_facts = @{
+        ansible_disks = @()
+    }
 }
 
 # Search disks
@@ -39,7 +36,7 @@ try {
     Fail-Json -obj $result -message "Failed to search the disks on the target: $($_.Exception.Message)"
 }
 [int32]$diskcount = $disks | Measure-Object | Select-Object  -ExpandProperty Count
-$result.ansible_facts.total_disks = $diskcount
+#$result.ansible_facts.total_disks = $diskcount
 foreach ($disk in $disks) {
     $disk_info = @{}
     $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
@@ -183,7 +180,7 @@ foreach ($disk in $disks) {
         $disk_info.partitions += $partition_info
         }
     }
-    $result.ansible_facts.disks += $disk_info
+    $result.ansible_facts.ansible_disks += $disk_info
 }
 
 # Return result
