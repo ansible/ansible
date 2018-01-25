@@ -27,6 +27,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35149)
 * Fix azure_rm_subnet absent idempotency issues
   (https://github.com/ansible/ansible/pull/35037)
+* Fix azure_rm_virtualmachine creating VM with vnet in another resource group
+  (https://github.com/ansible/ansible/pull/35038)
 
 
 <a id="2.4.3"></a>
