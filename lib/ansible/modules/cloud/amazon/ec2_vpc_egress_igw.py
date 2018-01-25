@@ -82,13 +82,15 @@ def delete_eigw(module, conn, eigw_id):
 
     try:
         response = conn.delete_egress_only_internet_gateway(DryRun=module.check_mode, EgressOnlyInternetGatewayId=eigw_id)
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+    except botocore.exceptions.ClientError as e:
         # When boto3 method is run with DryRun=True it returns an error on success
         # We need to catch the error and return something valid
-        if "DryRunOperation" in e.message:
+        if e.response.get('Error', {}).get('Code') == "DryRunOperation":
             changed = True
         else:
             module.fail_json_aws(e, msg="Could not delete Egress-Only Internet Gateway {0} from VPC {1}".format(eigw_id, module.vpc_id))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Could not delete Egress-Only Internet Gateway {0} from VPC {1}".format(eigw_id, module.vpc_id))
 
     if not module.check_mode:
         changed = response.get('ReturnCode', False)
@@ -109,15 +111,17 @@ def create_eigw(module, conn, vpc_id):
 
     try:
         response = conn.create_egress_only_internet_gateway(DryRun=module.check_mode, VpcId=vpc_id)
-    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+    except botocore.exceptions.ClientError as e:
         # When boto3 method is run with DryRun=True it returns an error on success
         # We need to catch the error and return something valid
-        if "DryRunOperation" in e.message:
+        if e.response.get('Error', {}).get('Code') == "DryRunOperation":
             changed = True
-        elif "InvalidVpcID.NotFound" in e.message:
+        elif e.response.get('Error', {}).get('Code') == "InvalidVpcID.NotFound":
             module.fail_json_aws(e, msg="invalid vpc ID '{0}' provided".format(vpc_id))
         else:
             module.fail_json_aws(e, msg="Could not create Egress-Only Internet Gateway for vpc ID {0}".format(vpc_id))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json_aws(e, msg="Could not create Egress-Only Internet Gateway for vpc ID {0}".format(vpc_id))
 
     if not module.check_mode:
         gateway = response.get('EgressOnlyInternetGateway', {})
