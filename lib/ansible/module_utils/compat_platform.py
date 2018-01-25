@@ -199,9 +199,9 @@ _release_version = re.compile(r'([^0-9]+)'
                               r'[^(]*(?:\((.+)\))?')
 
 # from http://bazaar.launchpad.net/~doko/python/pkg2.7-debian/view/head:/patches/platform-lsbrelease.diff
-_distributor_id_file_re = re.compile("(?:DISTRIB_ID\s*=)\s*(.*)", re.I)
-_release_file_re = re.compile("(?:DISTRIB_RELEASE\s*=)\s*(.*)", re.I)
-_codename_file_re = re.compile("(?:DISTRIB_CODENAME\s*=)\s*(.*)", re.I)
+_distributor_id_file_re = re.compile(r"(?:DISTRIB_ID\s*=)\s*(.*)", re.I)
+_release_file_re = re.compile(r"(?:DISTRIB_RELEASE\s*=)\s*(.*)", re.I)
+_codename_file_re = re.compile(r"(?:DISTRIB_CODENAME\s*=)\s*(.*)", re.I)
 
 # See also http://www.novell.com/coolsolutions/feature/11251.html
 # and http://linuxmafia.com/faq/Admin/release-files.html
