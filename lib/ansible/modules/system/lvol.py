@@ -193,14 +193,14 @@ EXAMPLES = '''
     size: 512g
     active: false
 
-# Create a thin pool of 512g.
-- lvol:
+- name: Create a thin pool of 512g
+  lvol:
     vg: firefly
     thinpool: testpool
     size: 512g
 
-# Create a thin volume of 128g.
-- lvol:
+- name: Create a thin volume of 128g
+  lvol:
     vg: firefly
     lv: test
     thinpool: testpool
