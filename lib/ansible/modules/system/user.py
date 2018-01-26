@@ -2297,6 +2297,7 @@ class HPUX(User):
             cmd.append(self.shell)
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            cmd.append('-F')
             cmd.append('-p')
             cmd.append(self.password)
 
