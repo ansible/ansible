@@ -1,19 +1,6 @@
 #!/usr/bin/python
-# (c) 2017, Jon Meran <jonathan.meran@sonos.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+# Copyright (c) 2017 Jon Meran <jonathan.meran@sonos.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -32,6 +19,10 @@ version_added: "2.5"
 
 author: Jon Meran (@jonmer85)
 options:
+  job_definition_arn:
+    description:
+      - The arn for the job definition
+
   job_definition_name:
     description:
       - The name for the job definition
@@ -176,6 +167,7 @@ requirements:
     - boto3
 extends_documentation_fragment:
     - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -224,17 +216,18 @@ output:
   type: dict
 '''
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
+import traceback
+
 try:
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-
-    HAS_BOTOCORE = True
 except ImportError:
-    HAS_BOTOCORE = False
+    pass  # Handled by HAS_BOTO3
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -248,36 +241,32 @@ except ImportError:
 # logger.setLevel(logging.DEBUG)
 
 
-class AWSConnection:
+class AWSConnection(object):
     """
     Create the connection object and client objects as required.
     """
 
     def __init__(self, ansible_obj, resources, boto3=True):
 
-        try:
-            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
+        self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
 
-            self.resource_client = dict()
-            if not resources:
-                resources = ['batch']
+        self.resource_client = dict()
+        if not resources:
+            resources = ['batch']
 
-            resources.append('iam')
+        resources.append('iam')
 
-            for resource in resources:
-                aws_connect_kwargs.update(dict(region=self.region,
-                                               endpoint=self.endpoint,
-                                               conn_type='client',
-                                               resource=resource
-                                               ))
-                self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
+        for resource in resources:
+            aws_connect_kwargs.update(dict(region=self.region,
+                                           endpoint=self.endpoint,
+                                           conn_type='client',
+                                           resource=resource
+                                           ))
+            self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
 
-            # if region is not provided, then get default profile/session region
-            if not self.region:
-                self.region = self.resource_client['batch'].meta.region_name
-
-        except (ClientError, ParamValidationError, MissingParametersError) as e:
-            ansible_obj.fail_json(msg="Unable to connect, authorize or access resource: {0}".format(e))
+        # if region is not provided, then get default profile/session region
+        if not self.region:
+            self.region = self.resource_client['batch'].meta.region_name
 
         # set account ID
         try:
@@ -370,7 +359,8 @@ def create_job_definition(module, aws):
             client.register_job_definition(**api_params)
         changed = True
     except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error registering job definition: {0}'.format(e))
+        module.fail_json(msg='Error registering job definition: {0}'.format(to_native(e)),
+                         exception=traceback.format_exc())
 
     return changed
 
@@ -412,7 +402,8 @@ def remove_job_definition(module, aws):
             client.deregister_job_definition(jobDefinition=module.params['job_definition_arn'])
         changed = True
     except (ClientError, ParamValidationError, MissingParametersError) as e:
-        module.fail_json(msg='Error removing job definition: {0}'.format(e))
+        module.fail_json(msg='Error removing job definition: {0}'.format(to_native(e)),
+                         exception=traceback.format_exc())
     return changed
 
 
@@ -492,37 +483,35 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            job_definition_name=dict(required=True, default=None),
+            job_definition_name=dict(required=True),
             job_definition_arn=dict(),
-            type=dict(required=True, default=None),
-            parameters=dict(type='dict', default=None),
-            image=dict(required=True, default=None),
-            vcpus=dict(type='int', required=True, default=None),
-            memory=dict(type='int', required=True, default=None),
+            type=dict(required=True),
+            parameters=dict(type='dict'),
+            image=dict(required=True),
+            vcpus=dict(type='int', required=True),
+            memory=dict(type='int', required=True),
             command=dict(type='list', default=[]),
-            job_role_arn=dict(default=None),
+            job_role_arn=dict(),
             volumes=dict(type='list', default=[]),
             environment=dict(type='list', default=[]),
             mount_points=dict(type='list', default=[]),
-            readonly_root_filesystem=dict(default=None),
-            privileged=dict(default=None),
+            readonly_root_filesystem=dict(),
+            privileged=dict(),
             ulimits=dict(type='list', default=[]),
-            user=dict(default=None),
-            attempts=dict(type='int', default=None),
-            region=dict(required=True)
+            user=dict(),
+            attempts=dict(type='int'),
+            region=dict(aliases=['aws_region', 'ec2_region'])
         )
     )
 
     module = AnsibleModule(
-        argument_spec=argument_spec
+        argument_spec=argument_spec,
+        supports_check_mode=True
     )
 
     # validate dependencies
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for this module.')
-
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='botocore is required for this module.')
 
     aws = AWSConnection(module, ['batch'])
 
