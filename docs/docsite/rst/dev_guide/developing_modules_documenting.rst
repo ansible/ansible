@@ -204,7 +204,7 @@ The following fields can be used and are all required unless specified otherwise
   If a module is deprecated it should
 
   * Mentioned in ``CHANGELOG``
-  * Referenced in the ``porting_guide.X.y.rst``
+  * Referenced in the ``porting_guide.x.y.rst``
   * File should be renamed to start with an ``_``
   * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
   * Following values should be set:
