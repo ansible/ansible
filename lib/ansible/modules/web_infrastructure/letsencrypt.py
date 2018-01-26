@@ -887,6 +887,22 @@ class ACMEClient(object):
 
         return data
 
+    def _fail_challenge(self, domain, auth, error):
+        '''
+        Aborts with a specific error for a challenge.
+        '''
+        error_details = ''
+        # multiple challenges could have failed at this point, gather error
+        # details for all of them before failing
+        for challenge in auth['challenges']:
+            if challenge['status'] == 'invalid':
+                error_details += ' CHALLENGE: {0}'.format(challenge['type'])
+                if 'error' in challenge:
+                    error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
+                else:
+                    error_details += ';'
+        self.module.fail_json(msg="{0}: {1}".format(error.format(domain), error_details))
+
     def _validate_challenges(self, domain, auth):
         '''
         Validate the authorization provided in the auth dict. Returns True
@@ -925,17 +941,7 @@ class ACMEClient(object):
             time.sleep(2)
 
         if status == 'invalid':
-            error_details = ''
-            # multiple challenges could have failed at this point, gather error
-            # details for all of them before failing
-            for challenge in result['challenges']:
-                if challenge['status'] == 'invalid':
-                    error_details += ' CHALLENGE: {0}'.format(challenge['type'])
-                    if 'error' in challenge:
-                        error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
-                    else:
-                        error_details += ';'
-            self.module.fail_json(msg="Authorization for {0} returned invalid: {1}".format(result['identifier']['value'], error_details))
+            self._fail_challenge(domain, result, 'Authorization for {0} returned invalid')
 
         return status == 'valid'
 
@@ -1022,7 +1028,7 @@ class ACMEClient(object):
 
     def _new_cert_v1(self):
         '''
-        Create a new certificate based on the csr.
+        Create a new certificate based on the CSR (ACME v1 protocol).
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
@@ -1051,6 +1057,10 @@ class ACMEClient(object):
             return {'cert': self._der_to_pem(result), 'uri': info['location'], 'chain': chain}
 
     def _new_order_v2(self):
+        '''
+        Start a new certificate order (ACME v2 protocol).
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        '''
         identifiers = []
         for domain in self.domains:
             identifiers.append({
@@ -1074,58 +1084,74 @@ class ACMEClient(object):
         self.order_uri = info['location']
         self.finalize_uri = result['finalize']
 
-    def do_challenges(self):
+    def is_first_step(self):
         '''
-        Create new authorizations for all domains of the CSR and return
-        the challenge details for the chosen challenge type.
+        Return True if this is the first execution of this module, i.e. if a
+        sufficient data object from a first run has not been provided.
+        '''
+        if (self.data is None) or ('authorizations' not in self.data):
+            return True
+        if self.finalize_uri is None and self.version != 1:
+            return True
+        return False
+
+    def start_challenges(self):
+        '''
+        Create new authorizations for all domains of the CSR,
+        respectively start a new order for ACME v2.
         '''
         self.authorizations = {}
-        if (self.data is None) or ('authorizations' not in self.data):
-            # First run: start new order
-            if self.version == 1:
-                for domain in self.domains:
-                    new_auth = self._new_authz_v1(domain)
-                    self._add_or_update_auth(domain, new_auth)
-            else:
-                self._new_order_v2()
-            self.changed = True
+        if self.version == 1:
+            for domain in self.domains:
+                new_auth = self._new_authz_v1(domain)
+                self._add_or_update_auth(domain, new_auth)
         else:
-            # Second run: verify challenges
-            for domain, auth in self.data['authorizations'].items():
-                self.authorizations[domain] = auth
-                if auth['status'] == 'pending':
-                    self._validate_challenges(domain, auth)
+            self._new_order_v2()
+        self.changed = True
 
+    def get_challenges_data(self):
+        '''
+        Get challenge details for the chosen challenge type.
+        '''
         data = {}
         for domain, auth in self.authorizations.items():
-            # _validate_challenges updates the global authrozation dict,
+            # _validate_challenges updates the global authorization dict,
             # so get the current version of the authorization we are working
             # on to retrieve the challenge data
             data[domain] = self._get_challenge_data(self.authorizations[domain], domain)
-
         return data
+
+    def finish_challenges(self):
+        '''
+        Verify challenges for all domains of the CSR.
+        '''
+        self.authorizations = {}
+        for domain, auth in self.data['authorizations'].items():
+            self.authorizations[domain] = auth
+            if auth['status'] == 'pending':
+                self._validate_challenges(domain, auth)
 
     def get_certificate(self):
         '''
         Request a new certificate and write it to the destination file.
-        Only do this if a destination file was provided and if all authorizations
-        for the domains of the csr are valid. No Return value.
+        First verifies whether all authorizations are valid; if not, aborts
+        with an error.
         '''
-        if self.dest is None and self.fullchain_dest is None:
-            return
-        if self.finalize_uri is None and self.version != 1:
-            return
-
         for domain in self.domains:
             auth = self.authorizations.get(domain)
-            if auth is None or ('status' not in auth) or (auth['status'] != 'valid'):
-                return
+            if auth is None:
+                self.module.fail_json(msg='Found no authorization information for "{0}"!'.format(domain))
+            if 'status' not in auth:
+                self._fail_challenge(domain, auth, 'Authorization for {0} returned no status')
+            if auth['status'] != 'valid':
+                self._fail_challenge(domain, auth, 'Authorization for {0} returned status ' + str(auth['status']))
 
         if self.version == 1:
             cert = self._new_cert_v1()
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
+
         if cert['cert'] is not None:
             pem_cert = cert['cert']
 
@@ -1189,8 +1215,14 @@ def main():
         else:
             client = ACMEClient(module)
             client.cert_days = cert_days
-            data = client.do_challenges()
-            client.get_certificate()
+            if client.is_first_step():
+                # First run: start challenges / start new order
+                client.start_challenges()
+            else:
+                # Second run: finish challenges, and get certificate
+                client.finish_challenges()
+                client.get_certificate()
+            data = client.get_challenges_data()
             module.exit_json(
                 changed=client.changed,
                 authorizations=client.authorizations,
