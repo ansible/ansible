@@ -83,6 +83,11 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.4"
+  checksum:
+    description:
+      - SHA1 checksum of the file being transferred. Used to valdiate that the copy of the file was successful.
+      - If this is not provided, ansible will use the local calculated checksum of the src file.
+    version_added: '2.5'
 extends_documentation_fragment:
     - files
     - validate
@@ -265,6 +270,7 @@ def main():
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
+            checksum=dict(),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -281,6 +287,7 @@ def main():
     follow = module.params['follow']
     mode = module.params['mode']
     remote_src = module.params['remote_src']
+    checksum = module.params['checksum']
 
     if not os.path.exists(b_src):
         module.fail_json(msg="Source %s not found" % (src))
@@ -298,6 +305,13 @@ def main():
         md5sum_src = None
 
     changed = False
+
+    if checksum and checksum_src != checksum:
+        module.fail_json(
+            msg='Copied file does not match the expected checksum. Transfer failed.',
+            checksum=checksum_src,
+            expected_checksum=checksum
+        )
 
     # Special handling for recursive copy - create intermediate dirs
     if original_basename and dest.endswith(os.sep):
