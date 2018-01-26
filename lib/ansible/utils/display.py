@@ -101,8 +101,8 @@ class Display:
         if C.ANSIBLE_NOCOWS:
             return
 
-        if C.ANSIBLE_COWPATH:
-            self.b_cowsay = C.ANSIBLE_COWPATH
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
         else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
@@ -131,6 +131,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:

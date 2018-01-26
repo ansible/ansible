@@ -1,20 +1,5 @@
 ---
-- debug: msg="START ios_interface cli/intent.yaml"
-
-- name: Run show version
-  ios_command:
-    commands: show version
-    authorize: yes
-  register: show_version_result
-
-- name: Set test interface to GigabitEthernet0/2 if we are on Cisco IOS
-  set_fact: test_interface=GigabitEthernet0/2
-  when: "'Cisco IOS' in show_version_result.stdout[0]"
-
-- name: Set test interface to GigabitEthernet2 if we are on Cisco IOS-XE
-  set_fact: test_interface=GigabitEthernet2
-  when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
-
+- debug: msg="START ios_interface cli/intent.yaml on connection={{ ansible_connection }}"
 
 - name: Check intent arguments
   ios_interface:
@@ -108,7 +93,7 @@
           - "result.failed == true"
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
-  when: '"netdev" in show_lldp_neighbors_result.stdout'
+  when: '"netdev" in show_lldp_neighbors_result.stdout[0]'
 
 - name: Aggregate config + intent (pass)
   ios_interface:
@@ -158,4 +143,4 @@
           - "result.failed == true"
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
-  when: "'netdev' in show_lldp_neighbors_result.stdout"
+  when: "'netdev' in show_lldp_neighbors_result.stdout[0]"

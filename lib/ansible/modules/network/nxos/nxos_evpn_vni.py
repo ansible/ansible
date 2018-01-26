@@ -238,10 +238,7 @@ def main():
         route_target_both=dict(required=False, type='list'),
         route_target_import=dict(required=False, type='list'),
         route_target_export=dict(required=False, type='list'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
 
     argument_spec.update(nxos_argument_spec)

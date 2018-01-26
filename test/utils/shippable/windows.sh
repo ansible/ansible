@@ -29,17 +29,18 @@ if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Running Windows integration tests for multiple versions concurrently."
 
     platforms=(
-        --windows 2008-SP2
-        --windows 2008-R2_SP1
-        --windows 2012-RTM
-        --windows 2012-R2_RTM
+        --windows 2008
+        --windows 2008-R2
+        --windows 2012
+        --windows 2012-R2
+        --windows 2016
     )
 else
     echo "No changes requiring integration tests specific to Windows were detected."
     echo "Running Windows integration tests for a single version only."
 
     platforms=(
-        --windows 2012-R2_RTM
+        --windows 2012-R2
     )
 fi
 

@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -66,7 +68,7 @@
       - present_update.config != present_update.proposed
       - 'present_update.config.vzBrCP.attributes.scope == "application-profile"'
       - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: contract"'
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract"'
 
 - name: query contract
   aci_contract: &aci_contract_query
@@ -151,7 +153,7 @@
       - absent_idempotent.changed == false
       - absent_idempotent.existing == []
       - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: tenant"'
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: cleanup tenant
   aci_tenant:

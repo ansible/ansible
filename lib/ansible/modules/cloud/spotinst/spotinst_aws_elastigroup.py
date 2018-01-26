@@ -311,7 +311,7 @@ options:
         In case of update it will override the existing Security Group with the new given array
     required: true
 
-  shut_down_script:
+  shutdown_script:
     description:
       - (String) The Base64-encoded shutdown script that executes prior to instance termination.
         Encode before setting.
@@ -628,7 +628,6 @@ EXAMPLES = '''
             - sg-8f4b8fe9
           spot_instance_types:
             - c3.large
-          state: absent
           do_not_update:
             - image_id
             - target

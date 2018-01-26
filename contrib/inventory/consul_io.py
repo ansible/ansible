@@ -273,19 +273,31 @@ class ConsulInventory(object):
             self.load_data_for_datacenter(datacenter)
 
     def load_availability_groups(self, node, datacenter):
-        '''check the health of each service on a node and add add the node to either
+        '''check the health of each service on a node and add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
         controlled from the config'''
-        stat_dist = {"passing": ["available_suffix", "_available"],
-                     "warning": ["unavailable_suffix", "_unavailable"],
-                     "critical": ["unavailable_suffix", "_unavailable"]}
         if self.config.has_config('availability'):
             for service_name, service in iteritems(node['Services']):
                 for node in self.consul_api.health.service(service_name)[1]:
-                    for check in node['Checks']:
-                        if check['ServiceName'] == service_name:
-                            suffix = self.config.get_availability_suffix(*stat_dist[check['Status']])
-                            self.add_node_to_map(self.nodes_by_availability, "".join([service_name, suffix]), node['Node'])
+                    if self.is_service_available(node, service_name):
+                        suffix = self.config.get_availability_suffix(
+                            'available_suffix', '_available')
+                    else:
+                        suffix = self.config.get_availability_suffix(
+                            'unavailable_suffix', '_unavailable')
+                    self.add_node_to_map(self.nodes_by_availability,
+                                         service_name + suffix, node['Node'])
+
+    def is_service_available(self, node, service_name):
+        '''check the availability of the service on the node beside ensuring the
+        availability of the node itself'''
+        consul_ok = service_ok = False
+        for check in node['Checks']:
+            if check['CheckID'] == 'serfHealth':
+                consul_ok = check['Status'] == 'passing'
+            elif check['ServiceName'] == service_name:
+                service_ok = check['Status'] == 'passing'
+        return consul_ok and service_ok
 
     def consul_get_kv_inmemory(self, key):
         result = filter(lambda x: x['Key'] == key, self.inmemory_kv)
@@ -306,7 +318,7 @@ class ConsulInventory(object):
             self.load_data_for_node(node['Node'], datacenter)
 
     def load_data_for_node(self, node, datacenter):
-        '''loads the data for a sinle node adding it to various groups based on
+        '''loads the data for a single node adding it to various groups based on
         metadata retrieved from the kv store and service availability'''
 
         if self.config.suffixes == 'true':

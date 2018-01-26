@@ -62,7 +62,7 @@ class ActionModule(_ActionModule):
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
                 pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-                display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+                display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
                 socket_path = connection.run()
@@ -75,32 +75,9 @@ class ActionModule(_ActionModule):
                 task_vars['ansible_socket'] = socket_path
 
             else:
-                provider['transport'] = 'nxapi'
-                if provider.get('host') is None:
-                    provider['host'] = self._play_context.remote_addr
-
-                if provider.get('port') is None:
-                    if provider.get('use_ssl'):
-                        provider['port'] = 443
-                    else:
-                        provider['port'] = 80
-
-                if provider.get('timeout') is None:
-                    provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-                if provider.get('username') is None:
-                    provider['username'] = self._play_context.connection_user
-
-                if provider.get('password') is None:
-                    provider['password'] = self._play_context.password
-
-                if provider.get('use_ssl') is None:
-                    provider['use_ssl'] = False
-
-                if provider.get('validate_certs') is None:
-                    provider['validate_certs'] = True
-
-                self._task.args['provider'] = provider
+                self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
+        else:
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -117,3 +94,32 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
+
+    @staticmethod
+    def nxapi_implementation(provider, play_context):
+        provider['transport'] = 'nxapi'
+        if provider.get('host') is None:
+            provider['host'] = play_context.remote_addr
+
+        if provider.get('port') is None:
+            if provider.get('use_ssl'):
+                provider['port'] = 443
+            else:
+                provider['port'] = 80
+
+        if provider.get('timeout') is None:
+            provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
+
+        if provider.get('username') is None:
+            provider['username'] = play_context.connection_user
+
+        if provider.get('password') is None:
+            provider['password'] = play_context.password
+
+        if provider.get('use_ssl') is None:
+            provider['use_ssl'] = False
+
+        if provider.get('validate_certs') is None:
+            provider['validate_certs'] = True
+
+        return provider

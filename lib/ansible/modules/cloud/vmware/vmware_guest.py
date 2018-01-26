@@ -55,7 +55,7 @@ options:
     - Please note that a supplied UUID will be ignored on VM creation, as VMware creates the UUID internally.
   template:
     description:
-    - Template used to create VM.
+    - Template or existing VM used to create VM.
     - If this value is not set, VM is created without using a template.
     - If the VM exists already this setting will be ignored.
   is_template:
@@ -78,12 +78,12 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    default: /vm
   hardware:
     description:
     - Manage some VM hardware attributes.
     - 'Valid attributes are:'
-    - ' - C(hotadd_cpu) (boolean): Allow cpus to be added while the VM is running.'
+    - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
+    - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
     - ' - C(hotadd_memory) (boolean): Allow memory to be added while the VM is running.'
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
@@ -94,6 +94,15 @@ options:
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for VM
           will always be equal to the VM's memory size. version_added: 2.5"
     - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines. version_added: 2.5.'
+    - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
+          version_added: 2.5'
+    - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
+          machine. Unit is MB. version_added: 2.5'
+    - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
+          version_added: 2.5'
+    - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
+          Unit is MHz. version_added: 2.5'
+
   guest_id:
     description:
     - Set the guest ID (Debian, RHEL, Windows...).
@@ -231,7 +240,14 @@ EXAMPLES = r'''
       scsi: paravirtual
       memory_reservation: 512
       memory_reservation_lock: True
+      mem_limit: 8096
+      mem_reservation: 4096
+      cpu_limit: 8096
+      cpu_reservation: 4096
       max_connections: 5
+      hotadd_cpu: True
+      hotremove_cpu: True
+      hotadd_memory: False
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -601,6 +617,10 @@ class PyVmomiHelper(PyVmomi):
 
     def remove_vm(self, vm):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
+        if vm.summary.runtime.powerState.lower() == 'poweredon':
+            self.module.fail_json(msg="Virtual machine %s found in 'powered on' state, "
+                                      "please use 'force' parameter to remove or poweroff VM "
+                                      "and try removing VM again." % vm.name)
         task = vm.Destroy()
         self.wait_for_task(task)
 
@@ -621,6 +641,59 @@ class PyVmomiHelper(PyVmomi):
         if self.params['guest_id'] and (vm_obj is None or self.params['guest_id'] != vm_obj.summary.config.guestId):
             self.change_detected = True
             self.configspec.guestId = self.params['guest_id']
+
+    def configure_resource_alloc_info(self, vm_obj):
+        """
+        Function to configure resource allocation information about virtual machine
+        :param vm_obj: VM object in case of reconfigure, None in case of deploy
+        :return: None
+        """
+        self.configspec.memoryAllocation = vim.ResourceAllocationInfo()
+        self.configspec.cpuAllocation = vim.ResourceAllocationInfo()
+
+        if 'hardware' in self.params:
+            if 'mem_limit' in self.params['hardware']:
+                mem_limit = None
+                try:
+                    mem_limit = int(self.params['hardware'].get('mem_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_limit attribute should be an integer value.")
+                self.configspec.memoryAllocation.limit = mem_limit
+                if vm_obj is None or self.configspec.memoryAllocation.limit != vm_obj.config.memoryAllocation.limit:
+                    self.change_detected = True
+
+            if 'mem_reservation' in self.params['hardware']:
+                mem_reservation = None
+                try:
+                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+
+                self.configspec.memoryAllocation.reservation = mem_reservation
+                if vm_obj is None or \
+                        self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
+                    self.change_detected = True
+
+            if 'cpu_limit' in self.params['hardware']:
+                cpu_limit = None
+                try:
+                    cpu_limit = int(self.params['hardware'].get('cpu_limit'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_limit attribute should be an integer value.")
+                self.configspec.cpuAllocation.limit = cpu_limit
+                if vm_obj is None or self.configspec.cpuAllocation.limit != vm_obj.config.cpuAllocation.limit:
+                    self.change_detected = True
+
+            if 'cpu_reservation' in self.params['hardware']:
+                cpu_reservation = None
+                try:
+                    cpu_reservation = int(self.params['hardware'].get('cpu_reservation'))
+                except ValueError as e:
+                    self.module.fail_json(msg="hardware.cpu_reservation should be an integer value.")
+                self.configspec.cpuAllocation.reservation = cpu_reservation
+                if vm_obj is None or \
+                        self.configspec.cpuAllocation.reservation != vm_obj.config.cpuAllocation.reservation:
+                    self.change_detected = True
 
     def configure_cpu_and_memory(self, vm_obj, vm_creation=False):
         # set cpu/memory/etc
@@ -668,6 +741,11 @@ class PyVmomiHelper(PyVmomi):
             if 'hotadd_cpu' in self.params['hardware']:
                 self.configspec.cpuHotAddEnabled = bool(self.params['hardware']['hotadd_cpu'])
                 if vm_obj is None or self.configspec.cpuHotAddEnabled != vm_obj.config.cpuHotAddEnabled:
+                    self.change_detected = True
+
+            if 'hotremove_cpu' in self.params['hardware']:
+                self.configspec.cpuHotRemoveEnabled = bool(self.params['hardware']['hotremove_cpu'])
+                if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
                     self.change_detected = True
 
             if 'memory_reservation' in self.params['hardware']:
@@ -869,18 +947,15 @@ class PyVmomiHelper(PyVmomi):
                 # VDS switch
                 pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if (nic.device.backing and not hasattr(nic.device.backing, 'port')):
+                if (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
+                   (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
+                                            nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
+                    dvs_port_connection = vim.dvs.PortConnection()
+                    dvs_port_connection.portgroupKey = pg_obj.key
+                    dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
+                    nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                    nic.device.backing.port = dvs_port_connection
                     nic_change_detected = True
-                elif (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
-                                              nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
-                    nic_change_detected = True
-
-                dvs_port_connection = vim.dvs.PortConnection()
-                dvs_port_connection.portgroupKey = pg_obj.key
-                dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = dvs_port_connection
-                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1191,6 +1266,32 @@ class PyVmomiHelper(PyVmomi):
 
         return datastore
 
+    def get_recommended_datastore(self, datastore_cluster_obj=None):
+        """
+        Function to return Storage DRS recommended datastore from datastore cluster
+        Args:
+            datastore_cluster_obj: datastore cluster managed object
+
+        Returns: Name of recommended datastore from the given datastore cluster
+
+        """
+        if datastore_cluster_obj is None:
+            return None
+        pod_sel_spec = vim.storageDrs.PodSelectionSpec()
+        pod_sel_spec.storagePod = datastore_cluster_obj
+        storage_spec = vim.storageDrs.StoragePlacementSpec()
+        storage_spec.podSelectionSpec = pod_sel_spec
+        storage_spec.type = 'create'
+
+        try:
+            rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
+            rec_action = rec.recommendations[0].action[0]
+            real_datastore_name = rec_action.destination.name
+        except Exception as e:
+            # There is some error so we fall back to general workflow
+            return None
+        return real_datastore_name
+
     def select_datastore(self, vm_obj=None):
         datastore = None
         datastore_name = None
@@ -1218,6 +1319,12 @@ class PyVmomiHelper(PyVmomi):
 
             elif 'datastore' in self.params['disk'][0]:
                 datastore_name = self.params['disk'][0]['datastore']
+                # Check if user has provided datastore cluster first
+                datastore_cluster = self.cache.find_obj(self.content, [vim.StoragePod], datastore_name)
+                if datastore_cluster:
+                    # If user specified datastore cluster so get recommended datastore
+                    datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+                # Check if get_recommended_datastore or user specified datastore exists or not
                 datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
             else:
                 self.module.fail_json(msg="Either datastore or autoselect_datastore should be provided to select datastore")
@@ -1361,15 +1468,18 @@ class PyVmomiHelper(PyVmomi):
         #   - multiple templates by the same name
         #   - static IPs
 
-        # datacenters = get_all_objs(self.content, [vim.Datacenter])
+        self.folder = self.params.get('folder', None)
+        if self.folder is None:
+            self.module.fail_json(msg="Folder is required parameter while deploying new virtual machine")
+
+        # Prepend / if it was missing from the folder path, also strip trailing slashes
+        if not self.folder.startswith('/'):
+            self.folder = '/%(folder)s' % self.params
+        self.folder = self.folder.rstrip('/')
+
         datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
         if datacenter is None:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
-
-        # Prepend / if it was missing from the folder path, also strip trailing slashes
-        if not self.params['folder'].startswith('/'):
-            self.params['folder'] = '/%(folder)s' % self.params
-        self.params['folder'] = self.params['folder'].rstrip('/')
 
         dcpath = compile_folder_path_for_object(datacenter)
 
@@ -1378,15 +1488,15 @@ class PyVmomiHelper(PyVmomi):
             dcpath += '/'
 
         # Check for full path first in case it was already supplied
-        if (self.params['folder'].startswith(dcpath + self.params['datacenter'] + '/vm') or
-                self.params['folder'].startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
-            fullpath = self.params['folder']
-        elif self.params['folder'].startswith('/vm/') or self.params['folder'] == '/vm':
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.params['folder'])
-        elif self.params['folder'].startswith('/'):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+        if (self.folder.startswith(dcpath + self.params['datacenter'] + '/vm') or
+                self.folder.startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
+            fullpath = self.folder
+        elif self.folder.startswith('/vm/') or self.folder == '/vm':
+            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.folder)
+        elif self.folder.startswith('/'):
+            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.folder)
         else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.params['folder'])
+            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.folder)
 
         f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
 
@@ -1396,10 +1506,10 @@ class PyVmomiHelper(PyVmomi):
             details = {
                 'datacenter': datacenter.name,
                 'datacenter_path': dcpath,
-                'folder': self.params['folder'],
+                'folder': self.folder,
                 'full_search_path': fullpath,
             }
-            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.params['folder'], fullpath),
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath),
                                   details=details)
 
         destfolder = f_obj
@@ -1424,6 +1534,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
+        self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -1492,6 +1603,9 @@ class PyVmomiHelper(PyVmomi):
                 resource_pool = self.get_resource_pool()
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
+                except vmodl.fault.InvalidRequest as e:
+                    self.module.fail_json(msg="Failed to create virtual machine due to invalid configuration "
+                                              "parameter %s" % to_native(e.msg))
                 except vim.fault.RestrictedVersion as e:
                     self.module.fail_json(msg="Failed to create virtual machine due to "
                                               "product versioning restrictions: %s" % to_native(e.msg))
@@ -1561,6 +1675,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
+        self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
@@ -1674,10 +1789,10 @@ def main():
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
         customvalues=dict(type='list', default=[]),
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
@@ -1699,13 +1814,12 @@ def main():
                            mutually_exclusive=[
                                ['cluster', 'esxi_hostname'],
                            ],
+                           required_one_of=[
+                               ['name', 'uuid'],
+                           ],
                            )
 
     result = {'failed': False, 'changed': False}
-
-    # FindByInventoryPath() does not require an absolute path
-    # so we should leave the input folder path unmodified
-    module.params['folder'] = module.params['folder'].rstrip('/')
 
     pyv = PyVmomiHelper(module)
 
@@ -1716,13 +1830,36 @@ def main():
     if vm:
         if module.params['state'] == 'absent':
             # destroy it
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='remove_vm',
+                )
+                module.exit_json(**result)
             if module.params['force']:
                 # has to be poweredoff first
                 set_vm_power_state(pyv.content, vm, 'poweredoff', module.params['force'])
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    desired_operation='reconfigure_vm',
+                )
+                module.exit_json(**result)
             result = pyv.reconfigure_vm()
         elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
+            if module.check_mode:
+                result.update(
+                    vm_name=vm.name,
+                    changed=True,
+                    current_powerstate=vm.summary.runtime.powerState.lower(),
+                    desired_operation='set_vm_power_state',
+                )
+                module.exit_json(**result)
             # set powerstate
             tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
@@ -1735,6 +1872,12 @@ def main():
     # VM doesn't exist
     else:
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
+            if module.check_mode:
+                result.update(
+                    changed=True,
+                    desired_operation='deploy_vm',
+                )
+                module.exit_json(**result)
             result = pyv.deploy_vm()
             if result['failed']:
                 module.fail_json(msg='Failed to create a virtual machine : %s' % result['msg'])

@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -102,7 +104,7 @@
       - provide_present2.changed == true
       - provide_present2.existing == []
       - missing_param_present.failed == true
-      - 'missing_param_present.msg == "state is present but the following are missing: ap,contract,epg"'
+      - 'missing_param_present.msg == "state is present but all of the following are missing: ap, contract, epg"'
       - missing_required_present.failed == true
       - 'missing_required_present.msg == "missing required arguments: contract_type"'
       - incompatible_present.failed == true
@@ -205,7 +207,7 @@
       - consume_absent_idempotent.changed == false
       - consume_absent_idempotent.existing == []
       - missing_param_absent.failed == true
-      - 'missing_param_absent.msg == "state is absent but the following are missing: contract"'
+      - 'missing_param_absent.msg == "state is absent but all of the following are missing: contract"'
       - missing_required_absent.failed == true
       - 'missing_required_absent.msg == "missing required arguments: contract_type"'
 

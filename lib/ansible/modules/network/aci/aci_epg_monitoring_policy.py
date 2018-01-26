@@ -16,12 +16,10 @@ module: aci_epg_monitoring_policy
 short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(mon:EPGPol) at U(https://developer.cisco.com/media/mim-ref/MO-monEPGPol.html).
+- More information from the internal APIC class I(mon:EPGPol) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -55,7 +53,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_epg_monitoring_policy:
-    hostname: '{{ hostname }}'
+    host: '{{ hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     monitoring_policy: '{{ monitoring_policy }}'
@@ -72,13 +70,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         monitoring_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -99,14 +98,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='monEPGPol',
-            aci_rn='monepg-{}'.format(monitoring_policy),
-            filter_target='eq(monEPGPol.name, "{}")'.format(monitoring_policy),
+            aci_rn='monepg-{0}'.format(monitoring_policy),
+            filter_target='eq(monEPGPol.name, "{0}")'.format(monitoring_policy),
             module_object=monitoring_policy,
         ),
     )

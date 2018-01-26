@@ -1,5 +1,7 @@
 ---
-- debug: msg="START {{ connection.transport }}/negative.yaml"
+- debug: msg="START connection={{ ansible_connection }}/negative.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: run 11 commands
   nxos_command:
@@ -24,4 +26,4 @@
       - result.failed
 
 
-- debug: msg="END {{ connection.transport }}/negative.yaml"
+- debug: msg="END connection={{ ansible_connection }}/negative.yaml"

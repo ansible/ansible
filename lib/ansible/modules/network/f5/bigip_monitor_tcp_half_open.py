@@ -23,8 +23,6 @@ options:
     description:
       - Monitor name.
     required: True
-    aliases:
-      - monitor
   parent:
     description:
       - The parent template of this monitor template. Once this value has
@@ -72,12 +70,17 @@ options:
       - Device partition to manage resources on.
     default: Common
     version_added: 2.5
+  state:
+    description:
+      - When C(present), ensures that the monitor exists.
+      - When C(absent), ensures the monitor is removed.
+    default: present
+    choices:
+      - present
+      - absent
+    version_added: 2.5
 notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP software version >= 12
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -143,23 +146,44 @@ time_until_up:
 
 import os
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
+
+HAS_DEVEL_IMPORTS = False
+
+try:
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
+except ImportError:
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+
 try:
     import netaddr
     HAS_NETADDR = True
 except ImportError:
     HAS_NETADDR = False
-
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.six import iteritems
-from collections import defaultdict
-
-try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
-except ImportError:
-    HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -183,35 +207,10 @@ class Parameters(AnsibleF5Parameters):
         'destination', 'send', 'receive', 'interval', 'timeout', 'time_until_up'
     ]
 
-    def __init__(self, params=None):
-        self._values = defaultdict(lambda: None)
-        self._values['__warnings'] = []
-        if params:
-            self.update(params=params)
-
-    def update(self, params=None):
-        if params:
-            for k, v in iteritems(params):
-                if self.api_map is not None and k in self.api_map:
-                    map_key = self.api_map[k]
-                else:
-                    map_key = k
-
-                # Handle weird API parameters like `dns.proxy.__iter__` by
-                # using a map provided by the module developer
-                class_attr = getattr(type(self), map_key, None)
-                if isinstance(class_attr, property):
-                    # There is a mapped value for the api_map key
-                    if class_attr.fset is None:
-                        # If the mapped value does not have
-                        # an associated setter
-                        self._values[map_key] = v
-                    else:
-                        # The mapped value has a setter
-                        setattr(self, map_key, v)
-                else:
-                    # If the mapped value is not a @property
-                    self._values[map_key] = v
+    def _fqdn_name(self, value):
+        if value is not None and not value.startswith('/'):
+            return '/{0}/{1}'.format(self.partition, value)
+        return value
 
     def to_return(self):
         result = {}
@@ -222,16 +221,6 @@ class Parameters(AnsibleF5Parameters):
             return result
         except Exception:
             return result
-
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
 
     @property
     def destination(self):
@@ -309,6 +298,10 @@ class Parameters(AnsibleF5Parameters):
         return 'tcp_half_open'
 
 
+class Changes(Parameters):
+    pass
+
+
 class Difference(object):
     def __init__(self, want, have=None):
         self.want = want
@@ -324,7 +317,7 @@ class Difference(object):
 
     @property
     def parent(self):
-        if self.want.parent != self.want.parent:
+        if self.want.parent != self.have.parent:
             raise F5ModuleError(
                 "The parent monitor cannot be changed"
             )
@@ -377,11 +370,12 @@ class Difference(object):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+        self.want = Parameters(params=self.module.params)
+        self.changes = Changes()
 
     def _set_changed_options(self):
         changed = {}
@@ -389,7 +383,7 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(params=changed)
 
     def _update_changed_options(self):
         diff = Difference(self.want, self.have)
@@ -402,7 +396,7 @@ class ModuleManager(object):
             else:
                 changed[k] = change
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Changes(params=changed)
             return True
         return False
 
@@ -413,7 +407,7 @@ class ModuleManager(object):
         if self.have:
             warnings += self.have._values.get('__warnings', [])
         for warning in warnings:
-            self.client.module.deprecate(
+            self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
@@ -455,7 +449,7 @@ class ModuleManager(object):
             self.want.update({'ip': '*'})
         if self.want.port is None:
             self.want.update({'port': '*'})
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         return True
@@ -470,7 +464,7 @@ class ModuleManager(object):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -481,7 +475,7 @@ class ModuleManager(object):
         return False
 
     def remove(self):
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.remove_from_device()
         if self.exists():
@@ -494,7 +488,7 @@ class ModuleManager(object):
             partition=self.want.partition
         )
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def exists(self):
         result = self.client.api.tm.ltm.monitor.tcp_half_opens.tcp_half_open.exists(
@@ -531,51 +525,49 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             name=dict(required=True),
-            parent=dict(default='tcp_half_open'),
+            parent=dict(default='/Common/tcp_half_open'),
             ip=dict(),
             port=dict(type='int'),
             interval=dict(type='int'),
             timeout=dict(type='int'),
-            time_until_up=dict(type='int')
+            time_until_up=dict(type='int'),
+            state=dict(
+                default='present',
+                choices=['present', 'absent']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
         )
-        self.f5_product_name = 'bigip'
-
-
-def cleanup_tokens(client):
-    try:
-        resource = client.api.shared.authz.tokens_s.token.load(
-            name=client.api.icrs.token
-        )
-        resource.delete()
-    except Exception:
-        pass
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
+    if not HAS_NETADDR:
+        module.fail_json(msg="The python netaddr module is required")
 
     try:
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
-        if not HAS_NETADDR:
-            raise F5ModuleError("The python netaddr module is required")
-
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
+        module.exit_json(**results)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        client.module.fail_json(msg=str(e))
+        module.fail_json(msg=str(ex))
 
 
 if __name__ == '__main__':

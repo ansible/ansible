@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_snmp_community sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_community sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: Setup - Remove snmp_community if configured
   nxos_snmp_community: &remove
@@ -93,4 +95,4 @@
   - name: Cleanup
     nxos_snmp_community: *remove
 
-  - debug: msg="END TRANSPORT:{{ connection.transport }} nxos_snmp_community sanity test"
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_community sanity test"

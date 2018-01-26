@@ -48,8 +48,9 @@ DOCUMENTATION = """
       scheme:
         description:
             - URI scheme to use
+            - If not set, then will default to C(https) or C(http) if I(port) is
+              C(5985).
         choices: [http, https]
-        default: https
         vars:
           - name: ansible_winrm_scheme
       path:
@@ -144,6 +145,13 @@ try:
 except ImportError as e:
     HAS_PEXPECT = False
 
+# used to try and parse the hostname and detect if IPv6 is being used
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADRESS = False
+
 try:
     from __main__ import display
 except ImportError:
@@ -188,7 +196,13 @@ class Connection(ConnectionBase):
         self._become_pass = self._play_context.become_pass
 
         self._winrm_port = self.get_option('port')
+
         self._winrm_scheme = self.get_option('scheme')
+        # old behaviour, scheme should default to http if not set and the port
+        # is 5985 otherwise https
+        if self._winrm_scheme is None:
+            self._winrm_scheme = 'http' if self._winrm_port == 5985 else 'https'
+
         self._winrm_path = self.get_option('path')
         self._kinit_cmd = self.get_option('kerberos_command')
         self._winrm_transport = self.get_option('transport')
@@ -297,7 +311,18 @@ class Connection(ConnectionBase):
         '''
         display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" %
                     (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
-        netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
+
+        winrm_host = self._winrm_host
+        if HAS_IPADDRESS:
+            display.vvvv("checking if winrm_host %s is an IPv6 address" % winrm_host)
+            try:
+                ipaddress.IPv6Address(winrm_host)
+            except ipaddress.AddressValueError:
+                pass
+            else:
+                winrm_host = "[%s]" % winrm_host
+
+        netloc = '%s:%d' % (winrm_host, self._winrm_port)
         endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
         for transport in self._winrm_transport:
@@ -366,8 +391,6 @@ class Connection(ConnectionBase):
             stdin_push_failed = False
             command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator is None))
 
-            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that
-            # comes from this)
             try:
                 if stdin_iterator:
                     for (data, is_last) in stdin_iterator:
@@ -375,11 +398,8 @@ class Connection(ConnectionBase):
 
             except Exception as ex:
                 from traceback import format_exc
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % format_exc(ex))
+                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
                 stdin_push_failed = True
-
-            if stdin_push_failed:
-                raise AnsibleError('winrm send_input failed')
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
             # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
@@ -398,7 +418,11 @@ class Connection(ConnectionBase):
             display.vvvvvv('WINRM STDERR %s' % to_text(response.std_err), host=self._winrm_host)
 
             if stdin_push_failed:
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
+                stderr = to_bytes(response.std_err, encoding='utf-8')
+                if self.is_clixml(stderr):
+                    stderr = self.parse_clixml_stream(stderr)
+
+                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, stderr))
 
             return response
         finally:
@@ -431,7 +455,9 @@ class Connection(ConnectionBase):
             'powershell_modules': {},
             'actions': ['exec'],
             'exec': to_text(base64.b64encode(to_bytes(leaf_exec))),
-            'environment': environment
+            'environment': environment,
+            'min_ps_version': None,
+            'min_os_version': None
         }
 
         return json.dumps(payload)

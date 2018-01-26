@@ -18,16 +18,11 @@ description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes
-  I(config:Snapshot) at U(https://developer.cisco.com/media/mim-ref/MO-configSnapshot.html) and
-  I(config:ExportP) at U(https://developer.cisco.com/media/mim-ref/MO-configExportP.html).
+- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
@@ -74,7 +69,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Create a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: present
@@ -84,14 +79,14 @@ EXAMPLES = r'''
 
 - name: Query all Snapshots
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: Query Snapshots associated with a particular Export Policy
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -99,7 +94,7 @@ EXAMPLES = r'''
 
 - name: Delete a Snapshot
   aci_config_snapshot:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent
@@ -114,7 +109,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
         export_policy=dict(type='str', aliases=['name']),
@@ -155,8 +150,8 @@ def main():
         aci.construct_url(
             root_class=dict(
                 aci_class='configExportP',
-                aci_rn='fabric/configexp-{}'.format(export_policy),
-                filter_target='eq(configExportP.name, "{}")'.format(export_policy),
+                aci_rn='fabric/configexp-{0}'.format(export_policy),
+                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
             ),
         )
@@ -185,19 +180,19 @@ def main():
     else:
         # Prefix the proper url to export_policy
         if export_policy is not None:
-            export_policy = 'uni/fabric/configexp-{}'.format(export_policy)
+            export_policy = 'uni/fabric/configexp-{0}'.format(export_policy)
 
         aci.construct_url(
             root_class=dict(
                 aci_class='configSnapshotCont',
-                aci_rn='backupst/snapshots-[{}]'.format(export_policy),
-                filter_target='(configSnapshotCont.name, "{}")'.format(export_policy),
+                aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
+                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
             ),
             subclass_1=dict(
                 aci_class='configSnapshot',
-                aci_rn='snapshot-{}'.format(snapshot),
-                filter_target='(configSnapshot.name, "{}")'.format(snapshot),
+                aci_rn='snapshot-{0}'.format(snapshot),
+                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
             ),
         )

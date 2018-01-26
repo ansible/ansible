@@ -158,6 +158,8 @@ options:
     choices: ['success', 'fail']
     default: 'success'
     required: false
+extends_documentation_fragment:
+    - aws
 requirements:
   - "python >= 2.6"
   - boto
@@ -198,11 +200,6 @@ ami_id:
     returned: when AMI found
     type: string
     sample: "ami-e9095e8c"
-architecture:
-    description: architecture of image
-    returned: when AMI found
-    type: string
-    sample: "x86_64"
 architecture:
     description: architecture of image
     returned: when AMI found

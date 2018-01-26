@@ -16,16 +16,11 @@ module: aci_epg_to_contract
 short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
-- More information from the internal APIC classes
-  I(fv:RsCons) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsCons.html) and
-  I(fv:RsProv) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsProv.html).
+- More information from the internal APIC classes I(fv:RsCons) and I(fv:RsProv) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob Mcgill (@jmcgill298)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
@@ -84,7 +79,7 @@ PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_o
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         epg=dict(type='str', aliases=['epg_name']),
@@ -95,6 +90,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -127,26 +123,26 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvAp',
-            aci_rn='ap-{}'.format(ap),
-            filter_target='eq(fvAp.name, "{}")'.format(ap),
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
-            aci_rn='epg-{}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{}")'.format(epg),
+            aci_rn='epg-{0}'.format(epg),
+            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
         ),
         subclass_3=dict(
             aci_class=aci_class,
-            aci_rn='{}{}'.format(aci_rn, contract),
-            filter_target='eq({}.tnVzBrCPName, "{}'.format(aci_class, contract),
+            aci_rn='{0}{1}'.format(aci_rn, contract),
+            filter_target='eq({0}.tnVzBrCPName, "{1}'.format(aci_class, contract),
             module_object=contract,
         ),
     )

@@ -15,21 +15,25 @@ if sys.version_info < (2, 7):
     raise SkipTest("F5 Ansible modules require Python >= 2.7")
 
 from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, Mock
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from units.modules.utils import set_module_args
+from ansible.compat.tests.mock import patch
+from ansible.compat.tests.mock import Mock
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     from library.bigip_command import Parameters
     from library.bigip_command import ModuleManager
     from library.bigip_command import ArgumentSpec
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    from test.unit.modules.utils import set_module_args
 except ImportError:
     try:
         from ansible.modules.network.f5.bigip_command import Parameters
         from ansible.modules.network.f5.bigip_command import ModuleManager
         from ansible.modules.network.f5.bigip_command import ArgumentSpec
-        from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+        from ansible.module_utils.network.f5.common import F5ModuleError
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+        from units.modules.utils import set_module_args
     except ImportError:
         raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
 
@@ -59,19 +63,13 @@ class TestParameters(unittest.TestCase):
             user='admin',
             password='password'
         )
-        p = Parameters(args)
-        assert len(p.commands) == 2
+        p = Parameters(params=args)
+        assert len(p.commands) == 1
 
 
-@patch('ansible.module_utils.f5_utils.AnsibleF5Client._get_mgmt_root',
-       return_value=True)
 class TestManager(unittest.TestCase):
 
     def setUp(self):
-        self.mock_run_commands = patch('ansible.modules.network.f5.bigip_command.run_commands')
-        self.run_commands = self.mock_run_commands.start()
-        self.mock_execute_on_device = patch('ansible.modules.network.f5.bigip_command.ModuleManager.execute_on_device')
-        self.execute_on_device = self.mock_execute_on_device.start()
         self.spec = ArgumentSpec()
 
     def test_run_single_command(self, *args):
@@ -84,18 +82,20 @@ class TestManager(unittest.TestCase):
             password='password'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+
+        mm = ModuleManager(module=module)
+        mm._run_commands = Mock(return_value=[])
+        mm.execute_on_device = Mock(return_value=[])
 
         results = mm.exec_module()
 
         assert results['changed'] is False
-        self.assertEqual(self.run_commands.call_count, 0)
-        self.assertEqual(self.execute_on_device.call_count, 1)
+        assert mm._run_commands.call_count == 0
+        assert mm.execute_on_device.call_count == 1
 
     def test_run_single_modification_command(self, *args):
         set_module_args(dict(
@@ -107,18 +107,19 @@ class TestManager(unittest.TestCase):
             password='password'
         ))
 
-        client = AnsibleF5Client(
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
+        mm = ModuleManager(module=module)
+        mm._run_commands = Mock(return_value=[])
+        mm.execute_on_device = Mock(return_value=[])
 
         results = mm.exec_module()
 
         assert results['changed'] is True
-        self.assertEqual(self.run_commands.call_count, 0)
-        self.assertEqual(self.execute_on_device.call_count, 1)
+        assert mm._run_commands.call_count == 0
+        assert mm.execute_on_device.call_count == 1
 
     def test_cli_command(self, *args):
         set_module_args(dict(
@@ -130,12 +131,53 @@ class TestManager(unittest.TestCase):
             password='password',
             transport='cli'
         ))
-        client = AnsibleF5Client(
+
+        module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            f5_product_name=self.spec.f5_product_name
+            supports_check_mode=self.spec.supports_check_mode
         )
-        mm = ModuleManager(client)
-        mm.exec_module()
-        self.assertEqual(self.run_commands.call_count, 1)
-        self.assertEqual(self.execute_on_device.call_count, 0)
+        mm = ModuleManager(module=module)
+        mm._run_commands = Mock(return_value=[])
+        mm.execute_on_device = Mock(return_value=[])
+
+        results = mm.exec_module()
+
+        assert results['changed'] is False
+
+        # call count is two on CLI transport because we must first
+        # determine if the remote CLI is in tmsh mode or advanced shell
+        # (bash) mode.
+        #
+        # 1 call for the shell check
+        # 1 call for the command in the "commands" list above
+        #
+        # Can we change this in the future by making the terminal plugin
+        # find this out ahead of time?
+        assert mm._run_commands.call_count == 2
+        assert mm.execute_on_device.call_count == 0
+
+    def test_command_with_commas(self, *args):
+        set_module_args(dict(
+            commands="""
+              tmsh create /auth ldap system-auth {bind-dn uid=binduser,
+              cn=users,dc=domain,dc=com bind-pw $ENCRYPTEDPW check-roles-group
+              enabled search-base-dn cn=users,dc=domain,dc=com servers add {
+              ldap.server.com } }"
+            """,
+            server='localhost',
+            user='admin',
+            password='password'
+        ))
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode
+        )
+        mm = ModuleManager(module=module)
+        mm._run_commands = Mock(return_value=[])
+        mm.execute_on_device = Mock(return_value=[])
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert mm._run_commands.call_count == 0
+        assert mm.execute_on_device.call_count == 1

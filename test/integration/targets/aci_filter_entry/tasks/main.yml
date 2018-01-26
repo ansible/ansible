@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: absent
     tenant: anstest
 
@@ -22,7 +24,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -124,7 +128,7 @@
       - entry_present_4.changed == true
       - 'entry_present_4.config.vzEntry.attributes == {"dFromPort": "1000", "dToPort": "1000", "etherT": "ip", "name": "anstest4", "prot": "udp"}'
       - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: entry"'
+      - 'present_missing_param.msg == "state is present but all of the following are missing: entry"'
       - present_incompatible_params.failed == true
       - present_incompatible_params.msg.startswith("Parameter")
 
@@ -264,7 +268,7 @@
       - entry_absent_idempotent.changed == false
       - entry_absent_idempotent.existing == []
       - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: entry,filter"'
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: entry, filter"'
 
 - name: cleanup filter
   aci_filter:

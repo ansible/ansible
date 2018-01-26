@@ -87,10 +87,15 @@ options:
     format:
         description:
             - Specify format of the disk.
-            - If (cow) format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as I(thin provision).
-            - If (raw) format is used, disk storage will be allocated right away, also known as I(preallocated).
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
         choices: ['raw', 'cow']
+    sparse:
+        required: False
+        version_added: "2.5"
+        description:
+            - "I(True) if the disk should be sparse (also known as I(thin provision)).
+              If the parameter is omitted, cow disks will be created as sparse and raw disks as I(preallocated)"
+            - Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
     storage_domain:
         description:
             - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
@@ -438,7 +443,11 @@ class DisksModule(BaseModule):
             format=otypes.DiskFormat(
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
-            sparse=self._module.params.get('format') != 'raw',
+            sparse=self._module.params.get(
+                'sparse'
+            ) if self._module.params.get(
+                'sparse'
+            ) is not None else self._module.params.get('format') != 'raw',
             openstack_volume_type=otypes.OpenStackVolumeType(
                 name=self.param('openstack_volume_type')
             ) if self.param('openstack_volume_type') else None,
@@ -563,6 +572,7 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
+        sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
         logical_unit=dict(default=None, type='dict'),
@@ -606,6 +616,7 @@ def main():
             ret = disks_module.create(
                 entity=disk,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
+                fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL,
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])

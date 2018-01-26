@@ -148,6 +148,11 @@ class TestPromptVaultSecret(unittest.TestCase):
 
 
 class TestFileVaultSecret(unittest.TestCase):
+    def setUp(self):
+        self.vault_password = "test-vault-password"
+        text_secret = TextVaultSecret(self.vault_password)
+        self.vault_secrets = [('foo', text_secret)]
+
     def test(self):
         secret = vault.FileVaultSecret()
         self.assertIsNone(secret._bytes)
@@ -200,6 +205,36 @@ class TestFileVaultSecret(unittest.TestCase):
                                 secret.load)
 
         os.unlink(tmp_file.name)
+
+    def test_file_encrypted(self):
+        vault_password = "test-vault-password"
+        text_secret = TextVaultSecret(vault_password)
+        vault_secrets = [('foo', text_secret)]
+
+        password = 'some password'
+        # 'some password' encrypted with 'test-ansible-password'
+
+        password_file_content = '''$ANSIBLE_VAULT;1.1;AES256
+61393863643638653437313566313632306462383837303132346434616433313438353634613762
+3334363431623364386164616163326537366333353663650a663634306232363432626162353665
+39623061353266373631636331643761306665343731376633623439313138396330346237653930
+6432643864346136640a653364386634666461306231353765636662316335613235383565306437
+3737
+'''
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file.write(to_bytes(password_file_content))
+        tmp_file.close()
+
+        fake_loader = DictDataLoader({tmp_file.name: 'sdfadf'})
+        fake_loader._vault.secrets = vault_secrets
+
+        secret = vault.FileVaultSecret(loader=fake_loader, filename=tmp_file.name)
+        secret.load()
+
+        os.unlink(tmp_file.name)
+
+        self.assertEqual(secret.bytes, to_bytes(password))
 
     def test_file_not_a_directory(self):
         filename = '/dev/null/foobar'
@@ -672,11 +707,6 @@ class TestVaultLib(unittest.TestCase):
                                 '.*A vault password must be specified to encrypt data.*',
                                 v.encrypt,
                                 plaintext)
-
-    def test_is_encrypted(self):
-        self.assertFalse(self.v.is_encrypted(b"foobar"), msg="encryption check on plaintext yielded false positive")
-        b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
-        self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
 
     def test_format_vaulttext_envelope(self):
         cipher_name = "TEST"

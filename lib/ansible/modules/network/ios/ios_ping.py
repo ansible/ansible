@@ -13,9 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ios_ping
-short_description: Tests reachability using ping from IOS switch
+short_description: Tests reachability using ping from Cisco IOS network devices
 description:
 - Tests reachability using ping from switch to a remote destination.
+- For a general purpose network module, see the M(net_ping) module.
+- For Windows targets, use the M(win_ping) module instead.
+- For targets running Python, use the M(ping) module instead.
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -45,6 +48,10 @@ options:
     - The VRF to use for forwarding.
     required: false
     default: default
+notes:
+  - For a general purpose network module, see the M(net_ping) module.
+  - For Windows targets, use the M(win_ping) module instead.
+  - For targets running Python, use the M(ping) module instead.
 '''
 
 EXAMPLES = r'''
@@ -169,7 +176,7 @@ def build_ping(dest, count=None, source=None, vrf=None):
     to execute. All args come from the module's unique params.
     """
     if vrf is not None:
-        cmd = "ping {0} {1}".format(vrf, dest)
+        cmd = "ping vrf {0} {1}".format(vrf, dest)
     else:
         cmd = "ping {0}".format(dest)
 

@@ -1,18 +1,5 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,12 +13,11 @@ short_description: Manage AWS IAM roles
 description:
   - Manage AWS IAM roles
 version_added: "2.3"
-author: Rob White, @wimnat
+author: "Rob White (@wimnat)"
 options:
   path:
     description:
       - The path to the role. For more information about paths, see U(http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
-    required: false
     default: "/"
   name:
     description:
@@ -40,64 +26,60 @@ options:
   description:
     description:
       - Provide a description of the new role
-    required: false
     version_added: "2.5"
   assume_role_policy_document:
     description:
-      - "The trust relationship policy document that grants an entity permission to assume the role.  This parameter is required when state: present."
-    required: false
+      - The trust relationship policy document that grants an entity permission to assume the role.
+      - "This parameter is required when C(state=present)."
   managed_policy:
     description:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
         To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
-    required: true
-    aliases: ['managed_policies']
+    aliases: [ managed_policies ]
   state:
     description:
       - Create or remove the IAM role
-    required: true
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   create_instance_profile:
     description:
       - Creates an IAM instance profile along with the role
     type: bool
-    default: true
-    version_added: 2.5
+    default: yes
+    version_added: "2.5"
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
+  - ec2
 '''
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a role with description
-- iam_role:
+- name: Create a role with description
+  iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
     description: This is My New Role
-    state: present
 
-# Create a role and attach a managed policy called "PowerUserAccess"
-- iam_role:
+- name: "Create a role and attach a managed policy called 'PowerUserAccess'"
+  iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    state: present
     managed_policy:
       - arn:aws:iam::aws:policy/PowerUserAccess
 
-# Keep the role created above but remove all managed policies
-- iam_role:
+- name: Keep the role created above but remove all managed policies
+  iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    state: present
     managed_policy:
       -
 
-# Delete the role
-- iam_role:
+- name: Delete the role
+  iam_role:
     name: mynewrole
-    assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+    assume_role_policy_document: "{{ lookup('file', 'policy.json') }}"
     state: absent
 
 '''
@@ -372,12 +354,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(required=True, type='str'),
-            path=dict(default="/", type='str'),
+            name=dict(type='str', required=True),
+            path=dict(type='str', default="/"),
             assume_role_policy_document=dict(type='json'),
             managed_policy=dict(type='list', aliases=['managed_policies']),
-            state=dict(choices=['present', 'absent'], required=True),
-            description=dict(required=False, type='str'),
+            state=dict(type='str', choices=['present', 'absent'], default='present'),
+            description=dict(type='str'),
             create_instance_profile=dict(type='bool', default=True)
         )
     )
@@ -398,6 +380,7 @@ def main():
         create_or_update_role(connection, module)
     else:
         destroy_role(connection, module)
+
 
 if __name__ == '__main__':
     main()

@@ -16,15 +16,11 @@ module: aci_epg_to_domain
 short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:RsDomAtt) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsDomAtt.html).
+- More information from the internal APIC class I(fv:RsDomAtt) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
-- Jacob Mcgill (@jmcgill298)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
@@ -68,7 +64,7 @@ options:
   epg:
     description:
     - Name of the end point group.
-    aliases: [ epg_name ]
+    aliases: [ epg_name, name ]
   netflow:
     description:
     - Determines if netflow should be enabled.
@@ -98,7 +94,9 @@ options:
   vm_provider:
     description:
     - The VM platform for VMM Domains.
-    choices: [ microsoft, openstack, vmware ]
+    - Support for Kubernetes was added in ACI v3.0.
+    - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
@@ -109,11 +107,19 @@ RETURN = r''' # '''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-VM_PROVIDER_MAPPING = dict(microsoft="uni/vmmp-Microsoft/dom-", openstack="uni/vmmp-OpenStack/dom-", vmware="uni/vmmp-VMware/dom-")
+VM_PROVIDER_MAPPING = dict(
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
+    microsoft='Microsoft',
+    openshift='OpenShift',
+    openstack='OpenStack',
+    redhat='Redhat',
+    vmware='VMware',
+)
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
@@ -128,8 +134,9 @@ def main():
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        vm_provider=dict(type='str', choices=['microsoft', 'openstack', 'vmware']),
+        vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -151,7 +158,7 @@ def main():
     encap = module.params['encap']
     if encap is not None:
         if encap in range(1, 4097):
-            encap = 'vlan-{}'.format(encap)
+            encap = 'vlan-{0}'.format(encap)
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
@@ -160,7 +167,7 @@ def main():
     primary_encap = module.params['primary_encap']
     if primary_encap is not None:
         if primary_encap in range(1, 4097):
-            primary_encap = 'vlan-{}'.format(primary_encap)
+            primary_encap = 'vlan-{0}'.format(primary_encap)
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     resolution_immediacy = module.params['resolution_immediacy']
@@ -172,9 +179,9 @@ def main():
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
-        epg_domain = '{}{}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+        epg_domain = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     elif domain_type is not None:
-        epg_domain = 'uni/phys-{}'.format(domain)
+        epg_domain = 'uni/phys-{0}'.format(domain)
     else:
         epg_domain = None
 
@@ -182,26 +189,26 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvAp',
-            aci_rn='ap-{}'.format(ap),
-            filter_target='eq(fvAp.name, "{}")'.format(ap),
+            aci_rn='ap-{0}'.format(ap),
+            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
-            aci_rn='epg-{}'.format(epg),
-            filter_target='eq(fvTenant.name, "{}")'.format(epg),
+            aci_rn='epg-{0}'.format(epg),
+            filter_target='eq(fvTenant.name, "{0}")'.format(epg),
             module_object=epg,
         ),
         subclass_3=dict(
             aci_class='fvRsDomAtt',
-            aci_rn='rsdomAtt-[{}]'.format(epg_domain),
-            filter_target='eq(fvRsDomAtt.tDn, "{}")'.format(epg_domain),
+            aci_rn='rsdomAtt-[{0}]'.format(epg_domain),
+            filter_target='eq(fvRsDomAtt.tDn, "{0}")'.format(epg_domain),
             module_object=epg_domain,
         ),
     )

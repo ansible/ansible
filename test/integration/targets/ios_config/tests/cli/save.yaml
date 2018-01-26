@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/save.yaml"
+- debug: msg="START cli/save.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -63,4 +63,4 @@
     authorize: yes
   register: result
 
-- debug: msg="END cli/save.yaml"
+- debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

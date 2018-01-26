@@ -53,6 +53,7 @@ options:
         devices active running configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """
@@ -116,7 +117,17 @@ def map_config_to_obj(module):
         module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
 
     if isinstance(output, dict):
-        output = list(output.values())[0]
+        output = list(output.values())
+        if output != []:
+            output = output[0]
+        else:
+            output = ''
+        if isinstance(output, dict):
+            output = list(output.values())
+            if output != []:
+                output = output[0]
+            else:
+                output = ''
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:

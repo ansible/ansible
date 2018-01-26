@@ -35,12 +35,6 @@ options:
       - Specify the number of seconds that LLDP information is held before it is
         discarded. The multiplier value is used in combination with the
         C(interval) value.
-  enable:
-    description:
-      - If value is C(True) it enable LLDP protocol on remote device, if value
-        is C(False) it disables LLDP protocol.
-    default: present
-    choices: [True, False]
   state:
     description:
       - Value of C(present) ensures given LLDP configuration
@@ -62,6 +56,7 @@ notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
   - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+extends_documentation_fragment: junos
 """
 
 EXAMPLES = """

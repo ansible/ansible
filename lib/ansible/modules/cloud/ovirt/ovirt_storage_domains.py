@@ -42,9 +42,10 @@ options:
             - "Name of the storage domain to manage. (Not required when state is I(imported))"
     state:
         description:
-            - "Should the storage domain be present/absent/maintenance/unattached/imported"
+            - "Should the storage domain be present/absent/maintenance/unattached/imported/update_ovf_store"
             - "I(imported) is supported since version 2.4."
-        choices: ['present', 'absent', 'maintenance', 'unattached']
+            - "I(update_ovf_store) is supported since version 2.5, currently if C(wait) is (true), we don't wait for update."
+        choices: ['present', 'absent', 'maintenance', 'unattached', 'update_ovf_store']
         default: present
     description:
         description:
@@ -114,6 +115,22 @@ options:
             - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
             - "Note that these parameters are not idempotent."
+    wipe_after_delete:
+        description:
+            - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
+        version_added: "2.5"
+    backup:
+        description:
+            - "Boolean flag which indicates whether the storage domain is configured as backup or not."
+        version_added: "2.5"
+    critical_space_action_blocker:
+        description:
+            - "Inidcates the minimal free space the storage domain should contain in percentages."
+        version_added: "2.5"
+    warning_low_space:
+        description:
+            - "Inidcates the minimum percentage of a free space in a storage domain to present a warning."
+        version_added: "2.5"
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -173,6 +190,10 @@ EXAMPLES = '''
        - 1IET_000d0001
        - 1IET_000d0002
       address: 10.34.63.204
+    discard_after_delete: True
+    backup: False
+    critical_space_action_blocker: 5
+    warning_low_space: 10
 
 # Add data glusterfs storage domain
 -  ovirt_storage_domains:
@@ -192,6 +213,10 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+    wipe_after_delete: False
+    backup: True
+    critical_space_action_blocker: 2
+    warning_low_space: 5
 
 # Import export NFS storage domain:
 - ovirt_storage_domains:
@@ -202,6 +227,11 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+
+# Update OVF_STORE:
+- ovirt_storage_domains:
+    state: update_ovf_store
+    name: domain
 
 # Create ISO NFS storage domain
 - ovirt_storage_domains:
@@ -293,6 +323,10 @@ class StorageDomainModule(BaseModule):
             name=self._module.params['name'],
             description=self._module.params['description'],
             comment=self._module.params['comment'],
+            wipe_after_delete=self._module.params['wipe_after_delete'],
+            backup=self._module.params['backup'],
+            critical_space_action_blocker=self._module.params['critical_space_action_blocker'],
+            warning_low_space_indicator=self._module.params['warning_low_space'],
             import_=(
                 True
                 if self._module.params['state'] == 'imported' else None
@@ -523,7 +557,7 @@ def control_state(sd_module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'maintenance', 'unattached', 'imported'],
+            choices=['present', 'absent', 'maintenance', 'unattached', 'imported', 'update_ovf_store'],
             default='present',
         ),
         id=dict(default=None),
@@ -539,6 +573,10 @@ def main():
         posixfs=dict(default=None, type='dict'),
         glusterfs=dict(default=None, type='dict'),
         fcp=dict(default=None, type='dict'),
+        wipe_after_delete=dict(type='bool', default=None),
+        backup=dict(type='bool', default=None),
+        critical_space_action_blocker=dict(type='int', default=None),
+        warning_low_space=dict(type='int', default=None),
         destroy=dict(type='bool', default=False),
         format=dict(type='bool', default=False),
         discard_after_delete=dict(type='bool', default=True)
@@ -602,7 +640,10 @@ def main():
                 storage_domain=storage_domains_service.service(ret['id']).get()
             )
             ret['changed'] = storage_domains_module.changed
-
+        elif state == 'update_ovf_store':
+            ret = storage_domains_module.action(
+                action='update_ovf_store'
+            )
         module.exit_json(**ret)
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())

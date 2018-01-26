@@ -1,6 +1,5 @@
 ---
-- debug: msg="START netconf/changeport.yaml"
-
+- debug: msg="START netconf/changeport.yaml on connection={{ ansible_connection }}"
 
 - name: Setup
   junos_netconf:
@@ -33,23 +32,16 @@
     seconds: 10
 
 - name: Ensure we can communicate over 8022
-  junos_command:
-    rpcs:
-    - get-software-information
-    provider: "{{ netconf }}"
-    port: 8022
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=8022 is_ignore_errors=false"
 
 - name: wait for persistent socket to timeout
   pause:
     seconds: 120
 
+
 # This protects against the port override above not being honoured and a bug setting the port
 - name: Ensure we can NOT communicate over default port
-  junos_command:
-    rpcs: get-software-information
-    provider: "{{ netconf }}"
-  register: result
-  ignore_errors: true
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=true"
 
 - assert:
     that:
@@ -65,9 +57,6 @@
     seconds: 120
 
 - name: Ensure we can communicate over netconf
-  junos_command:
-    rpcs:
-    - get-software-information
-    provider: "{{ netconf }}"
+  include: "{{ role_path }}/tests/utils/junos_command.yaml ansible_connection=netconf ansible_port=830 is_ignore_errors=false"
 
-- debug: msg="END netconf/changeport.yaml"
+- debug: msg="END netconf/changeport.yaml on connection={{ ansible_connection }}"

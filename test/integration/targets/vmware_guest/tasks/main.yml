@@ -16,6 +16,7 @@
 # Commenting following two is failing right now - 15 Dec 2017
 #- include: poweroff_d1_c1_f0.yml
 #- include: poweroff_d1_c1_f1.yml
+- include: check_mode.yml
 - include: clone_d1_c1_f0.yml
 - include: create_d1_c1_f0.yml
 - include: cdrom_d1_c1_f0.yml
@@ -24,4 +25,5 @@
 - include: mac_address_d1_c1_f0.yml
 - include: disk_type_d1_c1_f0.yml
 - include: create_nw_d1_c1_f0.yml
+- include: delete_vm.yml
 #- include: template_d1_c1_f0.yml

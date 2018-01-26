@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -32,10 +34,12 @@
 
 - name: ensure phys domain exists for tests to kick off
   aci_rest: &aci_rest_phys_domain
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     method: post
     path: api/mo/uni/phys-anstest.json
     content: {"physDomP": {"attributes": {}}}
@@ -117,7 +121,7 @@
       - 'vmm_present.config == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
       - '"[uni/vmmp-VMware/dom-anstest].json" in vmm_present.url'
       - present_missing_params.failed == true
-      - 'present_missing_params.msg == "domain_type is vmm but the following are missing: vm_provider"'
+      - 'present_missing_params.msg == "domain_type is vmm but all of the following are missing: vm_provider"'
       - invalid_vlan.failed == true
       - 'invalid_vlan.msg == "Valid VLAN assigments are from 1 to 4096"'
       - incompatible_params.failed == true
@@ -178,7 +182,7 @@
       - idempotency_absent.changed == false
       - idempotency_absent.existing == []
       - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: ap,domain,domain_type,epg"'
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
 
 - name: remove vmm domain - cleanup
   aci_rest:

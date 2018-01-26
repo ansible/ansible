@@ -22,11 +22,13 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $category_names = Get-AnsibleParam -obj $params -name "category_names" -type "list" -default @("CriticalUpdates", "SecurityUpdates", "UpdateRollups")
 $log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "installed" -validateset "installed", "searched"
-# TODO: blacklist and whitelist
+$blacklist = Get-AnsibleParam -obj $params -name "blacklist" -type "list"
+$whitelist = Get-AnsibleParam -obj $params -name "whitelist" -type "list"
 
 $result = @{
     changed = $false
     updates = @{}
+    filtered_updates = @{}
 }
 
 Function Write-DebugLog($msg) {
@@ -106,32 +108,67 @@ try {
     Fail-Json -obj $result -message "Failed to create update collection object: $($_.Exception.Message)"
 }
 
-# FUTURE: add further filtering options (whitelist/blacklist)
 foreach ($update in $search_result.Updates) {
-    if (-not $update.EulaAccepted) {
-        Write-DebugLog -msg "Accepting EULA for $($update.Identity.UpdateID)"
-        try {
-            $update.AcceptEula()
-        } catch {
-            Fail-Json -obj $result -message "Failed to accept EULA for update $($update.Identity.UpdateID) - $($update.Title)"
-        }
-    }
-
-    if ($update.IsHidden) {
-        Write-DebugLog -msg "Skipping hidden update $($update.Title)"
-        continue
-    }
-
-    Write-DebugLog -msg "Adding update $($update.Identity.UpdateID) - $($update.Title)"
-    $updates_to_install.Add($update) > $null
-
-    $result.updates[$update.Identity.UpdateId] = @{
+    $update_info = @{
         title = $update.Title
         # TODO: pluck the first KB out (since most have just one)?
         kb = $update.KBArticleIDs
         id = $update.Identity.UpdateId
         installed = $false
     }
+
+    # validate update again blacklist/whitelist
+    $skipped = $false
+    foreach ($whitelist_entry in $whitelist) {
+        $kb_match = $false
+        foreach ($kb in $update_info.kb) {
+            if ("KB$kb" -imatch $whitelist_entry) {
+                $kb_match = $true
+            }
+        }
+        if (-not ($kb_match -or $update_info.title -imatch $whitelist_entry)) {
+            Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was not found in the whitelist"
+            $skipped = $true
+            break
+        }
+    }
+    foreach ($blacklist_entry in $blacklist) {
+        $kb_match = $false
+        foreach ($kb in $update_info.kb) {
+            if ("KB$kb" -imatch $blacklist_entry) {
+                $kb_match = $true
+            }
+        }
+        if ($kb_match -or $update_info.title -imatch $blacklist_entry) {
+            Write-DebugLog -msg "Skipping update $($update_info.id) - $($update_info.title) as it was found in the blacklist"
+            $skipped = $true
+            break
+        }
+    }
+    if ($skipped) {
+        $result.filtered_updates[$update_info.id] = $update_info
+        continue
+    }
+
+
+    if (-not $update.EulaAccepted) {
+        Write-DebugLog -msg "Accepting EULA for $($update_info.id)"
+        try {
+            $update.AcceptEula()
+        } catch {
+            Fail-Json -obj $result -message "Failed to accept EULA for update $($update_info.id) - $($update_info.title)"
+        }
+    }
+
+    if ($update.IsHidden) {
+        Write-DebugLog -msg "Skipping hidden update $($update_info.title)"
+        continue
+    }
+
+    Write-DebugLog -msg "Adding update $($update_info.id) - $($update_info.title)"
+    $updates_to_install.Add($update) > $null
+
+    $result.updates[$update_info.id] = $update_info
 }
 
 Write-DebugLog -msg "Calculating pre-install reboot requirement..."
@@ -267,15 +304,16 @@ foreach ($update in $updates_to_install) {
     }
 }
 
-if ($update_fail_count -gt 0) {
-    Fail-Json -obj $result -msg "Failed to install one or more updates"
-}
-
 Write-DebugLog -msg "Performing post-install reboot requirement check..."
 $result.reboot_required = Get-RebootStatus
 $result.installed_update_count = $update_success_count
 $result.failed_update_count = $update_fail_count
 
+if ($update_fail_count -gt 0) {
+    Fail-Json -obj $result -msg "Failed to install one or more updates"
+}
+
 Write-DebugLog -msg "Return value:`r`n$(ConvertTo-Json -InputObject $result -Depth 99)"
 
 Exit-Json $result
+

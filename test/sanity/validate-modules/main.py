@@ -38,9 +38,10 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring
+from ansible.plugins.loader import fragment_loader
+from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from module_args import get_argument_spec
+from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
@@ -48,6 +49,7 @@ from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
+from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -247,7 +249,7 @@ class ModuleValidator(Validator):
         self.length = len(self.text.splitlines())
         try:
             self.ast = ast.parse(self.text)
-        except:
+        except Exception:
             self.ast = None
 
         if base_branch:
@@ -264,7 +266,7 @@ class ModuleValidator(Validator):
 
         try:
             os.remove(self.base_module)
-        except:
+        except Exception:
             pass
 
     @property
@@ -518,6 +520,30 @@ class ModuleValidator(Validator):
         bodies.extend(if_bodies)
 
         for child in bodies:
+
+            # validate that the next to last line is 'if __name__ == "__main__"'
+            if child.lineno == (self.length - 1):
+
+                mainchecked = False
+                try:
+                    if isinstance(child, ast.If) and \
+                            child.test.left.id == '__name__' and \
+                            len(child.test.ops) == 1 and \
+                            isinstance(child.test.ops[0], ast.Eq) and \
+                            child.test.comparators[0].s == '__main__':
+                        mainchecked = True
+                except Exception:
+                    pass
+
+                if not mainchecked:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=109,
+                        msg='Next to last line should be: if __name__ == "__main__":',
+                        line=child.lineno
+                    )
+
+            # validate that the final line is a call to main()
             if isinstance(child, ast.Expr):
                 if isinstance(child.value, ast.Call):
                     if (isinstance(child.value.func, ast.Name) and
@@ -560,7 +586,7 @@ class ModuleValidator(Validator):
                 self.reporter.warning(
                     path=self.object_path,
                     code=291,
-                    msg='Found Try/Except block without HAS_ assginment'
+                    msg='Found Try/Except block without HAS_ assignment'
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
@@ -779,6 +805,7 @@ class ModuleValidator(Validator):
     def _validate_docs(self):
         doc_info = self._get_docs()
         deprecated = False
+        doc = None
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -805,7 +832,7 @@ class ModuleValidator(Validator):
             if not errors and not traces:
                 with CaptureStd():
                     try:
-                        get_docstring(self.path, verbose=True)
+                        get_docstring(self.path, fragment_loader, verbose=True)
                     except AssertionError:
                         fragment = doc['extends_documentation_fragment']
                         self.reporter.error(
@@ -813,7 +840,7 @@ class ModuleValidator(Validator):
                             code=303,
                             msg='DOCUMENTATION fragment missing: %s' % fragment
                         )
-                    except Exception:
+                    except Exception as e:
                         self.reporter.trace(
                             path=self.object_path,
                             tracebk=traceback.format_exc()
@@ -821,7 +848,7 @@ class ModuleValidator(Validator):
                         self.reporter.error(
                             path=self.object_path,
                             code=304,
-                            msg='Unknown DOCUMENTATION error, see TRACE'
+                            msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                         )
 
                 if 'options' in doc and doc['options'] is None:
@@ -919,35 +946,45 @@ class ModuleValidator(Validator):
                     doc_info['ANSIBLE_METADATA']['value']
                 )
             else:
-                metadata, errors, traces = parse_yaml(
-                    doc_info['ANSIBLE_METADATA']['value'].s,
-                    doc_info['ANSIBLE_METADATA']['lineno'],
-                    self.name, 'ANSIBLE_METADATA'
+                # ANSIBLE_METADATA doesn't properly support YAML
+                # we should consider removing it from the spec
+                # Below code kept, incase we change our minds
+
+                # metadata, errors, traces = parse_yaml(
+                #     doc_info['ANSIBLE_METADATA']['value'].s,
+                #     doc_info['ANSIBLE_METADATA']['lineno'],
+                #     self.name, 'ANSIBLE_METADATA'
+                # )
+                # for error in errors:
+                #     self.reporter.error(
+                #         path=self.object_path,
+                #         code=315,
+                #         **error
+                #     )
+                # for trace in traces:
+                #     self.reporter.trace(
+                #         path=self.object_path,
+                #         tracebk=trace
+                #     )
+
+                self.reporter.error(
+                    path=self.object_path,
+                    code=315,
+                    msg='ANSIBLE_METADATA was not provided as a dict, YAML not supported'
                 )
-                for error in errors:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code=315,
-                        **error
-                    )
-                for trace in traces:
-                    self.reporter.trace(
-                        path=self.object_path,
-                        tracebk=trace
-                    )
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_1_1_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
-        return doc_info
+        return doc_info, doc
 
     def _check_version_added(self, doc):
         if not self._is_new_module():
             return
 
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '0.0')))
+            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             self.reporter.error(
@@ -968,11 +1005,40 @@ class ModuleValidator(Validator):
                 msg='version_added should be %s. Currently %s' % (should_be, version_added)
             )
 
-    def _validate_argument_spec(self):
+    def _validate_argument_spec(self, docs):
         if not self.analyze_arg_spec:
             return
-        spec = get_argument_spec(self.path)
+
+        try:
+            spec, args, kwargs = get_argument_spec(self.path)
+        except AnsibleModuleImportError as e:
+            self.reporter.error(
+                path=self.object_path,
+                code=321,
+                msg="Exception attempting to import module for argument_spec introspection, '%s'" % e
+            )
+            self.reporter.trace(
+                path=self.object_path,
+                tracebk=traceback.format_exc()
+            )
+            return
+
+        provider_args = set()
+        args_from_argspec = set()
+        deprecated_args_from_argspec = set()
         for arg, data in spec.items():
+            if not data.get('removed_in_version', None):
+                args_from_argspec.add(arg)
+                args_from_argspec.update(data.get('aliases', []))
+            else:
+                deprecated_args_from_argspec.add(arg)
+                deprecated_args_from_argspec.update(data.get('aliases', []))
+            if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
+                # Record provider options from network modules, for later comparison
+                for provider_arg, provider_data in data.get('options', {}).items():
+                    provider_args.add(provider_arg)
+                    provider_args.update(provider_data.get('aliases', []))
+
             if data.get('required') and data.get('default', object) != object:
                 self.reporter.error(
                     path=self.object_path,
@@ -982,13 +1048,57 @@ class ModuleValidator(Validator):
                          'should not be marked as required' % arg)
                 )
 
+        if docs:
+            try:
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+            except Exception:
+                # Cannot merge fragments
+                return
+
+            file_common_arguments = set()
+            for arg, data in FILE_COMMON_ARGUMENTS.items():
+                file_common_arguments.add(arg)
+                file_common_arguments.update(data.get('aliases', []))
+
+            args_from_docs = set()
+            for arg, data in docs.get('options', {}).items():
+                args_from_docs.add(arg)
+                args_from_docs.update(data.get('aliases', []))
+
+            args_missing_from_docs = args_from_argspec.difference(args_from_docs)
+            docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
+            for arg in args_missing_from_docs:
+                # args_from_argspec contains undocumented argument
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                if arg in provider_args:
+                    # Provider args are being removed from network module top level
+                    # So they are likely not documented on purpose
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=322,
+                    msg='"%s" is listed in the argument_spec, but not documented in the module' % arg
+                )
+            for arg in docs_missing_from_args:
+                # args_from_docs contains argument not in the argument_spec
+                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                    # add_file_common_args is handled in AnsibleModule, and not exposed earlier
+                    continue
+                self.reporter.error(
+                    path=self.object_path,
+                    code=323,
+                    msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
+                )
+
     def _check_for_new_args(self, doc):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
+                existing_doc = get_docstring(self.base_module, fragment_loader, verbose=True)[0]
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -1027,7 +1137,7 @@ class ModuleValidator(Validator):
         for option, details in options.items():
             try:
                 names = [option] + details.get('aliases', [])
-            except AttributeError:
+            except (TypeError, AttributeError):
                 # Reporting of this syntax error will be handled by schema validation.
                 continue
 
@@ -1048,7 +1158,7 @@ class ModuleValidator(Validator):
                          (option, version_added))
                 )
                 continue
-            except:
+            except Exception:
                 # If there is any other exception it should have been caught
                 # in schema validation, so we won't duplicate errors by
                 # listing it again
@@ -1111,10 +1221,10 @@ class ModuleValidator(Validator):
             return
 
         if self._python_module():
-            doc_info = self._validate_docs()
+            doc_info, docs = self._validate_docs()
 
         if self._python_module() and not self._just_docs():
-            self._validate_argument_spec()
+            self._validate_argument_spec(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
             main = self._find_main_call()

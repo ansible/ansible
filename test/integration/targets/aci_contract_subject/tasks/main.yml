@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -82,7 +84,7 @@
       - subject_present_2.changed == true
       - 'subject_present_2.config.vzSubj.attributes == {"consMatchT": "All", "name": "anstest2", "prio": "level3", "revFltPorts": "no"}'
       - present_missing_param.failed == true
-      - 'present_missing_param.msg == "state is present but the following are missing: contract,subject"'
+      - 'present_missing_param.msg == "state is present but all of the following are missing: contract, subject"'
 
 - name: query tenant contract subject
   aci_contract_subject: &aci_query_subject
@@ -223,7 +225,7 @@
       - subject_absent_idempotent.changed == false
       - subject_absent_idempotent.existing == []
       - absent_missing_param.failed == true
-      - 'absent_missing_param.msg == "state is absent but the following are missing: subject"'
+      - 'absent_missing_param.msg == "state is absent but all of the following are missing: subject"'
 
 - name: cleanup contract
   aci_contract:

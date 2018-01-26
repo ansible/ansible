@@ -16,15 +16,11 @@ module: aci_filter_entry
 short_description: Manage filter entries on Cisco ACI fabrics (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(vz:Entry) at U(https://developer.cisco.com/media/mim-ref/MO-vzEntry.html).
+- More information from the internal APIC class I(vz:Entry) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) and C(filter) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_filter) modules can be used for this.
@@ -106,17 +102,16 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_filter_entry:
-    action: "{{ action }}"
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
+    state: "{{ state }}"
     entry: "{{ entry }}"
     tenant: "{{ tenant }}"
     ether_name: "{{  ether_name }}"
     icmp_msg_type: "{{ icmp_msg_type }}"
     filter: "{{ filter }}"
     descr: "{{ descr }}"
-    host: "{{ inventory_hostname }}"
-    username: "{{ user }}"
-    password: "{{ pass }}"
-    protocol: "{{ protocol }}"
 '''
 
 RETURN = ''' # '''
@@ -142,10 +137,10 @@ ICMP6_MAPPING = dict(dst_unreachable='dst-unreach', echo_request='echo-req', ech
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         arp_flag=dict(type='str', choices=VALID_ARP_FLAGS),
-        description=dict(type='str'),
+        description=dict(type='str', aliases=['descr']),
         dst_port=dict(type='str'),
         dst_port_end=dict(type='str'),
         dst_port_start=dict(type='str'),
@@ -207,20 +202,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='vzFilter',
-            aci_rn='flt-{}'.format(filter_name),
-            filter_target='eq(vzFilter.name, "{}")'.format(filter_name),
+            aci_rn='flt-{0}'.format(filter_name),
+            filter_target='eq(vzFilter.name, "{0}")'.format(filter_name),
             module_object=filter_name,
         ),
         subclass_2=dict(
             aci_class='vzEntry',
-            aci_rn='e-{}'.format(entry),
-            filter_target='eq(vzEntry.name, "{}")'.format(entry),
+            aci_rn='e-{0}'.format(entry),
+            filter_target='eq(vzEntry.name, "{0}")'.format(entry),
             module_object=entry
         ),
     )

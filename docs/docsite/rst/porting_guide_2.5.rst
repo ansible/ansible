@@ -55,7 +55,7 @@ In addition to the deprecation warnings, many new tests have been introduced tha
 
     when: result is successful
 
-See :ref:`The Ansible Tests Documentation <playbooks_tests>` for more information.
+See :doc:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
@@ -64,7 +64,12 @@ Modules
 
 Major changes in popular modules are detailed here
 
-No notable changes.
+github_release
+--------------
+
+In Ansible versions 2.4 and older, after creating a GitHub release using the ``create_release`` state, the ``github_release`` module reported state as ``skipped``.
+In Ansible version 2.5 and later, after creating a GitHub release using the ``create_release`` state, the ``github_release`` module now reports state as ``changed``.
+
 
 Modules removed
 ---------------
@@ -78,9 +83,9 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.9. Please update update your playbooks accordingly.
 
-* :ref:`fixme <fixme>`
 * :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
 * :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
+* :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
 
 Noteworthy module changes
 -------------------------

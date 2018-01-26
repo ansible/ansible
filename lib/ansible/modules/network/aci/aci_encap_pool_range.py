@@ -16,8 +16,8 @@ module: aci_encap_pool_range
 short_description: Manage encap ranges assigned to pools on Cisco ACI fabrics (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information from the internal APIC class I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
@@ -28,8 +28,8 @@ options:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
-    aliases: [ mode ]
     choices: [ dynamic, inherit, static]
+    aliases: [ mode ]
   description:
     description:
     - Description for the pool range.
@@ -38,6 +38,12 @@ options:
     description:
     - The name of the pool that the range should be assigned to.
     aliases: [ pool_name ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating encaps to resources.
+    - Only vlan and vsan support allocation modes.
+    choices: [ dynamic, static]
+    aliases: [ pool_mode ]
   pool_type:
     description:
     - The encap type of C(pool).
@@ -67,8 +73,8 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new vlan range
-  aci_pool_to_range:
-    hostname: apic
+  aci_vlan_pool_encap_block:
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -78,8 +84,8 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove a vlan range
-  aci_pool_to_range:
-    hostname: apic
+  aci_vlan_pool_encap_block:
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -89,8 +95,8 @@ EXAMPLES = r'''
     state: absent
 
 - name: Query a vlan range
-  aci_pool_to_range:
-    hostname: apic
+  aci_vlan_pool_encap_block:
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -100,8 +106,8 @@ EXAMPLES = r'''
     state: query
 
 - name: Query a vlan pool for ranges
-  aci_pool_to_range:
-    hostname: apic
+  aci_vlan_pool_encap_block:
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -109,8 +115,8 @@ EXAMPLES = r'''
     state: query
 
 - name: Query all vlan ranges
-  aci_pool_to_range:
-    hostname: apic
+  aci_vlan_pool_encap_block:
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
@@ -141,7 +147,7 @@ ACI_POOL_MAPPING = dict(
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),

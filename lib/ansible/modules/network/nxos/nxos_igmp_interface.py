@@ -171,11 +171,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     startup_query_interval: 30
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
-
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
@@ -534,10 +530,7 @@ def main():
         oif_source=dict(required=False, type='str'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
-                   default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+                   default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -60,7 +60,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
     version_added: "2.2"
@@ -416,6 +416,7 @@ def main():
     argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src'),
                           ('save', 'save_when')]
 
     required_if = [('match', 'strict', ['lines']),
@@ -531,9 +532,16 @@ def main():
             base_config = NetworkConfig(indent=1, contents=contents, ignore_lines=diff_ignore_lines)
 
             if running_config.sha1 != base_config.sha1:
+                if module.params['diff_against'] == 'intended':
+                    before = running_config
+                    after = base_config
+                elif module.params['diff_against'] in ('startup', 'running'):
+                    before = base_config
+                    after = running_config
+
                 result.update({
                     'changed': True,
-                    'diff': {'before': str(base_config), 'after': str(running_config)}
+                    'diff': {'before': str(before), 'after': str(after)}
                 })
 
     module.exit_json(**result)

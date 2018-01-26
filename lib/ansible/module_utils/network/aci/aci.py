@@ -7,8 +7,9 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 
-# Copyright 2017 Dag Wieers <dag@wieers.com>
-# Copyright 2017 Swetha Chunduri (@schunduri)
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
+# Copyright: (c) 2017, Swetha Chunduri (@schunduri)
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without modification,
@@ -30,11 +31,20 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import base64
 import json
+import os
 from copy import deepcopy
 
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
+
+# Optional, only used for APIC signature-based authentication
+try:
+    from OpenSSL.crypto import FILETYPE_PEM, load_privatekey, sign
+    HAS_OPENSSL = True
+except ImportError:
+    HAS_OPENSSL = False
 
 # Optional, only used for XML payload
 try:
@@ -51,16 +61,19 @@ except ImportError:
     HAS_XMLJSON_COBRA = False
 
 
-aci_argument_spec = dict(
-    hostname=dict(type='str', required=True, aliases=['host']),
-    username=dict(type='str', default='admin', aliases=['user']),
-    password=dict(type='str', required=True, no_log=True),
-    protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
-    timeout=dict(type='int', default=30),
-    use_proxy=dict(type='bool', default=True),
-    use_ssl=dict(type='bool', default=True),
-    validate_certs=dict(type='bool', default=True),
-)
+def aci_argument_spec():
+    return dict(
+        host=dict(type='str', required=True, aliases=['hostname']),
+        port=dict(type='int', required=False),
+        username=dict(type='str', default='admin', aliases=['user']),
+        password=dict(type='str', no_log=True),
+        private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
+        certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
+        timeout=dict(type='int', default=30),
+        use_proxy=dict(type='bool', default=True),
+        use_ssl=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+    )
 
 '''
 URL_MAPPING = dict(
@@ -106,6 +119,7 @@ def aci_response_error(result):
     ''' Set error information when found '''
     result['error_code'] = 0
     result['error_text'] = 'Success'
+
     # Handle possible APIC error information
     if result['totalCount'] != '0':
         try:
@@ -157,17 +171,28 @@ class ACIModule(object):
         self.module = module
         self.params = module.params
         self.result = dict(changed=False)
-        self.headers = None
+        self.headers = dict()
 
-        self.login()
+        # Ensure protocol is set
+        self.define_protocol()
+
+        if self.params['private_key'] is None:
+            if self.params['password'] is None:
+                self.module.fail_json(msg="Parameter 'password' is required for HTTP authentication")
+            # Only log in when password-based authentication is used
+            self.login()
+        elif not HAS_OPENSSL:
+            self.module.fail_json(msg='Cannot use signature-based authentication because pyopenssl is not available')
+        elif self.params['password'] is not None:
+            self.module.warn('When doing ACI signatured-based authentication, a password is not required')
 
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameter '''
 
         # Set protocol for further use
-        if self.params['protocol'] in ('http', 'https'):
+        if 'protocol' in self.params and self.params['protocol'] in ('http', 'https'):
             self.module.deprecate("Parameter 'protocol' is deprecated, please use 'use_ssl' instead.", '2.6')
-        elif self.params['protocol'] is None:
+        elif 'protocol' not in self.params or self.params['protocol'] is None:
             self.params['protocol'] = 'https' if self.params.get('use_ssl', True) else 'http'
         else:
             self.module.fail_json(msg="Parameter 'protocol' needs to be one of ( http, https )")
@@ -189,11 +214,11 @@ class ACIModule(object):
     def login(self):
         ''' Log in to APIC '''
 
-        # Ensure protocol is set (only do this once)
-        self.define_protocol()
-
         # Perform login request
-        url = '%(protocol)s://%(hostname)s/api/aaaLogin.json' % self.params
+        if 'port' in self.params and self.params['port'] is not None:
+            url = '%(protocol)s://%(host)s:%(port)s/api/aaaLogin.json' % self.params
+        else:
+            url = '%(protocol)s://%(host)s/api/aaaLogin.json' % self.params
         payload = {'aaaUser': {'attributes': {'name': self.params['username'], 'pwd': self.params['password']}}}
         resp, auth = fetch_url(self.module, url,
                                data=json.dumps(payload),
@@ -214,16 +239,57 @@ class ACIModule(object):
                 self.module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
 
         # Retain cookie for later use
-        self.headers = dict(Cookie=resp.headers['Set-Cookie'])
+        self.headers['Cookie'] = resp.headers['Set-Cookie']
+
+    def cert_auth(self, path=None, payload='', method=None):
+        ''' Perform APIC signature-based authentication, not the expected SSL client certificate authentication. '''
+
+        if method is None:
+            method = self.params['method'].upper()
+
+        # NOTE: ACI documentation incorrectly uses complete URL
+        if path is None:
+            path = self.result['path']
+        path = '/' + path.lstrip('/')
+
+        if payload is None:
+            payload = ''
+
+        # Use the private key basename (without extension) as certificate_name
+        if self.params['certificate_name'] is None:
+            self.params['certificate_name'] = os.path.basename(os.path.splitext(self.params['private_key'])[0])
+
+        try:
+            sig_key = load_privatekey(FILETYPE_PEM, open(self.params['private_key'], 'r').read())
+        except:
+            self.module.fail_json(msg='Cannot load private key %s' % self.params['private_key'])
+
+        # NOTE: ACI documentation incorrectly adds a space between method and path
+        sig_request = method + path + payload
+        sig_signature = base64.b64encode(sign(sig_key, sig_request, 'sha256'))
+        sig_dn = 'uni/userext/user-%s/usercert-%s' % (self.params['username'], self.params['certificate_name'])
+        self.headers['Cookie'] = 'APIC-Certificate-Algorithm=v1.0; ' +\
+                                 'APIC-Certificate-DN=%s; ' % sig_dn +\
+                                 'APIC-Certificate-Fingerprint=fingerprint; ' +\
+                                 'APIC-Request-Signature=%s' % sig_signature
 
     def request(self, path, payload=None):
         ''' Perform a REST request '''
 
         # Ensure method is set (only do this once)
         self.define_method()
+        self.result['path'] = path
+
+        if 'port' in self.params and self.params['port'] is not None:
+            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+        else:
+            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+
+        # Sign and encode request as to APIC's wishes
+        if self.params['private_key'] is not None:
+            self.cert_auth(path=path, payload=payload)
 
         # Perform request
-        self.result['url'] = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
         resp, info = fetch_url(self.module, self.result['url'],
                                data=payload,
                                headers=self.headers,
@@ -248,8 +314,21 @@ class ACIModule(object):
 
     def query(self, path):
         ''' Perform a query with no payload '''
-        url = '%(protocol)s://%(hostname)s/' % self.params + path.lstrip('/')
-        resp, query = fetch_url(self.module, url,
+
+        # Ensure method is set
+        self.result['path'] = path
+
+        if 'port' in self.params and self.params['port'] is not None:
+            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+        else:
+            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+
+        # Sign and encode request as to APIC's wishes
+        if self.params['private_key'] is not None:
+            self.cert_auth(path=path, method='GET')
+
+        # Perform request
+        resp, query = fetch_url(self.module, self.result['url'],
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
@@ -314,7 +393,11 @@ class ACIModule(object):
         else:
             path, filter_string = self._construct_url_1(root_class, child_includes)
 
-        self.result['url'] = '{}://{}/{}'.format(self.module.params['protocol'], self.module.params['hostname'], path)
+        self.result['path'] = path
+        if 'port' in self.params and self.params['port'] is not None:
+            self.result['url'] = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
+        else:
+            self.result['url'] = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
         self.result['filter_string'] = filter_string
 
     def _construct_url_1(self, obj, child_includes):
@@ -327,15 +410,15 @@ class ACIModule(object):
 
         # State is present or absent
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}.json'.format(obj_rn)
+            path = 'api/mo/uni/{0}.json'.format(obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
         elif mo is None:
-            path = 'api/class/{}.json'.format(obj_class)
+            path = 'api/class/{0}.json'.format(obj_class)
             filter_string = ''
         # Query for a specific object in the module's class
         else:
-            path = 'api/mo/uni/{}.json'.format(obj_rn)
+            path = 'api/mo/uni/{0}.json'.format(obj_rn)
             filter_string = ''
 
         # Append child_includes to filter_string if filter string is empty
@@ -362,26 +445,26 @@ class ACIModule(object):
 
         # State is present or absent
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}/{}.json'.format(parent_rn, obj_rn)
+            path = 'api/mo/uni/{0}/{1}.json'.format(parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
         elif mo is None and parent_obj is None:
-            path = 'api/class/{}.json'.format(obj_class)
+            path = 'api/class/{0}.json'.format(obj_class)
             filter_string = ''
         # Queries when parent object is provided
         elif parent_obj is not None:
             # Query for specific object in the module's class
             if mo is not None:
-                path = 'api/mo/uni/{}/{}.json'.format(parent_rn, obj_rn)
+                path = 'api/mo/uni/{0}/{1}.json'.format(parent_rn, obj_rn)
                 filter_string = ''
             # Query for all object's of the module's class that belong to a specific parent object
             else:
-                path = 'api/mo/uni/{}.json'.format(parent_rn)
+                path = 'api/mo/uni/{0}.json'.format(parent_rn)
                 filter_string = self_child_includes
         # Query for all objects of the module's class that match the provided ID value
         else:
-            path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter={}'.format(obj_filter) + child_includes
+            path = 'api/class/{0}.json'.format(obj_class)
+            filter_string = '?query-target-filter={0}'.format(obj_filter) + child_includes
 
         # Append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':
@@ -407,20 +490,20 @@ class ACIModule(object):
         if not child_includes:
             self_child_includes = '&rsp-subtree=full&rsp-subtree-class=' + obj_class
         else:
-            self_child_includes = '{},{}'.format(child_includes, obj_class)
+            self_child_includes = '{0},{1}'.format(child_includes, obj_class)
 
         if not child_includes:
-            parent_self_child_includes = '&rsp-subtree=full&rsp-subtree-class={},{}'.format(parent_class, obj_class)
+            parent_self_child_includes = '&rsp-subtree=full&rsp-subtree-class={0},{1}'.format(parent_class, obj_class)
         else:
-            parent_self_child_includes = '{},{},{}'.format(child_includes, parent_class, obj_class)
+            parent_self_child_includes = '{0},{1},{2}'.format(child_includes, parent_class, obj_class)
 
         # State is ablsent or present
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}/{}/{}.json'.format(root_rn, parent_rn, obj_rn)
+            path = 'api/mo/uni/{0}/{1}/{2}.json'.format(root_rn, parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         # Query for all objects of the module's class
         elif mo is None and parent_obj is None and root_obj is None:
-            path = 'api/class/{}.json'.format(obj_class)
+            path = 'api/class/{0}.json'.format(obj_class)
             filter_string = ''
         # Queries when root object is provided
         elif root_obj is not None:
@@ -428,37 +511,37 @@ class ACIModule(object):
             if parent_obj is not None:
                 # Query for a specific object of the module's class
                 if mo is not None:
-                    path = 'api/mo/uni/{}/{}/{}.json'.format(root_rn, parent_rn, obj_rn)
+                    path = 'api/mo/uni/{0}/{1}/{2}.json'.format(root_rn, parent_rn, obj_rn)
                     filter_string = ''
                 # Query for all objects of the module's class that belong to a specific parent object
                 else:
-                    path = 'api/mo/uni/{}/{}.json'.format(root_rn, parent_rn)
+                    path = 'api/mo/uni/{0}/{1}.json'.format(root_rn, parent_rn)
                     filter_string = self_child_includes.replace('&', '?', 1)
             # Query for all objects of the module's class that match the provided ID value and belong to a specefic root object
             elif mo is not None:
-                path = 'api/mo/uni/{}.json'.format(root_rn)
-                filter_string = '?rsp-subtree-filter={}{}'.format(obj_filter, self_child_includes)
+                path = 'api/mo/uni/{0}.json'.format(root_rn)
+                filter_string = '?rsp-subtree-filter={0}{1}'.format(obj_filter, self_child_includes)
             # Query for all objects of the module's class that belong to a specific root object
             else:
-                path = 'api/mo/uni/{}.json'.format(root_rn)
+                path = 'api/mo/uni/{0}.json'.format(root_rn)
                 filter_string = '?' + parent_self_child_includes
         # Queries when parent object is provided but root object is not provided
         elif parent_obj is not None:
             # Query for all objects of the module's class that belong to any parent class
             # matching the provided ID values for both object and parent object
             if mo is not None:
-                path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter={}{}&rsp-subtree-filter={}'.format(
+                path = 'api/class/{0}.json'.format(parent_class)
+                filter_string = '?query-target-filter={0}{1}&rsp-subtree-filter={2}'.format(
                     parent_filter, self_child_includes, obj_filter)
             # Query for all objects of the module's class that belong to any parent class
             # matching the provided ID value for the parent object
             else:
-                path = 'api/class/{}.json'.format(parent_class)
-                filter_string = '?query-target-filter={}{}'.format(parent_filter, self_child_includes)
+                path = 'api/class/{0}.json'.format(parent_class)
+                filter_string = '?query-target-filter={0}{1}'.format(parent_filter, self_child_includes)
         # Query for all objects of the module's class matching the provided ID value of the object
         else:
-            path = 'api/class/{}.json'.format(obj_class)
-            filter_string = '?query-target-filter={}'.format(obj_filter) + child_includes
+            path = 'api/class/{0}.json'.format(obj_class)
+            filter_string = '?query-target-filter={0}'.format(obj_filter) + child_includes
 
         # append child_includes to filter_string if filter string is empty
         if child_includes is not None and filter_string == '':
@@ -489,10 +572,10 @@ class ACIModule(object):
 
         # State is ablsent or present
         if self.module.params['state'] != 'query':
-            path = 'api/mo/uni/{}/{}/{}/{}.json'.format(root_rn, sec_rn, parent_rn, obj_rn)
+            path = 'api/mo/uni/{0}/{1}/{2}/{3}.json'.format(root_rn, sec_rn, parent_rn, obj_rn)
             filter_string = '?rsp-prop-include=config-only' + child_includes
         else:
-            path = 'api/class/{}.json'.format(obj_class)
+            path = 'api/class/{0}.json'.format(obj_class)
             filter_string = child_includes
 
         return path, filter_string
@@ -508,6 +591,10 @@ class ACIModule(object):
             return
 
         elif not self.module.check_mode:
+            # Sign and encode request as to APIC's wishes
+            if self.params['private_key'] is not None:
+                self.cert_auth(method='DELETE')
+
             resp, info = fetch_url(self.module, self.result['url'],
                                    headers=self.headers,
                                    method='DELETE',
@@ -639,6 +726,10 @@ class ACIModule(object):
         """
         uri = self.result['url'] + self.result['filter_string']
 
+        # Sign and encode request as to APIC's wishes
+        if self.params['private_key'] is not None:
+            self.cert_auth(path=self.result['path'] + self.result['filter_string'], method='GET')
+
         resp, info = fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
@@ -732,6 +823,10 @@ class ACIModule(object):
         if not self.result['config']:
             return
         elif not self.module.check_mode:
+            # Sign and encode request as to APIC's wishes
+            if self.params['private_key'] is not None:
+                self.cert_auth(method='POST', payload=json.dumps(self.result['config']))
+
             resp, info = fetch_url(self.module, self.result['url'],
                                    data=json.dumps(self.result['config']),
                                    headers=self.headers,

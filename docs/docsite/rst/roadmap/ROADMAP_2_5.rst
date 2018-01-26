@@ -1,13 +1,13 @@
 ============================
 Ansible Project, 2.5
 ============================
-**Core Engine Freeze and Module Freeze: 15 January 2018**
+**Core Engine Freeze and Module Freeze: 22 January 2018**
 
-**Core and Curated Module Freeze: 15 January 2018**
+**Core and Curated Module Freeze: 22 January 2018**
 
-**Community Module Freeze: 31 January 2018**
+**Community Module Freeze: 7 February 2018**
 
-**Release Candidate 1 will be 14 February, 2018**
+**Release Candidate 1 will be 21 February, 2018**
 
 **Target: March 2018**
 
@@ -180,21 +180,21 @@ Azure
 
 Network Roadmap
 ---------------
-- Refactor common network shared code into package
-- Convert various nxos modules to leverage declarative intent 
-- Refactor various modules to leverage the cliconf plugin
-- Add various missing declarative modules for supported platforms and functions
-- Implement a feature that handles platform differences and feature unavailability.
+- Refactor common network shared code into package **(done)**
+- Convert various nxos modules to leverage declarative intent **(done)**
+- Refactor various modules to leverage the cliconf plugin **(done)**
+- Add various missing declarative modules for supported platforms and functions **(done)**
+- Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
-- Create netconf connection plugin
+- Create netconf connection plugin **(done)**
 - Create netconf fact module
-- Turn network_cli into a usable connection type
-- Implements jsonrpc message passing for ansible-connection
-- Improve logging for ansible-connection
-- Improve stdout output for failures whilst using persistent connection
-- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin
-- Refactor junos modules to use netconf plugin
-- Filters: Add a filter to convert XML response from a network device to JSON object.
+- Turn network_cli into a usable connection type **(done)**
+- Implements jsonrpc message passing for ansible-connection **(done)**
+- Improve logging for ansible-connection **(done)**
+- Improve stdout output for failures whilst using persistent connection **(done)**
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**
+- Refactor junos modules to use netconf plugin **(done)**
+- Filters: Add a filter to convert XML response from a network device to JSON object **(done)**
 
 Documentation
 -------------
@@ -208,6 +208,7 @@ Documentation
   - Use Case: Getting Started
   - Use Case: set hostname network documentation
   - Use Case: _command show version
+  - Best practice **(done)**
 
 Contributor Quality of Life
 ---------------------------

@@ -17,15 +17,11 @@ short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabr
 description:
 - Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
-- More information from the internal APIC class
-  I(fv:Ctx) at U(https://developer.cisco.com/media/mim-ref/MO-fvCtx.html).
+- More information from the internal APIC class I(fv:Ctx) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- Tested with ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -49,6 +45,7 @@ options:
   description:
     description:
     - The description for the VRF.
+    aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -61,7 +58,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new VRF to a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -73,7 +70,7 @@ EXAMPLES = r'''
 
 - name: Remove a VRF for a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -82,7 +79,7 @@ EXAMPLES = r'''
 
 - name: Query a VRF of a tenant
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     vrf: vrf_lab
@@ -91,7 +88,7 @@ EXAMPLES = r'''
 
 - name: Query all VRFs
   aci_vrf:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -104,15 +101,16 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         policy_control_direction=dict(choices=['ingress', 'egress'], type='str'),
         policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str'),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all objects
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -135,14 +133,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvCtx',
-            aci_rn='ctx-{}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{}")'.format(vrf),
+            aci_rn='ctx-{0}'.format(vrf),
+            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
         ),
     )

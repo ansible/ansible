@@ -65,6 +65,7 @@ notes:
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
 requirements: [ passlib>=1.6 ]
 author: "Ansible Core Team"
+extends_documentation_fragment: files
 """
 
 EXAMPLES = """

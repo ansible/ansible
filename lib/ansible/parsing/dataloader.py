@@ -7,23 +7,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import copy
-import json
 import os
 import os.path
 import re
 import tempfile
 
-from yaml import YAMLError
-
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
-from ansible.module_utils.six import binary_type, string_types, text_type
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.quoting import unquote
+from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
-from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.utils.path import unfrackpath
 
 try:
@@ -75,45 +70,8 @@ class DataLoader:
         self._vault.secrets = vault_secrets
 
     def load(self, data, file_name='<string>', show_content=True):
-        '''
-        Creates a python datastructure from the given data, which can be either
-        a JSON or YAML string.
-        '''
-        new_data = None
-
-        # YAML parser will take JSON as it is a subset.
-        if isinstance(data, AnsibleUnicode):
-            # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-            # they are unable to cope with our subclass.
-            # Unwrap and re-wrap the unicode so we can keep track of line
-            # numbers
-            in_data = text_type(data)
-        else:
-            in_data = data
-
-        try:
-            # we first try to load this data as JSON
-            new_data = json.loads(data)
-        except:
-            # must not be JSON, let the rest try
-            if isinstance(data, AnsibleUnicode):
-                # The PyYAML's libyaml bindings use PyUnicode_CheckExact so
-                # they are unable to cope with our subclass.
-                # Unwrap and re-wrap the unicode so we can keep track of line
-                # numbers
-                in_data = text_type(data)
-            else:
-                in_data = data
-            try:
-                new_data = self._safe_load(in_data, file_name=file_name)
-            except YAMLError as yaml_exc:
-                self._handle_error(yaml_exc, file_name, show_content)
-
-            if isinstance(data, AnsibleUnicode):
-                new_data = AnsibleUnicode(new_data)
-                new_data.ansible_pos = data.ansible_pos
-
-        return new_data
+        '''Backwards compat for now'''
+        return from_yaml(data, file_name, show_content, self._vault.secrets)
 
     def load_from_file(self, file_name, cache=True, unsafe=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
@@ -162,17 +120,18 @@ class DataLoader:
         path = self.path_dwim(path)
         return is_executable(path)
 
-    def _safe_load(self, stream, file_name=None):
-        ''' Implements yaml.safe_load(), except using our custom loader class. '''
+    def _decrypt_if_vault_data(self, b_vault_data, b_file_name=None):
+        '''Decrypt b_vault_data if encrypted and return b_data and the show_content flag'''
 
-        loader = AnsibleLoader(stream, file_name, self._vault.secrets)
-        try:
-            return loader.get_single_data()
-        finally:
-            try:
-                loader.dispose()
-            except AttributeError:
-                pass  # older versions of yaml don't have dispose function, ignore
+        if not is_encrypted(b_vault_data):
+            show_content = True
+            return b_vault_data, show_content
+
+        b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(b_vault_data)
+        b_data = self._vault.decrypt(b_vault_data, filename=b_file_name)
+
+        show_content = False
+        return b_data, show_content
 
     def _get_file_contents(self, file_name):
         '''
@@ -196,38 +155,13 @@ class DataLoader:
         if not self.path_exists(b_file_name) or not self.is_file(b_file_name):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
-        show_content = True
         try:
             with open(b_file_name, 'rb') as f:
                 data = f.read()
-                if is_encrypted(data):
-                    # FIXME: plugin vault selector
-                    b_ciphertext, b_version, cipher_name, vault_id = parse_vaulttext_envelope(data)
-                    data = self._vault.decrypt(data, filename=b_file_name)
-                    show_content = False
-
-            return (data, show_content)
+                return self._decrypt_if_vault_data(data, b_file_name)
 
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
-
-    def _handle_error(self, yaml_exc, file_name, show_content):
-        '''
-        Optionally constructs an object (AnsibleBaseYAMLObject) to encapsulate the
-        file name/position where a YAML exception occurred, and raises an AnsibleParserError
-        to display the syntax exception information.
-        '''
-
-        # if the YAML exception contains a problem mark, use it to construct
-        # an object the error class can use to display the faulty line
-        err_obj = None
-        if hasattr(yaml_exc, 'problem_mark'):
-            err_obj = AnsibleBaseYAMLObject()
-            err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
-
-        err_msg = getattr(yaml_exc, 'problem', '')
-
-        raise AnsibleParserError(YAML_SYNTAX_ERROR % to_native(err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
     def get_basedir(self):
         ''' returns the current basedir '''

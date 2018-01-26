@@ -35,7 +35,7 @@ import uuid
 import yaml
 
 from collections import MutableMapping, MutableSequence
-from datetime import datetime
+import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
@@ -69,6 +69,8 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, HostVars):
             return dict(o)
+        elif isinstance(o, (datetime.date, datetime.datetime)):
+            return o.isoformat()
         else:
             return super(AnsibleJSONEncoder, self).default(o)
 
@@ -126,7 +128,7 @@ def to_bool(a):
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
-    return datetime.strptime(string, format)
+    return datetime.datetime.strptime(string, format)
 
 
 def strftime(string_format, second=None):
@@ -233,7 +235,7 @@ def rand(environment, end, start=None, step=None, seed=None):
             start = 0
         if not step:
             step = 1
-        return r.randrange(start, end, step)
+        return r.randrange(start, end + 1, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise AnsibleFilterError('start and step can only be used with integer values')

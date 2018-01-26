@@ -13,7 +13,9 @@
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: present
     tenant: anstest
   register: tenant_present
@@ -85,7 +87,7 @@
       - 'bd_present_2.config.fvBD.attributes == {"arpFlood": "yes", "descr": "Ansible Test", "ipLearning": "no", "multiDstPktAct": "drop", "name": "anstest2",
       "unicastRoute": "no", "unkMacUcastAct": "flood", "unkMcastAct": "opt-flood"}'
       - bd_present_missing_param.failed == true
-      - 'bd_present_missing_param.msg == "state is present but the following are missing: tenant"'
+      - 'bd_present_missing_param.msg == "state is present but all of the following are missing: tenant"'
 
 - name: get all bd
   aci_bd: &aci_query
@@ -175,7 +177,7 @@
       - bd_absent_idempotent.changed == false
       - bd_absent_idempotent.existing == []
       - bd_absent_missing_param.failed == true
-      - 'bd_absent_missing_param.msg == "state is absent but the following are missing: bd"'
+      - 'bd_absent_missing_param.msg == "state is absent but all of the following are missing: bd"'
 
 - name: delete vrf - cleanup before ending tests
   aci_vrf:

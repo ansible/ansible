@@ -48,7 +48,6 @@ try:
 except ImportError:
     HAS_XML = False
 
-_DEVICE_CONFIGS = {}
 _EDIT_OPS = frozenset(['merge', 'create', 'replace', 'delete'])
 
 BASE_1_0 = "{urn:ietf:params:xml:ns:netconf:base:1.0}"
@@ -65,6 +64,10 @@ NS_DICT = {
     'INTERFACE-CONFIGURATIONS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg"},
     'INFRA-STATISTICS_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-statsd-oper"},
     'INTERFACE-PROPERTIES_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-oper"},
+    'IP-DOMAIN_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg"},
+    'SYSLOG_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg"},
+    'AAA_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-lib-cfg"},
+    'AAA_LOCALD_NSMAP': {None: "http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-locald-cfg"},
 }
 
 iosxr_provider_spec = {
@@ -74,7 +77,7 @@ iosxr_provider_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'transport': dict(),
+    'transport': dict(type='str', default='cli', choices=['cli', 'netconf']),
 }
 
 iosxr_argument_spec = {
@@ -133,9 +136,7 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
     meta_subtree = list()
 
     for key, meta in xmap.items():
-
         candidates = meta.get('xpath', "").split("/")
-
         if container_ele.tag == candidates[-2]:
             parent = container_ele
         elif sub_root.tag == candidates[-2]:
@@ -146,21 +147,21 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
         if ((opcode in ('delete', 'merge') and meta.get('operation', 'unknown') == 'edit') or
                 meta.get('operation', None) is None):
 
-            if meta.get('tag', False):
+            if meta.get('tag', False) is True:
                 if parent.tag == container_ele.tag:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.Element(candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.Element(candidates[-1])
                     meta_subtree.append(child)
                     sub_root = child
                 else:
-                    if meta.get('ns', None) is True:
+                    if meta.get('ns', False) is True:
                         child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                     else:
                         child = etree.SubElement(parent, candidates[-1])
 
-                if meta.get('attrib', None) and opcode in ('delete', 'merge'):
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
                     child.set(BASE_1_0 + meta.get('attrib'), opcode)
 
                 continue
@@ -168,24 +169,30 @@ def build_xml_subtree(container_ele, xmap, param=None, opcode=None):
             text = None
             param_key = key.split(":")
             if param_key[0] == 'a':
-                if param.get(param_key[1], None):
+                if param is not None and param.get(param_key[1], None) is not None:
                     text = param.get(param_key[1])
             elif param_key[0] == 'm':
-                if meta.get('value', None):
+                if meta.get('value', None) is not None:
                     text = meta.get('value')
 
             if text:
-                if meta.get('ns', None) is True:
+                if meta.get('ns', False) is True:
                     child = etree.SubElement(parent, candidates[-1], nsmap=NS_DICT[key.upper() + "_NSMAP"])
                 else:
                     child = etree.SubElement(parent, candidates[-1])
                 child.text = text
 
+                if meta.get('attrib', None) is not None and opcode in ('delete', 'merge'):
+                    child.set(BASE_1_0 + meta.get('attrib'), opcode)
+
     if len(meta_subtree) > 1:
         for item in meta_subtree:
             container_ele.append(item)
 
-    return sub_root
+    if sub_root == container_ele:
+        return None
+    else:
+        return sub_root
 
 
 def build_xml(container, xmap=None, params=None, opcode=None):
@@ -239,14 +246,15 @@ def build_xml(container, xmap=None, params=None, opcode=None):
 
     container_ele = etree.SubElement(root, container, nsmap=NS_DICT[container.upper() + "_NSMAP"])
 
-    if xmap:
-        if not params:
-            build_xml_subtree(container_ele, xmap)
+    if xmap is not None:
+        if params is None:
+            build_xml_subtree(container_ele, xmap, opcode=opcode)
         else:
             subtree_list = list()
-
             for param in to_list(params):
-                subtree_list.append(build_xml_subtree(container_ele, xmap, param, opcode=opcode))
+                subtree_ele = build_xml_subtree(container_ele, xmap, param=param, opcode=opcode)
+                if subtree_ele is not None:
+                    subtree_list.append(subtree_ele)
 
             for item in subtree_list:
                 container_ele.append(item)
@@ -347,36 +355,27 @@ def commit_config(module, comment=None, confirmed=False, confirm_timeout=None, p
 
 
 def get_oper(module, filter=None):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
     if filter is not None:
         response = conn.get(filter)
+    else:
+        return None
 
     return to_bytes(etree.tostring(response), errors='surrogate_then_replace').strip()
 
 
 def get_config(module, config_filter=None, source='running'):
-    global _DEVICE_CONFIGS
-
     conn = get_connection(module)
 
-    if config_filter is not None:
-        key = (source + ' ' + ' '.join(config_filter)).strip().rstrip()
-    else:
-        key = source
-    config = _DEVICE_CONFIGS.get(key)
-    if config:
-        return config
-    else:
-        out = conn.get_config(source=source, filter=config_filter)
-        if is_netconf(module):
-            out = to_xml(conn.get_config(source=source, filter=config_filter))
+    # Note: Does not cache config in favour of latest config on every get operation.
+    out = conn.get_config(source=source, filter=config_filter)
+    if is_netconf(module):
+        out = to_xml(conn.get_config(source=source, filter=config_filter))
 
-        cfg = to_bytes(out, errors='surrogate_then_replace').strip()
-        _DEVICE_CONFIGS.update({key: cfg})
-        return cfg
+    cfg = out.strip()
+
+    return cfg
 
 
 def load_config(module, command_filter, commit=False, replace=False,

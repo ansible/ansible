@@ -16,15 +16,11 @@ module: aci_bd_to_l3out
 short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:RsBDToOut) at U(https://developer.cisco.com/media/mim-ref/MO-fvRsBDToOut.html).
+- More information from the internal APIC class I(fv:RsBDToOut) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
   The M(aci_bd) and M(aci_l3out) can be used for these.
@@ -46,6 +42,7 @@ options:
     - Use C(query) for listing an object or multiple objects.
     choices: [ absent, present, query ]
     default: present
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r''' # '''
@@ -60,13 +57,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         l3out=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6')  # Deprecated starting from v2.6
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -88,20 +86,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvBD',
-            aci_rn='BD-{}'.format(bd),
-            filter_target='eq(fvBD.name, "{}")'.format(bd),
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
         ),
         subclass_2=dict(
             aci_class='fvRsBDToOut',
-            aci_rn='rsBDToOut-{}'.format(l3out),
-            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{}")'.format(l3out),
+            aci_rn='rsBDToOut-{0}'.format(l3out),
+            filter_target='eq(fvRsBDToOut.tnL3extOutName, "{0}")'.format(l3out),
             module_object=l3out,
         ),
     )

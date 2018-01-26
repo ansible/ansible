@@ -50,6 +50,12 @@ options:
             - IPv4 or IPv6 Address.
         required: false
         default: null
+    version:
+        description:
+            - Version of IP address. If the IP address is IPV4 version should be v4.
+              If the IP address is IPV6 version should be v6.
+        default: v4
+        choices: ['v4', 'v6']
     mask:
         description:
             - Subnet mask for IPv4 or IPv6 Address in decimal format.
@@ -527,10 +533,7 @@ def main():
         state=dict(required=False, default='present',
                    choices=['present', 'absent']),
         allow_secondary=dict(required=False, default=False,
-                             type='bool'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+                             type='bool')
     )
 
     argument_spec.update(nxos_argument_spec)

@@ -24,16 +24,23 @@ version_added: "2.5"
 author: "Chris Houseknecht (@chouseknecht)"
 
 description:
-  - Use the OpenShift Python client to perform CRUD operations on Kubernetes objects.
-  - Supports authentication using either a config file, certificates, password or token.
+  - Use the OpenShift Python client to perform CRUD operations on K8s objects.
+  - Pass the object definition from a source file or inline. See examples for reading
+    files and using Jinja templates.
+  - Access to the full range of K8s APIs.
+  - Authenticate using either a config file, certificates, password or token.
+  - Supports check mode.
 
 extends_documentation_fragment:
-  - kubernetes
+  - k8s_state_options
+  - k8s_name_options
+  - k8s_resource_options
+  - k8s_auth_options
 
 requirements:
-    - "python >= 2.7"
-    - "openshift >= 0.3"
-    - "PyYAML >= 3.11"
+  - "python >= 2.7"
+  - "openshift >= 0.3"
+  - "PyYAML >= 3.11"
 '''
 
 EXAMPLES = '''
@@ -93,6 +100,23 @@ EXAMPLES = '''
     kind: Service
     namespace: testing
     name: web
+
+# Passing the object definition from a file
+
+- name: Create a Deployment by reading the definition from a local file
+  k8s_raw:
+    state: present
+    src: /testing/deployment.yml
+
+- name: Read definition file from the Ansible controller file system
+  k8s_raw:
+    state: present
+    definition: "{{ lookup('file', '/testing/deployment.yml') | from_yaml }}"
+
+- name: Read definition file from the Ansible controller file system after Jinja templating
+  k8s_raw:
+    state: present
+    definition: "{{ lookup('template', '/testing/deployment.yml') | from_yaml }}"
 '''
 
 RETURN = '''
@@ -100,26 +124,39 @@ result:
   description:
   - The created, patched, or otherwise present object. Will be empty in the case of a deletion.
   returned: success
-  type: dict
-request:
-  description:
-  - The object sent to the API. Useful for troubleshooting unexpected differences and 404 errors.
-  returned: when diff is true
-  type: dict
-diff:
-  description:
-  - List of differences found when determining if an existing object will be patched. A copy of the existing object
-    is updated with the requested options, and the updated object is then compared to the original. If there are
-    differences, they will appear here.
-  returned: when diff is true
-  type: list
+  type: complex
+  contains:
+     api_version:
+       description: The versioned schema of this representation of an object.
+       returned: success
+       type: str
+     kind:
+       description: Represents the REST resource this object represents.
+       returned: success
+       type: str
+     metadata:
+       description: Standard object metadata. Includes name, namespace, annotations, labels, etc.
+       returned: success
+       type: complex
+     spec:
+       description: Specific attributes of the object. Will vary based on the I(api_version) and I(kind).
+       returned: success
+       type: complex
+     status:
+       description: Current status details for the object.
+       returned: success
+       type: complex
+     items:
+       description: Returned only when the I(kind) is a List type resource. Contains a set of objects.
+       returned: when resource is a List
+       type: list
 '''
 
-from ansible.module_utils.k8s_common import KubernetesAnsibleModule
+from ansible.module_utils.k8s.raw import KubernetesRawModule
 
 
 def main():
-    KubernetesAnsibleModule().execute_module()
+    KubernetesRawModule().execute_module()
 
 
 if __name__ == '__main__':

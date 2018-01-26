@@ -8,16 +8,19 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=other
+    - env: T=sanity/1
+    - env: T=sanity/2
 
     - env: T=units/2.6
     - env: T=units/2.7
     - env: T=units/3.5
     - env: T=units/3.6
+    - env: T=units/3.7
 
     - env: T=windows/1
     - env: T=windows/2
     - env: T=windows/3
+    - env: T=windows/4
 
     - env: T=network
 

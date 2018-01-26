@@ -20,6 +20,9 @@ description:
   - Returns information about the specified snapshot.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements: [ boto3, botocore ]
 options:
   name:

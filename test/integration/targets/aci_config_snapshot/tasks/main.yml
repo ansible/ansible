@@ -10,10 +10,12 @@
 
 - name: create a snapshot - creation works
   aci_config_snapshot: &create_snapshot
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     export_policy: anstest
     max_count: 10
     include_secure: no
@@ -54,7 +56,7 @@
       - invalid_max_count.failed == true
       - 'invalid_max_count.msg == "The \"max_count\" must be a number between 1 and 10"'
       - missing_param.failed == true
-      - 'missing_param.msg == "state is present but the following are missing: export_policy"'
+      - 'missing_param.msg == "state is present but all of the following are missing: export_policy"'
 
 - name: query with export_policy
   aci_config_snapshot: &query_snapshot
@@ -136,4 +138,4 @@
       - delete_idempotent.changed == false
       - delete_idempotent.existing == []
       - delete_missing_param.failed == true
-      - 'delete_missing_param.msg == "state is absent but the following are missing: snapshot"'
+      - 'delete_missing_param.msg == "state is absent but all of the following are missing: snapshot"'

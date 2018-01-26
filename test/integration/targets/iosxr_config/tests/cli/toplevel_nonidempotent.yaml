@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/toplevel_nonidempotent.yaml"
+- debug: msg="START cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   iosxr_config:
@@ -33,4 +33,4 @@
     commands: ['hostname {{ inventory_hostname_short }}']
     match: none
 
-- debug: msg="END cli/toplevel_nonidempotent.yaml"
+- debug: msg="END cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"

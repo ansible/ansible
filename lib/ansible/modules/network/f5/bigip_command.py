@@ -79,11 +79,6 @@ options:
         - cli
     default: rest
     version_added: "2.5"
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as pip
-    install f5-sdk.
-requirements:
-  - f5-sdk >= 2.2.3
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -167,17 +162,7 @@ failed_conditions:
 import re
 import time
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
-
-try:
-    from ansible.module_utils.f5_utils import run_commands
-    HAS_CLI_TRANSPORT = True
-except ImportError:
-    HAS_CLI_TRANSPORT = False
-
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.network.common.parsing import FailedConditionsError
 from ansible.module_utils.network.common.parsing import Conditional
@@ -185,10 +170,47 @@ from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.utils import to_list
 from collections import deque
 
+HAS_DEVEL_IMPORTS = False
+
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import is_cli
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
+    try:
+        from library.module_utils.network.f5.common import run_commands
+        HAS_CLI_TRANSPORT = True
+    except ImportError:
+        HAS_CLI_TRANSPORT = False
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import is_cli
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    try:
+        from ansible.module_utils.network.f5.common import run_commands
+        HAS_CLI_TRANSPORT = True
+    except ImportError:
+        HAS_CLI_TRANSPORT = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -201,19 +223,28 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
+    def _listify(self, item):
+        if isinstance(item, string_types):
+            result = [item]
+        else:
+            result = item
+        return result
+
     @property
     def commands(self):
-        commands = deque(self._values['commands'])
-        if self._values['transport'] != 'cli':
+        commands = self._listify(self._values['commands'])
+        commands = deque(commands)
+        if not is_cli(self.module):
             commands.appendleft(
                 'tmsh modify cli preference pager disabled'
             )
-            commands = map(self._ensure_tmsh_prefix, list(commands))
+        commands = map(self._ensure_tmsh_prefix, list(commands))
         return list(commands)
 
     @property
     def user_commands(self):
-        return map(self._ensure_tmsh_prefix, list(self._values['commands']))
+        commands = self._listify(self._values['commands'])
+        return map(self._ensure_tmsh_prefix, commands)
 
     def _ensure_tmsh_prefix(self, cmd):
         cmd = cmd.strip()
@@ -223,10 +254,12 @@ class Parameters(AnsibleF5Parameters):
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
-        self.want = Parameters(self.client.module.params)
-        self.changes = Parameters()
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
+        self.want = Parameters(params=self.module.params)
+        self.want.update({'module': self.module})
+        self.changes = Parameters(module=self.module)
 
     def _to_lines(self, stdout):
         lines = list()
@@ -241,10 +274,19 @@ class ModuleManager(object):
             'list', 'show',
             'modify cli preference pager disabled'
         ]
-        if self.client.module.params['transport'] != 'cli':
+        if not is_cli(self.module):
             valid_configs = list(map(self.want._ensure_tmsh_prefix, valid_configs))
         if any(cmd.startswith(x) for x in valid_configs):
             return True
+        return False
+
+    def is_tmsh(self):
+        try:
+            self._run_commands(self.module, 'tmsh help')
+        except F5ModuleError as ex:
+            if 'Syntax Error:' in str(ex):
+                return True
+            raise
         return False
 
     def exec_module(self):
@@ -259,23 +301,26 @@ class ModuleManager(object):
         result.update(dict(changed=changed))
         return result
 
+    def _run_commands(self, module, commands):
+        return run_commands(module, commands)
+
     def execute(self):
         warnings = list()
         changed = ('tmsh modify', 'tmsh create', 'tmsh delete')
-
         commands = self.parse_commands(warnings)
-
         wait_for = self.want.wait_for or list()
         retries = self.want.retries
-
         conditionals = [Conditional(c) for c in wait_for]
 
-        if self.client.check_mode:
+        if self.module.check_mode:
             return
 
         while retries > 0:
-            if self.client.module.params['transport'] == 'cli' and HAS_CLI_TRANSPORT:
-                responses = run_commands(self.client.module, self.want.commands)
+            if is_cli(self.module) and HAS_CLI_TRANSPORT:
+                if self.is_tmsh():
+                    for command in commands:
+                        command['command'] = command['command'][4:].strip()
+                responses = self._run_commands(self.module, commands)
             else:
                 responses = self.execute_on_device(commands)
 
@@ -296,11 +341,12 @@ class ModuleManager(object):
             errmsg = 'One or more conditional statements have not been satisfied'
             raise FailedConditionsError(errmsg, failed_conditions)
 
-        self.changes = Parameters({
+        changes = {
             'stdout': responses,
             'stdout_lines': self._to_lines(responses),
             'warnings': warnings
-        })
+        }
+        self.changes = Parameters(params=changes, module=self.module)
         if any(x for x in self.want.user_commands if x.startswith(changed)):
             return True
         return False
@@ -316,21 +362,26 @@ class ModuleManager(object):
             ),
         )
 
-        transform = ComplexList(spec, self.client.module)
+        transform = ComplexList(spec, self.module)
         commands = transform(commands)
 
         for index, item in enumerate(commands):
-            if not self._is_valid_mode(item['command']) and self.client.module.params['transport'] != 'cli':
+            if not self._is_valid_mode(item['command']) and is_cli(self.module):
                 warnings.append(
                     'Using "write" commands is not idempotent. You should use '
                     'a module that is specifically made for that. If such a '
                     'module does not exist, then please file a bug. The command '
                     'in question is "%s..."' % item['command'][0:40]
                 )
-            if item['output'] == 'one-line' and 'one-line' not in item['command']:
+            # This needs to be removed so that the ComplexList used in to_commands
+            # will work correctly.
+            output = item.pop('output', None)
+
+            if output == 'one-line' and 'one-line' not in item['command']:
                 item['command'] += ' one-line'
-            elif item['output'] == 'text' and 'one-line' in item['command']:
+            elif output == 'text' and 'one-line' in item['command']:
                 item['command'] = item['command'].replace('one-line', '')
+
             results.append(item)
         return results
 
@@ -351,9 +402,9 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             commands=dict(
-                type='list',
+                type='raw',
                 required=True
             ),
             wait_for=dict(
@@ -378,27 +429,30 @@ class ArgumentSpec(object):
                 choices=['cli', 'rest']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
-
-    if client.module.params['transport'] != 'cli' and not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required to use the rest api")
+    if is_cli(module) and not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required to use the rest api")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except (FailedConditionsError, AttributeError) as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as e:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(e))
 
 
 if __name__ == '__main__':

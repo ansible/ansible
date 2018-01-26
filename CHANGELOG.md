@@ -11,6 +11,7 @@ Ansible Changes By Release
 * Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansible_` prefix.
   They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
   currently on by default, in the future it will be off.
+* Add a configuration file to filter modules that a site administrator wants to exclude from being used.
 
 ### Deprecations
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
@@ -34,6 +35,7 @@ Ansible Changes By Release
   check_invalid_arguments will be removed in Ansible-2.9.
 * nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
+* nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -52,6 +54,8 @@ Ansible Changes By Release
   2.9. use `get_checksum: True` with `checksum_algorithm: md5` to return an md5 hash of the file
   under the `checksum` return value.
 * `osx_say` module was renamed into `say`.
+* Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
+  The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 
 #### Deprecated Modules (to be removed in 2.9):
 * ec2_ami_find: replaced by ec2_ami_facts
@@ -80,25 +84,48 @@ Ansible Changes By Release
 #### Cloud
 - amazon
   * aws_acm_facts
+  * aws_application_scaling_policy
+  * aws_az_facts
+  * aws_direct_connect_gateway
   * aws_kms_facts
+  * aws_region_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
+  * cloudfront_distribution
   * ec2_ami_facts
+  * ec2_asg_lifecycle_hook
+  * ec2_customer_gateway_facts
   * ec2_placement_group
   * ec2_placement_group_facts
+  * ec2_vpc_egress_igw
   * ecs_taskdefinition_facts
   * elasticache_facts
   * iam_role_facts
+  * iam_user
 - azure
+  * azure_rm_containerinstance
   * azure_rm_containerregistry
+  * azure_rm_image
+  * azure_rm_mysqldatabase
+  * azure_rm_mysqlserver
+  * azure_rm_postgresqldatabase
+  * azure_rm_postgresqlserver
   * azure_rm_sqlserver
+  * azure_rm_sqlserver_facts
 - cloudscale
   * cloudscale_floating_ip
 - cloudstack
-  * cs_serviceoffer
+  * cs_network_offering
+  * cs_service_offering
+  * cs_vpc_offering
+  * cs_vpn_connection
+  * cs_vpn_customer_gateway
 - digital_ocean
   * digital_ocean_certificate
+  * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
+- misc
+  * terraform
 - oneandone
   * oneandone_server
 - openstack
@@ -111,12 +138,39 @@ Ansible Changes By Release
 - vmware
   * vmware_cfg_backup
   * vmware_datastore_facts
+  * vmware_guest_file_operation
   * vmware_guest_powerstate
+  * vmware_host_config_facts
+  * vmware_host_config_manager
   * vmware_host_facts
+  * vmware_host_ntp
+  * vmware_host_service_facts
+  * vmware_host_service_manager
+  * vmware_local_role_manager
+- vultr
+  * vr_account_facts
+  * vr_dns_domain
+  * vr_dns_record
+  * vr_firewall_group
+  * vr_firewall_rule
+  * vr_server
+  * vr_ssh_key
+  * vr_startup_script
+  * vr_user
 
 #### Clustering
-  * k8s
-  * openshift
+- k8s
+  * k8s_raw
+  * k8s_scale
+- openshift
+  * openshift_raw
+  * openshift_scale
+
+#### Database
+- influxdb
+  * influxdb_query
+  * influxdb_user
+  * influxdb_write
 
 #### Identity
 - ipa
@@ -126,27 +180,60 @@ Ansible Changes By Release
   * keycloak_client
 
 #### Monitoring
+  * grafana_dashboard
+  * grafana_datasource
+  * grafana_plugin
   * icinga2_host
 - zabbix
   * zabbix_proxy
   * zabbix_template
 
+#### Net Tools
+  * ip_netns
+
 #### Network
 - aci
+  * aci_aaa_user_certificate
+  * aci_access_port_to_interface_policy_leaf_profile
+  * aci_aep_to_domain
+  * aci_domain
+  * aci_domain_to_encap_pool
+  * aci_domain_to_vlan_pool
   * aci_encap_pool
   * aci_encap_pool_range
+  * aci_firmware_source
+  * aci_interface_policy_leaf_policy_group
+  * aci_interface_policy_leaf_profile
+  * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_switch_leaf_selector
+  * aci_switch_policy_leaf_profile
+  * aci_vlan_pool
+  * aci_vlan_pool_encap_block
+- avi
+  * avi_api_version
+  * avi_customipamdnsprofile
+  * avi_errorpagebody
+  * avi_errorpageprofile
+  * avi_gslbservice_patch_member
+  * avi_wafpolicy
 - enos
   * enos_command
   * enos_config
   * enos_facts
 - eos
+  * eos_interface
+  * eos_l3_interface
+  * eos_linkagg
+  * eos_lldp
   * eos_static_route
 - f5
   * bigip_asm_policy
-  * bigip_configsync_action
   * bigip_device_connectivity
+  * bigip_device_group
+  * bigip_device_group_member
   * bigip_device_httpd
   * bigip_device_trust
+  * bigip_gtm_server
   * bigip_iapplx_package
   * bigip_monitor_https
   * bigip_monitor_snmp_dca
@@ -156,11 +243,22 @@ Ansible Changes By Release
   * bigip_policy_rule
   * bigip_profile_client_ssl
   * bigip_remote_syslog
+  * bigip_security_address_list
   * bigip_security_port_list
+  * bigip_software_update
   * bigip_ssl_key
+  * bigip_static_route
+  * bigip_traffic_group
+  * bigip_ucs_fetch
   * bigip_vcmp_guest
   * bigip_wait
+  * bigiq_regkey_license
+  * bigiq_regkey_pool
 - ios
+  * ios_l2_interface
+  * ios_l3_interface
+  * ios_linkagg
+  * ios_lldp
   * ios_vlan
 - iosxr
   * iosxr_netconf
@@ -168,16 +266,39 @@ Ansible Changes By Release
   * ironware_command
   * ironware_config
   * ironware_facts
-- mlnxos
-  * mlnxos_command
-  * mlnxos_config
-  * mlnxos_interface
+- junos
+  * junos_scp
 - netscaler
   * netscaler_nitro_request
 - nso
   * nso_action
   * nso_config
+  * nso_query
+  * nso_show
   * nso_verify
+- nxos
+  * nxos_l2_interface
+  * nxos_l3_interface
+  * nxos_linkagg
+  * nxos_lldp
+- onyx
+  * onyx_bgp
+  * onyx_command
+  * onyx_config
+  * onyx_facts
+  * onyx_interface
+  * onyx_l2_interface
+  * onyx_l3_interface
+  * onyx_linkagg
+  * onyx_lldp
+  * onyx_lldp_interface
+  * onyx_magp
+  * onyx_mlag_ipl
+  * onyx_mlag_vip
+  * onyx_ospf
+  * onyx_pfc_interface
+  * onyx_protocol
+  * onyx_vlan
 - radware
   * vdirect_commit
   * vdirect_runnable
@@ -185,6 +306,7 @@ Ansible Changes By Release
   * vyos_vlan
 
 #### Notification
+  * logentries_msg
   * say
   * snow_record
 
@@ -194,6 +316,7 @@ Ansible Changes By Release
 
 #### Remote Management
 - manageiq
+  * manageiq_alert_profiles
   * manageiq_policies
   * manageiq_tags
 - oneview
@@ -203,15 +326,23 @@ Ansible Changes By Release
   * oneview_logical_interconnect_group_facts
   * oneview_san_manager_facts
 - ucs
-  * ucs_macpool
+  * ucs_ip_pool
+  * ucs_mac_pool
+  * ucs_san_connectivity
+  * ucs_vhba_template
+  * ucs_vsans
+  * ucs_wwn_pool
 
 #### System
   * mksysb
   * nosh
+  * service_facts
 
 #### Windows
   * win_audit_policy_system
   * win_audit_rule
+  * win_certificate_store
+  * win_disk_facts
   * win_scheduled_task_stat
   * win_whoami
 

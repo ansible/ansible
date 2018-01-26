@@ -30,8 +30,7 @@ from ansible.plugins.terminal import TerminalBase
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+        re.compile(br"[\r\n][\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$")
     ]
 
     terminal_stderr_re = [
@@ -43,6 +42,10 @@ class TerminalModule(TerminalBase):
         re.compile(br"connection timed out", re.I),
         re.compile(br"[^\r\n]+ not found"),
         re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Bad mask", re.I),
+        re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
+        re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I)
     ]
 
     def on_open_shell(self):
@@ -60,7 +63,7 @@ class TerminalModule(TerminalBase):
         if passwd:
             # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
             # an r string and use to_text to ensure it's text on both py2 and py3.
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'prompt'] = to_text(r"[\r\n]password: $", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
 
         try:

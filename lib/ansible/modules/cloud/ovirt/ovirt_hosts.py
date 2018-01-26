@@ -476,8 +476,11 @@ def main():
                             event
                             for event in events_service.list(
                                 from_=int(last_event.id),
-                                search='type=885 and host.name=%s' % host.name,
-                            )
+                                search='type=885',
+                                # Uncomment when 4.1 is EOL, and remove the cond:
+                                # if host.name in event.description
+                                # search='type=885 and host.name=%s' % host.name,
+                            ) if host.name in event.description
                         ]) > 0
                     ),
                     fail_condition=lambda host: len([

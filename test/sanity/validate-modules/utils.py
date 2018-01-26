@@ -24,6 +24,13 @@ from io import BytesIO, TextIOWrapper
 import yaml
 import yaml.reader
 
+from ansible.module_utils._text import to_text
+
+
+class AnsibleTextIOWrapper(TextIOWrapper):
+    def write(self, s):
+        super(AnsibleTextIOWrapper, self).write(to_text(s, self.encoding, errors='replace'))
+
 
 def find_globals(g, tree):
     """Uses AST to find globals in an ast tree"""
@@ -54,8 +61,8 @@ class CaptureStd():
     def __enter__(self):
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        sys.stdout = self.stdout = TextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
-        sys.stderr = self.stderr = TextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
+        sys.stdout = self.stdout = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
+        sys.stderr = self.stderr = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -65,7 +72,7 @@ class CaptureStd():
     def get(self):
         """Return ``(stdout, stderr)``"""
 
-        return self.stdout.getvalue(), self.stderr.getvalue()
+        return self.stdout.buffer.getvalue(), self.stderr.buffer.getvalue()
 
 
 def parse_yaml(value, lineno, module, name, load_all=False):

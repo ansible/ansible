@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/ping.yaml"
+- debug: msg="START cli/ping.yaml on connection={{ ansible_connection }}"
 
 - ios_command:
     commands: show version

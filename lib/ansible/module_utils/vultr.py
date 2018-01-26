@@ -9,7 +9,7 @@ import os
 import time
 import urllib
 from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import fetch_url
 
 
@@ -19,9 +19,10 @@ VULTR_API_ENDPOINT = "https://api.vultr.com"
 def vultr_argument_spec():
     return dict(
         api_key=dict(default=os.environ.get('VULTR_API_KEY'), no_log=True),
-        api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT') or 60),
-        api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES') or 5),
+        api_timeout=dict(type='int', default=os.environ.get('VULTR_API_TIMEOUT')),
+        api_retries=dict(type='int', default=os.environ.get('VULTR_API_RETRIES')),
         api_account=dict(default=os.environ.get('VULTR_API_ACCOUNT') or 'default'),
+        api_endpoint=dict(default=os.environ.get('VULTR_API_ENDPOINT')),
         validate_certs=dict(default=True, type='bool'),
     )
 
@@ -48,16 +49,24 @@ class Vultr:
         except KeyError:
             config = {}
 
-        self.api_config = {
-            'api_key': self.module.params.get('api_key') or config.get('key'),
-            'api_timeout': self.module.params.get('api_timeout') or config.get('timeout'),
-            'api_retries': self.module.params.get('api_retries') or config.get('retries'),
-        }
+        try:
+            self.api_config = {
+                'api_key': self.module.params.get('api_key') or config.get('key'),
+                'api_timeout': self.module.params.get('api_timeout') or int(config.get('timeout') or 60),
+                'api_retries': self.module.params.get('api_retries') or int(config.get('retries') or 5),
+                'api_endpoint': self.module.params.get('api_endpoint') or config.get('endpoint') or VULTR_API_ENDPOINT,
+            }
+        except ValueError as e:
+            self.fail_json(msg="One of the following settings, "
+                               "in section '%s' in the ini config file has not an int value: timeout, retries. "
+                               "Error was %s" % (self.module.params.get('api_account'), to_native(e)))
 
         # Common vultr returns
         self.result['vultr_api'] = {
             'api_account': self.module.params.get('api_account'),
             'api_timeout': self.api_config['api_timeout'],
+            'api_retries': self.api_config['api_retries'],
+            'api_endpoint': self.api_config['api_endpoint'],
         }
 
         # Headers to be passed to the API
@@ -70,7 +79,7 @@ class Vultr:
     def read_ini_config(self):
         ini_group = self.module.params.get('api_account')
 
-        keys = ['key', 'timeout', 'retries']
+        keys = ['key', 'timeout', 'retries', 'endpoint']
         env_conf = {}
         for key in keys:
             if 'VULTR_API_%s' % key.upper() not in os.environ:
@@ -122,14 +131,18 @@ class Vultr:
                 return "disable"
 
     def api_query(self, path="/", method="GET", data=None):
-        url = VULTR_API_ENDPOINT + path
+        url = self.api_config['api_endpoint'] + path
 
         if data:
             data_encoded = dict()
+            data_list = ""
             for k, v in data.items():
-                if v is not None:
+                if isinstance(v, list):
+                    for s in v:
+                        data_list += '&%s[]=%s' % (k, urllib.quote(s))
+                elif v is not None:
                     data_encoded[k] = v
-            data = urllib.urlencode(data_encoded)
+            data = urllib.urlencode(data_encoded) + data_list
 
         for s in range(0, self.api_config['api_retries']):
             response, info = fetch_url(
@@ -199,7 +212,7 @@ class Vultr:
                 })
                 return r_data
 
-        self.module.fail_json(msg="Could not find %s %s: %s" % (resource, key, value))
+        self.module.fail_json(msg="Could not find %s with %s: %s" % (resource, key, value))
 
     def get_result(self, resource):
         if resource:

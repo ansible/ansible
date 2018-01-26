@@ -18,7 +18,7 @@ description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
 - More information from the internal APIC class
   I(fvns:VlanInstP), I(fvns:VxlanInstP), and I(fvns:VsanInstP) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
@@ -55,7 +55,7 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add a new vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -65,7 +65,7 @@ EXAMPLES = r'''
 
 - name: Remove a vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -74,7 +74,7 @@ EXAMPLES = r'''
 
 - name: Query a vlan pool
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
@@ -83,7 +83,7 @@ EXAMPLES = r'''
 
 - name: Query all vlan pools
   aci_encap_pool:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
@@ -114,7 +114,7 @@ ACI_MAPPING = dict(
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'static']),
         description=dict(type='str', aliases=['descr']),

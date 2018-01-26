@@ -77,6 +77,7 @@ options:
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -183,7 +184,7 @@ def validate_param_values(module, obj, param=None):
 def parse_shutdown(configobj, name):
     cfg = configobj['interface %s' % name]
     cfg = '\n'.join(cfg.children)
-    match = re.search(r'shutdown', cfg, re.M)
+    match = re.search(r'^shutdown', cfg, re.M)
     if match:
         return True
     else:

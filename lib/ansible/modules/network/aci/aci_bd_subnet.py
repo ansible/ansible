@@ -16,15 +16,11 @@ module: aci_bd_subnet
 short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(fv:Subnet) at U(https://developer.cisco.com/media/mim-ref/MO-fvSubnet.html).
+- More information from the internal APIC class I(fv:Subnet) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
   is required when the state is C(absent) or C(present).
@@ -34,9 +30,11 @@ options:
   bd:
     description:
     - The name of the Bridge Domain.
+    aliases: [ bd_name ]
   description:
     description:
     - The description for the Subnet.
+    aliases: [ descr ]
   enable_vip:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
@@ -102,19 +100,26 @@ options:
     description:
     - The name of the Tenant.
     aliases: [ tenant_name ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
 - name: create a tenant
   aci_tenant:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
 
 - name: create a bridge domain
   aci_bd:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -122,7 +127,7 @@ EXAMPLES = r'''
 
 - name: create a subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -132,7 +137,7 @@ EXAMPLES = r'''
 
 - name: create a subnet with options
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -147,7 +152,7 @@ EXAMPLES = r'''
 
 - name: update a subnets scope to private and shared
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     tenant: production
@@ -158,14 +163,14 @@ EXAMPLES = r'''
 
 - name: get all subnets
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
 
 - name: get all subnets of specific gateway in specified tenant
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -175,7 +180,7 @@ EXAMPLES = r'''
 
 - name: get specific subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: query
@@ -186,7 +191,7 @@ EXAMPLES = r'''
 
 - name: delete a subnet
   aci_bd_subnet:
-    hostname: apic
+    host: apic
     username: admin
     password: SomeSecretPassword
     state: absent
@@ -206,7 +211,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name']),
         description=dict(type='str', aliases=['descr']),
@@ -226,6 +231,7 @@ def main():
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -248,7 +254,7 @@ def main():
         # TODO: split checkes between IPv4 and IPv6 Addresses
         module.fail_json(msg='Valid Subnet Masks are 0 to 32 for IPv4 Addresses and 0 to 128 for IPv6 addresses')
     if gateway is not None:
-        gateway = '{}/{}'.format(gateway, str(mask))
+        gateway = '{0}/{1}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
     preferred = module.params['preferred']
@@ -271,20 +277,20 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, \"{}\")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='fvBD',
-            aci_rn='BD-{}'.format(bd),
-            filter_target='eq(fvBD.name, \"{}\")'.format(bd),
+            aci_rn='BD-{0}'.format(bd),
+            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
         ),
         subclass_2=dict(
             aci_class='fvSubnet',
-            aci_rn='subnet-[{}]'.format(gateway),
-            filter_target='eq(fvSubnet.ip, \"{}\")'.format(gateway),
+            aci_rn='subnet-[{0}]'.format(gateway),
+            filter_target='eq(fvSubnet.ip, "{0}")'.format(gateway),
             module_object=gateway,
         ),
         child_classes=['fvRsBDSubnetToProfile', 'fvRsNdPfxPol'],

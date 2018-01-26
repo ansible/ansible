@@ -52,14 +52,8 @@ class IncludedFile:
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, inventory, loader, variable_manager):
+    def process_include_results(results, iterator, loader, variable_manager):
         included_files = []
-
-        def get_original_host(host):
-            if host.name in inventory._hosts_cache:
-                return inventory._hosts_cache[host.name]
-            else:
-                return inventory.get_host(host.name)
 
         for res in results:
 
@@ -85,7 +79,7 @@ class IncludedFile:
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
                     if original_task.loop_control:
-                        loop_var = original_task.loop_control.loop_var or 'item'
+                        loop_var = original_task.loop_control.loop_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
 

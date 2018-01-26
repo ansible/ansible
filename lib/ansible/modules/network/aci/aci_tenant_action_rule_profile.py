@@ -16,15 +16,11 @@ module: aci_tenant_action_rule_profile
 short_description: Manage action rule profiles on Cisco ACI fabrics (rtctrl:AttrP)
 description:
 - Manage action rule profiles on Cisco ACI fabrics.
-- More information from the internal APIC class
-  I(rtctrl:AttrP) at U(https://developer.cisco.com/media/mim-ref/MO-rtctrlAttrP.html).
+- More information from the internal APIC class I(rtctrl:AttrP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
-- Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
@@ -53,7 +49,7 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_tenant_action_rule_profile:
-    hostname: '{{ inventory_hostname }}'
+    host: '{{ inventory_hostname }}'
     username: '{{ username }}'
     password: '{{ password }}'
     action_rule: '{{ action_rule }}'
@@ -70,13 +66,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec = aci_argument_spec
+    argument_spec = aci_argument_spec()
     argument_spec.update(
         action_rule=dict(type='str', required=False, aliases=['action_rule_name', 'name']),  # Not required for querying all objects
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -97,14 +94,14 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
-            aci_rn='tn-{}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{}")'.format(tenant),
+            aci_rn='tn-{0}'.format(tenant),
+            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
         ),
         subclass_1=dict(
             aci_class='rtctrlAttrP',
-            aci_rn='attr-{}'.format(action_rule),
-            filter_target='eq(rtctrlAttrP.name, "{}")'.format(action_rule),
+            aci_rn='attr-{0}'.format(action_rule),
+            filter_target='eq(rtctrlAttrP.name, "{0}")'.format(action_rule),
             module_object=action_rule,
         ),
     )

@@ -140,8 +140,16 @@ class JsonRpc(object):
 
     def exists(self, path):
         payload = {'method': 'exists', 'params': {'path': path}}
-        resp, resp_json = self._read_call(payload)
-        return resp_json['result']['exists']
+        try:
+            resp, resp_json = self._read_call(payload)
+            return resp_json['result']['exists']
+        except NsoException as ex:
+            # calling exists on a sub-list when the parent list does
+            # not exists will cause data.not_found errors on recent
+            # NSO
+            if 'type' in ex.error and ex.error['type'] == 'data.not_found':
+                return False
+            raise
 
     def create(self, th, path):
         payload = {'method': 'create', 'params': {'th': th, 'path': path}}
@@ -158,6 +166,28 @@ class JsonRpc(object):
         }
         resp, resp_json = self._write_call(payload)
         return resp_json['result']
+
+    def show_config(self, path, operational=False):
+        payload = {
+            'method': 'show_config',
+            'params': {
+                'path': path,
+                'result_as': 'json',
+                'with_oper': operational}
+        }
+        resp, resp_json = self._read_call(payload)
+        return resp_json['result']
+
+    def query(self, xpath, fields):
+        payload = {
+            'method': 'query',
+            'params': {
+                'xpath_expr': xpath,
+                'selection': fields
+            }
+        }
+        resp, resp_json = self._read_call(payload)
+        return resp_json['result']['results']
 
     def run_action(self, th, path, params=None):
         if params is None:
@@ -416,14 +446,20 @@ class ValueBuilder(object):
 
         schema = self._find_child(parent_path, parent_schema, key)
         if self._is_leaf(schema):
-            path_type = schema['type']
-            if path_type.get('primitive', False):
-                return path_type['name']
-            else:
-                path_type_key = '{0}:{1}'.format(
-                    path_type['namespace'], path_type['name'])
-                type_info = meta['types'][path_type_key]
-                return type_info[-1]['name']
+            def get_type(meta, curr_type):
+                if curr_type.get('primitive', False):
+                    return curr_type['name']
+                if 'namespace' in curr_type:
+                    curr_type_key = '{0}:{1}'.format(
+                        curr_type['namespace'], curr_type['name'])
+                    type_info = meta['types'][curr_type_key][-1]
+                    return get_type(meta, type_info)
+                if 'leaf_type' in curr_type:
+                    return get_type(meta, curr_type['leaf_type'][-1])
+                return curr_type['name']
+
+            return get_type(meta, schema['type'])
+
         return None
 
     def _ensure_schema_cached(self, path):
@@ -481,16 +517,40 @@ def connect(params):
     return client
 
 
-def verify_version(client):
+def verify_version(client, required_versions=None):
+    if required_versions is None:
+        required_versions = [(4, 5), (4, 4, 3)]
+
     version_str = client.get_system_setting('version')
+    if not verify_version_str(version_str, required_versions):
+        supported_versions = ', '.join(
+            ['.'.join([str(p) for p in required_version])
+             for required_version in required_versions])
+        raise ModuleFailException(
+            'unsupported NSO version {0}. {1} or later supported'.format(
+                version_str, supported_versions))
+
+
+def verify_version_str(version_str, required_versions):
     version = [int(p) for p in version_str.split('.')]
     if len(version) < 2:
         raise ModuleFailException(
             'unsupported NSO version format {0}'.format(version_str))
-    if (version[0] < 4 or version[1] < 4 or
-            (version[1] == 4 and (len(version) < 3 or version[2] < 3))):
-        raise ModuleFailException(
-            'unsupported NSO version {0}, only 4.4.3 or later is supported'.format(version_str))
+
+    def check_version(required_version, version):
+        for pos in range(len(required_version)):
+            if pos >= len(version):
+                return False
+            if version[pos] > required_version[pos]:
+                return True
+            if version[pos] < required_version[pos]:
+                return False
+        return True
+
+    for required_version in required_versions:
+        if check_version(required_version, version):
+            return True
+    return False
 
 
 def normalize_value(expected_value, value, key):

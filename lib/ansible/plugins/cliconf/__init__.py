@@ -25,7 +25,7 @@ from abc import ABCMeta, abstractmethod
 from functools import wraps
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 
 try:
@@ -45,8 +45,8 @@ except ImportError:
 def enable_mode(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        prompt = self.get_prompt()
-        if not str(prompt).strip().endswith('#'):
+        prompt = self._connection.get_prompt()
+        if not to_text(prompt, errors='surrogate_or_strict').strip().endswith('#'):
             raise AnsibleError('operation requires privilege escalation')
         return func(self, *args, **kwargs)
     return wrapped
@@ -94,23 +94,20 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command, prompt=None, answer=None, sendonly=False):
+    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True):
         """Executes a cli command and returns the results
         This method will execute the CLI command on the connection and return
         the results to the caller.  The command output will be returned as a
         string
         """
-        kwargs = {'command': to_bytes(command), 'sendonly': sendonly}
+        kwargs = {'command': to_bytes(command), 'sendonly': sendonly,
+                  'newline': newline}
         if prompt is not None:
             kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
             kwargs['answer'] = to_bytes(answer)
 
-        if not signal.getsignal(signal.SIGALRM):
-            signal.signal(signal.SIGALRM, self._alarm_handler)
-        signal.alarm(self._connection._play_context.timeout)
         resp = self._connection.send(**kwargs)
-        signal.alarm(0)
         return resp
 
     def get_base_rpc(self):

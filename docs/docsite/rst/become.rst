@@ -420,6 +420,108 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
+Accounts without a Password
+---------------------------
+
+.. Warning:: As a general security best practice, you should avoid allowing accounts without passwords.
+
+Ansible can be used to become an account that does not have a password (like the
+``Guest`` account). To become an account without a password, set up the
+variables like normal but either do not define ``ansible_become_pass`` or set
+``ansible_become_pass: ''``.
+
+Before become can work on an account like this, the local policy
+`Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
+must be disabled. This can either be done through a Group Policy Object (GPO)
+or with this Ansible task:
+
+.. code-block:: yaml
+
+   - name: allow blank password on become
+     win_regedit:
+       path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+       name: LimitBlankPasswordUse
+       data: 0
+       type: dword
+       state: present
+
+.. Note:: This is only for accounts that do not have a password. You still need
+    to set the account's password under ``ansible_become_pass`` if the
+    become_user has a password.
+
+Become Flags
+------------
+Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method. This parameter can be set using the ``become_flags`` task directive or set in Ansible's configuration using ``ansible_become_flags``. The two valid values that are initially supported for this parameter are ``logon_type`` and ``logon_flags``.
+
+
+.. Note:: These flags should only be set when becoming a normal user account, not a local service account like LocalSystem.
+
+The key ``logon_type`` sets the type of logon operation to perform. The value
+can be set to one of the following:
+
+* ``interactive``: The default logon type. The process will be run under a
+  context that is the same as when running a process locally. This bypasses all
+  WinRM restrictions and is the recommended method to use.
+
+* ``batch``: Runs the process under a batch context that is similar to a
+  scheduled task with a password set. This should bypass most WinRM
+  restrictions and is useful if the ``become_user`` is not allowed to log on
+  interactively.
+
+* ``new_credentials``: Runs under the same credentials as the calling user, but
+  outbound connections are run under the context of the ``become_user`` and
+  ``become_password``, similar to ``runas.exe /netonly``. The ``logon_flags``
+  flag should also be set to ``netcredentials_only``. Use this flag if
+  the process needs to access a network resource (like an SMB share) using a
+  different set of credentials.
+
+* ``network``: Runs the process under a network context without any cached
+  credentials. This results in the same type of logon session as running a
+  normal WinRM process without credential delegation, and operates under the same
+  restrictions.
+
+* ``network_cleartext``: Like the ``network`` logon type, but instead caches
+  the credentials so it can access network resources. This is the same type of
+  logon session as running a normal WinRM process with credential delegation.
+
+For more information, see
+`dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+
+The ``logon_flags`` key specifies how Windows will log the user on when creating
+the new process. The value can be set to one of the following:
+
+* ``with_profile``: The default logon flag set. The process will load the
+  user's profile in the ``HKEY_USERS`` registry key to ``HKEY_CURRENT_USER``.
+
+* ``netcredentials_only``: The process will use the same token as the caller
+  but will use the ``become_user`` and ``become_password`` when accessing a remote
+  resource. This is useful in inter-domain scenarios where there is no trust
+  relationship, and should be used with the ``new_credentials`` ``logon_type``.
+
+For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
+
+Here are some examples of how to use ``become_flags`` with Windows tasks:
+
+.. code-block:: yaml
+
+  - name: copy a file from a fileshare with custom credentials
+    win_copy:
+      src: \\server\share\data\file.txt
+      dest: C:\temp\file.txt
+      remote_src: yex
+    vars:
+      ansible_become: yes
+      ansible_become_method: runas
+      ansible_become_user: DOMAIN\user
+      ansible_become_pass: Password01
+      ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
+
+  - name: run a command under a batch logon
+    win_command: whoami
+    become: yes
+    become_flags: logon_type=batch
+
+
 Limitations
 -----------
 
@@ -428,8 +530,8 @@ Be aware of the following limitations with ``become`` on Windows:
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
   and Windows 7 does not work.
 
-* The become user logs on with an interactive session, so it must have the
-  ability to do so on the Windows host. If it does not inherit the
+* By default, the become user logs on with an interactive session, so it must
+  have the right to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
   privilege, the become process will fail.
 

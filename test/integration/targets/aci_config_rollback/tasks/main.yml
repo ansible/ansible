@@ -10,12 +10,14 @@
 
 - name: ensure tenant does not exist for tests to kick off
   aci_tenant: &aci_tenant_absent
-    hostname: "{{ aci_hostname }}"
+    host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
     password: "{{ aci_password }}"
-    validate_certs: no
-    tenant: anstest
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     state: absent
+    tenant: anstest
 
 - name: create a snapshot
   aci_config_snapshot: &create_snapshot
@@ -82,7 +84,7 @@
       - '"<fvTenant name=\"anstest\" rn=\"tn-anstest\" status=\"deleted\">" in rollback_preview.diff'
       - '"snapshots.diff.xml" in rollback_preview.url'
       - rollback_missing_param.failed == true
-      - 'rollback_missing_param.msg == "state is rollback but the following are missing: import_policy"'
+      - 'rollback_missing_param.msg == "state is rollback but all of the following are missing: import_policy"'
       - rollback_rollback.changed == true
       - '"ce2_" in rollback_rollback.config.configImportP.attributes.fileName'
       - '".tar.gz" in rollback_rollback.config.configImportP.attributes.fileName'
