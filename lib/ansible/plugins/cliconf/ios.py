@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import re
 import json
 
@@ -70,13 +71,13 @@ class Cliconf(CliconfBase):
     @enable_mode
     def edit_config(self, command):
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
-            if cmd[0] == '{':
-                cmd = json.loads(cmd.replace('\'', '"'))
+            try:
+                cmd = ast.literal_eval(cmd)
                 command = cmd['command']
                 prompt = cmd['prompt']
                 answer = cmd['answer']
                 newline = cmd.get('newline', True)
-            else:
+            except:
                 command = cmd
                 prompt = None
                 answer = None
