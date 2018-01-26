@@ -103,7 +103,7 @@ EXAMPLES = '''
     script_target: "remote_device"
     script_description: "Create by Ansible"
     script_content: "get system status"
-    
+
 - name: EXECUTE SCRIPT
   fmgr_script:
     host: "{{inventory_hostname}}"
@@ -113,7 +113,7 @@ EXAMPLES = '''
     script_name: "TestScript"
     state: "execute"
     script_scope: "FGT1,FGT2"
-    
+
 - name: DELETE SCRIPT
   fmgr_script:
     host: "{{inventory_hostname}}"
