@@ -70,7 +70,7 @@ EXAMPLES = '''
     - 'bypath'
 '''
 
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -158,7 +158,9 @@ class LookupModule(LookupBase):
                         x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
 
                 if len(paramlist):
-                    return paramlist
+                    return boto3_tag_list_to_ansible_dict(paramlist,
+                                                          tag_name_key_name="Name",
+                                                          tag_value_key_name="Value")
                 else:
                     return None
             # Lookup by parameter name
