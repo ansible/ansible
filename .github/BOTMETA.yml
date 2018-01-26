@@ -104,11 +104,10 @@ files:
   $modules/cloud/amazon/ec2_vpc_vgw.py: naslanidis
   $modules/cloud/amazon/ec2_vpc_vgw_facts.py: naslanidis willthames
   $modules/cloud/amazon/ec2_win_password.py: rickmendes
-  $modules/cloud/amazon/ecs_cluster.py: simplesteph
   $modules/cloud/amazon/ecs_ecr.py: leedm777 willthames
-  $modules/cloud/amazon/ecs_service_facts.py: java1guy kaczynskid simplesteph
-  $modules/cloud/amazon/ecs_task.py: simplesteph
-  $modules/cloud/amazon/ecs_taskdefinition.py: simplesteph
+  $modules/cloud/amazon/ecs_service.py:
+    ignored: simplesteph
+  $modules/cloud/amazon/ecs_service_facts.py: java1guy kaczynskid
   $modules/cloud/amazon/efs.py: akazakov ryansydnor
   $modules/cloud/amazon/efs_facts.py: ryansydnor
   $modules/cloud/amazon/elasticache.py: alachaum jsdalton
