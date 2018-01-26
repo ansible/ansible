@@ -618,6 +618,16 @@ EXAMPLES = '''
         - bar
         - baz: bang
 
+- name: create ec2 instances using a lookup and keywork arguments
+  # See also U(http://docs.ansible.com/ansible/latest/playbooks_loops.html#looping-over-hashes)
+  ec2:
+    "{{ item }}"
+  with_items: "{{ lookup('file', 'var.json') | from_json }}"
+
+- name: create ec2 instances using a list of instance dictionaries
+  ec2:
+    "{{ item }}"
+  with_items: "{{ instances_array }}"
 '''
 
 import traceback
