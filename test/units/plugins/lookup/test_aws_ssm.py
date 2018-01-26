@@ -52,20 +52,37 @@ simple_variable_success_response = {
     }
 }
 
+path_success_response = copy(simple_variable_success_response)
+path_success_response['Parameters'] = [
+    {'Name': '/testpath/too', 'Type': 'String', 'Value': 'simple_value_too', 'Version': 1},
+    {'Name': '/testpath/won', 'Type': 'String', 'Value': 'simple_value_won', 'Version': 1}
+]
+
 missing_variable_fail_response = copy(simple_variable_success_response)
 missing_variable_fail_response['Parameters'] = []
 missing_variable_fail_response['InvalidParameters'] = ['missing_variable']
 
 def test_lookup_variable():
     lookup = aws_ssm.LookupModule()
-    
+
     boto3_client_double = MagicMock()
-    # boto3_client_double.return_value.get_parameter_by_path.return_value = "simplevalue"
     boto3_client_double.return_value.get_parameters.return_value = simple_variable_success_response
 
     with patch.object(boto3, 'client', boto3_client_double):
         retval = lookup.run(["simple_variable"], {})
     assert(retval[0] == "simplevalue")
+
+
+def test_path_lookup_variable():
+    lookup = aws_ssm.LookupModule()
+
+    boto3_client_double = MagicMock()
+    boto3_client_double.return_value.get_parameters_by_path.return_value = path_success_response
+
+    with patch.object(boto3, 'client', boto3_client_double):
+        retval = lookup.run(["/testpath", "bypath"], {})
+    assert(retval["/testpath/won"] == "simple_value_won")
+    assert(retval["/testpath/too"] == "simple_value_too")
 
 
 def test_warn_missing_variable():
