@@ -101,6 +101,7 @@ Ansible Changes By Release
   * ecs_taskdefinition_facts
   * elasticache_facts
   * iam_role_facts
+  * iam_user
 - azure
   * azure_rm_containerinstance
   * azure_rm_containerregistry
