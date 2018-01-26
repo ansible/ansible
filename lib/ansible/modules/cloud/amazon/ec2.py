@@ -1755,6 +1755,14 @@ def main():
         else:
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
 
+    # Always return instances in the same order
+    if new_instance_ids:
+        new_instance_ids.sort()
+    if instance_dict_array:
+        instance_dict_array.sort(key=lambda x: x['id'])
+    if tagged_instances:
+        tagged_instances.sort(key=lambda x: x['id'])
+
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
 
