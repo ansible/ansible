@@ -171,9 +171,9 @@ def get_jobs(module):
         else:
             jobs = all_jobs
         # python-jenkins includes the internal Jenkins class used for each job
-        # in its return value; we strip that out because the leading _ (and the
-        # fact that it's not documented in the python-jenkins docs) indicates
-        # that it's not part of the dependable public interface.
+        # in its return value; we strip that out because the leading underscore
+        # (and the fact that it's not documented in the python-jenkins docs)
+        # indicates that it's not part of the dependable public interface.
         for job in jobs:
             if "_class" in job:
                 del job["_class"]
@@ -184,7 +184,7 @@ def get_jobs(module):
     return jobs
 
 
-def run_module():
+def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=False),
@@ -213,4 +213,4 @@ def run_module():
 
 
 if __name__ == '__main__':
-    run_module()
+    main()
