@@ -152,23 +152,28 @@ def get_jobs(module):
     if module.params.get("name"):
         try:
             job_info = jenkins_conn.get_job_info(module.params.get("name"))
+        except jenkins.NotFoundException:
+            pass
+        else:
             jobs.append({
                 "name": job_info["name"],
                 "fullname": job_info["fullName"],
                 "url": job_info["url"],
                 "color": job_info["color"]
             })
-        except jenkins.NotFoundException:
-            pass
+
     else:
         all_jobs = jenkins_conn.get_all_jobs()
         if module.params.get("glob"):
-            jobs.extend([
+            jobs.extend(
                 j for j in all_jobs
-                if fnmatch.fnmatch(j["fullname"], module.params.get("glob"))
-            ])
+                if fnmatch.fnmatch(j["fullname"], module.params.get("glob")))
         else:
             jobs = all_jobs
+        # python-jenkins includes the internal Jenkins class used for each job
+        # in its return value; we strip that out because the leading _ (and the
+        # fact that it's not documented in the python-jenkins docs) indicates
+        # that it's not part of the dependable public interface.
         for job in jobs:
             if "_class" in job:
                 del job["_class"]
@@ -207,9 +212,5 @@ def run_module():
     module.exit_json(changed=False, jobs=jobs)
 
 
-def main():
-    run_module()
-
-
 if __name__ == '__main__':
-    main()
+    run_module()
