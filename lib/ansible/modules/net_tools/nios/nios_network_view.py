@@ -67,6 +67,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  delegate_to: localhost
 
 - name: update the comment for network view
   nios_network_view:
@@ -77,6 +78,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  delegate_to: localhost
 
 - name: remove the network view
   nios_network_view:
@@ -86,6 +88,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  delegate_to: localhost
 '''
 
 RETURN = ''' # '''
