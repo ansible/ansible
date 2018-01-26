@@ -154,8 +154,8 @@ options:
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.
-      - Should I(only ever) be set to false for testing purposes, for example
-        when testing against a local Pebble server.
+      - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
+        for example when testing against a local Pebble server.
     required: false
     default: true
     version_added: 2.5
@@ -1209,6 +1209,11 @@ def main():
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     locale.setlocale(locale.LC_ALL, 'C')
+
+    if not module.params.get('validate_certs'):
+        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
+                            'This should only be done for testing against a local ACME server for ' +
+                            'development purposes, but *never* for production purposes.')
 
     if module.params.get('dest'):
         cert_days = get_cert_days(module, module.params['dest'])
