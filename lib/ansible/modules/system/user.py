@@ -1965,6 +1965,11 @@ class AIX(User):
 class HPUX(User):
     """
     This is a HP-UX User manipulation class.
+    
+    NOTE: for a password change you should use the following command on an 
+    HPUX machine to create an encrypted password
+    
+        echo"<password>"$(date +%S) | /usr/lbin/makekey
 
     This overrides the following methods from the generic class:-
       - create_user()
@@ -2096,6 +2101,8 @@ class HPUX(User):
             cmd.append(self.shell)
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            if self.force:
+                cmd.append('-F')
             cmd.append('-p')
             cmd.append(self.password)
 
