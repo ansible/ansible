@@ -149,6 +149,7 @@ class WapiBase(object):
             else:
                 raise
 
+
 class WapiLookup(WapiBase):
     ''' Implements WapiBase for lookup plugins '''
     pass
