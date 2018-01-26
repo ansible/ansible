@@ -1,8 +1,9 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import pytest
 import json
+
+import pytest
 
 from ansible.modules.net_tools import nmcli
 
@@ -113,6 +114,18 @@ TESTCASE_BRIDGE_SLAVE = [
         'conn_name': 'non_existent_nw_device',
         'ifname': 'br0_non_existant',
         'path_cost': 100,
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
+TESTCASE_VLAN = [
+    {
+        'type': 'vlan',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'vlan_not_exists',
+        'ip4': '10.10.10.10',
+        'gw4': '10.10.10.1',
         'state': 'present',
         '_ansible_check_mode': False,
     }
@@ -359,4 +372,38 @@ def test_mod_bridge_slave(mocked_generic_connection_modify):
     assert args[0][3] == 'non_existent_nw_device'
 
     for param in ['bridge-port.path-cost', '100']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VLAN, indirect=['patch_ansible_module'])
+def test_create_vlan_con(mocked_generic_connection_create):
+    """
+    Test if Bridge_slave created
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['vlan']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VLAN, indirect=['patch_ansible_module'])
+def test_mod_vlan_conn(mocked_generic_connection_modify):
+    """
+    Test if Bridge_slave modified
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['vlan.id']:
         assert param in args[0]
