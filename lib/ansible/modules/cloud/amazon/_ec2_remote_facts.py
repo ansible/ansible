@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: ec2_remote_facts
 short_description: Gather facts about ec2 instances in AWS
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: Replaced with boto3 version.
   alternative: Use M(ec2_instance_facts) instead.
 description:

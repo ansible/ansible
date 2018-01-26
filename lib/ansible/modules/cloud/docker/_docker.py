@@ -19,7 +19,7 @@ module: docker
 version_added: "1.4"
 short_description: manage docker containers
 deprecated:
-  version: "2.2"
+  removed_in: "2.4"
   why: Replaced by dedicated modules.
   alternative: Use M(docker_container) and M(docker_image) instead.
 description:

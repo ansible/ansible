@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: accelerate
 short_description: Enable accelerated mode on remote node
 deprecated:
-  version: "2.2"
+  removed_in: "2.4"
   why: Replaces by ControlPersist
   alternative: Use SSH with ControlPersist instead.
   removed: True

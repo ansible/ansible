@@ -17,7 +17,7 @@ module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
 deprecated:
-  version: "2.5"
+  removed_in: "2.9"
   why: Various AWS modules have been combined and replaced with M(ec2_ami_facts).
   alternative: Use M(ec2_ami_facts) instead.
 description:

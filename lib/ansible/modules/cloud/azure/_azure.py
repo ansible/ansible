@@ -20,7 +20,7 @@ description:
      - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: Replaced with various dedicated Azure modules.
   alternative: M(azure_rm_virtualmachine)
 options:

@@ -36,7 +36,7 @@ description:
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: Renamed panos_security_policy to M(panos_security_rule) in order to align with API calls and UI object references, which also has extra support for PanDevice SDK.
   alternative: Use M(panos_security_rule) instead.
 requirements:

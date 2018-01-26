@@ -209,7 +209,7 @@ The following fields can be used and are all required unless specified otherwise
   * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
   * Following values should be set:
 
-  :version: A `string` which represents the version of Ansible the deprecation starts, i.e. ``version: "2.5"``. Not the version this will be removed in.
+  :removed_in_version: A `string` which represents the version of Ansible this option will be deleted in.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:

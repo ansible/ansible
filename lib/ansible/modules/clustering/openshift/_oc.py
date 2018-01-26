@@ -18,7 +18,7 @@ DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
 deprecated:
-  version: "2.5"
+  removed_in: "2.9"
   why: This module used the oc command line tool, where as M(openshift_raw) goes over the REST API.
   alternative: Use M(openshift_raw) instead.
 description:

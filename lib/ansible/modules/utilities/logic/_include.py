@@ -20,7 +20,7 @@ author: Ansible Core Team (@ansible)
 module: include
 short_description: Include a play or task list
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: The include action was too confusing, dealing with both plays and tasks, being both dynamic and static. This module will be removed in version 2.8.
   alternative: Use M(include_tasks), M(import_playbook), M(import_tasks).
 description:

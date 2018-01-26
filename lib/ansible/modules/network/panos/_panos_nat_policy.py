@@ -31,7 +31,7 @@ version_added: "2.3"
 requirements:
     - pan-python
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: M(panos_nat_rule) uses next generation SDK (PanDevice).
   alternative: Use M(panos_nat_rule) instead.
 options:

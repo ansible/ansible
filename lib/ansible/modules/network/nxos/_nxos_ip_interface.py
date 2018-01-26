@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: nxos_ip_interface
 version_added: "2.1"
 deprecated:
-  version: "2.5"
+  removed_in: "2.9"
   why: Replaced with common C(*_l3_interface) network modules.
   alternative: Use M(nxos_l3_interface) instead.
 short_description: Manages L3 attributes for IPv4 and IPv6 interfaces.

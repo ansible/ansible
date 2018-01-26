@@ -90,7 +90,9 @@ def deprecation_schema():
         #   * old versions should be removed from the beginning of this list
         #   * git rm old modules
         #   * Update CHANGELOG & porting_guide
-        Required('version'): Any("2.0", "2.2", "2.3", "2.4", "2.5"),
+        # 2.3 -> removed_in: "2.5" +2
+        # 2.4 -> removed_in: "2.8" +4
+        Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.8", "2.9"),
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
         'removed': Any(True),

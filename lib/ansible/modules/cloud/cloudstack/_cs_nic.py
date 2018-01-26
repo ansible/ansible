@@ -21,7 +21,7 @@ version_added: "2.3"
 author:
 - René Moser (@resmo)
 deprecated:
-  version: "2.4"
+  removed_in: "2.8"
   why: New module created.
   alternative: Use M(cs_instance_nic_secondaryip) instead.
 options:
