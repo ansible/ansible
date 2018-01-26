@@ -291,6 +291,9 @@ class ActionModule(ActionBase):
                     original_basename=source_rel,
                 )
             )
+            if not self._task.args.get('checksum'):
+                new_module_args['checksum'] = local_checksum
+
             if lmode:
                 new_module_args['mode'] = lmode
 
