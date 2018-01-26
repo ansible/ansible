@@ -63,6 +63,7 @@ class TerminalModule(TerminalBase):
         if passwd:
             cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
+            cmd[u'prompt_retry_check'] = True
 
         try:
             self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
