@@ -37,7 +37,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"% ?Error"),
         # re.compile(br"^% \w+", re.M),
         re.compile(br"% ?Bad secret"),
-        #re.compile(br"[\r\n%] Bad passwords"),
+        # re.compile(br"[\r\n%] Bad passwords"),
         re.compile(br"invalid input", re.I),
         re.compile(br"(?:incomplete|ambiguous) command", re.I),
         re.compile(br"connection timed out", re.I),
