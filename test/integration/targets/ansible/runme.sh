@@ -15,4 +15,3 @@ ansible-config list | grep 'DEFAULT_REMOTE_USER'
 
 # 'view' command must fail when config file is missing
 ansible-config -c ./ansible-non-existent.cfg view && exit 1 || echo 'Failure is expected'
-

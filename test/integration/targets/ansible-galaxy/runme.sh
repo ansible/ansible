@@ -2,10 +2,6 @@
 
 set -eux -o pipefail
 
-################################################################################
-# BEGIN: Test case for ansible-galaxy
-#
-
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 
@@ -107,6 +103,3 @@ rm -fr "${galaxy_testdir}"
 
 
 rm -fr "${galaxy_local_test_role_dir}"
-#
-# END: Test case for ansible-galaxy
-################################################################################
