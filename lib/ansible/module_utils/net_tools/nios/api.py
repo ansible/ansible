@@ -145,7 +145,7 @@ class WapiBase(object):
             return method(*args, **kwargs)
         except InfobloxException as exc:
             if hasattr(self, 'handle_exception'):
-                self.handle_exception(exc)
+                self.handle_exception(name, exc)
             else:
                 raise
 
@@ -172,7 +172,7 @@ class WapiModule(WapiBase):
         except Exception as exc:
             self.module.fail_json(msg=to_text(exc))
 
-    def handle_exception(self, exc):
+    def handle_exception(self, method_name, exc):
         ''' Handles any exceptions raised
 
         This method will be called if an InfobloxException is raised for
@@ -185,7 +185,7 @@ class WapiModule(WapiBase):
             msg=exc.response['text'],
             type=exc.response['Error'].split(':')[0],
             code=exc.response.get('code'),
-            action=name
+            operation=method_name
         )
 
     def run(self, ib_obj_type, ib_spec):
