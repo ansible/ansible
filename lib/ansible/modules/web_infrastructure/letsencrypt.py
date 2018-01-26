@@ -131,6 +131,13 @@ options:
       - "Required if C(dest) is not specified."
     version_added: 2.5
     aliases: ['fullchain']
+  chain_dest:
+    description:
+      - If specified, the intermediate certificate will be written to this file.
+    required: false
+    default: null
+    aliases: ['chain']
+    version_added: 2.5
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -175,12 +182,13 @@ EXAMPLES = '''
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
 #     when: sample_com_challenge is changed
 
-- name: Let the challenge be validated and retrieve the cert
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
     fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
+    chain_dest: /etc/httpd/ssl/sample.com-intermediate.crt
     data: "{{ sample_com_challenge }}"
 
 ### Example with DNS challenge against production ACME server ###
@@ -207,12 +215,14 @@ EXAMPLES = '''
 #     ttl: 60
 #     value: '"{{ item.value[challenge].resource_value }}"'
 
-- name: Let the challenge be validated and retrieve the cert
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
     account_key_src: /etc/pki/cert/private/account.key
     account_email: myself@sample.com
     src: /etc/pki/cert/csr/sample.com.csr
     cert: /etc/httpd/ssl/sample.com.crt
+    fullchain: /etc/httpd/ssl/sample.com-fullchain.crt
+    chain: /etc/httpd/ssl/sample.com-intermediate.crt
     challenge: dns-01
     acme_directory: https://acme-v01.api.letsencrypt.org/directory
     remaining_days: 60
@@ -739,8 +749,9 @@ class ACMEClient(object):
         self.version = module.params['acme_version']
         self.challenge = module.params['challenge']
         self.csr = module.params['csr']
-        self.dest = module.get('dest')
-        self.fullchain_dest = module.get('fullchain_dest')
+        self.dest = module.params.get('dest')
+        self.fullchain_dest = module.params.get('fullchain_dest')
+        self.chain_dest = module.params.get('chain_dest')
         self.account = ACMEAccount(module)
         self.directory = self.account.directory
         self.data = module.params['data']
@@ -1103,6 +1114,9 @@ class ACMEClient(object):
                 self.cert_days = get_cert_days(self.module, self.fullchain_dest)
                 self.changed = True
 
+            if self.chain_dest and write_file(self.module, self.chain_dest, ("\n".join(chain)).encode('utf8')):
+                self.changed = True
+
 
 def main():
     module = AnsibleModule(
@@ -1119,6 +1133,7 @@ def main():
             data=dict(required=False, no_log=True, default=None, type='dict'),
             dest=dict(aliases=['cert'], type='path'),
             fullchain_dest=dict(aliases=['fullchain'], type='path'),
+            chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
         ),
         required_one_of=(
