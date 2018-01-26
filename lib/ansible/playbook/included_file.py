@@ -78,10 +78,14 @@ class IncludedFile:
 
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
+                    index_var = None
                     if original_task.loop_control:
                         loop_var = original_task.loop_control.loop_var
+                        index_var = original_task.loop_control.index_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
+                    if index_var and index_var in include_result:
+                        task_vars[index_var] = include_variables[index_var] = include_result[index_var]
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None

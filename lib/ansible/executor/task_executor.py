@@ -269,10 +269,12 @@ class TaskExecutor:
         task_vars = self._job_vars
 
         loop_var = 'item'
+        index_var = None
         label = None
         loop_pause = 0
         if self._task.loop_control:
             loop_var = self._task.loop_control.loop_var
+            index_var = self._task.loop_control.index_var
             loop_pause = self._task.loop_control.pause
             # the these may be 'None', so we still need to default to something useful
             label = self._task.loop_control.label or ('{{' + loop_var + '}}')
@@ -287,8 +289,10 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
-        for item in items:
+        for item_index, item in enumerate(items):
             task_vars[loop_var] = item
+            if index_var:
+                task_vars[index_var] = item_index
 
             # pause between loop iterations
             if loop_pause and ran_once:
@@ -316,6 +320,8 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            if index_var:
+                res[index_var] = item_index
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
