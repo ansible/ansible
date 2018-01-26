@@ -90,6 +90,9 @@ def openstack_full_argument_spec(**kwargs):
         api_timeout=dict(default=None, type='int'),
         endpoint_type=dict(
             default='public', choices=['public', 'internal', 'admin']
+        ),
+        identity_api_version=dict(
+            default=None, choices=['2.0', '3']
         )
     )
     spec.update(kwargs)
