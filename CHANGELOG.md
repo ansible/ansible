@@ -87,6 +87,7 @@ Ansible Changes By Release
   * aws_application_scaling_policy
   * aws_direct_connect_gateway
   * aws_kms_facts
+  * aws_region_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
   * cloudfront_distribution
