@@ -62,8 +62,8 @@ def get_db_instance(conn, instancename):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'DBInstanceNotFound':
             return None
-        else:
-            raise
+        raise
+
     instance = response['DBInstances'][0]
 
     tags = conn.list_tags_for_resource(ResourceName=instance['DBInstanceArn']).get('TagList', [])
@@ -76,8 +76,7 @@ def instance_to_facts(instance):
     if not instance:
         return instance
     assert 'DBInstanceIdentifier' in instance, "instance argument was not a valid instance"
-    d = camel_dict_to_snake_dict(instance, ignore_list=['Tags'])
-    return d
+    return camel_dict_to_snake_dict(instance, ignore_list=['Tags'])
 
 
 def get_snapshot(conn, snapshotid):
@@ -86,15 +85,13 @@ def get_snapshot(conn, snapshotid):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'DBSnapshotNotFound':
             return None
-        else:
-            raise
+        raise
     return response['DBSnapshots'][0]
 
 
 def snapshot_to_facts(snapshot):
     assert 'DBSnapshotIdentifier' in snapshot, "snapshot argument was not a valid snapshot"
-    d = camel_dict_to_snake_dict(snapshot)
-    return d
+    return camel_dict_to_snake_dict(snapshot)
 
 
 def instance_facts_diff(connection, state_a, state_b):
@@ -138,17 +135,17 @@ def instance_facts_diff(connection, state_a, state_b):
 
     state_a['db_subnet_group_name'] = state_a.get('db_subnet_group', {}).get('db_subnet_group_name')
     if state_a['db_subnet_group_name']:
-        del(state_a['db_subnet_group'])
+        del state_a['db_subnet_group']
 
     state_a['db_parameter_group_name'] = state_a.get('db_parameter_group', {}).get('db_parameter_group_name')
     if state_a['db_parameter_group_name']:
-        del(state_a['db_parameter_group'])
+        del state_a['db_parameter_group']
 
     before_groups = state_a.get('vpc_security_groups')
     if before_groups is not None:
         state_a['vpc_security_group_ids'] = [sg['vpc_security_group_id'] for sg in before_groups]
         if state_a['vpc_security_group_ids']:
-            del(state_a['vpc_security_groups'])
+            del state_a['vpc_security_groups']
 
     if new_port is not None:
         state_b["port"] = new_port
@@ -156,13 +153,13 @@ def instance_facts_diff(connection, state_a, state_b):
     for k in compare_keys:
         if state_a.get(k) != state_b.get(k):
             if state_b.get(k) is None and k not in remove_if_null:
-                pass
-            else:
-                before[k] = state_a.get(k)
-                after[k] = state_b.get(k)
+                continue
+            before[k] = state_a.get(k)
+            after[k] = state_b.get(k)
 
-    result = dict()
     if before:
         result = dict(before_header=state_a.get('instance_id'), before=before, after=after)
         result['after_header'] = state_b.get('instance_id', state_a.get('instance_id'))
+    else:
+        result = {}
     return result
