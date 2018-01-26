@@ -24,7 +24,7 @@ Function Get-PagefilePath() {
         $pagefile = "$($env:SystemRoot.Substring(0, 1)):\pagefile.sys"
     } else {
         $pf = Get-CimInstance -ClassName Win32_PageFileSetting
-        if ($pf -ne $null) {
+        if ($null -ne $pf) {
             $pagefile = $pf[0].Name
         }
     }
