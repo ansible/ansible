@@ -4,6 +4,26 @@
     path: '{{win_stat_dir}}\nested\file.ps1'
   register: stat_file
 
+- name: test win_stat module on file with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/nested/file.ps1'
+  register: stat_file_forward
+
+- name: test win_stat module on file with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\nested\\file.ps1'
+  register: stat_file_double
+
+- name: test win_stat module on file with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\nested\file.ps1'
+  register: stat_file_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_file.stat.path}}'
+
 - name: check actual for file
   assert:
     that:
@@ -29,6 +49,10 @@
     - stat_file.stat.owner == 'BUILTIN\Administrators'
     - stat_file.stat.path == win_stat_dir + '\\nested\\file.ps1'
     - stat_file.stat.size == 3
+    - stat_file == stat_file_forward
+    - stat_file == stat_file_double
+    - stat_file_long.stat.path == '\\\\?\\' + stat_file.stat.path
+    - stat_file == stat_file_long|update_stat(long_override)
 
 # get_md5 will be undocumented in 2.9, remove this test then
 - name: test win_stat module on file with md5
@@ -142,6 +166,27 @@
     path: '{{win_stat_dir}}\nested\hard-link.ps1'
   register: stat_hard_link
 
+- name: test win_stat on hard link file with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/nested/hard-link.ps1'
+  register: stat_hard_link_forward
+
+- name: test win_stat on hard link file with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\nested\\hard-link.ps1'
+  register: stat_hard_link_double
+
+- name: test win_stat on hard link file with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\nested\hard-link.ps1'
+  register: stat_hard_link_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_hard_link.stat.path}}'
+      hlnk_targets: '{{stat_hard_link.stat.hlnk_targets}}'
+
 - name: check actual for hard link file
   assert:
     that:
@@ -166,11 +211,36 @@
     - stat_hard_link.stat.owner == 'BUILTIN\Administrators'
     - stat_hard_link.stat.path == win_stat_dir + '\\nested\\hard-link.ps1'
     - stat_hard_link.stat.size == 3
+    - stat_hard_link == stat_hard_link_forward
+    - stat_hard_link == stat_hard_link_double
+    - stat_hard_link_long.stat.path == '\\\\?\\' + stat_hard_link.stat.path
+    - stat_hard_link_long.stat.hlnk_targets == [ '\\\\?\\' + stat_hard_link.stat.hlnk_targets[0] ]
+    - stat_hard_link == stat_hard_link_long|update_stat(long_override)
 
 - name: test win_stat on directory
   win_stat:
     path: '{{win_stat_dir}}\nested'
   register: stat_directory
+
+- name: test win_stat module on directory with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/nested'
+  register: stat_directory_forward
+
+- name: test win_stat module on directory with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\nested'
+  register: stat_directory_double
+
+- name: test win_stat module on directory with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\nested'
+  register: stat_directory_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_directory.stat.path}}'
 
 - name: check actual for directory
   assert:
@@ -197,6 +267,10 @@
     - stat_directory.stat.owner == 'BUILTIN\Administrators'
     - stat_directory.stat.path == win_stat_dir + '\\nested'
     - stat_directory.stat.size == 24
+    - stat_directory == stat_directory_forward
+    - stat_directory == stat_directory_double
+    - stat_directory_long.stat.path == '\\\\?\\' + stat_directory.stat.path
+    - stat_directory == stat_directory_long|update_stat(long_override)
 
 - name: test win_stat on empty directory
   win_stat:
@@ -328,6 +402,28 @@
     path: '{{win_stat_dir}}\link'
   register: stat_symlink
 
+- name: test win_stat module on directory symlink with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/link'
+  register: stat_symlink_forward
+
+- name: test win_stat module on directory symlink with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\link'
+  register: stat_symlink_double
+
+- name: test win_stat module on directory symlink with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\link'
+  register: stat_symlink_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_symlink.stat.path}}'
+      lnk_source: '{{stat_symlink.stat.lnk_source}}'
+      lnk_target: '{{stat_symlink.stat.lnk_target}}'
+
 - name: assert directory symlink actual
   assert:
     that:
@@ -353,11 +449,39 @@
     - stat_symlink.stat.path == win_stat_dir + '\\link'
     - stat_symlink.stat.checksum is not defined
     - stat_symlink.stat.md5 is not defined
+    - stat_symlink == stat_symlink_forward
+    - stat_symlink == stat_symlink_double
+    - stat_symlink_long.stat.path == '\\\\?\\' + stat_symlink.stat.path
+    - stat_symlink_long.stat.lnk_source == '\\\\?\\' + win_stat_dir + '\\link-dest'
+    - stat_symlink_long.stat.lnk_target == '\\\\?\\' + win_stat_dir + '\\link-dest'
+    - stat_symlink == stat_symlink_long|update_stat(long_override)
 
 - name: test win_stat on file symlink
   win_stat:
     path: '{{win_stat_dir}}\file-link.txt'
   register: stat_file_symlink
+
+- name: test win_stat module on file symlink with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/file-link.txt'
+  register: stat_file_symlink_forward
+
+- name: test win_stat module ony file symlink with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\file-link.txt'
+  register: stat_file_symlink_double
+
+- name: test win_stat module on file symlink with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\file-link.txt'
+  register: stat_file_symlink_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_file_symlink.stat.path}}'
+      lnk_source: '{{stat_file_symlink.stat.lnk_source}}'
+      lnk_target: '{{stat_file_symlink.stat.lnk_target}}'
 
 - name: assert file symlink actual
   assert:
@@ -385,11 +509,38 @@
     - stat_file_symlink.stat.nlink == 1
     - stat_file_symlink.stat.owner == 'BUILTIN\\Administrators'
     - stat_file_symlink.stat.path == win_stat_dir + '\\file-link.txt'
+    - stat_file_symlink == stat_file_symlink_forward
+    - stat_file_symlink == stat_file_symlink_double
+    - stat_file_symlink_long.stat.path == '\\\\?\\' + stat_file_symlink.stat.path
+    - stat_file_symlink_long.stat.lnk_source == '\\\\?\\' + win_stat_dir + '\\nested\\file.ps1'
+    - stat_file_symlink_long.stat.lnk_target == '\\\\?\\' + win_stat_dir + '\\nested\\file.ps1'
+    - stat_file_symlink == stat_file_symlink_long|update_stat(long_override)
 
 - name: test win_stat on relative symlink
   win_stat:
     path: '{{win_stat_dir}}\nested\nested\link-rel'
   register: stat_rel_symlink
+
+- name: test win_stat on relative symlink with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/nested/nested/link-rel'
+  register: stat_rel_symlink_forward
+
+- name: test win_stat on relative symlink with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\nested\\nested\\link-rel'
+  register: stat_rel_symlink_double
+
+- name: test win_stat on relative symlink with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\nested\nested\link-rel'
+  register: stat_rel_symlink_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_rel_symlink.stat.path}}'
+      lnk_source: '{{stat_rel_symlink.stat.lnk_source}}'
 
 - name: assert directory relative symlink actual
   assert:
@@ -416,11 +567,38 @@
     - stat_rel_symlink.stat.path == win_stat_dir + '\\nested\\nested\\link-rel'
     - stat_rel_symlink.stat.checksum is not defined
     - stat_rel_symlink.stat.md5 is not defined
+    - stat_rel_symlink == stat_rel_symlink_forward
+    - stat_rel_symlink == stat_rel_symlink_double
+    - stat_rel_symlink_long.stat.path == '\\\\?\\' + stat_rel_symlink.stat.path
+    - stat_rel_symlink_long.stat.lnk_source == '\\\\?\\' + win_stat_dir + '\\link-dest'
+    - stat_rel_symlink == stat_rel_symlink_long|update_stat(long_override)
 
 - name: test win_stat on junction
   win_stat:
     path: '{{win_stat_dir}}\junction-link'
   register: stat_junction_point
+
+- name: test win_stat on junction with forward slashes in path
+  win_stat:
+    path: '{{win_stat_dir_forward}}/junction-link'
+  register: stat_junction_point_forward
+
+- name: test win_stat on junction with double back slashes in path
+  win_stat:
+    path: '{{win_stat_dir_double}}\\junction-link'
+  register: stat_junction_point_double
+
+- name: test win_stat on junction with long path prefix in path
+  win_stat:
+    path: '{{win_stat_dir_long}}\junction-link'
+  register: stat_junction_point_long
+
+- name: set override assertion keys for long path
+  set_fact:
+    long_override:
+      path: '{{stat_junction_point.stat.path}}'
+      lnk_source: '{{stat_junction_point.stat.lnk_source}}'
+      lnk_target: '{{stat_junction_point.stat.lnk_target}}'
 
 - name: assert junction actual
   assert:
@@ -446,6 +624,12 @@
     - stat_junction_point.stat.owner == 'BUILTIN\\Administrators'
     - stat_junction_point.stat.path == win_stat_dir + '\\junction-link'
     - stat_junction_point.stat.size == 0
+    - stat_junction_point == stat_junction_point_forward
+    - stat_junction_point == stat_junction_point_double
+    - stat_junction_point_long.stat.path == '\\\\?\\' + stat_junction_point.stat.path
+    - stat_junction_point_long.stat.lnk_source == '\\\\?\\' + win_stat_dir + '\\junction-dest'
+    - stat_junction_point_long.stat.lnk_target == '\\\\?\\' + win_stat_dir + '\\junction-dest'
+    - stat_junction_point == stat_junction_point_long|update_stat(long_override)
 
 - name: test win_stat module non-existent path
   win_stat:

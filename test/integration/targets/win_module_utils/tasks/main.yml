@@ -97,3 +97,116 @@
 - assert:
     that:
     - file_util_test.data == 'success'
+
+- name: call module with FileUtil tests for Ansible.IO c# code
+  file_util_test_max_path:
+    path: C:\ansible testing
+    encrypt_tests: no
+  register: file_util_test
+
+- assert:
+    that:
+    - file_util_test.data == 'success'
+
+- set_fact:
+    become_test_username: ansible_become_test
+    become_test_admin_username: ansible_become_admin
+    gen_pw: password123! + {{ lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}
+
+- name: create normal user
+  win_user:
+    name: '{{ become_test_username }}'
+    password: '{{ gen_pw }}'
+    update_password: always
+    groups: Users
+
+- name: create admin user
+  win_user:
+    name: '{{ become_test_admin_username }}'
+    password: '{{ gen_pw }}'
+    update_password: always
+    groups: Administrators
+
+- name: execute become tests to ensure test user is deleted at the end
+  block:
+  - name: ensure current user is not the become user
+    win_shell: whoami
+    register: whoami_out
+    failed_when: whoami_out.stdout_lines[0].endswith(become_test_username) or whoami_out.stdout_lines[0].endswith(become_test_admin_username)
+
+  - name: get become user profile dir so we can clean it up later
+    vars: &become_vars
+      ansible_become_user: '{{ become_test_username }}'
+      ansible_become_password: '{{ gen_pw }}'
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out
+
+  - name: ensure profile dir contains test username
+    assert:
+      that:
+      - become_test_username in profile_dir_out.stdout_lines[0]
+
+  - name: get become admin user profile dir so we can clean it up later
+    vars: &become_admin_vars
+      ansible_become_user: '{{ become_test_admin_username }}'
+      ansible_become_password: '{{ gen_pw }}'
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: admin_profile_dir_out
+
+  - name: ensure profile dir contains test username
+    assert:
+      that:
+      - become_test_admin_username in admin_profile_dir_out.stdout_lines[0]
+
+  - name: call module with FileUtil tests for Ansible.IO c# code as admin become user
+    file_util_test_max_path:
+      path: C:\ansible testing
+      encrypt_tests: yes
+    vars: *become_admin_vars
+    register: file_util_test
+
+  - assert:
+      that:
+      - file_util_test.data == 'success'
+
+  - name: call module with FileUtil tests for Ansible.IO c# code as normal become user
+    file_util_test_max_path:
+      path: C:\ansible testing
+      encrypt_tests: yes
+    vars: *become_vars
+    register: file_util_test
+
+  - assert:
+      that:
+      - file_util_test.data == 'success'
+
+  always:
+  - name: ensure become user is deleted
+    win_user:
+      name: '{{ become_test_username }}'
+      state: absent
+
+  - name: ensure become admin user is deleted
+    win_user:
+      name: '{{ become_test_admin_username }}'
+      state: absent
+
+  - name: ensure become user profile is deleted
+    win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_username in profile_dir_out.stdout_lines[0]
+
+  - name: ensure become admin user profile is deleted
+    win_shell: rmdir /S /Q {{ admin_profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_admin_username in admin_profile_dir_out.stdout_lines[0]
+
+- assert:
+    that:
+    - file_util_test.data == 'success'

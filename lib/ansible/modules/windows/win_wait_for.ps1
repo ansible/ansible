@@ -26,6 +26,8 @@ $result = @{
     changed = $false
 }
 
+Load-FileUtilFunctions
+
 # validate the input with the various options
 if ($port -ne $null -and $path -ne $null) {
     Fail-Json $result "port and path parameter can not both be passed to win_wait_for"

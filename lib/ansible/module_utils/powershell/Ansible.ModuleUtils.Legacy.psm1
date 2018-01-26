@@ -182,13 +182,21 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
         if ($type -eq "path") {
             # Expand environment variables on path-type
             $value = Expand-Environment($value)
+            # Test-Path -IsValid failed when the long path prefix is there
+            if ($value.StartsWith("\\?\")) {
+                $path_value = $value.Substring(4)
+            } elseif ($value.StartsWith("\\?\UNC")) {
+                $path_value = "\\" + $value.Substring(8)
+            } else {
+                $path_value = $value
+            }
             # Test if a valid path is provided
-            if (-not (Test-Path -IsValid $value)) {
+            if (-not (Test-Path -IsValid $path_value)) {
                 $path_invalid = $true
                 # could still be a valid-shaped path with a nonexistent drive letter
-                if ($value -match "^\w:") {
+                if ($path_value -match "^\w:") {
                     # rewrite path with a valid drive letter and recheck the shape- this might still fail, eg, a nonexistent non-filesystem PS path
-                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $value.Substring(1))) {
+                    if (Test-Path -IsValid $(@(Get-PSDrive -PSProvider Filesystem)[0].Name + $path_value.Substring(1))) {
                         $path_invalid = $false
                     }
                 }
