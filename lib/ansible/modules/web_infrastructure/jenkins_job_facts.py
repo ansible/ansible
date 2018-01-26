@@ -29,6 +29,9 @@ options:
   glob:
     description:
       - A shell glob of Jenkins job names to fetch facts about.
+  color:
+    description:
+      - Only fetch jobs with the given status color.
   password:
     description:
       - Password to authenticate with the Jenkins server.
@@ -81,6 +84,21 @@ EXAMPLES = '''
 # Get facts about jobs matching a shell glob using basic auth
 - jenkins_job_facts:
     glob: some-job-*
+    user: admin
+    password: hunter2
+  register: my_jenkins_job_facts
+
+# Get facts about all failing jobs using basic auth
+- jenkins_job_facts:
+    color: red
+    user: admin
+    password: hunter2
+  register: my_jenkins_job_facts
+
+# Get facts about passing jobs matching a shell glob using basic auth
+- jenkins_job_facts:
+    name: some-job-*
+    color: blue
     user: admin
     password: hunter2
   register: my_jenkins_job_facts
@@ -154,6 +172,10 @@ def get_jobs(module):
         for job in jobs:
             if "_class" in job:
                 del job["_class"]
+
+    if module.params.get("color"):
+        jobs = [j for j in jobs if j["color"] == module.params.get("color")]
+
     return jobs
 
 
@@ -162,6 +184,7 @@ def run_module():
         argument_spec=dict(
             name=dict(type='str', required=False),
             glob=dict(type='str', required=False),
+            color=dict(type='str', required=False),
             password=dict(required=False, no_log=True),
             token=dict(required=False, no_log=True),
             url=dict(required=False, default="http://localhost:8080"),
@@ -181,8 +204,6 @@ def run_module():
             msg='Unable to connect to Jenkins server, %s' % to_native(err),
             exception=traceback.format_exc())
 
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(changed=False, jobs=jobs)
 
 
