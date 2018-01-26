@@ -23,6 +23,7 @@ from collections import Mapping
 
 from jinja2.utils import missing
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -105,10 +106,10 @@ class AnsibleJ2Vars(Mapping):
             try:
                 value = self._templar.template(variable)
             except Exception as e:
-                try:
-                    raise type(e)(to_native(variable) + ': ' + e.message)
-                except AttributeError:
-                    raise type(e)(to_native(variable) + ': ' + to_native(e))
+                msg = getattr(e, 'message') or to_native(e)
+                raise AnsibleError("An unhandled exception occurred while templating '%s'. "
+                                   "Error was a %s, original message: %s" % (to_native(variable), type(e), msg))
+
             return value
 
     def add_locals(self, locals):
