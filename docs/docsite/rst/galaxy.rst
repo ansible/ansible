@@ -50,7 +50,7 @@ The following provides an example of using *--roles-path* to install the role in
 
 ::
 
-    $ ansible-galaxy install --roles-path . geerlingguy.apache
+    $ ansible-galaxy install --roles-path=. geerlingguy.apache
 
 .. seealso::
 
