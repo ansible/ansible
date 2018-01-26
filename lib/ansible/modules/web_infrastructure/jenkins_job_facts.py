@@ -108,7 +108,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
-def get_jenkins_connection(url, username, password=None, token=None):
+def get_jenkins_connection(module):
+    url = module.params["url"]
+    username = module.params.get("user")
+    password = module.params.get("password")
+    token = module.params.get("token")
     if username and (password or token):
         return jenkins.Jenkins(url, username, password or token)
     elif username:
@@ -124,34 +128,8 @@ def test_dependencies(module):
             "see http://python-jenkins.readthedocs.io/en/latest/install.html")
 
 
-def run_module():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(type='str', required=False),
-            glob=dict(type='str', required=False),
-            password=dict(required=False, no_log=True),
-            token=dict(required=False, no_log=True),
-            url=dict(required=False, default="http://localhost:8080"),
-            user=dict(required=False)),
-        mutually_exclusive=[
-            ['password', 'token'],
-            ['name', 'glob'],
-        ],
-        supports_check_mode=True)
-
-    test_dependencies(module)
-
-    try:
-        jenkins_conn = get_jenkins_connection(
-            module.params["url"],
-            module.params.get("user"),
-            password=module.params.get("password"),
-            token=module.params.get("token"))
-    except Exception as err:
-        module.fail_json(
-            msg='Unable to connect to Jenkins server, %s' % to_native(err),
-            exception=traceback.format_exc())
-
+def get_jobs(module):
+    jenkins_conn = get_jenkins_connection(module)
     jobs = []
     if module.params.get("name"):
         try:
@@ -176,6 +154,32 @@ def run_module():
         for job in jobs:
             if "_class" in job:
                 del job["_class"]
+    return jobs
+
+
+def run_module():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(type='str', required=False),
+            glob=dict(type='str', required=False),
+            password=dict(required=False, no_log=True),
+            token=dict(required=False, no_log=True),
+            url=dict(required=False, default="http://localhost:8080"),
+            user=dict(required=False)),
+        mutually_exclusive=[
+            ['password', 'token'],
+            ['name', 'glob'],
+        ],
+        supports_check_mode=True)
+
+    test_dependencies(module)
+
+    try:
+        jobs = get_jobs(module)
+    except jenkins.JenkinsException as err:
+        module.fail_json(
+            msg='Unable to connect to Jenkins server, %s' % to_native(err),
+            exception=traceback.format_exc())
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
