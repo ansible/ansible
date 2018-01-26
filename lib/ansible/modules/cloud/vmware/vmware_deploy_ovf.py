@@ -358,6 +358,9 @@ class VMwareDeployOvf:
             if match:
                 self.module.exit_json(instance=gather_vm_facts(self.si, match), changed=False)
 
+        if self.module.check_mode:
+            self.module.exit_json(changed=True, instance={'hw_name': name})
+
         try:
             self.lease = resource_pool.ImportVApp(
                 self.import_spec.importSpec,
@@ -550,6 +553,7 @@ def main():
     })
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     if not module.params['power_on'] and (module.params['wait_for_ip_address'] or module.params['wait']):
