@@ -116,6 +116,12 @@ options:
     required: false
     default: None
     version_added: "2.3"
+  tags:
+    description:
+      - tag dict to apply to the function (requires botocore 1.5.40 or above)
+    required: false
+    default: None
+    version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -140,6 +146,8 @@ EXAMPLES = '''
     - sg-123abcde
     - sg-edcba321
     environment_variables: '{{ item.env_vars }}'
+    tags:
+      key1: 'value1'
   with_items:
     - name: HelloWorld
       zip_file: hello-code.zip
@@ -151,6 +159,17 @@ EXAMPLES = '''
       env_vars:
         key1: "1"
         key2: "2"
+
+# To remove previously added tags pass a empty dict
+- name: remove tags
+  lambda:
+    name: 'Lambda function'
+    state: present
+    zip_file: 'code.zip'
+    runtime: 'python2.7'
+    role: 'arn:aws:iam::987654321012:role/lambda_basic_execution'
+    handler: 'hello_python.my_handler'
+    tags: {}
 
 # Basic Lambda function deletion
 - name: Delete Lambda functions HelloWorld and ByeBye
@@ -205,12 +224,13 @@ configuration:
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ValidationError, ParamValidationError
+    from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
 except ImportError:
     pass  # protected by AnsibleAWSModule
 
@@ -270,6 +290,47 @@ def sha256sum(filename):
     return hex_digest
 
 
+def set_tag(client, module, tags, function):
+    if not hasattr(client, "list_tags"):
+        module.fail_json(msg="Using tags requires botocore 1.5.40 or above")
+
+    changed = False
+    arn = function['Configuration']['FunctionArn']
+
+    try:
+        current_tags = client.list_tags(Resource=arn).get('Tags', {})
+    except ClientError as e:
+        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e),
+                         exception=traceback.format_exc()))
+
+    tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
+
+    try:
+        if tags_to_remove:
+            client.untag_resource(
+                Resource=arn,
+                TagKeys=tags_to_remove
+            )
+            changed = True
+
+        if tags_to_add:
+            client.tag_resource(
+                Resource=arn,
+                Tags=tags_to_add
+            )
+            changed = True
+
+    except ClientError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc())
+
+    return changed
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -288,6 +349,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        tags=dict(type='dict'),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -321,6 +383,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    tags = module.params.get('tags')
 
     check_mode = module.check_mode
     changed = False
@@ -440,6 +503,11 @@ def main():
                 except IOError as e:
                     module.fail_json(msg=str(e), exception=traceback.format_exc())
 
+        # Tag Function
+        if tags is not None:
+            if set_tag(client, module, tags, current_function):
+                changed = True
+
         # Upload new code if needed (e.g. code checksum has changed)
         if len(code_kwargs) > 2:
             try:
@@ -516,6 +584,11 @@ def main():
             changed = True
         except (ParamValidationError, ClientError) as e:
             module.fail_json_aws(e, msg="Trying to create function")
+
+        # Tag Function
+        if tags is not None:
+            if set_tag(client, module, tags, get_current_function(client, name)):
+                changed = True
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:
