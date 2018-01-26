@@ -29,9 +29,11 @@ options:
   glob:
     description:
       - A shell glob of Jenkins job names to fetch facts about.
+    required: false
   color:
     description:
       - Only fetch jobs with the given status color.
+    required: false
   password:
     description:
       - Password to authenticate with the Jenkins server.
