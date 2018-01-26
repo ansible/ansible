@@ -30,17 +30,23 @@ module: fmgr_script
 version_added: "2.5"
 author: Andrew Welsh
 short_description: Add/Edit/Delete and execute scripts
-description:
-  -  Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
+description: Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
 
 options:
   adom:
     description:
-      - The ADOM the configuration should belong to.
+      - The administrative domain (admon) the configuration belongs to
     required: true
+  vdom:
+    description:
+      - The virtual domain (vdom) the configuration belongs to
   host:
     description:
       - The FortiManager's Address.
+    required: true
+  username:
+    description:
+      - The username to log into the FortiManager
     required: true
   password:
     description:
@@ -97,6 +103,7 @@ EXAMPLES = '''
     script_target: "remote_device"
     script_description: "Create by Ansible"
     script_content: "get system status"
+    
 - name: EXECUTE SCRIPT
   fmgr_script:
     host: "{{inventory_hostname}}"
@@ -106,6 +113,7 @@ EXAMPLES = '''
     script_name: "TestScript"
     state: "execute"
     script_scope: "FGT1,FGT2"
+    
 - name: DELETE SCRIPT
   fmgr_script:
     host: "{{inventory_hostname}}"
@@ -195,7 +203,7 @@ def main():
         vdom=dict(required=False, type="str"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
+        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
         state=dict(choices=["execute", "delete", "present"], type="str"),
 
         script_name=dict(required=True, type="str"),

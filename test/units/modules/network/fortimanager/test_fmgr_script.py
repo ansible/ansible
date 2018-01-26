@@ -19,9 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.modules.network.fortimanager import fmgr_script
-from units.modules.utils import set_module_args
-from .fortimanager_module import TestFortimanagerModule
+from nose.plugins.skip import SkipTest
+
+try:
+    from ansible.modules.network.fortimanager import fmgr_script
+    from .fortimanager_module import TestFortimanagerModule
+    from units.modules.utils import set_module_args
+except ImportError:
+    raise SkipTest("Could not load required modules for testing")
 
 
 class TestFmgrScriptModule(TestFortimanagerModule):
