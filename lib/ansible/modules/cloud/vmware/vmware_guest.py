@@ -947,7 +947,7 @@ class PyVmomiHelper(PyVmomi):
                 # VDS switch
                 pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
+                if vm_obj is None or (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
                    (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
                                             nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     dvs_port_connection = vim.dvs.PortConnection()
