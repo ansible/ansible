@@ -231,7 +231,7 @@ import hashlib
 import traceback
 
 try:
-    from botocore.exceptions import ClientError, ValidationError, ParamValidationError
+    from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
 except ImportError:
     pass  # protected by AnsibleAWSModule
 
@@ -296,11 +296,10 @@ def set_tag(client, module, tags, function):
         module.fail_json(msg="Using tags requires botocore 1.5.40 or above")
 
     changed = False
-    c = client
     arn = function['Configuration']['FunctionArn']
 
     try:
-        current_tags = c.list_tags(Resource=arn).get('Tags', {})
+        current_tags = client.list_tags(Resource=arn).get('Tags', {})
     except ClientError as e:
         module.fail_json(msg="Unable to list tags: {0}".format(to_native(e),
                          exception=traceback.format_exc()))
@@ -309,20 +308,24 @@ def set_tag(client, module, tags, function):
 
     try:
         if tags_to_remove:
-            c.untag_resource(
+            client.untag_resource(
                 Resource=arn,
                 TagKeys=tags_to_remove
             )
             changed = True
 
         if tags_to_add:
-            c.tag_resource(
+            client.tag_resource(
                 Resource=arn,
                 Tags=tags_to_add
             )
             changed = True
 
     except ClientError as e:
+        module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
+                         to_native(e)), exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
         module.fail_json(msg="Unable to tag resource {0}: {1}".format(arn,
                          to_native(e)), exception=traceback.format_exc())
 
