@@ -93,6 +93,12 @@ options:
     choices: [public, internal, admin]
     required: false
     default: public
+  identity_api_version:
+    description:
+        - The identity API version
+    choices: [2.0, 3]
+    required: false
+    default: None
 requirements:
   - python >= 2.7
   - shade
