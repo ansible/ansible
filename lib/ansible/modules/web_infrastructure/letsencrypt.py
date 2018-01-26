@@ -151,6 +151,14 @@ options:
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
     default: 10
+  validate_certs:
+    description:
+      - Whether calls to the ACME directory will validate TLS certificates.
+      - Should I(only ever) be set to false for testing purposes, for example
+        when testing against a local Pebble server.
+    required: false
+    default: true
+    version_added: 2.5
 '''
 
 EXAMPLES = '''
@@ -1186,6 +1194,7 @@ def main():
             fullchain_dest=dict(aliases=['fullchain'], type='path'),
             chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
