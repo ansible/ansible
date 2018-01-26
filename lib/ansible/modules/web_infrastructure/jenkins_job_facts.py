@@ -80,7 +80,7 @@ EXAMPLES = '''
 
 # Get facts about jobs matching a shell glob using basic auth
 - jenkins_job_facts:
-    name: some-job-*
+    glob: some-job-*
     user: admin
     password: hunter2
   register: my_jenkins_job_facts
@@ -91,7 +91,7 @@ RETURN = '''
 jobs:
   description: All jobs found matching the specified criteria
   returned: success
-  type: string
+  type: list
   sample: [{"name": "test-job", "fullname": "test-folder/test-job", "url": "http://localhost:8080/job/test-job/", "color": "blue"}, ...]
 '''
 
