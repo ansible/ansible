@@ -292,14 +292,14 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             if sys.platform.startswith('darwin'):
                 raise AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
             saltstring = "$%s$%s" % (cryptmethod[hashtype], salt)
-            encrypted = crypt.crypt(password, saltstring)
+            encrypted = crypt.crypt(str(password), saltstring)
         else:
             if hashtype == 'blowfish':
                 cls = passlib.hash.bcrypt
             else:
                 cls = getattr(passlib.hash, '%s_crypt' % hashtype)
 
-            encrypted = cls.encrypt(password, salt=salt)
+            encrypted = cls.encrypt(str(password), salt=str(salt))
 
         return encrypted
 
