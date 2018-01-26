@@ -95,6 +95,7 @@ Ansible Changes By Release
   * ec2_customer_gateway_facts
   * ec2_placement_group
   * ec2_placement_group_facts
+  * ec2_vpc_egress_igw
   * ecs_taskdefinition_facts
   * elasticache_facts
   * iam_role_facts
