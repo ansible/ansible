@@ -48,7 +48,7 @@ DOCUMENTATION = """
         type: integer
         default: 16
       nosymbols:
-        description: do not use any non-alphanumeric characters
+        description: use alphanumeric characters
         type: boolean
         default: False
 """
@@ -68,7 +68,7 @@ EXAMPLES = """
 - name: Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file
   debug: msg="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}"
 
-- name: Create a password without any non-alphanumeric characters
+- name: Create an alphanumeric password
   debug: msg="{{ lookup('passwordstore', 'example/test create=true nosymbols=true) }}"
 
 - name: Return the value for user in the KV pair user, username
