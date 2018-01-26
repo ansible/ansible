@@ -81,13 +81,12 @@ simple_config_file:
     strict: False
     keyed_groups:
       - prefix: arch
-        key: 'Architecture'
+        key: 'architecture'
         value: 'x86_64'
       - prefix: tag
-        key: Tags
+        key: tags
         value:
-          "Key": "Name"
-          "Value": "Test"
+          "Name": "Test"
 
 '''
 
@@ -95,11 +94,8 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
-from ansible.module_utils.basic import jsonify
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
-
-from collections import namedtuple
-import os
 
 try:
     import boto3
@@ -243,7 +239,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_boto_attr_chain(self, filter_name, instance):
         '''
             :param filter_name: The filter
-            :param instance: A namedtuple
+            :param instance: instance dict returned by boto3 ec2 describe_instances()
         '''
         allowed_filters = sorted(list(instance_data_filter_to_boto_attr.keys()) + list(instance_meta_filter_to_boto_attr.keys()))
         if filter_name not in allowed_filters:
@@ -299,7 +295,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
            :param regions: a list of regions in which to describe instances
            :param filters: a list of boto3 filter dicionaries
            :param strict_permissions: a boolean determining whether to fail or ignore 403 error codes
-           :return A list of namedtuples containing the fields region, instance_meta, and instance_data
+           :return A list of instance dictionaries
         '''
         all_instances = []
 
@@ -337,7 +333,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _get_hostname(self, instance, hostnames):
         '''
-            :param instance: a named tuple with instance_data field
+            :param instance: an instance dict returned by boto3 ec2 describe_instances()
             :param hostnames: a list of hostname destination variables in order of preference
             :return the preferred identifer for the host
         '''
@@ -408,11 +404,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         for host in hosts:
             hostname = self._get_hostname(host, hostnames)
+
+            host = camel_dict_to_snake_dict(host, ignore_list=['Tags'])
+            host['tags'] = boto3_tag_list_to_ansible_dict(host.get('tags', []))
+
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
-            for hostvar in host.keys():
-                self.inventory.set_variable(hostname, hostvar, host[hostvar])
+            for hostvar, hostval in host.items():
+                self.inventory.set_variable(hostname, hostvar, hostval)
 
             # Use constructed if applicable
 
