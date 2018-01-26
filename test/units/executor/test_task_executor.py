@@ -22,7 +22,7 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.task_executor import TaskExecutor
+from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import action_loader, lookup_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
@@ -484,3 +484,38 @@ class TestTaskExecutor(unittest.TestCase):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
             self.assertEqual(res, dict(finished=1))
+
+    def test_recursive_remove_omit(self):
+        omit_token = 'POPCORN'
+
+        data = {
+            'foo': 'bar',
+            'baz': 1,
+            'qux': ['one', 'two', 'three'],
+            'subdict': {
+                'remove': 'POPCORN',
+                'keep': 'not_popcorn',
+                'subsubdict': {
+                    'remove': 'POPCORN',
+                    'keep': 'not_popcorn',
+                },
+                'a_list': ['POPCORN'],
+            },
+            'a_list': ['POPCORN'],
+        }
+
+        expected = {
+            'foo': 'bar',
+            'baz': 1,
+            'qux': ['one', 'two', 'three'],
+            'subdict': {
+                'keep': 'not_popcorn',
+                'subsubdict': {
+                    'keep': 'not_popcorn',
+                },
+                'a_list': ['POPCORN'],
+            },
+            'a_list': ['POPCORN'],
+        }
+
+        self.assertEqual(remove_omit(data, omit_token), expected)
