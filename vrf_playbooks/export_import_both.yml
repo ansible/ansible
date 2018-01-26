@@ -1,0 +1,46 @@
+---
+- hosts: all
+  gather_facts: no
+  connection: local
+  vars_files:
+     - group_vars/all
+  tasks:
+  - name: Set the test provider
+    set_fact:
+     provider:
+      host: "{{ inventory_hostname}}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      authorize: yes
+      auth_pass: "{{ auth_pass }}"
+      timeout: 30
+
+
+  - name: Add Test_vrf
+    ios_vrf:
+      name: Test_vrf
+      rd: 2:100
+      route_both:
+       - 2:100
+       - 3:100
+      provider: "{{ provider }}"
+
+
+  - name: Add Test_vrf1
+    ios_vrf:
+      name: Test_vrf1
+      rd: 1:100
+      route_export:
+        - 1:100
+        - 3:100
+      route_import:
+        - 1:100
+        - 3:100
+      provider: "{{ provider }}"
+
+  - name: Add interface Ethernet0/2
+    ios_vrf:
+      name: Test_vrf1
+      interfaces:
+        - Ethernet0/2
+      provider: "{{ provider }}"

@@ -1,0 +1,4 @@
+# credentials for cisco IOL
+auth_pass: "cisco"
+password: "cisco"
+username: "root"
