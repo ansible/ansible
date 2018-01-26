@@ -1049,12 +1049,60 @@ class Nmcli(object):
 
     def create_connection_vlan(self):
         cmd = [self.nmcli_bin]
-        # format for creating ethernet interface
+        cmd.append('con')
+        cmd.append('add')
+        cmd.append('type')
+        cmd.append('vlan')
+        cmd.append('con-name')
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vlan%s' % self.vlanid)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('vlan%s' % self.vlanid)
+
+        params = {'dev': self.vlandev,
+                  'id': self.vlanid,
+                  'ip4': self.ip4,
+                  'gw4': self.gw4,
+                  'ip6': self.ip6,
+                  'gw6': self.gw6,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
         return cmd
 
     def modify_connection_vlan(self):
         cmd = [self.nmcli_bin]
-        # format for modifying ethernet interface
+        cmd.append('con')
+        cmd.append('mod')
+        cmd.append('con-name')
+
+        params = {'vlan.parent': self.vlandev,
+                  'vlan.id': self.vlanid,
+                  'ipv4.address': self.ip4,
+                  'ipv4.geteway': self.gw4,
+                  'ipv4.dns': self.dns4,
+                  'ipv6.address': self.ip6,
+                  'ipv6.gateway': self.gw6,
+                  'ipv6.dns': self.dns6,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+
+        for k, v in params.items():
+            cmd.extend([k, v])
+
         return cmd
 
     def create_connection(self):
