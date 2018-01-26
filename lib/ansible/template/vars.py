@@ -106,7 +106,7 @@ class AnsibleJ2Vars(Mapping):
                 value = self._templar.template(variable)
             except Exception as e:
                 try:
-                    raise type(e)(to_native(variable) + ': ' + e.message)
+                    raise type(e)(to_native(variable) + ': ' + e.message, e.lineno)
                 except AttributeError:
                     raise type(e)(to_native(variable) + ': ' + to_native(e))
             return value
