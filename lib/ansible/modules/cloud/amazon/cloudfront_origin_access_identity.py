@@ -202,12 +202,10 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
 def main():
     argument_spec = ec2_argument_spec()
 
-    argument_spec.update(dict(
-        state=dict(choices=['present', 'absent'], default='present'),
-        origin_access_identity_id=dict(required=False, default=None,
-                                       type='str'),
-        caller_reference=dict(required=False, default=None, type='str'),
-        comment=dict(required=False, default=None, type='str')
+    argument_spec.update(dict(state=dict(choices=['present', 'absent'], default='present'),
+        origin_access_identity_id=dict(),
+        caller_reference=dict(),
+        comment=dict()
     ))
 
     result = {}
