@@ -128,7 +128,7 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
+from ansible.module_utils.net_tools.nios.api import WapiModule
 
 
 def main():
@@ -157,12 +157,12 @@ def main():
     )
 
     argument_spec.update(ib_spec)
-    argument_spec.update(get_provider_spec())
+    argument_spec.update(WapiModule.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    wapi = Wapi(module)
+    wapi = WapiModule(module)
     result = wapi.run('zone_auth', ib_spec)
 
     module.exit_json(**result)
