@@ -81,8 +81,7 @@ location:
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3
-from ansible.modules.cloud.amazon.cloudfront_facts import (
-    CloudFrontFactsServiceManager)
+from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
 import ansible.module_utils.cloudfront as helpers
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
