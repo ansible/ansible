@@ -81,8 +81,7 @@ location:
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn
-from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
-import ansible.module_utils.cloudfront as helpers
+from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from botocore.signers import CloudFrontSigner
@@ -93,9 +92,9 @@ import traceback
 
 try:
     import botocore
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass
-
+    pass  # caught by imported AnsibleAWSModule
 
 class CloudFrontOriginAccessIdentityServiceManager(object):
     """
@@ -114,7 +113,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                 self.module, conn_type='client', resource=resource,
                 region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except (ClientError, BotoCoreError) as e:
-                module.fail_json_aws(e, msg="Unable to establish connection.")
+                self.module.fail_json_aws(e, msg="Unable to establish connection.")
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
@@ -124,7 +123,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                     'Comment': comment
                 })
         except (ClientError, BotoCoreError) as e:
-               module.fail_json_aws(e, msg="Error creating cloud front origin access identity.")
+               self.module.fail_json_aws(e, msg="Error creating cloud front origin access identity.")
 
     def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
@@ -132,7 +131,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                 Id=origin_access_identity_id, IfMatch=e_tag)
 
         except (ClientError, BotoCoreError) as e:
-               module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
+               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
 
     def update_origin_access_identity(self, caller_reference, comment,
                                       origin_access_identity_id, e_tag):
@@ -144,7 +143,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                 },
                 Id=origin_access_identity_id, IfMatch=e_tag)
         except (ClientError, BotoCoreError) as e:
-               module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
+               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
 
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
@@ -165,10 +164,8 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
                 origin_access_identity_id)
             if oai is not None:
                 return oai.get('ETag')
-        except Exception as e:
-            self.module.fail_json(
-                msg="error getting etag from origin_access_identity_id - " +
-                str(e) + "\n" + traceback.format_exc())
+        except (ClientError, BotoCoreError) as e:
+               self.module.fail_json_aws(e, msg="Error getting etag from origin_access_identity.") 
 
     def validate_origin_access_identity_id_from_caller_reference(
             self, caller_reference):
@@ -186,10 +183,8 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
                     'CallerReference')
                 if temp_caller_reference == caller_reference:
                     return origin_access_identity_id
-        except Exception as e:
-            self.module.fail_json(
-                msg="error getting origin access identity from " +
-                "caller_reference - " + str(e) + "\n" + traceback.format_exc())
+        except (ClientError, BotoCoreError) as e:
+               self.module.fail_json_aws(e, msg="Error getting Origin Access Identity from caller_reference.") 
 
     def validate_comment(self, comment):
         if comment is None:
@@ -212,7 +207,7 @@ def main():
     e_tag = None
     changed = False
 
-    module = AnsibleModule(argument_spec=argument_spec,
+    module = AnsibleAWSModule(argument_spec=argument_spec,
                            supports_check_mode=False)
     service_mgr = CloudFrontOriginAccessIdentityServiceManager(module)
     validation_mgr = CloudFrontOriginAccessIdentityValidationManager(module)
@@ -247,7 +242,7 @@ def main():
 
     result.pop('ResponseMetadata', None)
 
-    module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **pascal_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
