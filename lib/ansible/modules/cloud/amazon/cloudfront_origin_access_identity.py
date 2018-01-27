@@ -245,10 +245,7 @@ def main():
             origin_access_identity_id, e_tag)
         changed = True
 
-    if result:
-        results = result
-        results.pop('ResponseMetadata', None)
-        result.update(results)
+    result.pop('ResponseMetadata', None)
 
     module.exit_json(changed=changed, **helpers.pascal_dict_to_snake_dict(result))
 
