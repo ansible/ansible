@@ -311,7 +311,7 @@ class Rhsm(RegistrationBase):
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--server.hostname'.
         for k, v in kwargs.items():
-            if re.search(r'^(server|rhsm)_', k):
+            if re.search(r'^(server|rhsm)_', k) and v is not None:
                 args.append('--%s=%s' % (k.replace('_', '.', 1), v))
 
         self.module.run_command(args, check_rc=True)
