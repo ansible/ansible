@@ -107,18 +107,14 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
 
     def create_client(self, resource):
         try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-                self.module, boto3=True)
-            self.client = boto3_conn(
-                self.module, conn_type='client', resource=resource,
-                region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
+            self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except (ClientError, BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Unable to establish connection.")
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
-            return self.client.create_cloud_front_origin_access_identity(
-                CloudFrontOriginAccessIdentityConfig={
+            return self.client.create_cloud_front_origin_access_identity(CloudFrontOriginAccessIdentityConfig={
                     'CallerReference': caller_reference,
                     'Comment': comment
                 })
@@ -127,17 +123,13 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
 
     def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
-            return self.client.delete_cloud_front_origin_access_identity(
-                Id=origin_access_identity_id, IfMatch=e_tag)
-
+            return self.client.delete_cloud_front_origin_access_identity(Id=origin_access_identity_id, IfMatch=e_tag)
         except (ClientError, BotoCoreError) as e:
                self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
 
-    def update_origin_access_identity(self, caller_reference, comment,
-                                      origin_access_identity_id, e_tag):
+    def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
-            return self.client.update_cloud_front_origin_access_identity(
-                CloudFrontOriginAccessIdentityConfig={
+            return self.client.update_cloud_front_origin_access_identity(CloudFrontOriginAccessIdentityConfig={
                     'CallerReference': caller_reference,
                     'Comment': comment
                 },
@@ -155,13 +147,11 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
         self.module = module
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
 
-    def validate_etag_from_origin_access_identity_id(self,
-                                                     origin_access_identity_id):
+    def validate_etag_from_origin_access_identity_id(self, origin_access_identity_id):
         try:
             if origin_access_identity_id is None:
                 return
-            oai = self.__cloudfront_facts_mgr.get_origin_access_identity(
-                origin_access_identity_id)
+            oai = self.__cloudfront_facts_mgr.get_origin_access_identity(origin_access_identity_id)
             if oai is not None:
                 return oai.get('ETag')
         except (ClientError, BotoCoreError) as e:
@@ -170,17 +160,11 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
     def validate_origin_access_identity_id_from_caller_reference(
             self, caller_reference):
         try:
-            origin_access_identities = (
-                self.__cloudfront_facts_mgr.list_origin_access_identities())
-            origin_origin_access_identity_ids = [oai.get('Id') for oai in
-                                                 origin_access_identities]
+            origin_access_identities = self.__cloudfront_facts_mgr.list_origin_access_identities()
+            origin_origin_access_identity_ids = [oai.get('Id') for oai in origin_access_identities]
             for origin_access_identity_id in origin_origin_access_identity_ids:
-                oai_config = (
-                    self.__cloudfront_facts_mgr.get_origin_access_identity_config(
-                        origin_access_identity_id))
-                temp_caller_reference = oai_config.get(
-                    'CloudFrontOriginAccessIdentityConfig').get(
-                    'CallerReference')
+                oai_config = (self.__cloudfront_facts_mgr.get_origin_access_identity_config(origin_access_identity_id))
+                temp_caller_reference = oai_config.get('CloudFrontOriginAccessIdentityConfig').get('CallerReference')
                 if temp_caller_reference == caller_reference:
                     return origin_access_identity_id
         except (ClientError, BotoCoreError) as e:
@@ -188,61 +172,54 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
 
     def validate_comment(self, comment):
         if comment is None:
-            comment = (
-                "origin access identity created by Ansible with datetime " +
-                datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f'))
+            return "origin access identity created by Ansible with datetime " + datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
         return comment
 
 
 def main():
     argument_spec = ec2_argument_spec()
 
-    argument_spec.update(dict(state=dict(choices=['present', 'absent'], default='present'),
+    argument_spec.update(dict(
+        state=dict(choices=['present', 'absent'], default='present'),
         origin_access_identity_id=dict(),
         caller_reference=dict(),
-        comment=dict()
+        comment=dict(),
     ))
 
     result = {}
     e_tag = None
     changed = False
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False)
     service_mgr = CloudFrontOriginAccessIdentityServiceManager(module)
     validation_mgr = CloudFrontOriginAccessIdentityValidationManager(module)
 
     state = module.params.get('state')
     caller_reference = module.params.get('caller_reference')
+    
     comment = module.params.get('comment')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
     if origin_access_identity_id is None and caller_reference is not None:
-        origin_access_identity_id = (
-            validation_mgr.validate_origin_access_identity_id_from_caller_reference(
-                caller_reference))
+        origin_access_identity_id = validation_mgr.validate_origin_access_identity_id_from_caller_reference(caller_reference)
 
-    e_tag = validation_mgr.validate_etag_from_origin_access_identity_id(
-        origin_access_identity_id)
+    e_tag = validation_mgr.validate_etag_from_origin_access_identity_id(origin_access_identity_id)
     comment = validation_mgr.validate_comment(comment)
 
     if state == 'present':
         if origin_access_identity_id is not None and e_tag is not None:
-            result = service_mgr.update_origin_access_identity(
-                caller_reference, comment, origin_access_identity_id, e_tag)
+            result = service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
         else:
-            result = service_mgr.create_origin_access_identity(
-                caller_reference, comment)
+            result = service_mgr.create_origin_access_identity(caller_reference, comment)
         changed = True
     elif(state == 'absent' and origin_access_identity_id is not None and
          e_tag is not None):
-        result = service_mgr.delete_origin_access_identity(
-            origin_access_identity_id, e_tag)
+        result = service_mgr.delete_origin_access_identity(origin_access_identity_id, e_tag)
         changed = True
 
     result.pop('ResponseMetadata', None)
 
-    module.exit_json(changed=changed, **pascal_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
