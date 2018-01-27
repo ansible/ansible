@@ -230,6 +230,19 @@ EXAMPLES = '''
 #     # Note: route53 requires TXT entries to be enclosed in quotes
 #     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
 #     when: sample_com_challenge is changed
+#
+# Alternative way:
+#
+# - route53:
+#     zone: sample.com
+#     record: "{{ item.key }}"
+#     type: TXT
+#     ttl: 60
+#     # Note: item.value is a list of TXT entries, and route53
+#     # requires every entry to be enclosed in quotes
+#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\'\\1\'' ) | list }}"
+#     with_dict: sample_com_challenge.challenge_data_dns
+#     when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
@@ -271,6 +284,11 @@ challenge_data:
       type: string
       sample: _acme-challenge.example.com
       version_added: "2.5"
+challenge_data_dns:
+  description: list of TXT values per DNS record, in case challenge is dns-01
+  returned: changed
+  type: dict
+  version_added: "2.5"
 authorizations:
   description: ACME authorization data.
   returned: changed
@@ -1122,14 +1140,23 @@ class ACMEClient(object):
     def get_challenges_data(self):
         '''
         Get challenge details for the chosen challenge type.
+        Return a tuple of generic challenge details, and specialized DNS challenge details.
         '''
+        # Get general challenge data
         data = {}
         for domain, auth in self.authorizations.items():
-            # _validate_challenges updates the global authorization dict,
-            # so get the current version of the authorization we are working
-            # on to retrieve the challenge data
             data[domain] = self._get_challenge_data(self.authorizations[domain], domain)
-        return data
+        # Get DNS challenge data
+        data_dns = {}
+        if self.challenge == 'dns-01':
+            for domain, challenges in data.items():
+                if self.challenge in challenges:
+                    values = data_dns.get(challenges[self.challenge]['record'])
+                    if values is None:
+                        values = []
+                        data_dns[challenges[self.challenge]['record']] = values
+                    values.append(challenges[self.challenge]['resource_value'])
+        return data, data_dns
 
     def finish_challenges(self):
         '''
@@ -1238,7 +1265,7 @@ def main():
                 # Second run: finish challenges, and get certificate
                 client.finish_challenges()
                 client.get_certificate()
-            data = client.get_challenges_data()
+            data, data_dns = client.get_challenges_data()
             module.exit_json(
                 changed=client.changed,
                 authorizations=client.authorizations,
@@ -1246,6 +1273,7 @@ def main():
                 order_uri=client.order_uri,
                 account_uri=client.account.uri,
                 challenge_data=data,
+                challenge_data_dns=data_dns,
                 cert_days=client.cert_days
             )
     else:
