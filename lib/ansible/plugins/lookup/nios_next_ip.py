@@ -60,8 +60,7 @@ _list:
 """
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.net_tools.nios.api import nios_provider_spec
-from ansible.module_utils.net_tools.nios.api import get_connector
+from ansible.module_utils.net_tools.nios.api import WapiLookup
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 
@@ -75,9 +74,9 @@ class LookupModule(LookupBase):
             raise AnsibleError('missing argument in the form of A.B.C.D/E')
 
         provider = kwargs.pop('provider', {})
-        connector = get_connector(**provider)
+        wapi = WapiLookup(provider)
 
-        network_obj = connector.get_object('network', {'network': network})
+        network_obj = wapi.get_object('network', {'network': network})
         if network_obj is None:
             raise AnsibleError('unable to find network object %s' % network)
 
@@ -85,7 +84,7 @@ class LookupModule(LookupBase):
 
         try:
             ref = network_obj[0]['_ref']
-            avail_ips = connector.call_func('next_available_ip', ref, {'num': num})
+            avail_ips = wapi.call_func('next_available_ip', ref, {'num': num})
             return [avail_ips['ips']]
         except Exception as exc:
             raise AnsibleError(to_text(exc))

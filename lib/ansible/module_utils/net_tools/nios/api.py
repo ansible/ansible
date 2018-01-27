@@ -45,6 +45,7 @@ nios_provider_spec = {
     'username': dict(),
     'password': dict(no_log=True),
     'ssl_verify': dict(type='bool', default=False),
+    'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10),
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
@@ -53,11 +54,14 @@ nios_provider_spec = {
 }
 
 
-def get_provider_spec():
-    return {'provider': dict(type='dict', options=nios_provider_spec)}
-
-
 def get_connector(*args, **kwargs):
+    ''' Returns an instance of infoblox_client.connector.Connector
+
+    :params args: positional arguments are silently ignored
+    :params kwargs: dict that is passed to Connector init
+
+    :returns: Connector
+    '''
     if not HAS_INFOBLOX_CLIENT:
         raise Exception('infoblox-client is required but does not appear '
                         'to be installed.  It can be installed using the '
@@ -66,8 +70,15 @@ def get_connector(*args, **kwargs):
     if not set(kwargs.keys()).issubset(nios_provider_spec.keys()):
         raise Exception('invalid or unsupported keyword argument for connector')
 
-    for key in nios_provider_spec.keys():
+    for key, value in iteritems(nios_provider_spec):
         if key not in kwargs:
+            # apply default values from nios_provider_spec since we cannot just
+            # assume the provider values are coming from AnsibleModule
+            if 'default' in value:
+                kwargs[key] = value['default']
+
+            # override any values with env variables unless they were
+            # explicitly set
             env = ('INFOBLOX_%s' % key).upper()
             if env in os.environ:
                 kwargs[key] = os.environ.get(env)
@@ -115,14 +126,10 @@ def flatten_extattrs(value):
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
 
-    def __init__(self, module):
-        self.module = module
+    provider_spec = {'provider': dict(type='dict', options=nios_provider_spec)}
 
-        try:
-            provider = module.params['provider'] or {}
-            self.connector = get_connector(**provider)
-        except Exception as exc:
-            module.fail_json(msg=to_text(exc))
+    def __init__(self, provider):
+        self.connector = get_connector(**provider)
 
     def __getattr__(self, name):
         try:
@@ -137,19 +144,49 @@ class WapiBase(object):
             method = getattr(self.connector, name)
             return method(*args, **kwargs)
         except InfobloxException as exc:
-            self.module.fail_json(
-                msg=exc.response['text'],
-                type=exc.response['Error'].split(':')[0],
-                code=exc.response.get('code'),
-                action=name
-            )
-
-    def run(self, ib_obj_type, ib_spec):
-        raise NotImplementedError
+            if hasattr(self, 'handle_exception'):
+                self.handle_exception(name, exc)
+            else:
+                raise
 
 
-class Wapi(WapiBase):
+class WapiLookup(WapiBase):
+    ''' Implements WapiBase for lookup plugins '''
+    pass
+
+
+class WapiInventory(WapiBase):
+    ''' Implements WapiBase for dynamic inventory script '''
+    pass
+
+
+class WapiModule(WapiBase):
     ''' Implements WapiBase for executing a NIOS module '''
+
+    def __init__(self, module):
+        self.module = module
+        provider = module.params['provider']
+
+        try:
+            super(WapiModule, self).__init__(provider)
+        except Exception as exc:
+            self.module.fail_json(msg=to_text(exc))
+
+    def handle_exception(self, method_name, exc):
+        ''' Handles any exceptions raised
+
+        This method will be called if an InfobloxException is raised for
+        any call to the instance of Connector.  This method will then
+        gracefully fail the module.
+
+        :args exc: instance of InfobloxException
+        '''
+        self.module.fail_json(
+            msg=exc.response['text'],
+            type=exc.response['Error'].split(':')[0],
+            code=exc.response.get('code'),
+            operation=method_name
+        )
 
     def run(self, ib_obj_type, ib_spec):
         ''' Runs the module and performans configuration tasks
