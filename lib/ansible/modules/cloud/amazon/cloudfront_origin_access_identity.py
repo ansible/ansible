@@ -113,11 +113,6 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
             self.client = boto3_conn(
                 self.module, conn_type='client', resource=resource,
                 region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except botocore.exceptions.NoRegionError:
-            self.module.fail_json(
-                msg=("region must be specified as a parameter in "
-                     "AWS_DEFAULT_REGION environment variable or in "
-                     "boto configuration file"))
         except (ClientError, BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Unable to establish connection.")
 
