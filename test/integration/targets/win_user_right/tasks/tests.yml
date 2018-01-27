@@ -68,7 +68,8 @@
   assert:
     that:
     - set_administrator_check is changed
-    - set_administrator_check.added == ['{{ansible_hostname}}\{{ admin_account_name }}']
+    - set_administrator_check.added|count == 1
+    - set_administrator_check.added[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
     - set_administrator_check.removed == []
     - set_administrator_actual_check.users == []
 
@@ -88,7 +89,8 @@
   assert:
     that:
     - set_administrator is changed
-    - set_administrator.added == ['{{ansible_hostname}}\{{ admin_account_name }}']
+    - set_administrator.added|count == 1
+    - set_administrator.added[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
     - set_administrator.removed == []
     - set_administrator_actual.users == ['{{ admin_account_name }}']
 
@@ -123,7 +125,8 @@
   assert:
     that:
     - remove_right_check is changed
-    - remove_right_check.removed == ['{{ansible_hostname}}\{{ admin_account_name }}']
+    - remove_right_check.removed|count == 1
+    - remove_right_check.removed[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
     - remove_right_check.added == []
     - remove_right_actual_check.users == ['{{ admin_account_name }}']
 
@@ -143,7 +146,8 @@
   assert:
     that:
     - remove_right is changed
-    - remove_right.removed == ['{{ansible_hostname}}\{{ admin_account_name }}']
+    - remove_right.removed|count == 1
+    - remove_right.removed[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
     - remove_right.added == []
     - remove_right_actual.users == []
 
@@ -179,7 +183,9 @@
     that:
     - add_right_on_empty_check is changed
     - add_right_on_empty_check.removed == []
-    - add_right_on_empty_check.added == ['{{ansible_hostname}}\{{ admin_account_name }}', "BUILTIN\\Administrators"]
+    - add_right_on_empty_check.added|count == 2
+    - add_right_on_empty_check.added[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
+    - add_right_on_empty_check.added[1] == 'BUILTIN\Administrators'
     - add_right_on_empty_actual_check.users == []
 
 - name: add to empty right
@@ -199,7 +205,9 @@
     that:
     - add_right_on_empty is changed
     - add_right_on_empty.removed == []
-    - add_right_on_empty.added == ["{{ansible_hostname}}\\{{ admin_account_name }}", "BUILTIN\\Administrators"]
+    - add_right_on_empty.added|count == 2
+    - add_right_on_empty.added[0]|upper == '{{ansible_hostname|upper}}\{{ admin_account_name|upper }}'
+    - add_right_on_empty.added[1] == 'BUILTIN\Administrators'
     - add_right_on_empty_actual.users == ["{{ admin_account_name }}", "BUILTIN\\Administrators"]
 
 - name: add to empty right again
