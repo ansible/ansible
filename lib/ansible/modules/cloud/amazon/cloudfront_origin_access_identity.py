@@ -80,11 +80,11 @@ location:
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import boto3_conn
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
 import ansible.module_utils.cloudfront as helpers
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from botocore.signers import CloudFrontSigner
 import datetime
 from functools import partial
@@ -118,11 +118,8 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                 msg=("region must be specified as a parameter in "
                      "AWS_DEFAULT_REGION environment variable or in "
                      "boto configuration file"))
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(
-                msg="unable to establish connection - " + str(e),
-                exception=traceback.format_exc(),
-                **camel_dict_to_snake_dict(e.response))
+        except (ClientError, BotoCoreError) as e:
+                module.fail_json_aws(e, msg="Unable to establish connection.")
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
@@ -131,19 +128,16 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                     'CallerReference': caller_reference,
                     'Comment': comment
                 })
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(
-                msg="error creating cloud front origin access identity - " +
-                str(e) + "\n" + traceback.format_exc())
+        except (ClientError, BotoCoreError) as e:
+               module.fail_json_aws(e, msg="Error creating cloud front origin access identity.")
 
     def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
             return self.client.delete_cloud_front_origin_access_identity(
                 Id=origin_access_identity_id, IfMatch=e_tag)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(
-                msg="error deleting cloud front origin access identity - " +
-                str(e) + "\n" + traceback.format_exc())
+
+        except (ClientError, BotoCoreError) as e:
+               module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
 
     def update_origin_access_identity(self, caller_reference, comment,
                                       origin_access_identity_id, e_tag):
@@ -154,10 +148,8 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                     'Comment': comment
                 },
                 Id=origin_access_identity_id, IfMatch=e_tag)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(
-                msg="error updating cloud front origin access identity - " +
-                str(e) + "\n" + traceback.format_exc())
+        except (ClientError, BotoCoreError) as e:
+               module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
 
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
