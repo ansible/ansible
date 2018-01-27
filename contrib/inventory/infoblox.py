@@ -25,17 +25,8 @@ import argparse
 from ansible.parsing.dataloader import DataLoader
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
-from ansible.module_utils.net_tools.nios.api import get_connector
+from ansible.module_utils.net_tools.nios.api import WapiInventory
 from ansible.module_utils.net_tools.nios.api import normalize_extattrs, flatten_extattrs
-
-try:
-    # disable urllib3 warnings so as to not interfere with printing to stdout
-    # which is read by ansible
-    import urllib3
-    urllib3.disable_warnings()
-except ImportError:
-    sys.stdout.write('missing required library: urllib3\n')
-    sys.exit(-1)
 
 
 CONFIG_FILES = [
@@ -70,7 +61,7 @@ def main():
         loader = DataLoader()
         config = loader.load_from_file(config_file)
         provider = config.get('provider') or {}
-        connector = get_connector(**provider)
+        wapi = WapiInventory(provider)
     except Exception as exc:
         sys.stdout.write(to_text(exc))
         sys.exit(-1)
@@ -99,10 +90,10 @@ def main():
 
     return_fields = ['name', 'view', 'extattrs', 'ipv4addrs']
 
-    hosts = connector.get_object('record:host',
-                                 host_filter,
-                                 extattrs=extattrs,
-                                 return_fields=return_fields)
+    hosts = wapi.get_object('record:host',
+                            host_filter,
+                            extattrs=extattrs,
+                            return_fields=return_fields)
 
     if hosts:
         for item in hosts:
