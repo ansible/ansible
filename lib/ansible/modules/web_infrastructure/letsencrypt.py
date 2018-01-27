@@ -224,10 +224,12 @@ EXAMPLES = '''
 #
 # - route53:
 #     zone: sample.com
-#     record: "{{ item.value[challenge].resource }}.sample.com"
+#     record: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].record }}"
 #     type: TXT
 #     ttl: 60
-#     value: '"{{ item.value[challenge].resource_value }}"'
+#     # Note: route53 requires TXT entries to be enclosed in quotes
+#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
+#     when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
