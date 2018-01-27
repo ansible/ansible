@@ -72,8 +72,25 @@ EXAMPLES = '''
 
 RETURN = '''
 
-location:
-    description: describes a url specifying the origin access identity.
+cloud_front_origin_access_identity_config:
+  description: describes a url specifying the origin access identity.
+  returned: always
+  type: complex
+  contains:
+    caller_reference:
+      description: a caller reference for the oai
+      returned: always
+      type: str
+    comment:
+      description: a comment describing the oai
+    returned: always
+    type: str
+  id: 
+    description: a unique identifier of the oai
+    returned: always
+    type: str
+  s3_canonical_user_id:
+    description: the cannonical user id of the user who created the oai
     returned: always
     type: str
 
