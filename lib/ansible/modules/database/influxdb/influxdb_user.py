@@ -83,6 +83,12 @@ import ansible.module_utils.urls
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.influxdb import InfluxDb
 
+try:
+    from influxdb.exceptions import InfluxDBClientError
+    HAS_INFLUXDB = True
+except ImportError:
+    HAS_INFLUXDB = False
+
 
 def find_user(module, client, user_name):
     name = None
@@ -96,6 +102,30 @@ def find_user(module, client, user_name):
     except ansible.module_utils.urls.ConnectionError as e:
         module.fail_json(msg=str(e))
     return name
+
+
+def check_user_password(module, user_name, user_password):
+    influxdb = InfluxDb(module)
+    client = influxdb.connect_to_influxdb()
+    try:
+        client.switch_user(user_name, user_password)
+        client.get_list_users()
+    except InfluxDBClientError as e:
+        if e.code == 401:
+            return False
+    except ansible.module_utils.urls.ConnectionError as e:
+        module.fail_json(msg=str(e))
+    return True
+
+
+def set_user_password(module, client, user_name, user_password):
+    if not module.check_mode:
+        try:
+            client.set_user_password(user_name, user_password)
+        except ansible.module_utils.urls.ConnectionError as e:
+            module.fail_json(msg=str(e))
+
+    module.exit_json(changed=True)
 
 
 def create_user(module, client, user_name, user_password, admin):
@@ -131,6 +161,9 @@ def main():
         supports_check_mode=True
     )
 
+    if not HAS_INFLUXDB:
+        module.fail_json(msg='This module requires influxdb python package.')
+
     state = module.params['state']
     user_name = module.params['user_name']
     user_password = module.params['user_password']
@@ -141,7 +174,10 @@ def main():
 
     if state == 'present':
         if user:
-            module.exit_json(changed=False)
+            if check_user_password(module, user_name, user_password):
+                module.exit_json(changed=False)
+            else:
+                set_user_password(module, client, user_name, user_password)
         else:
             create_user(module, client, user_name, user_password, admin)
 
