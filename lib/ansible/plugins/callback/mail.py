@@ -25,6 +25,13 @@ options:
           key: smtphost
           version_added: '2.5'
     default: localhost
+  mtaport:
+    description: Mail Transfer Agent Port, port at which server SMTP
+    ini:
+        - section: callback_mail
+          key: smtpport
+          version_added: '2.5'
+    default: 25
   to:
     description: Mail recipient
     ini:
@@ -76,6 +83,7 @@ class CallbackModule(CallbackBase):
         self.sender = None
         self.to = 'root'
         self.smtphost = os.getenv('SMTPHOST', 'localhost')
+        self.smtpport = 25
         self.cc = None
         self.bcc = None
 
@@ -86,6 +94,7 @@ class CallbackModule(CallbackBase):
         self.sender = self.get_option('sender')
         self.to = self.get_option('to')
         self.smtphost = self.get_option('mta')
+        self.smtpport = int(self.get_option('mtaport'))
         self.cc = self.get_option('cc')
         self.bcc = self.get_option('bcc')
 
@@ -93,7 +102,7 @@ class CallbackModule(CallbackBase):
         if body is None:
             body = subject
 
-        smtp = smtplib.SMTP(self.smtphost)
+        smtp = smtplib.SMTP(self.smtphost, port=self.smtpport)
 
         b_sender = to_bytes(self.sender)
         b_to = to_bytes(self.to)
