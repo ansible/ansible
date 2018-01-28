@@ -259,20 +259,26 @@ class DockerNetworkManager(object):
                 different = True
                 differences.append('ipam_options')
             else:
-                for key, value in self.parameters.ipam_options.items():
-                    camelkey = None
-                    for net_key in net['IPAM']['Config'][0]:
-                        if key == net_key.lower():
-                            camelkey = net_key
-                            break
-                    if not camelkey:
-                        # key not found
-                        different = True
-                        differences.append('ipam_options.%s' % key)
-                    elif net['IPAM']['Config'][0].get(camelkey) != value:
-                        # key has different value
-                        different = True
-                        differences.append('ipam_options.%s' % key)
+                for ipam_config in net['IPAM']['Config']:
+                    ipam_config_differences = []
+                    for key, value in self.parameters.ipam_options.items():
+                        camelkey = None
+                        for net_key in ipam_config:
+                            if key == net_key.lower():
+                                camelkey = net_key
+                                break
+                        if not camelkey:
+                            # key not found
+                            ipam_config_differences.append('ipam_options.%s' % key)
+                        elif ipam_config.get(camelkey) != value:
+                            # key has different value
+                            ipam_config_differences.append('ipam_options.%s' % key)
+                    if not ipam_config_differences:
+                        # no difference
+                        break
+                else:
+                    different = True
+                    differences.extend(ipam_config_differences)
         return different, differences
 
     def create_network(self):
