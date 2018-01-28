@@ -33,7 +33,7 @@ fixture_data = {}
 
 def load_fixture(name):
     # convert illegal filenames (both unix and windows to another char)
-    name = name.replace(':', '(semicolon)')
+    name = name.replace(':', '_semicolon_')
 
     path = os.path.join(fixture_path, name)
 
