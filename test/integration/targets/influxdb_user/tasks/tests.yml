@@ -81,3 +81,37 @@
       assert:
         that:
           - same_user.changed == false
+
+- name: Test remove user in check mode
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      check_mode: true
+      register: remove_user
+
+    - name: Check that removing user succeeds with a change
+      assert:
+        that:
+          - remove_user.changed == true
+
+- name: Test remove user
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      register: remove_user
+
+    - name: Check that removing user succeeds with a change
+      assert:
+        that:
+          - remove_user.changed == true
+
+- name: Test remove user idempotence
+  block:
+    - name: Remove user
+      influxdb_user: user_name=user state=absent login_username=admin login_password=admin
+      register: remove_user
+
+    - name: Check that removing user succeeds without a change
+      assert:
+        that:
+          - remove_user.changed == false
