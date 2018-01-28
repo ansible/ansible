@@ -235,6 +235,9 @@ class DockerNetworkManager(object):
         '''
         different = False
         differences = []
+        if self.parameters.enable_ipv6 != net['EnableIPv6']:
+            different = True
+            differences.append('enable_ipv6')
         if self.parameters.driver and self.parameters.driver != net['Driver']:
             different = True
             differences.append('driver')
