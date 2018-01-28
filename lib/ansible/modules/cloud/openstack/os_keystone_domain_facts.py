@@ -27,7 +27,7 @@ options:
    name:
      description:
         - Name or ID of the domain
-     required: true
+     required: false
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
