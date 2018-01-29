@@ -391,7 +391,7 @@ class StrategyModule(StrategyBase):
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
-                        if s.run_state != iterator.ITERATING_RESCUE or \
+                        if s.run_state not in [iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS] or \
                            s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
