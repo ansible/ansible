@@ -62,7 +62,7 @@
 - assert:
     that:
       - "result.changed == false"
-      - "'set system host-name {{ inventory_hostname_short }}' in result['ansible_facts']['ansible_net_config']"
+      - "'set system services netconf ssh' in result['ansible_facts']['ansible_net_config']"
 
 - name: Collect config facts from device in xml format
   junos_facts:
