@@ -1,0 +1,11 @@
+---
+- name: Setting the fact for 'test' to 'test value'
+  set_fact:
+    test: "test value"
+  when: "inventory_hostname == groups.all.0"
+
+- name: EXPECTED FAILURE echo jinja eval of a var that should not exist
+  shell: "echo {{ test }}"
+
+- debug:
+    msg: "any_errors_fatal_this_should_never_be_reached"
