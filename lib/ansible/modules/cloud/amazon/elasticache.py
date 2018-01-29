@@ -132,8 +132,16 @@ EXAMPLES = """
 """
 from time import sleep
 from traceback import format_exc
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (
+    ec2_argument_spec,
+    get_aws_connection_info,
+    boto3_conn,
+    HAS_BOTO3,
+    camel_dict_to_snake_dict,
+    get_ec2_security_group_ids_from_names
+)
 
 try:
     import boto3
@@ -435,11 +443,8 @@ class ElastiCacheManager(object):
     def _get_elasticache_connection(self):
         """Get an elasticache connection"""
         region, ec2_url, aws_connect_params = get_aws_connection_info(self.module, boto3=True)
-        if region:
-            return boto3_conn(self.module, conn_type='client', resource='elasticache',
-                              region=region, endpoint=ec2_url, **aws_connect_params)
-        else:
-            self.module.fail_json(msg="region must be specified")
+        return boto3_conn(self.module, conn_type='client', resource='elasticache',
+                          region=region, endpoint=ec2_url, **aws_connect_params)
 
     def _get_port(self):
         """Get the port. Where this information is retrieved from is engine dependent."""
@@ -519,7 +524,7 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
     name = module.params['name']
     state = module.params['state']
@@ -548,22 +553,25 @@ def main():
     if state == 'present' and not num_nodes and not replication_group:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
 
-    if not region:
-        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
-
     if security_group_names:
-        conn = boto.connect_ec2()
-        security_groups = [x for x in conn.get_all_security_groups() \
-                              if x.name in security_group_names]
-        unique_security_group_names = set([x.name for x in security_groups])
-        if len(security_groups) > len(unique_security_group_names):
-            module.fail_json(msg=str("Security group names given do not name unique "
-                                     "security groups; i.e. there may be security "
-                                     "groups with the same name across different VPCs.") )
-        if len(unique_security_group_names) < len(security_group_names):
+        conn = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        try:
+            security_groups = get_ec2_security_group_ids_from_names(security_group_names, conn)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Unable to get security groups ids for groups {0}: {1}".format(security_group_names, to_native(e)),
+                             exception=format_exc(), **response)
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Unable to get security groups ids for groups {0}: {1}".format(security_group_names, to_native(e)),
+                             exception=format_exc())
+        if len(security_groups) > len(security_group_names):
+            module.fail_json(msg="Security group names given do not name unique "
+                                 "security groups; i.e. there may be security "
+                                 "groups with the same name across different VPCs.")
+        if len(security_groups) < len(security_group_names):
             module.fail_json(msg=str("One or more security groups named does not exist."))
         else:
-            security_group_ids = [x.id for x in security_groups]
+            security_group_ids.extend(security_groups)
+
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
