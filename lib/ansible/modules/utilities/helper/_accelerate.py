@@ -80,3 +80,8 @@ EXAMPLES = '''
   tasks:
       - command: /usr/bin/anything
 '''
+
+from ansible.module_utils.common.removed import removed_module
+
+if __name__ == '__main__':
+    removed_module()
