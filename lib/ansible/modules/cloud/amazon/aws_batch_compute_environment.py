@@ -129,7 +129,7 @@ EXAMPLES = '''
     state: present
   tasks:
   - name: My Batch Compute Environment
-    batch_compute_environment:
+    aws_batch_compute_environment:
       compute_environment_name: computeEnvironmentName
       state: present
       region: us-east-1
@@ -154,7 +154,7 @@ EXAMPLES = '''
       service_role: arn:aws:iam::<account>:role/service-role/<role>
 
   - name: show results
-    debug: var=batch_compute_environment_action
+    debug: var=aws_batch_compute_environment_action
 '''
 
 RETURN = '''
@@ -225,8 +225,9 @@ output:
 '''
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.batch import AWSConnection
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ec2_argument_spec, HAS_BOTO3
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 import re
 import traceback
@@ -242,43 +243,6 @@ except ImportError:
 #   Helper Functions & classes
 #
 # ---------------------------------------------------------------------------------------------------
-
-class AWSConnection(object):
-    """
-    Create the connection object and client objects as required.
-    """
-
-    def __init__(self, ansible_obj, resources, boto3=True):
-
-        self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
-
-        self.resource_client = dict()
-        if not resources:
-            resources = ['batch']
-
-        resources.append('iam')
-
-        for resource in resources:
-            aws_connect_kwargs.update(dict(region=self.region,
-                                           endpoint=self.endpoint,
-                                           conn_type='client',
-                                           resource=resource
-                                           ))
-            self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
-
-        # if region is not provided, then get default profile/session region
-        if not self.region:
-            self.region = self.resource_client['batch'].meta.region_name
-
-        # set account ID
-        try:
-            self.account_id = self.resource_client['iam'].get_user()['User']['Arn'].split(':')[4]
-        except (ClientError, ValueError, KeyError, IndexError):
-            self.account_id = ''
-
-    def client(self, resource='batch'):
-        return self.resource_client[resource]
-
 
 def set_api_params(module, module_params):
     """
