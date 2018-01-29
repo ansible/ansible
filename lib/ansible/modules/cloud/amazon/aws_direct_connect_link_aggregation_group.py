@@ -193,7 +193,7 @@ def lag_exists(client, lag_id=None, lag_name=None, verify=True):
             failed_op = "Failed to describe DirectConnect link aggregation groups."
         raise DirectConnectError(msg=failed_op,
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
     match = []  # List of LAG IDs that are exact matches
     lag = []  # List of LAG data that are exact matches
@@ -241,7 +241,7 @@ def create_lag(client, num_connections, location, bandwidth, name, connection_id
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to create DirectConnect link aggregation group {0}".format(name),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
     return lag['lagId']
 
@@ -252,7 +252,7 @@ def delete_lag(client, lag_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to delete Direct Connect link aggregation group {0}.".format(lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
 
 
 @AWSRetry.backoff(tries=5, delay=2, backoff=2.0, catch_extra_error_codes=['DirectConnectClientException'])
@@ -286,7 +286,7 @@ def update_lag(client, lag_id, lag_name, min_links, num_connections, wait, wait_
                 msg += "Unable to set the min number of links to {0} while the LAG connections are being requested".format(min_links)
             raise DirectConnectError(msg=msg,
                                      last_traceback=traceback.format_exc(),
-                                     response=e.response)
+                                     exception=e)
         else:
             break
 
@@ -323,7 +323,7 @@ def describe_virtual_interfaces(client, lag_id):
     except botocore.exceptions.ClientError as e:
         raise DirectConnectError(msg="Failed to describe any virtual interfaces associated with LAG: {0}".format(lag_id),
                                  last_traceback=traceback.format_exc(),
-                                 response=e.response)
+                                 exception=e)
     return response.get('virtualInterfaces', [])
 
 
@@ -341,7 +341,7 @@ def disassociate_vis(client, lag_id, virtual_interfaces):
         except botocore.exceptions.ClientError as e:
             raise DirectConnectError(msg="Could not delete virtual interface {0} to delete link aggregation group {1}.".format(vi, lag_id),
                                      last_traceback=traceback.format_exc(),
-                                     response=e.response)
+                                     exception=e)
 
 
 def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassociation, wait, wait_timeout):
@@ -380,7 +380,7 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
         try:
             delete_lag(client, lag_id)
         except DirectConnectError as e:
-            if ('until its Virtual Interfaces are deleted' in e.response) and (time.time() - start_time < wait_timeout) and wait:
+            if ('until its Virtual Interfaces are deleted' in e.exception.response) and (time.time() - start_time < wait_timeout) and wait:
                 continue
         else:
             return True
@@ -442,10 +442,8 @@ def main():
                                     wait_timeout=module.params.get('wait_timeout'))
             response = {}
     except DirectConnectError as e:
-        if e.response:
-            module.fail_json(msg=e.msg, exception=e.last_traceback, **e.response)
-        elif e.last_traceback:
-            module.fail_json(msg=e.msg, exception=e.last_traceback)
+        if e.last_traceback:
+            module.fail_json(msg=e.msg, exception=e.last_traceback, **camel_dict_to_snake_dict(e.exception.response))
         else:
             module.fail_json(msg=e.msg)
 
