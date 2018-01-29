@@ -494,7 +494,7 @@ def main():
 
     results = manage_state(module, aws)
 
-    module.exit_json(**camel_dict_to_snake_dict(results))
+    module.exit_json(**camel_dict_to_snake_dict(results, ignore_list=['Tags']))
 
 
 if __name__ == '__main__':
