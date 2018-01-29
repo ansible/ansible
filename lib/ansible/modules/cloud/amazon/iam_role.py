@@ -342,10 +342,12 @@ def destroy_role(connection, module):
             try:
                 connection.remove_role_from_instance_profile(InstanceProfileName=profile['InstanceProfileName'], RoleName=params['RoleName'])
             except ClientError as e:
-                module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(params['RoleName'], profile['InstanceProfileName'], to_native(e)),
+                module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(
+                                 params['RoleName'], profile['InstanceProfileName'], to_native(e)),
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             except BotoCoreError as e:
-                module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(params['RoleName'], profile['InstanceProfileName'], to_native(e)),
+                module.fail_json(msg="Unable to remove role {0} from instance profile {1}: {2}".format(
+                                 params['RoleName'], profile['InstanceProfileName'], to_native(e)),
                                  exception=traceback.format_exc())
 
         # Now remove any attached policies otherwise deletion fails
