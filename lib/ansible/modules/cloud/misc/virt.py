@@ -36,6 +36,7 @@ options:
     description:
       - In addition to state management, various non-idempotent commands are available.
     choices: [ create, define, destroy, freemem, get_xml, info, list_vms, nodeinfo, pause, shutdown, start, status, stop, undefine, unpause, virttype ]
+    required: true
   autostart:
     description:
       - start VM at host startup.
