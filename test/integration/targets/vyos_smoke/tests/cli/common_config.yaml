@@ -1,0 +1,9 @@
+# hit NetworkConfig
+- name: configure simple config command
+  vyos_config:
+    lines: set system host-name smoke
+
+- name: return host name to inventory_hostname
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
