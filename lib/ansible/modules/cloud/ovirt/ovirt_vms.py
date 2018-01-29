@@ -919,7 +919,7 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
-            equal(self.param('boot_menu'), entity.boot.boot_menu.enabled) and
+            equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
