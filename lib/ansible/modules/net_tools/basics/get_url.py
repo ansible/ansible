@@ -114,7 +114,7 @@ options:
     version_added: '1.8'
   headers:
     description:
-        - Add custom HTTP headers to a request in the format "key:value,key:value".
+        - Add custom HTTP headers to a request in hash/dict format. The C("key:value,key:value") string format is deprecated and will be removed in version 2.9.
     version_added: '2.0'
   url_username:
     description:
