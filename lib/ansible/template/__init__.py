@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from collections import Sequence
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -635,7 +636,15 @@ class Templar:
                     try:
                         ran = UnsafeProxy(",".join(ran))
                     except TypeError:
-                        if isinstance(ran, list) and len(ran) == 1:
+                        # Lookup Plugins should always return lists.  Throw an error if that's not
+                        # the case:
+                        if not isinstance(ran, Sequence):
+                            raise AnsibleError("The lookup plugin '%s' did not return a list."
+                                               % name)
+
+                        # The TypeError we can recover from is when the value *inside* of the list
+                        # is not a string
+                        if len(ran) == 1:
                             ran = wrap_var(ran[0])
                         else:
                             ran = wrap_var(ran)
