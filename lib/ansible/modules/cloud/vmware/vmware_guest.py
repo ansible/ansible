@@ -1465,7 +1465,6 @@ class PyVmomiHelper(PyVmomi):
         # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
 
         # FIXME:
-        #   - multiple templates by the same name
         #   - static IPs
 
         self.folder = self.params.get('folder', None)
@@ -1515,8 +1514,7 @@ class PyVmomiHelper(PyVmomi):
         destfolder = f_obj
 
         if self.params['template']:
-            # FIXME: need to search for this in the same way as guests to ensure accuracy
-            vm_obj = find_obj(self.content, [vim.VirtualMachine], self.params['template'])
+            vm_obj = self.get_vm_or_template(template_name=self.params['template'])
             if vm_obj is None:
                 self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
