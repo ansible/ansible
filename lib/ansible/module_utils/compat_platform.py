@@ -15,6 +15,10 @@
 #
 #    If that URL should fail, try contacting the author.
 
+import os
+import re
+import sys
+
 __copyright__ = """
     Copyright (c) 1999-2000, Marc-Andre Lemburg; mailto:mal@lemburg.com
     Copyright (c) 2000-2010, eGenix.com Software GmbH; mailto:info@egenix.com
@@ -38,17 +42,13 @@ __copyright__ = """
 
 __version__ = '1.0.8'
 
-import os
-import re
-import sys
-
 
 # Directory to search for configuration information on Unix.
 # Constant used by test_platform to test linux_distribution().
 _UNIXCONFDIR = '/etc'
 
 
-def _dist_try_harder(distname, version, id):
+def _dist_try_harder(distname, version, distid):
 
     """ Tries some special tricks to get the distribution
         information in case the default method fails.
@@ -70,8 +70,8 @@ def _dist_try_harder(distname, version, id):
                 version = value.strip()
             elif tag == 'DIST_IDENT':
                 values = value.split('-')
-                id = values[2]
-        return distname, version, id
+                distid = values[2]
+        return distname, version, distid
 
     if os.path.exists('/etc/.installed'):
         # Caldera OpenLinux has some infos in that file (thanks to Colin Kong)
@@ -80,21 +80,21 @@ def _dist_try_harder(distname, version, id):
             if len(pkg) >= 2 and pkg[0] == 'OpenLinux':
                 # XXX does Caldera support non Intel platforms ? If yes,
                 #     where can we find the needed id ?
-                return 'OpenLinux', pkg[1], id
+                return 'OpenLinux', pkg[1], distid
 
     if os.path.isdir('/usr/lib/setup'):
         # Check for slackware version tag file (thanks to Greg Andruk)
         verfiles = os.listdir('/usr/lib/setup')
-        for n in range(len(verfiles)-1, -1, -1):
+        for n in range(len(verfiles) - 1, -1, -1):
             if verfiles[n][:14] != 'slack-version-':
                 del verfiles[n]
         if verfiles:
             verfiles.sort()
             distname = 'slackware'
             version = verfiles[-1][14:]
-            return distname, version, id
+            return distname, version, distid
 
-    return distname, version, id
+    return distname, version, distid
 
 
 # 3.6 versions specify the re.ASCII flag here. rm for compat
@@ -108,7 +108,7 @@ _release_version = re.compile(r'([^0-9]+)'
                               r'([\d.]+)'
                               r'[^(]*(?:\((.+)\))?')
 
-# from http://bazaar.launchpad.net/~doko/python/pkg2.7-debian/view/head:/patches/platform-lsbrelease.diff
+# from http://bazaar.launchpad.net/~doko/python/pkg2.7-debian/view/head:/patches/platform-lsbrelease.diff  # noqa
 _distributor_id_file_re = re.compile(r"(?:DISTRIB_ID\s*=)\s*(.*)", re.I)
 _release_file_re = re.compile(r"(?:DISTRIB_RELEASE\s*=)\s*(.*)", re.I)
 _codename_file_re = re.compile(r"(?:DISTRIB_CODENAME\s*=)\s*(.*)", re.I)
@@ -130,7 +130,7 @@ def _parse_release_file(firstline):
     # when 'firstline' is empty.  'id' defaults to empty when an id can not
     # be deduced.
     version = ''
-    id = ''
+    _id = ''
 
     # Parse the first line
     m = _lsb_release_version.match(firstline)
@@ -148,11 +148,12 @@ def _parse_release_file(firstline):
     if l:
         version = l[0]
         if len(l) > 1:
-            id = l[1]
-    return '', version, id
+            _id = l[1]
+    return '', version, _id
 
 
-def linux_distribution(distname='', version='', id='', supported_dists=_supported_dists,
+# noqa because id shadows builtin but cant change API
+def linux_distribution(distname='', version='', id='', supported_dists=_supported_dists,  # noqa
                        full_distribution_name=1):
 
     """ Tries to determine the name of the Linux OS distribution name.
@@ -175,6 +176,7 @@ def linux_distribution(distname='', version='', id='', supported_dists=_supporte
 
     """
 
+    distid = id
     # check for the LSB /etc/lsb-release file first, needed so
     # that the distribution doesn't get identified as Debian.
     try:
@@ -198,37 +200,44 @@ def linux_distribution(distname='', version='', id='', supported_dists=_supporte
         etc = os.listdir(_UNIXCONFDIR)
     except OSError:
         # Probably not a Unix system
-        return distname, version, id
+        return distname, version, distid
+
     etc.sort()
-    for file in etc:
-        m = _release_filename.match(file)
+
+    filename = None
+    _distname = None
+    _version = None
+    _distid = None
+
+    for filename in etc:
+        m = _release_filename.match(filename)
         if m is not None:
             _distname, dummy = m.groups()
             if _distname in supported_dists:
                 distname = _distname
                 break
     else:
-        return _dist_try_harder(distname, version, id)
+        return _dist_try_harder(distname, version, distid)
 
     # Read the first line
 
     # FIXME: wrap with py2/py3 compat encoding stuff
-    with open(os.path.join(_UNIXCONFDIR, file), 'r',) as f:
-        # encoding='utf-8', errors='surrogateescape') as f:
-        firstline = f.readline()
-    _distname, _version, _id = _parse_release_file(firstline)
+    if filename:
+        with open(os.path.join(_UNIXCONFDIR, filename), 'r',) as f:
+            # encoding='utf-8', errors='surrogateescape') as f:
+            firstline = f.readline()
+        _distname, _version, _distid = _parse_release_file(firstline)
 
     if _distname and full_distribution_name:
         distname = _distname
     if _version:
         version = _version
-    if _id:
-        id = _id
-    return distname, version, id
+    if _distid:
+        distid = _distid
+    return distname, version, distid
 
 
 def dist(distname='', version='', id='',
-
          supported_dists=_supported_dists):
 
     """ Tries to determine the name of the Linux OS distribution name.
