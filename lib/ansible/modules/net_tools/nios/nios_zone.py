@@ -102,6 +102,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: update the comment and ext attributes for an existing zone
   nios_zone:
@@ -114,6 +115,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: remove the dns zone
   nios_zone:
@@ -123,6 +125,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
