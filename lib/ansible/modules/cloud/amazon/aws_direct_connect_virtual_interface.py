@@ -63,6 +63,9 @@ options:
   virtual_interface_id:
     description:
       - The virtual interface ID.
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 RETURN = '''
