@@ -79,7 +79,7 @@ The following modules no longer exist:
 * :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`
 * :ref:`cl_interface_policy <cl_interface_policy>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_bridge <cl_bridge>` use :ref:`nclu <nclu>` instead
-* :ref:`img_install <img_install>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_img_install <cl_img_install>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_ports <cl_ports>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_license <cl_license>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_interface <cl_interface>` use :ref:`nclu <nclu>` instead
