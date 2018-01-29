@@ -72,6 +72,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: update the comment for dns view
   nios_dns_view:
@@ -82,6 +83,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: remove the dns view instance
   nios_dns_view:
@@ -91,6 +93,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
