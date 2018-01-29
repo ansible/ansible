@@ -115,6 +115,8 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
+
 - name: add a comment to an existing host record
   nios_host_record:
     name: host.ansible.com
@@ -126,6 +128,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: remove a host record from the system
   nios_host_record:
@@ -135,6 +138,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
