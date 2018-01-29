@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -530,6 +531,22 @@ EXAMPLES = r'''
       ip_tunnel_local: 192.168.1.2
       ip_tunnel_remote: 192.168.1.5
 
+  - name: To disable the ipv4 connection
+    nmcli:
+      type: vlan
+      conn_name: my-eth1
+      ifname: eth1
+      ip4: disabled
+      state: present
+
+  - name: To disable the ipv6 connection
+    nmcli:
+      type: vlan
+      conn_name: my-eth1
+      ifname: eth1
+      ip6: ignore
+      state: present
+
 # nmcli exits with status 0 if it succeeds and exits with a status greater
 # than zero when there is a failure. The following list of status codes may be
 # returned:
@@ -555,6 +572,7 @@ import traceback
 DBUS_IMP_ERR = None
 try:
     import dbus
+
     HAVE_DBUS = True
 except ImportError:
     DBUS_IMP_ERR = traceback.format_exc()
@@ -563,10 +581,12 @@ except ImportError:
 NM_CLIENT_IMP_ERR = None
 try:
     import gi
+
     gi.require_version('NMClient', '1.0')
     gi.require_version('NetworkManager', '1.0')
 
     from gi.repository import NetworkManager, NMClient
+
     HAVE_NM_CLIENT = True
 except (ImportError, ValueError):
     NM_CLIENT_IMP_ERR = traceback.format_exc()
@@ -1419,11 +1439,30 @@ class Nmcli(object):
             cmd = self.modify_connection_sit()
         elif self.type == 'generic':
             cmd = self.modify_connection_ethernet(conn_type='generic')
+
         if cmd:
+            # If no dns given, then we assume that IPv4/IPv6 is not used on the interface
+            # so we are going to disable the protocol, otherwise interface won't come up.
+
+            if self.ip4 == 'disabled':
+                self.execute_command(cmd)
+                cmd = self.modify_conn_disable_ipv4_or_ipv6()
+
+            if self.ip6 == 'ignore':
+                self.execute_command(cmd)
+                cmd = self.modify_conn_disable_ipv4_or_ipv6(ipv4=False)
             return self.execute_command(cmd)
         else:
             self.module.fail_json(msg="Type of device or network connection is required "
                                       "while performing 'modify' operation. Please specify 'type' as an argument.")
+
+    def modify_conn_disable_ipv4_or_ipv6(self, ipv4=True):
+        if ipv4:
+            cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name, 'ipv4.method', 'disabled']
+            return cmd
+        else:
+            cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name, 'ipv6.method', 'ignore']
+            return cmd
 
 
 def main():
@@ -1436,7 +1475,8 @@ def main():
             master=dict(type='str'),
             ifname=dict(type='str'),
             type=dict(type='str',
-                      choices=['bond', 'bond-slave', 'bridge', 'bridge-slave', 'ethernet', 'generic', 'ipip', 'sit', 'team', 'team-slave', 'vlan', 'vxlan']),
+                      choices=['bond', 'bond-slave', 'bridge', 'bridge-slave', 'ethernet', 'generic', 'ipip', 'sit',
+                               'team', 'team-slave', 'vlan', 'vxlan']),
             ip4=dict(type='str'),
             gw4=dict(type='str'),
             dns4=dict(type='list'),
@@ -1448,7 +1488,8 @@ def main():
             dns6_search=dict(type='list'),
             # Bond Specific vars
             mode=dict(type='str', default='balance-rr',
-                      choices=['802.3ad', 'active-backup', 'balance-alb', 'balance-rr', 'balance-tlb', 'balance-xor', 'broadcast']),
+                      choices=['802.3ad', 'active-backup', 'balance-alb', 'balance-rr', 'balance-tlb', 'balance-xor',
+                               'broadcast']),
             miimon=dict(type='int'),
             downdelay=dict(type='int'),
             updelay=dict(type='int'),

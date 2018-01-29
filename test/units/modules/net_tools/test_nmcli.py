@@ -201,6 +201,28 @@ TESTCASE_ETHERNET_DHCP = [
     }
 ]
 
+TESTCASE_DISABLE_IPV4 = [
+    {
+        'type': 'vlan',
+        'conn_name': 'disable_ipv4_proto',
+        'ifname': 'ipv4_proto_disabled',
+        'ip4': 'disabled',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
+TESTCASE_DISABLE_IPV6 = [
+    {
+        'type': 'vlan',
+        'conn_name': 'disable_ipv6_proto',
+        'ifname': 'ipv6_proto_disable',
+        'ip6': 'ignore',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
 
 def mocker_set(mocker, connection_exists=False):
     """
@@ -653,3 +675,35 @@ def test_eth_dhcp_client_id_con_create(mocked_generic_connection_create):
     args, kwargs = arg_list[0]
 
     assert 'ipv4.dhcp-client-id' in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_DISABLE_IPV4,
+                         indirect=['patch_ansible_module'])
+def test_disable_ipv4_protocol(mocked_generic_connection_create):
+    """
+    Test : Disable ipv4 protocol.
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert 'disabled' in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_DISABLE_IPV6,
+                         indirect=['patch_ansible_module'])
+def test_disable_ipv6_protocol(mocked_generic_connection_create):
+    """
+    Test : Disable ipv6 protocol.
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert 'ignore' in args[0]
