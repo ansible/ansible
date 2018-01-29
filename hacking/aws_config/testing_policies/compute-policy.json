@@ -249,6 +249,37 @@
           "Resource": [
             "*"
           ]
+        },
+        {
+          "Sid": "AllowSESManagement",
+          "Effect": "Allow",
+          "Action": [
+            "ses:VerifyEmailIdentity",
+            "ses:DeleteIdentity",
+            "ses:GetIdentityVerificationAttributes",
+            "ses:GetIdentityNotificationAttributes",
+            "ses:VerifyDomainIdentity",
+            "ses:SetIdentityNotificationTopic",
+            "ses:SetIdentityHeadersInNotificationsEnabled",
+            "ses:SetIdentityFeedbackForwardingEnabled"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+            "Sid": "AllowSNSManagement",
+            "Effect": "Allow",
+            "Action": [
+              "SNS:CreateTopic",
+              "SNS:DeleteTopic",
+              "SNS:ListTopics",
+              "SNS:GetTopicAttributes",
+              "SNS:ListSubscriptionsByTopic"
+            ],
+            "Resource": [
+              "*"
+            ]
         }
     ]
 }
