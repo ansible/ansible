@@ -1,11 +1,10 @@
-""" This module tries to retrieve as much platform-identifying data as
-    possible. It makes this information available via function APIs.
-
-    If called from the command line, it prints the platform
-    information concatenated as single string to stdout. The output
-    format is useable as part of a filename.
-
-"""
+#
+# This module is based on the python 3.6.2 'platform.py' but with
+# everything except the deprecated 'dist' and 'linux_distribution'
+# methods removed
+#
+# The following comment is from original upstream python platform.py
+#
 #    This module is maintained by Marc-Andre Lemburg <mal@egenix.com>.
 #    If you find problems, please submit bug reports/patches via the
 #    Python bug tracker (http://bugs.python.org) and assign them to "lemburg".
@@ -153,8 +152,8 @@ def _parse_release_file(firstline):
     return '', version, id
 
 
-def linux_distribution(distname, version, id, supported_dists,
-                       full_distribution_name):
+def linux_distribution(distname='', version='', id='', supported_dists=_supported_dists,
+                       full_distribution_name=1):
 
     """ Tries to determine the name of the Linux OS distribution name.
 
