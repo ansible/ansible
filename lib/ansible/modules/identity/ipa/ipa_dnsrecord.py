@@ -226,11 +226,19 @@ def ensure(module, client):
 
     elif state == 'force':
         changed = True
-        if not module.check_mode:
-            client.dnsrecord_add(zone_name=zone_name,
-                                 record_name=record_name,
-                                 record_ttl=record_ttl,
-                                 details=module_dnsrecord)
+        if not ipa_dnsrecord:
+            if not module.check_mode:
+                client.dnsrecord_add(zone_name=zone_name,
+                                     record_name=record_name,
+                                     record_ttl=record_ttl,
+                                     details=module_dnsrecord)
+
+        else:
+            if not module.check_mode:
+                client.dnsrecord_mod(zone_name=zone_name,
+                                     record_name=record_name,
+                                     record_ttl=record_ttl,
+                                     details=module_dnsrecord)
 
     else:
         if ipa_dnsrecord:
