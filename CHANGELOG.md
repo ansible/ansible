@@ -138,15 +138,19 @@ Ansible Changes By Release
 - vmware
   * vmware_cfg_backup
   * vmware_datastore_facts
+  * vmware_drs_rule_facts
   * vmware_guest_file_operation
   * vmware_guest_powerstate
+  * vmware_host_acceptance
   * vmware_host_config_facts
   * vmware_host_config_manager
   * vmware_host_facts
   * vmware_host_ntp
   * vmware_host_service_facts
   * vmware_host_service_manager
+  * vmware_host_vmnic_facts
   * vmware_local_role_manager
+  * vmware_vm_vm_drs_rule
 - vultr
   * vr_account_facts
   * vr_dns_domain
