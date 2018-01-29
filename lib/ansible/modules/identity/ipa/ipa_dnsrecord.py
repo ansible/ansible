@@ -48,14 +48,24 @@ options:
     required: true
   record_ttl:
     description:
-    - Set the TTL for the record if the record_value is new, changes its value, or if state is set to force.
-    - If the record exists and state is set to present the TTL is not updated even the option differs from what is set in IPA.
+    - Set the TTL for the record.
+    - Applies only when adding a new or changing the value of record_value.
+    - TTL updates can be forced by setting force to true.
+    version_added: "2.5"
+  force:
+    description:
+    - Required in order to apply a TTL change to an existing record and record_value.
+    - When true any existing record is removed a new recorded added.
+    - Always returns changed.
+    required: false
+    default: 'False'
+    choices: ['True', 'False']
     version_added: "2.5"
   state:
     description: State to ensure
     required: false
     default: present
-    choices: ["present", "force", "absent"]
+    choices: ["present", "absent"]
 extends_documentation_fragment: ipa.documentation
 version_added: "2.4"
 '''
@@ -104,7 +114,7 @@ EXAMPLES = '''
 
 # Ensure that dns record exists with a TTL
 - ipa_dnsrecord:
-    name: host01
+    name: host02
     zone_name: example.com
     record_type: 'AAAA'
     record_value: '::1'
@@ -112,7 +122,20 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
-    state: force
+    state: present
+
+# Update a TTL for an existing record set
+- ipa_dnsrecord:
+    name: host02
+    zone_name: example.com
+    record_type: 'AAAA'
+    record_value: '::1'
+    record_ttl: 60
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    state: present
+    force: true
 '''
 
 RETURN = '''
@@ -199,6 +222,7 @@ def ensure(module, client):
     zone_name = module.params['zone_name']
     record_name = module.params['record_name']
     record_ttl = module.params['record_ttl']
+    force = module.params['force']
     state = module.params['state']
 
     ipa_dnsrecord = client.dnsrecord_find(zone_name, record_name)
@@ -223,22 +247,16 @@ def ensure(module, client):
                                          record_name=record_name,
                                          record_ttl=record_ttl,
                                          details=module_dnsrecord)
-
-    elif state == 'force':
-        changed = True
-        if not ipa_dnsrecord:
-            if not module.check_mode:
-                client.dnsrecord_add(zone_name=zone_name,
-                                     record_name=record_name,
-                                     record_ttl=record_ttl,
-                                     details=module_dnsrecord)
-
-        else:
-            if not module.check_mode:
-                client.dnsrecord_mod(zone_name=zone_name,
-                                     record_name=record_name,
-                                     record_ttl=record_ttl,
-                                     details=module_dnsrecord)
+            elif force:
+                changed = True
+                if not module.check_mode:
+                    client.dnsrecord_del(zone_name=zone_name,
+                                         record_name=record_name,
+                                         details=module_dnsrecord)
+                    client.dnsrecord_add(zone_name=zone_name,
+                                         record_name=record_name,
+                                         record_ttl=record_ttl,
+                                         details=module_dnsrecord)
 
     else:
         if ipa_dnsrecord:
@@ -259,7 +277,8 @@ def main():
                          record_type=dict(type='str', default='A', choices=record_types),
                          record_value=dict(type='str', required=True),
                          record_ttl=dict(type='int', required=False),
-                         state=dict(type='str', default='present', choices=['present', 'absent', 'force']),
+                         force=dict(type='bool', default=False, required=False),
+                         state=dict(type='str', default='present', choices=['present', 'absent'])
                          )
 
     module = AnsibleModule(argument_spec=argument_spec,
