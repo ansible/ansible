@@ -201,7 +201,7 @@ The following fields can be used and are all required unless specified otherwise
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
-  If a module is deprecated it should
+  If a module is deprecated it must be:
 
   * Mentioned in ``CHANGELOG``
   * Referenced in the ``porting_guide.x.y.rst``
@@ -209,7 +209,7 @@ The following fields can be used and are all required unless specified otherwise
   * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
   * Following values should be set:
 
-  :removed_in_version: A `string` which represents the version of Ansible this option will be deleted in.
+  :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will be deleted in.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:
