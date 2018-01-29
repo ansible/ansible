@@ -46,10 +46,10 @@ options:
     - In the case of 'PTR' record type, this will be the hostname.
     - In the case of 'TXT' record type, this will be a text.
     required: true
-  record_ttl: 
-    description: 
+  record_ttl:
+    description:
     - Set the TTL for the record if the record_value is new, changes its value, or if state is set to force.
-    - If the record exists and state is set to present the TTL is not updated even the option differs from what is set in IPA.  
+    - If the record exists and state is set to present the TTL is not updated even the option differs from what is set in IPA.
     version_added: "2.5"
   state:
     description: State to ensure
@@ -153,7 +153,7 @@ class DNSRecordIPAClient(IPAClient):
         elif details['record_type'] == 'TXT':
             item.update(txtrecord=details['record_value'])
 
-        if record_ttl: 
+        if record_ttl:
             item.update(dnsttl=record_ttl)
 
         return self._post_json(method='dnsrecord_add', name=zone_name, item=item)
@@ -161,7 +161,7 @@ class DNSRecordIPAClient(IPAClient):
     def dnsrecord_mod(self, zone_name=None, record_name=None, record_ttl=None, details=None):
         item = get_dnsrecord_dict(details)
         item.update(idnsname=record_name)
-        if record_ttl: 
+        if record_ttl:
             item.update(dnsttl=record_ttl)
         return self._post_json(method='dnsrecord_mod', name=zone_name, item=item)
 
