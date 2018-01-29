@@ -251,6 +251,13 @@ options:
             - If I(no) Virtual Machine won't be set as highly available.
             - If no value is passed, default value is set by oVirt/RHV engine.
         type: bool
+    high_availability_priority:
+        description:
+            - Indicates the priority of the virtual machine inside the run and migration queues.
+              Virtual machines with higher priorities will be started and migrated before virtual machines with lower
+              priorities. The value is an integer between 0 and 100. The higher the value, the higher the priority.
+            - If no value is passed, default value is set by oVirt/RHV engine.
+        version_added: "2.5"
     lease:
         description:
             - Name of the storage domain this virtual machine lease reside on.
@@ -587,6 +594,7 @@ EXAMPLES = '''
     cluster: Default
     memory: 1GiB
     high_availability: true
+    high_availability_priority: 50  # Available from Ansible 2.5
     cloud_init:
       nic_boot_protocol: static
       nic_ip_address: 10.34.60.86
@@ -851,8 +859,9 @@ class VmsModule(BaseModule):
             ),
             quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
-                enabled=self.param('high_availability')
-            ) if self.param('high_availability') is not None else None,
+                enabled=self.param('high_availability'),
+                priority=self.param('high_availability_priority'),
+            ) if self.param('high_availability') is not None or self.param('high_availability_priority') else None,
             lease=otypes.StorageDomainLease(
                 storage_domain=otypes.StorageDomain(
                     id=get_id_by_name(
@@ -925,6 +934,7 @@ class VmsModule(BaseModule):
             equal(self.param('sso'), True if entity.sso.methods else False) and
             equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
+            equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
             equal(self.param('stateless'), entity.stateless) and
             equal(self.param('cpu_shares'), entity.cpu_shares) and
@@ -1516,6 +1526,7 @@ def main():
         sso=dict(type='bool'),
         quota_id=dict(type='str'),
         high_availability=dict(type='bool'),
+        high_availability_priority=dict(type='int'),
         lease=dict(type='str'),
         stateless=dict(type='bool'),
         delete_protected=dict(type='bool'),
