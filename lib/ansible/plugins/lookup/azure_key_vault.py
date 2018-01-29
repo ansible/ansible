@@ -27,7 +27,7 @@ DOCUMENTATION = """
       description: Your Azure Active Directory Service Principal AppId.
       required: True
       env:
-        - name: AZURE_SECRET                
+        - name: AZURE_SECRET
     azure_tenant_id:
       description: Your Azure Active Directory Application Key.
       required: True
@@ -46,10 +46,10 @@ EXAMPLES = """
 - name: Return a secret from a specified vault_uri.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName vault_uri=https://anothervault.vault.azure.net/') }}"
-    
+
 - name: Return a specific version of a secret.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}" 
+    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}"
 
  - name: Return a specific version of a secret from a specified vault_uri.
   debug:
@@ -106,7 +106,7 @@ class LookupModule(LookupBase):
         try:
             if accepted_params['azure_client_id'] is None:
                 raise AnsibleError(
-                "Please set AZURE_CLIENT_ID environment variable or provide azure_client_id value in the form azure_client_id=some_value")
+                    "Please set AZURE_CLIENT_ID environment variable or provide azure_client_id value in the form azure_client_id=some_value")
 
             if accepted_params['azure_client_secret'] is None:
                 raise AnsibleError("Please set AZURE_SECRET environment variable or provide azure_client_secret value in the form azure_client_secret=some_value")
