@@ -1,6 +1,16 @@
 ---
 # tasks file for aws_elasticbeanstalk_app
 - block:
+
+  - name: set connection information for all tasks
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
   # ============================================================
   - name: test with no parameters
     aws_elasticbeanstalk_app:
@@ -18,10 +28,7 @@
       app_name: "{{ app_name }}"
       description: "{{ description }}"
       state: present
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
+      <<: *aws_connection_info
     register: result
 
   - name: assert changed is True
@@ -35,10 +42,7 @@
       app_name: "{{ app_name }}"
       description: "{{ description }}"
       state: present
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
+      <<: *aws_connection_info
     register: result
 
   - name: assert changed is False since the app already exists
@@ -52,10 +56,7 @@
       app_name: "{{ app_name }}"
       description: "{{ alternate_description }}"
       state: present
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
+      <<: *aws_connection_info
     register: result
 
   - name: assert changed is True
@@ -68,10 +69,7 @@
 #     aws_elasticbeanstalk_app:
 #       app_name: "non_app"
 #       state: absent
-#       aws_access_key: "{{ ec2_access_key }}"
-#       aws_secret_key: "{{ ec2_secret_key }}"
-#       security_token: "{{ security_token }}"
-#       region: "{{ aws_region }}"
+#       <<: *aws_connection_info
 #     register: result
 #     ignore_error: true
 #
@@ -86,10 +84,7 @@
 #       app_name: "non_app"
 #       state: absent
 #       terminate_by_force: True
-#       aws_access_key: "{{ ec2_access_key }}"
-#       aws_secret_key: "{{ ec2_secret_key }}"
-#       security_token: "{{ security_token }}"
-#       region: "{{ aws_region }}"
+#       <<: *aws_connection_info
 #     register: result
 #
 #   - name: assert deleteing app with running environments with terminate_by_force True
@@ -98,19 +93,15 @@
 #         - result.changed == True
 #
   # ============================================================
-  - name: retrieve a list of apps
-    aws_elasticbeanstalk_app:
-      state: list
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
-    register: result
+#  - name: retrieve a list of apps
+#    aws_elasticbeanstalk_app_facts:
+#      <<: *aws_connection_info
+#    register: result
 
-  - name: assert changed is True
-    assert:
-      that:
-        - result is success
+#  - name: assert changed is True
+#    assert:
+#      that:
+#        - result is success
 
 #   # ============================================================
 #   - name: deleting an app that has environments that exist with terminate_by_force True
@@ -118,10 +109,7 @@
 #       app_name: "non_app"
 #       state: absent
 #       terminate_by_force: True
-#       aws_access_key: "{{ ec2_access_key }}"
-#       aws_secret_key: "{{ ec2_secret_key }}"
-#       security_token: "{{ security_token }}"
-#       region: "{{ aws_region }}"
+#       <<: *aws_connection_info
 #     register: result
 #
 #   - name: assert deleteing app with running environments with terminate_by_force True
@@ -134,10 +122,7 @@
     aws_elasticbeanstalk_app:
       app_name: "non_app"
       state: absent
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
+      <<: *aws_connection_info
     register: result
     ignore_error: true
 
@@ -152,13 +137,20 @@
     aws_elasticbeanstalk_app:
       app_name: "{{ app_name }}"
       state: absent
-      aws_access_key: "{{ ec2_access_key }}"
-      aws_secret_key: "{{ ec2_secret_key }}"
-      security_token: "{{ security_token }}"
-      region: "{{ aws_region }}"
+      <<: *aws_connection_info
     register: result
 
   - name: assert changed is True
     assert:
       that:
         - result.changed == True
+
+  # ============================================================
+
+  always:
+
+  - name: delete existing app
+    aws_elasticbeanstalk_app:
+      app_name: "{{ app_name }}"
+      state: absent
+      <<: *aws_connection_info
