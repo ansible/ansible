@@ -110,7 +110,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
-  delegate_to: localhost
+  connection: local
 
 - name: set dhcp options for a network
   nios_network:
@@ -124,7 +124,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
-  delegate_to: localhost
+  connection: local
 
 - name: remove a network
   nios_network:
@@ -134,7 +134,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
-  delegate_to: localhost
+  connection: local
 '''
 
 RETURN = ''' # '''

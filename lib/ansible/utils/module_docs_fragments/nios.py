@@ -77,5 +77,5 @@ options:
         required: false
         default: 1.4
 notes:
-  - "This module must be run locally, which can be achieved by using C(delegate_to: localhost) or with C(connection: local)."
+  - "This module must be run locally, which can be achieved by specifying C(connection: local)."
 """
