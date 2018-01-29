@@ -4,54 +4,54 @@ __metaclass__ = type
 DOCUMENTATION = """
   lookup: azure_key_vault
   author: James Johnson <james.johnson@hmcts.net>
-  short_description: Retrieve secrets from an Azure Key-Vault
+  short_description: Retrieve secrets from an Azure Key-Vault.
   requirements:
     - azure-keyvault (python library)
   description:
-    - Retrieve secrets from an Azure Key-Vault
+    - Retrieve secrets from an Azure Key-Vault.
   options:
     secret_name:
-      description: The name of the secret requested
+      description: The name of the secret requested.
       required: True
     vault_uri:
-      description: The URI of the Azure vault
+      description: The URI of the Azure vault.
       required: True
       env:
         - name: AZURE_VAULT_URI
     azure_client_id:
-      description: The URI of the vault to query
+      description: The URI of the vault to query.
       required: True
       env:
         - name: AZURE_CLIENT_ID
     azure_client_secret:
-      description: your Azure Active Directory Service Principal AppId
+      description: Your Azure Active Directory Service Principal AppId.
       required: True
       env:
         - name: AZURE_SECRET                
     azure_tenant_id:
-      description: your Azure Active Directory Application Key
+      description: Your Azure Active Directory Application Key.
       required: True
       env:
         - name: AZURE_TENANT
     secret_version:
-      description: your Azure Active Directory tenant id or domain
+      description: your Azure Active Directory tenant id or domain.
       default: 'latest'
 """
 
 EXAMPLES = """
-- name: Return a secret
+- name: Return a secret.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName') }}"
 
-- name: Return a secret from a specified vault_uri
+- name: Return a secret from a specified vault_uri.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName vault_uri=https://anothervault.vault.azure.net/') }}"
     
-- name: Return a specific version of a secret
+- name: Return a specific version of a secret.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}" 
 
- - name: Return a specific version of a secret from a specified vault_uri
+ - name: Return a specific version of a secret from a specified vault_uri.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce vault_uri=https://anothervault.vault.azure.net/') }}"
 """
@@ -59,7 +59,7 @@ EXAMPLES = """
 RETURN = """
 _raw:
   description:
-    - the secret requested
+    - the secret requested.
 """
 
 import os
