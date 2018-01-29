@@ -114,6 +114,12 @@ options:
         description:
             - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created.
             - Can be used when modifying Team, VLAN, Ethernet (Future plans to implement wifi, pppoe, infiniband)
+    dhcp_client_id:
+        required: False
+        default: None
+        description:
+            - DHCP Client Identifier sent to the DHCP server.
+        version_added: "2.5"
     primary:
         required: False
         default: None
@@ -611,6 +617,7 @@ class Nmcli(object):
         self.ingress = module.params['ingress']
         self.egress = module.params['egress']
         self.nmcli_bin = self.module.get_bin_path('nmcli', True)
+        self.dhcp_client_id = module.params['dhcp_client_id']
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
         return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
@@ -733,6 +740,7 @@ class Nmcli(object):
             cmd.append(self.ifname)
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
+
         options = {
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
@@ -741,6 +749,7 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
@@ -761,6 +770,7 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
@@ -821,17 +831,18 @@ class Nmcli(object):
             'arp-interval': self.arp_interval,
             'arp-ip-target': self.arp_ip_target,
             'primary': self.primary,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
             if value is not None:
                 cmd.extend([key, value])
-
         return cmd
 
     def modify_connection_bond(self):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
         # format for modifying bond interface
+
         options = {
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
@@ -847,6 +858,7 @@ class Nmcli(object):
             'updelay': self.updelay,
             'arp-interval': self.arp_interval,
             'arp-ip-target': self.arp_ip_target,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
@@ -897,6 +909,7 @@ class Nmcli(object):
             cmd.append(self.ifname)
         elif self.conn_name is not None:
             cmd.append(self.conn_name)
+
         options = {
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
@@ -905,6 +918,7 @@ class Nmcli(object):
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
@@ -930,6 +944,7 @@ class Nmcli(object):
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
             '802-3-ethernet.mtu': self.mtu,
+            'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
 
         for key, value in options.items():
@@ -1209,6 +1224,7 @@ def main():
             gw4=dict(required=False, default=None, type='str'),
             dns4=dict(required=False, default=None, type='list'),
             dns4_search=dict(type='list'),
+            dhcp_client_id=dict(required=False, default=None, type='str'),
             ip6=dict(required=False, default=None, type='str'),
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
