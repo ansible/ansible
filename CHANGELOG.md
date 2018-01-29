@@ -87,6 +87,7 @@ Ansible Changes By Release
   * aws_application_scaling_policy
   * aws_az_facts
   * aws_direct_connect_gateway
+  * aws_direct_connect_virtual_interface
   * aws_kms_facts
   * aws_region_facts
   * aws_s3_cors
