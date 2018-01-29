@@ -183,7 +183,7 @@
 
     - assert:
         that:
-        - "output.metrics_collection.0.Metric | match('Group*')"
+        - "'Group' in output.metrics_collection.0.Metric"
 
     - name: kill asg
       ec2_asg:
