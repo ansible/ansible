@@ -100,6 +100,13 @@ options:
         This option is mutually exclusive of secondary_private_ip_address_count
     required: false
     version_added: 2.2
+  purge_secondary_private_ip_addresses:
+    description:
+      - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
+        Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
+    required: false
+    default: False
+    version_added: 2.5
   secondary_private_ip_address_count:
     description:
       - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
@@ -372,6 +379,7 @@ def modify_eni(connection, vpc_id, module, eni):
     source_dest_check = module.params.get("source_dest_check")
     delete_on_termination = module.params.get("delete_on_termination")
     secondary_private_ip_addresses = module.params.get("secondary_private_ip_addresses")
+    purge_secondary_private_ip_addresses = module.params.get("purge_secondary_private_ip_addresses")
     secondary_private_ip_address_count = module.params.get("secondary_private_ip_address_count")
     changed = False
 
@@ -397,15 +405,20 @@ def modify_eni(connection, vpc_id, module, eni):
         current_secondary_addresses = [i.private_ip_address for i in eni.private_ip_addresses if not i.primary]
         if secondary_private_ip_addresses is not None:
             secondary_addresses_to_remove = list(set(current_secondary_addresses) - set(secondary_private_ip_addresses))
-            if secondary_addresses_to_remove:
+            if secondary_addresses_to_remove and purge_secondary_private_ip_addresses:
                 connection.unassign_private_ip_addresses(network_interface_id=eni.id,
                                                          private_ip_addresses=list(set(current_secondary_addresses) -
                                                                                    set(secondary_private_ip_addresses)),
                                                          dry_run=False)
-            connection.assign_private_ip_addresses(network_interface_id=eni.id,
-                                                   private_ip_addresses=secondary_private_ip_addresses,
-                                                   secondary_private_ip_address_count=None,
-                                                   allow_reassignment=False, dry_run=False)
+                changed = True
+
+            secondary_addresses_to_add = list(set(secondary_private_ip_addresses) - set(current_secondary_addresses))
+            if secondary_addresses_to_add:
+                connection.assign_private_ip_addresses(network_interface_id=eni.id,
+                                                       private_ip_addresses=secondary_addresses_to_add,
+                                                       secondary_private_ip_address_count=None,
+                                                       allow_reassignment=False, dry_run=False)
+                changed = True
         if secondary_private_ip_address_count is not None:
             current_secondary_address_count = len(current_secondary_addresses)
 
@@ -562,6 +575,7 @@ def main():
             source_dest_check=dict(default=None, type='bool'),
             delete_on_termination=dict(default=None, type='bool'),
             secondary_private_ip_addresses=dict(default=None, type='list'),
+            purge_secondary_private_ip_addresses=dict(default=False, type='bool'),
             secondary_private_ip_address_count=dict(default=None, type='int'),
             attached=dict(default=None, type='bool')
         )
@@ -573,7 +587,8 @@ def main():
                            ],
                            required_if=([
                                ('state', 'absent', ['eni_id']),
-                               ('attached', True, ['instance_id'])
+                               ('attached', True, ['instance_id']),
+                               ('purge_secondary_private_ip_addresses', True, ['secondary_private_ip_addresses'])
                            ])
                            )
 
