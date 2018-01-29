@@ -1,0 +1,11 @@
+---
+test_config_ini_overrides:
+  DEFAULT:
+    new_key: "new_value"
+  foo:
+    baz: "bar"
+test_config_yml_overrides:
+  list_one:
+    - four
+test_config_yml_hostvars_overrides:
+  test_hostvar: "{{ ansible_default_ipv4.address }}"
