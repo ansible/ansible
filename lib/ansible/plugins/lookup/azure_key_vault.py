@@ -53,7 +53,7 @@ EXAMPLES = """
 
  - name: Return a specific version of a secret from a specified vault_uri.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce vault_uri=https://anothervault.vault.azure.net/') }}"
+    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fb vault_uri=https://anothervault.vault.azure.net/') }}"
 """
 
 RETURN = """
@@ -106,13 +106,13 @@ class LookupModule(LookupBase):
         try:
             if accepted_params['azure_client_id'] is None:
                 raise AnsibleError(
-                    "Please set AZURE_CLIENT_ID environment variable or provide azure_client_id value in the form azure_client_id=some_value")
+                    "Please set AZURE_CLIENT_ID environment variable or provide azure_client_id=some_value parameter")
 
             if accepted_params['azure_client_secret'] is None:
-                raise AnsibleError("Please set AZURE_SECRET environment variable or provide azure_client_secret value in the form azure_client_secret=some_value")
+                raise AnsibleError("Please set AZURE_SECRET environment variable or provide azure_client_secret=some_value parameter")
 
             if accepted_params['azure_tenant_id'] is None:
-                raise AnsibleError("Please set AZURE_TENANT environment variable or provide azure_tenant_id value in the form azure_tenant_id=some_value")
+                raise AnsibleError("Please set AZURE_TENANT environment variable or provide azure_tenant_id=some_value parameter")
 
             if accepted_params['secret_name'] is None:
                 raise AnsibleError(
