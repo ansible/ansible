@@ -10,77 +10,6 @@
 #    If you find problems, please submit bug reports/patches via the
 #    Python bug tracker (http://bugs.python.org) and assign them to "lemburg".
 #
-#    Still needed:
-#    * support for MS-DOS (PythonDX ?)
-#    * support for Amiga and other still unsupported platforms running Python
-#    * support for additional Linux distributions
-#
-#    Many thanks to all those who helped adding platform-specific
-#    checks (in no particular order):
-#
-#      Charles G Waldman, David Arnold, Gordon McMillan, Ben Darnell,
-#      Jeff Bauer, Cliff Crawford, Ivan Van Laningham, Josef
-#      Betancourt, Randall Hopper, Karl Putland, John Farrell, Greg
-#      Andruk, Just van Rossum, Thomas Heller, Mark R. Levinson, Mark
-#      Hammond, Bill Tutt, Hans Nowak, Uwe Zessin (OpenVMS support),
-#      Colin Kong, Trent Mick, Guido van Rossum, Anthony Baxter, Steve
-#      Dower
-#
-#    History:
-#
-#    <see CVS and SVN checkin messages for history>
-#
-#    1.0.8 - changed Windows support to read version from kernel32.dll
-#    1.0.7 - added DEV_NULL
-#    1.0.6 - added linux_distribution()
-#    1.0.5 - fixed Java support to allow running the module on Jython
-#    1.0.4 - added IronPython support
-#    1.0.3 - added normalization of Windows system name
-#    1.0.2 - added more Windows support
-#    1.0.1 - reformatted to make doc.py happy
-#    1.0.0 - reformatted a bit and checked into Python CVS
-#    0.8.0 - added sys.version parser and various new access
-#            APIs (python_version(), python_compiler(), etc.)
-#    0.7.2 - fixed architecture() to use sizeof(pointer) where available
-#    0.7.1 - added support for Caldera OpenLinux
-#    0.7.0 - some fixes for WinCE; untabified the source file
-#    0.6.2 - support for OpenVMS - requires version 1.5.2-V006 or higher and
-#            vms_lib.getsyi() configured
-#    0.6.1 - added code to prevent 'uname -p' on platforms which are
-#            known not to support it
-#    0.6.0 - fixed win32_ver() to hopefully work on Win95,98,NT and Win2k;
-#            did some cleanup of the interfaces - some APIs have changed
-#    0.5.5 - fixed another type in the MacOS code... should have
-#            used more coffee today ;-)
-#    0.5.4 - fixed a few typos in the MacOS code
-#    0.5.3 - added experimental MacOS support; added better popen()
-#            workarounds in _syscmd_ver() -- still not 100% elegant
-#            though
-#    0.5.2 - fixed uname() to return '' instead of 'unknown' in all
-#            return values (the system uname command tends to return
-#            'unknown' instead of just leaving the field empty)
-#    0.5.1 - included code for slackware dist; added exception handlers
-#            to cover up situations where platforms don't have os.popen
-#            (e.g. Mac) or fail on socket.gethostname(); fixed libc
-#            detection RE
-#    0.5.0 - changed the API names referring to system commands to *syscmd*;
-#            added java_ver(); made syscmd_ver() a private
-#            API (was system_ver() in previous versions) -- use uname()
-#            instead; extended the win32_ver() to also return processor
-#            type information
-#    0.4.0 - added win32_ver() and modified the platform() output for WinXX
-#    0.3.4 - fixed a bug in _follow_symlinks()
-#    0.3.3 - fixed popen() and "file" command invokation bugs
-#    0.3.2 - added architecture() API and support for it in platform()
-#    0.3.1 - fixed syscmd_ver() RE to support Windows NT
-#    0.3.0 - added system alias support
-#    0.2.3 - removed 'wince' again... oh well.
-#    0.2.2 - added 'wince' to syscmd_ver() supported platforms
-#    0.2.1 - added cache logic and changed the platform string format
-#    0.2.0 - changed the API to use functions instead of module globals
-#            since some action take too long to be run on module import
-#    0.1.0 - first release
-#
 #    You can always get the latest version of this module at:
 #
 #             http://www.egenix.com/files/python/platform.py
@@ -113,8 +42,6 @@ __version__ = '1.0.8'
 import os
 import re
 import sys
-
-import warnings
 
 
 # Directory to search for configuration information on Unix.
@@ -226,20 +153,8 @@ def _parse_release_file(firstline):
     return '', version, id
 
 
-# TODO: remove, we dont want to warn
-def linux_distribution(distname='', version='', id='',
-
-                       supported_dists=_supported_dists,
-                       full_distribution_name=1):
-    import warnings
-    warnings.warn("dist() and linux_distribution() functions are deprecated "
-                  "in Python 3.5", PendingDeprecationWarning, stacklevel=2)
-    return _linux_distribution(distname, version, id, supported_dists,
-                               full_distribution_name)
-
-
-def _linux_distribution(distname, version, id, supported_dists,
-                        full_distribution_name):
+def linux_distribution(distname, version, id, supported_dists,
+                       full_distribution_name):
 
     """ Tries to determine the name of the Linux OS distribution name.
 
@@ -327,12 +242,9 @@ def dist(distname='', version='', id='',
         args given as parameters.
 
     """
-    import warnings
-    warnings.warn("dist() and linux_distribution() functions are deprecated "
-                  "in Python 3.5", PendingDeprecationWarning, stacklevel=2)
-    return _linux_distribution(distname, version, id,
-                               supported_dists=supported_dists,
-                               full_distribution_name=0)
+    return linux_distribution(distname, version, id,
+                              supported_dists=supported_dists,
+                              full_distribution_name=0)
 
 
 if __name__ == '__main__':
