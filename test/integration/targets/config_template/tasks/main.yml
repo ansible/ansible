@@ -1,0 +1,250 @@
+---
+# test code for the config_template module
+# (c) 2018,  Jean-Philippe Evrard <jean-philippe@evrard.me>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+
+# Test basic function of config_template
+- name: Template test INI template
+  config_template:
+    src: "test.ini"
+    dest: "/tmp/test.ini"
+    config_overrides: "{{ test_config_ini_overrides }}"
+    config_type: "ini"
+
+- name: Read test.ini
+  slurp:
+    src: /tmp/test.ini
+  register: ini_file
+
+- name: Show ini file contents
+  debug:
+    msg: "ini - {{ ini_file.content | b64decode }}"
+    verbosity: 2
+
+- name: Validate output
+  assert:
+    that:
+      - "(lookup('ini', 'new_key section=DEFAULT file=/tmp/test.ini')) == 'new_value'"
+      - "(lookup('ini', 'baz section=foo file=/tmp/test.ini')) == 'bar'"
+
+# Test basic function of config_template with content instead of src
+- name: Template test INI template
+  config_template:
+    content: "{{ lookup('file', playbook_dir + '/targets/config_template/templates/test.ini') }}"
+    dest: "/tmp/test_with_content.ini"
+    config_overrides: "{{ test_config_ini_overrides }}"
+    config_type: "ini"
+
+- name: Read test.ini
+  slurp:
+    src: /tmp/test_with_content.ini
+  register: ini_file_with_content
+
+- name: Show ini file contents
+  debug:
+    msg: "ini - {{ ini_file_with_content.content | b64decode }}"
+
+- name: Validate output
+  assert:
+    that:
+      - "(lookup('ini', 'new_key section=DEFAULT file=/tmp/test_with_content.ini')) == 'new_value'"
+      - "(lookup('ini', 'baz section=foo file=/tmp/test_with_content.ini')) == 'bar'"
+
+# Test list additions in config_template
+- name: Template test YML template
+  config_template:
+    src: "test.yml"
+    dest: "/tmp/test_extend.yml"
+    config_overrides: "{{ test_config_yml_overrides }}"
+    config_type: "yaml"
+    list_extend: True
+
+- name: Read test_extend.yml
+  slurp:
+    src: /tmp/test_extend.yml
+  register: extend_file
+
+- name: Read expected test_extend.yml
+  slurp:
+    src: "{{ playbook_dir }}/targets/config_template/files/test_extend.yml.expected"
+  register: extend_file_expected
+
+- name: Show content of the extended file
+  debug:
+    msg: "extend - {{ extend_file.content | b64decode }}"
+    verbosity: 2
+
+- name: Show the expected content of the extended file
+  debug:
+    msg: "extend.expected - {{ extend_file_expected.content | b64decode }}"
+    verbosity: 2
+
+- name: Compare files
+  assert:
+    that:
+      - "(extend_file.content | b64decode) == (extend_file_expected.content | b64decode)"
+
+# Test list replacement in config_template
+- name: Template test YML template
+  config_template:
+    src: "test.yml"
+    dest: "/tmp/test_no_extend.yml"
+    config_overrides: "{{ test_config_yml_overrides }}"
+    config_type: "yaml"
+    list_extend: False
+
+- name: Read test_no_extend.yml
+  slurp:
+    src: /tmp/test_no_extend.yml
+  register: no_extend_file
+
+- name: Read expected test_no_extend.yml
+  slurp:
+    src: "{{ playbook_dir }}/targets/config_template/files/test_no_extend.yml.expected"
+  register: no_extend_file_expected
+
+- name: Show content of file with replacements
+  debug:
+    msg: "no_extend - {{ no_extend_file.content | b64decode }}"
+    verbosity: 2
+
+- name: Show the expected content of file with replacements
+  debug:
+    msg: "no_extend.expected - {{ no_extend_file_expected.content | b64decode }}"
+    verbosity: 2
+
+- name: Compare files
+  assert:
+    that:
+      - "(no_extend_file.content | b64decode) == (no_extend_file_expected.content | b64decode)"
+
+# Test dumping hostvars using config overrides
+- name: Template test YML template with hostvars override
+  config_template:
+    src: "test.yml"
+    dest: "/tmp/test_hostvars.yml"
+    config_overrides: "{{ test_config_yml_hostvars_overrides }}"
+    config_type: "yaml"
+
+- name: Read test_hostvars.yml
+  slurp:
+    src: /tmp/test_hostvars.yml
+  register: hostvars_file
+
+- name: Test using ansible hostvars
+  debug:
+    msg: "hostvars - {{ (hostvars_file.content | b64decode | from_yaml).test_hostvar }}"
+    verbosity: 2
+
+- name: Test using ansible hostvars - expected content
+  debug:
+    msg: "hostvars.expected - {{ test_config_yml_hostvars_overrides.test_hostvar }}"
+    verbosity: 2
+
+- name: Compare files
+  assert:
+    that:
+      - "((hostvars_file.content | b64decode | from_yaml).test_hostvar) == (test_config_yml_hostvars_overrides.test_hostvar)"
+
+# Test content attribute with a dictionary input and config_type equal to 'json'
+- name: Template test JSON template with content attribute
+  config_template:
+    dest: "/tmp/test_content_no_overrides.json"
+    config_overrides: {}
+    config_type: "json"
+    content: "{{ lookup('file', playbook_dir ~ '/targets/config_template/templates/test.json') | from_json }}"
+
+- name: Read test_content_no_overrides.json
+  slurp:
+    src: /tmp/test_content_no_overrides.json
+  register: content_no_overrides_file
+
+- name: Read expected test_content_no_overrides.json
+  slurp:
+    src: "{{ playbook_dir }}/targets/config_template/files/test_content_no_overrides.json.expected"
+  register: content_no_overrides_file_expected
+
+- name: Show json content
+  debug:
+    msg: "content_no_overrides.json - {{ content_no_overrides_file.content | b64decode | from_json }}"
+    verbosity: 2
+
+- name: Show json's expected content
+  debug:
+    msg: "content_no_overrides.json.expected - {{ content_no_overrides_file_expected.content | b64decode | from_json }}"
+    verbosity: 2
+
+# NOTE (alextricity25): The config_template module doesn't use ordered dicts when reading and writing json
+# data, so we can't guarantee that the string literal of both file's content will be the same. Instead, we compare
+# the content after transforming it into a dictionary.
+- name: Compare file content
+  assert:
+    that:
+      - "(content_no_overrides_file.content | b64decode | from_json) == (content_no_overrides_file_expected.content | b64decode | from_json)"
+
+# Test the ignore_none_type attribute when set to False
+- name: Template test with ignore_none_type set to false
+  config_template:
+    src: "test_ignore_none_type.ini"
+    dest: "/tmp/test_ignore_none_type.ini"
+    config_overrides: "{{ test_config_ini_overrides }}"
+    config_type: "ini"
+    ignore_none_type: False
+
+- name: Read test_ignore_none_type.ini
+  slurp:
+    src: /tmp/test_ignore_none_type.ini
+  register: test_ignore_none_type
+
+- name: Test with ignore type for valueless keys
+  debug:
+    msg: "test_ignore_none_type.ini - {{ test_ignore_none_type.content | b64decode }}"
+    verbosity: 2
+
+- name: Validate output has valueless options printed out
+  assert:
+    that:
+      - "{{ test_ignore_none_type.content | b64decode | search('(?m)^india$') }}"
+      - "{{ test_ignore_none_type.content | b64decode | search('(?m)^juliett kilo$') }}"
+
+# Test comments
+- name: Template test INI comments
+  config_template:
+    src: "test_with_comments.ini"
+    dest: "/tmp/test_with_comments.ini"
+    config_overrides: "{{ test_config_ini_overrides }}"
+    config_type: "ini"
+
+- name: Read test.ini
+  slurp:
+    src: /tmp/test_with_comments.ini
+  register: ini_file
+
+- name: Test inifiles with comments
+  debug:
+    msg: "ini - {{ ini_file.content | b64decode }}"
+    verbosity: 2
+
+- name: Validate output
+  assert:
+    that:
+      - "(lookup('ini', 'new_key section=DEFAULT file=/tmp/test_with_comments.ini')) == 'new_value'"
+      - "(lookup('ini', 'baz section=foo file=/tmp/test_with_comments.ini')) == 'bar'"
+      - "{{ ini_file.content | b64decode | search('#This is a comment')}}"
+      - "{{ ini_file.content | b64decode | search('# A default section comment\n# broken into multiple lines\n\\[DEFAULT\\]')}}"
