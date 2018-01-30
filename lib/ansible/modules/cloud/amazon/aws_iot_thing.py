@@ -413,7 +413,7 @@ def describe_and_format_changed_thing(aws_module, client, thing_name, principals
 
 
 def format_thing(changed, thing, principals):
-    if 'ReponseMetadata' in thing:
+    if 'ResponseMetadata' in thing:
         del thing['ResponseMetadata']
     thing['principals'] = principals
     thing['changed'] = changed
