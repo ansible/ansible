@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    ecr_name: '{{ resource_prefix }}-ecr'
+    ecr_name: '{{ resource_prefix | lower }}-ecr'
 
 - block:
 
