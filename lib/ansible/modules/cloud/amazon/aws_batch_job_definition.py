@@ -217,6 +217,7 @@ output:
 '''
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.batch import AWSConnection, cc
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
@@ -239,55 +240,6 @@ except ImportError:
 # logger = logging.getLogger()
 # logging.basicConfig(filename='ansible_debug.log')
 # logger.setLevel(logging.DEBUG)
-
-
-class AWSConnection(object):
-    """
-    Create the connection object and client objects as required.
-    """
-
-    def __init__(self, ansible_obj, resources, boto3=True):
-
-        self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
-
-        self.resource_client = dict()
-        if not resources:
-            resources = ['batch']
-
-        resources.append('iam')
-
-        for resource in resources:
-            aws_connect_kwargs.update(dict(region=self.region,
-                                           endpoint=self.endpoint,
-                                           conn_type='client',
-                                           resource=resource
-                                           ))
-            self.resource_client[resource] = boto3_conn(ansible_obj, **aws_connect_kwargs)
-
-        # if region is not provided, then get default profile/session region
-        if not self.region:
-            self.region = self.resource_client['batch'].meta.region_name
-
-        # set account ID
-        try:
-            self.account_id = self.resource_client['iam'].get_user()['User']['Arn'].split(':')[4]
-        except (ClientError, ValueError, KeyError, IndexError):
-            self.account_id = ''
-
-    def client(self, resource='batch'):
-        return self.resource_client[resource]
-
-
-def cc(key):
-    """
-    Changes python key into Camel case equivalent. For example, 'compute_environment_name' becomes
-    'computeEnvironmentName'.
-
-    :param key:
-    :return:
-    """
-    components = key.split('_')
-    return components[0] + "".join([token.capitalize() for token in components[1:]])
 
 
 def set_api_params(module, module_params):
