@@ -336,9 +336,8 @@ class NosystemdTimezone(Timezone):
         # Distribution-specific configurations
         if self.module.get_bin_path('dpkg-reconfigure') is not None:
             # Debian/Ubuntu
-            # With additional hack for https://bugs.launchpad.net/ubuntu/+source/tzdata/+bug/1554806
-            self.update_timezone = ['rm -f /etc/localtime', '%s --frontend noninteractive tzdata' %
-                                    self.module.get_bin_path('dpkg-reconfigure', required=True)]
+            self.update_timezone = ['%s -sf %s /etc/localtime' % (self.module.get_bin_path('ln', required=True), tzfile),
+                                    '%s --frontend noninteractive tzdata' % self.module.get_bin_path('dpkg-reconfigure', required=True)]
             self.conf_files['name'] = '/etc/timezone'
             self.allow_no_file['name'] = True
             self.conf_files['hwclock'] = '/etc/default/rcS'
