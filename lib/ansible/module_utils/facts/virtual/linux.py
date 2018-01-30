@@ -209,7 +209,8 @@ class LinuxVirtual(Virtual):
 
                 else:
                     virtual_facts['virtualization_type'] = 'kvm'
-                virtual_facts['virtualization_role'] = 'host'
+                    virtual_facts['virtualization_role'] = 'host'
+
                 return virtual_facts
 
             if 'vboxdrv' in modules:
