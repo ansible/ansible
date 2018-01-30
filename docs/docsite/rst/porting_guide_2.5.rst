@@ -20,17 +20,15 @@ Playbook
 Dynamic includes and attribute inheritance
 ------------------------------------------
 
-In Ansible 2.4, the concept of dyanmic includes (e.g. ``include_tasks``) vs static imports (e.g. ``import_tasks``) was introduced to alleviate confusion
-between how ``include`` worked between dynamic and static includes. Part of this separation was to define behaviors for how inheritance worked between
-the two.
+In Ansible version 2.4, the concept of dynamic includes (``include_tasks``) versus static imports (``import_tasks``) was introduced to clearly define the differences in how ``include`` works between dynamic and static includes. 
 
-It was decided that all attributes applied to ia dyanmic ``include_*`` would only apply to the include itself, whereas attributes applied to a
+All attributes applied to a dynamic ``include_*`` would only apply to the include itself, while attributes applied to a
 static ``import_*`` would be inherited by the tasks within.
 
-In 2.4 the separation was incomplete, and did not meet the expectations of this separation. In 2.5, the behaviors have been aligned with the expectations.
-As such, attributes applied to an ``include_*`` task will not be inherited by the tasks within. To achieve a similar outcome to pre-2.5 behaviors, playbooks
-should make use of explicit application of the attribute on the needed tasks, or using blocks to apply the attribute to many tasks. Another option is to use
-a static ``import_*`` when possible, instead of a dynamic task.
+This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within. 
+
+To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks
+should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
 
 **OLD** In Ansible 2.4:
 
