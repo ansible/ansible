@@ -73,6 +73,9 @@ class AnsibleCoreCI(object):
             azure=(
                 'azure',
                 'rhel',
+                'windows/2012',
+                'windows/2012-R2',
+                'windows/2016',
             ),
             parallels=(
                 'osx',
@@ -86,6 +89,11 @@ class AnsibleCoreCI(object):
             for candidate in providers:
                 if platform in providers[candidate]:
                     # assign default provider based on platform
+                    self.provider = candidate
+                    break
+            for candidate in providers:
+                if '%s/%s' % (platform, version) in providers[candidate]:
+                    # assign default provider based on platform and version
                     self.provider = candidate
                     break
 
