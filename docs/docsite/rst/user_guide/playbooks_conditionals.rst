@@ -220,25 +220,15 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
 As a reminder, the various YAML files contain just keys and values::
 
     ---
-    # for vars/CentOS.yml
+    # for vars/RedHat.yml
     apache: httpd
     somethingelse: 42
 
-How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
+How does this work?  If the operating system was any RedHat derivate for example 'CentOS', the first file Ansible would try to import
+would be 'vars/RedHat.yml', followed by 'vars/os_defaults.yml' if that file
 did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
+On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/RedHat.yml', before
 falling back on 'vars/os_defaults.yml'. Pretty simple.
-
-To use this conditional import feature, you'll need facter or ohai installed prior to running the playbook, but
-you can of course push this out with Ansible if you like::
-
-    # for facter
-    ansible -m yum -a "pkg=facter state=present"
-    ansible -m yum -a "pkg=ruby-json state=present"
-
-    # for ohai
-    ansible -m yum -a "pkg=ohai state=present"
 
 Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
