@@ -207,9 +207,9 @@ The following fields can be used and are all required unless specified otherwise
   * Referenced in the ``porting_guide_x.y.rst``
   * File should be renamed to start with an ``_``
   * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
-  * Following values should be set:
+  * Following values must be set:
 
-  :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will be deleted in.
+  :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:

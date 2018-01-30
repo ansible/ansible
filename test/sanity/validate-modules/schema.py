@@ -86,12 +86,10 @@ def return_schema(data):
 def deprecation_schema():
 
     deprecation_schema_dict = {
-        # Every time we branch:
-        #   * old versions should be removed from the beginning of this list
-        #   * git rm old modules
-        #   * Update CHANGELOG & porting_guide
-        # 2.3 -> removed_in: "2.5" +2
-        # 2.4 -> removed_in: "2.8" +4
+        # Only list branches that are deprecated or may have docs stubs in
+        # Deprecation cycle changed at 2.4 (though not retroactively)
+        # 2.3 -> removed_in: "2.5" + n for docs stub
+        # 2.4 -> removed_in: "2.8" + n for docs stub
         Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.8", "2.9"),
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
