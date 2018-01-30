@@ -172,7 +172,7 @@ def describe_thing(aws_module, client, thing_name):
         if e.response['Error']['Code'] != 'ResourceNotFoundException':
             aws_module.fail_json_aws(e, msg='Describing thing')
     except BotoCoreError as e:
-        aws_module.fail_json(e, msg='Describing thing')
+        aws_module.fail_json_aws(e, msg='Describing thing')
 
     return thing
 
