@@ -159,9 +159,8 @@ from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, camel_
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # Handled by AnsibleAWSModule
 
 
 def describe_thing(aws_module, client, thing_name):
