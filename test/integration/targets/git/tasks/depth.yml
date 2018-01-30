@@ -186,7 +186,7 @@
 
 - name: clone from branch with depth specified
   git:
-    repo: '{{ repo_dir }}'
+    repo: "{{ repo_dir | replace('~', 'file://' + ansible_env.HOME) }}"
     dest: '{{ checkout_dir }}'
     depth: 1
     version: test_branch
@@ -209,7 +209,7 @@
 
 - name: fetch same updated branch with depth specified
   git:
-    repo: '{{ repo_dir }}'
+    repo: "{{ repo_dir | replace('~', 'file://' + ansible_env.HOME ) }}"
     dest: '{{ checkout_dir }}'
     depth: 1
     version: test_branch
