@@ -155,8 +155,8 @@
     - name: it should skip, change but not create, no deprecations
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
           - result.deprecations is not defined
 
@@ -238,7 +238,7 @@
     - name: it should fail
       assert:
         that:
-          - result|failed
+          - result is failed
 
 
     - name: When in check mode, and purging a lifecycle policy that does not exists
@@ -252,8 +252,8 @@
     - name: it should not skip and not change
       assert:
         that:
-          - not result|skipped
-          - not result|changed
+          - not result is skipped
+          - not result is changed
 
 
     - name: When in check mode, setting lifecyle policy on a repository that has no policy
@@ -267,8 +267,8 @@
     - name: it should skip, change and not create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
 
 
@@ -282,7 +282,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -297,8 +297,8 @@
     - name: it should skip, change but not create
       assert:
         that:
-          - result|skipped
-          - result|changed
+          - result is skipped
+          - result is changed
           - not result.created
 
 
@@ -312,7 +312,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -326,7 +326,7 @@
     - name: it should change and not create
       assert:
         that:
-          - result|changed
+          - result is changed
           - not result.created
 
 
@@ -340,7 +340,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - not result is changed
 
 
     - name: When omitting lifecycle policy on a repository that has a policy
@@ -352,7 +352,7 @@
     - name: it should not change
       assert:
         that:
-          - not result|changed
+          - not result is changed
 
 
     - name: When specifying both lifecycle_policy and purge_lifecycle_policy
@@ -367,7 +367,7 @@
     - name: it should fail
       assert:
         that:
-          - result|failed
+          - result is failed
 
 
     - name: When specifying invalid JSON for lifecycle policy
@@ -397,7 +397,7 @@
     - name: it should fail
       assert:
         that:
-          - result|failed
+          - result is failed
 
 
     - name: When in check mode, deleting a repository that exists
