@@ -217,10 +217,9 @@ output:
 '''
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.aws.batch import AWSConnection, cc
+from ansible.module_utils.aws.batch import AWSConnection, cc, set_api_params
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 import traceback
@@ -240,18 +239,6 @@ except ImportError:
 # logger = logging.getLogger()
 # logging.basicConfig(filename='ansible_debug.log')
 # logger.setLevel(logging.DEBUG)
-
-
-def set_api_params(module, module_params):
-    """
-    Sets module parameters to those expected by the boto3 API.
-
-    :param module:
-    :param module_params:
-    :return:
-    """
-    api_params = dict((k, v) for k, v in dict(module.params).items() if k in module_params and v is not None)
-    return snake_dict_to_camel_dict(api_params)
 
 
 def validate_params(module, aws):
