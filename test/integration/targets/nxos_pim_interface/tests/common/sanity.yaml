@@ -162,6 +162,34 @@
 
   - assert: *false
 
+  - name: configure border
+    nxos_pim_interface: &configb
+      interface: "{{ testint }}"
+      border: True
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *configb
+    register: result
+
+  - assert: *false
+
+  - name: configure state absent
+    nxos_pim_interface: *pimabsent
+    register: result
+
+  - assert: *true
+
+  - name: Check idempotence
+    nxos_pim_interface: *pimabsent
+    register: result
+
+  - assert: *false
+
   always:
   - name: "Disable feature PIM"
     nxos_feature: *disable_feature
