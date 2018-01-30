@@ -24,10 +24,11 @@ from functools import wraps
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._text import to_bytes
 
 try:
     from ncclient.operations import RPCError
-    from ncclient.xml_ import to_xml
+    from ncclient.xml_ import to_xml, to_ele
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
@@ -95,6 +96,16 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
     def __init__(self, connection):
         self._connection = connection
         self.m = self._connection._manager
+
+    @ensure_connected
+    def rpc(self, name):
+        """RPC to be execute on remote device
+           :name: Name of rpc in string format"""
+        try:
+            obj = to_ele(to_bytes(name, errors='surrogate_or_strict'))
+            return self.m.rpc(obj).data_xml
+        except RPCError as exc:
+            raise Exception(to_xml(exc.xml))
 
     @ensure_connected
     def get_config(self, *args, **kwargs):
