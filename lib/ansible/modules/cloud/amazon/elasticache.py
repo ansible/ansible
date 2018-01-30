@@ -218,10 +218,11 @@ class ElastiCacheManager(object):
                       CacheSecurityGroupNames=self.cache_security_groups,
                       SecurityGroupIds=self.security_group_ids,
                       CacheParameterGroupName=self.cache_parameter_group,
-                      CacheSubnetGroupName=self.cache_subnet_group,
-                      PreferredAvailabilityZone=self.zone)
+                      CacheSubnetGroupName=self.cache_subnet_group)
         if self.cache_port is not None:
             kwargs['Port'] = self.cache_port
+        if self.zone is not None:
+            kwargs['PreferredAvailabilityZone'] = self.zone
 
         try:
             self.conn.create_cache_cluster(**kwargs)
@@ -497,7 +498,7 @@ def main():
         cache_subnet_group=dict(default=""),
         cache_security_groups=dict(default=[], type='list'),
         security_group_ids=dict(default=[], type='list'),
-        zone=dict(default=""),
+        zone=dict(),
         wait=dict(default=True, type='bool'),
         hard_modify=dict(type='bool')
     ))
