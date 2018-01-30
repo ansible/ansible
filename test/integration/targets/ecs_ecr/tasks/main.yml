@@ -4,13 +4,19 @@
 
 - block:
 
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
     - name: When creating with check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -26,10 +32,7 @@
       ecs_ecr:
         registry_id: 999999999999
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -43,10 +46,7 @@
     - name: When creating a repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and create
@@ -64,10 +64,7 @@
     - name: When creating a repository that already exists in check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -81,10 +78,7 @@
     - name: When creating a repository that already exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -95,12 +89,9 @@
 
     - name: When in check mode, and deleting a policy that does not exist
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         purge_policy: yes
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -113,12 +104,9 @@
 
     - name: When in check mode, setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -132,12 +120,9 @@
 
     - name: When setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -149,12 +134,9 @@
 
     - name: When in check mode, and deleting a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -169,12 +151,9 @@
 
     - name: When in check mode, and purging a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         purge_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -189,12 +168,9 @@
 
     - name: When purging a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         purge_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -206,12 +182,9 @@
 
     - name: When setting a policy as a string
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy | to_json }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -223,12 +196,9 @@
 
     - name: When setting a policy to its current value
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -238,11 +208,8 @@
 
     - name: When omitting policy on a repository that has a policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -252,13 +219,10 @@
 
     - name: When specifying both policy and purge_policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
         purge_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -270,12 +234,9 @@
 
     - name: When specifying invalid JSON for policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: "Ceci n'est pas une JSON"
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -287,12 +248,9 @@
 
     - name: When in check mode, and purging a lifecycle policy that does not exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
         purge_lifecycle_policy: yes
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -305,12 +263,9 @@
 
     - name: When in check mode, setting lifecyle policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -324,12 +279,9 @@
 
     - name: When setting lifecycle policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -341,12 +293,9 @@
 
     - name: When in check mode, and purging a lifecyle policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         purge_lifecycle_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -360,12 +309,9 @@
 
     - name: When purging a lifecycle policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         purge_lifecycle_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -377,12 +323,9 @@
 
     - name: When setting a lifecyle policy as a string
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy | to_json }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -394,12 +337,9 @@
 
     - name: When setting a lifecycle policy to its current value
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -410,11 +350,8 @@
 
     - name: When omitting lifecycle policy on a repository that has a policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -425,13 +362,10 @@
 
     - name: When specifying both lifecycle_policy and purge_lifecycle_policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: '{{ lifecycle_policy }}'
         purge_lifecycle_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -443,12 +377,9 @@
 
     - name: When specifying invalid JSON for lifecycle policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy: "Ceci n'est pas une JSON"
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -460,14 +391,11 @@
 
     - name: When specifying an invalid document for lifecycle policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         lifecycle_policy:
           rules:
             - invalid: "Ceci n'est pas une rule"
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -480,11 +408,8 @@
     - name: When in check mode, deleting a repository that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -499,11 +424,8 @@
     - name: When deleting a repository that exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change
@@ -515,11 +437,8 @@
     - name: When in check mode, deleting a repository that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -533,11 +452,8 @@
     - name: When deleting a repository that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -621,8 +537,5 @@
     - name: Delete lingering ECR repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
