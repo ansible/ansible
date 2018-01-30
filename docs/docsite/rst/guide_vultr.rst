@@ -5,7 +5,7 @@ Vultr Cloud Guide
 
 Introduction
 ````````````
-The purpose of this chapter is to explain how to get started with Ansible in a Vultr context. You will find usage examples in the example section in of each module's doc.
+This section explains how to use Vultr with Ansible. You will find usage examples in the example section in of each module's documentation.
 
 The Vultr modules don't have any dependency other than Ansible itself.
 
