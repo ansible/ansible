@@ -94,11 +94,13 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_application_scaling_policy
   * aws_az_facts
   * aws_batch_compute_environment
+  * aws_elasticbeanstalk_app
   * aws_direct_connect_gateway
   * aws_direct_connect_virtual_interface
   * aws_kms_facts
   * aws_region_facts
   * aws_s3_cors
+  * aws_ses_identity
   * aws_ssm_parameter_store
   * cloudfront_distribution
   * ec2_ami_facts
