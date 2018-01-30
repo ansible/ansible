@@ -413,7 +413,8 @@ def describe_and_format_changed_thing(aws_module, client, thing_name, principals
 
 
 def format_thing(changed, thing, principals):
-    del thing['ResponseMetadata']
+    if 'ReponseMetadata' in thing:
+        del thing['ResponseMetadata']
     thing['principals'] = principals
     thing['changed'] = changed
     return camel_dict_to_snake_dict(thing)

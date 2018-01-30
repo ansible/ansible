@@ -58,6 +58,23 @@
           - "result.msg == 'parameters are mutually exclusive: type, remove_type'"
 
     # ============================================================
+    - name: test check mode for creating thing
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Mufasa
+          hyena: Ed
+          meerkat: Timon
+        <<: *aws_connection_info
+      check_mode: True
+      register: thing
+
+    - name: assert a change would happen
+      assert:
+        that:
+          - thing.changed
+
+    # ============================================================
     - name: test create thing
       aws_iot_thing:
         name: "{{ thing_name }}"
@@ -81,6 +98,23 @@
           - thing.attributes.lion == "Mufasa"
           - thing.attributes.hyena == "Ed"
           - thing.attributes.meerkat == "Timon"
+
+    # ============================================================
+    - name: test check mode for idempotence
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        attributes:
+          lion: Mufasa
+          hyena: Ed
+          meerkat: Timon
+        <<: *aws_connection_info
+      check_mode: True
+      register: thing
+
+    - name: assert a change would happen
+      assert:
+        that:
+          - not thing.changed
 
     # ============================================================
     - name: test idempotence
@@ -169,6 +203,20 @@
         that:
           - result.failed
           - result.msg == "Expected thing version 1 but actual version is 2"
+
+    # ============================================================
+    - name: test check mode for deleting thing
+      aws_iot_thing:
+        name: "{{ thing_name }}"
+        state: absent
+        <<: *aws_connection_info
+      check_mode: True
+      register: result
+
+    - name: assert the thing would be removed
+      assert:
+        that:
+          - result.changed
 
     # ============================================================
     - name: delete thing
