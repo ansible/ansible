@@ -213,7 +213,7 @@ def main():
             # update host macro
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
         else:
-            module.exit_json(changed=False, result="Host macro %s already exists and force set is to no" % macro_name)
+            module.exit_json(changed=False, result="Host macro %s already exists and force is set to no" % macro_name)
 
 
 
