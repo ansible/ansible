@@ -126,7 +126,7 @@ options:
         description: ["The number of second to delay data evaluation."]
         required: false
         default: null
-        version_added: "2.4"
+        version_added: "2.5"
 '''
 
 EXAMPLES = '''
