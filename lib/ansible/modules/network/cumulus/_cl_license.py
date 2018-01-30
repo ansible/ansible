@@ -18,8 +18,11 @@ DOCUMENTATION = '''
 module: cl_license
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
-short_description: Install licenses fo Cumulus Linux
-deprecated: Deprecated in 2.3.
+short_description: Install licenses for Cumulus Linux
+deprecated:
+  why: The M(nclu) module is designed to be easier to use for individuals who are new to Cumulus Linux by exposing the NCLU interface in an automatable way.
+  removed_in: "2.5"
+  alternative: Use M(nclu) instead.
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
       when a license is installed.
@@ -100,43 +103,7 @@ msg:
     sample: "interface bond0 config updated"
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-
-
-CL_LICENSE_PATH = '/usr/cumulus/bin/cl-license'
-
-
-def install_license(module):
-    # license is not installed, install it
-    _url = module.params.get('src')
-    (_rc, out, _err) = module.run_command("%s -i %s" % (CL_LICENSE_PATH, _url))
-    if _rc > 0:
-        module.fail_json(msg=_err)
-
-
-def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            src=dict(required=True, type='str'),
-            force=dict(type='bool', default=False)
-        ),
-    )
-
-    # check if license is installed
-    # if force is enabled then set return code to nonzero
-    if module.params.get('force') is True:
-        _rc = 10
-    else:
-        (_rc, out, _err) = module.run_command(CL_LICENSE_PATH)
-    if _rc == 0:
-        module.msg = "No change. License already installed"
-        module.changed = False
-    else:
-        install_license(module)
-        module.msg = "License installation completed"
-        module.changed = True
-    module.exit_json(changed=module.changed, msg=module.msg)
-
+from ansible.module_utils.common.removed import removed_module
 
 if __name__ == '__main__':
-    main()
+    removed_module()

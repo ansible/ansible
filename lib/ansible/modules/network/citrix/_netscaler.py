@@ -18,7 +18,10 @@ version_added: "1.1"
 short_description: Manages Citrix NetScaler entities
 description:
      - Manages Citrix NetScaler server and service entities.
-deprecated: In 2.4 use M(netscaler_service) and M(netscaler_server) instead.
+deprecated:
+  removed_in: "2.8"
+  why: Replaced with Citrix maintained version.
+  alternative: Use M(netscaler_service) and M(netscaler_server) instead.
 options:
   nsc_host:
     description:
