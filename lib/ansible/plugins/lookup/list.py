@@ -33,6 +33,7 @@ import collections
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):

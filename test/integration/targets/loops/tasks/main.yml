@@ -214,7 +214,7 @@
   ignore_errors: True
 - assert:
     that:
-      - with_dict_passed_a_list|failed
+      - with_dict_passed_a_list is failed
 - debug:
     msg: "with_list passed a dict: {{item}}"
   with_list: "{{ a_dict }}"
@@ -222,4 +222,4 @@
   ignore_errors: True
 - assert:
     that:
-      - with_list_passed_a_dict|failed
+      - with_list_passed_a_dict is failed
