@@ -93,6 +93,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_acm_facts
   * aws_application_scaling_policy
   * aws_az_facts
+  * aws_batch_compute_environment
   * aws_direct_connect_gateway
   * aws_direct_connect_virtual_interface
   * aws_kms_facts
