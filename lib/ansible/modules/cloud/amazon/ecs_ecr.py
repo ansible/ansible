@@ -47,7 +47,7 @@ options:
     delete_policy:
         description:
             - deprecated. Use I(purge_policy) instead. To be removed in
-              Ansible 2.6
+              Ansible 2.9
         required: false
         default: false
     purge_policy:
@@ -452,7 +452,7 @@ def main():
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
         delete_policy=dict(required=False, type='bool',
-                           removed_in_version='2.5'),
+                           removed_in_version='2.9'),
         purge_policy=dict(required=False, type='bool'),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool')))
