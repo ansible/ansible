@@ -63,8 +63,8 @@ Errors
   **1xx**   **Locations**
   101       Interpreter line is not ``#!/usr/bin/python``
   102       Interpreter line is not ``#!powershell``
-  103       Did not find a call to ``main()``
-  104       Call to ``main()`` not the last line
+  103       Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
+  104       Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   105       GPLv3 license header not found
   106       Import found before documentation variables. All imports must appear below
             ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
