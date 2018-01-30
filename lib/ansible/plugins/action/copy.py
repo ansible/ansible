@@ -190,7 +190,7 @@ class ActionModule(ActionBase):
 
     def _create_remote_file_args(self, module_args):
         # remove action plugin only keys
-        return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
+        return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt', 'local_follow'))
 
     def _copy_file(self, source_full, source_rel, content, content_tempfile, dest, task_vars, tmp):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
@@ -504,6 +504,11 @@ class ActionModule(ActionBase):
             if 'diff' in result and not result['diff']:
                 del result['diff']
             module_executed = True
+
+            if module_return.get('failed'):
+                result.update(module_return)
+                return result
+
             changed = changed or module_return.get('changed', False)
 
         for src, dest_path in source_files['directories']:
@@ -520,6 +525,11 @@ class ActionModule(ActionBase):
 
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
             module_executed = True
+
+            if module_return.get('failed'):
+                result.update(module_return)
+                return result
+
             changed = changed or module_return.get('changed', False)
 
         for target_path, dest_path in source_files['symlinks']:

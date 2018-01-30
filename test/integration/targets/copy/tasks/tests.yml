@@ -876,6 +876,27 @@
     state: absent
 
 #
+# recursive copy with invalid directory_mode (#33785)
+#
+- name: Test recursive copy with invalid directory_mode
+  copy:
+    src: subdir
+    dest: "{{ remote_subdir }}"
+    directory_mode: bogus
+  ignore_errors: True
+  register: recursive_copy_invalid_directory_mode_result
+
+- name: Assert that the recursive copy with invalid directory_mode fails
+  assert:
+    that:
+      - "recursive_copy_invalid_directory_mode_result.failed"
+
+- name: Cleanup the recursive copy subdir
+  file:
+    name: "{{ remote_subdir }}"
+    state: absent
+
+#
 # Recursive copy of tricky symlinks
 #
 - block:
