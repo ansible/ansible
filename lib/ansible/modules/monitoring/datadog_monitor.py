@@ -192,7 +192,8 @@ def main():
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
             new_host_delay=dict(required=False, default=None),
-            id=dict(required=False)
+            id=dict(required=False),
+            evaluation_delay=dict(required=False, default=None)
         )
     )
 
@@ -296,6 +297,7 @@ def install_monitor(module):
         "escalation_message": module.params['escalation_message'],
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
+        "evaluation_delay": module.params['evaluation_delay'],
         "require_full_window": module.params['require_full_window'],
         "new_host_delay": module.params['new_host_delay']
     }
