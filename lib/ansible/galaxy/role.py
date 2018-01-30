@@ -71,17 +71,11 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
-            for role_path_dir in galaxy.roles_paths:
-                role_path = os.path.join(role_path_dir, self.name)
-                if os.path.exists(role_path):
-                    self.path = role_path
-                    break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
-                # create list of possible paths
-                self.paths = [x for x in galaxy.roles_paths]
-                self.paths = [os.path.join(x, self.name) for x in self.paths]
+            # use the first path by default
+            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            # create list of possible paths
+            self.paths = [x for x in galaxy.roles_paths]
+            self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __repr__(self):
         """
