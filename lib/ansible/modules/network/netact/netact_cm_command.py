@@ -58,8 +58,8 @@ options:
         required: false
     DN:
         description:
-            Sets the exact scope of the operation in form of a list of managed object Distinguished Names (DN)
-             in the network.
+            Sets the exact scope of the operation in form of a list of managed object
+            Distinguished Names (DN) in the network.
             A single DN or a list of DNs can be given (comma separated list without spaces).
             Alternatively, if DN or a list of DNs is not given, working set (WS) or Maintenance Region (MR)
             must be provided as parameter to set the scope of operation.
