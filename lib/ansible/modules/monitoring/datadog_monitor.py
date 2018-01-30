@@ -85,8 +85,7 @@ options:
         default: null
     escalation_message:
         description:
-
-- A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
+            - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
               is None
         required: false
         default: null
