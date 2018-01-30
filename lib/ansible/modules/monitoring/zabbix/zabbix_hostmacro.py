@@ -49,8 +49,7 @@ options:
         default: "present"
     force:
         description:
-            - If C(yes) don't update an existing macro
-        required: false
+            - Only updates an existing macro if set to C(yes).
         default: 'yes'
         choices: ['yes', 'no']
 
@@ -214,7 +213,7 @@ def main():
             # update host macro
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
         else:
-            module.exit_json(changed=False, result="Host macro %s already exists and force set to no" % macro_name)
+            module.exit_json(changed=False, result="Host macro %s already exists and force set is to no" % macro_name)
 
 
 
