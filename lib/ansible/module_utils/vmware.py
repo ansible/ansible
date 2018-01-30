@@ -1087,3 +1087,16 @@ class PyVmomi(object):
             if portgroup.spec.name == portgroup_name:
                 return portgroup
         return False
+
+    def get_all_port_groups_by_host(self, host_system):
+        """
+        Function to get all Port Group by host
+        Args:
+            host_system: Name of Host System
+
+        Returns: List of Port Group Spec
+        """
+        pgs_list = []
+        for pg in host_system.config.network.portgroup:
+            pgs_list.append(pg)
+        return pgs_list
