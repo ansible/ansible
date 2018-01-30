@@ -70,14 +70,13 @@
     - name: assert thing created
       assert:
         that:
-          - not thing | failed
+          - not thing is failed
           - thing.changed == True
           - thing.default_client_id is defined
-          - thing.principals | length == 0
+          - thing.principals == []
           - thing.thing_arn is defined
           - thing.thing_name == thing_name
           - thing.version == 1
-          - thing.attributes | length == 3
           - thing.attributes.lion == "Mufasa"
           - thing.attributes.hyena == "Ed"
           - thing.attributes.meerkat == "Timon"
@@ -100,14 +99,13 @@
     - name: assert idempotence
       assert:
         that:
-          - not result | failed
+          - not result is failed
           - result.changed == False
           - result.default_client_id == thing.default_client_id
-          - result.principals | length == 0
+          - result.principals == []
           - result.thing_arn is defined
           - result.thing_name == thing_name
           - result.version == 1
-          - result.attributes | length == 3
           - result.attributes.lion == "Mufasa"
           - result.attributes.hyena == "Ed"
           - result.attributes.meerkat == "Timon"
@@ -153,14 +151,13 @@
     - name: assert things changed
       assert:
         that:
-          - not result | failed
+          - not result is failed
           - result.changed == True
           - result.default_client_id == thing.default_client_id
-          - result.principals | length == 0
+          - result.principals == []
           - result.thing_arn is defined
           - result.thing_name == thing_name
           - result.version == 2
-          - result.attributes | length == 3
           - result.attributes.lion == "Simba"
           - result.attributes.warthog == "Pumbaa"
           - result.attributes.meerkat == "Timon"
@@ -198,7 +195,7 @@
     - name: assert thing removed
       assert:
         that:
-          - not result | failed
+          - not result is failed
           - result.changed == True
 
   always:
@@ -216,5 +213,5 @@
     - name: assert nothing changed
       assert:
         that:
-          - not result | failed
+          - not result is failed
           - result.changed == False
