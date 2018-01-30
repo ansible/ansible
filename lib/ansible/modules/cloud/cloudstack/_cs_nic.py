@@ -20,7 +20,10 @@ description:
 version_added: "2.3"
 author:
 - René Moser (@resmo)
-deprecated: Deprecated in 2.4. Use M(cs_instance_nic_secondaryip) instead.
+deprecated:
+  removed_in: "2.8"
+  why: New module created.
+  alternative: Use M(cs_instance_nic_secondaryip) instead.
 options:
   vm:
     description:

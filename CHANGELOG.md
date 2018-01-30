@@ -5,6 +5,8 @@ Ansible Changes By Release
 
 ## 2.5 "TBD" - ACTIVE DEVELOPMENT
 
+[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html)
+
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
 * New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will be deprecated in the near future and eventually removed.
@@ -13,7 +15,7 @@ Ansible Changes By Release
   currently on by default, in the future it will be off.
 * Add a configuration file to filter modules that a site administrator wants to exclude from being used.
 
-### Deprecations
+### Deprecations (to be removed in 2.9)
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * Using Ansible provided Jinja tests as filters is deprecated and will be removed in Ansible 2.9
 * `stat` and `win_stat` have deprecated `get_md5` and the `md5` return value
@@ -36,6 +38,9 @@ Ansible Changes By Release
 * nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
 * nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
+* ec2_ami_find has been deprecated, use ec2_ami_facts.
+
+See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -57,14 +62,16 @@ Ansible Changes By Release
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 
-#### Deprecated Modules (to be removed in 2.9):
-* ec2_ami_find: replaced by ec2_ami_facts
-
 #### Removed Modules (previously deprecated):
-* accelerate
+* accelerate.
 * boundary_meter: There was no deprecation period for this but the hosted
   service it relied on has gone away so the module has been removed.
-  https://github.com/ansible/ansible/issues/29387
+  [#29387](https://github.com/ansible/ansible/issues/29387)
+* cl_ : cl_interface, cl_interface_policy, cl_bridge, cl_img_install, cl_ports, cl_license, cl_bond. Use `nclu` instead
+* docker, use docker_container and docker_image instead.
+* ec2_vpc.
+* ec2_ami_search, use ec2_ami_facts instead.
+* nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
 
 ### New Plugins
 
