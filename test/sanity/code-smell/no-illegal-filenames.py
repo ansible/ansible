@@ -5,7 +5,10 @@
 # https://msdn.microsoft.com/en-us/library/aa365247#naming_conventions
 
 import os
+import re
 import struct
+
+from ansible.module_utils.basic import to_bytes
 
 ILLEGAL_CHARS = [
     b'<',
@@ -62,16 +65,23 @@ def check_path(path, dir=False):
     if file_name[-1] in ILLEGAL_END_CHARS:
         errors.append("Illegal %s name end-char '%s': %s" % (type_name, file_name[-1], path))
 
-    bfile = file_name.encode('utf-8')
+    bfile = to_bytes(file_name, encoding='utf-8')
     for char in ILLEGAL_CHARS:
         if char in bfile:
-            errors.append("Illegal char %s in %s name: %s" % (char, type_name, path.encode('utf-8')))
+            bpath = to_bytes(path, encoding='utf-8')
+            errors.append("Illegal char %s in %s name: %s" % (char, type_name, bpath))
     return errors
 
 
 def main():
     errors = []
+    pattern = re.compile("^./test/integration/targets/.*/backup")
+
     for root, dirs, files in os.walk('.'):
+        # ignore test/integration/targets/*/backup
+        if pattern.match(root):
+            continue
+
         for dir_name in dirs:
             errors += check_path(os.path.abspath(os.path.join(root, dir_name)), dir=True)
 
