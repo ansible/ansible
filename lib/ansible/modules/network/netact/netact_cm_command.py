@@ -120,8 +120,9 @@ options:
         required: false
     createBackupPlan:
         description:
-            - Specifies if backup plan generation is enabled. Value can be set as true or false.
+            - Specifies if backup plan generation is enabled.
         required: false
+        type: bool
     backupPlanName:
         description:
             - Specifies a backup plan name
@@ -136,7 +137,8 @@ options:
             Operating Procedures > Command Line Operations in Nokia NetAct user documentation for further
             information for extra options.
         required: false
-
+notes:
+    - Check mode is not currently supported
 author:
     - Harri Tuominen (@hatuomin)
 '''
