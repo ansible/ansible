@@ -518,7 +518,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     if not HAS_BOTO3:
@@ -559,7 +559,7 @@ def main():
             security_groups = get_ec2_security_group_ids_from_names(security_group_names, conn)
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Unable to get security groups ids for groups {0}: {1}".format(security_group_names, to_native(e)),
-                             exception=format_exc(), **response)
+                             exception=format_exc(), **camel_dict_to_snake_dict(e.response))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Unable to get security groups ids for groups {0}: {1}".format(security_group_names, to_native(e)),
                              exception=format_exc())
