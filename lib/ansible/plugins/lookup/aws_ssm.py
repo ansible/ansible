@@ -107,7 +107,10 @@ class LookupModule(LookupBase):
             ssm_dict['Path'] = terms[0]
             del terms[terms[1:].index('bypath') + 1]
         else:
-            ssm_dict['Names'] = [terms[0]]
+            if isinstance(terms[0], list):
+                ssm_dict['Names'] = terms[0]
+            else:
+                ssm_dict['Names'] = [terms[0]]
 
         # Option to return short parameter names in by path lookups
         if 'shortnames' in terms[1:]:
@@ -163,12 +166,13 @@ class LookupModule(LookupBase):
                     return None
             # Lookup by parameter name
             else:
+                names = ssm_dict['Names']
                 response = client.get_parameters(**ssm_dict)
                 ret.update(response)
-                if ret['Parameters']:
-                    return [ret['Parameters'][0]['Value']]
-                else:
-                    return None
+                parameters = [parameter['Value'] for parameter in ret.get('Parameters', [])]
+                if len(parameters) < len(names):
+                    raise AnsibleError('Undefined AWS SSM parameters: %s ' % terms[0])
+                return parameters
 
         except ClientError as e:
             raise AnsibleError("SSM lookup exception: {0}".format(e))
