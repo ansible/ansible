@@ -50,7 +50,7 @@
   # https://github.com/ansible/ansible/issues/35148
   - block:
     - block:
-      - name: test triggering always by failing in nested block with run_once set
+      - name: EXPECTED FAILURE test triggering always by failing in nested block with run_once set
         fail:
       run_once: true
     always:
