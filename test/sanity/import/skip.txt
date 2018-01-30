@@ -5,4 +5,3 @@ lib/ansible/modules/cloud/webfaction/webfaction_domain.py
 lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py
 lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/packaging/os/yum_repository.py
-lib/ansible/modules/system/hostname.py
