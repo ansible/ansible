@@ -1,0 +1,15 @@
+{# Note that not all EC2 API Actions allow a specific resource #}
+{# See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ec2-api-permissions.html#ec2-api-unsupported-resource-permissions #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowUnspecifiedEC2Resource",
+            "Effect": "Allow",
+            "Action": [
+                "elasticache:*"
+            ]
+            "Resource": "*"
+        }
+    ]
+}
