@@ -76,7 +76,7 @@ Modules removed
 
 The following modules no longer exist:
 
-* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`
+* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface>` instead
 * :ref:`cl_interface_policy <cl_interface_policy>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_bridge <cl_bridge>` use :ref:`nclu <nclu>` instead
 * :ref:`cl_img_install <cl_img_install>` use :ref:`nclu <nclu>` instead

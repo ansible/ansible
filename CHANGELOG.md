@@ -63,15 +63,15 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 
 #### Removed Modules (previously deprecated):
-* accelerate
+* accelerate.
 * boundary_meter: There was no deprecation period for this but the hosted
   service it relied on has gone away so the module has been removed.
-  https://github.com/ansible/ansible/issues/29387
+  [#29387](https://github.com/ansible/ansible/issues/29387)
 * cl_ : cl_interface, cl_interface_policy, cl_bridge, cl_img_install, cl_ports, cl_license, cl_bond. Use `nclu` instead
-* docker, use docker_container and docker_image instead
-* ec2_vpc
-* ec2_ami_search, use ec2_ami_facts
-* nxos_mtu, use nxos_system instead
+* docker, use docker_container and docker_image instead.
+* ec2_vpc.
+* ec2_ami_search, use ec2_ami_facts instead.
+* nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
 
 ### New Plugins
 
