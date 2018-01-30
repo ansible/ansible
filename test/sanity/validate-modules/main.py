@@ -753,6 +753,9 @@ class ModuleValidator(Validator):
         for child in self.ast.body:
             if isinstance(child, ast.Assign):
                 for grandchild in child.targets:
+                    if not isinstance(grandchild, ast.Name):
+                        continue
+
                     if grandchild.id == 'DOCUMENTATION':
                         docs['DOCUMENTATION']['value'] = child.value.s
                         docs['DOCUMENTATION']['lineno'] = child.lineno
