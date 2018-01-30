@@ -59,6 +59,14 @@ options:
     - "none - Legacy vNIC template behavior. Select this option if you do not want to use redundancy."
     choices: [none, primary, secondary]
     default: none
+  peer_redundancy_template:
+    description:
+    - The Peer Redundancy Template.
+    - The name of the vNIC template sharing a configuration with this template.
+    - If the redundancy_type is primary, the name of the secondary template should be provided.
+    - If the redundancy_type is secondary, the name of the primary template should be provided.
+    - Secondary templates can only configure non-shared properties (name, description, and mac_pool).
+    aliases: [ peer_redundancy_templ ]
   target:
     description:
     - The possible target for vNICs created from this template.
@@ -188,6 +196,7 @@ def main():
         description=dict(type='str', aliases=['descr'], default=''),
         fabric=dict(type='str', default='A', choices=['A', 'B', 'A-B', 'B-A']),
         redundancy_type=dict(type='str', default='none', choices=['none', 'primary', 'secondary']),
+        peer_redundancy_template=dict(type='str', aliases=['peer_redundancy_templ'], default=''),
         target=dict(type='str', default='adapter', choices=['adapter', 'vm']),
         template_type=dict(type='str', default='initial-template', choices=['initial-template', 'updating-template']),
         vlans_list=dict(type='list'),
@@ -205,6 +214,9 @@ def main():
     module = AnsibleModule(
         argument_spec,
         supports_check_mode=True,
+        required_if=[
+            ['cdn_source', 'user-defined', ['cdn_name']],
+        ],
     )
     ucs = UCSModule(module)
 
@@ -246,16 +258,19 @@ def main():
                 kwargs = dict(descr=module.params['description'])
                 kwargs['switch_id'] = module.params['fabric']
                 kwargs['redundancy_pair_type'] = module.params['redundancy_type']
-                kwargs['target'] = module.params['target']
-                kwargs['templ_type'] = module.params['template_type']
-                kwargs['cdn_source'] = module.params['cdn_source']
-                kwargs['admin_cdn_name'] = module.params['cdn_name']
-                kwargs['mtu'] = module.params['mtu']
+                kwargs['peer_redundancy_templ_name'] = module.params['peer_redundancy_template']
                 kwargs['ident_pool_name'] = module.params['mac_pool']
-                kwargs['qos_policy_name'] = module.params['qos_policy']
-                kwargs['nw_ctrl_policy_name'] = module.params['network_control_policy']
-                kwargs['pin_to_group_name'] = module.params['pin_group']
-                kwargs['stats_policy_name'] = module.params['stats_policy']
+                # do not check shared props if this is a secondary template
+                if module.params['redundancy_type'] != 'secondary':
+                    kwargs['target'] = module.params['target']
+                    kwargs['templ_type'] = module.params['template_type']
+                    kwargs['cdn_source'] = module.params['cdn_source']
+                    kwargs['admin_cdn_name'] = module.params['cdn_name']
+                    kwargs['mtu'] = module.params['mtu']
+                    kwargs['qos_policy_name'] = module.params['qos_policy']
+                    kwargs['nw_ctrl_policy_name'] = module.params['network_control_policy']
+                    kwargs['pin_to_group_name'] = module.params['pin_group']
+                    kwargs['stats_policy_name'] = module.params['stats_policy']
                 if (mo.check_prop_match(**kwargs)):
                     # top-level props match, check next level mo/props
                     if not module.params.get('vlans_list'):
@@ -273,23 +288,36 @@ def main():
             if not props_match:
                 if not module.check_mode:
                     # create if mo does not already exist
-                    mo = VnicLanConnTempl(
-                        parent_mo_or_dn=module.params['org_dn'],
-                        name=module.params['name'],
-                        descr=module.params['description'],
-                        switch_id=module.params['fabric'],
-                        redundancy_pair_type=module.params['redundancy_type'],
-                        target=module.params['target'],
-                        templ_type=module.params['template_type'],
-                        cdn_source=module.params['cdn_source'],
-                        admin_cdn_name=module.params['cdn_name'],
-                        mtu=module.params['mtu'],
-                        ident_pool_name=module.params['mac_pool'],
-                        qos_policy_name=module.params['qos_policy'],
-                        nw_ctrl_policy_name=module.params['network_control_policy'],
-                        pin_to_group_name=module.params['pin_group'],
-                        stats_policy_name=module.params['stats_policy'],
-                    )
+                    # secondary template only sets non shared props
+                    if module.params['redundancy_type'] == 'secondary':
+                        mo = VnicLanConnTempl(
+                            parent_mo_or_dn=module.params['org_dn'],
+                            name=module.params['name'],
+                            descr=module.params['description'],
+                            switch_id=module.params['fabric'],
+                            redundancy_pair_type=module.params['redundancy_type'],
+                            peer_redundancy_templ_name=module.params['peer_redundancy_template'],
+                            ident_pool_name=module.params['mac_pool'],
+                        )
+                    else:
+                        mo = VnicLanConnTempl(
+                            parent_mo_or_dn=module.params['org_dn'],
+                            name=module.params['name'],
+                            descr=module.params['description'],
+                            switch_id=module.params['fabric'],
+                            redundancy_pair_type=module.params['redundancy_type'],
+                            peer_redundancy_templ_name=module.params['peer_redundancy_templ'],
+                            target=module.params['target'],
+                            templ_type=module.params['template_type'],
+                            cdn_source=module.params['cdn_source'],
+                            admin_cdn_name=module.params['cdn_name'],
+                            mtu=module.params['mtu'],
+                            ident_pool_name=module.params['mac_pool'],
+                            qos_policy_name=module.params['qos_policy'],
+                            nw_ctrl_policy_name=module.params['network_control_policy'],
+                            pin_to_group_name=module.params['pin_group'],
+                            stats_policy_name=module.params['stats_policy'],
+                        )
 
                     if module.params.get('vlans_list'):
                         for vlan in module.params['vlans_list']:
