@@ -1,5 +1,15 @@
 ---
 - block:
+
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
     # ============================================================
     - name: test create thing with no region
       aws_iot_thing:
@@ -21,10 +31,7 @@
       aws_iot_thing:
         name: "{{ thing_name }}"
         type: unknown_type_name
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -40,10 +47,7 @@
         name: "{{ thing_name }}"
         type: unknown_type_name
         remove_type: trye
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -61,10 +65,7 @@
           lion: Mufasa
           hyena: Ed
           meerkat: Timon
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: thing
 
     - name: assert thing created
@@ -90,10 +91,7 @@
           hyena: Ed
           meerkat: Timon
         expected_version: 1
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert idempotence
@@ -119,10 +117,7 @@
           hyena: Ed
           meerkat: Timon
         expected_version: 2
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: True
 
@@ -142,10 +137,7 @@
           meerkat: Timon
         absent_attributes:
           - hyena
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert things changed
@@ -168,10 +160,7 @@
         name: "{{ thing_name }}"
         state: absent
         expected_version: 1
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: True
 
@@ -186,10 +175,7 @@
       aws_iot_thing:
         name: "{{ thing_name }}"
         state: absent
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert thing removed
@@ -204,10 +190,7 @@
       aws_iot_thing:
         name: "{{ thing_name }}"
         state: absent
-        aws_access_key: "{{ ec2_access_key }}"
-        aws_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
-        ec2_region: '{{ec2_region}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert nothing changed
