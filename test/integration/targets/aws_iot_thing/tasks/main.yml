@@ -104,7 +104,7 @@
           - result.changed == False
           - result.default_client_id == thing.default_client_id
           - result.principals | length == 0
-          - result.thing_arn is not defined
+          - result.thing_arn is defined
           - result.thing_name == thing_name
           - result.version == 1
           - result.attributes | length == 3
@@ -157,7 +157,7 @@
           - result.changed == True
           - result.default_client_id == thing.default_client_id
           - result.principals | length == 0
-          - result.thing_arn is not defined
+          - result.thing_arn is defined
           - result.thing_name == thing_name
           - result.version == 2
           - result.attributes | length == 3
