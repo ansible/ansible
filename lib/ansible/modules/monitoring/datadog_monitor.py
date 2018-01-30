@@ -85,7 +85,8 @@ options:
         default: null
     escalation_message:
         description:
-            - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
+
+- A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
               is None
         required: false
         default: null
@@ -122,6 +123,11 @@ options:
         required: false
         default: null
         version_added: "2.3"
+    evaluation_delay:
+        description: ["The number of second to delay data evaluation."]
+        required: false
+        default: null
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
