@@ -29,7 +29,7 @@
 This module adds shared support for Batch modules.
 """
 
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, snake_dict_to_camel_dict
 
 try:
     from botocore.exceptions import ClientError
@@ -84,3 +84,14 @@ def cc(key):
     """
     components = key.split('_')
     return components[0] + "".join([token.capitalize() for token in components[1:]])
+
+
+def set_api_params(module, module_params):
+    """
+    Sets module parameters to those expected by the boto3 API.
+    :param module:
+    :param module_params:
+    :return:
+    """
+    api_params = dict((k, v) for k, v in dict(module.params).items() if k in module_params and v is not None)
+    return snake_dict_to_camel_dict(api_params)
