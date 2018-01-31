@@ -21,11 +21,16 @@ description:
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
+notes:
+- This module is not idempotent when C(aaa_password) is being used
+  (even if that password was already set identically). This
+  appears to be an inconsistency wrt. the idempotent nature
+  of the APIC REST API.
 version_added: '2.5'
 options:
   aaa_password:
     description:
-    - The AAA user password.
+    - The password of the locally-authenticated user.
 #  aaa_password_lifetime:
 #    description:
 #    - The lifetime of the locally-authenticated user password.
@@ -34,20 +39,30 @@ options:
 #    - Whether this account needs password update.
   aaa_user:
     description:
-    - The name of the user to add.
+    - The name of the locally-authenticated user user to add.
     aliases: [ name, user ]
+  clear_password_history:
+    description:
+    - Whether to clear the password history of a locally-authenticated user.
+    type: bool
+  description:
+    description:
+    - Description for the AAA user.
+    aliases: [ descr ]
   email:
     description:
     - The email address of the locally-authenticated user.
   enabled:
     description:
     - The status of the locally-authenticated user account.
+    type: bool
   expiration:
     description:
     - The expiration date of the locally-authenticated user account.
   expires:
     description:
     - Whether to enable an expiration date for the locally-authenticated user account.
+    type: bool
   first_name:
     description:
     - The first name of the locally-authenticated user.
@@ -116,7 +131,8 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         aaa_password=dict(type='str', no_log=True),
-        aaa_user=dict(type='str', required=True),
+        aaa_user=dict(type='str', required=True, aliases=['name']),
+        clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         email=dict(type='str'),
         enabled=dict(type='bool'),
@@ -140,6 +156,7 @@ def main():
 
     aaa_password = module.params['aaa_password']
     aaa_user = module.params['aaa_user']
+    clear_password_history = module.params['clear_password_history']
     description = module.params['description']
     email = module.params['email']
     enabled = module.params['enabled']
@@ -154,7 +171,7 @@ def main():
     aci.construct_url(
         root_class=dict(
             aci_class='aaaUser',
-            aci_rn='userext/user-' + aaa_user,
+            aci_rn='userext/user-{0}'.format(aaa_user),
             filter_target='eq(aaaUser.name, "{0}")'.format(aaa_user),
             module_object=aaa_user,
         ),
@@ -167,7 +184,7 @@ def main():
             aci_class='aaaUser',
             class_config=dict(
                 accountStatus='inactive' if enabled is False else 'active',
-                clearPwdHistory='no' if aaa_password is None else 'yes',  # Required if password is set :-/
+                clearPwdHistory=clear_password_history,
                 email=email,
                 expiration=expiration,
                 expires='yes' if expires is True and expiration else 'no',
