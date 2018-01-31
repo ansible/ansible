@@ -46,6 +46,8 @@ options:
         - A unique identifier to reference the origin access identity by.
       required: false
 
+notes: does not support check mode
+
 '''
 
 EXAMPLES = '''
