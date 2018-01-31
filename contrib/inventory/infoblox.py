@@ -114,7 +114,7 @@ def main():
                     if key.startswith('ansible_'):
                         hostvars[name][key] = value
                     else:
-                        if 'extattrs' not in hostvars:
+                        if 'extattrs' not in hostvars[name]:
                             hostvars[name]['extattrs'] = {}
                         hostvars[name]['extattrs'][key] = value
 
