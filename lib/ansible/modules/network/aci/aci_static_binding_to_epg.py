@@ -189,13 +189,13 @@ def main():
         module.fail_json(msg='extpaths must be defined')
 
     CONNECTION_TYPE_MAPPING = dict(
-        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or C(interface) of following format: "1/7", C(paths) can only be something like '1011'(int)
+        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or of following format: "1/7", C(paths) can only be something like '1011'(int)
         access_interface='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, paths, interface),
-        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or C(interface) of following format: "1/7", C(paths) can only be something like '1011'(int)
+        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or of following format: "1/7", C(paths) can only be something like '1011'(int)
         direct_port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, paths, interface),
         # NOTE: C(interface) can be a policy group like: "test-IntPolGrp", C(paths) can be something like 1011-1012'(str)
         virtual_port_channel='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, paths, interface),
-        # NOTE: C(interface) can be of the following format: "1/7", C(paths) can only be something like '1011'(int), C(extpaths) can only be something like '1011'(int)
+        # NOTE: C(interface) can be of the following format: "1/7", C(paths) can only be like '1011'(int), C(extpaths) can only be like '1011'(int)
         fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, paths, extpaths, interface),
     )
 
