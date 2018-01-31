@@ -55,7 +55,7 @@ options:
         description:
             - name of client template to work on (if I(target) is C('clienttemplate')). Either this
               or I(id) is required.
-              
+
     realm:
         description:
             - realm this scope mapping belongs to.
