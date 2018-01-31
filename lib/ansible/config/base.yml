@@ -710,6 +710,14 @@ DEFAULT_LOG_PATH:
   ini:
   - {key: log_path, section: defaults}
   type: path
+DEFAULT_LOG_FILTER:
+  name: Name filters for python logger
+  default: []
+  description: List of logger names to filter out of the log file
+  env: [{name: ANSIBLE_LOG_FILTER}]
+  ini:
+    - {key: log_filter, section: defaults}
+  type: list
 DEFAULT_LOOKUP_PLUGIN_PATH:
   name: Lookup Plugins Path
   description: Colon separated paths in which Ansible will search for Lookup Plugins.
