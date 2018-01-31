@@ -1,3 +1,6 @@
+# vyos.py in plugins and module_utils/network covered by these as well
+# remove_default_spec() hit by multiple plays
+
 # hit ComplexList
 - name: get output for single command
   vyos_command:
@@ -11,8 +14,8 @@
       - result.stdout is defined
       - result.stdout_lines is defined
 
-# hit conditional()
-- name: Setup (interface is up)
+# hit conditional() - used for declarative intent
+- name: enable eth1
   vyos_interface:
     name: eth1
     enabled: True
