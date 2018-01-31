@@ -173,12 +173,12 @@
     path: "{{ checkout_dir }}"
 
 #
-# Make sure shallow fetch works when updating a branch
+# Make sure shallow fetch works when switching to (fetching) a new a branch
 #
 
 - name: DEPTH | clone from branch with depth specified
   git:
-    repo: 'file://{{ repo_dir|expanduser }}/shallow_branch'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
     depth: 1
     version: test_branch
@@ -194,42 +194,25 @@
       - is_shallow.stat.exists
   when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
-- name: DEPTH | commit on branch in shallow_branch repo (and go back to master)
-  shell: |
-    git checkout test_branch;
-    echo "3" > a; git commit -m "3 on branch" a;
-    git checkout master;
-  args:
-    chdir: "{{repo_dir}}/shallow_branch"
-
-- name: DEPTH | fetch same updated branch with depth specified
+- name: DEPTH | switch to new branch (fetch) with the shallow clone
   git:
-    repo: 'file://{{ repo_dir|expanduser }}/shallow_branch'
+    repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
     depth: 1
-    version: test_branch
+    version: new_branch
   register: git_fetch
 
-- name: DEPTH | assert if branch update arrived
+- name: DEPTH | assert if switching a shallow clone to a new branch worked
   assert:
     that:
       - git_fetch is changed
 
-- name: DEPTH | assert if branch update resulted in file being updated
-  lineinfile:
-    path: '{{ checkout_dir }}/a'
-    line: 3
-    state: present
-  check_mode: yes
-  register: updated_file_contents
-  failed_when: (updated_file_contents is changed) or (updated_file_contents is failed)
-
-- name: DEPTH | check if checkout_dir is shallow
+- name: DEPTH | check if clone is still shallow
   stat: path={{ checkout_dir }}/.git/shallow
   register: is_shallow
   when: git_version.stdout is version(git_version_supporting_depth, '>=')
 
-- name: DEPTH | assert that checkout_dir still is shallow
+- name: DEPTH | assert that clone still is shallow
   assert:
     that:
       - is_shallow.stat.exists
