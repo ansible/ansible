@@ -70,7 +70,7 @@ class TestNxosIPInterfaceModule(TestNxosModule):
             changed=True,
             commands=[
                 'interface eth2/1', 'ip pim dr-priority 10', 'ip pim hello-interval 40000',
-                'ip pim sparse-mode', 'no ip pim border']
+                'ip pim sparse-mode']
         )
 
     def test_nxos_pim_interface_jp(self):
@@ -81,14 +81,14 @@ class TestNxosIPInterfaceModule(TestNxosModule):
         self.execute_module(
             changed=True,
             commands=['interface eth2/1', 'ip pim jp-policy JPOUT out',
-                      'ip pim jp-policy JPIN in', 'ip pim sparse-mode']
+                      'ip pim jp-policy JPIN in']
         )
 
     def test_nxos_pim_interface_default(self):
         set_module_args(dict(interface='eth2/1', state='default'))
         self.execute_module(
-            changed=True,
-            commands=['interface eth2/1', 'ip pim dr-priority 1', 'ip pim hello-interval 30000', 'no ip pim border']
+            changed=False,
+            commands=[]
         )
 
     def test_nxos_pim_interface_ip_absent(self):
