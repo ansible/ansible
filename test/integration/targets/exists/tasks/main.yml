@@ -1,0 +1,111 @@
+# test code for the exists module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: make a new file
+  copy: dest={{output_dir}}/foo.txt mode=0644 content="hello world"
+
+- name: check if file exists
+  exists: path={{output_dir}}/foo.txt
+  register: foo_exists
+
+- debug: var=foo_exists
+
+- assert:
+    that:
+        - "'changed' in foo_exists"
+        - "foo_exists.changed == false"
+        - "'exists' in foo_exists"
+        - "foo_exists.exists == true"
+        - "'is_dir' in foo_exists"
+        - "foo_exists.is_dir == false"
+        - "'is_link' in foo_exists"
+        - "foo_exists.is_link == false"
+        - "'path' in foo_exists"
+        - "foo_exists.path == '{{ output_dir }}/foo.txt'"
+
+- name: make a symlink
+  file:
+    src: "{{ output_dir }}/foo.txt"
+    path: "{{ output_dir }}/foo-link"
+    state: link
+
+- name: check symlink exists with follow off
+  stat:
+    path: "{{ output_dir }}/foo-link"
+  register: symlink_exists
+
+- debug: var=symlink_exists
+
+- assert:
+    that:
+        - "'changed' in symlink_exists"
+        - "symlink_exists.changed == false"
+        - "'exists' in symlink_exists"
+        - "symlink_exists.exists == true"
+        - "'is_dir' in symlink_exists"
+        - "symlink_exists.is_dir == false"
+        - "'is_link' in symlink_exists"
+        - "symlink_exists.is_link == true"
+        - "'path' in symlink_exists"
+        - "symlink_exists.path == '{{ output_dir }}/foo.txt'"
+
+- name: check symlink exists with follow on
+  exists:
+    path: "{{ output_dir }}/foo-link"
+    follow: True
+  register: symlink_exists_follow
+
+- debug: var=symlink_exists_follow
+
+- assert:
+    that:
+        - "'changed' in symlink_exists_follow"
+        - "symlink_exists_follow.changed == false"
+        - "'exists' in symlink_exists_follow"
+        - "symlink_exists_follow.exists == true"
+        - "'is_dir' in symlink_exists_follow"
+        - "symlink_exists_follow.is_dir == false"
+        - "'is_link' in symlink_exists_follow"
+        - "symlink_exists_follow.is_link == true"
+        - "'path' in symlink_exists"
+        - "symlink_exists_follow.path == '{{ output_dir }}/foo-link'"
+
+- name: make a directory
+  file:
+    path: "{{ output_dir }}/bar"
+    state: directory
+
+- name: check directory exists
+  exists:
+    path: "{{ output_dir }}/foo-link"
+  register: bar_exists
+
+- debug: var=bar_exists
+
+- assert:
+    that:
+        - "'changed' in bar_exists"
+        - "bar_exists.changed == false"
+        - "'exists' in bar_exists"
+        - "bar_exists.exists == true"
+        - "'is_dir' in bar_exists"
+        - "bar_exists.is_dir == false"
+        - "'is_link' in bar_exists"
+        - "bar_exists.is_link == true"
+        - "'path' in bar_exists"
+        - "bar_exists.path == '{{ output_dir }}/bar'"
