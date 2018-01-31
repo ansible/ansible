@@ -52,6 +52,7 @@ options:
             - Only updates an existing macro if set to C(yes).
         default: 'yes'
         choices: ['yes', 'no']
+        version_added: 2.5
 
 extends_documentation_fragment:
     - zabbix
@@ -214,7 +215,6 @@ def main():
             host_macro_class_obj.update_host_macro(host_macro_obj, macro_name, macro_value)
         else:
             module.exit_json(changed=False, result="Host macro %s already exists and force is set to no" % macro_name)
-
 
 
 if __name__ == '__main__':
