@@ -21,9 +21,6 @@ short_description: "Enforce state upon secrets stored in Thycotic Secret Server"
 
 version_added: "2.5"
 
-requirements:
-    - zeep
-
 description:
     - "NOTE: Requires Zeep library. The module interacts with the SOAP API of the instance."
     - "Webservices must be enabled for this work correctly."
