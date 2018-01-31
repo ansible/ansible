@@ -90,7 +90,7 @@ PluginLoader
     hardcoded powershell module_utils file.  If we add generic module_utils
     for powershell, we'll need to decide how to organize the code.
 
-Static Loop Keyword 
+Static Loop Keyword
 -------------------
 **(done)**
 
@@ -101,14 +101,14 @@ Static Loop Keyword
 
 Vault
 -----
-- In some cases diff users might want to use the same play with different access levels, 
+- In some cases diff users might want to use the same play with different access levels,
   being able to change vault failure to decrypt to a warning or something else allows for this.
 - Allow vault password files to be vault encrypted
 - Vault secrets client inc new 'keyring' client **(done)**
 
 Role Versioning
 ---------------
-- ansible-galaxy will install roles using name + version 
+- ansible-galaxy will install roles using name + version
 - On role install, If an existing role is found in the 'bare name' handle version
 - removing roles should detect multiple versions and prompt for 'all' or a specific version(s)
 - When referencing a role in a play, ansible-playbook should now also check if version is specified and use that if found
@@ -129,7 +129,7 @@ Runtime Check on Modules for Blacklisting
 
 Windows
 -------
-- Implement gather_subset on Windows facts 
+- Implement gather_subset on Windows facts
 - Move setup.ps1 guts to module_utils to allow arbitrary modules to call/refresh individual facts.
 - Fix Windows binary module support to work properly with become/env/async in all cases.
 - Fix Windows async + become to allow them to work together
@@ -147,7 +147,7 @@ Windows
 - Module updates
 
   - win_updates
-  
+
     - Fix win_updates to detect (or request) become
     - Add whitelist/blacklist features to win_updates
   - win_dsc further improvements
@@ -167,7 +167,7 @@ AWS
 - Triage existing merges for modules
 - Module work
 
-  - ec2_instance 
+  - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
   - AWS Network Load Balancer support (NLB module, ASG support, etc)
   - rds_instance
@@ -202,12 +202,10 @@ Documentation
 - Document vault-password-client scripts.
 - Network Documentation
 
-  - refactor intro_networking.rst 
-  - Document different authentication options
-  - Create network module index and TOC
-  - Use Case: Getting Started
-  - Use Case: set hostname network documentation
-  - Use Case: _command show version
+  - New landing page (to replace intro_networking)
+  - Platform specific guides
+  - Walk through: Getting Started
+  - Networking and ``become`` **(done)**
   - Best practice **(done)**
 
 Contributor Quality of Life
