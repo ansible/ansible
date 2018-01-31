@@ -46,6 +46,13 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 
 from requests.auth import HTTPBasicAuth
 
+try:
+    import concurrent.futures
+except ImportError:
+    sys.exit("Requires futures python library. use pip install futures or " +
+             "applicable linux packager. " +
+             "This library is already included with Ansible Tower packages")
+
 
 def json_format_dict(data, pretty=False):
     """Converts a dict to a JSON object and dumps it as a formatted string"""
@@ -65,6 +72,7 @@ class ForemanInventory(object):
         self.facts = dict()   # Facts of each host
         self.hostgroups = dict()  # host groups
         self.hostcollections = dict()  # host collections
+        self.host_list_from_api = None  # host list from API
         self.session = None   # Requests session
         self.config_paths = [
             "/etc/ansible/foreman.ini",
@@ -202,12 +210,14 @@ class ForemanInventory(object):
         params = {}
         if self.host_filters:
             params['search'] = self.host_filters
-
-        return self._get_json(url, params=params)
+        # do not call host list from API if it was done before
+        if not self.host_list_from_api:
+            self.host_list_from_api = self._get_json(url, params=params)
+        return self.host_list_from_api
 
     def _get_host_data_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
-        return self._get_json(url)
+        return {hid: self._get_json(url)}
 
     def _get_facts_by_id(self, hid):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
@@ -277,12 +287,19 @@ class ForemanInventory(object):
         self.groups = dict()
         self.hosts = dict()
 
+        results = {}
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self._get_host_data_by_id, host.get('id')) for host in self._get_hosts()]
+            for r in concurrent.futures.as_completed(futures):
+                results.update(r.result())
+
         for host in self._get_hosts():
             if host['name'] in self.cache.keys() and scan_only_new_hosts:
                 continue
             dns_name = host['name']
 
-            host_data = self._get_host_data_by_id(host['id'])
+            host_data = results.get(host.get('id'))
             host_params = host_data.get('all_parameters', {})
 
             # Create ansible groups for hostgroup
