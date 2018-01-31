@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Contains CLIConf Plugin methods for ENOS Module
+# Contains CLIConf Plugin methods for ENOS Modules
 # Lenovo Networking
 #
 from __future__ import (absolute_import, division, print_function)
