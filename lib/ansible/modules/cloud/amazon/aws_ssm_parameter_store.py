@@ -108,7 +108,7 @@ delete_parameter:
 '''
 
 import traceback
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
@@ -139,8 +139,7 @@ def create_update_parameter(client, module):
         response = client.put_parameter(**args)
         changed = True
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, msg="setting parameter")
 
     return changed, response
 
@@ -150,53 +149,48 @@ def delete_parameter(client, module):
     response = {}
 
     try:
-        get_response = client.get_parameters(
-            Names=[module.params.get('name')]
+        response = client.delete_parameter(
+            Name=module.params.get('name')
         )
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            return False, e.response
+        module.fail_json_aws(e, msg="deleting parameter")
 
-    if get_response['Parameters']:
-        try:
-            response = client.delete_parameter(
-                Name=module.params.get('name')
-            )
-            changed = True
-        except ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+    return True, response
 
-    return changed, response
+
+def setup_client(module):
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    if region:
+        connection = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_params)
+    else:
+        module.fail_json(msg="region must be specified")
+    return connection
+
+
+def setup_module_object():
+    argument_spec = dict(
+        name=dict(required=True),
+        description=dict(),
+        value=dict(required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+        string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),
+        decryption=dict(default=True, type='bool'),
+        key_id=dict(default="alias/aws/ssm"),
+        overwrite=dict(default=True, type='bool'),
+        region=dict(required=False),
+    )
+
+    return AnsibleAWSModule(
+        argument_spec=argument_spec,
+    )
 
 
 def main():
-
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            description=dict(),
-            value=dict(required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            string_type=dict(default='String', choices=['String', 'StringList', 'SecureString']),
-            decryption=dict(default=True, type='bool'),
-            key_id=dict(default="alias/aws/ssm"),
-            overwrite=dict(default=True, type='bool'),
-            region=dict(required=False),
-        )
-    )
-
-    module = AnsibleModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 are required.')
+    module = setup_module_object()
     state = module.params.get('state')
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except NoCredentialsError as e:
-        module.fail_json(msg="Can't authorize connection - %s" % str(e))
+    client = setup_client(module)
 
     invocations = {
         "present": create_update_parameter,

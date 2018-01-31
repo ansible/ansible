@@ -97,8 +97,9 @@ def test_path_lookup_variable():
     lookup._load_name = "aws_ssm"
 
     boto3_double = MagicMock()
-    boto3_client_double = MagicMock()
-    boto3_double.Session.return_value.client.return_value.get_parameters_by_path.return_value = path_success_response
+    get_path_fn = boto3_double.Session.return_value.client.return_value.get_parameters_by_path
+    get_path_fn.return_value = path_success_response
+    boto3_client_double = boto3_double.Session.return_value.client
 
     with patch.object(boto3, 'session', boto3_double):
         args=copy(dummy_credentials)
@@ -106,9 +107,9 @@ def test_path_lookup_variable():
         retval = lookup.run(["/testpath"], {}, **args)
     assert(retval[0]["/testpath/won"] == "simple_value_won")
     assert(retval[0]["/testpath/too"] == "simple_value_too")
-    # boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
-    #                                        aws_secret_access_key="notasecret", aws_session_token=None)
-
+    boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
+                                           aws_secret_access_key="notasecret", aws_session_token=None)
+    get_path_fn.assert_called_with(Path="/testpath", WithDecryption=True)
 
 def test_warn_missing_variable():
     lookup = aws_ssm.LookupModule()

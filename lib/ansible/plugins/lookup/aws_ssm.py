@@ -1,6 +1,6 @@
 # (c) 2016, Bill Wang <ozbillwang(at)gmail.com>
 # (c) 2017, Marat Bakeev <hawara(at)gmail.com>
-# (c) 2018, Michael De La Rue <hawara(at)gmail.com>
+# (c) 2018, Michael De La Rue <siblemitcom.mddlr(at)spamgourmet.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -72,12 +72,20 @@ EXAMPLES = '''
 '''
 # FIXME the last one is probably not true yet. 
 
-
+from ansible.utils.display import Display
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.parsing.convert_bool import boolean
 import pdb
+
+from ansible.utils.display import Display
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 try:
     from botocore.exceptions import ClientError
@@ -145,7 +153,7 @@ class LookupModule(LookupBase):
         if bypath:
             for term in terms: 
                 ssm_dict["Path"] = term
-                #FIXME: display.debug("AWS_ssm lookup term: %s" % term)
+                display.vvv("AWS_ssm path lookup term: %s in region: %s" % (term, region))
                 try:
                     response = client.get_parameters_by_path(**ssm_dict)
                 except ClientError as e:
@@ -163,6 +171,7 @@ class LookupModule(LookupBase):
                     for x in paramlist:
                         x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
 
+                display.vvvv("AWS_ssm path lookup returned: %s" % str(paramlist))
                 if len(paramlist):
                     ret.append(boto3_tag_list_to_ansible_dict(paramlist,
                                                           tag_name_key_name="Name",
@@ -171,7 +180,7 @@ class LookupModule(LookupBase):
                     return None
             # Lookup by parameter name - always returns a list with one or no entry. 
         else:
-            #FIXME: display.debug("AWS_ssm lookup term: %s" % terms)
+            FIXME: display.vvv("AWS_ssm name lookup term: %s" % terms)
             ssm_dict["Names"] = terms
             try:
                 response = client.get_parameters(**ssm_dict)
