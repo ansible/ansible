@@ -28,12 +28,11 @@ author: Willem van Ketwich (@wilvk)
 
 options:
     state:
-      description:
-        - The state of the resource. Valid states are
-            present
-            absent
-      required: false
-      default: present
+      description: If the named resource should exist.
+      choices:
+        - present
+        - absent
+      default: update_origin_access_identity
     origin_access_identity_id:
       description:
         - The origin_access_identity_id of the cloudfront distribution.
