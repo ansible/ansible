@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -96,7 +96,7 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 
 
 class SnapshotController(object):
@@ -152,17 +152,20 @@ def needs_update(actual, requested):
 
 
 def run_module():
-    module_args = dict(
-        cluster_name=dict(type='str', required=True, aliases=['cluster']),
-        state=dict(type='str', choices=['present', 'absent'], default='present'),
-        region=dict(type='str', required=True, aliases=['source']),
-        destination_region=dict(type='str', required=True, aliases=['destination']),
-        snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
-        snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            cluster_name=dict(type='str', required=True, aliases=['cluster']),
+            state=dict(type='str', choices=['present', 'absent'], default='present'),
+            region=dict(type='str', required=True, aliases=['source']),
+            destination_region=dict(type='str', required=True, aliases=['destination']),
+            snapshot_copy_grant=dict(type='str', aliases=['copy_grant']),
+            snapshot_retention_period=dict(type='int', required=True, aliases=['retention_period']),
+        )
     )
 
     module = AnsibleModule(
-        argument_spec=module_args,
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
