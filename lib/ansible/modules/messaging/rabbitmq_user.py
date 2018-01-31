@@ -298,7 +298,6 @@ def main():
         permissions.append(perm)
         bulk_permissions = False
 
-
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
                                  node, bulk_permissions=bulk_permissions, append_permissions=append_permissions)
 
