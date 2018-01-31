@@ -208,7 +208,6 @@ class Default(FactsBase):
         return "NA"
 
     def parse_model(self, data):
-        # match = re.search(r'^Cisco (.+) \(revision', data, re.M)
         match = re.search(r'^Lenovo RackSwitch (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -221,7 +220,6 @@ class Default(FactsBase):
             return "Image2"
 
     def parse_serialnum(self, data):
-        # match = re.search(r'board ID (\S+)', data)
         match = re.search(r'^Switch Serial No:  (\S+)', data, re.M | re.I)
         if match:
             return match.group(1)
@@ -370,6 +368,11 @@ class Interfaces(FactsBase):
             innerData['speed'] = intfSplit[1].strip()
             innerData['duplex'] = intfSplit[2].strip()
             innerData['operstatus'] = intfSplit[5].strip()
+            if("up" not in intfSplit[5].strip()) and ("down" not in intfSplit[5].strip()):
+                innerData['description'] = intfSplit[7].strip()
+                innerData['macaddress'] = intfSplit[9].strip()
+                innerData['mtu'] = intfSplit[10].strip()
+                innerData['operstatus'] = intfSplit[6].strip()
             interfaces[intfSplit[0].strip()] = innerData
         return interfaces
 
@@ -381,6 +384,14 @@ class Interfaces(FactsBase):
             else:
                 line = line.strip()
                 match = re.match(r'^([0-9]+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(INT+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(EXT+)', line)
                 if match:
                     key = match.group(1)
                     parsed.append(line)
@@ -398,6 +409,14 @@ class Interfaces(FactsBase):
             else:
                 line = line.strip()
                 match = re.match(r'^([0-9]+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(INT+)', line)
+                if match:
+                    key = match.group(1)
+                    parsed.append(line)
+                match = re.match(r'^(EXT+)', line)
                 if match:
                     key = match.group(1)
                     parsed.append(line)
