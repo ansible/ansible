@@ -41,6 +41,9 @@ URL_CLIENTS = "{url}/admin/realms/{realm}/clients"
 URL_CLIENT_ROLES = "{url}/admin/realms/{realm}/clients/{id}/roles"
 URL_REALM_ROLES = "{url}/admin/realms/{realm}/roles"
 
+URL_CLIENTTEMPLATE = "{url}/admin/realms/{realm}/client-templates/{id}"
+URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
+
 
 def keycloak_argument_spec():
     """
@@ -92,6 +95,9 @@ class KeycloakAPI(object):
         try:
             r = json.load(open_url(auth_url, method='POST',
                                    validate_certs=self.validate_certs, data=urlencode(payload)))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned invalid JSON when trying to obtain access token from %s: %s'
+                                      % (auth_url, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain access token from %s: %s'
                                       % (auth_url, str(e)))
@@ -118,6 +124,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(clientlist_url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of clients for realm %s: %s'
+                                      % (realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain list of clients for realm %s: %s'
                                       % (realm, str(e)))
@@ -135,7 +144,7 @@ class KeycloakAPI(object):
             return None
 
     def get_client_by_id(self, id, realm='master'):
-        """ Obtain client representatio by id
+        """ Obtain client representation by id
 
         :param id: id (not clientId) of client to be queried
         :param realm: client from this realm
@@ -153,9 +162,25 @@ class KeycloakAPI(object):
             else:
                 self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                           % (id, realm, str(e)))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client %s for realm %s: %s'
+                                      % (id, realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain client %s for realm %s: %s'
                                       % (id, realm, str(e)))
+
+    def get_client_id(self, client_id, realm='master'):
+        """ Obtain id of client by client_id
+
+        :param client_id: client_id of client to be queried
+        :param realm: client template from this realm
+        :return: id of client (usually a UUID)
+        """
+        result = self.get_client_by_clientid(client_id, realm)
+        if isinstance(result, dict) and 'id' in result:
+            return result['id']
+        else:
+            return None
 
     def update_client(self, id, clientrep, realm="master"):
         """ Update an existing client
@@ -202,4 +227,115 @@ class KeycloakAPI(object):
                             validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg='Could not delete client %s in realm %s: %s'
+                                      % (id, realm, str(e)))
+
+    def get_client_templates(self, realm='master'):
+        """ Obtains client template representations for client templates in a realm
+
+        :param realm: realm to be queried
+        :return: list of dicts of client representations
+        """
+        url = URL_CLIENTTEMPLATES.format(url=self.baseurl, realm=realm)
+
+        try:
+            return json.load(open_url(url, method='GET', headers=self.restheaders,
+                                      validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of client templates for realm %s: %s'
+                                      % (realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(msg='Could not obtain list of client templates for realm %s: %s'
+                                      % (realm, str(e)))
+
+    def get_client_template_by_id(self, id, realm='master'):
+        """ Obtain client template representation by id
+
+        :param id: id (not name) of client template to be queried
+        :param realm: client template from this realm
+        :return: dict of client template representation or None if none matching exist
+        """
+        url = URL_CLIENTTEMPLATE.format(url=self.baseurl, id=id, realm=realm)
+
+        try:
+            return json.load(open_url(url, method='GET', headers=self.restheaders,
+                                      validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain client templates %s for realm %s: %s'
+                                      % (id, realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(msg='Could not obtain client template %s for realm %s: %s'
+                                      % (id, realm, str(e)))
+
+    def get_client_template_by_name(self, name, realm='master'):
+        """ Obtain client template representation by name
+
+        :param name: name of client template to be queried
+        :param realm: client template from this realm
+        :return: dict of client template representation or None if none matching exist
+        """
+        result = self.get_client_templates(realm)
+        if isinstance(result, list):
+            result = [x for x in result if x['name'] == name]
+            if len(result) > 0:
+                return result[0]
+        return None
+
+    def get_client_template_id(self, name, realm='master'):
+        """ Obtain client template id by name
+
+        :param name: name of client template to be queried
+        :param realm: client template from this realm
+        :return: client template id (usually a UUID)
+        """
+        result = self.get_client_template_by_name(name, realm)
+        if isinstance(result, dict) and 'id' in result:
+            return result['id']
+        else:
+            return None
+
+    def update_client_template(self, id, clienttrep, realm="master"):
+        """ Update an existing client template
+        :param id: id (not name) of client template to be updated in Keycloak
+        :param clienttrep: corresponding (partial/full) client template representation with updates
+        :param realm: realm the client template is in
+        :return: HTTPResponse object on success
+        """
+        url = URL_CLIENTTEMPLATE.format(url=self.baseurl, realm=realm, id=id)
+
+        try:
+            return open_url(url, method='PUT', headers=self.restheaders,
+                            data=json.dumps(clienttrep), validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not update client template %s in realm %s: %s'
+                                      % (id, realm, str(e)))
+
+    def create_client_template(self, clienttrep, realm="master"):
+        """ Create a client in keycloak
+        :param clienttrep: Client template representation of client template to be created. Must at least contain field name
+        :param realm: realm for client template to be created in
+        :return: HTTPResponse object on success
+        """
+        url = URL_CLIENTTEMPLATES.format(url=self.baseurl, realm=realm)
+
+        try:
+            return open_url(url, method='POST', headers=self.restheaders,
+                            data=json.dumps(clienttrep), validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not create client template %s in realm %s: %s'
+                                      % (clienttrep['clientId'], realm, str(e)))
+
+    def delete_client_template(self, id, realm="master"):
+        """ Delete a client template from Keycloak
+
+        :param id: id (not name) of client to be deleted
+        :param realm: realm of client template to be deleted
+        :return: HTTPResponse object on success
+        """
+        url = URL_CLIENTTEMPLATE.format(url=self.baseurl, realm=realm, id=id)
+
+        try:
+            return open_url(url, method='DELETE', headers=self.restheaders,
+                            validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete client template %s in realm %s: %s'
                                       % (id, realm, str(e)))
