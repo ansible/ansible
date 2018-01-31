@@ -359,9 +359,11 @@ options:
 
             saml_signature_canonicalization_method:
                 description:
-                    - SAML signature canonicalization method. This is one of four values, namely C(http://www.w3.org/2001/10/xml-exc-c14n#) for EXCLUSIVE,
-                      C(http://www.w3.org/2001/10/xml-exc-c14n#WithComments) for EXCLUSIVE_WITH_COMMENTS, C(http://www.w3.org/TR/2001/REC-xml-c14n-20010315) for INCLUSIVE,
-                      and C(http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments) for INCLUSIVE_WITH_COMMENTS.
+                    - SAML signature canonicalization method. This is one of four values, namely
+                      C(http://www.w3.org/2001/10/xml-exc-c14n#) for EXCLUSIVE,
+                      C(http://www.w3.org/2001/10/xml-exc-c14n#WithComments) for EXCLUSIVE_WITH_COMMENTS,
+                      C(http://www.w3.org/TR/2001/REC-xml-c14n-20010315) for INCLUSIVE, and
+                      C(http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments) for INCLUSIVE_WITH_COMMENTS.
 
             saml_single_logout_service_url_post:
                 description:
