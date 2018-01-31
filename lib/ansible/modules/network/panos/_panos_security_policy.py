@@ -20,7 +20,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview', 'deprecated'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -35,7 +35,12 @@ description:
       traffic is applied, the more specific rules must precede the more general ones.
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
-deprecated: In 2.4 use M(panos_security_rule) instead.
+deprecated:
+    alternative:
+        - Use M(panos_security_rule) instead.
+    removed_in: '2.9'
+    why:
+        -  This module depended on outdated and old SDK. In 2.4 use M(panos_security_rule) instead.
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
