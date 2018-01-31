@@ -505,6 +505,14 @@ options:
             - "In order to select I(hwrng), you must have it enabled on cluster first."
             - "/dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0"
         version_added: "2.5"
+    custom_properties:
+        description:
+            - "Properties sent to VDSM to configure various hooks."
+            - "Custom properties is a list of dictionary which can have following values:"
+            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
+            - "C(regexp) - Regular expression to set for custom property."
+            - "C(value) - Value to set for custom property."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -996,6 +1004,13 @@ class VmsModule(BaseModule):
             rng_device=otypes.RngDevice(
                 source=otypes.RngSource(self.param('rng_device')),
             ) if self.param('rng_device') else None,
+            custom_properties=[
+                otypes.CustomProperty(
+                    name=cp.get('name'),
+                    regexp=cp.get('regexp'),
+                    value=str(cp.get('value')),
+                ) for cp in self.param('custom_properties')
+            ] if self.param('custom_properties') is not None else None
         )
 
     def update_check(self, entity):
@@ -1008,9 +1023,19 @@ class VmsModule(BaseModule):
                 return sorted(current) == sorted(passed)
             return True
 
+        def check_custom_properties():
+            if self.param('custom_properties'):
+                current = []
+                if entity.custom_properties:
+                    current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
+                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties')]
+                return sorted(current) == sorted(passed)
+            return True
+
         cpu_mode = getattr(entity.cpu, 'mode')
         return (
             check_cpu_pinning() and
+            check_custom_properties() and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
@@ -1656,6 +1681,7 @@ def main():
         io_threads_enabled=dict(type='bool', default=None),
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
+        custom_properties=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
