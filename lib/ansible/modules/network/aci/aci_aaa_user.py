@@ -129,8 +129,12 @@ RETURN = r''' # '''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-from dateutil.tz import tzutc
-import dateutil.parser
+try:
+    from dateutil.tz import tzutc
+    import dateutil.parser
+    HAS_DATEUTIL = True
+except ImportError:
+    HAS_DATEUTIL = False
 
 
 def main():
@@ -161,6 +165,9 @@ def main():
             ['expires', True, ['expiration']],
         ],
     )
+
+    if not HAS_DATEUTIL:
+        module.fail_json(msg='dateutil required for this module')
 
     aaa_password = module.params['aaa_password']
     aaa_password_lifetime = module.params['aaa_password_lifetime']
