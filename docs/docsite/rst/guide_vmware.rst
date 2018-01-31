@@ -41,9 +41,9 @@ When debugging or creating a new issue, you will need information about your VMw
 
 .. code-block:: bash
 
-    $ export GOVC_USERNAME=<ESXI_OR_VCENTER_USERNAME>
-    $ export GOVC_PASSWORD=<ESXI_OR_VCENTER_PASSWORD>
-    $ export GOVC_URL=https://<ESXI_OR_VCENTER_HOSTNAME>:443
+    $ export GOVC_USERNAME=ESXI_OR_VCENTER_USERNAME
+    $ export GOVC_PASSWORD=ESXI_OR_VCENTER_PASSWORD
+    $ export GOVC_URL=https://ESXI_OR_VCENTER_HOSTNAME:443
     $ govc find /
 
 
