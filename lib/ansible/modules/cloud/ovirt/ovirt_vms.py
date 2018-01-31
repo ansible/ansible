@@ -462,8 +462,17 @@ options:
     cpu_mode:
         description:
             - "CPU mode of the virtual machine. It can be some of the following: I(host_passthrough), I(host_model) or I(custom)."
-            - "For I(host_passthrough) CPU type"
-            - If no value is passed, default value is set by oVirt/RHV engine.
+            - "For I(host_passthrough) CPU type you need to set C(placement_policy) to I(pinned)."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+        version_added: "2.5"
+    placement_policy:
+        description:
+            - "The configuration of the virtual machine’s placement policy."
+            - "Placement policy can be one of the following values:"
+            - "C(migratable) - Allow manual and automatic migration."
+            - "C(pinned) - Do not allow migration."
+            - "C(user_migratable) - Allow manual migration only."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
@@ -933,6 +942,9 @@ class VmsModule(BaseModule):
                 self.param('serial_policy') is not None or
                 self.param('serial_policy_value') is not None
             ) else None,
+            placement_policy=otypes.VmPlacementPolicy(
+                affinity=otypes.VmAffinity(self.param('placement_policy')),
+            ) if self.param('placement_policy') else None,
         )
 
     def update_check(self, entity):
@@ -964,7 +976,8 @@ class VmsModule(BaseModule):
             equal(self.param('comment'), entity.comment) and
             equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
-            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
+            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
+            equal(self.param('placement_policy'), str(entity.placement_policy.affinity))
         )
 
     def pre_create(self, entity):
@@ -1569,6 +1582,7 @@ def main():
         xen=dict(type='dict'),
         kvm=dict(type='dict'),
         cpu_mode=dict(type='str'),
+        placement_policy=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
