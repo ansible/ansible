@@ -1,6 +1,5 @@
 #
-# Copyright (C) 2017 Lenovo, Inc.
-# All rights reserved.
+# (c) 2017 Red Hat Inc.
 #
 # This file is part of Ansible
 #
