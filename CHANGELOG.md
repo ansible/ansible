@@ -39,6 +39,7 @@ Ansible Changes By Release
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
 * nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
+* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 
 See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
 
@@ -61,10 +62,6 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * `osx_say` module was renamed into `say`.
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
-
-#### Deprecated Modules (to be removed in 2.9):
-* ec2_ami_find: replaced by ec2_ami_facts
-* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 
 #### Removed Modules (previously deprecated):
 * accelerate.
