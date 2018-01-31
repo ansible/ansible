@@ -102,7 +102,7 @@ options:
     choices: [ "yes", "no" ]
   state:
     description:
-      - Specify if user is to be added, removed or append permissions
+      - Specify if user is to be added, removed or append permission. Note I(append) was added in Ansible 2.3.
     required: false
     default: present
     choices: [present, absent, append]
