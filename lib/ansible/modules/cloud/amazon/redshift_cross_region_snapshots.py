@@ -66,31 +66,29 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-
-# configure cross-region snapshot on cluster `johniscool`
-- redshift_cross_region_snapshots:
+- name: configure cross-region snapshot on cluster `johniscool`
+  redshift_cross_region_snapshots:
     cluster_name: johniscool
     state: present
     region: us-east-1
     destination_region: us-west-2
     retention_period: 1
 
-# configure cross-region snapshot on kms-encrypted cluster
-- redshift_cross_region_snapshots:
+- name: configure cross-region snapshot on kms-encrypted cluster
+  redshift_cross_region_snapshots:
     cluster_name: whatever
     state: present
     source: us-east-1
     destination: us-west-2
-    copy_grant: 'whatever-you-called-your-grant'
+    copy_grant: 'my-grant-in-destination'
     retention_period: 10
 
-# disable cross-region snapshots, necessary before most cluster modifications (rename, resize)
-- redshift_cross_region_snapshots:
+- name: disable cross-region snapshots, necessary before most cluster modifications (rename, resize)
+  redshift_cross_region_snapshots:
     cluster_name: whatever
     state: absent
     region: us-east-1
     destination_region: us-west-2
-    retention_period: 10
 '''
 
 RETURN = ''' # '''
