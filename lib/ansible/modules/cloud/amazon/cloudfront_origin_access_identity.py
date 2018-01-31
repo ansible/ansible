@@ -26,6 +26,10 @@ version_added: "2.5"
 
 author: Willem van Ketwich (@wilvk)
 
+extends_documentation_fragment;
+  - aws
+  - ec2
+
 options:
     state:
       description: If the named resource should exist.
@@ -46,7 +50,8 @@ options:
         - A unique identifier to reference the origin access identity by.
       required: false
 
-notes: does not support check mode
+notes:
+  - does not support check mode
 
 '''
 
@@ -87,7 +92,7 @@ cloud_front_origin_access_identity_config:
       description: a comment describing the oai
     returned: always
     type: str
-  id: 
+  id:
     description: a unique identifier of the oai
     returned: always
     type: str
@@ -144,7 +149,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
         try:
             return self.client.delete_cloud_front_origin_access_identity(Id=origin_access_identity_id, IfMatch=e_tag)
         except (ClientError, BotoCoreError) as e:
-               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
+               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.")
 
     def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
@@ -154,7 +159,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
                 },
                 Id=origin_access_identity_id, IfMatch=e_tag)
         except (ClientError, BotoCoreError) as e:
-               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.") 
+               self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.")
 
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
@@ -174,7 +179,7 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
             if oai is not None:
                 return oai.get('ETag')
         except (ClientError, BotoCoreError) as e:
-               self.module.fail_json_aws(e, msg="Error getting etag from origin_access_identity.") 
+               self.module.fail_json_aws(e, msg="Error getting etag from origin_access_identity.")
 
     def validate_origin_access_identity_id_from_caller_reference(
             self, caller_reference):
@@ -187,7 +192,7 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
                 if temp_caller_reference == caller_reference:
                     return origin_access_identity_id
         except (ClientError, BotoCoreError) as e:
-               self.module.fail_json_aws(e, msg="Error getting Origin Access Identity from caller_reference.") 
+               self.module.fail_json_aws(e, msg="Error getting Origin Access Identity from caller_reference.")
 
     def validate_comment(self, comment):
         if comment is None:
@@ -215,7 +220,7 @@ def main():
 
     state = module.params.get('state')
     caller_reference = module.params.get('caller_reference')
-    
+
     comment = module.params.get('comment')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
 
