@@ -1,30 +1,22 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: iosxr_config
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
+author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage Cisco IOS XR configuration sections
 description:
   - Cisco IOS XR configurations use a simple block indent file syntax
@@ -32,6 +24,8 @@ description:
     an implementation for working with IOS XR configuration sections in
     a deterministic way.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XR 6.1.2
 options:
   lines:
     description:
@@ -57,7 +51,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
     version_added: "2.2"
@@ -145,22 +139,20 @@ options:
     required: false
     default: 'configured by iosxr_config'
     version_added: "2.2"
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+    required: false
+    default: false
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 - name: configure top level configuration
   iosxr_config:
     lines: hostname {{ inventory_hostname }}
-    provider: "{{ cli }}"
 
 - name: configure interface settings
   iosxr_config:
@@ -168,31 +160,30 @@ vars:
       - description test interface
       - ip address 172.31.1.1 255.255.255.0
     parents: interface GigabitEthernet0/0/0/0
-    provider: "{{ cli }}"
 
 - name: load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
-    update: replace
     backup: yes
-    provider: "{{ cli }}"
 """
 
 RETURN = """
-updates:
+commands:
   description: The set of commands that will be pushed to the remote device
-  returned: Only when lines is specified.
+  returned: If there are commands to run against the host
   type: list
-  sample: ['...', '...']
+  sample: ['hostname foo', 'router ospf 1', 'router-id 1.1.1.1']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: path
+  type: string
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
 """
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.iosxr import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
+
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
@@ -207,11 +198,12 @@ def check_args(module, warnings):
                         'removed in the future')
 
 
-def get_config(module, result):
+def get_running_config(module):
     contents = module.params['config']
     if not contents:
-        contents = module.config.get_config()
+        contents = get_config(module)
     return NetworkConfig(indent=1, contents=contents)
+
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
@@ -222,45 +214,45 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def load_config(module, commands, result):
-    replace = module.params['replace'] == 'config'
-    comment = module.params['comment']
-    commit = not module.check_mode
-
-    diff = module.config.load_config(commands, replace=replace, commit=commit,
-                                     comment=comment)
-
-    if diff:
-        result['diff'] = dict(prepared=diff)
-        result['changed'] = True
 
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
+    replace_config = replace == 'config'
     path = module.params['parents']
+    comment = module.params['comment']
+    admin = module.params['admin']
+    check_mode = module.check_mode
 
     candidate = get_candidate(module)
 
     if match != 'none' and replace != 'config':
-        config = get_config(module, result)
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
+        contents = get_running_config(module)
+        configobj = NetworkConfig(contents=contents, indent=1)
+        commands = candidate.difference(configobj, path=path, match=match,
+                                        replace=replace)
     else:
-        configobjs = candidate.items
+        commands = candidate.items
 
-    if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
+    if commands:
+        commands = dumps(commands, 'commands').split('\n')
 
-        if module.params['lines']:
+        if any((module.params['lines'], module.params['src'])):
             if module.params['before']:
                 commands[:0] = module.params['before']
 
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-            result['updates'] = commands
+            result['commands'] = commands
 
-        load_config(module, commands, result)
+        commit = not check_mode
+        diff = load_config(module, commands, commit=commit, replace=replace_config,
+                           comment=comment, admin=admin)
+        if diff:
+            result['diff'] = dict(prepared=diff)
+        result['changed'] = True
+
 
 def main():
     """main entry point for module execution
@@ -284,17 +276,20 @@ def main():
         config=dict(),
         backup=dict(type='bool', default=False),
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
+        admin=dict(type='bool', default=False)
     )
 
-    mutually_exclusive = [('lines', 'src')]
+    argument_spec.update(iosxr_argument_spec)
+
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines']),
                    ('replace', 'config', ['src'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
@@ -308,13 +303,9 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
-    try:
-        run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    run(module, result)
 
     module.exit_json(**result)
 

@@ -2,26 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,6 +26,10 @@ options:
         description:
           - Name of a profile.
         required: true
+    description:
+        description:
+          - Description of the profile.
+        version_added: "2.5"
     config:
         description:
           - 'The config for the container (e.g. {"limits.memory": "4GB"}).
@@ -157,7 +151,7 @@ EXAMPLES = '''
         state: present
 '''
 
-RETURN='''
+RETURN = '''
 old_state:
   description: The old state of the profile
   returned: success
@@ -176,7 +170,10 @@ actions:
 '''
 
 import os
+
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.lxd import LXDClient, LXDClientException
+
 
 # PROFILE_STATES is a list for states supported
 PROFILES_STATES = [
@@ -187,6 +184,7 @@ PROFILES_STATES = [
 CONFIG_PARAMS = [
     'config', 'description', 'devices'
 ]
+
 
 class LXDProfileManagement(object):
     def __init__(self, module):
@@ -284,7 +282,7 @@ class LXDProfileManagement(object):
 
     def _apply_profile_configs(self):
         config = self.old_profile_json.copy()
-        for k, v in self.config.iteritems():
+        for k, v in self.config.items():
             config[k] = v
         self.client.do('PUT', '/1.0/profiles/{}'.format(self.name), config)
         self.actions.append('apply_profile_configs')
@@ -362,9 +360,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict(
-                type='str',
-            )
+            trust_password=dict(type='str', no_log=True)
         ),
         supports_check_mode=False,
     )
@@ -372,7 +368,6 @@ def main():
     lxd_manage = LXDProfileManagement(module=module)
     lxd_manage.run()
 
-# import module bits
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

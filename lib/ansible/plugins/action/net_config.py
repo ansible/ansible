@@ -23,22 +23,19 @@ import os
 import re
 import time
 import glob
-import urlparse
 
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.utils.vars import merge_hash
 
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 
 
-class ActionModule(ActionBase):
-
-    TRANSFERS_FILES = False
+class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
-        result['changed'] = False
 
         if self._task.args.get('src'):
             try:
@@ -46,16 +43,14 @@ class ActionModule(ActionBase):
             except ValueError as exc:
                 return dict(failed=True, msg=exc.message)
 
-        action = self._task.action
-
-        result.update(self._execute_module(module_name=action,
-            module_args=self._task.args, task_vars=task_vars))
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
             # NOTE: If there is a parameter error, _backup key may not be in results.
             filepath = self._write_backup(task_vars['inventory_hostname'],
                                           result['__backup__'])
+
             result['backup_path'] = filepath
 
         # strip out any keys that have two leading and two trailing
@@ -87,7 +82,7 @@ class ActionModule(ActionBase):
         src = self._task.args.get('src')
         working_path = self._get_working_path()
 
-        if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
+        if os.path.isabs(src) or urlsplit('src').scheme:
             source = src
         else:
             source = self._loader.path_dwim_relative(working_path, 'templates', src)

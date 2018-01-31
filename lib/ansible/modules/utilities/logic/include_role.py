@@ -1,25 +1,29 @@
 #!/usr/bin/python
-# -*- mode: python -*-
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'core'
+}
+
 
 DOCUMENTATION = '''
 ---
-author:
-    - "Ansible Core Team (@ansible)"
+author: Ansible Core Team (@ansible)
 module: include_role
 short_description: Load and execute a role
 description:
-     - "Loads and executes a role as a task, this frees roles from the `role:` directive and allows them to be treated more as tasks."
+  - Loads and executes a role as a task dynamically. This frees roles from the `roles:` directive and allows them to be
+    treated more as tasks.
+  - Unlike M(import_role), most keywords, including loops and conditionals, apply to this statement.
+  - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
   name:
@@ -28,24 +32,19 @@ options:
     required: True
   tasks_from:
     description:
-      - "File to load from a Role's tasks/ directory."
+      - File to load from a role's C(tasks/) directory.
     required: False
-    default: 'main'
+    default: main
   vars_from:
     description:
-      - "File to load from a Role's vars/ directory."
+      - File to load from a role's C(vars/) directory.
     required: False
-    default: 'main'
+    default: main
   defaults_from:
     description:
-      - "File to load from a Role's defaults/ directory."
+      - File to load from a role's C(defaults/) directory.
     required: False
-    default: 'main'
-  static:
-    description:
-      - Gives Ansible a hint if this is a 'static' include or not. If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options.
-    required: False
-    default: None
+    default: main
   allow_duplicates:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
@@ -53,20 +52,22 @@ options:
     default: True
   private:
     description:
-      - If True the variables from defaults/ and vars/ in a role will not be made available to the rest of the play.
+      - If C(True) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
+        play.
     default: None
 notes:
-    - THIS IS EARLY PREVIEW, THINGS MAY CHANGE
-    - Handlers are made available to the whole play.
-    - simple dependencies seem to work fine.
-    - "Things not tested (yet): plugin overrides, nesting includes, used as handler, other stuff I did not think of when I wrote this."
+  - Handlers are made available to the whole play.
+  - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
+    need templating, loops or conditionals and will show included tasks in the `--list` options. Ansible would try to
+    autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
+  - After Ansible 2.4, you can use M(import_role) for 'static' behaviour and this action for 'dynamic' one.
 '''
 
 EXAMPLES = """
 - include_role:
     name: myrole
 
-- name: Run tasks/other.yml instead of 'main'
+- name: Run tasks/other.yaml instead of 'main'
   include_role:
     name: myrole
     tasks_from: other
@@ -75,23 +76,23 @@ EXAMPLES = """
   include_role:
     name: myrole
   vars:
-    rolevar1: 'value from task'
+    rolevar1: value from task
 
 - name: Use role in loop
   include_role:
     name: myrole
   with_items:
-    - "{{roleinput1}}"
-    - "{{roleinput2}}"
+    - '{{ roleinput1 }}'
+    - '{{ roleinput2 }}'
   loop_control:
     loop_var: roleinputvar
 
-- name: conditional role
+- name: Conditional role
   include_role:
     name: myrole
   when: not idontwanttorun
 """
 
 RETURN = """
-# this module does not return anything except tasks to execute
+# This module does not return anything except tasks to execute.
 """

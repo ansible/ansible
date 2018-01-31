@@ -17,13 +17,19 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args $true;
+$ErrorActionPreference = "Stop"
 
-$data = Get-Attr $params "data" "pong";
+$params = Parse-Args $args -supports_check_mode $true
 
-$result = New-Object psobject @{
+$data = Get-AnsibleParam -obj $params -name "data" -type "str" -default "pong"
+
+if ($data -eq "crash") {
+    throw "boom"
+}
+
+$result = @{
     changed = $false
     ping = $data
-};
+}
 
-Exit-Json $result;
+Exit-Json $result

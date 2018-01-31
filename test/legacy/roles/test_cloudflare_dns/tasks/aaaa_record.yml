@@ -1,0 +1,180 @@
+---
+######## AAAA record tests #################
+
+- name: "Test: AAAA record creation"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::1"
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record creation"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '::1'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: AAAA record idempotency"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::1"
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record idempotency"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: AAAA record update"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::1"
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record update"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.ttl == 300
+
+- name: "Test: AAAA record duplicate (create new record)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::2"
+    ttl: 150
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record duplicate (create new record)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '::2'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: AAAA record duplicate (old record present)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::1"
+    ttl: 300
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record duplicate (old record present)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+      - cloudflare_dns.result.record.content == '::1'
+      - cloudflare_dns.result.record.ttl == 300
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: AAAA record duplicate (make new record solo)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::2"
+    ttl: 150
+    solo: true
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record duplicate (make new record solo)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+      - cloudflare_dns.result.record.content == '::2'
+      - cloudflare_dns.result.record.ttl == 150
+      - cloudflare_dns.result.record.type == 'AAAA'
+      - cloudflare_dns.result.record.name == "{{ cloudflare_dns_record }}.{{ cloudflare_zone }}"
+      - cloudflare_dns.result.record.zone_name == "{{ cloudflare_zone }}"
+
+- name: "Test: AAAA record duplicate (old record absent)"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::1"
+    ttl: 300
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record duplicate (old record absent)"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed
+
+- name: "Test: AAAA record deletion"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::2"
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record deletion"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is changed
+
+- name: "Test: AAAA record deletion succeeded"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    record: "{{ cloudflare_dns_record  }}"
+    type: AAAA
+    value: "::2"
+    ttl: 150
+    state: absent
+  register: cloudflare_dns
+
+- name: "Validate: AAAA record deletion succeeded"
+  assert:
+    that:
+      - cloudflare_dns is successful
+      - cloudflare_dns is not changed

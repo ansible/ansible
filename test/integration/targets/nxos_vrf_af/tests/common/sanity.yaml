@@ -1,0 +1,82 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vrf_af sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Configure feature bgp
+  nxos_feature:
+    feature: bgp
+    state: enabled
+    provider: "{{ connection }}"
+
+- name: Configure feature nv overlay
+  nxos_config:
+    commands: "feature nv overlay"
+    provider: "{{ connection }}"
+
+- name: Configure nv overlay evpn
+  nxos_config:
+    commands: "nv overlay evpn"
+    provider: "{{ connection }}"
+
+- block:
+  - name: Configure vrf af
+    nxos_vrf_af: &configure
+      vrf: ansible
+      afi: ipv4
+      route_target_both_auto_evpn: true
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_vrf_af: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove vrf af
+    nxos_vrf_af: &remove
+      vrf: ansible
+      afi: ipv4
+      route_target_both_auto_evpn: true
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 30
+
+  - name: "Remove Idempotence"
+    nxos_vrf_af: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Remove feature bgp
+    nxos_feature:
+      feature: bgp
+      state: disabled
+      provider: "{{ connection }}"
+
+  - name: Remove feature nv overlay
+    nxos_config:
+      commands: "no feature nv overlay"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  - name: Remove nv overlay evpn
+    nxos_config:
+      commands: "no nv overlay evpn"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vrf_af sanity test"

@@ -1,3 +1,0 @@
-test_hg
-test_service
-test_uri

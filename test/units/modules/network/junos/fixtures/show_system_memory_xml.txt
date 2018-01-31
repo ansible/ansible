@@ -1,0 +1,20 @@
+<rpc-reply>
+    <system-memory-information>
+        <system-memory-summary-information>
+            <system-memory-total> 983500</system-memory-total>
+            <system-memory-total-percent>100%</system-memory-total-percent>
+            <system-memory-reserved>  17844</system-memory-reserved>
+            <system-memory-reserved-percent>  1%</system-memory-reserved-percent>
+            <system-memory-wired>  67284</system-memory-wired>
+            <system-memory-wired-percent>  6%</system-memory-wired-percent>
+            <system-memory-active> 148268</system-memory-active>
+            <system-memory-active-percent> 15%</system-memory-active-percent>
+            <system-memory-inactive> 288908</system-memory-inactive>
+            <system-memory-inactive-percent> 29%</system-memory-inactive-percent>
+            <system-memory-cache> 260500</system-memory-cache>
+            <system-memory-cache-percent> 26%</system-memory-cache-percent>
+            <system-memory-free> 200684</system-memory-free>
+            <system-memory-free-percent> 20%</system-memory-free-percent>
+        </system-memory-summary-information>
+    </system-memory-information>
+</rpc-reply>

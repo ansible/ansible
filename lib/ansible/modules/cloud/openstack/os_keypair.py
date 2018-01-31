@@ -3,36 +3,22 @@
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
 # Copyright (c) 2013, John Dewey <john@dewey.ws>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: os_keypair
 short_description: Add/Delete a keypair from OpenStack
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
@@ -60,6 +46,10 @@ options:
       - Should the resource be present or absent.
     choices: [present, absent]
     default: present
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatibility
+    required: false
 requirements: []
 '''
 
@@ -98,6 +88,15 @@ private_key:
     type: string
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def _system_state_change(module, keypair):
     state = module.params['state']
@@ -110,11 +109,11 @@ def _system_state_change(module, keypair):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        name            = dict(required=True),
-        public_key      = dict(default=None),
-        public_key_file = dict(default=None),
-        state           = dict(default='present',
-                               choices=['absent', 'present']),
+        name=dict(required=True),
+        public_key=dict(default=None),
+        public_key_file=dict(default=None),
+        state=dict(default='present',
+                   choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -168,8 +167,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
+
 if __name__ == '__main__':
     main()

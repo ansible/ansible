@@ -2,32 +2,16 @@
 
 # Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-from distutils.version import StrictVersion
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -73,7 +57,6 @@ options:
    provider_network_type:
      description:
         - The type of physical network that maps to this network resource.
-     choices: ['flat', 'vlan', 'vxlan', 'gre', 'uplink']
      required: false
      default: None
      version_added: "2.1"
@@ -92,6 +75,10 @@ options:
      required: false
      default: None
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -108,7 +95,7 @@ RETURN = '''
 network:
     description: Dictionary describing the network.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Network ID.
@@ -164,6 +151,17 @@ network:
             sample: 101
 '''
 
+from distutils.version import StrictVersion
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -172,8 +170,7 @@ def main():
         admin_state_up=dict(default=True, type='bool'),
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
-        provider_network_type=dict(required=False, default=None,
-                                   choices=['flat', 'vlan', 'vxlan', 'gre', 'uplink']),
+        provider_network_type=dict(required=False),
         provider_segmentation_id=dict(required=False),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)
@@ -248,8 +245,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 if __name__ == "__main__":
     main()

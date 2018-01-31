@@ -6,17 +6,27 @@ Avoids use of urllib2 due to lack of SNI support.
 from __future__ import absolute_import, print_function
 
 import json
+import time
 
 try:
     from urllib import urlencode
 except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences,PyUnresolvedReferences
+    # noinspection PyCompatibility, PyUnresolvedReferences
     from urllib.parse import urlencode  # pylint: disable=locally-disabled, import-error, no-name-in-module
+
+try:
+    # noinspection PyCompatibility
+    from urlparse import urlparse, urlunparse, parse_qs
+except ImportError:
+    # noinspection PyCompatibility, PyUnresolvedReferences
+    from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
 
 from lib.util import (
     CommonConfig,
     ApplicationError,
     run_command,
+    SubprocessError,
+    display,
 )
 
 
@@ -76,10 +86,31 @@ class HttpClient(object):
 
         cmd += [url]
 
-        stdout, _ = run_command(self.args, cmd, capture=True, always=self.always)
+        attempts = 0
+        max_attempts = 3
+        sleep_seconds = 3
+
+        # curl error codes which are safe to retry (request never sent to server)
+        retry_on_status = (
+            6,  # CURLE_COULDNT_RESOLVE_HOST
+        )
+
+        while True:
+            attempts += 1
+
+            try:
+                stdout, _ = run_command(self.args, cmd, capture=True, always=self.always, cmd_verbosity=2)
+                break
+            except SubprocessError as ex:
+                if ex.status in retry_on_status and attempts < max_attempts:
+                    display.warning(u'%s' % ex)
+                    time.sleep(sleep_seconds)
+                    continue
+
+                raise
 
         if self.args.explain and not self.always:
-            return HttpResponse(200, '')
+            return HttpResponse(method, url, 200, '')
 
         header, body = stdout.split('\r\n\r\n', 1)
 
@@ -88,16 +119,20 @@ class HttpClient(object):
         http_response = first_line.split(' ')
         status_code = int(http_response[1])
 
-        return HttpResponse(status_code, body)
+        return HttpResponse(method, url, status_code, body)
 
 
 class HttpResponse(object):
     """HTTP response from curl."""
-    def __init__(self, status_code, response):
+    def __init__(self, method, url, status_code, response):
         """
+        :type method: str
+        :type url: str
         :type status_code: int
         :type response: str
         """
+        self.method = method
+        self.url = url
         self.status_code = status_code
         self.response = response
 
@@ -108,7 +143,7 @@ class HttpResponse(object):
         try:
             return json.loads(self.response)
         except ValueError:
-            raise HttpError(self.status_code, 'Cannot parse response as JSON:\n%s' % self.response)
+            raise HttpError(self.status_code, 'Cannot parse response to %s %s as JSON:\n%s' % (self.method, self.url, self.response))
 
 
 class HttpError(ApplicationError):

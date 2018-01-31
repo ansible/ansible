@@ -1,0 +1,2 @@
+delete interfaces ae11
+set interfaces ae11 unit 0 description Test

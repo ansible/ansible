@@ -5,7 +5,11 @@ if __name__ == '__main__':
         import http.server
         import socketserver
         PORT = int(sys.argv[1])
-        Handler = http.server.SimpleHTTPRequestHandler
+
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            pass
+
+        Handler.extensions_map['.json'] = 'application/json'
         httpd = socketserver.TCPServer(("", PORT), Handler)
         httpd.serve_forever()
     else:
@@ -14,4 +18,3 @@ if __name__ == '__main__':
         mimetypes.add_type('application/json', '.json')
         import SimpleHTTPServer
         SimpleHTTPServer.test()
-

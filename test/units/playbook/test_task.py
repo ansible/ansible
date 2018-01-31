@@ -19,17 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.playbook.task import Task
 from ansible.compat.tests import unittest
+from ansible.playbook.task import Task
 
-basic_shell_task = dict(
-   name  = 'Test Task',
-   shell = 'echo hi'
+
+basic_command_task = dict(
+    name='Test Task',
+    command='echo hi'
 )
 
-kv_shell_task = dict(
-   action = 'shell echo hi'
+kv_command_task = dict(
+    action='command echo hi'
 )
+
 
 class TestTask(unittest.TestCase):
 
@@ -52,21 +54,21 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_load_task_simple(self):
-        t = Task.load(basic_shell_task)
+        t = Task.load(basic_command_task)
         assert t is not None
-        self.assertEqual(t.name, basic_shell_task['name'])
+        self.assertEqual(t.name, basic_command_task['name'])
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
+        self.assertEqual(t.args, dict(_raw_params='echo hi'))
 
     def test_load_task_kv_form(self):
-        t = Task.load(kv_shell_task)
+        t = Task.load(kv_command_task)
         self.assertEqual(t.action, 'command')
-        self.assertEqual(t.args, dict(_raw_params='echo hi', _uses_shell=True))
+        self.assertEqual(t.args, dict(_raw_params='echo hi'))
 
     def test_task_auto_name(self):
-        assert 'name' not in kv_shell_task
-        t = Task.load(kv_shell_task)
-        #self.assertEqual(t.name, 'shell echo hi')
+        assert 'name' not in kv_command_task
+        t = Task.load(kv_command_task)
+        # self.assertEqual(t.name, 'shell echo hi')
 
     def test_task_auto_name_with_role(self):
         pass

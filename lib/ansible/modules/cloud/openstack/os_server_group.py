@@ -1,30 +1,16 @@
 #!/usr/bin/python
 
 # Copyright (c) 2016 Catalyst IT Limited
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -53,6 +39,10 @@ options:
           group. The list must contain at least one policy name. The current
           valid policy names are anti-affinity, affinity, soft-anti-affinity
           and soft-affinity.
+     required: false
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"
@@ -95,11 +85,11 @@ name:
 policies:
     description: A list of one or more policy names of the server group.
     returned: success
-    type: list of strings
+    type: list
 members:
     description: A list of members in the server group.
     returned: success
-    type: list of strings
+    type: list
 metadata:
     description: Metadata key and value pairs.
     returned: success
@@ -113,6 +103,15 @@ user_id:
     returned: success
     type: string
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _system_state_change(state, server_group):
@@ -177,10 +176,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

@@ -1,24 +1,15 @@
 #!/usr/bin/python
 # Copyright 2013 Google Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -41,22 +32,22 @@ options:
     aliases: []
   instance_name:
     description:
-      - instance name if you wish to attach or detach the disk 
+      - instance name if you wish to attach or detach the disk
     required: false
-    default: null 
+    default: null
     aliases: []
   mode:
     description:
       - GCE mount mode of disk, READ_ONLY (default) or READ_WRITE
     required: false
-    default: "READ_ONLY" 
+    default: "READ_ONLY"
     choices: ["READ_WRITE", "READ_ONLY"]
     aliases: []
   name:
     description:
       - name of the disk
     required: true
-    default: null 
+    default: null
     aliases: []
   size_gb:
     description:
@@ -128,6 +119,12 @@ options:
     default: "pd-standard"
     choices: ["pd-standard", "pd-ssd"]
     aliases: []
+  delete_on_termination:
+    version_added: "2.3"
+    description:
+      - If yes, deletes the volume when instance is terminated
+    default: no
+    choices: ["yes", "no"]
 
 requirements:
     - "python >= 2.6"
@@ -147,31 +144,36 @@ EXAMPLES = '''
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
-    from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError, ResourceInUseError
+    from libcloud.common.google import GoogleBaseError, QuotaExceededError, ResourceExistsError, ResourceNotFoundError, ResourceInUseError
     _ = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gce import gce_connect, unexpected_error_msg
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            detach_only = dict(type='bool'),
-            instance_name = dict(),
-            mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
-            name = dict(required=True),
-            size_gb = dict(default=10),
-            disk_type = dict(default='pd-standard'),
-            image = dict(),
-            snapshot = dict(),
-            state = dict(default='present'),
-            zone = dict(default='us-central1-b'),
-            service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
-            project_id = dict(),
+        argument_spec=dict(
+            delete_on_termination=dict(type='bool'),
+            detach_only=dict(type='bool'),
+            instance_name=dict(),
+            mode=dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
+            name=dict(required=True),
+            size_gb=dict(default=10),
+            disk_type=dict(default='pd-standard'),
+            image=dict(),
+            image_family=dict(),
+            external_projects=dict(type='list'),
+            snapshot=dict(),
+            state=dict(default='present'),
+            zone=dict(default='us-central1-b'),
+            service_account_email=dict(),
+            pem_file=dict(type='path'),
+            credentials_file=dict(type='path'),
+            project_id=dict(),
         )
     )
     if not HAS_LIBCLOUD:
@@ -179,6 +181,7 @@ def main():
 
     gce = gce_connect(module)
 
+    delete_on_termination = module.params.get('delete_on_termination')
     detach_only = module.params.get('detach_only')
     instance_name = module.params.get('instance_name')
     mode = module.params.get('mode')
@@ -186,9 +189,16 @@ def main():
     size_gb = module.params.get('size_gb')
     disk_type = module.params.get('disk_type')
     image = module.params.get('image')
+    image_family = module.params.get('image_family')
+    external_projects = module.params.get('external_projects')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
     zone = module.params.get('zone')
+
+    if delete_on_termination and not instance_name:
+        module.fail_json(
+            msg='Must specify an instance name when requesting delete on termination',
+            changed=False)
 
     if detach_only and not instance_name:
         module.fail_json(
@@ -198,7 +208,7 @@ def main():
     disk = inst = None
     changed = is_attached = False
 
-    json_output = { 'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type  }
+    json_output = {'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type}
     if detach_only:
         json_output['detach_only'] = True
         json_output['detached_from_instance'] = instance_name
@@ -233,15 +243,15 @@ def main():
             module.fail_json(msg="Must supply a size_gb", changed=False)
         try:
             size_gb = int(round(float(size_gb)))
-            if size_gb < 1: 
+            if size_gb < 1:
                 raise Exception
-        except:        
+        except:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
-                    changed=False)
+                             changed=False)
 
         if instance_name and inst is None:
             module.fail_json(msg='Instance %s does not exist in zone %s' % (
-                    instance_name, zone), changed=False)
+                instance_name, zone), changed=False)
 
         if not disk:
             if image is not None and snapshot is not None:
@@ -250,8 +260,10 @@ def main():
                         image, snapshot), changed=False)
             lc_image = None
             lc_snapshot = None
-            if image is not None:
-                lc_image = gce.ex_get_image(image)
+            if image_family is not None:
+                lc_image = gce.ex_get_image_from_family(image_family, ex_project_list=external_projects)
+            elif image is not None:
+                lc_image = gce.ex_get_image(image, ex_project_list=external_projects)
             elif snapshot is not None:
                 lc_snapshot = gce.ex_get_snapshot(snapshot)
             try:
@@ -262,7 +274,7 @@ def main():
                 pass
             except QuotaExceededError:
                 module.fail_json(msg='Requested disk size exceeds quota',
-                        changed=False)
+                                 changed=False)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
@@ -273,11 +285,14 @@ def main():
             changed = True
         if inst and not is_attached:
             try:
-                gce.attach_volume(inst, disk, device=name, ex_mode=mode)
+                gce.attach_volume(inst, disk, device=name, ex_mode=mode,
+                                  ex_auto_delete=delete_on_termination)
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['attached_to_instance'] = inst.name
             json_output['attached_mode'] = mode
+            if delete_on_termination:
+                json_output['delete_on_termination'] = True
             changed = True
 
     # user wants to delete a disk (or perhaps just detach it).
@@ -301,9 +316,6 @@ def main():
     json_output['changed'] = changed
     module.exit_json(**json_output)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.gce import *
 
 if __name__ == '__main__':
     main()

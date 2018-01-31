@@ -1,0 +1,138 @@
+---
+- name: Test create server
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+  register: server
+- name: Verify create server
+  assert:
+    that:
+      - server is successful
+      - server is changed
+      - server.state == 'running'
+
+- name: Test create server indempotence
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+  register: server
+- name: Verify create server
+  assert:
+    that:
+      - server is successful
+      - server is not changed
+      - server.state == 'running'
+
+- name: Test create server stopped
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test-stopped'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    state: 'stopped'
+  register: server_stopped
+- name: Verify create server stopped
+  assert:
+    that:
+      - server_stopped is successful
+      - server_stopped is changed
+      - server_stopped.state == 'stopped'
+
+- name: Test create server failure without required parameters
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test-failed'
+  register: server_failed
+  ignore_errors: True
+- name: Verify create server failure without required parameters
+  assert:
+    that:
+      - server_failed is failed
+      - "'Missing required parameter' in server_failed.msg"
+
+- name: Test server stopped
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'stopped'
+  register: server
+- name: Verify server stopped
+  assert:
+    that:
+      - server is successful
+      - server is changed
+      - server.state == 'stopped'
+
+- name: Test server stopped indempotence
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'stopped'
+  register: server
+- name: Verify server stopped indempotence
+  assert:
+    that:
+      - server is successful
+      - server is not changed
+      - server.state == 'stopped'
+
+- name: Test server running
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'running'
+  register: server
+- name: Verify server running
+  assert:
+    that:
+      - server is successful
+      - server is changed
+      - server.state == 'running'
+
+- name: Test server running indempotence
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'running'
+  register: server
+- name: Verify server running indempotence
+  assert:
+    that:
+      - server is successful
+      - server is not changed
+      - server.state == 'running'
+
+- name: Test server deletion by name
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'absent'
+  register: server
+- name: Verify server deletion
+  assert:
+    that:
+      - server is successful
+      - server is changed
+      - server.state == 'absent'
+
+- name: Test server deletion by uuid
+  cloudscale_server:
+    uuid: '{{ server_stopped.uuid }}'
+    state: 'absent'
+  register: server_stopped
+- name: Verify server deletion by uuid
+  assert:
+    that:
+      - server_stopped is successful
+      - server_stopped is changed
+      - server_stopped.state == 'absent'
+
+- name: Test server deletion indempotence
+  cloudscale_server:
+    name: '{{ resource_prefix }}-test'
+    state: 'absent'
+  register: server
+- name: Verify server deletion
+  assert:
+    that:
+      - server is successful
+      - server is not changed
+      - server.state == 'absent'

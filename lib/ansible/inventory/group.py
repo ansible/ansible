@@ -19,27 +19,28 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 
+
 class Group:
     ''' a group of ansible hosts '''
 
-    #__slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
 
         self.depth = 0
         self.name = name
         self.hosts = []
+        self._hosts = None
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
         self.priority = 1
 
-        #self.clear_hosts_cache()
-        #if self.name is None:
-        #    raise Exception("group name is required")
-
     def __repr__(self):
+        return self.get_name()
+
+    def __str__(self):
         return self.get_name()
 
     def __getstate__(self):
@@ -53,11 +54,14 @@ class Group:
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
+        self._hosts = None
+
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
             depth=self.depth,
+            hosts=self.hosts,
         )
 
         return result
@@ -67,12 +71,20 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
+        self.hosts = data.get('hosts', [])
+        self._hosts = None
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
             g = Group()
             g.deserialize(parent_data)
             self.parent_groups.append(g)
+
+    @property
+    def host_names(self):
+        if self._hosts is None:
+            self._hosts = set(self.hosts)
+        return self._hosts
 
     def get_name(self):
         return self.name
@@ -83,19 +95,21 @@ class Group:
             raise Exception("can't add group to itself")
 
         # don't add if it's already there
-        if not group in self.child_groups:
+        if group not in self.child_groups:
             self.child_groups.append(group)
 
             # update the depth of the child
-            group.depth = max([self.depth+1, group.depth])
+            group.depth = max([self.depth + 1, group.depth])
 
             # update the depth of the grandchildren
             group._check_children_depth()
 
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
-            if not self.name in [g.name for g in group.parent_groups]:
+            if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
+                for h in group.get_hosts():
+                    h.populate_ancestors()
 
             self.clear_hosts_cache()
 
@@ -103,20 +117,32 @@ class Group:
 
         try:
             for group in self.child_groups:
-                group.depth = max([self.depth+1, group.depth])
+                group.depth = max([self.depth + 1, group.depth])
                 group._check_children_depth()
         except RuntimeError:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
+        if host.name not in self.host_names:
+            self.hosts.append(host)
+            self._hosts.add(host.name)
+            host.add_group(self)
+            self.clear_hosts_cache()
 
-        self.hosts.append(host)
-        host.add_group(self)
-        self.clear_hosts_cache()
+    def remove_host(self, host):
+
+        if host.name in self.host_names:
+            self.hosts.remove(host)
+            self._hosts.remove(host.name)
+            host.remove_group(self)
+            self.clear_hosts_cache()
 
     def set_variable(self, key, value):
 
-        self.vars[key] = value
+        if key == 'ansible_group_priority':
+            self.set_priority(int(value))
+        else:
+            self.vars[key] = value
 
     def clear_hosts_cache(self):
 
@@ -128,7 +154,6 @@ class Group:
 
         if self._hosts_cache is None:
             self._hosts_cache = self._get_hosts()
-
         return self._hosts_cache
 
     def _get_hosts(self):
@@ -170,6 +195,5 @@ class Group:
         try:
             self.priority = int(priority)
         except TypeError:
-            #FIXME: warn about invalid priority
+            # FIXME: warn about invalid priority
             pass
-

@@ -1,58 +1,12 @@
 #!/usr/bin/python
 
-"""LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
-   Copyright (C) 2015  LogicMonitor
+# LogicMonitor Ansible module for managing Collectors, Hosts and Hostgroups
+# Copyright (C) 2015  LogicMonitor
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 3 of the License, or
-   (at your option) any later version.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA"""
-
-import datetime
-import os
-import platform
-import socket
-import sys
-import types
-import urllib
-
-HAS_LIB_JSON = True
-try:
-    import json
-    # Detect the python-json library which is incompatible
-    # Look for simplejson if that's the case
-    try:
-        if (
-         not isinstance(json.loads, types.FunctionType) or
-         not isinstance(json.dumps, types.FunctionType)
-        ):
-            raise ImportError
-    except AttributeError:
-        raise ImportError
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        print(
-            '\n{"msg": "Error: ansible requires the stdlib json or ' +
-            'simplejson module, neither was found!", "failed": true}'
-        )
-        HAS_LIB_JSON = False
-    except SyntaxError:
-        print(
-            '\n{"msg": "SyntaxError: probably due to installed simplejson ' +
-            'being for a different python version", "failed": true}'
-        )
-        HAS_LIB_JSON = False
 
 RETURN = '''
 ---
@@ -65,9 +19,10 @@ success:
 '''
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -86,10 +41,14 @@ options:
     description:
       - The type of LogicMonitor object you wish to manage.
       - "Collector: Perform actions on a LogicMonitor collector."
-      - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and 'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services before a Collector remove.
+      - NOTE You should use Ansible service modules such as M(service) or M(supervisorctl) for managing the Collector 'logicmonitor-agent' and
+        'logicmonitor-watchdog' services. Specifically, you'll probably want to start these services after a Collector add and stop these services
+        before a Collector remove.
       - "Host: Perform actions on a host device."
       - "Hostgroup: Perform actions on a LogicMonitor host group."
-      - 'NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the remote host and doing so will typically cause problems.'
+      - >
+        NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the
+        remote host and doing so will typically cause problems.
     required: true
     default: null
     choices: ['collector', 'host', 'datsource', 'hostgroup']
@@ -122,7 +81,8 @@ options:
     description:
       - The fully qualified domain name of a collector in your LogicMonitor account.
       - This is required for the creation of a LogicMonitor host (target=host action=add).
-      - This is required for updating, removing or scheduling downtime for hosts if 'displayname' isn't specified (target=host action=update action=remove action=sdt).
+      - This is required for updating, removing or scheduling downtime for hosts if 'displayname' isn't
+        specified (target=host action=update action=remove action=sdt).
     required: false
     default: null
   hostname:
@@ -267,14 +227,14 @@ EXAMPLES = '''
   tasks:
   - name: Create a host group
     # All tasks except for target=collector should use delegate_to: localhost
-    logicmonitor
+    logicmonitor:
       target: hostgroup
       action: add
       fullpath: /servers/development
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: commstring
         type: dev
 
@@ -340,7 +300,7 @@ EXAMPLES = '''
       password: '{{ password }}'
       collector: mycompany-Collector
       groups: /servers/production,/datacenter5
-      properties: 
+      properties:
         snmp.community: commstring
         dc: 5
     delegate_to: localhost
@@ -363,7 +323,7 @@ EXAMPLES = '''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: hg
         type: dev
         status: test
@@ -474,7 +434,7 @@ EXAMPLES = '''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties: 
+      properties:
         snmp.community: commstring
   - name: SDT a host group
     logicmonitor:
@@ -555,6 +515,39 @@ EXAMPLES = '''
     delegate_to: localhost
 '''
 
+import datetime
+import os
+import platform
+import socket
+import sys
+import types
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import open_url
+
+
+HAS_LIB_JSON = True
+try:
+    import json
+    # Detect the python-json library which is incompatible
+    # Look for simplejson if that's the case
+    try:
+        if (
+            not isinstance(json.loads, types.FunctionType) or
+            not isinstance(json.dumps, types.FunctionType)
+        ):
+            raise ImportError
+    except AttributeError:
+        raise ImportError
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        HAS_LIB_JSON = False
+    except SyntaxError:
+        HAS_LIB_JSON = False
+
 
 class LogicMonitor(object):
 
@@ -576,8 +569,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})
@@ -604,8 +597,7 @@ class LogicMonitor(object):
                 self.fail(msg="Error: " + resp["errmsg"])
             else:
                 return raw
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/rpc/" + action + "\nException" + str(ioe))
@@ -615,8 +607,8 @@ class LogicMonitor(object):
          server \"do\" function"""
         self.module.debug("Running LogicMonitor.do...")
 
-        param_str = urllib.urlencode(params)
-        creds = (urllib.urlencode(
+        param_str = urlencode(params)
+        creds = (urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password}))
@@ -633,8 +625,7 @@ class LogicMonitor(object):
                 "https://" + self.company + "." + self.lm_url +
                 "/do/" + action + "?" + param_str)
             return f.read()
-        except IOError:
-            ioe = get_exception()
+        except IOError as ioe:
             self.fail(msg="Error: Exception making RPC call to " +
                           "https://" + self.company + "." + self.lm_url +
                           "/do/" + action + "\nException" + str(ioe))
@@ -675,7 +666,7 @@ class LogicMonitor(object):
 
                 for host in hosts:
                     if (host["hostName"] == hostname and
-                       host["agentId"] == collector["id"]):
+                            host["agentId"] == collector["id"]):
 
                         self.module.debug("Host match found")
                         return host
@@ -696,7 +687,7 @@ class LogicMonitor(object):
         self.module.debug("Looking for displayname " + displayname)
         self.module.debug("Making RPC call to 'getHost'")
         host_json = (json.loads(self.rpc("getHost",
-                                {"displayName": displayname})))
+                                         {"displayName": displayname})))
 
         if host_json["status"] == 200:
             self.module.debug("RPC call succeeded")
@@ -909,15 +900,13 @@ class Collector(LogicMonitor):
                 self.module.run_command("mkdir " + self.installdir)
 
                 try:
-                    f = open(installfilepath, "w")
                     installer = (self.do("logicmonitorsetup",
                                          {"id": self.id,
                                           "arch": arch}))
-                    f.write(installer)
-                    f.closed
+                    with open(installfilepath, "w") as write_file:
+                        write_file.write(installer)
                 except:
                     self.fail(msg="Unable to open installer file for writing")
-                    f.closed
             else:
                 self.module.debug("Collector installer already exists")
                 return installfilepath
@@ -947,7 +936,7 @@ class Collector(LogicMonitor):
             installer = self.get_installer_binary()
 
             if self.info is None:
-                self.module.debug("Retriving collector information")
+                self.module.debug("Retrieving collector information")
                 self.info = self._get()
 
             if not os.path.exists(self.installdir + "/agent"):
@@ -1038,18 +1027,18 @@ class Collector(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"agentId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1197,7 +1186,7 @@ class Host(LogicMonitor):
             # Used the host information to grab the collector description
             # if not provided
             if (not hasattr(self.params, "collector") and
-               "agentDescription" in info):
+                    "agentDescription" in info):
                 self.module.debug("Setting collector from host response. " +
                                   "Collector " + info["agentDescription"])
                 self.params["collector"] = info["agentDescription"]
@@ -1248,8 +1237,8 @@ class Host(LogicMonitor):
         if self.info:
             self.module.debug("Making RPC call to 'getHostProperties'")
             properties_json = (json.loads(self.rpc("getHostProperties",
-                                          {'hostId': self.info["id"],
-                                           "filterSystemProperties": True})))
+                                                   {'hostId': self.info["id"],
+                                                    "filterSystemProperties": True})))
 
             if properties_json["status"] == 200:
                 self.module.debug("RPC call succeeded")
@@ -1421,8 +1410,8 @@ class Host(LogicMonitor):
                 return True
 
             if (self.collector and
-               hasattr(self.collector, "id") and
-               hostresp["agentId"] != self.collector["id"]):
+                hasattr(self.collector, "id") and
+                    hostresp["agentId"] != self.collector["id"]):
                 return True
 
             self.module.debug("Comparing groups.")
@@ -1479,7 +1468,7 @@ class Host(LogicMonitor):
                     self.fail(
                         msg="Error: Unable to retrieve timezone offset")
 
-            offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+            offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
             h = {"hostId": self.info["id"],
                  "type": 1,
@@ -1526,7 +1515,7 @@ class Host(LogicMonitor):
                          groups,
                          properties,
                          alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a host using the rpc function"""
         self.module.debug("Running Host._build_host_hash...")
 
@@ -1557,7 +1546,7 @@ class Host(LogicMonitor):
         if properties is not None and properties is not {}:
             self.module.debug("Properties hash exists")
             propnum = 0
-            for key, value in properties.iteritems():
+            for key, value in properties.items():
                 h["propName" + str(propnum)] = key
                 h["propValue" + str(propnum)] = value
                 propnum = propnum + 1
@@ -1609,7 +1598,7 @@ class Host(LogicMonitor):
                 hgresp = json.loads(self.rpc("getHostGroup", h))
 
                 if (hgresp["status"] == 200 and
-                   hgresp["data"]["appliesTo"] == ""):
+                        hgresp["data"]["appliesTo"] == ""):
 
                     g.append(path[-1])
 
@@ -1642,7 +1631,7 @@ class Host(LogicMonitor):
         for prop in propresp:
             if prop["name"] not in ignore:
                 if ("*******" in prop["value"] and
-                   self._verify_property(prop["name"])):
+                        self._verify_property(prop["name"])):
                     p[prop["name"]] = self.properties[prop["name"]]
                 else:
                     p[prop["name"]] = prop["value"]
@@ -1651,7 +1640,7 @@ class Host(LogicMonitor):
         # Iterate provided properties and compare to received properties
         for prop in self.properties:
             if (prop not in p or
-               p[prop] != self.properties[prop]):
+                    p[prop] != self.properties[prop]):
                 self.module.debug("Properties mismatch")
                 return True
         self.module.debug("Properties match")
@@ -1713,18 +1702,18 @@ class Datasource(LogicMonitor):
             else:
                 self.fail(msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostDataSourceId": self.id,
              "type": 1,
              "notifyCC": True,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -1915,7 +1904,7 @@ class Hostgroup(LogicMonitor):
         if properties is not None and group is not None:
             self.module.debug("Comparing simple group properties")
             if (group["alertEnable"] != self.alertenable or
-               group["description"] != self.description):
+                    group["description"] != self.description):
 
                 return True
 
@@ -1925,7 +1914,7 @@ class Hostgroup(LogicMonitor):
             for prop in properties:
                 if prop["name"] not in ignore:
                     if ("*******" in prop["value"] and
-                       self._verify_property(prop["name"])):
+                            self._verify_property(prop["name"])):
 
                         p[prop["name"]] = (
                             self.properties[prop["name"]])
@@ -1975,17 +1964,17 @@ class Hostgroup(LogicMonitor):
                 self.fail(
                     msg="Error: Unable to retrieve timezone offset")
 
-        offsetend = offsetstart + datetime.timedelta(0, int(duration)*60)
+        offsetend = offsetstart + datetime.timedelta(0, int(duration) * 60)
 
         h = {"hostGroupId": self.info["id"],
              "type": 1,
              "year": offsetstart.year,
-             "month": offsetstart.month-1,
+             "month": offsetstart.month - 1,
              "day": offsetstart.day,
              "hour": offsetstart.hour,
              "minute": offsetstart.minute,
              "endYear": offsetend.year,
-             "endMonth": offsetend.month-1,
+             "endMonth": offsetend.month - 1,
              "endDay": offsetend.day,
              "endHour": offsetend.hour,
              "endMinute": offsetend.minute}
@@ -2017,7 +2006,7 @@ class Hostgroup(LogicMonitor):
                                description,
                                properties,
                                alertenable):
-        """Return a property formated hash for the
+        """Return a property formatted hash for the
         creation of a hostgroup using the rpc function"""
         self.module.debug("Running Hostgroup._build_host_hash")
 
@@ -2049,7 +2038,7 @@ class Hostgroup(LogicMonitor):
         if properties != {}:
             self.module.debug("Properties hash exists")
             propnum = 0
-            for key, value in properties.iteritems():
+            for key, value in properties.items():
                 h["propName" + str(propnum)] = key
                 h["propValue" + str(propnum)] = value
                 propnum = propnum + 1
@@ -2096,8 +2085,8 @@ def selector(module):
     elif module.params["target"] == "host":
         # Make sure required parameter collector is specified
         if ((module.params["action"] == "add" or
-            module.params["displayname"] is None) and
-           module.params["collector"] is None):
+             module.params["displayname"] is None) and
+                module.params["collector"] is None):
             module.fail_json(
                 msg="Parameter 'collector' required.")
 
@@ -2173,7 +2162,7 @@ def main():
             duration=dict(required=False, default=30),
             properties=dict(required=False, default={}, type="dict"),
             groups=dict(required=False, default=[], type="list"),
-            alertenable=dict(required=False, default="true", choices=BOOLEANS)
+            alertenable=dict(required=False, default="true", type="bool")
         ),
         supports_check_mode=True
     )
@@ -2182,11 +2171,6 @@ def main():
         module.fail_json(msg="Unable to load JSON library")
 
     selector(module)
-
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-from ansible.module_utils.urls import open_url
 
 
 if __name__ == "__main__":

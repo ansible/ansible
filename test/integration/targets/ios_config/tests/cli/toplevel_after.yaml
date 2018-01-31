@@ -1,19 +1,19 @@
 ---
-- debug: msg="START cli/toplevel_after.yaml"
+- debug: msg="START cli/toplevel_after.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
     lines:
       - "snmp-server contact ansible"
-      - "hostname {{ inventory_hostname }}"
-    provider: "{{ cli }}"
+      - "hostname {{ shorter_hostname }}"
     match: none
+    authorize: yes
 
 - name: configure top level command with before
   ios_config:
     lines: ['hostname foo']
     after: ['snmp-server contact bar']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -26,7 +26,7 @@
   ios_config:
     lines: ['hostname foo']
     after: ['snmp-server contact foo']
-    provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -37,8 +37,8 @@
   ios_config:
     lines:
       - "no snmp-server contact"
-      - "hostname {{ inventory_hostname }}"
-    provider: "{{ cli }}"
+      - "hostname {{ shorter_hostname }}"
     match: none
+    authorize: yes
 
-- debug: msg="END cli/toplevel_after.yaml"
+- debug: msg="END cli/toplevel_after.yaml on connection={{ ansible_connection }}"

@@ -1,0 +1,149 @@
+---
+- name: record the output directory
+  set_fact: deploy_helper_test_root={{output_dir}}/deploy_helper_test_root
+
+- name: State=query with default parameters
+  deploy_helper: path={{ deploy_helper_test_root }} state=query
+- name: Assert State=query with default parameters
+  assert:
+    that:
+    - "'project_path' in deploy_helper"
+    - "deploy_helper.current_path   == '{{ deploy_helper.project_path }}/current'"
+    - "deploy_helper.releases_path  == '{{ deploy_helper.project_path }}/releases'"
+    - "deploy_helper.shared_path    == '{{ deploy_helper.project_path }}/shared'"
+    - "deploy_helper.unfinished_filename == 'DEPLOY_UNFINISHED'"
+    - "'previous_release' in deploy_helper"
+    - "'previous_release_path' in deploy_helper"
+    - "'new_release' in deploy_helper"
+    - "'new_release_path' in deploy_helper"
+    - "deploy_helper.new_release_path == '{{ deploy_helper.releases_path }}/{{ deploy_helper.new_release }}'"
+
+- name: State=query with relative overridden paths
+  deploy_helper: path={{ deploy_helper_test_root }} current_path=CURRENT_PATH releases_path=RELEASES_PATH shared_path=SHARED_PATH state=query
+- name: Assert State=query with relative overridden paths
+  assert:
+    that:
+    - "deploy_helper.current_path   == '{{ deploy_helper.project_path }}/CURRENT_PATH'"
+    - "deploy_helper.releases_path  == '{{ deploy_helper.project_path }}/RELEASES_PATH'"
+    - "deploy_helper.shared_path    == '{{ deploy_helper.project_path }}/SHARED_PATH'"
+    - "deploy_helper.new_release_path == '{{ deploy_helper.releases_path }}/{{ deploy_helper.new_release}}'"
+
+- name: State=query with absolute overridden paths
+  deploy_helper: path={{ deploy_helper_test_root }} current_path=/CURRENT_PATH releases_path=/RELEASES_PATH shared_path=/SHARED_PATH state=query
+- name: Assert State=query with absolute overridden paths
+  assert:
+    that:
+    - "deploy_helper.current_path   == '/CURRENT_PATH'"
+    - "deploy_helper.releases_path  == '/RELEASES_PATH'"
+    - "deploy_helper.shared_path    == '/SHARED_PATH'"
+    - "deploy_helper.new_release_path == '{{ deploy_helper.releases_path }}/{{ deploy_helper.new_release}}'"
+
+- name: State=query with overridden unfinished_filename
+  deploy_helper: path={{ deploy_helper_test_root }} unfinished_filename=UNFINISHED_DEPLOY state=query
+- name: Assert State=query with overridden unfinished_filename
+  assert:
+    that:
+    - "'UNFINISHED_DEPLOY' == deploy_helper.unfinished_filename"
+
+# Remove the root folder just in case it exists
+- file: path={{ deploy_helper_test_root }} state=absent
+
+- name: State=present with default parameters
+  deploy_helper: path={{ deploy_helper_test_root }} state=present
+- stat: path={{ deploy_helper.releases_path }}
+  register: releases_path
+- stat: path={{ deploy_helper.shared_path }}
+  register: shared_path
+- name: Assert State=present with default parameters
+  assert:
+    that:
+    - "releases_path.stat.exists"
+    - "shared_path.stat.exists"
+
+# Setup older releases for tests
+- file: path={{ deploy_helper.releases_path }}/{{ item }} state=directory
+  with_items: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh']
+# Setup the new release
+- file: path={{ deploy_helper.new_release_path }} state=directory
+# Add a buildfile, just like in a real deploy
+- copy: content='' dest={{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }}
+# Add a buildfile, to an older deploy
+- copy: content='' dest={{ deploy_helper.releases_path }}/third/{{ deploy_helper.unfinished_filename }}
+
+- name: State=finalize with default parameters
+  deploy_helper: path={{ deploy_helper_test_root }} release={{ deploy_helper.new_release }} state=finalize
+- stat: path={{ deploy_helper.current_path }}
+  register: current_path
+- stat: path={{ deploy_helper.current_path }}/DEPLOY_UNFINISHED
+  register: current_path_unfinished_filename
+- name: Assert State=finalize with default parameters
+  assert:
+    that:
+    - "current_path.stat.islnk"
+    - "deploy_helper.new_release_path in current_path.stat.lnk_source"
+    - "not current_path_unfinished_filename.stat.exists"
+- stat: path={{ deploy_helper.releases_path }}/third
+  register: third_release_path
+- shell: "ls {{ deploy_helper.releases_path }} | wc -l"
+  register: releases_count
+- name: Assert State=finalize with default parameters (clean=true checks)
+  assert:
+    that:
+    - "not third_release_path.stat.exists"
+    - "releases_count.stdout|trim == '6'"
+- deploy_helper: path={{ deploy_helper_test_root }} release={{ deploy_helper.new_release }} state=query
+- name: Assert State=finalize with default parameters (previous_release checks)
+  assert:
+    that:
+    - "deploy_helper.new_release == deploy_helper.previous_release"
+
+- name: State=absent with default parameters
+  deploy_helper: path={{ deploy_helper_test_root }} state=absent
+- stat: path={{ deploy_helper_test_root }}
+  register: project_path
+- name: Assert State=absent with default parameters
+  assert:
+    that:
+    - "not project_path.stat.exists"
+
+- debug: msg="Clearing all release data and facts ---------"
+
+- name: State=present with shared_path set to False
+  deploy_helper: path={{ deploy_helper_test_root }} state=present shared_path=''
+- stat: path={{ deploy_helper.releases_path }}
+  register: releases_path
+- stat: path={{ deploy_helper.shared_path }}
+  register: shared_path
+- name: Assert State=present with shared_path set to False
+  assert:
+    that:
+    - "releases_path.stat.exists"
+    - "not shared_path.stat.exists"
+
+# Setup older releases for tests
+- file: path={{ deploy_helper.releases_path }}/{{ item }} state=directory
+  with_items: ['first', 'second', 'third', 'fourth', 'fifth']
+# Setup the new release
+- file: path={{ deploy_helper.new_release_path }} state=directory
+# Add a buildfile, just like in a real deploy
+- copy: content='' dest={{ deploy_helper.new_release_path }}/{{ deploy_helper.unfinished_filename }}
+# Add a buildfile, to an older deploy
+- copy: content='' dest={{ deploy_helper.releases_path }}/third/{{ deploy_helper.unfinished_filename }}
+
+- shell: "ls {{ deploy_helper_test_root }}/releases | wc -l"
+  register: before_releases_count
+- name: State=clean with keep_releases=3
+  deploy_helper: path={{ deploy_helper_test_root }} release={{ deploy_helper.new_release }} state=clean keep_releases=3
+- stat: path={{ deploy_helper.releases_path }}/third
+  register: third_release_path
+- shell: "ls {{ deploy_helper.releases_path }} | wc -l"
+  register: releases_count
+- name: Assert State=finalize with default parameters (clean=true checks)
+  assert:
+    that:
+    - "not third_release_path.stat.exists"
+    - "before_releases_count.stdout|trim == '6'"
+    - "releases_count.stdout|trim == '3'"
+
+# Remove the root folder
+- file: path={{ deploy_helper_test_root }} state=absent

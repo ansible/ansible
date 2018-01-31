@@ -1,27 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Nate Coraor <nate@bx.psu.edu>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2014, Nate Coraor <nate@bx.psu.edu>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -34,18 +22,16 @@ options:
     path:
         description:
             - Specifies the path to the file to be managed.
-        required: true
-        default: null
+        required: yes
     capability:
         description:
             - Desired capability to set (with operator and flags, if state is C(present)) or remove (if state is C(absent))
-        required: true
-        default: null
-        aliases: [ 'cap' ]
+        required: yes
+        aliases: [ cap ]
     state:
         description:
             - Whether the entry should be present or absent in the file's capabilities.
-        choices: [ "present", "absent" ]
+        choices: [ absent, present ]
         default: present
 notes:
     - The capabilities system will automatically transform operators and flags
@@ -53,53 +39,48 @@ notes:
       cap_foo+ep). This module does not attempt to determine the final operator
       and flags to compare, so you will want to ensure that your capabilities
       argument matches the final capabilities.
-requirements: []
-author: "Nate Coraor (@natefoo)"
+author:
+- Nate Coraor (@natefoo)
 '''
 
 EXAMPLES = '''
-# Set cap_sys_chroot+ep on /foo
-- capabilities:
+- name: Set cap_sys_chroot+ep on /foo
+  capabilities:
     path: /foo
     capability: cap_sys_chroot+ep
     state: present
 
-# Remove cap_net_bind_service from /bar
-- capabilities:
+- name: Remove cap_net_bind_service from /bar
+  capabilities:
     path: /bar
     capability: cap_net_bind_service
     state: absent
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 
-OPS = ( '=', '-', '+' )
+OPS = ('=', '-', '+')
 
-# ==============================================================
-
-import os
-import tempfile
-import re
 
 class CapabilitiesModule(object):
-
     platform = 'Linux'
     distribution = None
 
     def __init__(self, module):
-        self.module         = module 
-        self.path           = module.params['path'].strip()
-        self.capability     = module.params['capability'].strip().lower()
-        self.state          = module.params['state']
-        self.getcap_cmd     = module.get_bin_path('getcap', required=True)
-        self.setcap_cmd     = module.get_bin_path('setcap', required=True)
-        self.capability_tup = self._parse_cap(self.capability, op_required=self.state=='present')
+        self.module = module
+        self.path = module.params['path'].strip()
+        self.capability = module.params['capability'].strip().lower()
+        self.state = module.params['state']
+        self.getcap_cmd = module.get_bin_path('getcap', required=True)
+        self.setcap_cmd = module.get_bin_path('setcap', required=True)
+        self.capability_tup = self._parse_cap(self.capability, op_required=self.state == 'present')
 
         self.run()
 
     def run(self):
 
         current = self.getcap(self.path)
-        caps = [ cap[0] for cap in current ]
+        caps = [cap[0] for cap in current]
 
         if self.state == 'present' and self.capability_tup not in current:
             # need to add capability
@@ -107,9 +88,9 @@ class CapabilitiesModule(object):
                 self.module.exit_json(changed=True, msg='capabilities changed')
             else:
                 # remove from current cap list if it's already set (but op/flags differ)
-                current = filter(lambda x: x[0] != self.capability_tup[0], current)
+                current = list(filter(lambda x: x[0] != self.capability_tup[0], current))
                 # add new cap with correct op/flags
-                current.append( self.capability_tup )
+                current.append(self.capability_tup)
                 self.module.exit_json(changed=True, state=self.state, msg='capabilities changed', stdout=self.setcap(self.path, current))
         elif self.state == 'absent' and self.capability_tup[0] in caps:
             # need to remove capability
@@ -124,7 +105,7 @@ class CapabilitiesModule(object):
     def getcap(self, path):
         rval = []
         cmd = "%s -v %s" % (self.getcap_cmd, path)
-        rc, stdout, stderr = self.module.run_command(cmd)    
+        rc, stdout, stderr = self.module.run_command(cmd)
         # If file xattrs are set but no caps are set the output will be:
         #   '/foo ='
         # If file xattrs are unset the output will be:
@@ -143,15 +124,15 @@ class CapabilitiesModule(object):
                     cap_group = cap.split(',')
                     cap_group[-1], op, flags = self._parse_cap(cap_group[-1])
                     for subcap in cap_group:
-                        rval.append( ( subcap, op, flags ) )
+                        rval.append((subcap, op, flags))
                 else:
                     rval.append(self._parse_cap(cap))
         return rval
 
     def setcap(self, path, caps):
-        caps = ' '.join([ ''.join(cap) for cap in caps ])
+        caps = ' '.join([''.join(cap) for cap in caps])
         cmd = "%s '%s' %s" % (self.setcap_cmd, caps, path)
-        rc, stdout, stderr = self.module.run_command(cmd)    
+        rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Unable to set capabilities of %s" % path, stdout=stdout, stderr=stderr)
         else:
@@ -173,26 +154,23 @@ class CapabilitiesModule(object):
         cap, flags = cap.split(op)
         return (cap, op, flags)
 
+
 # ==============================================================
 # main
 
 def main():
-
     # defining module
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(aliases=['key'], required=True),
-            capability = dict(aliases=['cap'], required=True),
-            state = dict(default='present', choices=['present', 'absent']),
+        argument_spec=dict(
+            path=dict(type='str', required=True, aliases=['key']),
+            capability=dict(type='str', required=True, aliases=['cap']),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     CapabilitiesModule(module)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

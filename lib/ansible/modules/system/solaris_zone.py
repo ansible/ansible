@@ -1,30 +1,14 @@
 #!/usr/bin/python
 
 # (c) 2015, Paul Markham <pmarkham@netrefinery.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import sys
-import os
-import platform
-import tempfile
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -34,12 +18,12 @@ description:
    - Create, start, stop and delete Solaris zones. This module doesn't currently allow
      changing of options for a zone that's already been created.
 version_added: "2.0"
-author: Paul Markham
+author:
+- Paul Markham
 requirements:
   - Solaris 10 or 11
 options:
   state:
-    required: true
     description:
       - C(present), configure and install the zone.
       - C(installed), synonym for C(present).
@@ -51,8 +35,9 @@ options:
       - C(configured), configure the ready so that it's to be attached.
       - C(attached), attach a zone, but do not boot it.
       - C(detached), shutdown and detach a zone
-    choices: ['present', 'installed', 'started', 'running', 'stopped', 'absent', 'configured', 'attached', 'detached']
+    choices: [ absent, attached, configured, detached, installed, present, running, started, stopped ]
     default: present
+    required: true
   name:
     description:
       - Zone name.
@@ -61,122 +46,121 @@ options:
     description:
       - The path where the zone will be created. This is required when the zone is created, but not
         used otherwise.
-    required: false
-    default: null
   sparse:
     description:
       - Whether to create a sparse (C(true)) or whole root (C(false)) zone.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   root_password:
     description:
       - The password hash for the root account. If not specified, the zone's root account
         will not have a password.
-    required: false
-    default: null
   config:
     description:
       - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
         and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
         "set auto-boot=true;add net;set physical=bge0;set address=10.1.1.1;end"'
-    required: false
     default: empty string
   create_options:
     description:
       - 'Extra options to the zonecfg(1M) create command.'
-    required: false
     default: empty string
   install_options:
     description:
       - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
          use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
-    required: false
     default: empty string
   attach_options:
     description:
       - 'Extra options to the zoneadm attach command. For example, this can be used to specify
         whether a minimum or full update of packages is required and if any packages need to
         be deleted. For valid values, see zoneadm(1M)'
-    required: false
     default: empty string
   timeout:
     description:
       - Timeout, in seconds, for zone to boot.
-    required: false
     default: 600
 '''
 
 EXAMPLES = '''
-# Create and install a zone, but don't boot it
-- solaris_zone:
+- name: Create and install a zone, but don't boot it
+  solaris_zone:
     name: zone1
     state: present
     path: /zones/zone1
-    sparse: true
+    sparse: True
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Create and install a zone and boot it
-- solaris_zone:
+- name: Create and install a zone and boot it
+  solaris_zone:
     name: zone1
     state: running
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Boot an already installed zone
-- solaris_zone:
+- name: Boot an already installed zone
+  solaris_zone:
     name: zone1
     state: running
 
-# Stop a zone
-- solaris_zone:
+- name: Stop a zone
+  solaris_zone:
     name: zone1
     state: stopped
 
-# Destroy a zone
-- solaris_zone:
+- name: Destroy a zone
+  solaris_zone:
     name: zone1
     state: absent
 
-# Detach a zone
-- solaris_zone:
+- name: Detach a zone
+  solaris_zone:
     name: zone1
     state: detached
 
-# Configure a zone, ready to be attached
-- solaris_zone:
+- name: Configure a zone, ready to be attached
+  solaris_zone:
     name: zone1
     state: configured
     path: /zones/zone1
     root_password: Be9oX7OSwWoU.
     config: 'set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Attach a zone
-- solaris_zone:
+- name: Attach zone1
+  solaris_zone:
     name: zone1
     state: attached
-    attach_options=: -u
+    attach_options: -u
 '''
+
+import os
+import platform
+import tempfile
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Zone(object):
     def __init__(self, module):
         self.changed = False
-        self.msg     = []
+        self.msg = []
 
-        self.module          = module
-        self.path            = self.module.params['path']
-        self.name            = self.module.params['name']
-        self.sparse          = self.module.params['sparse']
-        self.root_password   = self.module.params['root_password']
-        self.timeout         = self.module.params['timeout']
-        self.config          = self.module.params['config']
-        self.create_options  = self.module.params['create_options']
+        self.module = module
+        self.path = self.module.params['path']
+        self.name = self.module.params['name']
+        self.sparse = self.module.params['sparse']
+        self.root_password = self.module.params['root_password']
+        self.timeout = self.module.params['timeout']
+        self.config = self.module.params['config']
+        self.create_options = self.module.params['create_options']
         self.install_options = self.module.params['install_options']
-        self.attach_options  = self.module.params['attach_options']
+        self.attach_options = self.module.params['attach_options']
 
-        self.zoneadm_cmd    = self.module.get_bin_path('zoneadm', True)
-        self.zonecfg_cmd    = self.module.get_bin_path('zonecfg', True)
+        self.zoneadm_cmd = self.module.get_bin_path('zoneadm', True)
+        self.zonecfg_cmd = self.module.get_bin_path('zonecfg', True)
         self.ssh_keygen_cmd = self.module.get_bin_path('ssh-keygen', True)
 
         if self.module.check_mode:
@@ -194,7 +178,7 @@ class Zone(object):
             self.module.fail_json(msg='Missing required argument: path')
 
         if not self.module.check_mode:
-            t = tempfile.NamedTemporaryFile(delete = False)
+            t = tempfile.NamedTemporaryFile(delete=False)
 
             if self.sparse:
                 t.write('create %s\n' % self.create_options)
@@ -440,21 +424,23 @@ class Zone(object):
         else:
             self.msg.append('zone already attached')
 
+
 def main():
     module = AnsibleModule(
-        argument_spec       = dict(
-            name            = dict(required=True),
-            state           = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
-            path            = dict(default=None),
-            sparse          = dict(default=False, type='bool'),
-            root_password   = dict(default=None, no_log=True),
-            timeout         = dict(default=600, type='int'),
-            config          = dict(default=''),
-            create_options  = dict(default=''),
-            install_options = dict(default=''),
-            attach_options  = dict(default=''),
-            ),
-        supports_check_mode=True
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present',
+                       choices=['absent', 'attached', 'configured', 'detached', 'installed', 'present', 'running', 'started', 'stopped']),
+            path=dict(type='str'),
+            sparse=dict(type='bool', default=False),
+            root_password=dict(type='str', no_log=True),
+            timeout=dict(type='int', default=600),
+            config=dict(type='str', default=''),
+            create_options=dict(type='str', default=''),
+            install_options=dict(type='str', default=''),
+            attach_options=dict(type='str', default=''),
+        ),
+        supports_check_mode=True,
     )
 
     zone = Zone(module)
@@ -480,7 +466,6 @@ def main():
 
     module.exit_json(changed=zone.changed, msg=', '.join(zone.msg))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,296 @@
+---
+- name: setup
+  cs_volume: name={{ cs_resource_prefix }}_vol state=absent
+  register: vol
+- name: verify setup
+  assert:
+    that:
+    - vol is successful
+
+- name: setup instance 1
+  cs_instance:
+    name: "{{ test_cs_instance_1 }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful
+
+- name: setup instance 2
+  cs_instance:
+    name: "{{ test_cs_instance_2 }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful
+
+- name: test fail if missing name
+  action: cs_volume
+  register: vol
+  ignore_errors: true
+- name: verify results of fail if missing name
+  assert:
+    that:
+    - vol is failed
+    - "vol.msg == 'missing required arguments: name'"
+
+- name: test create volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol is changed
+
+- name: test create volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - vol is changed
+    - vol.size == 20 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test create volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
+  register: vol
+- name: verify results test create volume idempotence
+  assert:
+    that:
+    - vol is not changed
+    - vol.size == 20 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol is changed
+    - vol.size == 20 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - vol is changed
+    - vol.size == 10 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - vol is not changed
+    - vol.size == 10 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test attach volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_1 }}"
+    state: attached
+  register: vol
+  check_mode: true
+- name: verify results test attach volume in check mode
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is not defined
+
+- name: test attach volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_1 }}"
+    state: attached
+  register: vol
+- name: verify results test attach volume
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_1 }}"
+    - vol.attached is defined
+
+- name: test attach volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_1 }}"
+    state: attached
+  register: vol
+- name: verify results test attach volume idempotence
+  assert:
+    that:
+    - vol is not changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_1 }}"
+    - vol.attached is defined
+
+- name: test attach attached volume to another vm in check mdoe
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_2 }}"
+    state: attached
+  register: vol
+  check_mode: true
+- name: verify results test attach attached volume to another vm in check mode
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_1 }}"
+    - vol.attached is defined
+
+- name: test attach attached volume to another vm
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_2 }}"
+    state: attached
+  register: vol
+- name: verify results test attach attached volume to another vm
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_2 }}"
+    - vol.attached is defined
+
+- name: test attach attached volume to another vm idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    vm: "{{ test_cs_instance_2 }}"
+    state: attached
+  register: vol
+- name: verify results test attach attached volume to another vm idempotence
+  assert:
+    that:
+    - vol is not changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.vm == "{{ test_cs_instance_2 }}"
+    - vol.attached is defined
+
+- name: test detach volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: detached
+  register: vol
+  check_mode: true
+- name: verify results test detach volume in check mdoe
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is defined
+
+- name: test detach volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: detached
+  register: vol
+- name: verify results test detach volume
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is undefined
+
+- name: test detach volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: detached
+  register: vol
+- name: verify results test detach volume idempotence
+  assert:
+    that:
+    - vol is not changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+    - vol.attached is undefined
+
+- name: test delete volume in check mode
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: absent
+  register: vol
+  check_mode: true
+- name: verify results test create volume in check mode
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test delete volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: absent
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - vol is changed
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test delete volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    state: absent
+  register: vol
+- name: verify results test delete volume idempotence
+  assert:
+    that:
+    - vol is not changed
+
+- name: cleanup instance 1
+  cs_instance:
+    name: "{{ test_cs_instance_1 }}"
+    state: absent
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful
+
+- name: cleanup instance 2
+  cs_instance:
+    name: "{{ test_cs_instance_2 }}"
+    state: absent
+  register: instance
+- name: verify create instance
+  assert:
+    that:
+    - instance is successful

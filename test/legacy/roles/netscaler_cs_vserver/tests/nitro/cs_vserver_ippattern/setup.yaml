@@ -1,0 +1,18 @@
+---
+
+
+- name: Setup cs vserver
+  delegate_to: localhost
+  register: result
+  check_mode: "{{ check_mode }}"
+  netscaler_cs_vserver:
+    nitro_user: "{{nitro_user}}"
+    nitro_pass: "{{nitro_pass}}"
+    nsip: "{{nsip}}"
+
+    name: cs-vserver-2
+
+    servicetype: HTTP
+    port: 80
+    ippattern: 10.78.10.0
+    ipmask: 255.255.255.0

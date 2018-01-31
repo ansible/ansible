@@ -1,0 +1,106 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_overlay_global sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: overlay_global_supported="false"
+- set_fact: overlay_global_supported="true"
+  when: platform is search("N35NG|N7K|^N9K$") or
+        ( platform is match("N9k-F") and imagetag is version('F3', 'ne'))
+
+- debug: msg="Platform {{ platform }} running Image version {{ image_version }} supports nxos_overlay_global"
+  when: overlay_global_supported
+
+# Setup Block
+- block:
+  - name: "Enable nv overlay evpn"
+    nxos_evpn_global: &enable_evpn
+      nv_overlay_evpn: true
+      provider: "{{ connection }}"
+
+  - name: "Apply N7K specific setup config"
+    include: targets/nxos_overlay_global/tasks/platform/n7k/setup.yaml
+    when: platform is match('N7K')
+
+  - name: "Configure Additional N7K requiste features"
+    nxos_config:
+      commands:
+        - feature-set fabric
+        - feature fabric forwarding
+      match: none
+      provider: "{{ connection }}"
+    when: platform is match('N7K')
+
+  - name: "Remove possibly existing mac"
+    nxos_overlay_global:
+      anycast_gateway_mac: "default"
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+  when: overlay_global_supported
+
+# Test execution block
+- block:
+
+  - name: Configure overlay global
+    nxos_overlay_global: &configure
+      anycast_gateway_mac: "b.b.b"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence"
+    nxos_overlay_global: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Update anycast gateway mac
+    nxos_overlay_global: &update
+      anycast_gateway_mac: "a.a.a"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_overlay_global: *update
+    register: result
+
+  - assert: *false
+
+
+  - name: Remove anycast gateway mac
+    nxos_overlay_global: &remove
+      anycast_gateway_mac: "default"
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_overlay_global: *remove
+    register: result
+
+  - assert: *false
+
+  when: overlay_global_supported
+
+  always:
+  - name: "Apply N7K specific cleanup config"
+    include: targets/nxos_overlay_global/tasks/platform/n7k/cleanup.yaml
+    when: platform is match('N7K')
+
+  - name: "Disable nv overlay evpn"
+    nxos_evpn_global: &disable_evpn
+      nv_overlay_evpn: false
+      provider: "{{ connection }}"
+    ignore_errors: yes
+    when: overlay_global_supported
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_overlay_global sanity test"

@@ -1,0 +1,25 @@
+<rpc-reply>
+    <interface-information>
+         <physical-interface>
+            <name>em0</name>
+            <admin-status>up</admin-status>
+            <oper-status>up</oper-status>
+            <local-index>8</local-index>
+            <snmp-index>17</snmp-index>
+            <generation>1</generation>
+            <if-type>Ethernet</if-type>
+            <link-level-type>Ethernet</link-level-type>
+            <mtu>1514</mtu>
+            <speed>1000mbps</speed>
+            <clocking>Unspecified</clocking>
+            <physical-information>Unspecified</physical-information>
+            <up-hold-time>0</up-hold-time>
+            <down-hold-time>0</down-hold-time>
+            <current-physical-address>52:54:00:8a:af:30</current-physical-address>
+            <hardware-physical-address>52:54:00:8a:af:30</hardware-physical-address>
+            <alternate-physical-address>Unspecified</alternate-physical-address>
+            <interface-flapped>Never</interface-flapped>
+            <statistics-cleared>Never</statistics-cleared>
+        </physical-interface>
+    </interface-information>
+</rpc-reply>

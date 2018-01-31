@@ -1,26 +1,16 @@
 #!/usr/bin/python
 
 # Copyright (c) 2015 Ansible, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,14 +127,17 @@ EXAMPLES = '''
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
     vapp_name: tower
-    state=present
-    template_name='Ubuntu Server 12.04 LTS (amd64 20150127)'
-    vdc_name=VDC1
-    instance_id=<your instance id here>
-    username=<your username here>
-    password=<your password here>
+    state: present
+    template_name: 'Ubuntu Server 12.04 LTS (amd64 20150127)'
+    vdc_name: VDC1
+    instance_id: '<your instance id here>'
+    username: '<your username here>'
+    password: '<your password here>'
 
 '''
+
+from ansible.module_utils.vca import VcaAnsibleModule, VcaError
+
 
 DEFAULT_VAPP_OPERATION = 'noop'
 
@@ -172,6 +165,7 @@ def get_instance(module):
     except VcaError:
         return inst
 
+
 def create(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
@@ -189,12 +183,17 @@ def create(module):
                                   catalog_name, network_name, network_mode,
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
 
+    if task is False:
+        module.fail('Failed to create vapp: ' + vapp_name)
+
     module.vca.block_until_completed(task)
+
 
 def delete(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
     module.vca.delete_vapp(vdc_name, vapp_name)
+
 
 def do_operation(module):
     vapp_name = module.params['vapp_name']
@@ -212,6 +211,7 @@ def do_operation(module):
 
     cmd = 'power:%s' % operation
     module.get_vapp(vapp_name).execute(cmd, 'post', targetVM=vm)
+
 
 def set_state(module):
     state = module.params['state']
@@ -279,8 +279,6 @@ def main():
 
     return module.exit(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
+
 if __name__ == '__main__':
     main()

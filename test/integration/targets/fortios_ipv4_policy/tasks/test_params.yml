@@ -1,0 +1,74 @@
+---
+ - name: Forget id
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     # id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: present
+   register: forget_id
+   ignore_errors: True
+
+ - name: Forget src_addr
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     # src_addr: all
+     dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: present
+   register: forget_src_addr
+   ignore_errors: True
+
+ - name: Forget dst_addr
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     # dst_addr: all
+     policy_action: accept
+     service: ALL
+     state: present
+   register: forget_dst_addr
+   ignore_errors: True
+
+ - name: Forget policy_action
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     # policy_action: accept
+     service: ALL
+     state: present
+   register: forget_policy_action
+   ignore_errors: True
+
+ - name: Forget service
+   fortios_ipv4_policy:
+     file_mode: true
+     config_file: "{{role_path}}/files/default_config.conf"
+     id: 42
+     src_addr: all
+     dst_addr: all
+     policy_action: accept
+     # service: ALL
+     state: present
+   register: forget_service
+   ignore_errors: True
+
+ - name: Verify that all previous test have failed
+   assert:
+     that:
+      - "forget_id.failed == True"
+      - "forget_src_addr.failed == True"
+      - "forget_dst_addr.failed == True"
+      - "forget_policy_action.failed == True"
+      - "forget_service.failed == True"

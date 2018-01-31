@@ -1,24 +1,25 @@
 ---
-- debug: msg="START netconf/backup.yaml"
+- debug: msg="START netconf/backup.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   junos_config:
     lines:
-      - set system host-name {{ inventory_hostname }}
+      - set system host-name {{ inventory_hostname_short }}
       - delete interfaces lo0
     provider: "{{ netconf }}"
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - name: delete backup files
   file:
     path: "{{ item.path }}"
     state: absent
+  connection: local
   with_items: "{{backup_files.files|default([])}}"
 
 - name: configure device with config
@@ -36,12 +37,12 @@
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
-    pattern: "{{ inventory_hostname }}_config*"
+    pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - assert:
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END netconf/backup.yaml"
+- debug: msg="END netconf/backup.yaml on connection={{ ansible_connection }}"

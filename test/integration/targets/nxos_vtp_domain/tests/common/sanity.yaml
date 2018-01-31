@@ -1,0 +1,38 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_vtp_domain sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+  - name: enable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: configure vtp domain
+    nxos_vtp_domain: &configure
+      domain: ntc
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+  
+  - name: "Conf Idempotence"
+    nxos_vtp_domain: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: disable feature vtp
+    nxos_feature:
+      feature: vtp
+      state: disabled
+      provider: "{{ connection }}"
+
+- debug: msg="END connection={{ ansible_connection }} nxos_vtp_domain sanity test"

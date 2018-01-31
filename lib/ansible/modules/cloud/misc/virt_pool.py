@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -155,10 +146,6 @@ EXAMPLES = '''
     name: vms
 '''
 
-VIRT_FAILED = 1
-VIRT_SUCCESS = 0
-VIRT_UNAVAILABLE=2
-
 try:
     import libvirt
 except ImportError:
@@ -176,47 +163,51 @@ else:
 from ansible.module_utils.basic import AnsibleModule
 
 
+VIRT_FAILED = 1
+VIRT_SUCCESS = 0
+VIRT_UNAVAILABLE = 2
+
 ALL_COMMANDS = []
 ENTRY_COMMANDS = ['create', 'status', 'start', 'stop', 'build', 'delete',
                   'undefine', 'destroy', 'get_xml', 'define', 'refresh']
-HOST_COMMANDS = [ 'list_pools', 'facts', 'info' ]
+HOST_COMMANDS = ['list_pools', 'facts', 'info']
 ALL_COMMANDS.extend(ENTRY_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
 
 ENTRY_STATE_ACTIVE_MAP = {
-    0 : "inactive",
-    1 : "active"
+    0: "inactive",
+    1: "active"
 }
 
 ENTRY_STATE_AUTOSTART_MAP = {
-    0 : "no",
-    1 : "yes"
+    0: "no",
+    1: "yes"
 }
 
 ENTRY_STATE_PERSISTENT_MAP = {
-    0 : "no",
-    1 : "yes"
+    0: "no",
+    1: "yes"
 }
 
 ENTRY_STATE_INFO_MAP = {
-    0 : "inactive",
-    1 : "building",
-    2 : "running",
-    3 : "degraded",
-    4 : "inaccessible"
+    0: "inactive",
+    1: "building",
+    2: "running",
+    3: "degraded",
+    4: "inaccessible"
 }
 
 ENTRY_BUILD_FLAGS_MAP = {
-    "new" : 0,
-    "repair" : 1,
-    "resize" : 2,
-    "no_overwrite"  : 4,
-    "overwrite" : 8
+    "new": 0,
+    "repair": 1,
+    "resize": 2,
+    "no_overwrite": 4,
+    "overwrite": 8
 }
 
 ENTRY_DELETE_FLAGS_MAP = {
-    "normal" : 0,
-    "zeroed" : 1
+    "normal": 0,
+    "zeroed": 1
 }
 
 ALL_MODES = []
@@ -292,18 +283,18 @@ class LibvirtConnection(object):
 
     def get_status2(self, entry):
         state = entry.isActive()
-        return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+        return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
 
     def get_status(self, entryid):
         if not self.module.check_mode:
             state = self.find_entry(entryid).isActive()
-            return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+            return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
         else:
             try:
                 state = self.find_entry(entryid).isActive()
-                return ENTRY_STATE_ACTIVE_MAP.get(state,"unknown")
+                return ENTRY_STATE_ACTIVE_MAP.get(state, "unknown")
             except:
-                return ENTRY_STATE_ACTIVE_MAP.get("inactive","unknown")
+                return ENTRY_STATE_ACTIVE_MAP.get("inactive", "unknown")
 
     def get_uuid(self, entryid):
         return self.find_entry(entryid).UUIDString()
@@ -387,7 +378,7 @@ class LibvirtConnection(object):
 
     def get_autostart(self, entryid):
         state = self.find_entry(entryid).autostart()
-        return ENTRY_STATE_AUTOSTART_MAP.get(state,"unknown")
+        return ENTRY_STATE_AUTOSTART_MAP.get(state, "unknown")
 
     def get_autostart2(self, entryid):
         if not self.module.check_mode:
@@ -414,7 +405,7 @@ class LibvirtConnection(object):
 
     def get_persistent(self, entryid):
         state = self.find_entry(entryid).isPersistent()
-        return ENTRY_STATE_PERSISTENT_MAP.get(state,"unknown")
+        return ENTRY_STATE_PERSISTENT_MAP.get(state, "unknown")
 
     def define_from_xml(self, entryid, xml):
         if not self.module.check_mode:
@@ -450,7 +441,7 @@ class VirtStoragePool(object):
         results = []
         for entry in self.list_pools():
             state_blurb = self.conn.get_status(entry)
-            results.append("%s %s" % (entry,state_blurb))
+            results.append("%s %s" % (entry, state_blurb))
         return results
 
     def autostart(self, entryid):
@@ -487,10 +478,10 @@ class VirtStoragePool(object):
         return self.conn.define_from_xml(entryid, xml)
 
     def build(self, entryid, flags):
-        return self.conn.build(entryid, ENTRY_BUILD_FLAGS_MAP.get(flags,0))
+        return self.conn.build(entryid, ENTRY_BUILD_FLAGS_MAP.get(flags, 0))
 
     def delete(self, entryid, flags):
-        return self.conn.delete(entryid, ENTRY_DELETE_FLAGS_MAP.get(flags,0))
+        return self.conn.delete(entryid, ENTRY_DELETE_FLAGS_MAP.get(flags, 0))
 
     def refresh(self, entryid):
         return self.conn.refresh(entryid)
@@ -510,10 +501,10 @@ class VirtStoragePool(object):
                 # assume the other end of the xmlrpc connection can figure things
                 # out or doesn't care.
                 results[entry] = {
-                    "status"    : ENTRY_STATE_INFO_MAP.get(data[0],"unknown"),
-                    "size_total"  : str(data[1]),
-                    "size_used"  : str(data[2]),
-                    "size_available"  : str(data[3]),
+                    "status": ENTRY_STATE_INFO_MAP.get(data[0], "unknown"),
+                    "size_total": str(data[1]),
+                    "size_used": str(data[2]),
+                    "size_available": str(data[3]),
                 }
                 results[entry]["autostart"] = self.conn.get_autostart(entry)
                 results[entry]["persistent"] = self.conn.get_persistent(entry)
@@ -564,13 +555,13 @@ class VirtStoragePool(object):
 
 def core(module):
 
-    state     = module.params.get('state', None)
-    name      = module.params.get('name', None)
-    command   = module.params.get('command', None)
-    uri       = module.params.get('uri', None)
-    xml       = module.params.get('xml', None)
+    state = module.params.get('state', None)
+    name = module.params.get('name', None)
+    command = module.params.get('command', None)
+    uri = module.params.get('uri', None)
+    xml = module.params.get('xml', None)
     autostart = module.params.get('autostart', None)
-    mode      = module.params.get('mode', None)
+    mode = module.params.get('mode', None)
 
     v = VirtStoragePool(uri, module)
     res = {}
@@ -578,40 +569,40 @@ def core(module):
     if state and command == 'list_pools':
         res = v.list_pools(state=state)
         if not isinstance(res, dict):
-            res = { command: res }
+            res = {command: res}
         return VIRT_SUCCESS, res
 
     if state:
         if not name:
-            module.fail_json(msg = "state change requires a specified name")
+            module.fail_json(msg="state change requires a specified name")
 
         res['changed'] = False
-        if state in [ 'active' ]:
+        if state in ['active']:
             if v.status(name) is not 'active':
                 res['changed'] = True
                 res['msg'] = v.start(name)
-        elif state in [ 'present' ]:
+        elif state in ['present']:
             try:
                 v.get_pool(name)
             except EntryNotFound:
                 if not xml:
-                    module.fail_json(msg = "storage pool '" + name + "' not present, but xml not specified")
+                    module.fail_json(msg="storage pool '" + name + "' not present, but xml not specified")
                 v.define(name, xml)
                 res = {'changed': True, 'created': name}
-        elif state in [ 'inactive' ]:
+        elif state in ['inactive']:
             entries = v.list_pools()
             if name in entries:
                 if v.status(name) is not 'inactive':
                     res['changed'] = True
                     res['msg'] = v.destroy(name)
-        elif state in [ 'undefined', 'absent' ]:
+        elif state in ['undefined', 'absent']:
             entries = v.list_pools()
             if name in entries:
                 if v.status(name) is not 'inactive':
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)
-        elif state in [ 'deleted' ]:
+        elif state in ['deleted']:
             entries = v.list_pools()
             if name in entries:
                 if v.status(name) is not 'inactive':
@@ -627,10 +618,10 @@ def core(module):
     if command:
         if command in ENTRY_COMMANDS:
             if not name:
-                module.fail_json(msg = "%s requires 1 argument: name" % command)
+                module.fail_json(msg="%s requires 1 argument: name" % command)
             if command == 'define':
                 if not xml:
-                    module.fail_json(msg = "define requires xml argument")
+                    module.fail_json(msg="define requires xml argument")
                 try:
                     v.get_pool(name)
                 except EntryNotFound:
@@ -640,22 +631,22 @@ def core(module):
             elif command == 'build':
                 res = v.build(name, mode)
                 if not isinstance(res, dict):
-                    res = { 'changed': True, command: res }
+                    res = {'changed': True, command: res}
                 return VIRT_SUCCESS, res
             elif command == 'delete':
                 res = v.delete(name, mode)
                 if not isinstance(res, dict):
-                    res = { 'changed': True, command: res }
+                    res = {'changed': True, command: res}
                 return VIRT_SUCCESS, res
             res = getattr(v, command)(name)
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
             res = getattr(v, command)()
             if not isinstance(res, dict):
-                res = { command: res }
+                res = {command: res}
             return VIRT_SUCCESS, res
 
         else:
@@ -663,7 +654,7 @@ def core(module):
 
     if autostart is not None:
         if not name:
-            module.fail_json(msg = "state change requires a specified name")
+            module.fail_json(msg="state change requires a specified name")
 
         res['changed'] = False
         if autostart:
@@ -682,17 +673,17 @@ def core(module):
 
 def main():
 
-    module = AnsibleModule (
-        argument_spec = dict(
-            name = dict(aliases=['pool']),
-            state = dict(choices=['active', 'inactive', 'present', 'absent', 'undefined', 'deleted']),
-            command = dict(choices=ALL_COMMANDS),
-            uri = dict(default='qemu:///system'),
-            xml = dict(),
-            autostart = dict(type='bool'),
-            mode = dict(choices=ALL_MODES),
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(aliases=['pool']),
+            state=dict(choices=['active', 'inactive', 'present', 'absent', 'undefined', 'deleted']),
+            command=dict(choices=ALL_COMMANDS),
+            uri=dict(default='qemu:///system'),
+            xml=dict(),
+            autostart=dict(type='bool'),
+            mode=dict(choices=ALL_MODES),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not HAS_VIRT:
@@ -711,7 +702,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e))
 
-    if rc != 0: # something went wrong emit the msg
+    if rc != 0:  # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
     else:
         module.exit_json(**result)

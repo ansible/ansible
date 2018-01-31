@@ -1,13 +1,17 @@
 #!/usr/bin/env python
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import argparse
-from ipalib import api
 import json
+from ipalib import api, errors
+from six import u
+
 
 def initialize():
     '''
     This function initializes the FreeIPA/IPA API. This function requires
-    no arguments. A kerberos key must be present in the users keyring in 
+    no arguments. A kerberos key must be present in the users keyring in
     order for this to work.
     '''
 
@@ -16,10 +20,11 @@ def initialize():
     try:
         api.Backend.rpcclient.connect()
     except AttributeError:
-        #FreeIPA < 4.0 compatibility
+        # FreeIPA < 4.0 compatibility
         api.Backend.xmlclient.connect()
-    
+
     return api
+
 
 def list_groups(api):
     '''
@@ -28,18 +33,18 @@ def list_groups(api):
     '''
 
     inventory = {}
-    hostvars={}
-    meta={}
+    hostvars = {}
 
-    result = api.Command.hostgroup_find()['result']
+    result = api.Command.hostgroup_find(all=True)['result']
 
     for hostgroup in result:
         # Get direct and indirect members (nested hostgroups) of hostgroup
         members = []
+
         if 'member_host' in hostgroup:
             members = [host for host in hostgroup['member_host']]
         if 'memberindirect_host' in hostgroup:
-            members += (host for host in  hostgroup['memberindirect_host'])
+            members += (host for host in hostgroup['memberindirect_host'])
         inventory[hostgroup['cn'][0]] = {'hosts': [host for host in members]}
 
         for member in members:
@@ -48,8 +53,9 @@ def list_groups(api):
     inventory['_meta'] = {'hostvars': hostvars}
     inv_string = json.dumps(inventory, indent=1, sort_keys=True)
     print(inv_string)
-    
+
     return None
+
 
 def parse_args():
     '''
@@ -66,24 +72,30 @@ def parse_args():
 
     return parser.parse_args()
 
-def print_host(host):
-    '''
-    This function is really a stub, it could return variables to be used in 
-    a playbook. However, at this point there are no variables stored in 
-    FreeIPA/IPA.
 
+def get_host_attributes(api, host):
+    """
     This function expects one string, this hostname to lookup variables for.
-    '''
+    Args:
+        api: FreeIPA API Object
+        host: Name of Hostname
 
-    print(json.dumps({}))
+    Returns: Dict of Host vars if found else None
+    """
+    try:
+        result = api.Command.host_show(u(host))['result']
+        if 'usercertificate' in result:
+            del result['usercertificate']
+        return json.dumps(result, indent=1)
+    except errors.NotFound as e:
+        return {}
 
-    return None
 
 if __name__ == '__main__':
     args = parse_args()
+    api = initialize()
 
     if args.host:
-        print_host(args.host)
+        print(get_host_attributes(api, args.host))
     elif args.list:
-        api = initialize()
         list_groups(api)

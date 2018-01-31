@@ -1,24 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This is a DOCUMENTATION stub specific to this module, it extends
-# a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -239,11 +230,23 @@ EXAMPLES = '''
       register: rax
 '''
 
+import json
+import os
+import re
+import time
+
 try:
     import pyrax
     HAS_PYRAX = True
 except ImportError:
     HAS_PYRAX = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.rax import (FINAL_STATUSES, rax_argument_spec, rax_find_bootable_volume,
+                                      rax_find_image, rax_find_network, rax_find_volume,
+                                      rax_required_together, rax_to_dict, setup_rax_module)
+from ansible.module_utils.six.moves import xrange
+from ansible.module_utils.six import string_types
 
 
 def rax_find_server_image(module, server, image, boot_volume):
@@ -279,10 +282,18 @@ def rax_find_server_image(module, server, image, boot_volume):
     return server.image
 
 
-def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
-           files={}, wait=True, wait_timeout=300, disk_config=None,
-           group=None, nics=[], extra_create_args={}, user_data=None,
-           config_drive=False, existing=[], block_device_mapping_v2=[]):
+def create(module, names=None, flavor=None, image=None, meta=None, key_name=None,
+           files=None, wait=True, wait_timeout=300, disk_config=None,
+           group=None, nics=None, extra_create_args=None, user_data=None,
+           config_drive=False, existing=None, block_device_mapping_v2=None):
+    names = [] if names is None else names
+    meta = {} if meta is None else meta
+    files = {} if files is None else files
+    nics = [] if nics is None else nics
+    extra_create_args = {} if extra_create_args is None else extra_create_args
+    existing = [] if existing is None else existing
+    block_device_mapping_v2 = [] if block_device_mapping_v2 is None else block_device_mapping_v2
+
     cs = pyrax.cloudservers
     changed = False
 
@@ -337,7 +348,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
                 try:
                     server.get()
                 except:
-                    server.status == 'ERROR'
+                    server.status = 'ERROR'
 
             if not filter(lambda s: s.status not in FINAL_STATUSES,
                           servers):
@@ -351,7 +362,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         try:
             server.get()
         except:
-            server.status == 'ERROR'
+            server.status = 'ERROR'
         instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
             success.append(instance)
@@ -389,7 +400,10 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
         module.exit_json(**results)
 
 
-def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
+def delete(module, instance_ids=None, wait=True, wait_timeout=300, kept=None):
+    instance_ids = [] if instance_ids is None else instance_ids
+    kept = [] if kept is None else kept
+
     cs = pyrax.cloudservers
 
     changed = False
@@ -466,13 +480,19 @@ def delete(module, instance_ids=[], wait=True, wait_timeout=300, kept=[]):
 
 
 def cloudservers(module, state=None, name=None, flavor=None, image=None,
-                 meta={}, key_name=None, files={}, wait=True, wait_timeout=300,
-                 disk_config=None, count=1, group=None, instance_ids=[],
-                 exact_count=False, networks=[], count_offset=0,
-                 auto_increment=False, extra_create_args={}, user_data=None,
+                 meta=None, key_name=None, files=None, wait=True, wait_timeout=300,
+                 disk_config=None, count=1, group=None, instance_ids=None,
+                 exact_count=False, networks=None, count_offset=0,
+                 auto_increment=False, extra_create_args=None, user_data=None,
                  config_drive=False, boot_from_volume=False,
                  boot_volume=None, boot_volume_size=None,
                  boot_volume_terminate=False):
+    meta = {} if meta is None else meta
+    files = {} if files is None else files
+    instance_ids = [] if instance_ids is None else instance_ids
+    networks = [] if networks is None else networks
+    extra_create_args = {} if extra_create_args is None else extra_create_args
+
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     if not cnw:
@@ -484,7 +504,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
         if not boot_from_volume and not boot_volume and not image:
             module.fail_json(msg='image is required for the "rax" module')
 
-        for arg, value in dict(name=name, flavor=flavor).iteritems():
+        for arg, value in dict(name=name, flavor=flavor).items():
             if not value:
                 module.fail_json(msg='%s is required for the "rax" module' %
                                      arg)
@@ -514,7 +534,7 @@ def cloudservers(module, state=None, name=None, flavor=None, image=None,
             meta[k] = ','.join(['%s' % i for i in v])
         elif isinstance(v, dict):
             meta[k] = json.dumps(v)
-        elif not isinstance(v, basestring):
+        elif not isinstance(v, string_types):
             meta[k] = '%s' % v
 
     # When using state=absent with group, the absent block won't match the
@@ -888,12 +908,6 @@ def main():
                  boot_volume=boot_volume, boot_volume_size=boot_volume_size,
                  boot_volume_terminate=boot_volume_terminate)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.rax import *
-
-# invoke the module
 
 if __name__ == '__main__':
     main()

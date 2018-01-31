@@ -1,0 +1,9 @@
+- name: Install
+  package:
+    name: attr
+    state: present
+
+- name: Create file
+  file:
+    path: "{{ test_file }}"
+    state: touch

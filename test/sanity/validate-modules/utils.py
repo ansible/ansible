@@ -19,8 +19,17 @@
 import ast
 import sys
 
-# We only use StringIO, since we cannot setattr on cStringIO
-from StringIO import StringIO
+from io import BytesIO, TextIOWrapper
+
+import yaml
+import yaml.reader
+
+from ansible.module_utils._text import to_text
+
+
+class AnsibleTextIOWrapper(TextIOWrapper):
+    def write(self, s):
+        super(AnsibleTextIOWrapper, self).write(to_text(s, self.encoding, errors='replace'))
 
 
 def find_globals(g, tree):
@@ -52,10 +61,8 @@ class CaptureStd():
     def __enter__(self):
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        sys.stdout = self.stdout = StringIO()
-        sys.stderr = self.stderr = StringIO()
-        setattr(sys.stdout, 'encoding', self.sys_stdout.encoding)
-        setattr(sys.stderr, 'encoding', self.sys_stderr.encoding)
+        sys.stdout = self.stdout = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
+        sys.stderr = self.stderr = AnsibleTextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -65,4 +72,45 @@ class CaptureStd():
     def get(self):
         """Return ``(stdout, stderr)``"""
 
-        return self.stdout.getvalue(), self.stderr.getvalue()
+        return self.stdout.buffer.getvalue(), self.stderr.buffer.getvalue()
+
+
+def parse_yaml(value, lineno, module, name, load_all=False):
+    traces = []
+    errors = []
+    data = None
+
+    if load_all:
+        loader = yaml.safe_load_all
+    else:
+        loader = yaml.safe_load
+
+    try:
+        data = loader(value)
+        if load_all:
+            data = list(data)
+    except yaml.MarkedYAMLError as e:
+        e.problem_mark.line += lineno - 1
+        e.problem_mark.name = '%s.%s' % (module, name)
+        errors.append({
+            'msg': '%s is not valid YAML' % name,
+            'line': e.problem_mark.line + 1,
+            'column': e.problem_mark.column + 1
+        })
+        traces.append(e)
+    except yaml.reader.ReaderError as e:
+        traces.append(e)
+        # TODO: Better line/column detection
+        errors.append({
+            'msg': ('%s is not valid YAML. Character '
+                    '0x%x at position %d.' % (name, e.character, e.position)),
+            'line': lineno
+        })
+    except yaml.YAMLError as e:
+        traces.append(e)
+        errors.append({
+            'msg': '%s is not valid YAML: %s: %s' % (name, type(e), e),
+            'line': lineno
+        })
+
+    return data, errors, traces

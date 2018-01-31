@@ -1,22 +1,14 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -30,7 +22,7 @@ version_added: "2.1"
 author:
     - "Mark Chance (@java1guy)"
     - "Darek Kaczynski (@kaczynskid)"
-requirements: [ json, boto, botocore, boto3 ]
+requirements: [ json, botocore, boto3 ]
 options:
     details:
         description:
@@ -70,7 +62,7 @@ RETURN = '''
 services:
     description: When details is false, returns an array of service ARNs, otherwise an array of complex objects as described below.
     returned: success
-    type: list of complex
+    type: complex
     contains:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
@@ -129,16 +121,10 @@ services:
             description: lost of service events
             returned: always
             type: list of complex
-'''
-try:
-    import boto
-    import botocore
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
+'''  # NOQA
 
 try:
-    import boto3
+    import botocore
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -153,20 +139,16 @@ class EcsServiceManager:
     def __init__(self, module):
         self.module = module
 
-        try:
-            # self.ecs = boto3.client('ecs')
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            if not region:
-                module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-            self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            self.module.fail_json(msg="Can't authorize connection - %s" % str(e))
+        # self.ecs = boto3.client('ecs')
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     # def list_clusters(self):
     #   return self.client.list_clusters()
     # {'failures': [],
     # 'ResponseMetadata': {'HTTPStatusCode': 200, 'RequestId': 'ce7b5880-1c41-11e5-8a31-47a93a8a98eb'},
-    # 'clusters': [{'activeServicesCount': 0, 'clusterArn': 'arn:aws:ecs:us-west-2:777110527155:cluster/default', 'status': 'ACTIVE', 'pendingTasksCount': 0, 'runningTasksCount': 0, 'registeredContainerInstancesCount': 0, 'clusterName': 'default'}]}
+    # 'clusters': [{'activeServicesCount': 0, 'clusterArn': 'arn:aws:ecs:us-west-2:777110527155:cluster/default',
+    #               'status': 'ACTIVE', 'pendingTasksCount': 0, 'runningTasksCount': 0, 'registeredContainerInstancesCount': 0, 'clusterName': 'default'}]}
     # {'failures': [{'arn': 'arn:aws:ecs:us-west-2:777110527155:cluster/bogus', 'reason': 'MISSING'}],
     # 'ResponseMetadata': {'HTTPStatusCode': 200, 'RequestId': '0f66c219-1c42-11e5-8a31-47a93a8a98eb'},
     # 'clusters': []}
@@ -176,17 +158,17 @@ class EcsServiceManager:
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
         response = self.ecs.list_services(**fn_args)
-        relevant_response = dict(services = response['serviceArns'])
+        relevant_response = dict(services=response['serviceArns'])
         return relevant_response
 
     def describe_services(self, cluster, services):
         fn_args = dict()
         if cluster and cluster is not None:
             fn_args['cluster'] = cluster
-        fn_args['services']=services.split(",")
+        fn_args['services'] = services.split(",")
         response = self.ecs.describe_services(**fn_args)
-        relevant_response = dict(services = map(self.extract_service_from, response['services']))
-        if 'failures' in response and len(response['failures'])>0:
+        relevant_response = dict(services=map(self.extract_service_from, response['services']))
+        if 'failures' in response and len(response['failures']) > 0:
             relevant_response['services_not_running'] = response['failures']
         return relevant_response
 
@@ -205,22 +187,20 @@ class EcsServiceManager:
                     e['createdAt'] = str(e['createdAt'])
         return service
 
+
 def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        details=dict(required=False, type='bool', default=False ),
-        cluster=dict(required=False, type='str' ),
-        service=dict(required=False, type='str' )
+        details=dict(required=False, type='bool', default=False),
+        cluster=dict(required=False, type='str'),
+        service=dict(required=False, type='str')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    if not HAS_BOTO:
-      module.fail_json(msg='boto is required.')
-
     if not HAS_BOTO3:
-      module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='boto3 is required.')
 
     show_details = module.params.get('details', False)
 

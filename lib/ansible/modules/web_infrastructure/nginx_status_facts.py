@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -135,7 +126,9 @@ class NginxStatusFacts(object):
             return result
 
         result['nginx_status_facts']['data'] = data
-        match = re.match(r'Active connections: ([0-9]+) \nserver accepts handled requests\n ([0-9]+) ([0-9]+) ([0-9]+) \nReading: ([0-9]+) Writing: ([0-9]+) Waiting: ([0-9]+)', data, re.S)
+        expr = r'Active connections: ([0-9]+) \nserver accepts handled requests\n ([0-9]+) ([0-9]+) ([0-9]+) \n' \
+            r'Reading: ([0-9]+) Writing: ([0-9]+) Waiting: ([0-9]+)'
+        match = re.match(expr, data, re.S)
         if match:
             result['nginx_status_facts']['active_connections'] = int(match.group(1))
             result['nginx_status_facts']['accepts'] = int(match.group(2))
@@ -145,6 +138,7 @@ class NginxStatusFacts(object):
             result['nginx_status_facts']['writing'] = int(match.group(6))
             result['nginx_status_facts']['waiting'] = int(match.group(7))
         return result
+
 
 def main():
     global module
@@ -159,6 +153,7 @@ def main():
     nginx_status_facts = NginxStatusFacts().run()
     result = dict(changed=False, ansible_facts=nginx_status_facts)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Matt Makai <matthew.makai@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -70,25 +61,25 @@ EXAMPLES = '''
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "All servers with webserver role are now configured."
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15552014545"
-    to_number: "+15553035681"
+    msg: All servers with webserver role are now configured.
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15552014545
+    to_number: +15553035681
   delegate_to: localhost
 
 # send an SMS to multiple phone numbers about the deployment
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "This server's configuration is now complete."
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15553258899"
+    msg: This server configuration is now complete.
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15553258899
     to_number:
-      - "+15551113232"
-      - "+12025551235"
-      - "+19735559010"
+      - +15551113232
+      - +12025551235
+      - +19735559010
   delegate_to: localhost
 
 # send an MMS to a single recipient with an update on the deployment
@@ -96,19 +87,23 @@ EXAMPLES = '''
 # note: replace account_sid and auth_token values with your credentials
 # and you have to have the 'from_number' on your Twilio account
 - twilio:
-    msg: "Deployment complete!"
-    account_sid: "ACXXXXXXXXXXXXXXXXX"
-    auth_token: "ACXXXXXXXXXXXXXXXXX"
-    from_number: "+15552014545"
-    to_number: "+15553035681"
-    media_url: "https://demo.twilio.com/logo.png"
+    msg: Deployment complete!
+    account_sid: ACXXXXXXXXXXXXXXXXX
+    auth_token: ACXXXXXXXXXXXXXXXXX
+    from_number: +15552014545
+    to_number: +15553035681
+    media_url: https://demo.twilio.com/logo.png
   delegate_to: localhost
 '''
 
 # =======================================
 # twilio module support methods
 #
-import urllib
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves.urllib.parse import urlencode
+from ansible.module_utils.urls import fetch_url
 
 
 def post_twilio_api(module, account_sid, auth_token, msg, from_number,
@@ -117,15 +112,15 @@ def post_twilio_api(module, account_sid, auth_token, msg, from_number,
         % (account_sid,)
     AGENT = "Ansible"
 
-    data = {'From':from_number, 'To':to_number, 'Body':msg}
+    data = {'From': from_number, 'To': to_number, 'Body': msg}
     if media_url:
         data['MediaUrl'] = media_url
-    encoded_data = urllib.urlencode(data)
+    encoded_data = urlencode(data)
 
     headers = {'User-Agent': AGENT,
-            'Content-type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-            }
+               'Content-type': 'application/x-www-form-urlencoded',
+               'Accept': 'application/json',
+               }
 
     # Hack module params to have the Basic auth params that fetch_url expects
     module.params['url_username'] = account_sid.replace('\n', '')
@@ -164,7 +159,7 @@ def main():
 
     for number in to_number:
         r, info = post_twilio_api(module, account_sid, auth_token, msg,
-                from_number, number, media_url)
+                                  from_number, number, media_url)
         if info['status'] not in [200, 201]:
             body_message = "unknown error"
             if 'body' in info:
@@ -174,8 +169,6 @@ def main():
 
     module.exit_json(msg=msg, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

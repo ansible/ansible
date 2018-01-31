@@ -1,0 +1,7 @@
+# This contain sample template execution tasks
+---
+
+- name: Test Command
+  cnos_command: host={{ inventory_hostname }}  username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}} clicommand='{{item.clicommand}}' outputfile=./results/cnos_command_{{ inventory_hostname }}_output.txt
+  with_items: "{{test_runcommand_data1}}"
+# Completed file

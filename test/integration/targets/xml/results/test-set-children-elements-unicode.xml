@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<business type="bar">
+  <name>Tasty Beverage Co.</name>
+  <beers>
+    <beer>Окское</beer><beer>Невское</beer></beers>
+  <rating subjective="true">10</rating>
+  <website>
+    <mobilefriendly/>
+    <address>http://tastybeverageco.com</address>
+  </website>
+</business>

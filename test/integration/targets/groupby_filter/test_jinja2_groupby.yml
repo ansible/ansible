@@ -1,0 +1,29 @@
+---
+- name: Test jinja2 groupby
+  hosts: localhost
+  gather_facts: True
+  connection: local
+  vars:
+    fruits:
+      - name: apple
+        enjoy: yes
+      - name: orange
+        enjoy: no
+      - name: strawberry
+        enjoy: yes
+    expected: [[false, [{"enjoy": false, "name": "orange"}]], [true, [{"enjoy": true, "name": "apple"}, {"enjoy": true, "name": "strawberry"}]]]
+  tasks:
+    - name: show python interpreter
+      debug:
+         msg: "{{ ansible_python['executable'] }}"
+
+    - name: show jinja2 version
+      debug:
+         msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+
+    - set_fact:
+        result: "{{ fruits | groupby('enjoy') }}"
+
+    - assert:
+        that:
+          - result == expected

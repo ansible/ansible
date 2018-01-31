@@ -1,0 +1,447 @@
+# Test code for win_eventlog
+
+# (c) 2017, Andrew Saraceni <andrew.saraceni@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Remove potentially leftover logs
+  win_eventlog:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - WinEventLogTest
+    - NewWinEventLogTest
+
+
+- name: Add log without sources
+  win_eventlog:
+    name: WinEventLogTest
+    state: present
+  register: add_log_without_sources
+  failed_when: add_log_without_sources.changed != false or add_log_without_sources.msg != "You must specify one or more sources when creating a log for the first time"
+
+
+- name: Add log
+  win_eventlog: &wel_present
+    name: WinEventLogTest
+    sources:
+      - WinEventLogSource1
+      - WinEventLogSource2
+    state: present
+  register: add_log
+
+- name: Test add_log (normal mode)
+  assert:
+    that:
+    - add_log.changed == true
+    - add_log.exists == true
+    - add_log.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+    - add_log.sources_changed == ["WinEventLogSource1", "WinEventLogSource2"]
+  when: not in_check_mode
+
+- name: Test add_log (check-mode)
+  assert:
+    that:
+    - add_log.changed == true
+    - add_log.exists == false
+    - add_log.sources_changed == []
+  when: in_check_mode
+
+
+- name: Add log (again)
+  win_eventlog: *wel_present
+  register: add_log_again
+
+- name: Test add_log_again (normal mode)
+  assert:
+    that:
+    - add_log_again.changed == false
+    - add_log_again.exists == true
+    - add_log_again.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+    - add_log_again.sources_changed == []
+  when: not in_check_mode
+
+
+- name: Run tests for normal mode only (expects event log)
+  when: not in_check_mode
+  block:
+
+  - name: Change default source
+    win_eventlog:
+      <<: *wel_present
+      sources:
+        - WinEventLogTest
+      category_file: C:\TestApp\AppCategories.dll
+    register: change_default_source
+    failed_when: change_default_source.changed != false or change_default_source.msg != "Cannot modify default source WinEventLogTest of log WinEventLogTest - you must remove the log"
+
+
+  - name: Change source category
+    win_eventlog: &welc_present
+      <<: *wel_present
+      sources:
+        - WinEventLogSource1
+      category_file: C:\TestApp\AppCategories.dll
+    register: change_source_category
+
+  - name: Test change_source_category
+    assert:
+      that:
+      - change_source_category.changed == true
+      - change_source_category.exists == true
+      - change_source_category.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_category.sources_changed == ["WinEventLogSource1"]
+
+
+  - name: Change source category (again)
+    win_eventlog: *welc_present
+    register: change_source_category_again
+
+  - name: Test change_source_category_again
+    assert:
+      that:
+      - change_source_category_again.changed == false
+      - change_source_category_again.exists == true
+      - change_source_category_again.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_category_again.sources_changed == []
+
+
+  - name: Change source message
+    win_eventlog: &welm_present
+      <<: *welc_present
+      message_file: C:\TestApp\AppMessages.dll
+    register: change_source_message
+
+  - name: Test change_source_message
+    assert:
+      that:
+      - change_source_message.changed == true
+      - change_source_message.exists == true
+      - change_source_message.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_message.sources_changed == ["WinEventLogSource1"]
+
+
+  - name: Change source message (again)
+    win_eventlog: *welm_present
+    register: change_source_message_again
+
+  - name: Test change_source_message_again
+    assert:
+      that:
+      - change_source_message_again.changed == false
+      - change_source_message_again.exists == true
+      - change_source_message_again.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_message_again.sources_changed == []
+
+
+  - name: Change source parameter
+    win_eventlog: &welp_present
+      <<: *welm_present
+      parameter_file: C:\TestApp\AppParameters.dll
+    register: change_source_parameter
+
+  - name: Test change_source_parameter
+    assert:
+      that:
+      - change_source_parameter.changed == true
+      - change_source_parameter.exists == true
+      - change_source_parameter.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_parameter.sources_changed == ["WinEventLogSource1"]
+
+
+  - name: Change source parameter (again)
+    win_eventlog: *welp_present
+    register: change_source_parameter_again
+
+  - name: Test change_source_parameter_again
+    assert:
+      that:
+      - change_source_parameter_again.changed == false
+      - change_source_parameter_again.exists == true
+      - change_source_parameter_again.sources == ["WinEventLogSource1", "WinEventLogSource2", "WinEventLogTest"]
+      - change_source_parameter_again.sources_changed == []
+
+
+  - name: Change log maximum size
+    win_eventlog: &wels_present
+      <<: *wel_present
+      maximum_size: 256MB
+    register: change_log_maximum_size
+
+  - name: Test change_log_maximum_size
+    assert:
+      that:
+      - change_log_maximum_size.changed == true
+      - change_log_maximum_size.exists == true
+      - change_log_maximum_size.maximum_size_kb == 262144
+
+
+  - name: Change log maximum size (again)
+    win_eventlog: *wels_present
+    register: change_log_maximum_size_again
+
+  - name: Test change_log_maximum_size_again
+    assert:
+      that:
+      - change_log_maximum_size_again.changed == false
+      - change_log_maximum_size_again.exists == true
+      - change_log_maximum_size_again.maximum_size_kb == 262144
+
+
+  - name: Change log invalid maximum size 1
+    win_eventlog:
+      <<: *wel_present
+      maximum_size: 256 MB
+    register: change_log_invalid_maximum_size_1
+    failed_when: change_log_invalid_maximum_size_1.changed != false or change_log_invalid_maximum_size_1.msg != "Maximum size 256 MB is not properly specified"
+
+
+  - name: Change log invalid maximum size 2
+    win_eventlog:
+      <<: *wel_present
+      maximum_size: 5GB
+    register: change_log_invalid_maximum_size_2
+    failed_when: change_log_invalid_maximum_size_2.changed != false or change_log_invalid_maximum_size_2.msg != "Maximum size must be between 64KB and 4GB"
+
+
+  - name: Change log invalid maximum size 3
+    win_eventlog:
+      <<: *wel_present
+      maximum_size: 129KB
+    register: change_log_invalid_maximum_size_3
+    failed_when: change_log_invalid_maximum_size_3.changed != false or change_log_invalid_maximum_size_3.msg != "Maximum size must be divisible by 64KB"
+
+
+  - name: Change log retention days
+    win_eventlog: &welr_present
+      <<: *wels_present
+      retention_days: 128
+    register: change_log_retention_days
+
+  - name: Test change_log_retention_days
+    assert:
+      that:
+      - change_log_retention_days.changed == true
+      - change_log_retention_days.exists == true
+      - change_log_retention_days.retention_days == 128
+
+
+  - name: Change log retention days (again)
+    win_eventlog: *welr_present
+    register: change_log_retention_days_again
+
+  - name: Test change_log_retention_days_again
+    assert:
+      that:
+      - change_log_retention_days_again.changed == false
+      - change_log_retention_days_again.exists == true
+      - change_log_retention_days_again.retention_days == 128
+
+
+  - name: Change log overflow action
+    win_eventlog: &welo_present
+      <<: *wels_present
+      overflow_action: OverwriteAsNeeded
+    register: change_log_overflow_action
+
+  - name: Test change_log_overflow_action
+    assert:
+      that:
+      - change_log_overflow_action.changed == true
+      - change_log_overflow_action.exists == true
+      - change_log_overflow_action.overflow_action == "OverwriteAsNeeded"
+
+
+  - name: Change log overflow action (again)
+    win_eventlog: *welo_present
+    register: change_log_overflow_action_again
+
+  - name: Test change_log_overflow_action_again
+    assert:
+      that:
+      - change_log_overflow_action_again.changed == false
+      - change_log_overflow_action_again.exists == true
+      - change_log_overflow_action_again.overflow_action == "OverwriteAsNeeded"
+
+
+  - name: Add log with existing source
+    win_eventlog: &wele_present
+      name: NewWinEventLogTest
+      sources:
+        - WinEventLogSource1
+      state: present
+    register: add_log_with_existing_source
+    failed_when: add_log_with_existing_source.changed != false or add_log_with_existing_source.msg != "Source WinEventLogSource1 already exists and cannot be created"
+
+
+  - name: Add new log
+    win_eventlog:
+      <<: *wele_present
+      sources:
+        - NewWinEventLogSource1
+
+  - name: Change source for different log
+    win_eventlog:
+      <<: *wele_present
+      sources:
+        - WinEventLogSource1
+      category_file: C:\TestApp\AppCategories.dll
+    register: change_source_for_different_log
+    failed_when: change_source_for_different_log.changed != false or change_source_for_different_log.msg != "Source WinEventLogSource1 does not belong to log NewWinEventLogTest and cannot be modified"
+
+  - name: Remove new log
+    win_eventlog:
+      name: NewWinEventLogTest
+      state: absent
+
+
+  - name: Add entry to log
+    win_shell: Write-EventLog -LogName WinEventLogTest -Source WinEventLogSource1 -EntryType Information -EventId 12345 -Message "Test message"
+
+  - name: Verify add entry
+    win_eventlog:
+      name: WinEventLogTest
+      state: present
+    register: verify_add_entry
+
+  - name: Test verify_add_entry
+    assert:
+      that:
+      - verify_add_entry.changed == false
+      - verify_add_entry.exists == true
+      - verify_add_entry.entries == 1
+
+
+  - name: Clear log
+    win_eventlog: &wel_clear
+      name: WinEventLogTest
+      state: clear
+    register: clear_log
+
+  - name: Test clear_log
+    assert:
+      that:
+      - clear_log.changed == true
+      - clear_log.exists == true
+      - clear_log.entries == 0
+    when: not in_check_mode
+
+
+  - name: Clear log (again)
+    win_eventlog: *wel_clear
+    register: clear_log_again
+
+  - name: Test clear_log_again
+    assert:
+      that:
+      - clear_log_again.changed == false
+      - clear_log_again.exists == true
+      - clear_log_again.entries == 0
+    when: in_check_mode
+
+
+- name: Clear absent log
+  win_eventlog:
+    name: WinEventLogTest
+    state: clear
+  register: clear_absent_log
+  when: in_check_mode
+  failed_when: clear_absent_log.changed != false or clear_absent_log.msg != "Cannot clear log WinEventLogTest as it does not exist"
+
+
+- name: Remove default source
+  win_eventlog: &weld_absent
+    name: WinEventLogTest
+    sources:
+      - WinEventLogTest
+    state: absent
+  register: remove_default_source
+  failed_when: remove_default_source.changed != false or remove_default_source.msg != "Cannot remove default source WinEventLogTest from log WinEventLogTest - you must remove the log"
+
+
+- name: Remove source
+  win_eventlog: &wels_absent
+    <<: *weld_absent
+    sources:
+      - WinEventLogSource1
+  register: remove_source
+
+- name: Test remove_source (normal mode)
+  assert:
+    that:
+    - remove_source.changed == true
+    - remove_source.exists == true
+    - remove_source.sources == ["WinEventLogSource2", "WinEventLogTest"]
+    - remove_source.sources_changed == ["WinEventLogSource1"]
+  when: not in_check_mode
+
+- name: Test remove_source (check-mode)
+  assert:
+    that:
+    - remove_source.changed == false
+    - remove_source.exists == false
+    - remove_source.sources_changed == []
+  when: in_check_mode
+
+
+- name: Remove source (again)
+  win_eventlog: *wels_absent
+  register: remove_source_again
+
+- name: Test remove_source_again (normal mode)
+  assert:
+    that:
+    - remove_source_again.changed == false
+    - remove_source_again.exists == true
+    - remove_source.sources == ["WinEventLogSource2", "WinEventLogTest"]
+    - remove_source_again.sources_changed == []
+  when: not in_check_mode
+
+
+- name: Remove log
+  win_eventlog: &wel_absent
+    name: WinEventLogTest
+    state: absent
+  register: remove_log
+
+- name: Test remove_log (normal mode)
+  assert:
+    that:
+    - remove_log.changed == true
+    - remove_log.exists == false
+    - remove_log.sources_changed == ["WinEventLogSource2", "WinEventLogTest"]
+  when: not in_check_mode
+
+- name: Test remove_log (check-mode)
+  assert:
+    that:
+    - remove_log.changed == false
+    - remove_log.exists == false
+    - remove_log.sources_changed == []
+  when: in_check_mode
+
+
+- name: Remove log (again)
+  win_eventlog: *wel_absent
+  register: remove_log_again
+
+- name: Test remove_log_again (normal mode)
+  assert:
+    that:
+    - remove_log_again.changed == false
+    - remove_log_again.exists == false
+    - remove_log_again.sources_changed == []
+  when: not in_check_mode

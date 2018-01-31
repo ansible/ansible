@@ -1,0 +1,26 @@
+- name: SETUP-LOCAL-REPOS | create dirs
+  file:
+    name: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ repo_dir }}/minimal"
+    - "{{ repo_dir }}/shallow"
+
+- name: SETUP-LOCAL-REPOS | prepare minimal git repo
+  shell: git init; echo "1" > a; git add a; git commit -m "1"
+  args:
+    chdir: "{{ repo_dir }}/minimal"
+
+- name: SETUP-LOCAL-REPOS | prepare git repo for shallow clone
+  shell: |
+    git init;
+    echo "1" > a; git add a; git commit -m "1"; git tag earlytag; git branch earlybranch;
+    echo "2" > a; git add a; git commit -m "2";
+  args:
+    chdir: "{{ repo_dir }}/shallow"
+
+- name: SETUP-LOCAL-REPOS | set old hash var for shallow test
+  command: 'git rev-parse HEAD~1'
+  register: git_shallow_head_1
+  args:
+    chdir: "{{ repo_dir }}/shallow"

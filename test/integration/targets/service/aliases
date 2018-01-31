@@ -1,6 +1,5 @@
 destructive
-needs/privileged
 posix/ci/group1
 skip/freebsd
 skip/osx
-skip/python3
+systemd

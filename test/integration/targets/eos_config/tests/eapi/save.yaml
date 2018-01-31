@@ -7,14 +7,14 @@
       - no description
       - no shutdown
     parents:
-      - interface Ethernet5
+      - interface Ethernet2
     match: none
     provider: "{{ eapi }}"
 
 
 - name: save config
   eos_config:
-    save: true
+    save_when: always
     provider: "{{ eapi }}"
   register: result
 
@@ -24,7 +24,7 @@
 
 - name: save should always run
   eos_config:
-    save: true
+    save_when: always
     provider: "{{ eapi }}"
   register: result
 

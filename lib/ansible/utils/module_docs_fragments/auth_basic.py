@@ -38,5 +38,5 @@ options:
     required: false
     default: yes
     description:
-      - Whether or not to validate SSL certs when supplying a https endpoint. 
+      - Whether or not to validate SSL certs when supplying a https endpoint.
 """

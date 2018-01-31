@@ -19,87 +19,100 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-Import-Module Servermanager;
+Import-Module Servermanager
 
-$params = Parse-Args $args;
-
-$result = New-Object PSObject -Property @{
+$result = @{
     changed = $false
 }
 
-$name = Get-Attr $params "name" -failifempty $true
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+
+# DEPRECATED 2.4, potential removal in 2.6+
+$restart = Get-AnsibleParam -obj $params -name "restart" -type "bool" -default $false
+$includesubfeatures = Get-AnsibleParam -obj $params -name "include_sub_features" -type "bool" -default $false
+$includemanagementtools = Get-AnsibleParam -obj $params -name "include_management_tools" -type "bool" -default $false
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
 
 $name = $name -split ',' | % { $_.Trim() }
 
-$state = Get-Attr $params "state" "present"
-$state = $state.ToString().ToLower()
-If (($state -ne 'present') -and ($state -ne 'absent')) {
-    Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
+If ($restart) {
+    Add-DeprecationWarning -obj $result -message "The 'restart' parameter causes instability. Use the 'win_reboot' action conditionally on 'reboot_required' return value instead" -version 2.6
 }
 
-$restart = Get-Attr $params "restart" $false | ConvertTo-Bool
-$includesubfeatures = Get-Attr $params "include_sub_features" $false | ConvertTo-Bool
-$includemanagementtools = Get-Attr $params "include_management_tools" $false | ConvertTo-Bool
-$source = Get-Attr $params "source" $false
+# Determine which cmdlets we need to work with. Then we can set options appropriate for the cmdlet
+$installWF= $false
+$addWF = $false
+
+try {
+    # We can infer uninstall/remove if install/add cmdlets exist
+    if (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
+        $addCmdlet = "Install-WindowsFeature"
+        $removeCmdlet = "Uninstall-WindowsFeature"
+        $installWF = $true
+    }
+    elseif (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
+        $addCmdlet = "Add-WindowsFeature"
+        $removeCmdlet = "Remove-WindowsFeature"
+        $addWF = $true
+    }
+    else {
+        throw [System.Exception] "Not supported on this version of Windows"
+    }
+}
+catch {
+    Fail-Json $result $_.Exception.Message
+}
+
 
 If ($state -eq "present") {
-    if ($source)
-    {
-        if (!(test-path $source))
-        {
-            Fail-Json $result "Failed to find source path $source"
-        }
-    }
-    
+
+    # Base params to cover both Add/Install-WindowsFeature
     $InstallParams = @{
-        "Name"=$name;
-        "Restart"=$Restart;
-        "IncludeAllSubFeature"=$includesubfeatures;
-        "ErrorAction"="SilentlyContinue"
+        Name = $name
+        Restart = $restart
+        IncludeAllSubFeature = $includesubfeatures
+        ErrorAction = "SilentlyContinue"
+        WhatIf = $check_mode
     }
-    
-    if ($IncludeManagementTools -eq $true)
-    {
-        $InstallParams.add("IncludeManagementTools",$includemanagementtools)
-    }
-    
-    if ($source)
-    {
-        $InstallParams.add("Source",$source)
-    }
-    
-    
-    
-    try {
-        If (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Install-WindowsFeature @InstallParams
-        }
-        ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
-            if ($IncludeManagementTools)
-            {
-                $InstallParams.Remove("IncludeManagementTools")
+
+    # IncludeManagementTools and source are options only for Install-WindowsFeature
+    if ($installWF) {
+
+        if ($source) {
+            if (-not (Test-Path -Path $source)) {
+                Fail-Json $result "Failed to find source path $source"
             }
-            $featureresult = Add-WindowsFeature @InstallParams
+
+            $InstallParams.add("Source",$source)
         }
-        Else {
-            Fail-Json $result "Not supported on this version of Windows"
+
+        if ($IncludeManagementTools) {
+            $InstallParams.add("IncludeManagementTools",$includemanagementtools)
         }
+    }
+
+    try {
+        $featureresult = Invoke-Expression "$addCmdlet @InstallParams"
     }
     catch {
         Fail-Json $result $_.Exception.Message
     }
 }
 ElseIf ($state -eq "absent") {
+
+    $UninstallParams = @{
+        Name = $name
+        Restart = $restart
+        ErrorAction = "SilentlyContinue"
+        WhatIf = $check_mode
+    }
+
     try {
-        If (Get-Command "Uninstall-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Uninstall-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
-        }
-        ElseIf (Get-Command "Remove-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Remove-WindowsFeature -Name $name -Restart:$restart -ErrorAction SilentlyContinue
-        }
-        Else {
-            Fail-Json $result "Not supported on this version of Windows"
-        }
+        $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams"
     }
     catch {
         Fail-Json $result $_.Exception.Message
@@ -115,28 +128,34 @@ If ($featureresult.FeatureResult)
     ForEach ($item in $featureresult.FeatureResult) {
         $message = @()
         ForEach ($msg in $item.Message) {
-            $message += New-Object PSObject -Property @{
+            $message += @{
                 message_type = $msg.MessageType.ToString()
                 error_code = $msg.ErrorCode
                 text = $msg.Text
             }
         }
-        $installed_features += New-Object PSObject -Property @{
+        $installed_features += @{
             id = $item.Id
             display_name = $item.DisplayName
             message = $message
-            restart_needed = $item.RestartNeeded.ToString() | ConvertTo-Bool
+            reboot_required = $item.RestartNeeded.ToString() | ConvertTo-Bool
             skip_reason = $item.SkipReason.ToString()
             success = $item.Success.ToString() | ConvertTo-Bool
+
+            # DEPRECATED 2.4, potential removal in 2.6+ (standardize naming to "reboot_required")
+            restart_needed = $item.RestartNeeded.ToString() | ConvertTo-Bool
         }
     }
     $result.changed = $true
 }
 
-Set-Attr $result "feature_result" $installed_features
-Set-Attr $result "success" ($featureresult.Success.ToString() | ConvertTo-Bool)
-Set-Attr $result "exitcode" $featureresult.ExitCode.ToString()
-Set-Attr $result "restart_needed" ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
+$result.feature_result = $installed_features
+$result.success = ($featureresult.Success.ToString() | ConvertTo-Bool)
+$result.exitcode = $featureresult.ExitCode.ToString()
+$result.reboot_required = ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
+
+# DEPRECATED 2.4, potential removal in 2.6+ (standardize naming to "reboot_required")
+$result.restart_needed = $result.reboot_required
 
 If ($result.success) {
     Exit-Json $result

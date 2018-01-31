@@ -26,13 +26,15 @@ import traceback
 
 from jinja2.exceptions import TemplateNotFound
 
-# TODO: not needed if we use the cryptography library with its default RNG
-# engine
-HAS_ATFORK=True
+HAS_PYCRYPTO_ATFORK = False
 try:
     from Crypto.Random import atfork
-except ImportError:
-    HAS_ATFORK=False
+    HAS_PYCRYPTO_ATFORK = True
+except:
+    # We only need to call atfork if pycrypto is used because it will need to
+    # reinitialize its RNG.  Since old paramiko could be using pycrypto, we
+    # need to take charge of calling it.
+    pass
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
@@ -59,30 +61,34 @@ class WorkerProcess(multiprocessing.Process):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._rslt_q            = rslt_q
-        self._task_vars         = task_vars
-        self._host              = host
-        self._task              = task
-        self._play_context      = play_context
-        self._loader            = loader
-        self._variable_manager  = variable_manager
+        self._rslt_q = rslt_q
+        self._task_vars = task_vars
+        self._host = host
+        self._task = task
+        self._play_context = play_context
+        self._loader = loader
+        self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
 
-        # dupe stdin, if we have one
-        self._new_stdin = sys.stdin
-        try:
-            fileno = sys.stdin.fileno()
-            if fileno is not None:
-                try:
-                    self._new_stdin = os.fdopen(os.dup(fileno))
-                except OSError:
-                    # couldn't dupe stdin, most likely because it's
-                    # not a valid file descriptor, so we just rely on
-                    # using the one that was passed in
-                    pass
-        except (AttributeError, ValueError):
-            # couldn't get stdin's fileno, so we just carry on
-            pass
+        if sys.stdin.isatty():
+            # dupe stdin, if we have one
+            self._new_stdin = sys.stdin
+            try:
+                fileno = sys.stdin.fileno()
+                if fileno is not None:
+                    try:
+                        self._new_stdin = os.fdopen(os.dup(fileno))
+                    except OSError:
+                        # couldn't dupe stdin, most likely because it's
+                        # not a valid file descriptor, so we just rely on
+                        # using the one that was passed in
+                        pass
+            except (AttributeError, ValueError):
+                # couldn't get stdin's fileno, so we just carry on
+                pass
+        else:
+            # set to /dev/null
+            self._new_stdin = os.devnull
 
     def run(self):
         '''
@@ -91,11 +97,11 @@ class WorkerProcess(multiprocessing.Process):
         signify that they are ready for their next task.
         '''
 
-        #import cProfile, pstats, StringIO
-        #pr = cProfile.Profile()
-        #pr.enable()
+        # import cProfile, pstats, StringIO
+        # pr = cProfile.Profile()
+        # pr.enable()
 
-        if HAS_ATFORK:
+        if HAS_PYCRYPTO_ATFORK:
             atfork()
 
         try:
@@ -112,20 +118,30 @@ class WorkerProcess(multiprocessing.Process):
                 self._rslt_q
             ).run()
 
-            display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host.name, self._task._uuid, executor_result)
+            task_result = TaskResult(
+                self._host.name,
+                self._task._uuid,
+                executor_result,
+                task_fields=self._task.dump_attrs(),
+            )
 
             # put the result on the result queue
-            display.debug("sending task result")
+            display.debug("sending task result for task %s" % self._task._uuid)
             self._rslt_q.put(task_result)
-            display.debug("done sending task result")
+            display.debug("done sending task result for task %s" % self._task._uuid)
 
         except AnsibleConnectionFailure:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host.name, self._task._uuid, dict(unreachable=True))
+            task_result = TaskResult(
+                self._host.name,
+                self._task._uuid,
+                dict(unreachable=True),
+                task_fields=self._task.dump_attrs(),
+            )
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
@@ -133,7 +149,12 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''))
+                    task_result = TaskResult(
+                        self._host.name,
+                        self._task._uuid,
+                        dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
+                        task_fields=self._task.dump_attrs(),
+                    )
                     self._rslt_q.put(task_result, block=False)
                 except:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
@@ -141,11 +162,10 @@ class WorkerProcess(multiprocessing.Process):
 
         display.debug("WORKER PROCESS EXITING")
 
-        #pr.disable()
-        #s = StringIO.StringIO()
-        #sortby = 'time'
-        #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        #ps.print_stats()
-        #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
-        #    f.write(s.getvalue())
-
+        # pr.disable()
+        # s = StringIO.StringIO()
+        # sortby = 'time'
+        # ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        # ps.print_stats()
+        # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
+        #     f.write(s.getvalue())

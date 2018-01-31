@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -78,6 +79,16 @@ EXAMPLES = '''
 
 '''
 
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    AWSRetry,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
+
 try:
     import boto.ec2.elb
     from boto.ec2.tag import Tag
@@ -86,8 +97,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+
 class ElbInformation(object):
-    """ Handles ELB information """
+    """Handles ELB information."""
 
     def __init__(self,
                  module,
@@ -103,17 +115,12 @@ class ElbInformation(object):
 
     def _get_tags(self, elbname):
         params = {'LoadBalancerNames.member.1': elbname}
-        try:
-            elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
-            return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
-        except:
-            return {}
+        elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
+        return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
 
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def _get_elb_connection(self):
-        try:
-            return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
-        except BotoServerError as err:
-            self.module.fail_json(msg=err.message)
+        return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
 
     def _get_elb_listeners(self, listeners):
         listener_list = []
@@ -141,7 +148,7 @@ class ElbInformation(object):
         protocol, port_path = health_check.target.split(':')
         try:
             port, path = port_path.split('/', 1)
-            path = '/{}'.format(path)
+            path = '/{0}'.format(path)
         except ValueError:
             port = port_path
             path = None
@@ -159,6 +166,7 @@ class ElbInformation(object):
             health_check_dict['ping_path'] = path
         return health_check_dict
 
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def _get_elb_info(self, elb):
         elb_info = {
             'name': elb.name,
@@ -186,43 +194,48 @@ class ElbInformation(object):
             elb_info['vpc_id'] = elb.vpc_id
 
         if elb.instances:
-            try:
-                instance_health = self.connection.describe_instance_health(elb.name)
-            except BotoServerError as err:
-                self.module.fail_json(msg=err.message)
+            instance_health = self.connection.describe_instance_health(elb.name)
             elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
             elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
             elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
             elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
-            elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
-                        float(elb_info['instances_inservice_count']) +
-                        float(elb_info['instances_outofservice_count']))*100
+            try:
+                elb_info['instances_inservice_percent'] = (
+                    float(elb_info['instances_inservice_count']) /
+                    float(elb_info['instances_inservice_count'] + elb_info['instances_outofservice_count'])
+                ) * 100.
+            except ZeroDivisionError:
+                elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
-
     def list_elbs(self):
-        elb_array = []
+        elb_array, token = [], None
+        get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
+        while True:
+            all_elbs = get_elb_with_backoff(marker=token)
+            token = all_elbs.next_marker
 
-        try:
-            all_elbs = self.connection.get_all_load_balancers()
-        except BotoServerError as err:
-            self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message))
-
-        if all_elbs:
-            if self.names:
-                for existing_lb in all_elbs:
-                    if existing_lb.name in self.names:
-                        elb_array.append(existing_lb)
+            if all_elbs:
+                if self.names:
+                    for existing_lb in all_elbs:
+                        if existing_lb.name in self.names:
+                            elb_array.append(existing_lb)
+                else:
+                    elb_array.extend(all_elbs)
             else:
-                elb_array = all_elbs
-                    
+                break
+
+            if token is None:
+                break
+
         return list(map(self._get_elb_info, elb_array))
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            names={'default': [], 'type': 'list'}
-        )
+        names={'default': [], 'type': 'list'}
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
@@ -230,24 +243,24 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    try:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+        if not region:
+            module.fail_json(msg="region must be specified")
 
-    if not region:
-        module.fail_json(msg="region must be specified")
+        names = module.params['names']
+        elb_information = ElbInformation(
+            module, names, region, **aws_connect_params)
 
-    names = module.params['names']
-    elb_information = ElbInformation(module,
-                              names,
-                              region,
-                              **aws_connect_params)
+        ec2_facts_result = dict(changed=False,
+                                elbs=elb_information.list_elbs())
 
-    ec2_facts_result = dict(changed=False,
-                            elbs=elb_information.list_elbs())
+    except BotoServerError as err:
+        module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
+                         exception=traceback.format_exc())
 
     module.exit_json(**ec2_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

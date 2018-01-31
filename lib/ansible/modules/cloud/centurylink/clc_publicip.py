@@ -1,27 +1,16 @@
 #!/usr/bin/python
-
 #
 # Copyright (c) 2015 CenturyLink
-#
-# This file is part of Ansible.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: clc_publicip
@@ -286,7 +275,7 @@ class ClcPublicIp(object):
         result = None
         try:
             for ip_address in server.PublicIPs().public_ips:
-                    result = ip_address.Delete()
+                result = ip_address.Delete()
         except CLCException as ex:
             self.module.fail_json(msg='Failed to remove public ip from the server : {0}. {1}'.format(
                 server.id, ex.response_text

@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -24,7 +25,6 @@ module: ec2
 short_description: create, terminate, start or stop an instance in ec2
 description:
     - Creates or terminates ec2 instances.
-    - C(state=restarted) was added in 2.2
 version_added: "0.9"
 options:
   key_name:
@@ -33,13 +33,15 @@ options:
     required: false
     default: null
     aliases: ['keypair']
-  id:        
+  id:
     version_added: "1.1"
-    description:        
-      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on. For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).        
-    required: false        
-    default: null        
-    aliases: []        
+    description:
+      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
+        This identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on.
+        For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
+    required: false
+    default: null
+    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -56,7 +58,9 @@ options:
   region:
     version_added: "1.2"
     description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
+      - The AWS region to use.  Must be specified if ec2_url is not used.
+        If not specified then the value of the EC2_REGION environment variable, if any, is used.
+        See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
     required: false
     default: null
     aliases: [ 'aws_region', 'ec2_region' ]
@@ -76,7 +80,8 @@ options:
   tenancy:
     version_added: "1.9"
     description:
-      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC. Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
+      - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC.
+        Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
     required: false
     default: default
     choices: [ "default", "dedicated" ]
@@ -84,7 +89,8 @@ options:
   spot_price:
     version_added: "1.5"
     description:
-      - Maximum spot price to bid, If not set a regular on-demand instance is requested. A spot request is made with this maximum bid. When it is filled, the instance is started.
+      - Maximum spot price to bid, If not set a regular on-demand instance is requested. A spot request is made with this maximum bid.
+        When it is filled, the instance is started.
     required: false
     default: null
     aliases: []
@@ -116,7 +122,7 @@ options:
     aliases: []
   wait:
     description:
-      - wait for the instance to be 'running' before returning.  Does not wait for SSH, see 'wait_for' example for details.
+      - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for' example for details.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -143,7 +149,7 @@ options:
     description:
       - enable detailed monitoring (CloudWatch) for instance
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   user_data:
@@ -179,7 +185,7 @@ options:
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   private_ip:
@@ -220,14 +226,16 @@ options:
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
     description:
-    - Set whether AWS will Stop or Terminate an instance on shutdown
+    - Set whether AWS will Stop or Terminate an instance on shutdown. This parameter is ignored when using instance-store
+      images (which require termination on shutdown).
     required: false
     default: 'stop'
     choices: [ "stop", "terminate" ]
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create, terminate, start, stop or restart instances.
+        The state 'restarted' was added in 2.2
     required: false
     default: 'present'
     aliases: []
@@ -235,7 +243,10 @@ options:
   volumes:
     version_added: "1.5"
     description:
-      - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str), encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type, iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
+      - a list of hash/dictionaries of volumes to add to the new instance; '[{"key":"value", "key":"value"}]'; keys allowed
+        are - device_name (str; required), delete_on_termination (bool; False), device_type (deprecated), ephemeral (str),
+        encrypted (bool; False), snapshot (str), volume_type (str), iops (int) - device_type is deprecated use volume_type,
+        iops must be set when volume_type='io1', ephemeral and snapshot are mutually exclusive.
     required: false
     default: null
     aliases: []
@@ -248,21 +259,26 @@ options:
   exact_count:
     version_added: "1.5"
     description:
-      - An integer value which indicates how many instances that match the 'count_tag' parameter should be running. Instances are either created or terminated based on this value.
+      - An integer value which indicates how many instances that match the 'count_tag' parameter should be running.
+        Instances are either created or terminated based on this value.
     required: false
     default: null
     aliases: []
   count_tag:
     version_added: "1.5"
     description:
-      - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.  This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers that are tagged with "class=webserver". The specified tag must already exist or be passed in as the 'instance_tags' option.
+      - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.
+        This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers
+        that are tagged with "class=webserver". The specified tag must already exist or be passed in as the 'instance_tags' option.
     required: false
     default: null
     aliases: []
   network_interfaces:
     version_added: "2.0"
     description:
-      - A list of existing network interfaces to attach to the instance at launch. When specifying existing network interfaces, none of the assign_public_ip, private_ip, vpc_subnet_id, group, or group_id parameters may be used. (Those parameters are for creating a new network interface at launch.)
+      - A list of existing network interfaces to attach to the instance at launch. When specifying existing network interfaces,
+        none of the assign_public_ip, private_ip, vpc_subnet_id, group, or group_id parameters may be used. (Those parameters are
+        for creating a new network interface at launch.)
     required: false
     default: null
     aliases: ['network_interface']
@@ -342,6 +358,8 @@ EXAMPLES = '''
         volume_size: 8
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
+    count_tag:
+      Name: dbserver
     exact_count: 1
 
 # Multiple groups example
@@ -578,19 +596,23 @@ EXAMPLES = '''
 #
 
     # instances with tag foo
+- ec2:
     count_tag:
         foo:
 
     # instances with tag foo=bar
+- ec2:
     count_tag:
         foo: bar
 
     # instances with tags foo=bar & baz
+- ec2:
     count_tag:
         foo: bar
         baz:
 
     # instances with tags foo & bar & baz=bang
+- ec2:
     count_tag:
         - foo
         - bar
@@ -598,30 +620,41 @@ EXAMPLES = '''
 
 '''
 
+import traceback
 import time
 from ast import literal_eval
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six import get_function_code
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
+from distutils.version import LooseVersion
+from ansible.module_utils.six import string_types
 
 try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
-    from boto.vpc import VPCConnection
+    from boto import connect_ec2_endpoint
+    from boto import connect_vpc
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 
-def find_running_instances_by_count_tag(module, ec2, count_tag, zone=None):
+def find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone=None):
 
-    # get reservations for instances that match tag(s) and are running
-    reservations = get_reservations(module, ec2, tags=count_tag, state="running", zone=zone)
+    # get reservations for instances that match tag(s) and are in the desired state
+    state = module.params.get('state')
+    if state not in ['running', 'stopped']:
+        state = None
+    reservations = get_reservations(module, ec2, vpc, tags=count_tag, state=state, zone=zone)
 
     instances = []
     for res in reservations:
         if hasattr(res, 'instances'):
             for inst in res.instances:
+                if inst.state == 'terminated':
+                    continue
                 instances.append(inst)
 
     return reservations, instances
@@ -637,10 +670,19 @@ def _set_none_to_blank(dictionary):
     return result
 
 
-def get_reservations(module, ec2, tags=None, state=None, zone=None):
-
+def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
     # TODO: filters do not work with tags that have underscores
     filters = dict()
+
+    vpc_subnet_id = module.params.get('vpc_subnet_id')
+    vpc_id = None
+    if vpc_subnet_id:
+        filters.update({"subnet-id": vpc_subnet_id})
+        if vpc:
+            vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+
+    if vpc_id:
+        filters.update({"vpc-id": vpc_id})
 
     if tags is not None:
 
@@ -649,6 +691,10 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
                 tags = literal_eval(tags)
             except:
                 pass
+
+        # if not a string type, convert and make sure it's a text string
+        if isinstance(tags, int):
+            tags = to_text(tags)
 
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
@@ -659,14 +705,18 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             for x in tags:
                 if isinstance(x, dict):
                     x = _set_none_to_blank(x)
-                    filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(x)))
+                    filters.update(dict(("tag:" + tn, tv) for (tn, tv) in x.items()))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
-            filters.update(dict(("tag:"+tn, tv) for (tn,tv) in iteritems(tags)))
+            filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
+
+        # lets check to see if the filters dict is empty, if so then stop
+        if not filters:
+            module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -675,9 +725,13 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
     if zone:
         filters.update({'availability-zone': zone})
 
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
+
     results = ec2.get_all_instances(filters=filters)
 
     return results
+
 
 def get_instance_info(inst):
     """
@@ -709,7 +763,7 @@ def get_instance_info(inst):
                      'groups': dict((group.id, group.name) for group in inst.groups),
                      }
     try:
-        instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
+        instance_info['virtualization_type'] = getattr(inst, 'virtualization_type')
     except AttributeError:
         instance_info['virtualization_type'] = None
 
@@ -738,6 +792,7 @@ def get_instance_info(inst):
 
     return instance_info
 
+
 def boto_supports_associate_public_ip_address(ec2):
     """
     Check if Boto library has associate_public_ip_address in the NetworkInterfaceSpecification
@@ -756,6 +811,7 @@ def boto_supports_associate_public_ip_address(ec2):
     except AttributeError:
         return False
 
+
 def boto_supports_profile_name_arg(ec2):
     """
     Check if Boto library has instance_profile_name argument. instance_profile_name has been added in Boto 2.5.0
@@ -768,6 +824,17 @@ def boto_supports_profile_name_arg(ec2):
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in get_function_code(run_instances_method).co_varnames
 
+
+def boto_supports_volume_encryption():
+    """
+    Check if Boto library supports encryption of EBS volumes (added in 2.29.0)
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
+
+
 def create_block_device(module, ec2, volume):
     # Not aware of a way to determine this programatically
     # http://aws.amazon.com/about-aws/whats-new/2013/10/09/ebs-provisioned-iops-maximum-iops-gb-ratio-increased-to-30-1/
@@ -776,35 +843,47 @@ def create_block_device(module, ec2, volume):
     # device_type has been used historically to represent volume_type,
     # however ec2_vol uses volume_type, as does the BlockDeviceType, so
     # we add handling for either/or but not both
-    if all(key in volume for key in ['device_type','volume_type']):
-        module.fail_json(msg = 'device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if all(key in volume for key in ['device_type', 'volume_type']):
+        module.fail_json(msg='device_type is a deprecated name for volume_type. Do not use both device_type and volume_type')
+    if 'device_type' in volume:
+        module.deprecate('device_type is deprecated for block devices - use volume_type instead',
+                         version=2.9)
 
     # get whichever one is set, or NoneType if neither are set
     volume_type = volume.get('device_type') or volume.get('volume_type')
 
     if 'snapshot' not in volume and 'ephemeral' not in volume:
         if 'volume_size' not in volume:
-            module.fail_json(msg = 'Size must be specified when creating a new volume or modifying the root volume')
+            module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
     if 'snapshot' in volume:
         if volume_type == 'io1' and 'iops' not in volume:
-            module.fail_json(msg = 'io1 volumes must have an iops value set')
+            module.fail_json(msg='io1 volumes must have an iops value set')
         if 'iops' in volume:
             snapshot = ec2.get_all_snapshots(snapshot_ids=[volume['snapshot']])[0]
             size = volume.get('volume_size', snapshot.volume_size)
             if int(volume['iops']) > MAX_IOPS_TO_SIZE_RATIO * size:
-                module.fail_json(msg = 'IOPS must be at most %d times greater than size' % MAX_IOPS_TO_SIZE_RATIO)
+                module.fail_json(msg='IOPS must be at most %d times greater than size' % MAX_IOPS_TO_SIZE_RATIO)
         if 'encrypted' in volume:
-            module.fail_json(msg = 'You can not set encryption when creating a volume from a snapshot')
+            module.fail_json(msg='You can not set encryption when creating a volume from a snapshot')
     if 'ephemeral' in volume:
         if 'snapshot' in volume:
-            module.fail_json(msg = 'Cannot set both ephemeral and snapshot')
-    return BlockDeviceType(snapshot_id=volume.get('snapshot'),
-                           ephemeral_name=volume.get('ephemeral'),
-                           size=volume.get('volume_size'),
-                           volume_type=volume_type,
-                           delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'),
-                           encrypted=volume.get('encrypted', None))
+            module.fail_json(msg='Cannot set both ephemeral and snapshot')
+    if boto_supports_volume_encryption():
+        return BlockDeviceType(snapshot_id=volume.get('snapshot'),
+                               ephemeral_name=volume.get('ephemeral'),
+                               size=volume.get('volume_size'),
+                               volume_type=volume_type,
+                               delete_on_termination=volume.get('delete_on_termination', False),
+                               iops=volume.get('iops'),
+                               encrypted=volume.get('encrypted', None))
+    else:
+        return BlockDeviceType(snapshot_id=volume.get('snapshot'),
+                               ephemeral_name=volume.get('ephemeral'),
+                               size=volume.get('volume_size'),
+                               volume_type=volume_type,
+                               delete_on_termination=volume.get('delete_on_termination', False),
+                               iops=volume.get('iops'))
+
 
 def boto_supports_param_in_spot_request(ec2, param):
     """
@@ -817,6 +896,7 @@ def boto_supports_param_in_spot_request(ec2, param):
     """
     method = getattr(ec2, 'request_spot_instances')
     return param in get_function_code(method).co_varnames
+
 
 def await_spot_requests(module, ec2, spot_requests, count):
     """
@@ -841,13 +921,13 @@ def await_spot_requests(module, ec2, spot_requests, count):
                 continue
             for sir in reqs:
                 if sir.id != sirb.id:
-                    continue # this is not our spot instance
+                    continue  # this is not our spot instance
                 if sir.instance_id is not None:
                     spot_req_inst_ids[sirb.id] = sir.instance_id
                 elif sir.state == 'open':
-                    continue # still waiting, nothing to do here
+                    continue  # still waiting, nothing to do here
                 elif sir.state == 'active':
-                    continue # Instance is created already, nothing to do here
+                    continue  # Instance is created already, nothing to do here
                 elif sir.state == 'failed':
                     module.fail_json(msg="Spot instance request %s failed with status %s and fault %s:%s" % (
                         sir.id, sir.status.code, sir.fault.code, sir.fault.message))
@@ -871,8 +951,8 @@ def await_spot_requests(module, ec2, spot_requests, count):
         if len(spot_req_inst_ids) < count:
             time.sleep(5)
         else:
-            return spot_req_inst_ids.values()
-    module.fail_json(msg = "wait for spot requests timeout on %s" % time.asctime())
+            return list(spot_req_inst_ids.values())
+    module.fail_json(msg="wait for spot requests timeout on %s" % time.asctime())
 
 
 def enforce_count(module, ec2, vpc):
@@ -886,7 +966,7 @@ def enforce_count(module, ec2, vpc):
     if exact_count and count_tag is None:
         module.fail_json(msg="you must use the 'count_tag' option with exact_count")
 
-    reservations, instances = find_running_instances_by_count_tag(module, ec2, count_tag, zone)
+    reservations, instances = find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone)
 
     changed = None
     checkmode = False
@@ -908,10 +988,10 @@ def enforce_count(module, ec2, vpc):
         changed = True
         to_remove = len(instances) - exact_count
         if not checkmode:
-            all_instance_ids = sorted([ x.id for x in instances ])
+            all_instance_ids = sorted([x.id for x in instances])
             remove_ids = all_instance_ids[0:to_remove]
 
-            instances = [ x for x in instances if x.id not in remove_ids]
+            instances = [x for x in instances if x.id not in remove_ids]
 
             (changed, instance_dict_array, changed_instance_ids) \
                 = terminate_instances(module, ec2, remove_ids)
@@ -924,7 +1004,9 @@ def enforce_count(module, ec2, vpc):
     # ensure all instances are dictionaries
     all_instances = []
     for inst in instances:
+
         if not isinstance(inst, dict):
+            warn_if_public_ip_assignment_changed(module, inst)
             inst = get_instance_info(inst)
         all_instances.append(inst)
 
@@ -980,10 +1062,6 @@ def create_instances(module, ec2, vpc, override_count=None):
     spot_launch_group = module.params.get('spot_launch_group')
     instance_initiated_shutdown_behavior = module.params.get('instance_initiated_shutdown_behavior')
 
-    # group_id and group_name are exclusive of each other
-    if group_id and group_name:
-        module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
-
     vpc_id = None
     if vpc_subnet_id:
         if not vpc:
@@ -1000,29 +1078,29 @@ def create_instances(module, ec2, vpc, override_count=None):
                 grp_details = ec2.get_all_security_groups(filters={'vpc_id': vpc_id})
             else:
                 grp_details = ec2.get_all_security_groups()
-            if isinstance(group_name, basestring):
+            if isinstance(group_name, string_types):
                 group_name = [group_name]
             unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
             if len(unmatched) > 0:
                 module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
-            group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+            group_id = [str(grp.id) for grp in grp_details if str(grp.name) in group_name]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
-            #wrap the group_id in a list if it's not one already
-            if isinstance(group_id, basestring):
+            # wrap the group_id in a list if it's not one already
+            if isinstance(group_id, string_types):
                 group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             group_name = [grp_item.name for grp_item in grp_details]
     except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
+        module.fail_json(msg=str(e))
 
     # Lookup any instances that much our run id.
 
     running_instances = []
     count_remaining = int(count)
 
-    if id != None:
-        filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
+    if id is not None:
+        filter_dict = {'client-token': id, 'instance-state-name': 'running'}
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
@@ -1046,11 +1124,11 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'user_data': user_data}
 
             if ebs_optimized:
-              params['ebs_optimized'] = ebs_optimized
+                params['ebs_optimized'] = ebs_optimized
 
             # 'tenancy' always has a default value, but it is not a valid parameter for spot instance request
             if not spot_price:
-              params['tenancy'] = tenancy
+                params['tenancy'] = tenancy
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -1083,7 +1161,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                     params['network_interfaces'] = interfaces
             else:
                 if network_interfaces:
-                    if isinstance(network_interfaces, basestring):
+                    if isinstance(network_interfaces, string_types):
                         network_interfaces = [network_interfaces]
                     interfaces = []
                     for i, network_interface_id in enumerate(network_interfaces):
@@ -1104,7 +1182,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 bdm = BlockDeviceMapping()
                 for volume in volumes:
                     if 'device_name' not in volume:
-                        module.fail_json(msg = 'Device name must be set for volume')
+                        module.fail_json(msg='Device name must be set for volume')
                     # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
                     # to be a signal not to create this volume
                     if 'volume_size' not in volume or int(volume['volume_size']) > 0:
@@ -1115,27 +1193,40 @@ def create_instances(module, ec2, vpc, override_count=None):
             # check to see if we're using spot pricing first before starting instances
             if not spot_price:
                 if assign_public_ip and private_ip:
-                    params.update(dict(
-                      min_count          = count_remaining,
-                      max_count          = count_remaining,
-                      client_token       = id,
-                      placement_group    = placement_group,
-                    ))
+                    params.update(
+                        dict(
+                            min_count=count_remaining,
+                            max_count=count_remaining,
+                            client_token=id,
+                            placement_group=placement_group,
+                        )
+                    )
                 else:
-                    params.update(dict(
-                      min_count          = count_remaining,
-                      max_count          = count_remaining,
-                      client_token       = id,
-                      placement_group    = placement_group,
-                      private_ip_address = private_ip,
-                    ))
+                    params.update(
+                        dict(
+                            min_count=count_remaining,
+                            max_count=count_remaining,
+                            client_token=id,
+                            placement_group=placement_group,
+                            private_ip_address=private_ip,
+                        )
+                    )
 
                 # For ordinary (not spot) instances, we can select 'stop'
                 # (the default) or 'terminate' here.
                 params['instance_initiated_shutdown_behavior'] = instance_initiated_shutdown_behavior or 'stop'
 
-                res = ec2.run_instances(**params)
-                instids = [ i.id for i in res.instances ]
+                try:
+                    res = ec2.run_instances(**params)
+                except boto.exception.EC2ResponseError as e:
+                    if (params['instance_initiated_shutdown_behavior'] != 'terminate' and
+                            "InvalidParameterCombination" == e.error_code):
+                        params['instance_initiated_shutdown_behavior'] = 'terminate'
+                        res = ec2.run_instances(**params)
+                    else:
+                        raise
+
+                instids = [i.id for i in res.instances]
                 while True:
                     try:
                         ec2.get_all_instances(instids)
@@ -1145,7 +1236,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                             # there's a race between start and get an instance
                             continue
                         else:
-                            module.fail_json(msg = str(e))
+                            module.fail_json(msg=str(e))
 
                 # The instances returned through ec2.run_instances above can be in
                 # terminated state due to idempotency. See commit 7f11c3d for a complete
@@ -1154,9 +1245,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                     str(instance.id) for instance in res.instances if instance.state == 'terminated'
                 ]
                 if terminated_instances:
-                    module.fail_json(msg = "Instances with id(s) %s " % terminated_instances +
-                                           "were created previously but have since been terminated - " +
-                                           "use a (possibly different) 'instanceid' parameter")
+                    module.fail_json(msg="Instances with id(s) %s " % terminated_instances +
+                                     "were created previously but have since been terminated - " +
+                                     "use a (possibly different) 'instanceid' parameter")
 
             else:
                 if private_ip:
@@ -1164,9 +1255,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                         msg='private_ip only available with on-demand (non-spot) instances')
                 if boto_supports_param_in_spot_request(ec2, 'placement_group'):
                     params['placement_group'] = placement_group
-                elif placement_group :
-                        module.fail_json(
-                            msg="placement_group parameter requires Boto version 2.3.0 or higher.")
+                elif placement_group:
+                    module.fail_json(
+                        msg="placement_group parameter requires Boto version 2.3.0 or higher.")
 
                 # You can't tell spot instances to 'stop'; they will always be
                 # 'terminate'd. For convenience, we'll ignore the latter value.
@@ -1174,24 +1265,27 @@ def create_instances(module, ec2, vpc, override_count=None):
                     module.fail_json(
                         msg="instance_initiated_shutdown_behavior=stop is not supported for spot instances.")
 
-                if spot_launch_group and isinstance(spot_launch_group, basestring):
+                if spot_launch_group and isinstance(spot_launch_group, string_types):
                     params['launch_group'] = spot_launch_group
 
                 params.update(dict(
-                    count = count_remaining,
-                    type = spot_type,
+                    count=count_remaining,
+                    type=spot_type,
                 ))
                 res = ec2.request_spot_instances(spot_price, **params)
 
                 # Now we have to do the intermediate waiting
                 if wait:
                     instids = await_spot_requests(module, ec2, res, count)
+                else:
+                    instids = []
         except boto.exception.BotoServerError as e:
-            module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
         num_running = 0
         wait_timeout = time.time() + wait_timeout
+        res_list = ()
         while wait_timeout > time.time() and num_running < len(instids):
             try:
                 res_list = ec2.get_all_instances(instids)
@@ -1204,7 +1298,7 @@ def create_instances(module, ec2, vpc, override_count=None):
 
             num_running = 0
             for res in res_list:
-                num_running += len([ i for i in res.instances if i.state=='running' ])
+                num_running += len([i for i in res.instances if i.state == 'running'])
             if len(res_list) <= 0:
                 # got a bad response of some sort, possibly due to
                 # stale/cached data. Wait a second and then try again
@@ -1217,9 +1311,9 @@ def create_instances(module, ec2, vpc, override_count=None):
 
         if wait and wait_timeout <= time.time():
             # waiting took too long
-            module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
+            module.fail_json(msg="wait for instances running timeout on %s" % time.asctime())
 
-        #We do this after the loop ends so that we end up with one list
+        # We do this after the loop ends so that we end up with one list
         for res in res_list:
             running_instances.extend(res.instances)
 
@@ -1234,11 +1328,11 @@ def create_instances(module, ec2, vpc, override_count=None):
                 inst.modify_attribute('disableApiTermination', True)
 
         # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
-        if instance_tags:
+        if instance_tags and instids:
             try:
                 ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError as e:
-                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
+                module.fail_json(msg="Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
     instance_dict_array = []
     created_instance_ids = []
@@ -1295,9 +1389,8 @@ def terminate_instances(module, ec2, instance_ids):
         num_terminated = 0
         wait_timeout = time.time() + wait_timeout
         while wait_timeout > time.time() and num_terminated < len(terminated_instance_ids):
-            response = ec2.get_all_instances( \
-                instance_ids=terminated_instance_ids, \
-                filters={'instance-state-name':'terminated'})
+            response = ec2.get_all_instances(instance_ids=terminated_instance_ids,
+                                             filters={'instance-state-name': 'terminated'})
             try:
                 num_terminated = sum([len(res.instances) for res in response])
             except Exception as e:
@@ -1311,14 +1404,12 @@ def terminate_instances(module, ec2, instance_ids):
 
         # waiting took too long
         if wait_timeout < time.time() and num_terminated < len(terminated_instance_ids):
-            module.fail_json(msg = "wait for instance termination timeout on %s" % time.asctime())
-        #Lets get the current state of the instances after terminating - issue600
+            module.fail_json(msg="wait for instance termination timeout on %s" % time.asctime())
+        # Lets get the current state of the instances after terminating - issue600
         instance_dict_array = []
-        for res in ec2.get_all_instances(instance_ids=terminated_instance_ids,\
-                                            filters={'instance-state-name':'terminated'}):
+        for res in ec2.get_all_instances(instance_ids=terminated_instance_ids, filters={'instance-state-name': 'terminated'}):
             for inst in res.instances:
                 instance_dict_array.append(get_instance_info(inst))
-
 
     return (changed, instance_dict_array, terminated_instance_ids)
 
@@ -1349,6 +1440,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     wait_timeout = int(module.params.get('wait_timeout'))
     source_dest_check = module.params.get('source_dest_check')
     termination_protection = module.params.get('termination_protection')
+    group_id = module.params.get('group_id')
+    group_name = module.params.get('group')
     changed = False
     instance_dict_array = []
 
@@ -1365,12 +1458,16 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
 
-     # Check that our instances are not in the state we want to take
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
+    # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     existing_instances_array = []
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
+
+            warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
             try:
@@ -1388,13 +1485,30 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                             changed = True
                 else:
                     module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc(exc))
+                                     exception=traceback.format_exc())
 
             # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
-                    and termination_protection is not None):
+            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
+
+            # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
+            if inst.vpc_id and group_name:
+                grp_details = ec2.get_all_security_groups(filters={'vpc_id': inst.vpc_id})
+                if isinstance(group_name, string_types):
+                    group_name = [group_name]
+                unmatched = set(group_name) - set(to_text(grp.name) for grp in grp_details)
+                if unmatched:
+                    module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
+                group_ids = [to_text(grp.id) for grp in grp_details if to_text(grp.name) in group_name]
+            elif inst.vpc_id and group_id:
+                if isinstance(group_id, string_types):
+                    group_id = [group_id]
+                grp_details = ec2.get_all_security_groups(group_ids=group_id)
+                group_ids = [grp_item.id for grp_item in grp_details]
+            if inst.vpc_id and (group_name or group_id):
+                if set(sg.id for sg in inst.groups) != set(group_ids):
+                    changed = inst.modify_attribute('groupSet', group_ids)
 
             # Check instance state
             if inst.state != state:
@@ -1410,7 +1524,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
             existing_instances_array.append(inst.id)
 
     instance_ids = list(set(existing_instances_array + (instance_ids or [])))
-    ## Wait for all the instances to finish starting or stopping
+    # Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time():
         instance_dict_array = []
@@ -1427,9 +1541,10 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
     if wait and wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
+        module.fail_json(msg="wait for instances running timeout on %s" % time.asctime())
 
     return (changed, instance_dict_array, instance_ids)
+
 
 def restart_instances(module, ec2, instance_ids, state, instance_tags):
     """
@@ -1472,12 +1587,16 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     if instance_tags:
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
+    if module.params.get('id'):
+        filters['client-token'] = module.params['id']
 
-     # Check that our instances are not in the state we want to take
+    # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     for res in ec2.get_all_instances(instance_ids, filters=filters):
         for inst in res.instances:
+
+            warn_if_public_ip_assignment_changed(module, inst)
 
             # Check "source_dest_check" attribute
             try:
@@ -1495,11 +1614,10 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                             changed = True
                 else:
                     module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc(exc))
+                                     exception=traceback.format_exc())
 
             # Check "termination_protection" attribute
-            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
-                    and termination_protection is not None):
+            if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
 
@@ -1515,75 +1633,90 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
     return (changed, instance_dict_array, instance_ids)
 
 
+def warn_if_public_ip_assignment_changed(module, instance):
+    # This is a non-modifiable attribute.
+    assign_public_ip = module.params.get('assign_public_ip')
+
+    # Check that public ip assignment is the same and warn if not
+    public_dns_name = getattr(instance, 'public_dns_name', None)
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+        module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
+                    "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
+
+
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-            key_name = dict(aliases = ['keypair']),
-            id = dict(),
-            group = dict(type='list', aliases=['groups']),
-            group_id = dict(type='list'),
-            zone = dict(aliases=['aws_zone', 'ec2_zone']),
-            instance_type = dict(aliases=['type']),
-            spot_price = dict(),
-            spot_type = dict(default='one-time', choices=["one-time", "persistent"]),
-            spot_launch_group = dict(),
-            image = dict(),
-            kernel = dict(),
-            count = dict(type='int', default='1'),
-            monitoring = dict(type='bool', default=False),
-            ramdisk = dict(),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=300),
-            spot_wait_timeout = dict(default=600),
-            placement_group = dict(),
-            user_data = dict(),
-            instance_tags = dict(type='dict'),
-            vpc_subnet_id = dict(),
-            assign_public_ip = dict(type='bool', default=False),
-            private_ip = dict(),
-            instance_profile_name = dict(),
-            instance_ids = dict(type='list', aliases=['instance_id']),
-            source_dest_check = dict(type='bool', default=True),
-            termination_protection = dict(type='bool', default=None),
-            state = dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
+    argument_spec.update(
+        dict(
+            key_name=dict(aliases=['keypair']),
+            id=dict(),
+            group=dict(type='list', aliases=['groups']),
+            group_id=dict(type='list'),
+            zone=dict(aliases=['aws_zone', 'ec2_zone']),
+            instance_type=dict(aliases=['type']),
+            spot_price=dict(),
+            spot_type=dict(default='one-time', choices=["one-time", "persistent"]),
+            spot_launch_group=dict(),
+            image=dict(),
+            kernel=dict(),
+            count=dict(type='int', default='1'),
+            monitoring=dict(type='bool', default=False),
+            ramdisk=dict(),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(default=300),
+            spot_wait_timeout=dict(default=600),
+            placement_group=dict(),
+            user_data=dict(),
+            instance_tags=dict(type='dict'),
+            vpc_subnet_id=dict(),
+            assign_public_ip=dict(type='bool', default=False),
+            private_ip=dict(),
+            instance_profile_name=dict(),
+            instance_ids=dict(type='list', aliases=['instance_id']),
+            source_dest_check=dict(type='bool', default=True),
+            termination_protection=dict(type='bool', default=None),
+            state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
-            exact_count = dict(type='int', default=None),
-            count_tag = dict(),
-            volumes = dict(type='list'),
-            ebs_optimized = dict(type='bool', default=False),
-            tenancy = dict(default='default'),
-            network_interfaces = dict(type='list', aliases=['network_interface'])
+            exact_count=dict(type='int', default=None),
+            count_tag=dict(),
+            volumes=dict(type='list'),
+            ebs_optimized=dict(type='bool', default=False),
+            tenancy=dict(default='default'),
+            network_interfaces=dict(type='list', aliases=['network_interface'])
         )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [
-                                ['exact_count', 'count'],
-                                ['exact_count', 'state'],
-                                ['exact_count', 'instance_ids'],
-                                ['network_interfaces', 'assign_public_ip'],
-                                ['network_interfaces', 'group'],
-                                ['network_interfaces', 'group_id'],
-                                ['network_interfaces', 'private_ip'],
-                                ['network_interfaces', 'vpc_subnet_id'],
-                             ],
+        mutually_exclusive=[
+            ['group_name', 'group_id'],
+            ['exact_count', 'count'],
+            ['exact_count', 'state'],
+            ['exact_count', 'instance_ids'],
+            ['network_interfaces', 'assign_public_ip'],
+            ['network_interfaces', 'group'],
+            ['network_interfaces', 'group_id'],
+            ['network_interfaces', 'private_ip'],
+            ['network_interfaces', 'vpc_subnet_id'],
+        ],
     )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    ec2 = ec2_connect(module)
+    try:
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+        if module.params.get('region') or not module.params.get('ec2_url'):
+            ec2 = ec2_connect(module)
+        elif module.params.get('ec2_url'):
+            ec2 = connect_ec2_endpoint(ec2_url, **aws_connect_kwargs)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+        if 'region' not in aws_connect_kwargs:
+            aws_connect_kwargs['region'] = ec2.region
 
-    if region:
-        try:
-            vpc = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg = str(e))
-    else:
-        vpc = None
+        vpc = connect_vpc(**aws_connect_kwargs)
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg="Failed to get connection: %s" % e.message, exception=traceback.format_exc())
 
     tagged_instances = []
 
@@ -1622,11 +1755,16 @@ def main():
         else:
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
 
+    # Always return instances in the same order
+    if new_instance_ids:
+        new_instance_ids.sort()
+    if instance_dict_array:
+        instance_dict_array.sort(key=lambda x: x['id'])
+    if tagged_instances:
+        tagged_instances.sort(key=lambda x: x['id'])
+
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

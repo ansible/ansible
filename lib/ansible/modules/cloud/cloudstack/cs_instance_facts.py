@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -38,23 +29,18 @@ options:
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
   project:
     description:
       - Project the instance is related to.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- cs_instance_facts:
+- name: gather instance facts
+  cs_instance_facts:
     name: web-vm-1
   delegate_to: localhost
 
@@ -179,12 +165,16 @@ cloudstack_instance.instance_name:
   returned: success
   type: string
   sample: i-44-3992-VM
+cloudstack_instance.volumes:
+  description: List of dictionaries of the volumes attached to the instance.
+  returned: success
+  type: list
+  sample: '[ { name: "ROOT-1369", type: "ROOT", size: 10737418240 }, { name: "data01, type: "DATADISK", size: 10737418240 } ]'
 '''
 
-import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import AnsibleCloudStack, cs_argument_spec
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
 
@@ -192,48 +182,62 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         super(AnsibleCloudStackInstanceFacts, self).__init__(module)
         self.instance = None
         self.returns = {
-            'group':                'group',
-            'hypervisor':           'hypervisor',
-            'instancename':         'instance_name',
-            'publicip':             'public_ip',
-            'passwordenabled':      'password_enabled',
-            'password':             'password',
-            'serviceofferingname':  'service_offering',
-            'isoname':              'iso',
-            'templatename':         'template',
-            'keypair':              'ssh_key',
+            'group': 'group',
+            'hypervisor': 'hypervisor',
+            'instancename': 'instance_name',
+            'publicip': 'public_ip',
+            'passwordenabled': 'password_enabled',
+            'password': 'password',
+            'serviceofferingname': 'service_offering',
+            'isoname': 'iso',
+            'templatename': 'template',
+            'keypair': 'ssh_key',
         }
         self.facts = {
             'cloudstack_instance': None,
         }
-
 
     def get_instance(self):
         instance = self.instance
         if not instance:
             instance_name = self.module.params.get('name')
 
-            args                = {}
-            args['account']     = self.get_account(key='name')
-            args['domainid']    = self.get_domain(key='id')
-            args['projectid']   = self.get_project(key='id')
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+            }
             # Do not pass zoneid, as the instance name must be unique across zones.
-            instances = self.cs.listVirtualMachines(**args)
+            instances = self.query_api('listVirtualMachines', **args)
             if instances:
                 for v in instances['virtualmachine']:
-                    if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
+                    if instance_name.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                         self.instance = v
                         break
         return self.instance
 
+    def get_volumes(self, instance):
+        volume_details = []
+        if instance:
+            args = {
+                'account': self.get_account(key='name'),
+                'domainid': self.get_domain(key='id'),
+                'projectid': self.get_project(key='id'),
+                'virtualmachineid': instance['id'],
+            }
+
+            volumes = self.query_api('listVolumes', **args)
+            if volumes:
+                for vol in volumes['volume']:
+                    volume_details.append({'size': vol['size'], 'type': vol['type'], 'name': vol['name']})
+        return volume_details
 
     def run(self):
         instance = self.get_instance()
         if not instance:
             self.module.fail_json(msg="Instance not found: %s" % self.module.params.get('name'))
         self.facts['cloudstack_instance'] = self.get_result(instance)
-        return  self.facts
-
+        return self.facts
 
     def get_result(self, instance):
         super(AnsibleCloudStackInstanceFacts, self).get_result(instance)
@@ -252,27 +256,30 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
                 for nic in instance['nic']:
                     if nic['isdefault'] and 'ipaddress' in nic:
                         self.result['default_ip'] = nic['ipaddress']
+            volumes = self.get_volumes(instance)
+            if volumes:
+                self.result['volumes'] = volumes
         return self.result
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        name=dict(required=True),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
     ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
+        supports_check_mode=True,
     )
 
     cs_instance_facts = AnsibleCloudStackInstanceFacts(module=module).run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_instance_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

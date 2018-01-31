@@ -1,0 +1,19 @@
+---
+cnos_vlan_data1:
+  - {vlanArg1: 13, vlanArg2: "name", vlanArg3: "anil"}
+cnos_vlan_data2:
+  - {vlanArg1: 13, vlanArg2: "flood", vlanArg3: "ipv4"}
+cnos_vlan_data3:
+  - {vlanArg1: 13, vlanArg2: "state", vlanArg3: "active"}
+cnos_vlan_data4:
+  - {vlanArg1: "access-map", vlanArg2: "anil", vlanArg3: "statistics"}
+cnos_vlan_data5:
+  - {vlanArg1: "access-map", vlanArg2: "anil", vlanArg3: "action", vlanArg4: "forward"}
+cnos_vlan_data6:
+  - {vlanArg1: 13, vlanArg2: "ip", vlanArg3: "query-interval", vlanArg4: 1313}
+cnos_vlan_data7:
+  - {vlanArg1: 13, vlanArg2: "ip", vlanArg3: "last-member-query-interval", vlanArg4: 23}
+cnos_vlan_data8:
+  - {vlanArg1: 13, vlanArg2: "ip", vlanArg3: "mrouter", vlanArg4: "port-aggregation", vlanArg5: 23}
+cnos_vlan_data9:
+  - {clicommand: "no vlan 13"}

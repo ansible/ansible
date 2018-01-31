@@ -1,24 +1,16 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -38,6 +30,7 @@ options:
         command syntax as some commands are automatically modified by the
         device config parser.
     required: true
+    aliases: [commands]
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -94,7 +87,7 @@ options:
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuruation to use as the base
-        config for comparision.
+        config for comparison.
     required: false
     default: null
 """
@@ -102,6 +95,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -111,6 +105,7 @@ vars:
     authorize: yes
     auth_pass: cisco
 
+---
 - asa_acl:
     lines:
       - access-list ACL-ANSIBLE extended permit tcp any any eq 82
@@ -127,7 +122,7 @@ vars:
     lines:
       - access-list ACL-OUTSIDE extended permit tcp any any eq www
       - access-list ACL-OUTSIDE extended permit tcp any any eq https
-     context: customer_a
+    context: customer_a
     provider: "{{ cli }}"
 """
 
@@ -136,24 +131,19 @@ updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: ['...', '...']
-
-responses:
-  description: The set of responses from issuing the commands on the device
-  retured: when not check_mode
-  type: list
-  sample: ['...', '...']
+  sample: ['access-list ACL-OUTSIDE extended permit tcp any any eq www']
 """
-import ansible.module_utils.asa
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
+from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
 
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 
-def get_config(module, acl_name):
+def get_acl_config(module, acl_name):
     contents = module.params['config']
     if not contents:
-        contents = module.config.get_config()
+        contents = get_config(module)
 
     filtered_config = list()
     for item in contents.split('\n'):
@@ -161,6 +151,7 @@ def get_config(module, acl_name):
             filtered_config.append(item)
 
     return NetworkConfig(indent=1, contents='\n'.join(filtered_config))
+
 
 def parse_acl_name(module):
     first_line = True
@@ -179,30 +170,30 @@ def parse_acl_name(module):
 
     return acl_name
 
+
 def main():
 
     argument_spec = dict(
         lines=dict(aliases=['commands'], required=True, type='list'),
+
         before=dict(type='list'),
         after=dict(type='list'),
+
         match=dict(default='line', choices=['line', 'strict', 'exact']),
         replace=dict(default='line', choices=['line', 'block']),
+
         force=dict(default=False, type='bool'),
         config=dict()
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
+    argument_spec.update(asa_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     lines = module.params['lines']
 
-    before = module.params['before']
-    after = module.params['after']
-
-    match = module.params['match']
-    replace = module.params['replace']
-
-    result = dict(changed=False)
+    result = {'changed': False}
 
     candidate = NetworkConfig(indent=1)
     candidate.add(lines)
@@ -210,7 +201,7 @@ def main():
     acl_name = parse_acl_name(module)
 
     if not module.params['force']:
-        contents = get_config(module, acl_name)
+        contents = get_acl_config(module, acl_name)
         config = NetworkConfig(indent=1, contents=contents)
 
         commands = candidate.difference(config)
@@ -220,9 +211,15 @@ def main():
         commands = str(candidate).split('\n')
 
     if commands:
+        if module.params['before']:
+            commands[:0] = module.params['before']
+
+        if module.params['after']:
+            commands.extend(module.params['after'])
+
         if not module.check_mode:
-            response = module.config(commands)
-            result['responses'] = response
+            load_config(module, commands)
+
         result['changed'] = True
 
     result['updates'] = commands

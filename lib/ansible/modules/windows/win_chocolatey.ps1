@@ -1,55 +1,52 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2014, Trond Hindenes <trond@hindenes.com>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Copyright: (c) 2014, Trond Hindenes <trond@hindenes.com>
+# Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$ErrorActionPreference = 'Stop'
 
-$package = Get-Attr -obj $params -name name -failifempty $true -emptyattributefailmessage "missing required argument: name"
-$force = Get-Attr -obj $params -name force -default "false" | ConvertTo-Bool
-$upgrade = Get-Attr -obj $params -name upgrade -default "false" | ConvertTo-Bool
-$version = Get-Attr -obj $params -name version -default $null
+# As of chocolatey 0.9.10, non-zero success exit codes can be returned
+# See https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
+$successexitcodes = (0, 1605, 1614, 1641, 3010)
 
-$source = Get-Attr -obj $params -name source -default $null
-if ($source) {$source = $source.Tolower()}
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$verbosity = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int" -default 0
 
-$showlog = Get-Attr -obj $params -name showlog -default "false" | ConvertTo-Bool
-$state = Get-Attr -obj $params -name state -default "present"
+$package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
+$upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $false
+$version = Get-AnsibleParam -obj $params -name "version" -type "str"
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
+$showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
+$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","downgrade","latest","present","reinstalled"
+$installargs = Get-AnsibleParam -obj $params -name "install_args" -type "str"
+$packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
+$allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
+$ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
+$ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
+$skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
+$proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
+$proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
+$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
 
-$installargs = Get-Attr -obj $params -name install_args -default $null
-$packageparams = Get-Attr -obj $params -name params -default $null
-$allowemptychecksums = Get-Attr -obj $params -name allow_empty_checksums -default "false" | ConvertTo-Bool
-$ignorechecksums = Get-Attr -obj $params -name ignore_checksums -default "false" | ConvertTo-Bool
-$ignoredependencies = Get-Attr -obj $params -name ignore_dependencies -default "false" | ConvertTo-Bool
-
-# as of chocolatey 0.9.10, nonzero success exit codes can be returned
-# see https://github.com/chocolatey/choco/issues/512#issuecomment-214284461
-$successexitcodes = (0,1605,1614,1641,3010)
-
-if ("present","absent" -notcontains $state)
-{
-    Fail-Json $result "state is $state; must be present or absent"
+$result = @{
+    changed = $false
 }
 
+if ($upgrade)
+{
+    Add-DeprecationWarning -obj $result -message "Parameter upgrade=yes is replaced with state=latest" -version 2.6
+    if ($state -eq "present")
+    {
+        $state = "latest"
+    }
+}
 
 Function Chocolatey-Install-Upgrade
 {
@@ -57,27 +54,84 @@ Function Chocolatey-Install-Upgrade
 
     param()
 
-    $ChocoAlreadyInstalled = get-command choco -ErrorAction 0
+    $ChocoAlreadyInstalled = Get-Command -Name "choco.exe" -ErrorAction SilentlyContinue
     if ($ChocoAlreadyInstalled -eq $null)
     {
+
         #We need to install chocolatey
-        $install_output = (new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1") | powershell -
-        if ($LASTEXITCODE -ne 0)
+        $wc = New-Object System.Net.WebClient;
+        if ($proxy_url)
         {
-            Set-Attr $result "choco_bootstrap_output" $install_output
-            Fail-Json $result "Chocolatey bootstrap installation failed."
+            #We need to configure proxy
+            $env:chocolateyProxyLocation = $proxy_url
+            $wp = New-Object System.Net.WebProxy($proxy_url, $true);
+            $wc.proxy = $wp;
+            if ($proxy_username -and $proxy_password) {
+                $env:chocolateyProxyUser = $proxy_username
+                $env:chocolateyProxyPassword = $proxy_password
+                $passwd = ConvertTo-SecureString $proxy_password -AsPlainText -Force
+                $wp.Credentials = New-Object System.Management.Automation.PSCredential($proxy_username, $passwd)
+            }
+        }
+        $install_output = $wc.DownloadString("https://chocolatey.org/install.ps1") | powershell -
+        $result.rc = $LastExitCode
+        $result.stdout = $install_output | Out-String
+        if ($result.rc -ne 0) {
+            # Deprecated below result output in v2.4, remove in v2.6
+            $result.choco_bootstrap_output = $install_output
+            Fail-Json -obj $result -message "Chocolatey bootstrap installation failed."
         }
         $result.changed = $true
-        $script:executable = "C:\ProgramData\chocolatey\bin\choco.exe"
+        Add-Warning -obj $result -message "Chocolatey was missing from this system, so it was installed during this task run."
+
+        # locate the newly installed choco.exe
+        $command = Get-Command -Name "choco.exe" -ErrorAction SilentlyContinue
+        if ($command)
+        {
+            $path = $command.Path
+        }
+        else
+        {
+            $env_value = $env:ChocolateyInstall
+            if ($env_value)
+            {
+                $path = "$env_value\bin\choco.exe"
+            }
+            else
+            {
+                $path = "$env:SYSTEMDRIVE\ProgramData\Chocolatey\bin\choco.exe"
+            }
+        }
+        if (-not (Test-Path -Path $path))
+        {
+            Fail-Json -obj $result -message "failed to find choco.exe, make sure it is added to the PATH or the env var ChocolateyInstall is set"
+        }
+
+        $script:executable = $path
     }
     else
     {
+
         $script:executable = "choco.exe"
 
-        if ([Version](choco --version) -lt [Version]'0.9.9')
+        if ([Version](choco --version) -lt [Version]'0.10.5')
         {
-            Choco-Upgrade chocolatey 
+            Add-Warning -obj $result -message "Chocolatey was older than v0.10.5, so it was upgraded during this task run."
+            $script:options = @( "-dv" )
+            Choco-Upgrade -package chocolatey  -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
         }
+    }
+
+    # set the default verbosity options
+    if ($verbosity -gt 4) {
+        Add-Warning -obj $result -message "Debug output enabled."
+        $script:options = @( "-dv", "--no-progress" )
+    } elseif ($verbosity -gt 3) {
+        $script:options = @( "-v", "--no-progress" )
+#    } elseif ($verbosity -gt 2) {
+#        $script:options = @( "--no-progress" )
+    } else {
+        $script:options = @( "-r", "--no-progress" )
     }
 }
 
@@ -85,231 +139,320 @@ Function Chocolatey-Install-Upgrade
 Function Choco-IsInstalled
 {
     [CmdletBinding()]
-    
+
     param(
-        [Parameter(Mandatory=$true, Position=1)]
+        [Parameter(Mandatory=$true)]
         [string]$package
     )
 
-    $cmd = "$executable list --local-only $package"
-    $results = invoke-expression $cmd
+    if ($package -eq "all") {
+        return $true
+    }
 
-    if ($LastExitCode -ne 0)
-    {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        
-        Throw "Error checking installation status for $package" 
-    } 
-    
-    If ("$results" -match "$package .* (\d+) packages installed.")
+    $options = @( "--local-only", "--exact", $package )
+
+    # NOTE: Chocolatey does not use stderr except for help output
+    Try {
+        $output = & $script:executable list $options
+    } Catch {
+        Fail-Json -obj $result -message "Error checking installation status for package 'package': $($_.Exception.Message)"
+    }
+
+    if ($LastExitCode -ne 0) {
+        $result.rc = $LastExitCode
+        $result.command =  "$script:executable list $options"
+        $result.stdout = $output | Out-String
+        # Deprecated below result output in v2.4, remove in v2.6
+        $result.choco_error_cmd = $result.command
+        $result.choco_error_log = $output
+        Fail-Json -obj $result -message "Error checking installation status for $package 'package'"
+    }
+
+    If ("$output" -match "(\d+) packages installed.")
     {
         return $matches[1] -gt 0
     }
-    
-    $false
+
+    return $false
 }
 
-Function Choco-Upgrade 
+Function Choco-Upgrade
 {
     [CmdletBinding()]
-    
+
     param(
-        [Parameter(Mandatory=$true, Position=1)]
-        [string]$package,
-        [Parameter(Mandatory=$false, Position=2)]
-        [string]$version,
-        [Parameter(Mandatory=$false, Position=3)]
-        [string]$source,
-        [Parameter(Mandatory=$false, Position=4)]
-        [bool]$force,
-        [Parameter(Mandatory=$false, Position=5)]
-        [string]$installargs,
-        [Parameter(Mandatory=$false, Position=6)]
-        [string]$packageparams,
-        [Parameter(Mandatory=$false, Position=7)]
-        [bool]$allowemptychecksums,
-        [Parameter(Mandatory=$false, Position=8)]
-        [bool]$ignorechecksums,
-        [Parameter(Mandatory=$false, Position=9)]
-        [bool]$ignoredependencies
+        [Parameter(Mandatory=$true)]
+        [string] $package,
+        [string] $version,
+        [bool] $force,
+        [int] $timeout,
+        [bool] $skipscripts,
+        [string] $source,
+        [string] $installargs,
+        [string] $packageparams,
+        [bool] $allowemptychecksums,
+        [bool] $ignorechecksums,
+        [bool] $ignoredependencies,
+        [bool] $allowdowngrade,
+        [string] $proxy_url,
+        [string] $proxy_username,
+        [string] $proxy_password
     )
 
     if (-not (Choco-IsInstalled $package))
     {
-        throw "$package is not installed, you cannot upgrade"
+        Fail-Json -obj @{} -message "Package '$package' is not installed, you cannot upgrade"
     }
 
-    $cmd = "$executable upgrade -dv -y $package"
+    $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
+
+    if ($check_mode)
+    {
+        $options += "--whatif"
+    }
 
     if ($version)
     {
-        $cmd += " -version $version"
+        $options += "--version", $version
     }
 
     if ($source)
     {
-        $cmd += " -source $source"
+        $options += "--source", $source
     }
 
     if ($force)
     {
-        $cmd += " -force"
+        $options += "--force"
     }
 
     if ($installargs)
     {
-        $cmd += " -installargs '$installargs'"
+        $options += "--installargs", $installargs
     }
 
     if ($packageparams)
     {
-        $cmd += " -params '$packageparams'"
+        $options += "--params", $packageparams
     }
 
     if ($allowemptychecksums)
     {
-        $cmd += " --allow-empty-checksums"
+        $options += "--allow-empty-checksums"
     }
-    
+
     if ($ignorechecksums)
     {
-        $cmd += " --ignore-checksums"
+        $options += "--ignore-checksums"
     }
 
     if ($ignoredependencies)
     {
-        $cmd += " -ignoredependencies"
+        $options += "--ignoredependencies"
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error installing $package" 
+        $options += "--skip-scripts"
     }
 
-    if ("$results" -match ' upgraded (\d+)/\d+ package\(s\)\. ')
+    if ($allowdowngrade)
+    {
+        $options += "--allow-downgrade"
+    }
+
+    if ($proxy_url)
+    {
+        $options += "--proxy=`"'$proxy_url'`""
+    }
+
+    if ($proxy_username)
+    {
+        $options += "--proxy-user=`"'$proxy_username'`""
+    }
+
+    if ($proxy_password)
+    {
+        $options += "--proxy-password=`"'$proxy_password'`""
+    }
+
+    # NOTE: Chocolatey does not use stderr except for help output
+    Try {
+        $output = & $script:executable upgrade $script:options $options
+    } Catch {
+        Fail-Json -obj $result -message "Error upgrading package '$package': $($_.Exception.Message)"
+    }
+
+    $result.rc = $LastExitCode
+
+    if ($result.rc -notin $successexitcodes) {
+        $result.command =  "$script:executable upgrade $script:options $options"
+        $result.stdout = $output | Out-String
+        # Deprecated below result output in v2.4, remove in v2.6
+        $result.choco_error_cmd = $result.command
+        $result.choco_error_log = $output
+        Fail-Json -obj $result -message "Error upgrading package '$package'"
+    }
+
+    if ($verbosity -gt 1) {
+        $result.stdout = $output | Out-String
+    }
+
+    if ("$output" -match ' upgraded (\d+)/\d+ package')
     {
         if ($matches[1] -gt 0)
         {
             $result.changed = $true
         }
     }
+    $result.failed = $false
 }
 
-Function Choco-Install 
+Function Choco-Install
 {
     [CmdletBinding()]
-    
+
     param(
-        [Parameter(Mandatory=$true, Position=1)]
-        [string]$package,
-        [Parameter(Mandatory=$false, Position=2)]
-        [string]$version,
-        [Parameter(Mandatory=$false, Position=3)]
-        [string]$source,
-        [Parameter(Mandatory=$false, Position=4)]
-        [bool]$force,
-        [Parameter(Mandatory=$false, Position=5)]
-        [bool]$upgrade,
-        [Parameter(Mandatory=$false, Position=6)]
-        [string]$installargs,
-        [Parameter(Mandatory=$false, Position=7)]
-        [string]$packageparams,
-        [Parameter(Mandatory=$false, Position=8)]
-        [bool]$allowemptychecksums,
-        [Parameter(Mandatory=$false, Position=9)]
-        [bool]$ignorechecksums,
-        [Parameter(Mandatory=$false, Position=10)]
-        [bool]$ignoredependencies
+        [Parameter(Mandatory=$true)]
+        [string] $package,
+        [string] $version,
+        [bool] $force,
+        [int] $timeout,
+        [bool] $skipscripts,
+        [string] $source,
+        [string] $installargs,
+        [string] $packageparams,
+        [bool] $allowemptychecksums,
+        [bool] $ignorechecksums,
+        [bool] $ignoredependencies,
+        [bool] $allowdowngrade,
+        [string] $proxy_url,
+        [string] $proxy_username,
+        [string] $proxy_password
     )
 
     if (Choco-IsInstalled $package)
     {
-        if ($upgrade)
+        if ($state -in ("downgrade", "latest"))
         {
-            Choco-Upgrade -package $package -version $version -source $source -force $force `
-                -installargs $installargs -packageparams $packageparams `
-                -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-                -ignoredependencies $ignoredependencies
-
+            Choco-Upgrade -package $package -version $version -force $force -timeout $timeout `
+                -skipscripts $skipscripts -source $source -installargs $installargs `
+                -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
+                -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
+                -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
+                -proxy_username $proxy_username -proxy_password $proxy_password
             return
         }
-
-        if (-not $force)
+        elseif (-not $force)
         {
             return
         }
     }
 
-    $cmd = "$executable install -dv -y $package"
+    $options = @( "-y", $package, "--timeout", "$timeout", "--failonunfound" )
+
+    if ($check_mode)
+    {
+        $options += "--whatif"
+    }
 
     if ($version)
     {
-        $cmd += " -version $version"
+        $options += "--version", $version
     }
 
     if ($source)
     {
-        $cmd += " -source $source"
+        $options += "--source", $source
     }
 
     if ($force)
     {
-        $cmd += " -force"
+        $options += "--force"
     }
 
     if ($installargs)
     {
-        $cmd += " -installargs '$installargs'"
+        $options += "--installargs", $installargs
     }
 
     if ($packageparams)
     {
-        $cmd += " -params '$packageparams'"
+        $options += "--params", $packageparams
     }
 
     if ($allowemptychecksums)
     {
-        $cmd += " --allow-empty-checksums"
+        $options += "--allow-empty-checksums"
     }
-    
+
     if ($ignorechecksums)
     {
-        $cmd += " --ignore-checksums"
+        $options += "--ignore-checksums"
     }
 
     if ($ignoredependencies)
     {
-        $cmd += " -ignoredependencies"
+        $options += "--ignoredependencies"
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error installing $package" 
+        $options += "--skip-scripts"
     }
 
-     $result.changed = $true
+    if ($proxy_url)
+    {
+        $options += "--proxy=`"'$proxy_url'`""
+    }
+
+    if ($proxy_username)
+    {
+        $options += "--proxy-user=`"'$proxy_username'`""
+    }
+
+    if ($proxy_password)
+    {
+        $options += "--proxy-password=`"'$proxy_password'`""
+    }
+
+    # NOTE: Chocolatey does not use stderr except for help output
+    Try {
+        $output = & $script:executable install $script:options $options
+    } Catch {
+        Fail-Json -obj $result -message "Error installing package '$package': $($_.Exception.Message)"
+    }
+
+    $result.rc = $LastExitCode
+
+    if ($result.rc -notin $successexitcodes) {
+        $result.command =  "$script:executable install $script:options $options"
+        $result.stdout = $output | Out-String
+        # Deprecated below result output in v2.4, remove in v2.6
+        $result.choco_error_cmd = $result.command
+        $result.choco_error_log = $output
+        Fail-Json -obj $result -message "Error installing package '$package'"
+    }
+
+    if ($verbosity -gt 1) {
+        $result.stdout = $output | Out-String
+    }
+
+    $result.changed = $true
+    $result.failed = $false
 }
 
-Function Choco-Uninstall 
+Function Choco-Uninstall
 {
     [CmdletBinding()]
-    
+
     param(
-        [Parameter(Mandatory=$true, Position=1)]
-        [string]$package,
-        [Parameter(Mandatory=$false, Position=2)]
-        [string]$version,
-        [Parameter(Mandatory=$false, Position=3)]
-        [bool]$force
+        [Parameter(Mandatory=$true)]
+        [string] $package,
+        [string] $version,
+        [bool] $force,
+        [int] $timeout,
+        [bool] $skipscripts
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -317,55 +460,76 @@ Function Choco-Uninstall
         return
     }
 
-    $cmd = "$executable uninstall -dv -y $package"
+    $options = @( "-y", $package, "--timeout", "$timeout" )
+
+    if ($check_mode)
+    {
+        $options += "--whatif"
+    }
 
     if ($version)
     {
-        $cmd += " -version $version"
+        $options += "--version", $version
     }
 
     if ($force)
     {
-        $cmd += " -force"
+        $options += "--force"
     }
 
     if ($packageparams)
     {
-        $cmd += " -params '$packageparams'"
+        $options += "--params", $packageparams
     }
 
-    $results = invoke-expression $cmd
-
-    if ($LastExitCode -notin $successexitcodes)
+    if ($skipscripts)
     {
-        Set-Attr $result "choco_error_cmd" $cmd
-        Set-Attr $result "choco_error_log" "$results"
-        Throw "Error uninstalling $package" 
+        $options += "--skip-scripts"
     }
 
-     $result.changed = $true
-}
-Try
-{
-    Chocolatey-Install-Upgrade
-
-    if ($state -eq "present")
-    {
-        Choco-Install -package $package -version $version -source $source `
-            -force $force -upgrade $upgrade -installargs $installargs `
-            -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
-            -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies
-    }
-    else
-    {
-        Choco-Uninstall -package $package -version $version -force $force
+    # NOTE: Chocolatey does not use stderr except for help output
+    Try {
+        $output = & $script:executable uninstall $script:options $options
+    } Catch {
+        Fail-Json -obj $result -message "Error uninstalling package '$package': $($_.Exception.Message)"
     }
 
-    Exit-Json $result;
-}
-Catch
-{
-     Fail-Json $result $_.Exception.Message
+    $result.rc = $LastExitCode
+
+    if ($result.rc -notin $successexitcodes) {
+        $result.command =  "$script:executable uninstall $script:options $options"
+        $result.stdout = $output | Out-String
+        # Deprecated below result output in v2.4, remove in v2.6
+        $result.choco_error_cmd = $result.command
+        $result.choco_error_log = $output
+        Fail-Json -obj $result -message "Error uninstalling package '$package'"
+    }
+
+    if ($verbosity -gt 1) {
+        $result.stdout = $output | Out-String
+    }
+
+    $result.changed = $true
+    $result.failed = $false
 }
 
+Chocolatey-Install-Upgrade
 
+if ($state -in ("absent", "reinstalled")) {
+
+    Choco-Uninstall -package $package -version $version -force $force -timeout $timeout `
+        -skipscripts $skipscripts
+
+}
+
+if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
+
+    Choco-Install -package $package -version $version -force $force -timeout $timeout `
+        -skipscripts $skipscripts -source $source -installargs $installargs `
+        -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
+        -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
+        -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
+        -proxy_username $proxy_username -proxy_password $proxy_password
+}
+
+Exit-Json -obj $result

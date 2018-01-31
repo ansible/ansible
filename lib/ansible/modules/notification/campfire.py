@@ -1,23 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -80,6 +74,10 @@ EXAMPLES = '''
 
 import cgi
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 def main():
 
     module = AnsibleModule(
@@ -124,27 +122,25 @@ def main():
 
     target_url = '%s/room/%s/speak.xml' % (URI, room)
     headers = {'Content-Type': 'application/xml',
-            'User-agent': AGENT}
+               'User-agent': AGENT}
 
     # Send some audible notification if requested
     if notify:
         response, info = fetch_url(module, target_url, data=NSTR % cgi.escape(notify), headers=headers)
         if info['status'] not in [200, 201]:
             module.fail_json(msg="unable to send msg: '%s', campfire api"
-                                " returned error code: '%s'" %
+                             " returned error code: '%s'" %
                                  (notify, info['status']))
 
     # Send the message
-    response, info = fetch_url(module, target_url, data=MSTR %cgi.escape(msg), headers=headers)
+    response, info = fetch_url(module, target_url, data=MSTR % cgi.escape(msg), headers=headers)
     if info['status'] not in [200, 201]:
         module.fail_json(msg="unable to send msg: '%s', campfire api"
-                            " returned error code: '%s'" %
+                         " returned error code: '%s'" %
                              (msg, info['status']))
 
     module.exit_json(changed=True, room=room, msg=msg, notify=notify)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

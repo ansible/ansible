@@ -1,38 +1,110 @@
 # (c) 2016 Dag Wieers <dag@wieers.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+    lookup: filetree
+    author: Dag Wieers (@dagwieers) <dag@wieers.com>
+    version_added: "2.4"
+    short_description: recursively match all files in a directory tree
+    description:
+        - This lookup enables you to template a complete tree of files on a target system while retaining permissions and ownership.
+        - Supports directories, files and symlinks, including SELinux and other file properties
+        - If you provide more than one path, it will implement a with_first_found logic, and will not process entries it already processed in previous paths.
+          This enables merging different trees in order of importance, or add role_vars to specific paths to influence different instances of the same role.
+    options:
+      _terms:
+        description: path(s) of files to read
+        required: True
+"""
+
+EXAMPLES = """
+- name: Create directories
+  file:
+    path: /web/{{ item.path }}
+    state: directory
+    mode: '{{ item.mode }}'
+  with_filetree: web/
+  when: item.state == 'directory'
+
+- name: Template files
+  template:
+    src: '{{ item.src }}'
+    dest: /web/{{ item.path }}
+    mode: '{{ item.mode }}'
+  with_filetree: web/
+  when: item.state == 'file'
+
+- name: Recreate symlinks
+  file:
+    src: '{{ item.src }}'
+    dest: /web/{{ item.path }}
+    state: link
+    force: yes
+    mode: '{{ item.mode }}'
+  with_filetree: web/
+  when: item.state == 'link'
+"""
+
+RETURN = """
+  _raw:
+    description: list of dictionaries with file information
+    contains:
+        src:
+          description: TODO
+        root:
+          description: allows filtering by original location
+        path:
+          description: contains the relative path to root
+        mode:
+          description: TODO
+        state:
+          description: TODO
+        owner:
+          description: TODO
+        group:
+          description: TODO
+        seuser:
+          description: TODO
+        serole:
+          description: TODO
+        setype:
+          description: TODO
+        selevel:
+          description: TODO
+        uid:
+          description: TODO
+        gid:
+          description: TODO
+        size:
+          description: TODO
+        mtime:
+          description: TODO
+        ctime:
+          description: TODO
+"""
 import os
 import pwd
 import grp
 import stat
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
-from __main__ import display
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 # If selinux fails to find a default, return an array of None
@@ -83,7 +155,7 @@ def file_props(root, path):
     except KeyError:
         ret['owner'] = st.st_uid
     try:
-        ret['group'] = grp.getgrgid(st.st_gid).gr_name
+        ret['group'] = to_text(grp.getgrgid(st.st_gid).gr_name)
     except KeyError:
         ret['group'] = st.st_gid
     ret['mode'] = '0%03o' % (stat.S_IMODE(st.st_mode))
@@ -116,7 +188,7 @@ class LookupModule(LookupBase):
                     relpath = os.path.relpath(os.path.join(root, entry), path)
 
                     # Skip if relpath was already processed (from another root)
-                    if relpath not in [ entry['path'] for entry in ret ]:
+                    if relpath not in [entry['path'] for entry in ret]:
                         props = file_props(path, relpath)
                         if props is not None:
                             ret.append(props)

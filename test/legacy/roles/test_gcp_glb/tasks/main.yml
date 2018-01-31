@@ -1,0 +1,6 @@
+# main driver for Cross Region HTTP load balancer test
+# this integration test uses multiple modules to create
+# the HTTP load balancer, then tears it down.
+- include: test.yml
+- pause: seconds=10
+- include: teardown.yml

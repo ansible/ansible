@@ -19,6 +19,72 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
+DOCUMENTATION = '''
+---
+module: ovirt_users
+short_description: Module to manage users in oVirt/RHV
+version_added: "2.3"
+author: "Ondra Machacek (@machacekondra)"
+description:
+    - "Module to manage users in oVirt/RHV."
+options:
+    name:
+        description:
+            - "Name of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+        required: true
+    state:
+        description:
+            - "Should the user be present/absent."
+        choices: ['present', 'absent']
+        default: present
+    authz_name:
+        description:
+            - "Authorization provider of the user. In previous versions of oVirt/RHV known as domain."
+        required: true
+        aliases: ['domain']
+extends_documentation_fragment: ovirt
+'''
+
+EXAMPLES = '''
+# Examples don't contain auth parameter for simplicity,
+# look at ovirt_auth module to see how to reuse authentication:
+
+# Add user user1 from authorization provider example.com-authz
+- ovirt_users:
+    name: user1
+    domain: example.com-authz
+
+# Add user user1 from authorization provider example.com-authz
+# In case of Active Directory specify UPN:
+- ovirt_users:
+    name: user1@ad2.example.com
+    domain: example.com-authz
+
+# Remove user user1 with authorization provider example.com-authz
+- ovirt_users:
+    state: absent
+    name: user1
+    authz_name: example.com-authz
+'''
+
+RETURN = '''
+id:
+    description: ID of the user which is managed
+    returned: On success if user is found.
+    type: str
+    sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+user:
+    description: "Dictionary of all the user attributes. User attributes can be found on your oVirt/RHV instance
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/user."
+    returned: On success if user is found.
+    type: dict
+'''
+
 import traceback
 
 try:
@@ -34,71 +100,6 @@ from ansible.module_utils.ovirt import (
     create_connection,
     ovirt_full_argument_spec,
 )
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
-
-DOCUMENTATION = '''
----
-module: ovirt_users
-short_description: Module to manage users in oVirt
-version_added: "2.3"
-author: "Ondra Machacek (@machacekondra)"
-description:
-    - "Module to manage users in oVirt."
-options:
-    name:
-        description:
-            - "Name of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
-        required: true
-    state:
-        description:
-            - "Should the user be present/absent."
-        choices: ['present', 'absent']
-        default: present
-    authz_name:
-        description:
-            - "Authorization provider of the user. In previous versions of oVirt known as domain."
-        required: true
-        aliases: ['domain']
-extends_documentation_fragment: ovirt
-'''
-
-EXAMPLES = '''
-# Examples don't contain auth parameter for simplicity,
-# look at ovirt_auth module to see how to reuse authentication:
-
-# Add user user1 from authorization provider example.com-authz
-ovirt_users:
-    name: user1
-    domain: example.com-authz
-
-# Add user user1 from authorization provider example.com-authz
-# In case of Active Directory specify UPN:
-ovirt_users:
-    name: user1@ad2.example.com
-    domain: example.com-authz
-
-# Remove user user1 with authorization provider example.com-authz
-ovirt_users:
-    state: absent
-    name: user1
-    authz_name: example.com-authz
-'''
-
-RETURN = '''
-id:
-    description: ID of the user which is managed
-    returned: On success if user is found.
-    type: str
-    sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
-user:
-    description: "Dictionary of all the user attributes. User attributes can be found on your oVirt instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
-    returned: On success if user is found.
-'''
 
 
 def username(module):
@@ -136,7 +137,8 @@ def main():
     check_params(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         users_service = connection.system_service().users_service()
         users_module = UsersModule(
             connection=connection,
@@ -162,7 +164,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

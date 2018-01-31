@@ -2,31 +2,16 @@
 # coding: utf-8 -*-
 
 # (c) 2015-2016, Hewlett Packard Enterprise Development Company LP
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-from distutils.version import StrictVersion
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -66,6 +51,10 @@ options:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
       required: false
       default: 1200
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatibility
+      required: false
 
 requirements: ["shade"]
 '''
@@ -74,7 +63,7 @@ RETURN = '''
 ansible_facts:
     description: Dictionary of new facts representing discovered properties of the node..
     returned: changed
-    type: dictionary
+    type: complex
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
@@ -99,6 +88,17 @@ EXAMPLES = '''
 - os_ironic_inspect:
     name: "testnode1"
 '''
+
+from distutils.version import StrictVersion
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _choose_id_value(module):
@@ -153,7 +153,7 @@ def main():
         if server:
             cloud.inspect_machine(server['uuid'], module.params['wait'])
             # TODO(TheJulia): diff properties, ?and ports? and determine
-            # if a change occured.  In theory, the node is always changed
+            # if a change occurred.  In theory, the node is always changed
             # if introspection is able to update the record.
             module.exit_json(changed=True,
                              ansible_facts=server['properties'])
@@ -164,10 +164,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == "__main__":
     main()

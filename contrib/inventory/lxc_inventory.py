@@ -35,6 +35,7 @@ import sys
 import lxc
 import json
 
+
 def build_dict():
     """Returns a dictionary keyed to the defined LXC groups. All
     containers, including the ones not in any group, are included in the
@@ -51,7 +52,8 @@ def build_dict():
 
     # Create a dictionary for each group (including the 'all' group
     return dict([(g, {'hosts': [k for k, v in containers.items() if g in v],
-                      'vars': {'ansible_connection':'lxc'}}) for g in groups])
+                      'vars': {'ansible_connection': 'lxc'}}) for g in groups])
+
 
 def main(argv):
     """Returns a JSON dictionary as expected by Ansible"""

@@ -23,7 +23,7 @@
       # Items from those subsets are present
       - "result.ansible_facts.ansible_net_filesystems is defined" #hw
       - "result.ansible_facts.ansible_net_memtotal_mb > 10" #hw
-      - "result.ansible_facts.ansible_net_interfaces.Ethernet1.ipv4.masklen > 1" # interfaces
+      - "result.ansible_facts.ansible_net_interfaces.Management1.ipv4.masklen > 1" # interfaces
 
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config

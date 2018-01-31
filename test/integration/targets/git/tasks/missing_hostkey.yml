@@ -1,0 +1,48 @@
+- name: MISSING-HOSTKEY | checkout ssh://git@github.com repo without accept_hostkey (expected fail)
+  git:
+    repo: '{{ repo_format2 }}'
+    dest: '{{ checkout_dir }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+  register: git_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - git_result is failed
+
+- name: MISSING-HOSTKEY | checkout git@github.com repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format2 }}'
+    dest: '{{ checkout_dir }}'
+    accept_hostkey: true
+    key_file: '{{ github_ssh_private_key }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - git_result is changed
+  when: github_ssh_private_key is defined
+
+- name: MISSING-HOSTKEY | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+  when: github_ssh_private_key is defined
+
+- name: MISSING-HOSTKEY | checkout ssh://git@github.com repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format3 }}'
+    dest: '{{ checkout_dir }}'
+    version: 'master'
+    accept_hostkey: false # should already have been accepted
+    key_file: '{{ github_ssh_private_key }}'
+    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - git_result is changed
+  when: github_ssh_private_key is defined

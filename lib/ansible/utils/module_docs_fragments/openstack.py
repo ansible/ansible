@@ -48,10 +48,6 @@ options:
     description:
       - Name of the region.
     required: false
-  availability_zone:
-    description:
-      - Name of the availability zone.
-    required: false
   wait:
     description:
       - Should ansible wait until the requested resource is complete.
@@ -71,9 +67,9 @@ options:
     default: None
   validate_certs:
     description:
-      - Whether or not SSL API requests should be verified.
+      - Whether or not SSL API requests should be verified. Before 2.3 this defaulted to True.
     required: false
-    default: True
+    default: null
     aliases: ['verify']
   cacert:
     description:
@@ -97,6 +93,12 @@ options:
     choices: [public, internal, admin]
     required: false
     default: public
+  identity_api_version:
+    description:
+        - The identity API version
+    choices: [2.0, 3]
+    required: false
+    default: None
 requirements:
   - python >= 2.7
   - shade

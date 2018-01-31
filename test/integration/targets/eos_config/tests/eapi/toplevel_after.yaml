@@ -5,7 +5,7 @@
   eos_config:
     lines:
       - "snmp-server contact ansible"
-      - "hostname {{ inventory_hostname }}"
+      - "hostname {{ inventory_hostname_short }}"
     match: none
     provider: "{{ eapi }}"
 
@@ -37,7 +37,7 @@
   eos_config:
     lines:
       - no snmp-server contact
-      - hostname {{ inventory_hostname }}
+      - hostname {{ inventory_hostname_short }}
     match: none
     provider: "{{ eapi }}"
 

@@ -82,6 +82,12 @@ options:
     required: false
     default: no
     choices: ['yes', 'no']
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.  If the transport
+        argument is not nxapi, this value is ignored.
+    choices: ['yes', 'no']
   provider:
     description:
       - Convenience method that allows all I(nxos) arguments to be passed as
@@ -89,5 +95,13 @@ options:
         met either by individual arguments or values in this dict.
     required: false
     default: null
+  use_proxy:
+    description:
+      - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: "2.5"
 
+notes:
+  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
 """

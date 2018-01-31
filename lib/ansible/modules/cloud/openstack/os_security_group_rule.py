@@ -2,35 +2,22 @@
 
 # Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
@@ -81,6 +68,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements: ["shade"]
 '''
 
@@ -137,36 +128,53 @@ RETURN = '''
 id:
   description: Unique rule UUID.
   type: string
+  returned: state == present
 direction:
   description: The direction in which the security group rule is applied.
   type: string
   sample: 'egress'
+  returned: state == present
 ethertype:
   description: One of IPv4 or IPv6.
   type: string
   sample: 'IPv4'
+  returned: state == present
 port_range_min:
   description: The minimum port number in the range that is matched by
                the security group rule.
   type: int
   sample: 8000
+  returned: state == present
 port_range_max:
   description: The maximum port number in the range that is matched by
                the security group rule.
   type: int
   sample: 8000
+  returned: state == present
 protocol:
   description: The protocol that is matched by the security group rule.
   type: string
   sample: 'tcp'
+  returned: state == present
 remote_ip_prefix:
   description: The remote IP prefix to be associated with this security group rule.
   type: string
   sample: '0.0.0.0/0'
+  returned: state == present
 security_group_id:
   description: The security group ID to associate with this security group rule.
   type: string
+  returned: state == present
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
@@ -195,10 +203,15 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
         if module_max and int(module_max) == -1:
             module_max = None
 
-    # Check if user is supplying None values for full TCP/UDP port range.
-    if protocol in ['tcp', 'udp'] and module_min is None and module_max is None:
-        if (rule_min and int(rule_min) == 1
-                and rule_max and int(rule_max) == 65535):
+    # Check if the user is supplying -1 or None values for full TPC/UDP port range.
+    if protocol in ['tcp', 'udp'] or protocol is None:
+        if module_min and module_max and int(module_min) == int(module_max) == -1:
+            module_min = None
+            module_max = None
+
+        if ((module_min is None and module_max is None) and
+                (rule_min and int(rule_min) == 1 and
+                    rule_max and int(rule_max) == 65535)):
             # (None, None) == (1, 65535)
             return True
 
@@ -257,21 +270,21 @@ def _system_state_change(module, secgroup, remotegroup):
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        security_group   = dict(required=True),
+        security_group=dict(required=True),
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
-        protocol         = dict(default=None,
-                                choices=[None, 'tcp', 'udp', 'icmp', '112']),
-        port_range_min   = dict(required=False, type='int'),
-        port_range_max   = dict(required=False, type='int'),
-        remote_ip_prefix = dict(required=False, default=None),
-        remote_group     = dict(required=False, default=None),
-        ethertype        = dict(default='IPv4',
-                                choices=['IPv4', 'IPv6']),
-        direction        = dict(default='ingress',
-                                choices=['egress', 'ingress']),
-        state            = dict(default='present',
-                                choices=['absent', 'present']),
+        protocol=dict(default=None,
+                      choices=[None, 'tcp', 'udp', 'icmp', '112']),
+        port_range_min=dict(required=False, type='int'),
+        port_range_max=dict(required=False, type='int'),
+        remote_ip_prefix=dict(required=False, default=None),
+        remote_group=dict(required=False, default=None),
+        ethertype=dict(default='IPv4',
+                       choices=['IPv4', 'IPv6']),
+        direction=dict(default='ingress',
+                       choices=['egress', 'ingress']),
+        state=dict(default='present',
+                   choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -299,7 +312,7 @@ def main():
         if remote_group:
             remotegroup = cloud.get_security_group(remote_group)
         else:
-            remotegroup = { 'id' : None }
+            remotegroup = {'id': None}
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup, remotegroup))
@@ -335,9 +348,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

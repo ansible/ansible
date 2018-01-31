@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.errors import AnsibleParserError
+from ansible.playbook.attribute import FieldAttribute
 
 try:
     from __main__ import display
@@ -29,23 +29,24 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class Become:
 
     # Privilege escalation
-    _become              = FieldAttribute(isa='bool')
-    _become_method       = FieldAttribute(isa='string')
-    _become_user         = FieldAttribute(isa='string')
-    _become_flags        = FieldAttribute(isa='string')
+    _become = FieldAttribute(isa='bool')
+    _become_method = FieldAttribute(isa='string')
+    _become_user = FieldAttribute(isa='string')
+    _become_flags = FieldAttribute(isa='string')
 
     def __init__(self):
-        return super(Become, self).__init__()
+        super(Become, self).__init__()
 
     def _detect_privilege_escalation_conflict(self, ds):
 
         # Fail out if user specifies conflicting privilege escalations
         has_become = 'become' in ds or 'become_user'in ds
-        has_sudo   = 'sudo' in ds or 'sudo_user' in ds
-        has_su     = 'su' in ds or 'su_user' in ds
+        has_sudo = 'sudo' in ds or 'sudo_user' in ds
+        has_su = 'su' in ds or 'su_user' in ds
 
         if has_become:
             msg = 'The become params ("become", "become_user") and'
@@ -77,7 +78,7 @@ class Become:
                 ds['become_user'] = ds['sudo_user']
                 del ds['sudo_user']
 
-            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)")
+            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)", '2.6')
 
         elif 'su' in ds or 'su_user' in ds:
             ds['become_method'] = 'su'
@@ -89,16 +90,6 @@ class Become:
                 ds['become_user'] = ds['su_user']
                 del ds['su_user']
 
-            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
+            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)", '2.6')
 
         return ds
-
-    def set_become_defaults(self, become, become_method, become_user):
-        ''' if we are becoming someone else, but some fields are unset,
-            make sure they're initialized to the default config values  '''
-        if become:
-            if become_method is None:
-                become_method = C.DEFAULT_BECOME_METHOD
-            if become_user is None:
-                become_user = C.DEFAULT_BECOME_USER
-

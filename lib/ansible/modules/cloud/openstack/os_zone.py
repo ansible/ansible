@@ -1,31 +1,15 @@
 #!/usr/bin/python
 # Copyright (c) 2016 Hewlett-Packard Enterprise
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -72,6 +56,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -106,7 +94,7 @@ RETURN = '''
 zone:
     description: Dictionary describing the zone.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique zone ID
@@ -138,6 +126,17 @@ zone:
             sample: []
 '''
 
+from distutils.version import StrictVersion
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def _system_state_change(state, email, description, ttl, masters, zone):
     if state == 'present':
@@ -154,6 +153,7 @@ def _system_state_change(state, email, description, ttl, masters, zone):
     if state == 'absent' and zone:
         return True
     return False
+
 
 def main():
     argument_spec = openstack_full_argument_spec(
@@ -184,7 +184,6 @@ def main():
         cloud = shade.openstack_cloud(**module.params)
         zone = cloud.get_zone(name)
 
-
         if state == 'present':
             zone_type = module.params.get('zone_type')
             email = module.params.get('email')
@@ -205,16 +204,16 @@ def main():
             else:
                 if masters is None:
                     masters = []
-                
+
                 pre_update_zone = zone
                 changed = _system_state_change(state, email,
                                                description, ttl,
                                                masters, pre_update_zone)
                 if changed:
                     zone = cloud.update_zone(
-                                name, email=email,
-                                description=description,
-                                ttl=ttl, masters=masters)
+                        name, email=email,
+                        description=description,
+                        ttl=ttl, masters=masters)
             module.exit_json(changed=changed, zone=zone)
 
         elif state == 'absent':
@@ -224,18 +223,15 @@ def main():
                                                               None, zone))
 
             if zone is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_zone(name)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

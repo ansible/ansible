@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.role.definition import RoleDefinition
@@ -41,7 +40,7 @@ class RoleInclude(RoleDefinition):
     is included for execution in a play.
     """
 
-    _delegate_to    = FieldAttribute(isa='string')
+    _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
@@ -58,4 +57,3 @@ class RoleInclude(RoleDefinition):
 
         ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader)
         return ri.load_data(data, variable_manager=variable_manager, loader=loader)
-

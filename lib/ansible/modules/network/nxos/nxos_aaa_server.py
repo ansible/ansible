@@ -16,22 +16,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 
 module: nxos_aaa_server
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages AAA server global configuration.
 description:
     - Manages AAA server global configuration
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - The server_type parameter is always required.
     - If encrypt_type is not supplied, the global AAA server key will be
       stored as encrypted (type 7).
@@ -94,9 +96,6 @@ EXAMPLES = '''
         server_timeout: 9
         deadtime: 20
         directed_request: enabled
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 
 # Tacacs Server Basic settings
   - name: "Tacacs Server Basic settings"
@@ -105,270 +104,36 @@ EXAMPLES = '''
         server_timeout: 8
         deadtime: 19
         directed_request: disabled
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 
 # Setting Global Key
   - name: "AAA Server Global Key"
     nxos_aaa_server:
         server_type: radius
         global_key: test_key
-        host:  inventory_hostname }}
-        username:  un }}
-        password:  pwd }}
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "server_type": "radius", "server_timeout": "11"}
-existing:
-    description:
-        - k/v pairs of existing aaa server
-    type: dict
-    sample: {"deadtime": "0", "directed_request": "disabled",
-            "global_key": "unknown", "server_timeout": "5"}
-end_state:
-    description: k/v pairs of aaa params after module execution
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "global_key": "unknown", "server_timeout": "11"}
-state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: ["radius-server deadtime 22", "radius-server timeout 11",
              "radius-server directed-request"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-
-import json
-
-# COMMON CODE FOR MIGRATION
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = execute_show(cmds, module)
-    elif module.params['transport'] == 'nxapi':
-        body = execute_show(cmds, module, command_type=command_type)
-    return body
+    command = {
+        'command': command,
+        'output': 'text',
+    }
+
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -381,16 +146,15 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-
 def get_aaa_server_info(server_type, module):
     aaa_server_info = {}
     server_command = 'show {0}-server'.format(server_type)
     request_command = 'show {0}-server directed-request'.format(server_type)
     global_key_command = 'show run | sec {0}'.format(server_type)
-    aaa_regex = '.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
+    aaa_regex = r'.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
 
     server_body = execute_show_command(
-                server_command, module, command_type='cli_show_ascii')[0]
+        server_command, module, command_type='cli_show_ascii')[0]
 
     split_server = server_body.splitlines()
 
@@ -402,11 +166,11 @@ def get_aaa_server_info(server_type, module):
             aaa_server_info['deadtime'] = line.split(':')[1]
 
     request_body = execute_show_command(
-                request_command, module, command_type='cli_show_ascii')[0]
+        request_command, module, command_type='cli_show_ascii')[0]
     aaa_server_info['directed_request'] = request_body.replace('\n', '')
 
     key_body = execute_show_command(
-                global_key_command, module, command_type='cli_show_ascii')[0]
+        global_key_command, module, command_type='cli_show_ascii')[0]
 
     try:
         match_global_key = re.match(aaa_regex, key_body, re.DOTALL)
@@ -479,19 +243,23 @@ def default_aaa_server(existing, params, server_type):
 
 def main():
     argument_spec = dict(
-            server_type=dict(type='str',
-                             choices=['radius', 'tacacs'], required=True),
-            global_key=dict(type='str'),
-            encrypt_type=dict(type='str', choices=['0', '7']),
-            deadtime=dict(type='str'),
-            server_timeout=dict(type='str'),
-            directed_request=dict(type='str',
-                                  choices=['enabled', 'disabled', 'default']),
-            state=dict(choices=['default', 'present'], default='present'),
+        server_type=dict(type='str', choices=['radius', 'tacacs'], required=True),
+        global_key=dict(type='str'),
+        encrypt_type=dict(type='str', choices=['0', '7']),
+        deadtime=dict(type='str'),
+        server_timeout=dict(type='str'),
+        directed_request=dict(type='str', choices=['enabled', 'disabled', 'default']),
+        state=dict(choices=['default', 'present'], default='present'),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
-    
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
+
     server_type = module.params['server_type']
     global_key = module.params['global_key']
     encrypt_type = module.params['encrypt_type']
@@ -507,11 +275,9 @@ def main():
                 encrypt_type=encrypt_type, deadtime=deadtime,
                 server_timeout=server_timeout, directed_request=directed_request)
 
-    changed = False
-    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
+    proposed = dict((k, v) for k, v in args.items() if v is not None)
 
     existing = get_aaa_server_info(server_type, module)
-    end_state = existing
 
     commands = []
     if state == 'present':
@@ -521,7 +287,7 @@ def main():
                     raise ValueError
             except ValueError:
                 module.fail_json(
-                        msg='deadtime must be an integer between 0 and 1440')
+                    msg='deadtime must be an integer between 0 and 1440')
 
         if server_timeout:
             try:
@@ -531,15 +297,15 @@ def main():
                 module.fail_json(
                     msg='server_timeout must be an integer between 1 and 60')
 
-        delta = dict(set(proposed.iteritems()).difference(
-                                                    existing.iteritems()))
+        delta = dict(set(proposed.items()).difference(
+            existing.items()))
         if delta:
             command = config_aaa_server(delta, server_type)
             if command:
                 commands.append(command)
 
     elif state == 'default':
-        for key, value in proposed.iteritems():
+        for key, value in proposed.items():
             if key != 'server_type' and value != 'default':
                 module.fail_json(
                     msg='Parameters must be set to "default"'
@@ -550,21 +316,12 @@ def main():
 
     cmds = flatten_list(commands)
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            execute_config_command(cmds, module)
-            end_state = get_aaa_server_info(server_type, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
-
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['end_state'] = end_state
+        results['changed'] = True
+        if not module.check_mode:
+            load_config(module, cmds)
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 

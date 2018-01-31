@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_cluster
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to create/delete a cluster.
 description:
   - Execute cluster-create or cluster-delete command.
@@ -97,6 +94,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the cluster command.
   returned: always
@@ -110,6 +109,8 @@ changed:
   returned: always
   type: bool
 """
+
+import shlex
 
 NAME_EXISTS = None
 NODE1_EXISTS = None
@@ -242,8 +243,8 @@ def main():
             pn_cliusername=dict(required=False, type='str'),
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
-            state =dict(required=True, type='str',
-                            choices=['present', 'absent']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent']),
             pn_name=dict(required=True, type='str'),
             pn_cluster_node1=dict(type='str'),
             pn_cluster_node2=dict(type='str'),

@@ -7,23 +7,16 @@
 # Modified by William L. Thomson Jr. <wlt@o-sinc.com>
 # Based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -45,28 +38,28 @@ options:
       - State of the package atom
     required: false
     default: "present"
-    choices: [ "present", "installed", "emerged", "absent", "removed", "unmerged" ]
+    choices: [ "present", "installed", "emerged", "absent", "removed", "unmerged", "latest" ]
 
   update:
     description:
       - Update packages to the best version available (--update)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: no
+    choices: [ "yes", "no" ]
 
   deep:
     description:
       - Consider the entire dependency tree of packages (--deep)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: no
+    choices: [ "yes", "no" ]
 
   newuse:
     description:
       - Include installed packages where USE flags have changed (--newuse)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: no
+    choices: [ "yes", "no" ]
 
   changed_use:
     description:
@@ -74,8 +67,8 @@ options:
       - flags that the user has not enabled are added or removed
       - (--changed-use)
     required: false
-    default: null
-    choices: [ "yes" ]
+    default: no
+    choices: [ "yes", "no" ]
     version_added: 1.8
 
   oneshot:
@@ -136,7 +129,7 @@ options:
       - If web, perform "emerge-webrsync"
     required: false
     default: null
-    choices: [ "yes", "web", "no" ]
+    choices: [ "web", "yes", "no" ]
 
   getbinpkg:
     description:
@@ -165,7 +158,6 @@ options:
       - Specifies the number of packages to build simultaneously.
     required: false
     default: None
-    type: int
     version_added: 2.3
 
   loadavg:
@@ -174,7 +166,6 @@ options:
       - other builds running and the load average is at least LOAD
     required: false
     default: None
-    type: float
     version_added: 2.3
 
 requirements: [ gentoolkit ]
@@ -196,7 +187,7 @@ EXAMPLES = '''
     package: foo
     state: absent
 
-# Update package foo to the "best" version
+# Update package foo to the "latest" version ( os specific alternative to latest )
 - portage:
     package: foo
     update: yes
@@ -208,12 +199,12 @@ EXAMPLES = '''
 
 # Re-install world from binary packages only and do not allow any compiling
 - portage:
-    package: @world
+    package: '@world'
     usepkgonly: yes
 
 # Sync repositories and update world
 - portage:
-    package: @world
+    package: '@world'
     update: yes
     deep: yes
     sync: yes
@@ -298,7 +289,7 @@ def sync_repositories(module, webrsync=False):
 def emerge_packages(module, packages):
     p = module.params
 
-    if not (p['update'] or p['noreplace']):
+    if not (p['update'] or p['noreplace'] or p['state'] == 'latest'):
         for package in packages:
             if not query_package(module, package, 'emerge'):
                 break
@@ -327,6 +318,9 @@ def emerge_packages(module, packages):
     for flag, arg in emerge_flags.items():
         if p[flag]:
             args.append(arg)
+
+    if p['state'] and p['state'] == 'latest':
+        args.append("--update")
 
     if p['usepkg'] and p['usepkgonly']:
         module.fail_json(msg='Use only one of usepkg, usepkgonly')
@@ -449,7 +443,7 @@ def run_emerge(module, packages, *args):
     return cmd, module.run_command(cmd)
 
 
-portage_present_states = ['present', 'emerged', 'installed']
+portage_present_states = ['present', 'emerged', 'installed', 'latest']
 portage_absent_states = ['absent', 'unmerged', 'removed']
 
 
@@ -472,7 +466,7 @@ def main():
             depclean=dict(default=False, type='bool'),
             quiet=dict(default=False, type='bool'),
             verbose=dict(default=False, type='bool'),
-            sync=dict(default=None, choices=['yes', 'web']),
+            sync=dict(default=None, choices=['yes', 'web', 'no']),
             getbinpkg=dict(default=False, type='bool'),
             usepkgonly=dict(default=False, type='bool'),
             usepkg=dict(default=False, type='bool'),
@@ -490,7 +484,7 @@ def main():
 
     p = module.params
 
-    if p['sync']:
+    if p['sync'] and p['sync'].strip() != 'no':
         sync_repositories(module, webrsync=(p['sync'] == 'web'))
         if not p['package']:
             module.exit_json(msg='Sync successfully finished.')

@@ -1,29 +1,15 @@
 #!/usr/bin/python
 # Copyright (c) 2016 IBM
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -45,11 +31,21 @@ options:
         - Group description
      required: false
      default: None
+   domain_id:
+     description:
+        - Domain id to create the group in if the cloud supports domains.
+     required: false
+     default: None
+     version_added: "2.3"
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -62,6 +58,7 @@ EXAMPLES = '''
     state: present
     name: demo
     description: "Demo Group"
+    domain_id: demoid
 
 # Update the description on existing "demo" group
 - os_group:
@@ -69,6 +66,7 @@ EXAMPLES = '''
     state: present
     name: demo
     description: "Something else"
+    domain_id: demoid
 
 # Delete group named "demo"
 - os_group:
@@ -81,7 +79,7 @@ RETURN = '''
 group:
     description: Dictionary describing the group.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique group ID
@@ -101,6 +99,15 @@ group:
             sample: "default"
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+
 
 def _system_state_change(state, description, group):
     if state == 'present' and not group:
@@ -116,6 +123,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         description=dict(required=False, default=None),
+        domain_id=dict(required=False, default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
@@ -129,11 +137,15 @@ def main():
 
     name = module.params.pop('name')
     description = module.params.pop('description')
+    domain_id = module.params.pop('domain_id')
     state = module.params.pop('state')
 
     try:
         cloud = shade.operator_cloud(**module.params)
-        group = cloud.get_group(name)
+        if domain_id:
+            group = cloud.get_group(name, filters={'domain_id': domain_id})
+        else:
+            group = cloud.get_group(name)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(state, description, group))
@@ -141,7 +153,7 @@ def main():
         if state == 'present':
             if group is None:
                 group = cloud.create_group(
-                    name=name, description=description)
+                    name=name, description=description, domain=domain_id)
                 changed = True
             else:
                 if description is not None and group.description != description:
@@ -154,18 +166,15 @@ def main():
 
         elif state == 'absent':
             if group is None:
-                changed=False
+                changed = False
             else:
                 cloud.delete_group(group.id)
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

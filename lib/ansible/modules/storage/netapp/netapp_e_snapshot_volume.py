@@ -1,25 +1,16 @@
 #!/usr/bin/python
 
 # (c) 2016, NetApp, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -29,7 +20,9 @@ description:
     - Create, update, remove snapshot volumes for NetApp E/EF-Series storage arrays.
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
-note: Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status will be returned, no other changes can be made to a pre-existing snapshot volume.
+notes:
+  - Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status
+    will be returned, no other changes can be made to a pre-existing snapshot volume.
 options:
     api_username:
         required: true
@@ -43,8 +36,6 @@ options:
         required: true
         description:
         - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
     validate_certs:
         required: false
         default: true
@@ -96,7 +87,7 @@ EXAMPLES = """
     - name: Snapshot volume
       netapp_e_snapshot_volume:
         ssid: "{{ ssid }}"
-        api_url: "{{ netapp_api_url }}"/
+        api_url: "{{ netapp_api_url }}/"
         api_username: "{{ netapp_api_username }}"
         api_password: "{{ netapp_api_password }}"
         state: present

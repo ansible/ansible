@@ -72,7 +72,7 @@
 
     - name: Generate ca key
       command: >
-        openssl req -new -x509 -days 3650 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem
+        openssl req -new -x509 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem
           -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=ansible.http.tests"
 
     - name: Generate ansible.http.tests key
@@ -82,7 +82,7 @@
 
     - name: Generate ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/ansible.http.tests-cert.pem -infiles /root/ca/ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/ansible.http.tests-cert.pem -infiles /root/ca/ansible.http.tests-req.pem
 
     - name: Generate sni1.ansible.http.tests key
       command: >
@@ -91,7 +91,7 @@
 
     - name: Generate sni1.ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni1.ansible.http.tests-cert.pem -infiles /root/ca/sni1.ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/sni1.ansible.http.tests-cert.pem -infiles /root/ca/sni1.ansible.http.tests-req.pem
 
     - name: Generate sni2.ansible.http.tests key
       command: >
@@ -100,24 +100,45 @@
 
     - name: Generate sni2.ansible.http.tests cert
       shell: >
-        yes | openssl ca -config /etc/ssl/openssl.cnf -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/sni2.ansible.http.tests-cert.pem -infiles /root/ca/sni2.ansible.http.tests-req.pem
+
+    - name: Generate client key
+      command: >
+        openssl req -new -nodes -out /root/ca/client.ansible.http.tests-req.pem -keyout /root/ca/private/client.ansible.http.tests-key.pem -config /etc/ssl/openssl.cnf
+          -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=client.ansible.http.tests"
+
+    - name: Generate client.ansible.http.tests cert
+      shell: >
+        yes | openssl ca -config /etc/ssl/openssl.cnf -days 3650 -out /root/ca/client.ansible.http.tests-cert.pem -infiles /root/ca/client.ansible.http.tests-req.pem
 
     - name: Copy cacert.pem into nginx doc root for easy retrieval
       copy:
-        src: /root/ca/cacert.pem
-        dest: /usr/share/nginx/html/cacert.pem
+        src: "/root/ca/cacert.pem"
+        dest: "/usr/share/nginx/html/cacert.pem"
+        remote_src: true
+
+    - copy:
+        src: /root/ca/client.ansible.http.tests-cert.pem
+        dest: /usr/share/nginx/html/client.pem
+        remote_src: true
+
+    - copy:
+        src: /root/ca/private/client.ansible.http.tests-key.pem
+        dest: /usr/share/nginx/html/client.key
         remote_src: true
 
     - name: Install gunicorn and httpbin
       pip:
-        name: "{{ item }}"
+        name: "{{ item.name }}"
+        version: "{{ item.version|default(omit) }}"
       with_items:
-        - gunicorn
-        - httpbin
+        - name: gunicorn
+        - name: httpbin
+          version: '0.5.0'
 
     - name: Copy services.sh script
       copy:
-        src: services.sh
+        src: "{{ playbook_dir }}/services.sh"
         dest: /services.sh
         mode: 0755
 

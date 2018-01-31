@@ -28,15 +28,17 @@ from ansible.module_utils._text import to_bytes
 
 class DictDataLoader(DataLoader):
 
-    def __init__(self, file_mapping=dict()):
+    def __init__(self, file_mapping=None):
+        file_mapping = {} if file_mapping is None else file_mapping
         assert type(file_mapping) == dict
 
         super(DictDataLoader, self).__init__()
 
         self._file_mapping = file_mapping
         self._build_known_directories()
+        self._vault_secrets = None
 
-    def load_from_file(self, path):
+    def load_from_file(self, path, unsafe=False):
         if path in self._file_mapping:
             return self.load(self._file_mapping[path], path)
         return None
@@ -70,7 +72,7 @@ class DictDataLoader(DataLoader):
             self._known_directories.append(directory)
 
     def _build_known_directories(self):
-        self._known_directories  = []
+        self._known_directories = []
         for path in self._file_mapping:
             dirname = os.path.dirname(path)
             while dirname not in ('/', ''):
@@ -96,3 +98,8 @@ class DictDataLoader(DataLoader):
         self._file_mapping = dict()
         self._known_directories = []
 
+    def get_basedir(self):
+        return os.getcwd()
+
+    def set_vault_secrets(self, vault_secrets):
+        self._vault_secrets = vault_secrets

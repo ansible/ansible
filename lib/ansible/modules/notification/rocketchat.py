@@ -5,37 +5,29 @@
 # (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: rocketchat
 short_description: Send notifications to Rocket Chat
 description:
-    - The M(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
+    - The C(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
 version_added: "2.2"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
   domain:
     description:
       - The domain for your environment without protocol. (i.e.
-        C(subdomain.domain.com or chat.domain.tld))
+        C(example.com) or C(chat.example.com))
     required: true
   token:
     description:
@@ -59,7 +51,7 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token)
-        specifed during the creation of webhook.
+        specified during the creation of webhook.
     required: false
     default: None
   username:
@@ -114,48 +106,49 @@ options:
 
 EXAMPLES = """
 - name: Send notification message via Rocket Chat
-  local_action:
-    module: rocketchat
+  rocketchat:
     token: thetoken/generatedby/rocketchat
     domain: chat.example.com
-    msg: "{{ inventory_hostname }} completed"
+    msg: '{{ inventory_hostname }} completed'
+  delegate_to: localhost
 
 - name: Send notification message via Rocket Chat all options
-  local_action:
-    module: rocketchat
+  rocketchat:
     domain: chat.example.com
     token: thetoken/generatedby/rocketchat
-    msg: "{{ inventory_hostname }} completed"
-    channel: "#ansible"
-    username: "Ansible on {{ inventory_hostname }}"
-    icon_url: "http://www.example.com/some-image-file.png"
+    msg: '{{ inventory_hostname }} completed'
+    channel: #ansible
+    username: 'Ansible on {{ inventory_hostname }}'
+    icon_url: http://www.example.com/some-image-file.png
     link_names: 0
+  delegate_to: localhost
 
 - name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in rocketchat
   rocketchat:
     token: thetoken/generatedby/rocketchat
     domain: chat.example.com
-    msg: "{{ inventory_hostname }} is alive!"
+    msg: '{{ inventory_hostname }} is alive!'
     color: good
-    username: ""
-    icon_url: ""
+    username: ''
+    icon_url: ''
+  delegate_to: localhost
 
 - name: Use the attachments API
   rocketchat:
     token: thetoken/generatedby/rocketchat
     domain: chat.example.com
     attachments:
-      - text: "Display my system load on host A and B"
-        color: "#ff00dd"
-        title: "System load"
+      - text: Display my system load on host A and B
+        color: #ff00dd
+        title: System load
         fields:
-          - title: "System A"
-            value: "load average: 0,74, 0,66, 0,63"
-            short: "true"
-          - title: "System B"
-            value: "load average: 5,16, 4,64, 2,43"
-            short: "true"
-
+          - title: System A
+            value: 'load average: 0,74, 0,66, 0,63'
+            short: True
+          - title: System B
+            value: 'load average: 5,16, 4,64, 2,43'
+            short: True
+  delegate_to: localhost
 """
 
 RETURN = """
@@ -166,7 +159,12 @@ changed:
     sample: false
 """
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
+
 ROCKETCHAT_INCOMING_WEBHOOK = '%s://%s/hooks/%s'
+
 
 def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon_emoji, link_names, color, attachments):
     payload = {}
@@ -198,8 +196,9 @@ def build_payload_for_rocketchat(module, text, channel, username, icon_url, icon
                 attachment['fallback'] = attachment['text']
             payload['attachments'].append(attachment)
 
-    payload="payload=" + module.jsonify(payload)
+    payload = "payload=" + module.jsonify(payload)
     return payload
+
 
 def do_notify_rocketchat(module, domain, token, protocol, payload):
 
@@ -212,21 +211,22 @@ def do_notify_rocketchat(module, domain, token, protocol, payload):
     if info['status'] != 200:
         module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            domain      = dict(type='str', required=True, default=None),
-            token       = dict(type='str', required=True, no_log=True),
-            protocol    = dict(type='str', default='https', choices=['http', 'https']),
-            msg         = dict(type='str', required=False, default=None),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
-            icon_emoji  = dict(type='str', default=None),
-            link_names  = dict(type='int', default=1, choices=[0,1]),
-            validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
-            attachments = dict(type='list', required=False, default=None)
+        argument_spec=dict(
+            domain=dict(type='str', required=True, default=None),
+            token=dict(type='str', required=True, no_log=True),
+            protocol=dict(type='str', default='https', choices=['http', 'https']),
+            msg=dict(type='str', required=False, default=None),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(type='str', default='https://www.ansible.com/favicon.ico'),
+            icon_emoji=dict(type='str', default=None),
+            link_names=dict(type='int', default=1, choices=[0, 1]),
+            validate_certs=dict(default='yes', type='bool'),
+            color=dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments=dict(type='list', required=False, default=None)
         )
     )
 
@@ -247,9 +247,6 @@ def main():
 
     module.exit_json(msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

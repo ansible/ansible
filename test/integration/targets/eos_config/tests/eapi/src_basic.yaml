@@ -7,7 +7,7 @@
       - no description
       - no shutdown
     parents:
-      - interface Ethernet5
+      - interface Ethernet2
     match: none
     provider: "{{ eapi }}"
 
@@ -21,7 +21,7 @@
     that:
       - "result.changed == true"
 # https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
+      - "result.updates is defined"
 
 - name: check device with config
   eos_config:

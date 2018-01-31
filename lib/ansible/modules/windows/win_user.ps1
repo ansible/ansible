@@ -47,60 +47,37 @@ function Clear-UserFlag($user, $flag) {
     $user.UserFlags = ($user.UserFlags[0] -BXOR $flag)
 }
 
+function Get-Group($grp) {
+    $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+    return
+}
+
 ########
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject @{
+$result = @{
     changed = $false
 };
 
-$username = Get-Attr $params "name" -failifempty $true
-$fullname = Get-Attr $params "fullname"
-$description = Get-Attr $params "description"
-$password = Get-Attr $params "password"
+$username = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$fullname = Get-AnsibleParam -obj $params -name "fullname" -type "str"
+$description = Get-AnsibleParam -obj $params -name "description" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
+$update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always","on_create"
+$password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type "bool"
+$password_never_expires = Get-AnsibleParam -obj $params -name "password_never_expires" -type "bool"
+$user_cannot_change_password = Get-AnsibleParam -obj $params -name "user_cannot_change_password" -type "bool"
+$account_disabled = Get-AnsibleParam -obj $params -name "account_disabled" -type "bool"
+$account_locked = Get-AnsibleParam -obj $params -name "account_locked" -type "bool"
+$groups = Get-AnsibleParam -obj $params -name "groups"
+$groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 
-$state = Get-Attr $params "state" "present"
-$state = $state.ToString().ToLower()
-If (($state -ne 'present') -and ($state -ne 'absent') -and ($state -ne 'query')) {
-    Fail-Json $result "state is '$state'; must be 'present', 'absent' or 'query'"
+If ($account_locked -ne $null -and $account_locked) {
+    Fail-Json $result "account_locked must be set to 'no' if provided"
 }
 
-$update_password = Get-Attr $params "update_password" "always"
-$update_password = $update_password.ToString().ToLower()
-If (($update_password -ne 'always') -and ($update_password -ne 'on_create')) {
-    Fail-Json $result "update_password is '$update_password'; must be 'always' or 'on_create'"
-}
-
-$password_expired = Get-Attr $params "password_expired" $null
-If ($password_expired -ne $null) {
-    $password_expired = $password_expired | ConvertTo-Bool
-}
-
-$password_never_expires = Get-Attr $params "password_never_expires" $null
-If ($password_never_expires -ne $null) {
-    $password_never_expires = $password_never_expires | ConvertTo-Bool
-}
-
-$user_cannot_change_password = Get-Attr $params "user_cannot_change_password" $null
-If ($user_cannot_change_password -ne $null) {
-    $user_cannot_change_password = $user_cannot_change_password | ConvertTo-Bool
-}
-
-$account_disabled = Get-Attr $params "account_disabled" $null
-If ($account_disabled -ne $null) {
-    $account_disabled = $account_disabled | ConvertTo-Bool
-}
-
-$account_locked = Get-Attr $params "account_locked" $null
-If ($account_locked -ne $null) {
-    $account_locked = $account_locked | ConvertTo-Bool
-    if ($account_locked) {
-        Fail-Json $result "account_locked must be set to 'no' if provided"
-    }
-}
-
-$groups = Get-Attr $params "groups" $null
 If ($groups -ne $null) {
     If ($groups -is [System.String]) {
         [string[]]$groups = $groups.Split(",")
@@ -112,12 +89,6 @@ If ($groups -ne $null) {
     If ($groups -eq $null) {
         $groups = @()
     }
-}
-
-$groups_action = Get-Attr $params "groups_action" "replace"
-$groups_action = $groups_action.ToString().ToLower()
-If (($groups_action -ne 'replace') -and ($groups_action -ne 'add') -and ($groups_action -ne 'remove')) {
-    Fail-Json $result "groups_action is '$groups_action'; must be 'replace', 'add' or 'remove'"
 }
 
 $user_obj = Get-User $username
@@ -197,7 +168,7 @@ If ($state -eq 'present') {
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $current_groups) {
                     If ((($groups_action -eq "remove") -and ($groups -contains $grp)) -or (($groups_action -eq "replace") -and ($groups -notcontains $grp))) {
-                        $group_obj = $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+                        $group_obj = Get-Group $grp
                         If ($group_obj) {
                             $group_obj.Remove($user_obj.Path)
                             $result.changed = $true
@@ -211,7 +182,7 @@ If ($state -eq 'present') {
             If (($groups_action -eq "add") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $groups) {
                     If ($current_groups -notcontains $grp) {
-                        $group_obj = $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
+                        $group_obj = Get-Group $grp
                         If ($group_obj) {
                             $group_obj.Add($user_obj.Path)
                             $result.changed = $true
@@ -235,7 +206,10 @@ ElseIf ($state -eq 'absent') {
             $username = $user_obj.Name.Value
             $adsi.delete("User", $user_obj.Name.Value)
             $result.changed = $true
+            $result.msg = "User '$username' deleted successfully"
             $user_obj = $null
+        } else {
+            $result.msg = "User '$username' was not found"
         }
     }
     catch {
@@ -246,31 +220,33 @@ ElseIf ($state -eq 'absent') {
 try {
     If ($user_obj -and $user_obj -is [System.DirectoryServices.DirectoryEntry]) {
         $user_obj.RefreshCache()
-        Set-Attr $result "name" $user_obj.Name[0]
-        Set-Attr $result "fullname" $user_obj.FullName[0]
-        Set-Attr $result "path" $user_obj.Path
-        Set-Attr $result "description" $user_obj.Description[0]
-        Set-Attr $result "password_expired" ($user_obj.PasswordExpired | ConvertTo-Bool)
-        Set-Attr $result "password_never_expires" (Get-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD)
-        Set-Attr $result "user_cannot_change_password" (Get-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE)
-        Set-Attr $result "account_disabled" $user_obj.AccountDisabled
-        Set-Attr $result "account_locked" $user_obj.IsAccountLocked
-        Set-Attr $result "sid" (New-Object System.Security.Principal.SecurityIdentifier($user_obj.ObjectSid.Value, 0)).Value
+        $result.name = $user_obj.Name[0]
+        $result.fullname = $user_obj.FullName[0]
+        $result.path = $user_obj.Path
+        $result.description = $user_obj.Description[0]
+        $result.password_expired = ($user_obj.PasswordExpired | ConvertTo-Bool)
+        $result.password_never_expires = (Get-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD)
+        $result.user_cannot_change_password = (Get-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE)
+        $result.account_disabled = $user_obj.AccountDisabled
+        $result.account_locked = $user_obj.IsAccountLocked
+        $result.sid = (New-Object System.Security.Principal.SecurityIdentifier($user_obj.ObjectSid.Value, 0)).Value
         $user_groups = @()
         ForEach ($grp in $user_obj.Groups()) {
-            $group_result = New-Object psobject @{
+            $group_result = @{
                 name = $grp.GetType().InvokeMember("Name", "GetProperty", $null, $grp, $null)
                 path = $grp.GetType().InvokeMember("ADsPath", "GetProperty", $null, $grp, $null)
             }
             $user_groups += $group_result;
         }
-        Set-Attr $result "groups" $user_groups
-        Set-Attr $result "state" "present"
+        $result.groups = $user_groups
+        $result.state = "present"
     }
     Else {
-        Set-Attr $result "name" $username
-        Set-Attr $result "msg" "User '$username' was not found"
-        Set-Attr $result "state" "absent"
+        $result.name = $username
+        if ($state -eq 'query') {
+            $result.msg = "User '$username' was not found"
+        }
+        $result.state = "absent"
     }
 }
 catch {

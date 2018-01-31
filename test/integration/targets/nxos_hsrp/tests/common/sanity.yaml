@@ -1,0 +1,94 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_hsrp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# Select interface for test
+- set_fact: intname="{{ nxos_int1 }}"
+
+- block:
+  - name: "Enable feature hsrp"
+    nxos_feature: 
+      feature: hsrp
+      state: enabled
+      provider: "{{ connection }}"
+
+  - name: "change interface mode"
+    nxos_config:
+      commands:
+        - no switchport
+      parents:
+        - "interface {{ intname }}"
+      match: none
+      provider: "{{ connection }}"
+
+  - name: "configure nxos_hsrp"
+    nxos_hsrp: &configure
+      group: 10
+      version: 2
+      vip: 10.1.1.1
+      priority: 150
+      interface: "{{ intname }}"
+      preempt: enabled
+      auth_type: text
+      auth_string: CISCO
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Conf Idempotence"
+    nxos_hsrp: *configure
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: "remove nxos_hsrp"
+    nxos_hsrp: &remove
+      group: 10
+      version: 2
+      vip: 10.1.1.1
+      priority: 150
+      interface: "{{ intname }}"
+      preempt: enabled
+      auth_type: text
+      auth_string: CISCO
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: "Remove Idempotence"
+    nxos_hsrp: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: "remove nxos_hsrp"
+    nxos_hsrp:
+      group: 10
+      version: 2
+      vip: 10.1.1.1
+      priority: 150
+      interface: "{{ intname }}"
+      preempt: enabled
+      auth_type: text
+      auth_string: CISCO
+      provider: "{{ connection }}"
+      state: absent
+    ignore_errors: yes
+
+  - name: "Disable feature hsrp"
+    nxos_feature: 
+      feature: hsrp
+      state: disabled
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_hsrp sanity test"

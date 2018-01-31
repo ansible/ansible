@@ -1,25 +1,16 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: consul
@@ -56,7 +47,7 @@ options:
     service_name:
         description:
           - Unique name for the service on a node, must be unique per node,
-            required if registering a service. May be ommitted if registering
+            required if registering a service. May be omitted if registering
             a node level check
         required: false
     service_id:
@@ -94,9 +85,10 @@ options:
         default: None
     service_port:
         description:
-          - the port on which the service is listening required for
+          - the port on which the service is listening. Can optionally be supplied for
             registration of a service, i.e. if service_name or service_id is set
         required: false
+        default: None
     service_address:
         description:
           - the address to advertise that the service will be listening on.
@@ -172,59 +164,65 @@ options:
 """
 
 EXAMPLES = '''
-  - name: register nginx service with the local consul agent
-    consul:
-      service_name: nginx
-      service_port: 80
+- name: register nginx service with the local consul agent
+  consul:
+    service_name: nginx
+    service_port: 80
 
-  - name: register nginx service with curl check
-    consul:
-      service_name: nginx
-      service_port: 80
-      script: "curl http://localhost"
-      interval: 60s
+- name: register nginx service with curl check
+  consul:
+    service_name: nginx
+    service_port: 80
+    script: curl http://localhost
+    interval: 60s
 
-  - name: register nginx with an http check
-    consul:
-      service_name: nginx
-      service_port: 80
-      interval: 60s
-      http: "http://localhost:80/status"
+- name: register nginx with an http check
+  consul:
+    service_name: nginx
+    service_port: 80
+    interval: 60s
+    http: http://localhost:80/status
 
-  - name: register external service nginx available at 10.1.5.23
-    consul:
-      service_name: nginx
-      service_port: 80
-      service_address: 10.1.5.23
+- name: register external service nginx available at 10.1.5.23
+  consul:
+    service_name: nginx
+    service_port: 80
+    service_address: 10.1.5.23
 
-  - name: register nginx with some service tags
-    consul:
-      service_name: nginx
-      service_port: 80
-      tags:
-        - prod
-        - webservers
+- name: register nginx with some service tags
+  consul:
+    service_name: nginx
+    service_port: 80
+    tags:
+      - prod
+      - webservers
 
-  - name: remove nginx service
-    consul:
-      service_name: nginx
-      state: absent
+- name: remove nginx service
+  consul:
+    service_name: nginx
+    state: absent
 
-  - name: create a node level check to test disk usage
-    consul:
-      check_name: Disk usage
-      check_id: disk_usage
-      script: "/opt/disk_usage.py"
-      interval: 5m
+- name: register celery worker service
+  consul:
+    service_name: celery-worker
+    tags:
+      - prod
+      - worker
 
-  - name: register an http check against a service that's already registered
-    consul:
-      check_name: nginx-check2
-      check_id: nginx-check2
-      service_id: nginx
-      interval: 60s
-      http: "http://localhost:80/morestatus"
+- name: create a node level check to test disk usage
+  consul:
+    check_name: Disk usage
+    check_id: disk_usage
+    script: /opt/disk_usage.py
+    interval: 5m
 
+- name: register an http check against a service that's already registered
+  consul:
+    check_name: nginx-check2
+    check_id: nginx-check2
+    service_id: nginx
+    interval: 60s
+    http: http://localhost:80/morestatus
 '''
 
 try:
@@ -234,8 +232,10 @@ try:
 except ImportError:
     python_consul_installed = False
 
-def register_with_consul(module):
+from ansible.module_utils.basic import AnsibleModule
 
+
+def register_with_consul(module):
     state = module.params.get('state')
 
     if state == 'present':
@@ -277,7 +277,7 @@ def add_check(module, check):
     retrieve the full metadata of an existing check  through the consul api.
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
-    if not check.name and not service_id:
+    if not check.name and not check.service_id:
         module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
@@ -306,7 +306,7 @@ def remove_check(module, check_id):
 
 
 def add_service(module, service):
-    ''' registers a service with the the current agent '''
+    ''' registers a service with the current agent '''
     result = service
     changed = False
 
@@ -353,20 +353,19 @@ def get_consul_api(module, token=None):
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
     ''' iterate the registered services and find one with the given id '''
-    for name, service in consul_api.agent.services().iteritems():
+    for name, service in consul_api.agent.services().items():
         if service['ID'] == service_id_or_name or service['Service'] == service_id_or_name:
             return ConsulService(loaded=service)
 
 
 def parse_check(module):
-
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len([p for p in (module.params.get('script'), module.params.get('ttl'), module.params.get('http')) if p]) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
+            msg='checks are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
-       return ConsulCheck(
+        return ConsulCheck(
             module.params.get('check_id'),
             module.params.get('check_name'),
             module.params.get('check_node'),
@@ -382,8 +381,7 @@ def parse_check(module):
 
 
 def parse_service(module):
-
-    if module.params.get('service_name') and module.params.get('service_port'):
+    if module.params.get('service_name'):
         return ConsulService(
             module.params.get('service_id'),
             module.params.get('service_name'),
@@ -391,12 +389,11 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_name') and not module.params.get('service_port'):
+    elif not module.params.get('service_name'):
+        module.fail_json(msg="service_name is required to configure a service.")
 
-        module.fail_json( msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure the 'port' argument meaning 'service_port'?")
 
-
-class  ConsulService():
+class ConsulService():
 
     def __init__(self, service_id=None, name=None, address=None, port=-1,
                  tags=None, loaded=None):
@@ -414,23 +411,20 @@ class  ConsulService():
             self.tags = loaded['Tags']
 
     def register(self, consul_api):
-        if len(self.checks) > 0:
-            check = self.checks[0]
+        optional = {}
 
-            consul_api.agent.service.register(
-                self.name,
-                service_id=self.id,
-                address=self.address,
-                port=self.port,
-                tags=self.tags,
-                check=check.check)
-        else:
-            consul_api.agent.service.register(
-                self.name,
-                service_id=self.id,
-                address=self.address,
-                port=self.port,
-                tags=self.tags)
+        if self.port:
+            optional['port'] = self.port
+
+        if len(self.checks) > 0:
+            optional['check'] = self.checks[0].check
+
+        consul_api.agent.service.register(
+            self.name,
+            service_id=self.id,
+            address=self.address,
+            tags=self.tags,
+            **optional)
 
     def add_check(self, check):
         self.checks.append(check)
@@ -442,11 +436,11 @@ class  ConsulService():
         return len(self.checks) > 0
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.id == other.id
-                and self.name == other.name
-                and self.port == other.port
-                and self.tags == other.tags)
+        return (isinstance(other, self.__class__) and
+                self.id == other.id and
+                self.name == other.name and
+                self.port == other.port and
+                self.tags == other.tags)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -462,10 +456,10 @@ class  ConsulService():
         return data
 
 
-class ConsulCheck():
+class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
+                 script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
@@ -494,7 +488,6 @@ class ConsulCheck():
 
             self.check = consul.Check.http(http, self.interval, self.timeout)
 
-
     def validate_duration(self, name, duration):
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
@@ -508,12 +501,12 @@ class ConsulCheck():
                                         check=self.check)
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.check_id == other.check_id
-                and self.service_id == other.service_id
-                and self.name == other.name
-                and self.script == script
-                and self.interval == interval)
+        return (isinstance(other, self.__class__) and
+                self.check_id == other.check_id and
+                self.service_id == other.service_id and
+                self.name == other.name and
+                self.script == other.script and
+                self.interval == other.interval)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -541,9 +534,11 @@ class ConsulCheck():
         except:
             pass
 
+
 def test_dependencies(module):
     if not python_consul_installed:
         module.fail_json(msg="python-consul required for this module. see http://python-consul.readthedocs.org/en/latest/#installation")
+
 
 def main():
     module = AnsibleModule(
@@ -561,7 +556,7 @@ def main():
             service_id=dict(required=False),
             service_name=dict(required=False),
             service_address=dict(required=False, type='str', default=None),
-            service_port=dict(required=False, type='int'),
+            service_port=dict(required=False, type='int', default=None),
             state=dict(default='present', choices=['present', 'absent']),
             interval=dict(required=False, type='str'),
             ttl=dict(required=False, type='str'),
@@ -579,11 +574,10 @@ def main():
         register_with_consul(module)
     except ConnectionError as e:
         module.fail_json(msg='Could not connect to consul agent at %s:%s, error was %s' % (
-                            module.params.get('host'), module.params.get('port'), str(e)))
+            module.params.get('host'), module.params.get('port'), str(e)))
     except Exception as e:
         module.fail_json(msg=str(e))
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

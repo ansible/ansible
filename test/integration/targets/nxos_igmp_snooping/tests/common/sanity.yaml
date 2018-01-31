@@ -1,0 +1,50 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_igmp_snooping sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- block:
+
+  - name: Configure igmp snooping with non-default values
+    nxos_igmp_snooping: &non-default
+      snooping: true
+      group_timeout: never
+      link_local_grp_supp: true
+      report_supp: true
+      v3_report_supp: true
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: "Check Idempotence - Configure igmp snooping with non-default values"
+    nxos_igmp_snooping: *non-default
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: &default
+      state: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence - Configure igmp snooping with default values"
+    nxos_igmp_snooping: *default
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Configure igmp snooping with default values
+    nxos_igmp_snooping: *default
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_igmp_snooping sanity test"

@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import re
 
 from ansible.plugins.terminal import TerminalBase
@@ -27,26 +28,23 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\@[\w\-\.]+:\S+?[>#\$] ?$")
+    terminal_stdout_re = [
+        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"\@[\w\-\.]+:\S+?[>#\$] ?$")
     ]
 
-    terminal_errors_re = [
-        re.compile(r"\n\s*Invalid command:"),
-        re.compile(r"\nCommit failed"),
-        re.compile(r"\n\s+Set failed"),
+    terminal_stderr_re = [
+        re.compile(br"\n\s*Invalid command:"),
+        re.compile(br"\nCommit failed"),
+        re.compile(br"\n\s+Set failed"),
     ]
+
+    terminal_length = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command('set terminal length 0')
+            for cmd in (b'set terminal length 0', b'set terminal width 512'):
+                self._exec_cli_command(cmd)
+            self._exec_cli_command(b'set terminal length %d' % self.terminal_length)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('cat /proc/version')
-        if 'vyos' in stdout.read():
-            return 'vyos'
-
