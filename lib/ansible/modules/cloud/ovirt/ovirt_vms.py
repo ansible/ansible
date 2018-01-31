@@ -481,6 +481,10 @@ options:
             - "C(cpu) - Number of the host CPU."
             - "C(vcpu) - Number of the virtual machine CPU."
         version_added: "2.5"
+    soundcard_enabled:
+        description:
+            - "If I(true), the sound card is added to the virtual machine."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -961,6 +965,7 @@ class VmsModule(BaseModule):
                     otypes.Host(name=self.param('host')),
                 ] if self.param('host') else None,
             ) if self.param('placement_policy') else None,
+            soundcard_enabled=self.param('soundcard_enabled'),
         )
 
     def update_check(self, entity):
@@ -985,6 +990,7 @@ class VmsModule(BaseModule):
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
+            equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
@@ -1611,6 +1617,7 @@ def main():
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
         cpu_pinning=dict(type='list'),
+        soundcard_enabled=dict(type='bool', default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
