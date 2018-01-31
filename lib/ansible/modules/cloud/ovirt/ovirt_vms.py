@@ -493,6 +493,12 @@ options:
         description:
             - "If I(true), use IO threads."
         version_added: "2.5"
+    ballooning_enabled:
+        description:
+            - "If I(true), use memory ballooning."
+            - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
+               based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -948,7 +954,8 @@ class VmsModule(BaseModule):
             ) if self.param('memory') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
-            ) if self.param('memory_guaranteed') else None,
+                ballooning=self.param('ballooning_enabled'),
+            ) if any((self.param('memory_guaranteed'), self.param('ballooning_enabled') is not None)) else None,
             instance_type=otypes.InstanceType(
                 id=get_id_by_name(
                     self._connection.system_service().instance_types_service(),
@@ -1007,6 +1014,7 @@ class VmsModule(BaseModule):
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
             equal(self.param('smartcard_enabled'), entity.display.smartcard_enabled) and
             equal(self.param('io_threads_enabled'), bool(entity.io.threads)) and
+            equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
@@ -1636,6 +1644,7 @@ def main():
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
         io_threads_enabled=dict(type='bool', default=None),
+        ballooning_enabled=dict(type='bool', default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
