@@ -330,7 +330,7 @@ except ImportError:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
 from ansible.module_utils.aws.waf import get_change_token, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff
 
@@ -551,11 +551,25 @@ class Condition(object):
             self.tidy_up_regex_patterns(current_condition)
         return True, {}
 
+
+    def find_missing(self, update, current_condition):
+        missing = []
+        for desired in update['Updates']:
+            found = False
+            desired_condition = desired[self.conditiontuple]
+            current_conditions = current_condition[self.conditiontuples]
+            for current_condition in current_conditions:
+                if not compare_policies(current_condition, desired_condition):
+                    found = True
+            if not found:
+                missing.append(desired)
+        return missing
+
+
     def find_and_update_condition(self, condition_set_id):
         current_condition = self.get_condition_by_id(condition_set_id)
         update = self.format_for_update(condition_set_id)
-        missing = [desired for desired in update['Updates']
-                   if desired[self.conditiontuple] not in current_condition[self.conditiontuples]]
+        missing = self.find_missing(update, current_condition)
         if self.module.params.get('purge_filters'):
             extra = [{'Action': 'DELETE', self.conditiontuple: current_tuple}
                      for current_tuple in current_condition[self.conditiontuples]
