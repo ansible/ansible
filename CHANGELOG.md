@@ -62,6 +62,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 
+#### Deprecated Modules (to be removed in 2.9):
+* ec2_ami_find: replaced by ec2_ami_facts
+* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
+
 #### Removed Modules (previously deprecated):
 * accelerate.
 * boundary_meter: There was no deprecation period for this but the hosted
@@ -73,7 +77,6 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
   https://github.com/ansible/ansible/issues/29387
-* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 
 ### New Plugins
 
