@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 $Results = @()
 
 ForEach ($Path in $Args) {
-    $Results += Invoke-ScriptAnalyzer -Path $Path
+    $Results += Invoke-ScriptAnalyzer -Path $Path -Setting $PSScriptRoot/settings.psd1
 }
 
 ConvertTo-Json -InputObject $Results
