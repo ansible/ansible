@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: "thycotic_secret"
 
-short_description: "Add or retrieve secrets from of Thycotic Secret Server"
+short_description: "Enforce state upon secrets stored in Thycotic Secret Server"
 
 version_added: "2.5"
 
@@ -60,59 +60,23 @@ options:
         description:
             - Type of secret template you wish to use
             - Required for putting secrets (file or text)
-        required: false
+        required: true
     src:
         description:
             - Absolute path on the host machine to the file that you wish to upload and attach to the secret
             - Required for putting files
-        required: false
-    dest:
-        description:
-            - Absolute path on the host machine to the folder that you wish to download the secret file to
-            - Required for getting files
         required: false
     field_value:
         description:
             - Text value that you wish to place in the secret field
             - Required for putting text
         required: false
-    mode:
-        description:
-            - Mode of operation of the module
-        choices:
-            - get
-            - put
-        required: true
 
 author:
     - Patrick Thomison (@pthomison)
 '''
 
 EXAMPLES = '''
-# Retrieve Text From A Field
-- name: get text
-  thycotic_secret:
-    username: 'admin'
-    password: 'adm-password'
-    endpoint: 'http://endpoint/SecretServer/webservices/sswebservice.asmx'
-    secret_name: 'example_ssh_key'
-    field_name: 'Private Key'
-    folder: 'demo'
-    mode: 'get'
-  register: priv_key
-
-# Retrieve File Attachement From A Field
-- name: get file
-  thycotic_secret:
-    username: 'admin'
-    password: 'adm-password'
-    endpoint: 'http://endpoint/SecretServer/webservices/sswebservice.asmx'
-    secret_name: 'test_image'
-    field_name: 'file'
-    dest: '/tmp/'
-    folder: 'demo'
-    mode: 'get'
-
 # Place Text In A Field
 - name: put text
   thycotic_secret:
@@ -124,7 +88,6 @@ EXAMPLES = '''
     field_name: 'Password'
     field_value: 'pa44w0rd'
     folder: 'demo'
-    mode: 'put'
 
 # Attach A File To A Field
 - name: put file
@@ -137,14 +100,10 @@ EXAMPLES = '''
     field_name: 'file'
     src: '/tmp/test_file.jpg'
     folder: 'demo'
-    mode: 'put'
 '''
 
 RETURN = '''
-secret_value:
-    description: The secret field value that you requested; Only populated when getting text
-    type: str
-    returned: success
+
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -165,24 +124,18 @@ def run_module():
         folder=dict(type='str', required=True),
         secret_name=dict(type='str', required=True),
         field_name=dict(type='str', required=True),
-        mode=dict(type='str', required=True, choices=['get', 'put', 'debug']),
         src=dict(type='str', required=False),
-        dest=dict(type='str', required=False),
-        type=dict(type='str', required=False),
+        type=dict(type='str', required=True),
         field_value=dict(type='str', required=False, no_log=True),
     )
 
     result = dict(
-        changed=False,
-        secret_value="test"
+        changed=False
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True,
-        required_if=[
-            ["mode", "put", ["type"]]
-        ]
+        supports_check_mode=True
     )
 
     # Error checking for imports
@@ -210,156 +163,97 @@ def run_module():
 
     secret = find_secret(module.params['endpoint'], token, module.params['secret_name'], folderId)
 
-    # non production, testing mode
-    if module.params['mode'] == 'debug':
-        result['changed'] = False
+    # Get the correct template
+    get_templates_result = make_soap_request(module.params['endpoint'], 'GetSecretTemplates', {'token': token})
+    template_list = get_templates_result["SecretTemplates"]["SecretTemplate"]
+    template_test = [tpl for tpl in template_list if (module.params['type'] == tpl["Name"])]
+    # Ensuring template is Present
+    if len(template_test) == 0:
+        module.fail_json(msg='Secret Type Is Not Present On This Server', **result)
+    template = template_test[0]
 
-    # retrieves a secret and returns it
-    elif module.params['mode'] == 'get':
-            # secret must exist
-            if secret is None:
-                module.fail_json(msg='Secret Does Not Exist', **result)
+    if template['Fields'] is None:
+        module.fail_json(msg='Secret Has No Fields', **result)
 
-            # field name must be present on the secret
-            field = field_name_filter(secret, module.params['field_name'])
-            if field is None:
-                module.fail_json(msg='Field Is Not Present On The Secret', **result)
+    template_fields = template['Fields']['SecretField']
+    template_field_name_test = [x for x in template_fields if x['DisplayName'] == module.params['field_name']]
+    # Ensuring the field name is on the template
+    if len(template_field_name_test) == 0:
+        module.fail_json(msg='Field Is Not Present On The Secret Type', **result)
+    template_field = template_field_name_test[0]
 
-            if field['IsFile']:
-                # Download destination must be present if it is a file
-                if not module.params['dest']:
-                    module.fail_json(msg="Field is a file and no destination was given", **result)
+    # CHANGE VALIDATION
 
-                # Downloading file
-                get_file_args = {'token': token, 'secretId': secret['Id'], 'secretItemId': field['Id']}
-                get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachmentByItemId', get_file_args)
-                file_bytes = get_file_result["FileAttachment"]
-                download_location = os.path.join(module.params['dest'], get_file_result["FileName"])
+    # assume nothing changes
+    result['changed'] = False
 
-                # assume nothing changes
-                result['changed'] = False
+    # Secret is present
+    if secret is not None:
+        field = field_name_filter(secret, module.params['field_name'])
 
-                # if getting a file and the dest does not exist
-                if not os.path.exists(download_location):
-                    result['changed'] = True
+        if template_field['IsFile']:
+            # error check for 'src'
+            if not module.params['src']:
+                module.fail_json(msg="Field is a file and no src was given", **result)
 
-                # if getting a file, and the dest already exists, download a temp copy, check to see if the files match
-                else:
-                    with open(download_location, 'rb') as fp:
-                        curr_file = fp.read()
+            get_file_args = {'token': token, 'secretId': secret['Id'], 'secretItemId': field['Id']}
+            get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachmentByItemId', get_file_args)
+            file_bytes = get_file_result["FileAttachment"]
 
-                    # if they do, return nothing changed
-                    if curr_file == file_bytes:
-                        result['changed'] = False
+            with open(module.params['src'], "rb") as fp:
+                src_bytes = fp.read()
+            equality_test = file_bytes == src_bytes
 
-                    # if they don't & check mode is not enabled, return changed & update the file
-                    # if they don't & check mode is enabled, return changed, but do not update the file
-                    else:
-                        result['changed'] = True
+        else:
+            equality_test = field['Value'] == module.params['field_value']
 
-                # Downloading the file to the correct location
-                if result['changed'] and not module.check_mode:
-                    with open(download_location, 'wb') as fp:
-                        fp.write(file_bytes)
-
-            else:
-                # returning secret
-                result['secret_value'] = field['Value']
-                result['changed'] = False
-
-    # ensures the secret is added into the secret server
-    elif module.params['mode'] == 'put':
-            # Get the correct template
-            get_templates_result = make_soap_request(module.params['endpoint'], 'GetSecretTemplates', {'token': token})
-            template_list = get_templates_result["SecretTemplates"]["SecretTemplate"]
-            template_test = [tpl for tpl in template_list if (module.params['type'] == tpl["Name"])]
-            # Ensuring template is Present
-            if len(template_test) == 0:
-                module.fail_json(msg='Secret Type Is Not Present On This Server', **result)
-            template = template_test[0]
-
-            if template['Fields'] is None:
-                module.fail_json(msg='Secret Has No Fields', **result)
-
-            template_fields = template['Fields']['SecretField']
-            template_field_name_test = [x for x in template_fields if x['DisplayName'] == module.params['field_name']]
-            # Ensuring the field name is on the template
-            if len(template_field_name_test) == 0:
-                module.fail_json(msg='Field Is Not Present On The Secret Type', **result)
-            template_field = template_field_name_test[0]
-
-            # CHANGE VALIDATION
-
-            # assume nothing changes
+        # if arguments & secret match, change nothing
+        if equality_test:
             result['changed'] = False
+        # if arguments & secret don't match, the secret will be updated
+        else:
+            result['changed'] = True
 
-            # Secret is present
-            if secret is not None:
+    # if secret is not present
+    # it will be uploaded
+    else:
+        result['changed'] = True
+
+    # CHANGE IMPLEMENTATION
+
+    # if the secret is not present or doesn't match the argmuments,
+    if result['changed'] and not module.check_mode:
+
+        # Secret does not exist, must be created
+        if secret is None:
+            # Creating a new secret from the template
+            get_new_secret_args = {'token': token, 'secretTypeId': template['Id'], 'folderId': folderId}
+            get_new_secret_result = make_soap_request(module.params['endpoint'], 'GetNewSecret', get_new_secret_args)
+
+            new_secret = get_new_secret_result['Secret']
+            new_secret["Name"] = module.params['secret_name']
+
+            if not template_field['IsFile']:
+                new_secret = inject_arg(new_secret, module.params['field_name'], module.params['field_value'])
+
+            # Tell the server to add the new secret
+            make_soap_request(module.params['endpoint'], 'AddNewSecret', {'token': token, 'secret': new_secret})
+
+            if template_field['IsFile']:
+                # re-requesting secret to get updated ID
+                new_secret = find_secret(module.params['endpoint'], token, module.params['secret_name'], folderId)
+                new_secret_field = field_name_filter(new_secret, module.params['field_name'])
+                upload_file(module.params['endpoint'], token, new_secret['Id'], new_secret_field['Id'], module.params['src'])
+
+        # if secret is present, update it
+        else:
+            if template_field['IsFile']:
                 field = field_name_filter(secret, module.params['field_name'])
+                upload_file(module.params['endpoint'], token, secret['Id'], field['Id'], module.params['src'])
 
-                if template_field['IsFile']:
-                    # error check for 'src'
-                    if not module.params['src']:
-                        module.fail_json(msg="Field is a file and no src was given", **result)
-
-                    get_file_args = {'token': token, 'secretId': secret['Id'], 'secretItemId': field['Id']}
-                    get_file_result = make_soap_request(module.params['endpoint'], 'DownloadFileAttachmentByItemId', get_file_args)
-                    file_bytes = get_file_result["FileAttachment"]
-
-                    with open(module.params['src'], "rb") as fp:
-                        src_bytes = fp.read()
-                    equality_test = file_bytes == src_bytes
-
-                else:
-                    equality_test = field['Value'] == module.params['field_value']
-
-                # if arguments & secret match, change nothing
-                if equality_test:
-                    result['changed'] = False
-                # if arguments & secret don't match, the secret will be updated
-                else:
-                    result['changed'] = True
-
-            # if secret is not present
-            # it will be uploaded
             else:
-                result['changed'] = True
-
-            # CHANGE IMPLEMENTATION
-
-            # if the secret is not present or doesn't match the argmuments,
-            if result['changed'] and not module.check_mode:
-
-                # Secret does not exist, must be created
-                if secret is None:
-                    # Creating a new secret from the template
-                    get_new_secret_args = {'token': token, 'secretTypeId': template['Id'], 'folderId': folderId}
-                    get_new_secret_result = make_soap_request(module.params['endpoint'], 'GetNewSecret', get_new_secret_args)
-
-                    new_secret = get_new_secret_result['Secret']
-                    new_secret["Name"] = module.params['secret_name']
-
-                    if not template_field['IsFile']:
-                        new_secret = inject_arg(new_secret, module.params['field_name'], module.params['field_value'])
-
-                    # Tell the server to add the new secret
-                    make_soap_request(module.params['endpoint'], 'AddNewSecret', {'token': token, 'secret': new_secret})
-
-                    if template_field['IsFile']:
-                        # re-requesting secret to get updated ID
-                        new_secret = find_secret(module.params['endpoint'], token, module.params['secret_name'], folderId)
-                        new_secret_field = field_name_filter(new_secret, module.params['field_name'])
-                        upload_file(module.params['endpoint'], token, new_secret['Id'], new_secret_field['Id'], module.params['src'])
-
-                # if secret is present, update it
-                else:
-                    if template_field['IsFile']:
-                        field = field_name_filter(secret, module.params['field_name'])
-                        upload_file(module.params['endpoint'], token, secret['Id'], field['Id'], module.params['src'])
-
-                    else:
-                        updated_secret = inject_arg(secret, module.params['field_name'], module.params['field_value'])
-                        make_soap_request(module.params['endpoint'], 'UpdateSecret', {'token': token, 'secret': updated_secret})
+                updated_secret = inject_arg(secret, module.params['field_name'], module.params['field_value'])
+                make_soap_request(module.params['endpoint'], 'UpdateSecret', {'token': token, 'secret': updated_secret})
 
     module.exit_json(**result)
 
