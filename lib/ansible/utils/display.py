@@ -47,6 +47,14 @@ except NameError:
     pass
 
 
+class FilterBlackList(logging.Filter):
+    def __init__(self, blacklist):
+        self.blacklist = [logging.Filter(name) for name in blacklist]
+
+    def filter(self, record):
+        return not any(f.filter(record) for f in self.blacklist)
+
+
 logger = None
 # TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
@@ -56,6 +64,8 @@ if C.DEFAULT_LOG_PATH:
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        for handler in logging.root.handlers:
+            handler.addFilter(FilterBlackList(C.DEFAULT_LOG_FILTER))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
