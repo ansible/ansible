@@ -1,5 +1,6 @@
 # (c) 2016, Bill Wang <ozbillwang(at)gmail.com>
 # (c) 2017, Marat Bakeev <hawara(at)gmail.com>
+# (c) 2018, Michael De La Rue <hawara(at)gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -11,6 +12,7 @@ DOCUMENTATION = '''
     author:
       - Bill Wang <ozbillwang(at)gmail.com>
       - Marat Bakeev <hawara(at)gmail.com>
+      - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com> 
     version_added: 2.5
     short_description: Get the value for a SSM parameter.
     description:
@@ -18,10 +20,11 @@ DOCUMENTATION = '''
         argument you pass the lookup can either be a parameter name or a hierarchy of parameters. Hierarchies start
         with a forward slash and end with the parameter name. Up to 5 layers may be specified.
     options:
-      aws_profile:
-        description: The boto profile to use. You may use environment variables or the default profile as an alternative.
       region:
         description: The region to use. You may use environment variables ar the default profile's region as an alternative.
+      aws_profile:
+        description: The boto profile to use. You may use environment variables or the default profile as an alternative.
+
       decrypt:
         description: A boolean to indicate whether to decrypt the parameter.
         default: false
@@ -45,132 +48,141 @@ EXAMPLES = '''
   debug: msg="{{ lookup('aws_ssm', 'NoKey') }}"
 
 - name: lookup ssm parameter store in nominated region
-  debug: msg="{{ lookup('aws_ssm', 'Hello', 'region=us-east-2' ) }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', region=us-east-2 ) }}"
 
 - name: lookup ssm parameter store without decrypted
-  debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=False' ) }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=False ) }}"
 
 - name: lookup ssm parameter store in nominated aws profile
-  debug: msg="{{ lookup('aws_ssm', 'Hello', 'aws_profile=myprofile' ) }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', aws_profile=myprofile ) }}"
 
 - name: lookup ssm parameter store with all options.
-  debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
+  debug: msg="{{ lookup('aws_ssm', 'Hello', decrypt=false, region=us-east-2, aws_profile=myprofile') }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path
-  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'bypath', 'recursive=true' ) }}"
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, bypath=true, recursive=true' ) }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
-  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'shortnames', 'bypath', 'recursive=true' ) }}"
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, shortnames, bypath=true, recursive=true ) }}"
 
 - name: Iterate over a parameter hierarchy
   debug: msg='key contains {{item.Name }} with value {{item.Value}} '
   with_aws_ssm:
-    - '/TEST/test-list'
-    - 'region=ap-southeast-2'
-    - 'bypath'
+    - '/TEST/test-list region=ap-southeast-2, bypath'
 '''
+# FIXME the last one is probably not true yet. 
+
 
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.parsing.convert_bool import boolean
+import pdb
 
 try:
     from botocore.exceptions import ClientError
+    import botocore
     import boto3
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
 
+def _boto3_conn(region, credentials):
+    if 'boto_profile' in credentials:
+        boto_profile = credentials.pop('boto_profile')
+    else:
+        boto_profile = None
+
+    try:
+        connection = boto3.session.Session(profile_name=boto_profile).client('ssm', region, **credentials)
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+        if boto_profile:
+            try:
+                connection = boto3.session.Session(profile_name=boto_profile).client('ssm', region)
+            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                raise AnsibleError("Insufficient credentials found.")
+        else:
+            raise AnsibleError("Insufficient credentials found.")
+    return connection
+
+
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables, boto_profile=None, aws_secret_key=None, aws_access_key=None,
+            aws_security_token=None, region=None, bypath=False, shortnames=False, recursive=False,
+            decrypt=True):
         '''
-            :param terms: a list of plugin options
-                          e.g. ['parameter_name', 'region=us-east-1', 'aws_profile=profile', 'decrypt=false']
-            :param variables: config variables
-            :return A list containing one entry with the value of the SSM parameter or None
+            :param terms: a list of lookups to run
+                e.g. ['parameter_name', 'parameter_name_too' ]
+            :param variables: ansible variables active at the time of the lookup
+            :keyword args: keyword arguments used for configuring the lookup
+                - aws_secret_key / aws_access_key / aws_security_token - AWS credentials
+                - region - the AWS region in which to do the lookup
+                - bypath - set to true to do a lookup of variables under a path
+                - recursive - set to true to do a recurse to paths below the path (needs bypath)
+            :return A list of parameter values or a list of dictionaries if doing a bypath lookup
         '''
 
-        ret = {}
+        if not HAS_BOTO3:
+            raise AnsibleError('botocore and boto3 are required for aws_ssm lookup.')
+
+        ret = []
         response = {}
         session = {}
         ssm_dict = {}
         lparams = {}
 
-        if not HAS_BOTO3:
-            raise AnsibleError('botocore and boto3 are required.')
+        credentials = {}
+        credentials['boto_profile'] = boto_profile
+        credentials['aws_secret_access_key'] = aws_secret_key
+        credentials['aws_access_key_id'] = aws_access_key
+        credentials['aws_session_token'] = aws_security_token
 
-        ssm_dict['WithDecryption'] = True
+        client = _boto3_conn(region, credentials)
 
-        # check if option 'bypath' is specified, while still allowing to have a parameter with the same name
-        if 'bypath' in terms[1:]:
-            ssm_dict['Path'] = terms[0]
-            del terms[terms[1:].index('bypath') + 1]
-        else:
-            ssm_dict['Names'] = [terms[0]]
+        ssm_dict['WithDecryption'] = decrypt
 
-        # Option to return short parameter names in by path lookups
-        if 'shortnames' in terms[1:]:
-            lparams['shortnames'] = True
-            del terms[terms[1:].index('shortnames') + 1]
-
-        if len(terms) > 1:
-            for param in terms[1:]:
-                if "=" in param:
-                    key, value = param.split('=')
-                else:
-                    raise AnsibleError("ssm parameter store plugin needs key=value pairs, but received %s" % param)
-
-                if key == "region" or key == "aws_profile":
-                    session[key] = value
-
-                # recurse or not
-                if key == "recursive" and boolean(value):
-                    ssm_dict['Recursive'] = True
-
-                # decrypt the value or not
-                if key == "decrypt" and boolean(value):
-                    ssm_dict['WithDecryption'] = False
-
-        if "aws_profile" in session:
-            boto3.setup_default_session(profile_name=session['aws_profile'])
-
-        if "region" in session:
-            client = boto3.client('ssm', region_name=session['region'])
-        else:
-            client = boto3.client('ssm')
-
-        try:
-            # Lookup by path
-            if 'Path' in ssm_dict:
-                response = client.get_parameters_by_path(**ssm_dict)
+        # Lookup by path
+        if bypath:
+            for term in terms: 
+                ssm_dict["Path"] = term
+                #FIXME: display.debug("AWS_ssm lookup term: %s" % term)
+                try:
+                    response = client.get_parameters_by_path(**ssm_dict)
+                except ClientError as e:
+                    raise AnsibleError("SSM lookup exception: {0}".format(e))
                 paramlist = list()
                 paramlist.extend(response['Parameters'])
 
-                # Manual pagination, since boto doesnt support it yet for get_parameters_by_path
+                # Manual pagination, since boto doesn't support it yet for get_parameters_by_path
                 while 'NextToken' in response:
                     response = client.get_parameters_by_path(NextToken=response['NextToken'], **ssm_dict)
                     paramlist.extend(response['Parameters'])
 
                 # shorten parameter names. yes, this will return duplicate names with different values.
-                if 'shortnames' in lparams:
+                if shortnames:
                     for x in paramlist:
                         x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
 
                 if len(paramlist):
-                    return boto3_tag_list_to_ansible_dict(paramlist,
+                    ret.append(boto3_tag_list_to_ansible_dict(paramlist,
                                                           tag_name_key_name="Name",
-                                                          tag_value_key_name="Value")
+                                                          tag_value_key_name="Value"))
                 else:
                     return None
-            # Lookup by parameter name
-            else:
+            # Lookup by parameter name - always returns a list with one or no entry. 
+        else:
+            #FIXME: display.debug("AWS_ssm lookup term: %s" % terms)
+            ssm_dict["Names"] = terms
+            try:
                 response = client.get_parameters(**ssm_dict)
-                ret.update(response)
-                if ret['Parameters']:
-                    return [ret['Parameters'][0]['Value']]
-                else:
-                    raise AnsibleError('Undefined AWS SSM parameter: %s ' % terms[0])
+            except ClientError as e:
+                raise AnsibleError("SSM lookup exception: {0}".format(e))
+            # FIXME - hanle invaliod right
+            if len(response['Parameters']) > 0:
+                ret.append(response['Parameters'][0]['Value'])
+            else:
+                raise AnsibleError('Undefined AWS SSM parameter: %s ' % terms[0])
 
-        except ClientError as e:
-            raise AnsibleError("SSM lookup exception: {0}".format(e))
+        return ret
+
+

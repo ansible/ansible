@@ -19,14 +19,16 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
+import pdb
 import pytest
 from copy import copy
 
 from ansible.compat.tests.mock import MagicMock, patch
 from ansible.errors import AnsibleError
 
+import ansible.plugins.lookup.aws_ssm as aws_ssm
+
 try:
-    import ansible.plugins.lookup.aws_ssm as aws_ssm
     import boto3
     from botocore.exceptions import ClientError
 except ImportError:
@@ -67,40 +69,58 @@ missing_variable_fail_response['Parameters'] = []
 missing_variable_fail_response['InvalidParameters'] = ['missing_variable']
 
 
+dummy_credentials = {}
+dummy_credentials['boto_profile'] = None
+dummy_credentials['aws_secret_key'] = "notasecret"
+dummy_credentials['aws_access_key'] = "notakey"
+dummy_credentials['aws_security_token'] = None
+dummy_credentials['region'] = 'eu-west-1'
+
+
+
 def test_lookup_variable():
     lookup = aws_ssm.LookupModule()
+    lookup._load_name = "aws_ssm"
 
-    boto3_client_double = MagicMock()
-    boto3_client_double.return_value.get_parameters.return_value = simple_variable_success_response
+    boto3_double = MagicMock()
+    boto3_double.Session.return_value.client.return_value.get_parameters.return_value = simple_variable_success_response
+    boto3_client_double = boto3_double.Session.return_value.client
 
-    with patch.object(boto3, 'client', boto3_client_double):
-        retval = lookup.run(["simple_variable"], {})
+    with patch.object(boto3, 'session', boto3_double):
+        retval = lookup.run(["simple_variable"], {}, **dummy_credentials)
     assert(retval[0] == "simplevalue")
-
+    boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
+                                           aws_secret_access_key="notasecret", aws_session_token=None)
 
 def test_path_lookup_variable():
     lookup = aws_ssm.LookupModule()
+    lookup._load_name = "aws_ssm"
 
+    boto3_double = MagicMock()
     boto3_client_double = MagicMock()
-    boto3_client_double.return_value.get_parameters_by_path.return_value = path_success_response
+    boto3_double.Session.return_value.client.return_value.get_parameters_by_path.return_value = path_success_response
 
-    with patch.object(boto3, 'client', boto3_client_double):
-        retval = lookup.run(["/testpath", "bypath"], {})
-    assert(retval["/testpath/won"] == "simple_value_won")
-    assert(retval["/testpath/too"] == "simple_value_too")
+    with patch.object(boto3, 'session', boto3_double):
+        args=copy(dummy_credentials)
+        args["bypath"]='true'
+        retval = lookup.run(["/testpath"], {}, **args)
+    assert(retval[0]["/testpath/won"] == "simple_value_won")
+    assert(retval[0]["/testpath/too"] == "simple_value_too")
+    # boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
+    #                                        aws_secret_access_key="notasecret", aws_session_token=None)
 
 
 def test_warn_missing_variable():
     lookup = aws_ssm.LookupModule()
+    lookup._load_name = "aws_ssm"
 
+    boto3_double = MagicMock()
     boto3_client_double = MagicMock()
-    # boto3_client_double.return_value.get_parameter_by_path.return_value = "simplevalue"
-    boto3_client_double.return_value.get_parameters.return_value = missing_variable_fail_response
+    boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_fail_response
 
     with pytest.raises(AnsibleError):
-        with patch.object(boto3, 'client', boto3_client_double):
-            lookup.run(["missing_variable"], {})
-
+        with patch.object(boto3, 'session', boto3_double):
+            lookup.run(["missing_variable"], {}, **dummy_credentials)
 
 error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fake Testing Error'}}
 operation_name = 'FakeOperation'
@@ -108,11 +128,12 @@ operation_name = 'FakeOperation'
 
 def test_warn_denied_variable():
     lookup = aws_ssm.LookupModule()
+    lookup._load_name = "aws_ssm"
 
+    boto3_double = MagicMock()
     boto3_client_double = MagicMock()
-    # boto3_client_double.return_value.get_parameter_by_path.return_value = "simplevalue"
-    boto3_client_double.return_value.get_parameters.side_effect = ClientError(error_response, operation_name)
+    boto3_double.Session.return_value.client.return_value.get_parameters.side_effect = ClientError(error_response, operation_name)
 
     with pytest.raises(AnsibleError):
-        with patch.object(boto3, 'client', boto3_client_double):
-            lookup.run(["denied_variable"], {})
+        with patch.object(boto3, 'session', boto3_double):
+            lookup.run(["denied_variable"], {}, **dummy_credentials)

@@ -1,0 +1,34 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on aws_lambda
+- block:
+
+     - name: Create or update key/value pair in aws parameter store
+       aws_ssm_parameter_store:
+         name: "/{{ssm_key_prefix}}/Hello"
+         description: "This is your first key"
+         value: "World"
+         ec2_access_key: '{{ec2_access_key}}'
+         ec2_secret_key: '{{ec2_secret_key}}'
+         security_token: '{{security_token}}'
+         region: '{{ec2_region}}'
+        
+     - name: Check that parameter was stored correctly
+       assert:
+        that:
+         - "{{lookup('aws_ssm', ssm_key_prefix ~ '/Hello', 'region=' ~ ec2_region )}} = 'World'"
+
+
+  always:
+
+     - name: Delete key/value pair in aws parameter store
+       aws_ssm_parameter_store:
+         name: "/{{ssm_key_prefix}}/Hello"
+         state: absent
+         ec2_access_key: '{{ec2_access_key}}'
+         ec2_secret_key: '{{ec2_secret_key}}'
+         security_token: '{{security_token}}'
+         region: '{{ec2_region}}'
+
+
