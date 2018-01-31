@@ -26,6 +26,8 @@ notes:
   (even if that password was already set identically). This
   appears to be an inconsistency wrt. the idempotent nature
   of the APIC REST API.
+requirements:
+  - python-dateutil
 version_added: '2.5'
 options:
   aaa_password:
@@ -127,6 +129,9 @@ RETURN = r''' # '''
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+from dateutil.tz import tzutc
+import dateutil.parser
+
 
 def main():
     argument_spec = aci_argument_spec()
@@ -165,11 +170,12 @@ def main():
     description = module.params['description']
     email = module.params['email']
     enabled = module.params['enabled']
-    expiration = module.params['expiration']
     first_name = module.params['first_name']
     last_name = module.params['last_name']
     phone = module.params['phone']
     state = module.params['state']
+
+    aci = ACIModule(module)
 
     if module.params['enabled'] is True:
         enabled = 'active'
@@ -178,21 +184,25 @@ def main():
     else:
         enabled = None
 
-    if module.params['expires'] is True:
+    expiration = module.params['expiration']
+    if expiration is not None and expiration != 'never':
+        try:
+            expiration = aci.iso8601_format(dateutil.parser.parse(expiration).replace(tzinfo=tzutc()))
+        except Exception as e:
+            module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params['expiration'], e))
+
+    expires = module.params['expires']
+    if expires is True:
         expires = 'yes'
-    elif module.params['expires'] is False:
+    elif expires is False:
         expires = 'no'
-    else:
-        expires = None
 
-    if module.params['aaa_password_update_required'] is True:
+    aaa_password_update_required = module.params['aaa_password_update_required']
+    if aaa_password_update_required is True:
         aaa_password_update_required = 'yes'
-    elif module.params['aaa_password_update_required'] is False:
+    elif aaa_password_update_required is False:
         aaa_password_update_required = 'no'
-    else:
-        aaa_password_update_required = None
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='aaaUser',

@@ -78,8 +78,8 @@
     aaa_user: ansible
     description: Ansible test user for integration tests
     email: aci-ansible@ansible.lan
-#    expiration: 2123-12-12
-#    expires: yes
+    expiration: '2123-12-12'
+    expires: yes
     phone: 2-345-555-678
   check_mode: yes
   register: cm_modify_user
