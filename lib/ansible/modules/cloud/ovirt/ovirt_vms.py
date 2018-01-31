@@ -499,6 +499,12 @@ options:
             - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
                based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
         version_added: "2.5"
+    rng_device:
+        description:
+            - "Random number generator (RNG). You can choose of one the following devices I(urandom), I(random) or I(hwrng)."
+            - "In order to select I(hwrng), you must have it enabled on cluster first."
+            - "/dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0"
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -987,6 +993,9 @@ class VmsModule(BaseModule):
             io=otypes.Io(
                 threads=int(self.param('io_threads_enabled')),
             ) if self.param('io_threads_enabled') is not None else None,
+            rng_device=otypes.RngDevice(
+                source=otypes.RngSource(self.param('rng_device')),
+            ) if self.param('rng_device') else None,
         )
 
     def update_check(self, entity):
@@ -1034,6 +1043,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity)) and
+            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None ) and
             self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts]
         )
 
@@ -1645,6 +1655,7 @@ def main():
         smartcard_enabled=dict(type='bool', default=None),
         io_threads_enabled=dict(type='bool', default=None),
         ballooning_enabled=dict(type='bool', default=None),
+        rng_device=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
