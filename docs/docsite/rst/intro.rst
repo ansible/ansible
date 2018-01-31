@@ -15,5 +15,3 @@ Before we start exploring the main components of Ansible -- playbooks, configura
    intro_configuration
    intro_bsd
    intro_windows
-   intro_networking
-
