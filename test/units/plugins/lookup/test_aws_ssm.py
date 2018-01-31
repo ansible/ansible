@@ -22,8 +22,7 @@ from __future__ import (absolute_import, division, print_function)
 import pytest
 from copy import copy
 
-from ansible.compat.tests.mock import MagicMock, Mock, patch
-from units.modules.utils import set_module_args
+from ansible.compat.tests.mock import MagicMock, patch
 from ansible.errors import AnsibleError
 
 try:
@@ -35,20 +34,25 @@ except ImportError:
 
 
 simple_variable_success_response = {
-    'Parameters': [{'Name': 'simple_variable',
-                    'Type': 'String',
-                    'Value': 'simplevalue',
-                    'Version': 1
-    }],
+    'Parameters': [
+        {
+            'Name': 'simple_variable',
+            'Type': 'String',
+            'Value': 'simplevalue',
+            'Version': 1
+        }
+    ],
     'InvalidParameters': [],
-    'ResponseMetadata': { 'RequestId': '12121212-3434-5656-7878-9a9a9a9a9a9a',
-                          'HTTPStatusCode': 200,
-                          'HTTPHeaders': {'x-amzn-requestid': '12121212-3434-5656-7878-9a9a9a9a9a9a',
-                                          'content-type': 'application/x-amz-json-1.1',
-                                          'content-length': '116',
-                                          'date': 'Tue, 23 Jan 2018 11:04:27 GMT'
-                          },
-                          'RetryAttempts': 0
+    'ResponseMetadata': {
+        'RequestId': '12121212-3434-5656-7878-9a9a9a9a9a9a',
+        'HTTPStatusCode': 200,
+        'HTTPHeaders': {
+            'x-amzn-requestid': '12121212-3434-5656-7878-9a9a9a9a9a9a',
+            'content-type': 'application/x-amz-json-1.1',
+            'content-length': '116',
+            'date': 'Tue, 23 Jan 2018 11:04:27 GMT'
+        },
+        'RetryAttempts': 0
     }
 }
 
@@ -61,6 +65,7 @@ path_success_response['Parameters'] = [
 missing_variable_fail_response = copy(simple_variable_success_response)
 missing_variable_fail_response['Parameters'] = []
 missing_variable_fail_response['InvalidParameters'] = ['missing_variable']
+
 
 def test_lookup_variable():
     lookup = aws_ssm.LookupModule()
@@ -111,4 +116,3 @@ def test_warn_denied_variable():
     with pytest.raises(AnsibleError):
         with patch.object(boto3, 'client', boto3_client_double):
             lookup.run(["denied_variable"], {})
-    
