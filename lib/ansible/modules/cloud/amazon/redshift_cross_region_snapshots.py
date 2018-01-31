@@ -16,50 +16,52 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: redshift_cross_region_snapshots
 short_description: Manage Redshift Cross Region Snapshots
 description:
-  - Manage Redshift Cross Region Snapshots. Supports KMS-Encrypted Snapshots. For more information, see https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html#cross-region-snapshot-copy
-version_added: "2.4"
+  - Manage Redshift Cross Region Snapshots. Supports KMS-Encrypted Snapshots.
+  - For more information, see https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-snapshots.html#cross-region-snapshot-copy
+version_added: "2.5"
 author: John Kerkstra (@captainkerk)
 options:
   cluster_name:
     description:
       - The name of the cluster to configure cross-region snapshots for.
     required: true
-    aliases: [ 'cluster' ]
+    aliases: [ "cluster" ]
   state:
     description:
       - Create or remove the cross-region snapshot configuration.
     required: true
-    choices: [ 'present', 'absent' ]
+    choices: [ "present", "absent" ]
   region:
     description:
-      - The cluster's region
+      - The clusters region
     required: true
-    aliases: [ 'source' ]
+    aliases: [ "source" ]
   destination_region:
     description:
       - The region to copy snapshots to
     required: true
-    aliases: [ 'destination' ]
+    aliases: [ "destination" ]
   snapshot_copy_grant:
     description:
       - A grant for Amazon Redshift to use a master key in the destination region.
-      - See: http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant
+      - See http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant
     required: false
-    aliases: [ 'copy_grant' ]
+    aliases: [ "copy_grant" ]
   snapshot_retention_period:
     description:
       - Keep cross-region snapshots for N number of days
     required: true
-    aliases: [ 'retention_period' ]
-requirements: [ botocore, boto3 ]
+    aliases: [ "retention_period" ]
+requirements: [ "botocore", "boto3" ]
 extends_documentation_fragment:
+  - ec2
   - aws
 '''
 
