@@ -60,46 +60,6 @@ options:
         description:
             - Description of the client template in Keycloak
 
-    bearer_only:
-        description:
-            - The access type of this client template is bearer-only.
-              This is 'bearerOnly' in the Keycloak REST API.
-
-    consent_required:
-        description:
-            - If enabled, users have to consent to client access.
-              This is 'consentRequired' in the Keycloak REST API.
-
-    standard_flow_enabled:
-        description:
-            - Enable standard flow for this client template or not (OpenID connect).
-              This is 'standardFlowEnabled' in the Keycloak REST API.
-
-    implicit_flow_enabled:
-        description:
-            - Enable implicit flow for this client template or not (OpenID connect).
-              This is 'implicitFlowEnabled' in the Keycloak REST API.
-
-    direct_access_grants_enabled:
-        description:
-            - Are direct access grants enabled for this client template or not (OpenID connect).
-              This is 'directAccessGrantsEnabled' in the Keycloak REST API.
-
-    service_accounts_enabled:
-        description:
-            - Are service accounts enabled for this client template or not (OpenID connect).
-              This is 'serviceAccountsEnabled' in the Keycloak REST API.
-
-    public_client:
-        description:
-            - Is the access type for this client template public or not.
-              This is 'publicClient' in the Keycloak REST API.
-
-    frontchannel_logout:
-        description:
-            - Is frontchannel logout enabled for this client template or not.
-              This is 'frontchannelLogout' in the Keycloak REST API.
-
     protocol:
         description:
             - Type of client template (either C(openid-connect) or C(saml).
@@ -181,6 +141,13 @@ options:
             - A dict of further attributes for this client template. This can contain various
               configuration settings, though in the default installation of Keycloak as of 3.4, none
               are documented or known, so this is usually empty.
+
+notes:
+- The Keycloak REST API defines further fields (namely I(bearerOnly), I(consentRequired), I(standardFlowEnabled),
+  I(implicitFlowEnabled), I(directAccessGrantsEnabled), I(serviceAccountsEnabled), I(publicClient), and
+  I(frontchannelLogout)) which, while available with keycloak_client, do not have any effect on
+  Keycloak client-templates and are discarded if supplied with an API request changing client-templates. As such,
+  they are not available through this module.
 
 extends_documentation_fragment:
     - keycloak
@@ -307,14 +274,6 @@ def main():
         id=dict(type='str'),
         name=dict(type='str'),
         description=dict(type='str'),
-        bearer_only=dict(type='bool'),
-        consent_required=dict(type='bool'),
-        standard_flow_enabled=dict(type='bool'),
-        implicit_flow_enabled=dict(type='bool'),
-        direct_access_grants_enabled=dict(type='bool'),
-        service_accounts_enabled=dict(type='bool'),
-        public_client=dict(type='bool'),
-        frontchannel_logout=dict(type='bool'),
         protocol=dict(type='str', choices=['openid-connect', 'saml']),
         attributes=dict(type='dict'),
         full_scope_allowed=dict(type='bool'),
