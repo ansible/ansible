@@ -66,7 +66,7 @@ class PslintTest(SanitySingleVersion):
 
                 ignore[path][code] = line
 
-        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1') and i.path not in skip_paths)
+        paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.ps1', '.psm1', '.psd1') and i.path not in skip_paths)
 
         if not paths:
             return SanitySkipped(self.name)
