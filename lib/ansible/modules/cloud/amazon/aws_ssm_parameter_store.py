@@ -60,7 +60,9 @@ options:
     description:
       - region.
     required: false
-author: Bill Wang (ozbillwang@gmail.com)
+author:
+  - Bill Wang (ozbillwang@gmail.com)
+  - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
 requirements: [ botocore, boto3 ]
 '''
@@ -107,13 +109,11 @@ delete_parameter:
     type: dictionary
 '''
 
-import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 
 try:
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
@@ -145,7 +145,6 @@ def create_update_parameter(client, module):
 
 
 def delete_parameter(client, module):
-    changed = False
     response = {}
 
     try:
@@ -198,6 +197,7 @@ def main():
     }
     (changed, response) = invocations[state](client, module)
     module.exit_json(changed=changed, response=response)
+
 
 if __name__ == '__main__':
     main()

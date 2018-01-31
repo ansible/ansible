@@ -19,7 +19,6 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
-import pdb
 import pytest
 from copy import copy
 

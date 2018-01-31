@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     author:
       - Bill Wang <ozbillwang(at)gmail.com>
       - Marat Bakeev <hawara(at)gmail.com>
-      - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com> 
+      - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com>
     version_added: 2.5
     short_description: Get the value for a SSM parameter.
     description:
@@ -70,16 +70,11 @@ EXAMPLES = '''
   with_aws_ssm:
     - '/TEST/test-list region=ap-southeast-2, bypath'
 '''
-# FIXME the last one is probably not true yet. 
+# FIXME the last one is probably not true yet.
 
-from ansible.utils.display import Display
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.parsing.convert_bool import boolean
-import pdb
-
-from ansible.utils.display import Display
 
 try:
     from __main__ import display
@@ -135,9 +130,7 @@ class LookupModule(LookupBase):
 
         ret = []
         response = {}
-        session = {}
         ssm_dict = {}
-        lparams = {}
 
         credentials = {}
         credentials['boto_profile'] = boto_profile
@@ -151,7 +144,7 @@ class LookupModule(LookupBase):
 
         # Lookup by path
         if bypath:
-            for term in terms: 
+            for term in terms:
                 ssm_dict["Path"] = term
                 display.vvv("AWS_ssm path lookup term: %s in region: %s" % (term, region))
                 try:
@@ -174,24 +167,21 @@ class LookupModule(LookupBase):
                 display.vvvv("AWS_ssm path lookup returned: %s" % str(paramlist))
                 if len(paramlist):
                     ret.append(boto3_tag_list_to_ansible_dict(paramlist,
-                                                          tag_name_key_name="Name",
-                                                          tag_value_key_name="Value"))
+                                                              tag_name_key_name="Name",
+                                                              tag_value_key_name="Value"))
                 else:
                     return None
-            # Lookup by parameter name - always returns a list with one or no entry. 
+            # Lookup by parameter name - always returns a list with one or no entry.
         else:
-            FIXME: display.vvv("AWS_ssm name lookup term: %s" % terms)
+            display.vvv("AWS_ssm name lookup term: %s" % terms)
             ssm_dict["Names"] = terms
             try:
                 response = client.get_parameters(**ssm_dict)
             except ClientError as e:
                 raise AnsibleError("SSM lookup exception: {0}".format(e))
-            # FIXME - hanle invaliod right
-            if len(response['Parameters']) > 0:
-                ret.append(response['Parameters'][0]['Value'])
+            if len(response['Parameters']) == len(terms):
+                ret = [p['Value'] for p in response['Parameters']]
             else:
-                raise AnsibleError('Undefined AWS SSM parameter: %s ' % terms[0])
+                raise AnsibleError('Undefined AWS SSM parameter: %s ' % str(response['InvalidParameters']))
 
         return ret
-
-
