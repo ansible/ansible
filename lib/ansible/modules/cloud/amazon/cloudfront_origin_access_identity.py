@@ -26,7 +26,7 @@ version_added: "2.5"
 
 author: Willem van Ketwich (@wilvk)
 
-extends_documentation_fragment;
+extends_documentation_fragment:
   - aws
   - ec2
 
