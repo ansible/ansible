@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.4.3"></a>
 
-## 2.4.3 "Dancing Days" - TBD
+## 2.4.3 "Dancing Days" - 2018-01-31
 
 ### Bugfixes
 * Fix `pamd` rule args regexp to match file paths (https://github.com/ansible/ansible/pull/33432)
