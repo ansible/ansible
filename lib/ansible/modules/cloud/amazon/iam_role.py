@@ -239,9 +239,11 @@ def create_or_update_role(connection, module):
             role = connection.create_role(**params)
             changed = True
         except ClientError as e:
-            module.fail_json(msg="Unable to create role", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg="Unable to create role: {0}".format(to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
         except BotoCoreError as e:
-            module.fail_json(msg="Unable to create role", exception=traceback.format_exc())
+            module.fail_json(msg="Unable to create role: {0}".format(to_native(e)),
+                             exception=traceback.format_exc())
     else:
         # Check Assumed Policy document
         if not compare_assume_role_policy_doc(role['AssumeRolePolicyDocument'], params['AssumeRolePolicyDocument']):
