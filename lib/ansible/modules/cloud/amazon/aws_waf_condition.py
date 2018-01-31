@@ -551,7 +551,6 @@ class Condition(object):
             self.tidy_up_regex_patterns(current_condition)
         return True, {}
 
-
     def find_missing(self, update, current_condition):
         missing = []
         for desired in update['Updates']:
@@ -564,7 +563,6 @@ class Condition(object):
             if not found:
                 missing.append(desired)
         return missing
-
 
     def find_and_update_condition(self, condition_set_id):
         current_condition = self.get_condition_by_id(condition_set_id)
