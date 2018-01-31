@@ -104,9 +104,7 @@ def find_user(module, client, user_name):
     return name
 
 
-def check_user_password(module, user_name, user_password):
-    influxdb = InfluxDb(module)
-    client = influxdb.connect_to_influxdb()
+def check_user_password(module, client, user_name, user_password):
     try:
         client.switch_user(user_name, user_password)
         client.get_list_users()
@@ -115,6 +113,9 @@ def check_user_password(module, user_name, user_password):
             return False
     except ansible.module_utils.urls.ConnectionError as e:
         module.fail_json(msg=str(e))
+    finally:
+        # restore previous user
+        client.switch_user(module.params['username'], module.params['password'])
     return True
 
 
@@ -142,7 +143,7 @@ def drop_user(module, client, user_name):
     if not module.check_mode:
         try:
             client.drop_user(user_name)
-        except client.InfluxDBClientError as e:
+        except InfluxDBClientError as e:
             module.fail_json(msg=e.content)
 
     module.exit_json(changed=True)
@@ -174,7 +175,7 @@ def main():
 
     if state == 'present':
         if user:
-            if check_user_password(module, user_name, user_password):
+            if check_user_password(module, client, user_name, user_password):
                 module.exit_json(changed=False)
             else:
                 set_user_password(module, client, user_name, user_password)
