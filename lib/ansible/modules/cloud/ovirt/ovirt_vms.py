@@ -474,6 +474,13 @@ options:
             - "C(user_migratable) - Allow manual migration only."
             - "If no value is passed, default value is set by oVirt/RHV engine."
         version_added: "2.5"
+    cpu_pinning:
+        description:
+            - "CPU Pinning topology to map virtual machine CPU to host CPU."
+            - "CPU Pinning topology is a list of dictionary which can have following values:"
+            - "C(cpu) - Number of the host CPU."
+            - "C(vcpu) - Number of the virtual machine CPU."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -895,13 +902,19 @@ class VmsModule(BaseModule):
                     self.param('cpu_sockets'),
                     self.param('cpu_threads')
                 )) else None,
+                cpu_tune=otypes.CpuTune(
+                    vcpu_pins=[
+                        otypes.VcpuPin(vcpu=int(pin['vcpu']), cpu_set=str(pin['cpu'])) for pin in self.param('cpu_pinning')
+                    ],
+                ) if self.param('cpu_pinning') else None,
                 mode=otypes.CpuMode(self.param('cpu_mode')) if self.param('cpu_mode') else None,
             ) if (
                 any((
                     self.param('cpu_cores'),
                     self.param('cpu_sockets'),
                     self.param('cpu_threads'),
-                    self.param('cpu_mode'))
+                    self.param('cpu_mode'),
+                    self.param('cpu_pinning'))
                 )
             ) else None,
             cpu_shares=self.param('cpu_shares'),
@@ -944,12 +957,25 @@ class VmsModule(BaseModule):
             ) else None,
             placement_policy=otypes.VmPlacementPolicy(
                 affinity=otypes.VmAffinity(self.param('placement_policy')),
+                hosts=[
+                    otypes.Host(name=self.param('host')),
+                ] if self.param('host') else None,
             ) if self.param('placement_policy') else None,
         )
 
     def update_check(self, entity):
+        def check_cpu_pinning():
+            if self.param('cpu_pinning'):
+                current = []
+                if entity.cpu.cpu_tune:
+                    current = [(str(pin.cpu_set), int(pin.vcpu)) for pin in entity.cpu.cpu_tune.vcpu_pins]
+                passed = [(str(pin['cpu']), int(pin['vcpu'])) for pin in self.param('cpu_pinning')]
+                return sorted(current) == sorted(passed)
+            return True
+
         cpu_mode = getattr(entity.cpu, 'mode')
         return (
+            check_cpu_pinning() and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
@@ -977,7 +1003,8 @@ class VmsModule(BaseModule):
             equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
-            equal(self.param('placement_policy'), str(entity.placement_policy.affinity))
+            equal(self.param('placement_policy'), str(entity.placement_policy.affinity)) and
+            self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts]
         )
 
     def pre_create(self, entity):
@@ -1583,6 +1610,7 @@ def main():
         kvm=dict(type='dict'),
         cpu_mode=dict(type='str'),
         placement_policy=dict(type='str'),
+        cpu_pinning=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
