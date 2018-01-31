@@ -184,7 +184,6 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
         return result, changed
 
 
-
 class CloudFrontOriginAccessIdentityValidationManager(object):
     """
     Manages Cloudfront Origin Access Identities
