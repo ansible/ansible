@@ -161,11 +161,24 @@ def main():
     email = module.params['email']
     enabled = module.params['enabled']
     expiration = module.params['expiration']
-    expires = module.params['expires']
     first_name = module.params['first_name']
     last_name = module.params['last_name']
     phone = module.params['phone']
     state = module.params['state']
+
+    if module.params['enabled'] is True:
+        enabled = 'active'
+    elif module.params['enabled'] is False:
+        enabled = 'inactive'
+    else:
+        enabled = None
+
+    if module.params['expires'] is True:
+        expires = 'yes'
+    elif module.params['expires'] is False:
+        expires = 'no'
+    else:
+        expires = None
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -183,11 +196,11 @@ def main():
         aci.payload(
             aci_class='aaaUser',
             class_config=dict(
-                accountStatus='inactive' if enabled is False else 'active',
+                accountStatus=enabled,
                 clearPwdHistory=clear_password_history,
                 email=email,
                 expiration=expiration,
-                expires='yes' if expires is True and expiration else 'no',
+                expires=expires,
                 firstName=first_name,
                 lastName=last_name,
                 name=aaa_user,
