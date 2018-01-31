@@ -186,6 +186,14 @@ class ACIModule(object):
         elif self.params['password'] is not None:
             self.module.warn('When doing ACI signatured-based authentication, a password is not required')
 
+    def iso8601_format(self, dt):
+        ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
+        try:
+            return dt.isoformat(timespec='milliseconds')
+        except:
+            tz = dt.strftime('%z')
+            return '%s.%03d%s:%s' % (dt.strftime('%Y-%m-%dT%H:%M:%S'), dt.microsecond / 1000, tz[:3], tz[3:])
+
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameter '''
 
@@ -315,7 +323,6 @@ class ACIModule(object):
     def query(self, path):
         ''' Perform a query with no payload '''
 
-        # Ensure method is set
         self.result['path'] = path
 
         if 'port' in self.params and self.params['port'] is not None:
