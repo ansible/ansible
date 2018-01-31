@@ -1484,7 +1484,6 @@ class PyVmomiHelper(PyVmomi):
         else:
             vm_obj = None
 
-        resource_pool = None
         # always get a resource_pool
         resource_pool = self.get_resource_pool()
 
