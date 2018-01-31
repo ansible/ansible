@@ -1,0 +1,4 @@
+- hosts: testhost
+  tasks:
+    - include_role:
+        name: outer

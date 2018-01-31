@@ -1,0 +1,2 @@
+- debug:
+    msg: "in outer role"
