@@ -74,15 +74,15 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: str
+  type: string
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
@@ -118,7 +118,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: str
+  type: string
 
 # interfaces
 ansible_net_all_ipv4_addresses:
