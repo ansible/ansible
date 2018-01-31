@@ -485,6 +485,10 @@ options:
         description:
             - "If I(true), the sound card is added to the virtual machine."
         version_added: "2.5"
+    smartcard_enabled:
+        description:
+            - "If I(true), use smart card authentication."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -966,6 +970,9 @@ class VmsModule(BaseModule):
                 ] if self.param('host') else None,
             ) if self.param('placement_policy') else None,
             soundcard_enabled=self.param('soundcard_enabled'),
+            display=otypes.Display(
+                smartcard_enabled=self.param('smartcard_enabled')
+            ) if self.param('smartcard_enabled') is not None else None,
         )
 
     def update_check(self, entity):
@@ -991,6 +998,7 @@ class VmsModule(BaseModule):
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
+            equal(self.param('smartcard_enabled'), entity.display.smartcard_enabled) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
@@ -1618,6 +1626,7 @@ def main():
         placement_policy=dict(type='str'),
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
+        smartcard_enabled=dict(type='bool', default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
