@@ -226,6 +226,9 @@ class Btrfs(Filesystem):
             self.MKFS_FORCE_FLAGS = '-f'
             self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
+class Ocfs2(Filesystem):
+    MKFS = 'mkfs.ocfs2'
+    MKFS_FORCE_FLAGS = '-f'
 
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
@@ -269,6 +272,7 @@ FILESYSTEMS = {
     'xfs': XFS,
     'btrfs': Btrfs,
     'vfat': VFAT,
+    'ocfs2': Ocfs2,
     'LVM2_member': LVM,
 }
 
