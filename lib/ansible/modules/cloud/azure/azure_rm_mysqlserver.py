@@ -39,8 +39,10 @@ options:
                     - The name of the sku, typically, a letter + Number code, e.g. P3.
             tier:
                 description:
-                    - The tier of the particular SKU, e.g. Basic.
-                choices: ['basic', 'standard']
+                    - The tier of the particular SKU, e.g. C(basic).
+                choices:
+                    - 'basic'
+                    - 'standard'
             capacity:
                 description:
                     - "The scale up/out capacity, representing server's compute units."
@@ -56,7 +58,9 @@ options:
     version:
         description:
             - Server version.
-        choices: ['5.6', '5.7']
+        choices:
+            - '5.6'
+            - '5.7'
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -102,13 +106,13 @@ id:
     sample: /subscriptions/12345678-1234-1234-1234-123412341234/testrg/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - Server version. Possible values include: C(5.6), C(5.7)
+        - "Server version. Possible values include: '5.6', '5.7'"
     returned: always
     type: str
     sample: 5.6
 state:
     description:
-        - A state of a server that is visible to user. Possible values include: C(Ready), C(Dropping), C(Disabled)
+        - "A state of a server that is visible to user. Possible values include: 'Ready', 'Dropping', 'Disabled'"
     returned: always
     type: str
     sample: Ready
@@ -161,7 +165,8 @@ class AzureRMServers(AzureRMModuleBase):
             ),
             version=dict(
                 type='str',
-                choices=['5.6', '5.7']
+                choices=['5.6',
+                         '5.7']
             ),
             enforce_ssl=dict(
                 type='bool',
