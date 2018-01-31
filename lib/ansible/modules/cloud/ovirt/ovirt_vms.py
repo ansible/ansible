@@ -149,6 +149,12 @@ options:
               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
             - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
             - Default value is set by engine.
+    memory_max:
+        description:
+            - Upper bound of virtual machine memory up to which memory hot-plug can be performed.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - Default value is set by engine.
+        version_added: "2.5"
     cpu_shares:
         description:
             - Set a CPU shares for this Virtual Machine.
@@ -969,7 +975,12 @@ class VmsModule(BaseModule):
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
                 ballooning=self.param('ballooning_enabled'),
-            ) if any((self.param('memory_guaranteed'), self.param('ballooning_enabled') is not None)) else None,
+                max=convert_to_bytes(self.param('memory_max')),
+            ) if any((
+                self.param('memory_guaranteed'),
+                self.param('ballooning_enabled') is not None,
+                self.param('memory_max')
+            )) else None,
             instance_type=otypes.InstanceType(
                 id=get_id_by_name(
                     self._connection.system_service().instance_types_service(),
@@ -1038,6 +1049,7 @@ class VmsModule(BaseModule):
             check_custom_properties() and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
             equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
@@ -1615,6 +1627,7 @@ def main():
         disks=dict(type='list', default=[]),
         memory=dict(type='str'),
         memory_guaranteed=dict(type='str'),
+        memory_max=dict(type='str'),
         cpu_sockets=dict(type='int'),
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
