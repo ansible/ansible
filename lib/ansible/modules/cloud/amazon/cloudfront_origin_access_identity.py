@@ -155,17 +155,34 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
             self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.")
 
     def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
+        changed = False
+        new_config = {
+            'CallerReference': caller_reference,
+            'Comment': comment
+        }
+
         try:
-            return self.client.update_cloud_front_origin_access_identity(
-                CloudFrontOriginAccessIdentityConfig={
-                    'CallerReference': caller_reference,
-                    'Comment': comment
-                },
+            current_config = self.client.get_cloud_front_origin_access_identity_config(
+                Id=origin_access_identity_id)['CloudFrontOriginAccessIdentityConfig']
+        except (ClientError, BotoCoreError) as e:
+            self.module.fail_json_aws(e, msg="Error getting Origin Access Identity config.")
+
+        if new_config != current_config:
+            changed = True
+
+        try:
+            # If the CallerReference is a value already sent in a previous identity request
+            # the returned value is that of the original request
+            result = self.client.update_cloud_front_origin_access_identity(
+                CloudFrontOriginAccessIdentityConfig=new_config,
                 Id=origin_access_identity_id,
                 IfMatch=e_tag,
             )
         except (ClientError, BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Error updating Origin Access Identity.")
+
+        return result, changed
+
 
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
@@ -238,10 +255,10 @@ def main():
 
     if state == 'present':
         if origin_access_identity_id is not None and e_tag is not None:
-            result = service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
+            result, changed = service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
         else:
             result = service_mgr.create_origin_access_identity(caller_reference, comment)
-        changed = True
+            changed = True
     elif(state == 'absent' and origin_access_identity_id is not None and
          e_tag is not None):
         result = service_mgr.delete_origin_access_identity(origin_access_identity_id, e_tag)
