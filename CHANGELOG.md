@@ -29,6 +29,12 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35037)
 * Fix azure_rm_virtualmachine creating VM with vnet in another resource group
   (https://github.com/ansible/ansible/pull/35038)
+* Fix nxos terminal plugin regex to support certain commands
+  (https://github.com/ansible/ansible/pull/35186)
+* Fix network os_config modules backward diff
+  (https://github.com/ansible/ansible/pull/35332)
+* Fix nxos_snmp_user removing encryption from user on subsequent runs of the task
+  (https://github.com/ansible/ansible/pull/35433)
 
 
 <a id="2.4.3"></a>
