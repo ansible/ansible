@@ -31,12 +31,13 @@ options:
   aaa_password:
     description:
     - The password of the locally-authenticated user.
-#  aaa_password_lifetime:
-#    description:
-#    - The lifetime of the locally-authenticated user password.
-#  aaa_password_update_required:
-#    description:
-#    - Whether this account needs password update.
+  aaa_password_lifetime:
+    description:
+    - The lifetime of the locally-authenticated user password.
+  aaa_password_update_required:
+    description:
+    - Whether this account needs password update.
+    type: bool
   aaa_user:
     description:
     - The name of the locally-authenticated user user to add.
@@ -131,6 +132,8 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         aaa_password=dict(type='str', no_log=True),
+        aaa_password_lifetime=dict(type='int'),
+        aaa_password_update_required=dict(type='bool'),
         aaa_user=dict(type='str', required=True, aliases=['name']),
         clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
@@ -155,6 +158,8 @@ def main():
     )
 
     aaa_password = module.params['aaa_password']
+    aaa_password_lifetime = module.params['aaa_password_lifetime']
+    aaa_password_update_required = module.params['aaa_password_update_required']
     aaa_user = module.params['aaa_user']
     clear_password_history = module.params['clear_password_history']
     description = module.params['description']
@@ -179,6 +184,13 @@ def main():
         expires = 'no'
     else:
         expires = None
+
+    if module.params['aaa_password_update_required'] is True:
+        aaa_password_update_required = 'yes'
+    elif module.params['aaa_password_update_required'] is False:
+        aaa_password_update_required = 'no'
+    else:
+        aaa_password_update_required = None
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -206,6 +218,8 @@ def main():
                 name=aaa_user,
                 phone=phone,
                 pwd=aaa_password,
+                pwdLifeTime=aaa_password_lifetime,
+                pwdUpdateRequired=aaa_password_update_required,
             ),
         )
 
