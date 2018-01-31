@@ -391,6 +391,7 @@ files:
     maintainers: tbielawa dagwieers sm4rk0 cmprescott
   $modules/identity/ipa/:
     maintainers: $team_ipa
+  $modules/identity/keycloak/: eikef
   $modules/identity/opendj/opendj_backendprop.py: dj-wasabi
   $modules/inventory/add_host.py: $team_ansible
   $modules/inventory/group_by.py: $team_ansible jhoekx
@@ -1009,6 +1010,8 @@ files:
   $module_utils/k8s_common.py:
     maintainers: chouseknecht sdoran maxamillion fabianvf flaper87
     labels: clustering
+  $module_utils/keycloak.py:
+    maintainers: eikef
   $module_utils/manageiq.py:
     maintainers: $team_manageiq
   $module_utils/network/netscaler:
