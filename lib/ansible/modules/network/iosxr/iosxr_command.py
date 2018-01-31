@@ -94,7 +94,7 @@ tasks:
       commands:
         - show version
         - show interfaces
-        - [{ command: example command that prompts, prompt: expected prompt, answer: yes}]
+        - { command: example command that prompts, prompt: expected prompt, answer: yes}
 
   - name: run multiple commands and evaluate the output
     iosxr_command:

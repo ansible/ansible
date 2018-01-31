@@ -288,6 +288,8 @@ class Connection(ConnectionBase):
         p.force_persistence = self.force_persistence
         ssh = p._connect()
 
+        self.p = p
+
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
         self._ssh_shell = ssh.ssh.invoke_shell()
