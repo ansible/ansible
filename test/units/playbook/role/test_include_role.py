@@ -89,26 +89,27 @@ class TestIncludeRole(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def flatten_tasks(self, tasks):
+    def flatten_tasks(self, play, tasks, no_load=None):
         for task in tasks:
-            if isinstance(task, IncludeRole):
-                blocks, handlers = task.get_block_list(loader=self.loader)
+            if isinstance(task, IncludeRole) and not no_load:
+                blocks, handlers = task.get_block_list(play,
+                                                       loader=self.loader)
                 for block in blocks:
-                    for t in self.flatten_tasks(block.block):
+                    for t in self.flatten_tasks(play, block.block):
                         yield t
             elif isinstance(task, Task):
                 yield task
             else:
-                for t in self.flatten_tasks(task.block):
+                for t in self.flatten_tasks(play, task.block):
                     yield t
 
-    def get_tasks_vars(self, play, tasks):
-        for task in self.flatten_tasks(tasks):
+    def get_tasks_vars(self, play, tasks, no_load=None):
+        for task in self.flatten_tasks(play, tasks, no_load=None):
             role = task._role
             if not role:
                 continue
 
-            yield (role.get_name(),
+            yield (role,
                    self.var_manager.get_vars(play=play, task=task))
 
     @patch('ansible.playbook.role.definition.unfrackpath',
@@ -128,7 +129,8 @@ class TestIncludeRole(unittest.TestCase):
 
         tasks = play.compile()
         tested = False
-        for role, task_vars in self.get_tasks_vars(play, tasks):
+        for roleo, task_vars in self.get_tasks_vars(play, tasks):
+            role = roleo.get_name()
             tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
             self.assertEqual(task_vars.get('test_variable'), 'l3-main')
@@ -149,7 +151,8 @@ class TestIncludeRole(unittest.TestCase):
 
         tasks = play.compile()
         tested = False
-        for role, task_vars in self.get_tasks_vars(play, tasks):
+        for roleo, task_vars in self.get_tasks_vars(play, tasks):
+            role = roleo.get_name()
             tested = True
             self.assertEqual(task_vars.get('l3_variable'), 'l3-alt')
             self.assertEqual(task_vars.get('test_variable'), 'l3-alt')
@@ -177,8 +180,62 @@ class TestIncludeRole(unittest.TestCase):
 
         tasks = play.compile()
         expected_roles = ['l1', 'l2', 'l3']
-        for role, task_vars in self.get_tasks_vars(play, tasks):
+        roles = {}
+        for roleo, task_vars in self.get_tasks_vars(play, tasks):
+            role = roleo.get_name()
             expected_roles.remove(role)
+            roles[role] = {'r': roleo, 't': task_vars}
+            # Outer-most role must not have variables from inner roles yet
+            if role == 'l1':
+                self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
+                self.assertEqual(task_vars.get('l2_variable'), None)
+                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertEqual(task_vars.get('test_variable'), 'l1-main')
+            # Middle role must have variables from outer role, but not inner
+            elif role == 'l2':
+                self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
+                self.assertEqual(task_vars.get('l2_variable'), 'l2-main')
+                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertEqual(task_vars.get('test_variable'), 'l2-main')
+            # Inner role must have variables from both outer roles
+            elif role == 'l3':
+                self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
+                self.assertEqual(task_vars.get('l2_variable'), 'l2-main')
+                self.assertEqual(task_vars.get('l3_variable'), 'l3-main')
+                self.assertEqual(task_vars.get('test_variable'), 'l3-main')
+            else:
+                self.fail()
+        self.assertFalse(expected_roles)
+
+    @patch('ansible.playbook.role.definition.unfrackpath',
+           mock_unfrackpath_noop)
+    def test_static_nested(self):
+
+        """
+        Test nested includes with default tasks and variables.
+
+        Variables from outer roles should be inherited, but overridden in inner
+        roles.
+        """
+
+        play = Play.load(dict(
+            name="test play",
+            hosts=['foo'],
+            gather_facts=False,
+            tasks=[
+                {'import_role': 'name=l1'}
+            ]
+        ), loader=self.loader, variable_manager=self.var_manager)
+
+        tasks = play.compile()
+        expected_roles = ['l1', 'l2', 'l3']
+        roles = {}
+        # we dont need here to call get_block_list as the role
+        # should have been already loaded (static)
+        for roleo, task_vars in self.get_tasks_vars(play, tasks, no_load=True):
+            role = roleo.get_name()
+            expected_roles.remove(role)
+            roles[role] = {'r': roleo, 't': task_vars}
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
@@ -223,7 +280,8 @@ class TestIncludeRole(unittest.TestCase):
 
         tasks = play.compile()
         expected_roles = ['l1', 'l2', 'l3']
-        for role, task_vars in self.get_tasks_vars(play, tasks):
+        for roleo, task_vars in self.get_tasks_vars(play, tasks):
+            role = roleo.get_name()
             expected_roles.remove(role)
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':

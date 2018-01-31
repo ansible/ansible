@@ -77,3 +77,9 @@ if [[ -z "$OUT" ]]; then
     echo "apply on import_tasks did not cause error"
     exit 1
 fi
+
+
+## shared vars
+# https://github.com/ansible/ansible/issues/21890
+ANSIBLE_STRATEGY='linear' ansible-playbook -i ../../inventory playbook/sharedvars.yml -v "$@" --skip-tags never
+ANSIBLE_STRATEGY='free' ansible-playbook -i ../../inventory playbook/sharedvars.yml -v "$@" --skip-tags never
