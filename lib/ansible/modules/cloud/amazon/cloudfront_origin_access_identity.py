@@ -87,19 +87,19 @@ cloud_front_origin_access_identity_config:
     caller_reference:
       description: a caller reference for the oai
       returned: always
-      type: str
+      type: string
     comment:
       description: a comment describing the oai
-    returned: always
-    type: str
+      returned: always
+      type: string
   id:
     description: a unique identifier of the oai
     returned: always
-    type: str
+    type: string
   s3_canonical_user_id:
     description: the cannonical user id of the user who created the oai
     returned: always
-    type: str
+    type: string
 
 '''
 
