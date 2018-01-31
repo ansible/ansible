@@ -459,6 +459,12 @@ options:
             - C(storage_domain) - Specifies the target storage domain for
               converted disks. This is required parameter.
         version_added: "2.3"
+    cpu_mode:
+        description:
+            - "CPU mode of the virtual machine. It can be some of the following: I(host_passthrough), I(host_model) or I(custom)."
+            - "For I(host_passthrough) CPU type"
+            - If no value is passed, default value is set by oVirt/RHV engine.
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -875,9 +881,19 @@ class VmsModule(BaseModule):
                     cores=self.param('cpu_cores'),
                     sockets=self.param('cpu_sockets'),
                     threads=self.param('cpu_threads'),
-                )
+                ) if any((
+                    self.param('cpu_cores'),
+                    self.param('cpu_sockets'),
+                    self.param('cpu_threads')
+                )) else None,
+                mode=otypes.CpuMode(self.param('cpu_mode')) if self.param('cpu_mode') else None,
             ) if (
-                any((self.param('cpu_cores'), self.param('cpu_sockets'), self.param('cpu_threads')))
+                any((
+                    self.param('cpu_cores'),
+                    self.param('cpu_sockets'),
+                    self.param('cpu_threads'),
+                    self.param('cpu_mode'))
+                )
             ) else None,
             cpu_shares=self.param('cpu_shares'),
             os=otypes.OperatingSystem(
@@ -920,12 +936,14 @@ class VmsModule(BaseModule):
         )
 
     def update_check(self, entity):
+        cpu_mode = getattr(entity.cpu, 'mode')
         return (
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
             equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
+            equal(self.param('cpu_mode'), str(cpu_mode) if cpu_mode else None) and
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
@@ -1550,6 +1568,7 @@ def main():
         vmware=dict(type='dict'),
         xen=dict(type='dict'),
         kvm=dict(type='dict'),
+        cpu_mode=dict(type='str'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
