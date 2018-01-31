@@ -573,7 +573,7 @@ class ACMEAccount(object):
             # FIXME: add some kind of auto-detection
             account_key_type = "rsa"
         if account_key_type not in ("rsa", "ec"):
-            return 'unknown key type "%s" % account_key_type', {}
+            return 'unknown key type "%s"' % account_key_type, {}
 
         openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
         dummy, out, dummy = self.module.run_command(openssl_keydump_cmd, check_rc=True)
