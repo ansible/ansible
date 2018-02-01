@@ -634,7 +634,7 @@ def _hashable_policy(policy, policy_list):
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
-    elif isinstance(policy, string_types):
+    elif isinstance(policy, string_types) or isinstance(policy, binary_type):
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
