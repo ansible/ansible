@@ -27,10 +27,13 @@ RETURN = """
   _list:
     description: basically the same as you fed in
 """
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
+        if not isinstance(terms, list):
+            raise AnsibleError("with_list expects a list")
         return terms
