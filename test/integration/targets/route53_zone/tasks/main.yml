@@ -44,13 +44,13 @@
       assert:
         that:
           - result.changed
-          - result.name == '{{ zone_domain_name }}'
+          - 'result.name == "{{ zone_domain_name | lower }}."'
           - result.comment == '{{ zone_comment }}'
           - not result.private_zone
-          - zone_id in result
+          - result.zone_id
 
     - set_fact:
-        public_zone_id: result.zone_id
+        public_zone_id: '{{ result.zone_id  }}'
 
     # ============================================================
 
@@ -84,7 +84,7 @@
       assert:
         that:
           - result.changed
-          - "result.result == 'Successfully deleted zone: {{ public_zone_id }}'"
+          - '"{{ result.result }}" == "Successfully deleted {{ zone_domain_name | lower }}."'
 
     # ============================================================
 
@@ -120,13 +120,13 @@
       assert:
         that:
           - result.changed
-          - result.name == '{{ zone_domain_name }}'
+          - '"{{ result.name }}" == "{{ zone_domain_name | lower }}."'
           - result.comment == '{{ zone_comment }}'
           - result.private_zone
-          - zone_id in result
+          - result.zone_id
 
     - set_fact:
-        private_zone_id: result.zone_id
+        private_zone_id: '{{ result.zone_id }}'
 
     # ============================================================
 
@@ -152,6 +152,8 @@
     - name: 'delete private hosted zone (expect: changed=True)'
       route53_zone:
         zone: '{{ zone_domain_name }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        vpc_region: '{{ ec2_region }}'
         state: absent
         ec2_access_key: '{{ ec2_access_key }}'
         ec2_secret_key: '{{ ec2_secret_key }}'
@@ -162,7 +164,7 @@
       assert:
         that:
           - result.changed
-          - "result.result == 'Successfully deleted zone: {{ private_zone_id }}'"
+          - '"{{ result.result }}" == "Successfully deleted {{ zone_domain_name | lower }}."'
 
     # ============================================================
 
@@ -198,7 +200,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        hosted_zone_id: '{{ hosted_zone.id }}'
+        hosted_zone_id: '{{ hosted_zone.zone_id }}'
         ec2_access_key: '{{ ec2_access_key }}'
         ec2_secret_key: '{{ ec2_secret_key }}'
         security_token: '{{ security_token }}'
@@ -208,13 +210,13 @@
       assert:
         that:
           - result.changed
-          - "result.result == 'Successfully deleted zone: {{ hosted_zone.id }}'"
+          - '"{{ result.result }}" == "Successfully deleted zone: {{ hosted_zone.zone_id }}"'
 
     - name: 'delete hosted zone using hosted_zone_id (expect: changed=False)'
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        hosted_zone_id: '{{ hosted_zone.id }}'
+        hosted_zone_id: '{{ hosted_zone.zone_id }}'
         ec2_access_key: '{{ ec2_access_key }}'
         ec2_secret_key: '{{ ec2_secret_key }}'
         security_token: '{{ security_token }}'
@@ -224,8 +226,7 @@
       assert:
         that:
           - not result.changed
-          - "result.result == 'There is no zone to delete that matches hosted_zone_id {{ hosted_zone.id }}.'"
-
+          - "result.result == 'No zone to delete.'"
     # ============================================================
 
     # hosted_zone_id can also be used to distinguish between multiple matching zones
@@ -235,6 +236,16 @@
     # ============================================================
 
   always:
+
+    - name: cleanup hosted zones
+      route53_zone:
+        zone: '{{ zone_domain_name }}'
+        state: absent
+        ec2_access_key: '{{ ec2_access_key }}'
+        ec2_secret_key: '{{ ec2_secret_key }}'
+        security_token: '{{ security_token }}'
+      ignore_errors: True
+
     - name: remove setup VPC
       ec2_vpc_net:
         ec2_region: '{{ ec2_region }}'
