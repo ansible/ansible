@@ -6,11 +6,12 @@
 - name: Create instance of MySQL Server -- check mode
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     sku:
       name: MYSQLB50
       tier: basic
     location: westus
+    storage_mb: 51200
     version: 5.6
     enforce_ssl: True
     admin_username: zimxyz
@@ -25,11 +26,12 @@
 - name: Create instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     sku:
       name: MYSQLB50
       tier: basic
     location: westus
+    storage_mb: 51200
     version: 5.6
     enforce_ssl: True
     admin_username: zimxyz
@@ -44,11 +46,12 @@
 - name: Create again instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     sku:
       name: MYSQLB50
       tier: basic
     location: westus
+    storage_mb: 51200
     version: 5.6
     enforce_ssl: True
     admin_username: zimxyz
@@ -63,7 +66,7 @@
 - name: Delete instance of MySQL Server -- check mode
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     state: absent
   check_mode: yes
   register: output
@@ -75,7 +78,7 @@
 - name: Delete instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     state: absent
   register: output
 - name: Assert the state has changed
@@ -86,7 +89,7 @@
 - name: Delete unexisting instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
-    name: "mysqlsrv{{ rpfx }}"
+    name: mysqlsrv{{ rpfx }}
     state: absent
   register: output
 - name: Assert the state has changed
