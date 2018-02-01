@@ -75,6 +75,10 @@ options:
         required: false
         type: 'dict'
 
+notes:
+    - Presently, the I(realmRoles), I(clientRoles) and I(access) attributes returned by the Keycloak API
+      are read-only for groups. This limitation will be removed in a later version of this module.
+
 extends_documentation_fragment:
     - keycloak
 
