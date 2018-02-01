@@ -557,8 +557,8 @@ class Condition(object):
             found = False
             desired_condition = desired[self.conditiontuple]
             current_conditions = current_condition[self.conditiontuples]
-            for current_condition in current_conditions:
-                if not compare_policies(current_condition, desired_condition):
+            for condition in current_conditions:
+                if not compare_policies(condition, desired_condition):
                     found = True
             if not found:
                 missing.append(desired)
