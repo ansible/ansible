@@ -182,6 +182,11 @@ class CloudFormsInventory(object):
         else:
             self.cloudforms_suffix = None
 
+        if config.has_option('cloudforms', 'prefer_ipv4'):
+            self.cloudforms_prefer_ipv4 = config.getboolean('cloudforms', 'prefer_ipv4')
+        else:
+            self.cloudforms_prefer_ipv4 = False
+
         # Ansible related
         try:
             group_patterns = config.get('ansible', 'group_patterns')
@@ -362,7 +367,15 @@ class CloudFormsInventory(object):
 
             # Set ansible_ssh_host to the first available ip address
             if 'ipaddresses' in host and host['ipaddresses'] and isinstance(host['ipaddresses'], list):
-                host['ansible_ssh_host'] = host['ipaddresses'][0]
+                # If no preference for IPv4, just use the first entry
+                if not self.cloudforms_prefer_ipv4:
+                    host['ansible_ssh_host'] = host['ipaddresses'][0]
+                else:
+                    # Before we search for an IPv4 address, set using the first entry in case we don't find any
+                    host['ansible_ssh_host'] = host['ipaddresses'][0]
+                    for currenthost in host['ipaddresses']:
+                        if '.' in currenthost:
+                            host['ansible_ssh_host'] = currenthost
 
             # Create additional groups
             for key in ('location', 'type', 'vendor'):
