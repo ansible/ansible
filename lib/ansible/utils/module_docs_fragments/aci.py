@@ -54,6 +54,14 @@ options:
     - It defaults to the C(private_key) basename, without extension.
     aliases: [ cert_name ]
     default: C(private_key) basename
+  output_level:
+    description:
+    - Influence the output of the ACI module.
+    - C(default) means the normal output, incl. C(existing) dict
+    - C(info) means informational output, incl. C(original), C(config) an C(proposed)
+    - C(debug) means debugging output, incl. C(method), C(path), C(status), C(url)
+    choices: [normal, info, debug]
+    default: normal
   timeout:
     description:
     - The socket level timeout in seconds.

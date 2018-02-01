@@ -69,7 +69,7 @@ def aci_argument_spec():
         password=dict(type='str', no_log=True),
         private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
-        output_level=dict(type='str', aliases=['default', 'normal', 'info', 'debug']),
+        output_level=dict(type='str', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
         use_ssl=dict(type='bool', default=True),
@@ -879,6 +879,7 @@ class ACIModule(object):
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['original'] = self.existing
+
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
             self.result['path'] = self.path
