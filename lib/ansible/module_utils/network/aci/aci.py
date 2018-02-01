@@ -195,9 +195,9 @@ class ACIModule(object):
             return true
         elif value is False:
             return false
-        elif boolean(value) == True:  # When type=raw, this supports Ansible booleans
+        elif boolean(value) is True:  # When type=raw, this supports Ansible booleans
             return true
-        elif boolean(value) == False:  # When type=raw, this supports Ansible booleans
+        elif boolean(value) is False:  # When type=raw, this supports Ansible booleans
             return false
         elif value == true:  # When type=raw, this supports the original boolean values
             self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value.", '2.9')
