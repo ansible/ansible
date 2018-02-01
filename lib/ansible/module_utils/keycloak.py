@@ -395,6 +395,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain scope mappings for %s in realm %s: %s'
+                                      % (id, realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain scope mappings for %s in realm %s: %s'
                                       % (id, realm, str(e)))
@@ -418,8 +421,11 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain scope mapping for %s in realm %s: %s'
+                                      % (id, realm, str(e)))
         except Exception as e:
-            self.module.fail_json(msg='Could not obtain scope mappings for %s in realm %s: %s'
+            self.module.fail_json(msg='Could not obtain scope mapping for %s in realm %s: %s'
                                       % (id, realm, str(e)))
 
     def get_available_roles(self, id, id_client=None, target='client', realm='master'):
@@ -442,6 +448,9 @@ class KeycloakAPI(object):
         try:
             return json.load(open_url(url, method='GET', headers=self.restheaders,
                                       validate_certs=self.validate_certs))
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain available roles for realm %s: %s'
+                                      % (realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg='Could not obtain scope mappings for %s in realm %s: %s'
                                       % (id, realm, str(e)))
