@@ -216,14 +216,15 @@ def repo_exists(module, repodata, overwrite_multiple):
             if repodata[kw] == oldr[kw] and oldr not in repos:
                 repos.append(oldr)
 
-    if len(repos) == 0:
+    number_of_repos = len(repos)
+    if number_of_repos == 0:
         # Repo does not exist yet
         return (False, False, None)
-    elif len(repos) == 1:
+    elif number_of_repos == 1:
         # Found an existing repo, look for changes
         has_changes = _repo_changes(repos[0], repodata)
         return (True, has_changes, repos)
-    elif len(repos) >= 2:
+    elif number_of_repos >= 2:
         if overwrite_multiple:
             # Found two repos and want to overwrite_multiple
             return (True, True, repos)

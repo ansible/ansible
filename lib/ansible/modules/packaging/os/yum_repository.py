@@ -562,7 +562,7 @@ class YumRepo(object):
                 self.repofile.set(self.section, key, value)
 
     def save(self):
-        if len(self.repofile.sections()):
+        if self.repofile.sections():
             # Write data into the file
             try:
                 fd = open(self.params['dest'], 'w')

@@ -137,12 +137,9 @@ class RpmKey(object):
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
         ret = keyid.strip().upper()
-        if ret.startswith('0x'):
+        if ret.startswith('0X'):
             return ret[2:]
-        elif ret.startswith('0X'):
-            return ret[2:]
-        else:
-            return ret
+        return ret
 
     def getkeyid(self, keyfile):
         stdout, stderr = self.execute_command([self.gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])

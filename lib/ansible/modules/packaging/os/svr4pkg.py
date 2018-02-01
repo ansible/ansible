@@ -113,10 +113,7 @@ def package_installed(module, name, category):
         cmd.append('-c')
     cmd.append(name)
     rc, out, err = module.run_command(' '.join(cmd))
-    if rc == 0:
-        return True
-    else:
-        return False
+    return rc == 0
 
 
 def create_admin_file():

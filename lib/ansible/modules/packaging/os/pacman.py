@@ -316,7 +316,7 @@ def install_packages(module, pacman_path, state, packages, package_files):
 
         install_c += len(to_install_files)
 
-    if state == 'latest' and len(package_err) > 0:
+    if state == 'latest' and package_err:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
 
     if install_c > 0:

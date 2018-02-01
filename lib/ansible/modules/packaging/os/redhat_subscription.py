@@ -311,8 +311,7 @@ class Rhsm(RegistrationBase):
             sect, opt = key.split('.', 1)
             if self.has_section(sect) and self.has_option(sect, opt):
                 return self.get(sect, opt)
-            else:
-                return default
+            return default
 
         cp.get_option = functools.partial(get_option_default, cp)
 
@@ -356,10 +355,7 @@ class Rhsm(RegistrationBase):
 
         args = [SUBMAN_CMD, 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)
-        if rc == 0:
-            return True
-        else:
-            return False
+        return rc == 0
 
     def register(self, username, password, auto_attach, activationkey, org_id,
                  consumer_type, consumer_name, consumer_id, force_register, environment,
@@ -581,10 +577,7 @@ class RhsmPool(object):
     def subscribe(self):
         args = "subscription-manager subscribe --pool %s" % self.get_pool_id()
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
-        if rc == 0:
-            return True
-        else:
-            return False
+        return rc == 0
 
 
 class RhsmPools(object):
@@ -618,7 +611,7 @@ class RhsmPools(object):
             # Remove leading+trailing whitespace
             line = line.strip()
             # An empty line implies the end of a output group
-            if len(line) == 0:
+            if not line:
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:

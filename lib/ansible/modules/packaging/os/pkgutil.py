@@ -75,10 +75,7 @@ def package_installed(module, name):
     cmd.append('-q')
     cmd.append(name)
     rc, out, err = run_command(module, cmd)
-    if rc == 0:
-        return True
-    else:
-        return False
+    return rc == 0
 
 
 def package_latest(module, name, site):
