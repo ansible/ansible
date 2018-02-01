@@ -81,13 +81,7 @@ RETURN = '''
 
 import ansible.module_utils.urls
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.influxdb import InfluxDb
-
-try:
-    from influxdb.exceptions import InfluxDBClientError
-    HAS_INFLUXDB = True
-except ImportError:
-    HAS_INFLUXDB = False
+import ansible.module_utils.influxdb as influx
 
 
 def find_user(module, client, user_name):
@@ -108,7 +102,7 @@ def check_user_password(module, client, user_name, user_password):
     try:
         client.switch_user(user_name, user_password)
         client.get_list_users()
-    except InfluxDBClientError as e:
+    except influx.exceptions.InfluxDBClientError as e:
         if e.code == 401:
             return False
     except ansible.module_utils.urls.ConnectionError as e:
@@ -143,14 +137,14 @@ def drop_user(module, client, user_name):
     if not module.check_mode:
         try:
             client.drop_user(user_name)
-        except InfluxDBClientError as e:
+        except influx.exceptions.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
 
     module.exit_json(changed=True)
 
 
 def main():
-    argument_spec = InfluxDb.influxdb_argument_spec()
+    argument_spec = influx.InfluxDb.influxdb_argument_spec()
     argument_spec.update(
         state=dict(default='present', type='str', choices=['present', 'absent']),
         user_name=dict(required=True, type='str'),
@@ -162,14 +156,11 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_INFLUXDB:
-        module.fail_json(msg='This module requires influxdb python package.')
-
     state = module.params['state']
     user_name = module.params['user_name']
     user_password = module.params['user_password']
     admin = module.params['admin']
-    influxdb = InfluxDb(module)
+    influxdb = influx.InfluxDb(module)
     client = influxdb.connect_to_influxdb()
     user = find_user(module, client, user_name)
 
