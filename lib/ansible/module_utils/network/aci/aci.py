@@ -174,6 +174,7 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
 
+        self.filter_string = None
         self.method = None
         self.path = None
         self.response = None
@@ -881,10 +882,12 @@ class ACIModule(object):
             self.result['original'] = self.existing
 
         if self.params['output_level'] == 'debug':
+            self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
-            self.result['path'] = self.path
+            #self.result['path'] = self.path
             self.result['response'] = self.response
             self.result['status'] = self.status
+            self.result['url'] = self.url
 
         if self.params['state'] in ('absent', 'present'):
             self.get_existing()

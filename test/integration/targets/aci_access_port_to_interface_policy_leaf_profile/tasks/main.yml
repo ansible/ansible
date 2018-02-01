@@ -16,7 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: debug
     state: present
     leaf_interface_profile: leafintprftest
   register: leaf_profile_present
