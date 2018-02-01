@@ -34,7 +34,6 @@ try:
 except ImportError:
     HAS_SCP = False
 
-
 try:
     from __main__ import display
 except ImportError:
@@ -135,7 +134,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def edit_config(self, commands):
+    def edit_config(self, commands=None):
         """Loads the specified commands into the remote device
         This method will load the commands into the remote device.  This
         method will make sure the device is in the proper context before
@@ -150,7 +149,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def get(self, command, prompt=None, answer=None, sendonly=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -181,18 +180,26 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         "Discard changes in candidate datastore"
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
 
-    def put_file(self, source, destination):
-        """Copies file over scp to remote device"""
-        if not HAS_SCP:
-            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-        ssh = self._connection._connect_uncached()
-        with SCPClient(ssh.get_transport()) as scp:
-            scp.put(source, destination)
+    def copy_file(self, source=None, destination=None, proto='scp'):
+        """Copies file over scp/sftp to remote device"""
+        ssh = self._connection.paramiko_conn._connect_uncached()
+        if proto == 'scp':
+            if not HAS_SCP:
+                self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+            with SCPClient(ssh.get_transport()) as scp:
+                scp.put(source, destination)
+        elif proto == 'sftp':
+            with ssh.open_sftp() as sftp:
+                sftp.put(source, destination)
 
-    def fetch_file(self, source, destination):
-        """Fetch file over scp from remote device"""
-        if not HAS_SCP:
-            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-        ssh = self._connection._connect_uncached()
-        with SCPClient(ssh.get_transport()) as scp:
-            scp.get(source, destination)
+    def get_file(self, source=None, destination=None, proto='scp'):
+        """Fetch file over scp/sftp from remote device"""
+        ssh = self._connection.paramiko_conn._connect_uncached()
+        if proto == 'scp':
+            if not HAS_SCP:
+                self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+            with SCPClient(ssh.get_transport()) as scp:
+                scp.get(source, destination)
+        elif proto == 'sftp':
+            with ssh.open_sftp() as sftp:
+                sftp.get(source, destination)
