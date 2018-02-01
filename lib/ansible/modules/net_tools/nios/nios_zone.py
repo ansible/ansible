@@ -140,8 +140,6 @@ def main():
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
         grid_secondaries=dict(type='list', elements='dict', options=grid_spec),
 
-        #restart_if_needed=dict(type='bool', default=False),
-
         extattrs=dict(type='dict'),
         comment=dict()
     )
