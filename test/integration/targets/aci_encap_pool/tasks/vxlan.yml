@@ -34,7 +34,7 @@
   assert:
     that:
       - create_vxlan.changed == true
-      - create_vxlan.existing == []
+      - create_vxlan.original == []
       - create_vxlan.config == create_vxlan_check_mode.config
 
 - name: create vxlan pool again - idempotency works
@@ -46,7 +46,7 @@
   assert:
     that:
       - idempotent_vxlan.changed == false
-      - 'idempotent_vxlan.existing.0.fvnsVxlanInstP.attributes.name == "anstest"'
+      - 'idempotent_vxlan.original.0.fvnsVxlanInstP.attributes.name == "anstest"'
       - idempotent_vxlan.config == {}
 
 - name: update vxlan pool - update works
@@ -96,7 +96,7 @@
   assert:
     that:
       - query_vxlan.changed == false
-      - query_vxlan.existing | length == 1
+      - query_vxlan.original | length == 1
       - '"infra/vxlanns-anstest.json" in query_vxlan.url'
 
 - name: get created static vlan pool - get class works
@@ -109,7 +109,7 @@
   assert:
     that:
       - query_vxlan_all.changed == false
-      - query_vxlan_all.existing | length > 1
+      - query_vxlan_all.original | length > 1
       - '"class/fvnsVxlanInstP.json" in query_vxlan_all.url'
 
 - name: delete vxlan pool - check mode works
@@ -122,7 +122,7 @@
   assert:
     that:
       - delete_vxlan_check_mode.changed == true
-      - delete_vxlan_check_mode.existing != []
+      - delete_vxlan_check_mode.original != []
 
 - name: delete vxlan pool - deletion works
   aci_encap_pool:
@@ -133,8 +133,8 @@
   assert:
     that:
       - delete_vxlan.changed == true
-      - delete_vxlan.existing == delete_vxlan_check_mode.existing
-      - delete_vxlan.existing.0.fvnsVxlanInstP.attributes.name == "anstest"
+      - delete_vxlan.original == delete_vxlan_check_mode.original
+      - delete_vxlan.original.0.fvnsVxlanInstP.attributes.name == "anstest"
 
 - name: delete vxlan pool again - idempotency works
   aci_encap_pool:
@@ -152,7 +152,7 @@
   assert:
     that:
       - delete_vxlan_idempotent.changed == false
-      - delete_vxlan_idempotent.existing == []
+      - delete_vxlan_idempotent.original == []
 
 - name: delete vxlan pool - cleanup
   aci_encap_pool:

@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: info
     state: present
     tenant: anstest
   register: tenant_present
@@ -110,7 +111,7 @@
     that:
       - phys_check_mode_present.changed == true
       - phys_present.changed == true
-      - phys_present.existing == []
+      - phys_present.original == []
       - 'phys_present.config == {"fvRsDomAtt": {"attributes": {}}}'
       - '"[uni/phys-anstest].json" in phys_present.url'
       - phys_idempotent.changed == false
@@ -138,7 +139,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.existing | length > 1
+      - binding_query.original | length > 1
       - '"class/fvRsDomAtt.json" in binding_query.url'
 
 - name: delete domain epg binding - check mode
@@ -175,12 +176,12 @@
   assert:
     that:
       - epg_domain_check_mode_absent.changed == true
-      - epg_domain_check_mode_absent.existing != []
+      - epg_domain_check_mode_absent.original != []
       - epg_domain_absent.changed == true
-      - epg_domain_absent.existing == epg_domain_check_mode_absent.existing
+      - epg_domain_absent.original == epg_domain_check_mode_absent.original
       - epg_vmm_domain_absent.changed == true
       - idempotency_absent.changed == false
-      - idempotency_absent.existing == []
+      - idempotency_absent.original == []
       - absent_missing_param.failed == true
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
 

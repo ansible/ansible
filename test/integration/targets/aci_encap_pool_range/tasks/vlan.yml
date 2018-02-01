@@ -55,7 +55,7 @@
   assert:
     that:
       - range_present.changed == true
-      - range_present.existing == []
+      - range_present.original == []
       - range_present.config == range_present_check_mode.config
       - range_present.config == range_present.proposed
 
@@ -68,7 +68,7 @@
   assert:
     that:
       - range_present_idempotent.changed == false
-      - 'range_present_idempotent.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_present_idempotent.original.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: update vlan pool range - update works
   aci_encap_pool_range:
@@ -81,7 +81,7 @@
   assert:
     that:
       - range_present_update.changed == true
-      - range_present_update.existing != []
+      - range_present_update.original != []
       - range_present_update.config != range_present.config
 
 - name: create vlan pool range - used for query
@@ -96,7 +96,7 @@
   assert:
     that:
       - range_present_2.changed == true
-      - range_present_2.existing == []
+      - range_present_2.original == []
 
 - name: invalid range_start - error message works
   aci_encap_pool_range:
@@ -212,8 +212,8 @@
     that:
       - range_query.changed == false
       - range_query.url.endswith("infra/vlanns-[anstest]-static/from-[vlan-20]-to-[vlan-40].json")
-      - range_query.existing | length == 1
-      - 'range_query.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - range_query.original | length == 1
+      - 'range_query.original.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: query vlan pool range - from, to, and name are filtered
   aci_encap_pool_range: &aci_range_query_filter
@@ -227,9 +227,9 @@
       - range_query_from_to_name.changed == false
       - 'range_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_to_name.filter_string'
-      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
-      - 'range_query_from_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_from_to_name.original.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_to_name.original.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to_name.original.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query vlan pool range - from and name are filtered
   aci_encap_pool_range:
@@ -243,8 +243,8 @@
       - range_query_from_name.changed == false
       - 'range_query_from_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_name.filter_string'
-      - 'range_query_from_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_from_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_name.original.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_name.original.0.fvnsEncapBlk.attributes.from == "vlan-20"'
 
 - name: query vlan pool range - to and name are filtered
   aci_encap_pool_range:
@@ -258,8 +258,8 @@
       - range_query_to_name.changed == false
       - 'range_query_to_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_to_name.filter_string'
-      - 'range_query_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_to_name.original.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_to_name.original.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query vlan pool range - name is filtered
   aci_encap_pool_range:
@@ -274,7 +274,7 @@
       - range_query_name.changed == false
       - 'range_query_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=eq(fvnsEncapBlk.name, \"anstest\")" in range_query_name.filter_string'
-      - 'range_query_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_name.original.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: query vlan pool range - from and to are filtered
   aci_encap_pool_range:
@@ -288,8 +288,8 @@
       - range_query_from_to.changed == false
       - 'range_query_from_to.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"))" in range_query_from_to.filter_string'
-      - 'range_query_from_to.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"'
-      - 'range_query_from_to.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_from_to.original.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to.original.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query all ranges in a vlan pool
   aci_encap_pool_range:
@@ -301,9 +301,9 @@
 - name: query assertions
   assert:
     that:
-      - range_query_pool.existing | length == 1
-      - 'range_query_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"'
-      - range_query_pool.existing.0.fvnsVlanInstP.children | length > 1
+      - range_query_pool.original | length == 1
+      - 'range_query_pool.original.0.fvnsVlanInstP.attributes.name == "anstest"'
+      - range_query_pool.original.0.fvnsVlanInstP.children | length > 1
       - 'range_query_pool.url.endswith("infra/vlanns-[anstest]-static.json")'
 
 - name: query all ranges
@@ -317,8 +317,8 @@
   assert:
     that:
       - range_query_all.changed == false
-      - range_query_all.existing | length > 1
-      - range_query_all.existing.0.fvnsEncapBlk is defined
+      - range_query_all.original | length > 1
+      - range_query_all.original.0.fvnsEncapBlk is defined
       - 'range_query_all.url.endswith("class/fvnsEncapBlk.json")'
 
 - name: delete vlan pool range - deletion works
@@ -332,7 +332,7 @@
     that:
       - delete_range.changed == true
       - delete_range.proposed == {}
-      - 'delete_range.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'delete_range.original.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: delete vlan pool range - check mode works
   aci_encap_pool_range: &aci_range_absent
@@ -345,7 +345,7 @@
   assert:
     that:
       - delete_check_mode.changed == true
-      - delete_check_mode.existing != []
+      - delete_check_mode.original != []
 
 - name: delete vlan pool range - deletion works
   aci_encap_pool_range:
@@ -356,7 +356,7 @@
   assert:
     that:
       - delete_range_2.changed == true
-      - delete_range_2.existing == delete_check_mode.existing
+      - delete_range_2.original == delete_check_mode.original
 
 - name: delete vlan pool range again - idempotency works
   aci_encap_pool_range:
@@ -367,7 +367,7 @@
   assert:
     that:
       - delete_idempotent.changed == false
-      - delete_idempotent.existing == []
+      - delete_idempotent.original == []
 
 - name: cleanup vlan pool
   aci_encap_pool:

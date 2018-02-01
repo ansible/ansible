@@ -69,6 +69,7 @@ def aci_argument_spec():
         password=dict(type='str', no_log=True),
         private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
+        output_level=dict(type='str', aliases=['default', 'normal', 'info', 'debug']),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
         use_ssl=dict(type='bool', default=True),
@@ -172,6 +173,11 @@ class ACIModule(object):
         self.params = module.params
         self.result = dict(changed=False)
         self.headers = dict()
+
+        self.config = None
+        self.existing = None
+        self.original = None
+        self.proposed = None
 
         # Ensure protocol is set
         self.define_protocol()
@@ -594,9 +600,9 @@ class ACIModule(object):
         This method is used to handle the logic when the modules state is equal to absent. The method only pushes a change if
         the object exists, and if check_mode is False. A successful change will mark the module as changed.
         """
-        self.result['proposed'] = {}
+        self.proposed = dict()
 
-        if not self.result['existing']:
+        if not self.existing:
             return
 
         elif not self.module.check_mode:
@@ -610,9 +616,9 @@ class ACIModule(object):
                                    timeout=self.params['timeout'],
                                    use_proxy=self.params['use_proxy'])
 
-            self.result['response'] = info['msg']
-            self.result['status'] = info['status']
-            self.result['method'] = 'DELETE'
+            self.response = info['msg']
+            self.status = info['status']
+            self.method = 'DELETE'
 
             # Handle APIC response
             if info['status'] == 200:
@@ -628,7 +634,7 @@ class ACIModule(object):
                     self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
-            self.result['method'] = 'DELETE'
+            self.method = 'DELETE'
 
     def get_diff(self, aci_class):
         """
@@ -639,9 +645,9 @@ class ACIModule(object):
         :param aci_class: Type str.
                           This is the root dictionary key for the MO's configuration body, or the ACI class of the MO.
         """
-        proposed_config = self.result['proposed'][aci_class]['attributes']
-        if self.result['existing']:
-            existing_config = self.result['existing'][0][aci_class]['attributes']
+        proposed_config = self.proposed[aci_class]['attributes']
+        if self.existing:
+            existing_config = self.existing[0][aci_class]['attributes']
             config = {}
 
             # values are strings, so any diff between proposed and existing can be a straight replace
@@ -664,9 +670,9 @@ class ACIModule(object):
                 config = {aci_class: {'attributes': {}, 'children': children}}
 
         else:
-            config = self.result['proposed']
+            config = self.proposed
 
-        self.result['config'] = config
+        self.config = config
 
     @staticmethod
     def get_diff_child(child_class, proposed_child, existing_child):
@@ -703,10 +709,10 @@ class ACIModule(object):
         :return: The list of updated child config dictionaries. None is returned if there are no changes to the child
                  configurations.
         """
-        proposed_children = self.result['proposed'][aci_class].get('children')
+        proposed_children = self.proposed[aci_class].get('children')
         if proposed_children:
             child_updates = []
-            existing_children = self.result['existing'][0][aci_class].get('children', [])
+            existing_children = self.existing[0][aci_class].get('children', [])
 
             # Loop through proposed child configs and compare against existing child configuration
             for child in proposed_children:
@@ -750,7 +756,7 @@ class ACIModule(object):
 
         # Handle APIC response
         if info['status'] == 200:
-            self.result['existing'] = json.loads(resp.read())['imdata']
+            self.existing = json.loads(resp.read())['imdata']
         else:
             try:
                 # APIC error
@@ -802,7 +808,7 @@ class ACIModule(object):
                               MOs should have their own module.
         """
         proposed = dict((k, str(v)) for k, v in class_config.items() if v is not None)
-        self.result['proposed'] = {aci_class: {'attributes': proposed}}
+        self.proposed = {aci_class: {'attributes': proposed}}
 
         # add child objects to proposed
         if child_configs:
@@ -821,7 +827,7 @@ class ACIModule(object):
                     children.append(child)
 
             if children:
-                self.result['proposed'][aci_class].update(dict(children=children))
+                self.proposed[aci_class].update(dict(children=children))
 
     def post_config(self):
         """
@@ -829,15 +835,15 @@ class ACIModule(object):
         the object has differences than what exists on the APIC, and if check_mode is False. A successful change will mark the
         module as changed.
         """
-        if not self.result['config']:
+        if not self.config:
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
             if self.params['private_key'] is not None:
-                self.cert_auth(method='POST', payload=json.dumps(self.result['config']))
+                self.cert_auth(method='POST', payload=json.dumps(self.config))
 
             resp, info = fetch_url(self.module, self.result['url'],
-                                   data=json.dumps(self.result['config']),
+                                   data=json.dumps(self.config),
                                    headers=self.headers,
                                    method='POST',
                                    timeout=self.params['timeout'],
@@ -862,3 +868,17 @@ class ACIModule(object):
         else:
             self.result['changed'] = True
             self.result['method'] = 'POST'
+
+    def exit_json(self):
+
+        if self.params['output_level'] in ('debug', 'info'):
+            self.result['original'] = self.existing
+
+        self.get_existing()
+        self.result['existing'] = self.existing
+
+        if self.params['output_level'] in ('debug', 'info'):
+            self.result['config'] = self.config
+            self.result['proposed'] = self.proposed
+
+        module.exit_json(**aci.result)
