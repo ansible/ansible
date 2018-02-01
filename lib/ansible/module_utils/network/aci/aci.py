@@ -174,6 +174,12 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
 
+        self.method = None
+        self.path = None
+        self.response = None
+        self.status = None
+        self.url = None
+
         self.config = None
         self.existing = None
         self.original = None
@@ -244,8 +250,8 @@ class ACIModule(object):
 
         # Handle APIC response
         if auth['status'] != 200:
-            self.result['response'] = auth['msg']
-            self.result['status'] = auth['status']
+            self.response = auth['msg']
+            self.status = auth['status']
             try:
                 # APIC error
                 aci_response_json(self.result, auth['body'])
@@ -265,7 +271,7 @@ class ACIModule(object):
 
         # NOTE: ACI documentation incorrectly uses complete URL
         if path is None:
-            path = self.result['path']
+            path = self.path
         path = '/' + path.lstrip('/')
 
         if payload is None:
@@ -294,27 +300,27 @@ class ACIModule(object):
 
         # Ensure method is set (only do this once)
         self.define_method()
-        self.result['path'] = path
+        self.path = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
-        resp, info = fetch_url(self.module, self.result['url'],
+        resp, info = fetch_url(self.module, self.url,
                                data=payload,
                                headers=self.headers,
                                method=self.params['method'].upper(),
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'])
 
-        self.result['response'] = info['msg']
-        self.result['status'] = info['status']
+        self.response = info['msg']
+        self.status = info['status']
 
         # Handle APIC response
         if info['status'] != 200:
@@ -331,19 +337,19 @@ class ACIModule(object):
     def query(self, path):
         ''' Perform a query with no payload '''
 
-        self.result['path'] = path
+        self.path = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
             self.cert_auth(path=path, method='GET')
 
         # Perform request
-        resp, query = fetch_url(self.module, self.result['url'],
+        resp, query = fetch_url(self.module, self.url,
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
@@ -352,8 +358,8 @@ class ACIModule(object):
 
         # Handle APIC response
         if query['status'] != 200:
-            self.result['response'] = query['msg']
-            self.result['status'] = query['status']
+            self.response = query['msg']
+            self.status = query['status']
             try:
                 # APIC error
                 aci_response_json(self.result, query['body'])
@@ -408,12 +414,12 @@ class ACIModule(object):
         else:
             path, filter_string = self._construct_url_1(root_class, child_includes)
 
-        self.result['path'] = path
+        self.path = path
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
+            self.url = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
         else:
-            self.result['url'] = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
-        self.result['filter_string'] = filter_string
+            self.url = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
+        self.filter_string = filter_string
 
     def _construct_url_1(self, obj, child_includes):
         """
@@ -610,7 +616,7 @@ class ACIModule(object):
             if self.params['private_key'] is not None:
                 self.cert_auth(method='DELETE')
 
-            resp, info = fetch_url(self.module, self.result['url'],
+            resp, info = fetch_url(self.module, self.url,
                                    headers=self.headers,
                                    method='DELETE',
                                    timeout=self.params['timeout'],
@@ -739,20 +745,20 @@ class ACIModule(object):
         that this method can be used to supply the existing configuration when using the get_diff method. The response, status,
         and existing configuration will be added to the self.result dictionary.
         """
-        uri = self.result['url'] + self.result['filter_string']
+        uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
-            self.cert_auth(path=self.result['path'] + self.result['filter_string'], method='GET')
+            self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'])
-        self.result['response'] = info['msg']
-        self.result['status'] = info['status']
-        self.result['method'] = 'GET'
+        self.response = info['msg']
+        self.status = info['status']
+        self.method = 'GET'
 
         # Handle APIC response
         if info['status'] == 200:
@@ -842,16 +848,16 @@ class ACIModule(object):
             if self.params['private_key'] is not None:
                 self.cert_auth(method='POST', payload=json.dumps(self.config))
 
-            resp, info = fetch_url(self.module, self.result['url'],
+            resp, info = fetch_url(self.module, self.url,
                                    data=json.dumps(self.config),
                                    headers=self.headers,
                                    method='POST',
                                    timeout=self.params['timeout'],
                                    use_proxy=self.params['use_proxy'])
 
-            self.result['response'] = info['msg']
-            self.result['status'] = info['status']
-            self.result['method'] = 'POST'
+            self.response = info['msg']
+            self.status = info['status']
+            self.method = 'POST'
 
             # Handle APIC response
             if info['status'] == 200:
@@ -867,18 +873,24 @@ class ACIModule(object):
                     self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
-            self.result['method'] = 'POST'
+            self.method = 'POST'
 
     def exit_json(self):
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['original'] = self.existing
+        if self.params['output_level'] == 'debug':
+            self.result['method'] = self.method
+            self.result['path'] = self.path
+            self.result['response'] = self.response
+            self.result['status'] = self.status
 
-        self.get_existing()
+        if self.params['state'] in ('absent', 'present'):
+            self.get_existing()
         self.result['existing'] = self.existing
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['config'] = self.config
             self.result['proposed'] = self.proposed
 
-        module.exit_json(**aci.result)
+        self.module.exit_json(**self.result)

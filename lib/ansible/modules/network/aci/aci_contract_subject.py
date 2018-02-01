@@ -232,7 +232,7 @@ def main():
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 if __name__ == "__main__":
     main()

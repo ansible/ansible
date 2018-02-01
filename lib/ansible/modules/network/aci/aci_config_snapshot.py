@@ -215,7 +215,7 @@ def main():
                 # Mark Snapshot for Deletion
                 aci.post_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

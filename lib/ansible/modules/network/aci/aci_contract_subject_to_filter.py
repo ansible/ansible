@@ -169,7 +169,7 @@ def main():
     # Remove subject_filter used to build URL from module.params
     module.params.pop('subject_filter')
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":
