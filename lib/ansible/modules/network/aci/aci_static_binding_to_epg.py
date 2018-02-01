@@ -79,12 +79,12 @@ options:
   interface:
     description:
     - the C(interface) string value part of the tDn.
-    - Usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(connection_type).
+    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(connection_type).
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
-    - C(extpaths) is only used if C(connection_type) is C(fex)
-    - Usually something like '1011'(int)
+    - C(extpaths) is only used if C(connection_type) is C(fex).
+    - Usually something like '1011'(int).
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
