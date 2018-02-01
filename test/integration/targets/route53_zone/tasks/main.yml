@@ -2,18 +2,24 @@
 
 - block:
 
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
     # ============================================================
 
     - name: create a VPC to test in
       ec2_vpc_net:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         cidr_block: 10.0.0.0/24
         name: '{{ setup_vpc_name }}'
         resource_tags:
           Name: '{{ setup_vpc_name }}'
+        <<: *aws_connection_info
       register: setup_vpc
 
     # ============================================================
@@ -35,9 +41,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         comment: '{{ zone_comment }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert creation of public hosted zone (expect: changed=True)'
@@ -58,9 +62,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         comment: '{{ zone_comment }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert creation of public hosted zone (expect: changed=False)'
@@ -75,9 +77,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of public hosted zone (expect: changed=True)'
@@ -92,9 +92,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of public hosted zone (expect: changed=False)'
@@ -110,10 +108,8 @@
         zone: '{{ zone_domain_name }}'
         comment: '{{ zone_comment }}'
         vpc_id: '{{ setup_vpc.vpc.id }}'
-        vpc_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        vpc_region: '{{ aws_region }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert creation of private hosted zone (expect: changed=True)'
@@ -135,10 +131,8 @@
         zone: '{{ zone_domain_name }}'
         comment: '{{ zone_comment }}'
         vpc_id: '{{ setup_vpc.vpc.id }}'
-        vpc_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        vpc_region: '{{ aws_region }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert creation of private hosted zone (expect: changed=False)'
@@ -153,11 +147,9 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         vpc_id: '{{ setup_vpc.vpc.id }}'
-        vpc_region: '{{ ec2_region }}'
+        vpc_region: '{{ aws_region }}'
         state: absent
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of private hosted zone (expect: changed=True)'
@@ -172,9 +164,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of private hosted zone (expect: changed=False)'
@@ -191,9 +181,7 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         comment: '{{ zone_comment }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: hosted_zone
 
     - name: 'delete hosted zone using hosted_zone_id (expect: changed=True)'
@@ -201,9 +189,7 @@
         zone: '{{ zone_domain_name }}'
         state: absent
         hosted_zone_id: '{{ hosted_zone.zone_id }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of hosted zone (expect: changed=True)'
@@ -217,9 +203,7 @@
         zone: '{{ zone_domain_name }}'
         state: absent
         hosted_zone_id: '{{ hosted_zone.zone_id }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       register: result
 
     - name: 'assert deletion of hosted zone (expect: changed=False)'
@@ -241,17 +225,12 @@
       route53_zone:
         zone: '{{ zone_domain_name }}'
         state: absent
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
+        <<: *aws_connection_info
       ignore_errors: True
 
     - name: remove setup VPC
       ec2_vpc_net:
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         cidr_block: 10.0.0.0/24
         state: absent
         name: '{{ setup_vpc_name }}'
+        <<: *aws_connection_info
