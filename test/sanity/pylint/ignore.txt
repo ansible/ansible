@@ -96,8 +96,10 @@ test/runner/lib/powershell_import_analysis.py missing-docstring 3.7
 test/runner/lib/pytar.py missing-docstring 3.7
 test/runner/lib/sanity/__init__.py missing-docstring 3.7
 test/runner/lib/sanity/ansible_doc.py missing-docstring 3.7
+test/runner/lib/sanity/compile.py missing-docstring 3.7
 test/runner/lib/sanity/import.py missing-docstring 3.7
 test/runner/lib/sanity/pep8.py missing-docstring 3.7
+test/runner/lib/sanity/pslint.py missing-docstring 3.7
 test/runner/lib/sanity/pylint.py missing-docstring 3.7
 test/runner/lib/sanity/rstcheck.py missing-docstring 3.7
 test/runner/lib/sanity/sanity_docs.py missing-docstring 3.7
