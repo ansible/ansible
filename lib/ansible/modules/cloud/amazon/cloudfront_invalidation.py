@@ -112,12 +112,48 @@ class CloudFrontInvalidationServiceManager(object):
                 self.module.fail_json_aws(e, msg="Unable to establish connection.")
 
     def create_invalidation(self, distribution_id, invalidation_batch):
+        current_invalidation_response = self.get_invalidation(distribution_id, invalidation_batch['CallerReference'])
         try:
             response = self.client.create_invalidation(DistributionId=distribution_id, InvalidationBatch=invalidation_batch)
             response.pop('ResponseMetadata', None)
-            return response
-        except (ClientError, BotoCoreError) as e:
+            if current_invalidation_response:
+                return response, False
+            else:
+                return response, True
+        except BotoCoreError as e:
             self.module.fail_json_aws(e, msg="Error creating CloudFront invalidations.")
+        except ClientError as e:
+            if ('Your request contains a caller reference that was used for a previous invalidation batch '
+                'for the same distribution.' in e.response['Error']['Message']):
+                self.module.warn("InvalidationBatch target paths are not modifiable. "
+                                 "To make a new invalidation please update caller_reference.")
+                return current_invalidation_response, False
+            else:
+                self.module.fail_json_aws(e, msg="Error creating CloudFront invalidations.")
+
+    def get_invalidation(self, distribution_id, caller_reference):
+        current_invalidation = {}
+        # find all invalidations for the distribution
+        try:
+            paginator = self.client.get_paginator('list_invalidations')
+            invalidations = paginator.paginate(DistributionId=distribution_id).build_full_result()['InvalidationList'].get('Items', [])
+            invalidation_ids = [inv['Id'] for inv in invalidations]
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e, msg="Error listing CloudFront invalidations.")
+
+        # check if there is an invalidation with the same caller reference
+        for inv_id in invalidation_ids:
+            try:
+                invalidation = self.client.get_invalidation(DistributionId=distribution_id, Id=inv_id)['Invalidation']
+                caller_ref = invalidation.get('InvalidationBatch', {}).get('CallerReference')
+            except (BotoCoreError, ClientError) as e:
+                self.module.fail_json_aws(e, msg="Error getting Cloudfront invalidation {0}".format(inv_id))
+            if caller_ref == caller_reference:
+                current_invalidation = invalidation
+                break
+
+        current_invalidation.pop('ResponseMetadata', None)
+        return current_invalidation
 
 
 class CloudFrontInvalidationValidationManager(object):
@@ -185,9 +221,9 @@ def main():
     distribution_id = validation_mgr.validate_distribution_id(distribution_id, alias)
     valid_target_paths = validation_mgr.validate_invalidation_batch(target_paths, caller_reference)
     valid_pascal_target_paths = snake_dict_to_camel_dict(valid_target_paths, True)
-    result = service_mgr.create_invalidation(distribution_id, valid_pascal_target_paths)
+    result, changed = service_mgr.create_invalidation(distribution_id, valid_pascal_target_paths)
 
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(result))
 
 
 if __name__ == '__main__':
