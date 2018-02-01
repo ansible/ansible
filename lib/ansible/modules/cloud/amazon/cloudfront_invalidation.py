@@ -170,9 +170,9 @@ class CloudFrontInvalidationServiceManager(object):
         except ClientError as e:
             if ('Your request contains a caller reference that was used for a previous invalidation batch '
                 'for the same distribution.' in e.response['Error']['Message']):
-                self.module.warn("InvalidationBatch target paths are not modifiable. "
-                                 "To make a new invalidation please update caller_reference.")
-                return current_invalidation_response, False
+                    self.module.warn("InvalidationBatch target paths are not modifiable. "
+                                     "To make a new invalidation please update caller_reference.")
+                    return current_invalidation_response, False
             else:
                 self.module.fail_json_aws(e, msg="Error creating CloudFront invalidations.")
 
