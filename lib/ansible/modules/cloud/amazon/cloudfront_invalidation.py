@@ -130,17 +130,14 @@ location:
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 import datetime
-from functools import partial
-import traceback
 
 try:
-    import botocore
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # caught by imported AnsibleAWSModule
@@ -156,12 +153,8 @@ class CloudFrontInvalidationServiceManager(object):
         self.create_client('cloudfront')
 
     def create_client(self, resource):
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-                self.module, boto3=True)
-            self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except (ClientError, BotoCoreError) as e:
-                self.module.fail_json_aws(e, msg="Unable to establish connection.")
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
+        self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     def create_invalidation(self, distribution_id, invalidation_batch):
         current_invalidation_response = self.get_invalidation(distribution_id, invalidation_batch['CallerReference'])
