@@ -74,7 +74,7 @@ class ActionModule(ActionBase):
         if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
             self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
         elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
-             self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
+            self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
         else:
             socket_path = self._start_connection(play_context)
             task_vars['ansible_socket'] = socket_path
