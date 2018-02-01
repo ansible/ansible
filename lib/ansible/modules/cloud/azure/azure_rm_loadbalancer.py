@@ -152,7 +152,7 @@ options:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 1 and 65535.
         version_added: 2.5
-    load_balancing_rule_spec:
+    load_balancing_rules:
         description:
             - Object collection representing the load balancing rules Gets the provisioning.
         suboptions:
