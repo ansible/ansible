@@ -81,38 +81,42 @@ class ActionModule(_ActionModule):
             task_vars['ansible_socket'] = socket_path
 
         else:
-            provider['transport'] = 'nxapi'
-            if provider.get('host') is None:
-                provider['host'] = self._play_context.remote_addr
-
-            if provider.get('port') is None:
-                if provider.get('use_ssl'):
-                    provider['port'] = 443
-                else:
-                    provider['port'] = 80
-
-            if provider.get('timeout') is None:
-                provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
-
-            if provider.get('username') is None:
-                provider['username'] = self._play_context.connection_user
-
-            if provider.get('password') is None:
-                provider['password'] = self._play_context.password
-
-            if provider.get('use_ssl') is None:
-                provider['use_ssl'] = False
-
-            if provider.get('validate_certs') is None:
-                provider['validate_certs'] = True
-
-            self._task.args['provider'] = provider
+            self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
 
         # make sure a transport value is set in args
         self._task.args['transport'] = transport
 
         result = super(ActionModule, self).run(tmp, task_vars)
         return result
+
+    @staticmethod
+    def nxapi_implementation(provider, play_context):
+        provider['transport'] = 'nxapi'
+        if provider.get('host') is None:
+            provider['host'] = play_context.remote_addr
+
+        if provider.get('port') is None:
+            if provider.get('use_ssl'):
+                provider['port'] = 443
+            else:
+                provider['port'] = 80
+
+        if provider.get('timeout') is None:
+            provider['timeout'] = C.PERSISTENT_COMMAND_TIMEOUT
+
+        if provider.get('username') is None:
+            provider['username'] = play_context.connection_user
+
+        if provider.get('password') is None:
+            provider['password'] = play_context.password
+
+        if provider.get('use_ssl') is None:
+            provider['use_ssl'] = False
+
+        if provider.get('validate_certs') is None:
+            provider['validate_certs'] = True
+
+        return provider
 
     def load_provider(self):
         provider = self._task.args.get('provider', {})
