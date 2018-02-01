@@ -1,0 +1,12 @@
+test_regexp:
+  - regex: '1'
+    replace: 'bar'
+
+  - regex: '2'
+    replace: 'bar'
+
+  - regex: '3'
+    replace: 'bar'
+
+  - regex: '4'
+    replace: 'bar'
