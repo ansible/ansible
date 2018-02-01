@@ -943,6 +943,9 @@ def command_integration_role(args, target, start_at_task):
         if args.diff:
             cmd += ['--diff']
 
+        if args.check:
+            cmd += ['--check']
+
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 

@@ -152,6 +152,7 @@ class IntegrationConfig(TestConfig):
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
+        self.check = args.check
 
         if self.list_targets:
             self.explain = True

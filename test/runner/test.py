@@ -207,6 +207,10 @@ def parse_args():
                              action='store_true',
                              help='show diff output')
 
+    integration.add_argument('--check',
+                             action='store_true',
+                             help='runs integration tests in check mode')
+
     integration.add_argument('--allow-destructive',
                              action='store_true',
                              help='allow destructive tests (--local and --tox only)')
