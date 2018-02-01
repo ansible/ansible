@@ -76,7 +76,6 @@ dummy_credentials['aws_security_token'] = None
 dummy_credentials['region'] = 'eu-west-1'
 
 
-
 def test_lookup_variable():
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
@@ -91,6 +90,7 @@ def test_lookup_variable():
     boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
                                            aws_secret_access_key="notasecret", aws_session_token=None)
 
+
 def test_path_lookup_variable():
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
@@ -101,26 +101,27 @@ def test_path_lookup_variable():
     boto3_client_double = boto3_double.Session.return_value.client
 
     with patch.object(boto3, 'session', boto3_double):
-        args=copy(dummy_credentials)
-        args["bypath"]='true'
+        args = copy(dummy_credentials)
+        args["bypath"] = 'true'
         retval = lookup.run(["/testpath"], {}, **args)
     assert(retval[0]["/testpath/won"] == "simple_value_won")
     assert(retval[0]["/testpath/too"] == "simple_value_too")
     boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
                                            aws_secret_access_key="notasecret", aws_session_token=None)
-    get_path_fn.assert_called_with(Path="/testpath", WithDecryption=True)
+    get_path_fn.assert_called_with(Path="/testpath", Recursive=False, WithDecryption=True)
+
 
 def test_warn_missing_variable():
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
     boto3_double = MagicMock()
-    boto3_client_double = MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_fail_response
 
     with pytest.raises(AnsibleError):
         with patch.object(boto3, 'session', boto3_double):
             lookup.run(["missing_variable"], {}, **dummy_credentials)
+
 
 error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fake Testing Error'}}
 operation_name = 'FakeOperation'
@@ -131,7 +132,6 @@ def test_warn_denied_variable():
     lookup._load_name = "aws_ssm"
 
     boto3_double = MagicMock()
-    boto3_client_double = MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.side_effect = ClientError(error_response, operation_name)
 
     with pytest.raises(AnsibleError):

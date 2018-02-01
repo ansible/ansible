@@ -152,8 +152,8 @@ def delete_parameter(client, module):
             Name=module.params.get('name')
         )
     except ClientError as e:
-        if e.response['Error']['Code'] == 'ResourceNotFoundException':
-            return False, e.response
+        if e.response['Error']['Code'] == 'ParameterNotFound':
+            return False, {}
         module.fail_json_aws(e, msg="deleting parameter")
 
     return True, response
@@ -161,10 +161,7 @@ def delete_parameter(client, module):
 
 def setup_client(module):
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_params)
     return connection
 
 

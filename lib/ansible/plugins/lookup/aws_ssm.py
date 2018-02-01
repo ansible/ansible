@@ -14,11 +14,16 @@ DOCUMENTATION = '''
       - Marat Bakeev <hawara(at)gmail.com>
       - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com>
     version_added: 2.5
-    short_description: Get the value for a SSM parameter.
+    short_description: Get the value for a SSM parameter or all parameters under a path.
     description:
-      - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters. The first
-        argument you pass the lookup can either be a parameter name or a hierarchy of parameters. Hierarchies start
-        with a forward slash and end with the parameter name. Up to 5 layers may be specified.
+      - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters.
+        The first argument you pass the lookup can either be a parameter name or a hierarchy of
+        parameters. Hierarchies start with a forward slash and end with the parameter name. Up to
+        5 layers may be specified.
+      - When explicitly looking up a parameter by name the parameter being missing will be an error.
+      - When looking up a path for parameters under it a dictionary will be returned for each path.
+        If there is no parameter under that path then the return will be successful but the
+        dictionary will be empty.
     options:
       region:
         description: The region to use. You may use environment variables ar the default profile's region as an alternative.
@@ -63,12 +68,12 @@ EXAMPLES = '''
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, bypath=true, recursive=true' ) }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path with shortened names (param instead of /PATH/to/param)
-  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, shortnames, bypath=true, recursive=true ) }}"
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', region=ap-southeast-2, shortnames=true, bypath=true, recursive=true ) }}"
 
 - name: Iterate over a parameter hierarchy
-  debug: msg='key contains {{item.Name }} with value {{item.Value}} '
-  with_aws_ssm:
-    - '/TEST/test-list region=ap-southeast-2, bypath'
+  debug: msg='key contains {{item.Name}} with value {{item.Value}} '
+  loop: '{{ query("aws_ssm", "/TEST/test-list", region="ap-southeast-2", bypath=true) }}'
+
 '''
 # FIXME the last one is probably not true yet.
 
@@ -98,11 +103,12 @@ def _boto3_conn(region, credentials):
 
     try:
         connection = boto3.session.Session(profile_name=boto_profile).client('ssm', region, **credentials)
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError):
         if boto_profile:
             try:
                 connection = boto3.session.Session(profile_name=boto_profile).client('ssm', region)
-            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+            # FIXME: we should probably do better passing on of the error information
+            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError):
                 raise AnsibleError("Insufficient credentials found.")
         else:
             raise AnsibleError("Insufficient credentials found.")
@@ -144,6 +150,7 @@ class LookupModule(LookupBase):
 
         # Lookup by path
         if bypath:
+            ssm_dict['Recursive'] = recursive
             for term in terms:
                 ssm_dict["Path"] = term
                 display.vvv("AWS_ssm path lookup term: %s in region: %s" % (term, region))
@@ -170,7 +177,7 @@ class LookupModule(LookupBase):
                                                               tag_name_key_name="Name",
                                                               tag_value_key_name="Value"))
                 else:
-                    return None
+                    ret.append({})
             # Lookup by parameter name - always returns a list with one or no entry.
         else:
             display.vvv("AWS_ssm name lookup term: %s" % terms)
@@ -184,4 +191,5 @@ class LookupModule(LookupBase):
             else:
                 raise AnsibleError('Undefined AWS SSM parameter: %s ' % str(response['InvalidParameters']))
 
+        display.vvvv("AWS_ssm path lookup returning: %s " % str(ret))
         return ret
