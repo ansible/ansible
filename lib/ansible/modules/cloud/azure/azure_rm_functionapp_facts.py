@@ -122,6 +122,10 @@ class AzureRMFunctionAppFacts(AzureRMModuleBase):
             tags=dict(type='list'),
         )
 
+        required_if = [
+            ('name', 'present', ['resource_group'])
+        ]
+
         self.results = dict(
             changed=False,
             ansible_facts=dict(azure_functionapps=[])
@@ -141,9 +145,6 @@ class AzureRMFunctionAppFacts(AzureRMModuleBase):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-
-        if self.name and not self.resource_group:
-            self.fail("Parameter error: resource group required when filtering by name.")
 
         if self.name:
             self.results['ansible_facts']['azure_functionapps'] = self.get_functionapp()

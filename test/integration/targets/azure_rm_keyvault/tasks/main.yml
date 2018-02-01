@@ -1,0 +1,114 @@
+- name: Create random keyvault name
+  set_fact:
+    keyvault_orig: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (65535 | random | string) }}"
+    keyvault_tags: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (64535 | random | string) }}"
+    keyvault_secr: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (63535 | random | string) }}"
+    keyvault_keys: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (62535 | random | string) }}"
+    keyvault_cert: "{{ 'ip' + resource_group | hash('md5') | truncate(16, True, '') + (61535 | random | string) }}"
+
+- name: create a kevyault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_orig }}"
+    enabled_for_deployment: True
+    location: westus
+    sku: premium
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: create a kevyault with tags
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_tags }}"
+    enabled_for_deployment: True
+    location: westus
+    sku: premium
+    tags:
+      tag1: testtag
+  register: results
+
+- assert:
+    that: 
+     - results.changed
+     - results.state.tags.tag1 == 'testtag'
+
+- name: Create a key secret and certificate management key vault
+  azure_rm_keyvault:
+    name: "{{ keyvault_secr }}"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: Create a key management key vault
+  azure_rm_keyvault:
+    name: "{{ keyvault_keys }}"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+    permissions: "Key Management"
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: Create a certificate management key vault
+  azure_rm_keyvault:
+    name: "{{ keyvault_cert }}"
+    resource_group: "{{ resource_group }}"
+    state: "present"
+    enabled_for_deployment: True
+    location: "westus"
+    sku: "premium"
+    enabled_for_disk_encryption: True
+    permissions: "Certificate Management"
+  register: results
+
+- assert:
+    that: results.changed
+
+- name: delete a kevyault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_orig }}"
+    state: absent
+    location: westus
+
+- name: delete a kevyault with tags
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_tags }}"
+    state: absent
+    location: westus
+
+- name: delete a key secret and certificate management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_secr }}"
+    state: absent
+    location: westus
+
+- name: delete a key management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_keys }}"
+    state: absent
+    location: westus
+
+- name: delete a certificate management key vault
+  azure_rm_keyvault:
+    resource_group: "{{ resource_group }}"
+    name: "{{ keyvault_cert }}"
+    state: absent
+    location: westus
