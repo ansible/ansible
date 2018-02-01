@@ -61,6 +61,7 @@ options:
     - The APIC defaults the mode to C(regular).
     choices: [ untagged, native, regular ]
     default: regular
+    aliases: [ mode_name ]
   connection_type:
     description:
     - The Path Type for the static EPG deployement.
