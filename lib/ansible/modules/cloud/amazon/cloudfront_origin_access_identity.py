@@ -92,14 +92,14 @@ cloud_front_origin_access_identity_config:
       description: a comment describing the oai
       returned: always
       type: string
-  id:
-    description: a unique identifier of the oai
-    returned: always
-    type: string
-  s3_canonical_user_id:
-    description: the cannonical user id of the user who created the oai
-    returned: always
-    type: string
+id:
+  description: a unique identifier of the oai
+  returned: always
+  type: string
+s3_canonical_user_id:
+  description: the cannonical user id of the user who created the oai
+  returned: always
+  type: string
 
 '''
 
