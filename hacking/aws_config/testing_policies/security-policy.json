@@ -17,6 +17,12 @@
             "Resource": "*",
             "Effect": "Allow",
             "Sid": "AllowReadOnlyIAMUse"
+        },
+        {
+            "Sid": "AllowWAFusage",
+            "Action": "waf:*",
+            "Effect": "Allow",
+            "Resource": "*"
         }
     ]
 }

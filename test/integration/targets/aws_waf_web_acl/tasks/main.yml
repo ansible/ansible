@@ -1,0 +1,297 @@
+- block:
+  - name: set yaml anchor
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+    no_log: yes
+
+  - name: create WAF IP condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_ip_condition"
+      filters:
+        - ip_address: "10.0.0.0/8"
+      type: ip
+      <<: *aws_connection_info
+    register: create_waf_ip_condition
+
+  - name: add an IP address to WAF condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_ip_condition"
+      filters:
+        - ip_address: "10.0.0.0/8"
+        - ip_address: "192.168.0.0/24"
+      type: ip
+      <<: *aws_connection_info
+    register: add_ip_address_to_waf_condition
+
+  - name: check expected waf filter length
+    assert:
+      that:
+        - add_ip_address_to_waf_condition.condition.ip_set_descriptors|length == 2
+
+  - name: add an IP address to WAF condition (rely on purge_filters defaulting to false)
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_ip_condition"
+      filters:
+        - ip_address: "192.168.10.0/24"
+      type: ip
+      <<: *aws_connection_info
+    register: add_ip_address_to_waf_condition_no_purge
+
+  - name: check waf filter length has increased
+    assert:
+      that:
+        - add_ip_address_to_waf_condition_no_purge.condition.ip_set_descriptors|length == 3
+        - add_ip_address_to_waf_condition_no_purge.changed
+
+  - name: add an IP address to WAF condition (set purge_filters)
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_ip_condition"
+      filters:
+        - ip_address: "192.168.20.0/24"
+      purge_filters: yes
+      type: ip
+      <<: *aws_connection_info
+    register: add_ip_address_to_waf_condition_purge
+
+  - name: check waf filter length has reduced
+    assert:
+      that:
+        - add_ip_address_to_waf_condition_purge.condition.ip_set_descriptors|length == 1
+        - add_ip_address_to_waf_condition_purge.changed
+
+  - name: create WAF byte condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_byte_condition"
+      filters:
+      - field_to_match: header
+        position: STARTS_WITH
+        target_string: Hello
+        header: Content-type
+      type: byte
+      <<: *aws_connection_info
+    register: create_waf_byte_condition
+
+  - name: recreate WAF byte condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_byte_condition"
+      filters:
+      - field_to_match: header
+        position: STARTS_WITH
+        target_string: Hello
+        header: Content-type
+      type: byte
+      <<: *aws_connection_info
+    register: recreate_waf_byte_condition
+
+  - name: assert that no change was made
+    assert:
+      that:
+        - not recreate_waf_byte_condition.changed
+
+  - name: create WAF geo condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_geo_condition"
+      filters:
+        - country: US
+        - country: AU
+        - country: AT
+      type: geo
+      <<: *aws_connection_info
+    register: create_waf_geo_condition
+
+  - name: create WAF size condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_size_condition"
+      filters:
+        - field_to_match: query_string
+          size: 300
+          comparison: GT
+      type: size
+      <<: *aws_connection_info
+    register: create_waf_size_condition
+
+  - name: create WAF sql condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_sql_condition"
+      filters:
+        - field_to_match: query_string
+          transformation: url_decode
+      type: sql
+      <<: *aws_connection_info
+    register: create_waf_sql_condition
+
+  - name: create WAF xss condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_xss_condition"
+      filters:
+        - field_to_match: query_string
+          transformation: url_decode
+      type: xss
+      <<: *aws_connection_info
+    register: create_waf_xss_condition
+
+  - name: create WAF regex condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition"
+      filters:
+        - field_to_match: query_string
+          regex_pattern:
+            name: greetings
+            regex_strings:
+              - '[hH]ello'
+              - '^Hi there'
+              - '.*Good Day to You'
+      type: regex
+      <<: *aws_connection_info
+    register: create_waf_regex_condition
+
+  - name: create a second WAF regex condition with the same regex
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition_part_2"
+      filters:
+        - field_to_match: header
+          header: cookie
+          regex_pattern:
+            name: greetings
+            regex_strings:
+              - '[hH]ello'
+              - '^Hi there'
+              - '.*Good Day to You'
+      type: regex
+      <<: *aws_connection_info
+    register: create_second_waf_regex_condition
+
+  - name: check that the pattern is shared
+    assert:
+      that:
+        - >
+            create_waf_regex_condition.condition.regex_match_tuples[0].regex_pattern_set_id ==
+            create_second_waf_regex_condition.condition.regex_match_tuples[0].regex_pattern_set_id
+        - create_second_waf_regex_condition.changed
+
+
+  - name: delete first WAF regex condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition"
+      filters:
+        - field_to_match: query_string
+          regex_pattern:
+            name: greetings
+            regex_strings:
+              - '[hH]ello'
+              - '^Hi there'
+              - '.*Good Day to You'
+      type: regex
+      state: absent
+      <<: *aws_connection_info
+    register: delete_waf_regex_condition
+
+  - name: delete second WAF regex condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition_part_2"
+      filters:
+        - field_to_match: header
+          header: cookie
+          regex_pattern:
+            name: greetings
+            regex_strings:
+              - '[hH]ello'
+              - '^Hi there'
+              - '.*Good Day to You'
+      type: regex
+      state: absent
+      <<: *aws_connection_info
+    register: delete_second_waf_regex_condition
+
+  - name: create WAF regex condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition"
+      filters:
+        - field_to_match: query_string
+          regex_pattern:
+            name: greetings
+            regex_strings:
+              - '[hH]ello'
+              - '^Hi there'
+              - '.*Good Day to You'
+      type: regex
+      <<: *aws_connection_info
+    register: recreate_waf_regex_condition
+
+  - name: check that a new pattern is created (because the first pattern should have been deleted once unused)
+    assert:
+      that:
+        - >
+            recreate_waf_regex_condition.condition.regex_match_tuples[0].regex_pattern_set_id !=
+            create_waf_regex_condition.condition.regex_match_tuples[0].regex_pattern_set_id
+
+  always:
+  - debug:
+      msg: "****** TEARDOWN STARTS HERE ******"
+
+  - name: remove XSS condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_xss_condition"
+      type: xss
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove SQL condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_sql_condition"
+      type: sql
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove size condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_size_condition"
+      type: size
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove geo condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_geo_condition"
+      type: geo
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove byte condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_byte_condition"
+      type: byte
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove ip address condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_ip_condition"
+      type: ip
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove regex part 2 condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition_part_2"
+      type: regex
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
+
+  - name: remove first regex condition
+    aws_waf_condition:
+      name: "{{ resource_prefix }}_regex_condition"
+      type: regex
+      state: absent
+      <<: *aws_connection_info
+    ignore_errors: yes
