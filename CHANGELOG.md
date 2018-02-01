@@ -91,6 +91,7 @@ Ansible Changes By Release
   * aws_region_facts
   * aws_s3_cors
   * aws_ssm_parameter_store
+  * aws_waf_condition
   * cloudfront_distribution
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
