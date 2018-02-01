@@ -88,7 +88,7 @@ options:
                 description: The port for communicating the probe. Possible values range from 1 to 65535, inclusive.
                 required: True
             protocol:
-                description: 
+                description:
                     - The protocol of the end point.
                     - "Possible values are: 'Http' or 'Tcp'."
                     - If 'Tcp' is specified, a received ACK is required for the probe to be successful.
@@ -98,7 +98,7 @@ options:
                     - Http
                 default: Tcp
             interval:
-                description: 
+                description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
                     - Slightly less than half the allocated timeout period, which allows two full probes before taking the instance out of rotation.
                     - The default value is 15, the minimum value is 5.
@@ -111,12 +111,12 @@ options:
                 aliases:
                     - fail_count
             request_path:
-                description: 
+                description:
                     - The URI used for requesting health status from the VM.
                     - Path is required if a protocol is set to http. Otherwise, it is not allowed.
         version_added: 2.5
     inbound_nat_pools:
-        description: 
+        description:
             - Defines an external port range for inbound NAT to a single backend port on NICs associated with a load balancer.
             - Inbound NAT rules are created automatically for each NIC associated with the Load Balancer using an external port from this range.
             - Defining an Inbound NAT pool on your Load Balancer is mutually exclusive with defining inbound Nat rules.
@@ -136,9 +136,9 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp             
+                default: Tcp
             frontend_port_range_start:
-                description: 
+                description:
                     - The first port number in the range of external ports that will be used to provide Inbound Nat to NICs associated with a load balancer.
                     - Acceptable values range between 1 and 65534.
                 required: True
@@ -148,12 +148,12 @@ options:
                     - Acceptable values range between 1 and 65535.
                 required: True
             backend_port:
-                description: 
+                description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 1 and 65535.
         version_added: 2.5
     load_balancing_rule_spec:
-        description: 
+        description:
             - Object collection representing the load balancing rules Gets the provisioning.
         suboptions:
             name:
@@ -164,7 +164,7 @@ options:
                 required: True
             backend_address_pool:
                 description: A reference to a pool of DIPs. Inbound traffic is randomly load balanced across IPs in the backend IPs.
-                required: True                
+                required: True
             probe:
                 description: The reference of the load balancer probe used by the load balancing rule.
                 required: True
@@ -176,7 +176,7 @@ options:
                     - All
                 default: Tcp
             load_distribution:
-                description: 
+                description:
                     - The load distribution policy for this rule.
                     - Possible values are 'Default', 'SourceIP', and 'SourceIPProtocol'.
                 choices:
@@ -185,25 +185,24 @@ options:
                     - SourceIPProtocol
                 default: Default
             frontend_port:
-                description: 
+                description:
                     - The port for the external endpoint.
                     - Port numbers for each rule must be unique within the Load Balancer.
                     - Acceptable values are between 0 and 65534.
                     - Note that value 0 enables "Any Port"
             backend_port:
-                description: 
+                description:
                     - The port used for internal connections on the endpoint.
                     - Acceptable values are between 0 and 65535. Note that value 0 enables "Any Port"
             idle_timeout:
-                description: 
+                description:
                     - The timeout for the TCP idle connection.
                     - The value can be set between 4 and 30 minutes.
                     - The default value is 4 minutes.
                     - This element is only used when the protocol is set to TCP.
             enable_floating_ip:
-                description: 
-                    - Configures SNAT for the VMs in the backend pool to use the publicIP address specified in the frontend of the load.
-     balancing rule.
+                description:
+                    - Configures SNAT for the VMs in the backend pool to use the publicIP address specified in the frontend of the load balancing rule.
         version_added: 2.5
     public_ip_address_name:
         description:
@@ -340,17 +339,17 @@ changed:
 '''
 
 import random
-from msrestazure.tools import parse_resource_id
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
+    from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
 
-frontend_ip_configuration_spec=dict(
+frontend_ip_configuration_spec = dict(
     name=dict(
         type='str',
         required=True
@@ -362,7 +361,7 @@ frontend_ip_configuration_spec=dict(
 )
 
 
-backend_address_pool_spec=dict(
+backend_address_pool_spec = dict(
     name=dict(
         type='str',
         required=True
@@ -370,7 +369,7 @@ backend_address_pool_spec=dict(
 )
 
 
-probes_spec=dict(
+probes_spec = dict(
     name=dict(
         type='str',
         required=True
@@ -613,7 +612,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
             self.location = resource_group.location
-        
+
         load_balancer = self.get_load_balancer()
 
         if self.state == 'present':
@@ -668,7 +667,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 changed = True
         elif self.state == 'absent' and load_balancer:
             changed = True
-        
+
         self.results['state'] = load_balancer_to_dict(load_balancer)
         self.results['changed'] = changed
 
@@ -758,7 +757,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
     def get_public_ip_address(self, id):
         """Get a reference to the public ip address resource"""
         self.log('Fetching public ip address {}'.format(id))
-        pip_dict=parse_resource_id(id)
+        pip_dict = parse_resource_id(id)
         resource_group = pip_dict.get('resource_group', self.resource_group)
         name = pip_dict.get('name')
         try:
@@ -773,7 +772,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             return self.network_client.load_balancers.get(self.resource_group, self.name)
         except CloudError:
             return None
-    
+
     def delete_load_balancer(self):
         """Delete a load balancer"""
         self.log('Deleting loadbalancer {0}'.format(self.name))
