@@ -105,6 +105,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_ses_identity
   * aws_ssm_parameter_store
   * cloudfront_distribution
+  * cloudfront_origin_access_identity
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
