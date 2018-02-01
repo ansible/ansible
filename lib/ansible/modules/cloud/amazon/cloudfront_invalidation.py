@@ -119,6 +119,7 @@ class CloudFrontInvalidationServiceManager(object):
         except (ClientError, BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Error creating CloudFront invalidations.")
 
+
 class CloudFrontInvalidationValidationManager(object):
     """
     Manages Cloudfront validations for invalidation batches
