@@ -92,6 +92,7 @@ Ansible Changes By Release
   * aws_s3_cors
   * aws_ssm_parameter_store
   * cloudfront_distribution
+  * cloudfront_origin_access_identity
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
