@@ -174,11 +174,14 @@ class ZfsDelegateAdmin(object):
             scope = linemap.get(line, scope)
             if not scope:
                 continue
-            if line.startswith('\tuser ') or line.startswith('\tgroup '):
-                ent_type, ent, cur_perms = line.split()
-                perms[scope][ent_type[0]][ent] = cur_perms.split(',')
-            elif line.startswith('\teveryone '):
-                perms[scope]['e'] = line.split()[1].split(',')
+            try:
+                if line.startswith('\tuser ') or line.startswith('\tgroup '):
+                    ent_type, ent, cur_perms = line.split()
+                    perms[scope][ent_type[0]][ent] = cur_perms.split(',')
+                elif line.startswith('\teveryone '):
+                    perms[scope]['e'] = line.split()[1].split(',')
+            except ValueError:
+                self.module.fail_json(msg="Cannot parse user/group permission output by `zfs allow`: '%s'" % line)
         return perms
 
     def run_zfs_raw(self, subcommand=None, args=None):
