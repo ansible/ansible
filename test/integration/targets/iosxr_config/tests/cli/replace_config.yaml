@@ -17,7 +17,7 @@
     that:
       - '"load harddisk:/ansible_config.txt" in result.commands'
 
-- name: replace config (add preconfigured interface) 
+- name: replace config (add preconfigured interface)(idempotence)
   iosxr_config: *addreplace
   register: result
 
@@ -36,7 +36,7 @@
     that:
       - '"load harddisk:/ansible_config.txt" in result.commands'
 
-- name: replace config (del preconfigured interface) 
+- name: replace config (del preconfigured interface)(idempotence)
   iosxr_config: *delreplace
   register: result
 

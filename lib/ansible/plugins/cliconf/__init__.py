@@ -180,9 +180,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         "Discard changes in candidate datastore"
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
 
-    def put_file_cliconf(self, source=None, destination=None, proto='scp'):
+    def copy_file(self, source=None, destination=None, proto='scp'):
         """Copies file over scp/sftp to remote device"""
-        ssh = self._connection.p._connect_uncached()
+        ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
@@ -192,9 +192,9 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
             with ssh.open_sftp() as sftp:
                 sftp.put(source, destination)
 
-    def fetch_file_cliconf(self, source=None, destination=None, proto='scp'):
+    def get_file(self, source=None, destination=None, proto='scp'):
         """Fetch file over scp/sftp from remote device"""
-        ssh = self._connection.p._connect_uncached()
+        ssh = self._connection.paramiko_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")

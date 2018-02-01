@@ -184,7 +184,7 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, put_file
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
@@ -199,7 +199,7 @@ def copy_file_to_node(module):
     file.close()
 
     dst = '/harddisk:/ansible_config.txt'
-    put_file(module, src, dst, 'sftp')
+    copy_file(module, src, dst, 'sftp')
 
     return True
 

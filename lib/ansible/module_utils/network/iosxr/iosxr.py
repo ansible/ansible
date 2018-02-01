@@ -417,12 +417,12 @@ def load_config(module, command_filter, commit=False, replace=False,
             diff = get_config_diff(module)
 
         if replace:
-            cmd = {'command': 'commit replace',
-                   'prompt': 'This commit will replace or remove the entire running configuration',
-                   'answer': 'yes'}
+            cmd = list()
+            cmd.append({'command': 'commit replace',
+                        'prompt': 'This commit will replace or remove the entire running configuration',
+                        'answer': 'yes'})
+            cmd.append('end')
             conn.edit_config(cmd)
-            sleep(5)
-            conn.edit_config('end')
         elif commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
@@ -461,11 +461,11 @@ def run_command(module, commands):
     return responses
 
 
-def put_file(module, src, dst, proto='scp'):
+def copy_file(module, src, dst, proto='scp'):
     conn = get_connection(module)
-    conn.put_file_cliconf(source=src, destination=dst, proto=proto)
+    conn.copy_file(source=src, destination=dst, proto=proto)
 
 
 def get_file(module, src, dst, proto='scp'):
     conn = get_connection(module)
-    conn.fetch_file_cliconf(source=src, destination=dst, proto=proto)
+    conn.get_file(source=src, destination=dst, proto=proto)
