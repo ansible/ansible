@@ -30,7 +30,6 @@ matrix:
     - env: T=linux/centos7/1
     - env: T=linux/fedora24/1
     - env: T=linux/fedora25/1
-    - env: T=linux/opensuse42.2/1
     - env: T=linux/opensuse42.3/1
     - env: T=linux/ubuntu1404/1
     - env: T=linux/ubuntu1604/1
@@ -43,7 +42,6 @@ matrix:
     - env: T=linux/centos7/2
     - env: T=linux/fedora24/2
     - env: T=linux/fedora25/2
-    - env: T=linux/opensuse42.2/2
     - env: T=linux/opensuse42.3/2
     - env: T=linux/ubuntu1404/2
     - env: T=linux/ubuntu1604/2
@@ -56,7 +54,6 @@ matrix:
     - env: T=linux/centos7/3
     - env: T=linux/fedora24/3
     - env: T=linux/fedora25/3
-    - env: T=linux/opensuse42.2/3
     - env: T=linux/opensuse42.3/3
     - env: T=linux/ubuntu1404/3
     - env: T=linux/ubuntu1604/3
