@@ -167,7 +167,7 @@ def main():
         caller_reference=dict(),
         distribution_id=dict(),
         alias=dict(),
-        target_paths=dict(required=True, default=None, type='list')
+        target_paths=dict(required=True, type='list')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False, mutually_exclusive=[['distribution_id', 'alias']])
