@@ -228,9 +228,8 @@ def create_scaling_policy(connection, module):
 
         if not scalable_targets['ScalableTargets']:
             create_scalable_target(connection, module)
-        else:
-            if scalable_targets['ScalableTargets'][0]['MinCapacity'] != minimum_tasks or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != max_capacity:
-                create_scalable_target(connection, module)
+        elif scalable_targets['ScalableTargets'][0]['MinCapacity'] != minimum_tasks or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != max_capacity:
+            create_scalable_target(connection, module)
 
         scaling_policy = {
             'PolicyName': module.params.get('policy_name'),
