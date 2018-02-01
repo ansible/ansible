@@ -37,6 +37,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35433)
 * Fix traceback in winrm module when the ipaddress module is not installed
   https://github.com/ansible/ansible/pull/35723/files
+* Fix bug in `lineinfile` where the line would not be inserted when using `insertbefore` or `insertafter` if the pattern occured anywhere in the file. (https://github.com/ansible/ansible/issues/28721)
 
 <a id="2.4.3"></a>
 
