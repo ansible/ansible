@@ -279,7 +279,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = NetworkConfig(indent=3)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -298,7 +298,7 @@ def get_running_config(module, config=None):
             if module.params['defaults']:
                 flags.append('all')
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return NetworkConfig(indent=3, contents=contents)
 
 
 def main():
@@ -362,7 +362,7 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=2, contents=contents)
+        config = NetworkConfig(indent=3, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
