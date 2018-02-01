@@ -41,7 +41,7 @@ def main():
 
             for result in results:
                 if result[0].startswith(base_dir):
-                    source = result[0][len(base_dir) + 1:].replace('test/runner/import/', '')
+                    source = result[0][len(base_dir) + 1:].replace('test/sanity/import/', '')
                     line = result[1] or 0
                     break
 
