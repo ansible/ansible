@@ -1,0 +1,30 @@
+---
+
+- name: Install https transport for apt
+  apt: name=apt-transport-https state=latest force=yes
+
+- name: Add Erlang Solutions public GPG key
+  apt_key: url=https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc state=present
+
+- name: Add Erlang Solutions repository
+  apt_repository: repo="deb https://packages.erlang-solutions.com/ubuntu {{ ansible_distribution_release }} contrib" filename='erlang-solutions' state=present update_cache=yes
+
+- name: Add RabbitMQ public GPG key
+  apt_key: url=https://www.rabbitmq.com/rabbitmq-release-signing-key.asc state=present
+
+- name: Add RabbitMQ repository
+  apt_repository: repo='deb https://dl.bintray.com/rabbitmq/debian {{ ansible_distribution_release }} main' filename='rabbitmq' state=present update_cache=yes
+
+- name: Install RabbitMQ Server
+  apt: name=rabbitmq-server state=latest
+
+- name: Start RabbitMQ service
+  service: name=rabbitmq-server state=started
+  when: ansible_distribution_release == 'trusty'
+
+# This is an ugly workaround!
+# There is a problem to run services via systemd inside docker containers (https://github.com/moby/moby/issues/2296):
+# systemctl command fails with the error 'Failed to connect to bus: No such file or directory'
+- name: Start RabbitMQ service
+  command: /etc/init.d/rabbitmq-server start
+  when: ansible_distribution_release == 'xenial'
