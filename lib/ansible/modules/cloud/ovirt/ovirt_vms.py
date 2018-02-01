@@ -473,7 +473,7 @@ options:
         version_added: "2.5"
     placement_policy:
         description:
-            - "The configuration of the virtual machine’s placement policy."
+            - "The configuration of the virtual machine's placement policy."
             - "Placement policy can be one of the following values:"
             - "C(migratable) - Allow manual and automatic migration."
             - "C(pinned) - Do not allow migration."
@@ -946,15 +946,13 @@ class VmsModule(BaseModule):
                     ],
                 ) if self.param('cpu_pinning') else None,
                 mode=otypes.CpuMode(self.param('cpu_mode')) if self.param('cpu_mode') else None,
-            ) if (
-                any((
-                    self.param('cpu_cores'),
-                    self.param('cpu_sockets'),
-                    self.param('cpu_threads'),
-                    self.param('cpu_mode'),
-                    self.param('cpu_pinning'))
-                )
-            ) else None,
+            ) if any((
+                self.param('cpu_cores'),
+                self.param('cpu_sockets'),
+                self.param('cpu_threads'),
+                self.param('cpu_mode'),
+                self.param('cpu_pinning')
+            )) else None,
             cpu_shares=self.param('cpu_shares'),
             os=otypes.OperatingSystem(
                 type=self.param('operating_system'),
@@ -1080,7 +1078,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity)) and
-            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None ) and
+            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
             self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts]
         )
 
