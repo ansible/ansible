@@ -17,7 +17,6 @@ wildcard_imports=$(find . -path ./test/runner/.tox -prune \
         -o -path ./test/units/plugins/action/test_action.py \
         -o -path ./lib/ansible/compat/tests/mock.py -prune \
         -o -path ./lib/ansible/compat/tests/unittest.py \
-        -o -path ./lib/ansible/modules/network/f5 -prune \
         -o -path ./lib/ansible/modules/packaging/os -prune \
         -o -name '*.py' -type f -exec grep -H 'import \*' '{}' '+')
 
