@@ -244,6 +244,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     enable_vip = aci.boolean(module.params['enable_vip'])
     tenant = module.params['tenant']
@@ -273,7 +275,6 @@ def main():
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',

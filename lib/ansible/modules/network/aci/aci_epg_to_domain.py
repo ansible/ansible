@@ -149,6 +149,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     allow_useg = module.params['allow_useg']
     ap = module.params['ap']
     deploy_immediacy = module.params['deploy_immediacy']
@@ -185,7 +187,6 @@ def main():
     else:
         epg_domain = None
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',

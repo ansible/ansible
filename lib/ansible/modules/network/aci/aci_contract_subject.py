@@ -164,6 +164,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     subject = module.params['subject']
     priority = module.params['priority']
     reverse_filter = aci.boolean(module.params['reverse_filter'])
@@ -184,7 +186,6 @@ def main():
     if directive is not None or filter_name is not None:
         module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',

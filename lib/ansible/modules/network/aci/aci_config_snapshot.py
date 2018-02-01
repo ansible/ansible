@@ -129,6 +129,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
     file_format = module.params['format']
@@ -143,8 +145,6 @@ def main():
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'present':
         aci.construct_url(

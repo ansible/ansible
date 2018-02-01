@@ -164,6 +164,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     arp_flag = module.params['arp_flag']
     if arp_flag is not None:
         arp_flag = ARP_FLAG_MAPPING[arp_flag]
@@ -198,7 +200,6 @@ def main():
         dst_end = dst_port
         dst_start = dst_port
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
