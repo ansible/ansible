@@ -992,6 +992,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
+    if not validate_certs:
+        module.warn(warning="SSL/TLS certificate validation is disabled")
 
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
