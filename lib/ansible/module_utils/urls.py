@@ -618,6 +618,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             pass
 
         if not to_add:
+            try:
+                os.remove(to_add_path)
+            except OSError:
+                pass
             to_add_path = None
         return (tmp_path, to_add_path, paths_checked)
 
@@ -677,6 +681,16 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if not use_proxy:
             # ignore proxy settings for this host request
+            if tmp_ca_cert_path:
+                try:
+                    os.remove(tmp_ca_cert_path)
+                except OSError:
+                    pass
+            if to_add_ca_cert_path:
+                try:
+                    os.remove(to_add_ca_cert_path)
+                except OSError:
+                    pass
             return req
 
         try:
