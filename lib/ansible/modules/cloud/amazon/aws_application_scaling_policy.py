@@ -56,10 +56,10 @@ options:
         description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
         required: no
     minimum_tasks:
-        description: The lower boundary to which Service Auto Scaling can adjust your service’s desired count. This parameter is required if you are creating a first new policy for the specified service.
+        description: The minimum value to scale to in response to a scale in event. This parameter is required if you are creating a first new policy for the specified service.
         required: no
     maximum_tasks:
-        description: The upper boundary to which Service Auto Scaling can adjust your service’s desired count. This parameter is required if you are creating a first new policy for the specified service.
+        description: The maximum value to scale to in response to a scale out event. This parameter is required if you are creating a first new policy for the specified service.
         required: no    
 extends_documentation_fragment:
     - aws
@@ -176,19 +176,55 @@ def delete_scaling_policy(connection, module):
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed)
+    result = {"changed": changed}
+    return result
 
 def create_scalable_target(connection, module):
+    changed = False
+
+    scalable_targets = connection.describe_scalable_targets(
+        ServiceNamespace=module.params.get('service_namespace'),
+        ResourceIds=[
+            module.params.get('resource_id'),
+        ],
+        ScalableDimension=module.params.get('scalable_dimension')
+    )
+
+    if (
+        not scalable_targets['ScalableTargets']
+        or scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
+        or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')
+    ):
+        changed = True
+        try:
+            connection.register_scalable_target(
+                ServiceNamespace=module.params.get('service_namespace'),
+                ResourceId=module.params.get('resource_id'),
+                ScalableDimension=module.params.get('scalable_dimension'),
+                MinCapacity=module.params.get('minimum_tasks'),
+                MaxCapacity=module.params.get('maximum_tasks')
+            )
+        except Exception as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+
     try:
-        connection.register_scalable_target(
+        response = connection.describe_scalable_targets(
             ServiceNamespace=module.params.get('service_namespace'),
-            ResourceId=module.params.get('resource_id'),
-            ScalableDimension=module.params.get('scalable_dimension'),
-            MinCapacity=module.params.get('minimum_tasks'),
-            MaxCapacity=module.params.get('maximum_tasks')
+            ResourceIds=[
+                module.params.get('resource_id'),
+            ],
+            ScalableDimension=module.params.get('scalable_dimension')
         )
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
+    if (response['ScalableTargets']):
+        snaked_response = camel_dict_to_snake_dict(response['ScalableTargets'][0])
+    else:
+        snaked_response = {}
+
+    result = {"changed": changed, "response": snaked_response}
+    return result
 
 def create_scaling_policy(connection, module):
     scaling_policy = connection.describe_scaling_policies(
@@ -215,22 +251,7 @@ def create_scaling_policy(connection, module):
                 changed = True
                 scaling_policy[attr] = module.params.get(_camel_to_snake(attr))
     else:
-
         changed = True
-
-        scalable_targets = connection.describe_scalable_targets(
-            ServiceNamespace=module.params.get('service_namespace'),
-            ResourceIds=[
-                module.params.get('resource_id'),
-            ],
-            ScalableDimension=module.params.get('scalable_dimension')
-        )
-
-        if not scalable_targets['ScalableTargets']:
-            create_scalable_target(connection, module)
-        elif scalable_targets['ScalableTargets'][0]['MinCapacity'] != minimum_tasks or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != max_capacity:
-            create_scalable_target(connection, module)
-
         scaling_policy = {
             'PolicyName': module.params.get('policy_name'),
             'ServiceNamespace': module.params.get('service_namespace'),
@@ -279,7 +300,8 @@ def create_scaling_policy(connection, module):
         snaked_response = camel_dict_to_snake_dict(response['ScalingPolicies'][0])
     else:
         snaked_response = {}
-    module.exit_json(changed=changed, response=snaked_response)
+    result = {"changed": changed, "response": snaked_response}
+    return result
 
 
 def main():
@@ -300,7 +322,9 @@ def main():
                                                         ], type='str'),
         policy_type=dict(required=True, choices=['StepScaling', 'TargetTrackingScaling'], type='str'),
         step_scaling_policy_configuration=dict(required=False, type='dict'),
-        target_tracking_scaling_policy_configuration=dict(required=False, type='dict')
+        target_tracking_scaling_policy_configuration=dict(required=False, type='dict'),
+        minimum_tasks=dict(required=False, type='int'),
+        maximum_tasks=dict(required=False, type='int')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -316,11 +340,19 @@ def main():
     except botocore.exceptions.ProfileNotFound as e:
         module.fail_json(msg=str(e))
 
-    if module.params.get("state") == 'present':
-        create_scaling_policy(connection, module)
-    else:
-        delete_scaling_policy(connection, module)
+    # A scalable target must be registered prior to creating a scaling policy
+    scalable_target_result = create_scalable_target(connection, module)
 
+    if module.params.get("state") == 'present':
+        policy_result = create_scaling_policy(connection, module)
+    else:
+        policy_result = delete_scaling_policy(connection, module)
+
+    # return the scalable target result only if it has changed and there were no policy changes
+    if scalable_target_result['changed'] is True and policy_result['changed'] is False:
+        module.exit_json(**scalable_target_result)
+    else:
+        module.exit_json(**policy_result)
 
 if __name__ == '__main__':
     main()
