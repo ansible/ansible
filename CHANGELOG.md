@@ -104,6 +104,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_s3_cors
   * aws_ses_identity
   * aws_ssm_parameter_store
+  * aws_waf_condition
   * cloudfront_distribution
   * cloudfront_origin_access_identity
   * ec2_ami_facts
