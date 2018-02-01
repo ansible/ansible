@@ -1,0 +1,47 @@
+- name: Install RabbitMQ via apt
+  apt:
+    name: rabbitmq-server
+    state: present
+  when: ansible_pkg_mgr == 'apt'
+
+- name: Install RabbitMQ via pkgng
+  pkgng:
+    name: rabbitmq
+    state: present
+  when: ansible_os_family == "FreeBSD"
+
+- name: Install RabbitMQ via yum
+  yum:
+    name: rabbitmq-server
+    state: present
+  when: ansible_pkg_mgr == 'yum' and ansible_os_family != "RedHat"
+
+- name: Install RabbitMQ via yum on RedHat 6
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - 'https://github.com/rabbitmq/erlang-rpm/releases/download/v19.3.6.2/erlang-19.3.6.2-1.el6.x86_64.rpm'
+    - 'https://github.com/rabbitmq/rabbitmq-server/releases/download/rabbitmq_v3_6_11/rabbitmq-server-3.6.11-1.el6.noarch.rpm'
+  when: ansible_pkg_mgr == 'yum' and ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6
+
+- name: Install RabbitMQ via yum on RedHat 7
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - 'https://github.com/rabbitmq/erlang-rpm/releases/download/v19.3.6.2/erlang-19.3.6.2-1.el7.centos.x86_64.rpm'
+    - 'https://github.com/rabbitmq/rabbitmq-server/releases/download/rabbitmq_v3_6_11/rabbitmq-server-3.6.11-1.el7.noarch.rpm'
+  when: ansible_pkg_mgr == 'yum' and ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 7
+
+- name: Install RabbitMQ via dnf
+  dnf:
+    name: rabbitmq-server
+    state: present
+  when: ansible_pkg_mgr == 'dnf'
+
+- name: Install RabbitMQ via zypper
+  zypper:
+    name: 'http://download.opensuse.org/repositories/openSUSE:/Leap:/42.1/standard/x86_64/rabbitmq-server-3.5.1-2.7.x86_64.rpm'
+    state: present
+  when: ansible_pkg_mgr == 'zypper'

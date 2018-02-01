@@ -1,0 +1,79 @@
+- name: Ensure that rabbitmq_management plugin disabled
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
+
+- name: Enable rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+  register: enable_plugin
+
+- name: Check that enabling plugin succeeds with a change
+  assert:
+    that:
+    - enable_plugin.changed == true
+    - enable_plugin.enabled == ['rabbitmq_management']
+
+- name: Enable enabled rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+  register: enable_plugin_again
+
+- name: Check that enabling enabled plugin succeeds without a change
+  assert:
+    that:
+    - enable_plugin_again.changed == false
+    - enable_plugin_again.enabled == []
+
+- name: Enable new plugin when 'new_only' option is 'no' (by default) and there are installed plugins
+  rabbitmq_plugin:
+    names: rabbitmq_mqtt
+    state: enabled
+  register: enable_plugin_without_new_only
+
+- name: Check that 'new_only == no' option enables new plugin and disables the old one
+  assert:
+    that:
+    - enable_plugin_without_new_only.changed == true
+    - enable_plugin_without_new_only.enabled == ['rabbitmq_mqtt']
+    - enable_plugin_without_new_only.disabled == ['rabbitmq_management']
+
+- name: Enable new plugin when 'new_only' option is 'yes' and there are installed plugins
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+    new_only: yes
+  register: enable_plugin_with_new_only
+
+- name: Check that 'new_only == yes' option just enables new plugin
+  assert:
+    that:
+    - enable_plugin_with_new_only.changed == true
+    - enable_plugin_with_new_only.enabled == ['rabbitmq_management']
+    - enable_plugin_with_new_only.disabled == []
+
+- name: Disable rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
+  register: disable_plugin
+
+- name: Check that disabling plugin succeeds with a change
+  assert:
+    that:
+    - disable_plugin.changed == true
+    - disable_plugin.disabled == ['rabbitmq_management']
+
+- name: Disable disabled rabbitmq_management plugin
+  rabbitmq_plugin:
+    names: rabbitmq_management
+    state: disabled
+  register: disable_plugin_again
+
+- name: Check that disabling disabled plugin succeeds without a change
+  assert:
+    that:
+    - disable_plugin_again.changed == false
+    - disable_plugin_again.disabled == []
