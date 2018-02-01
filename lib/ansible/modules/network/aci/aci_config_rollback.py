@@ -170,7 +170,7 @@ def main():
 
     description = module.params['description']
     export_policy = module.params['export_policy']
-    fail_on_decrypt = module.params['fail_on_decrypt']
+    fail_on_decrypt = aci.boolean(module.params['fail_on_decrypt'])
     if fail_on_decrypt is True:
         fail_on_decrypt = 'yes'
     elif fail_on_decrypt is False:

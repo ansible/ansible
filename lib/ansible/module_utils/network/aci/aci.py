@@ -186,6 +186,17 @@ class ACIModule(object):
         elif self.params['password'] is not None:
             self.module.warn('When doing ACI signatured-based authentication, a password is not required')
 
+    def boolean(self, value, true='yes', false='no'):
+        ''' Return an acceptable value back '''
+        if value == None:
+            return None
+        elif value is True or value == true:
+            return true
+        elif value is False or value == false:
+            return false
+        else:
+            self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
+
     def iso8601_format(self, dt):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
         try:
