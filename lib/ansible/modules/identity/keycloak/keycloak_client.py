@@ -375,7 +375,7 @@ options:
 
             user.info.response.signature.alg:
                 description:
-                    - For OpenID-Connect clients, JWA algorithm for signed UserInfo-endpoint responses. one of C(RS256) or C(unsigned).
+                    - For OpenID-Connect clients, JWA algorithm for signed UserInfo-endpoint responses. One of C(RS256) or C(unsigned).
 
             request.object.signature.alg:
                 description:
