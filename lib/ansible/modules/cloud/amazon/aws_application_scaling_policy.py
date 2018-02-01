@@ -55,6 +55,12 @@ options:
     target_tracking_scaling_policy_configuration:
         description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
         required: no
+    minimum_tasks:
+        description: The lower boundary to which Service Auto Scaling can adjust your service’s desired count. This parameter is required if you are creating a first new policy for the specified service.
+        required: no
+    maximum_tasks:
+        description: The upper boundary to which Service Auto Scaling can adjust your service’s desired count. This parameter is required if you are creating a first new policy for the specified service.
+        required: no    
 extends_documentation_fragment:
     - aws
     - ec2
@@ -172,6 +178,17 @@ def delete_scaling_policy(connection, module):
 
     module.exit_json(changed=changed)
 
+def create_scalable_target(connection, module):
+    try:
+        connection.register_scalable_target(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceId=module.params.get('resource_id'),
+            ScalableDimension=module.params.get('scalable_dimension'),
+            MinCapacity=module.params.get('minimum_tasks'),
+            MaxCapacity=module.params.get('maximum_tasks')
+        )
+    except Exception as e:
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 def create_scaling_policy(connection, module):
     scaling_policy = connection.describe_scaling_policies(
@@ -198,7 +215,23 @@ def create_scaling_policy(connection, module):
                 changed = True
                 scaling_policy[attr] = module.params.get(_camel_to_snake(attr))
     else:
+
         changed = True
+
+        scalable_targets = connection.describe_scalable_targets(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceIds=[
+                module.params.get('resource_id'),
+            ],
+            ScalableDimension=module.params.get('scalable_dimension')
+        )
+
+        if not scalable_targets['ScalableTargets']:
+            create_scalable_target(connection, module)
+        else:
+            if scalable_targets['ScalableTargets'][0]['MinCapacity'] != minimum_tasks or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != max_capacity:
+                create_scalable_target(connection, module)
+
         scaling_policy = {
             'PolicyName': module.params.get('policy_name'),
             'ServiceNamespace': module.params.get('service_namespace'),
