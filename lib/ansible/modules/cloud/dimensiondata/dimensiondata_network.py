@@ -110,16 +110,13 @@ network:
 '''
 import traceback
 
-try:
-    from libcloud.compute.base import NodeLocation
-
-    HAS_LIBCLOUD = True
-except ImportError:
-    HAS_LIBCLOUD = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dimensiondata import DimensionDataModule, DimensionDataAPIException
+from ansible.module_utils.dimensiondata import HAS_LIBCLOUD, DimensionDataModule
 from ansible.module_utils._text import to_native
+
+if HAS_LIBCLOUD:
+    from libcloud.compute.base import NodeLocation
+    from libcloud.common.dimensiondata import DimensionDataAPIException
 
 
 class DimensionDataNetworkModule(DimensionDataModule):
