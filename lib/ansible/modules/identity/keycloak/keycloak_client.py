@@ -247,7 +247,7 @@ options:
 
             protocol:
                 description:
-                    - This is either 'openid-connect' or 'saml', this specifies for which protocol this protocol mapper
+                    - This is either C(openid-connect) or C(saml), this specifies for which protocol this protocol mapper
                       is active.
                 choices: ['openid-connect', 'saml']
 
@@ -288,7 +288,7 @@ options:
                       contents differ depending on the value of I(protocolMapper) and are not documented
                       other than by the source of the mappers and its parent class(es). An example is given
                       below. It is easiest to obtain valid config values by dumping an already-existing
-                      protocol mapper configuration through check-mode in the "existing" field.
+                      protocol mapper configuration through check-mode in the I(existing) field.
 
     attributes:
         description:
@@ -375,7 +375,7 @@ options:
 
             user.info.response.signature.alg:
                 description:
-                    - For OpenID-Connect clients, JWA algorithm for signed UserInfo-endpoint responses. One of C(RS256) or C(unsigned).
+                    - For OpenID-Connect clients, JWA algorithm for signed UserInfo-endpoint responses. one of C(RS256) or C(unsigned).
 
             request.object.signature.alg:
                 description:
