@@ -156,8 +156,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 network=self._network_to_dict(network)
             )
 
-            return
-
         network = self._create_network()
 
         self.module.exit_json(
@@ -175,8 +173,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 msg='Network "%s" does not exist' % self.name,
                 network=self._network_to_dict(network)
             )
-
-            return
 
         self._delete_network(network)
 
@@ -223,8 +219,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
                 msg='service_plan required when creating network and location is MCP 2.0'
             )
 
-            return None
-
         # Create network
         try:
             if self.mcp_version == '1.0':
@@ -245,8 +239,6 @@ class DimensionDataNetworkModule(DimensionDataModule):
             self.module.fail_json(
                 msg="Failed to create new network: %s" % to_native(e), exception=traceback.format_exc()
             )
-
-            return None
 
         if self.module.params['wait'] is True:
             network = self._wait_for_network_state(network.id, 'NORMAL')
