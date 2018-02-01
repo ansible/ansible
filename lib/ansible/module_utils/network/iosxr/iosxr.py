@@ -29,6 +29,7 @@
 import json
 from difflib import Differ
 from copy import deepcopy
+from time import sleep
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -415,7 +416,14 @@ def load_config(module, command_filter, commit=False, replace=False,
         if module._diff:
             diff = get_config_diff(module)
 
-        if commit:
+        if replace:
+            cmd = list()
+            cmd.append({'command': 'commit replace',
+                        'prompt': 'This commit will replace or remove the entire running configuration',
+                        'answer': 'yes'})
+            cmd.append('end')
+            conn.edit_config(cmd)
+        elif commit:
             commit_config(module, comment=comment)
             conn.edit_config('end')
         else:
@@ -428,20 +436,36 @@ def run_command(module, commands):
     conn = get_connection(module)
     responses = list()
     for cmd in to_list(commands):
+
         try:
-            cmd = json.loads(cmd)
-            command = cmd['command']
-            prompt = cmd['prompt']
-            answer = cmd['answer']
+            if isinstance(cmd, str):
+                cmd = json.loads(cmd)
+            command = cmd.get('command', None)
+            prompt = cmd.get('prompt', None)
+            answer = cmd.get('answer', None)
+            sendonly = cmd.get('sendonly', False)
+            newline = cmd.get('newline', True)
         except:
             command = cmd
             prompt = None
             answer = None
+            sendonly = False
+            newline = True
 
-        out = conn.get(command, prompt, answer)
+        out = conn.get(command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
         try:
             responses.append(to_text(out, errors='surrogate_or_strict'))
         except UnicodeError:
             module.fail_json(msg=u'failed to decode output from {0}:{1}'.format(cmd, to_text(out)))
     return responses
+
+
+def copy_file(module, src, dst, proto='scp'):
+    conn = get_connection(module)
+    conn.copy_file(source=src, destination=dst, proto=proto)
+
+
+def get_file(module, src, dst, proto='scp'):
+    conn = get_connection(module)
+    conn.get_file(source=src, destination=dst, proto=proto)

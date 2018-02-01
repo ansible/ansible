@@ -3,7 +3,7 @@
 
 - name: run invalid command
   iosxr_command:
-    commands: [{command: 'show foo', prompt: 'fooprompt', answer: 'yes'}]
+    commands: {command: 'show foo', prompt: 'fooprompt', answer: 'yes'}
   register: result
   ignore_errors: yes
 
@@ -15,7 +15,7 @@
   iosxr_command:
     commands:
       - show version
-      - [{command: 'show foo', prompt: 'fooprompt', answer: 'yes'}]
+      - {command: 'show foo', prompt: 'fooprompt', answer: 'yes'}
   register: result
   ignore_errors: yes
 
