@@ -60,13 +60,6 @@ options:
         description:
           - The name of the grid secondary server
         required: true
-  restart_if_needed:
-    description:
-      - Restart the services (if necessary) when objects are added or
-        removed
-    required: false
-    default: false
-    type: bool
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -96,7 +89,6 @@ EXAMPLES = '''
 - name: configure a zone on the system
   nios_zone:
     name: ansible.com
-    restart_if_needed: yes
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -147,8 +139,6 @@ def main():
 
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
         grid_secondaries=dict(type='list', elements='dict', options=grid_spec),
-
-        restart_if_needed=dict(type='bool', default=False),
 
         extattrs=dict(type='dict'),
         comment=dict()
