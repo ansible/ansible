@@ -75,11 +75,11 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath('test/runner/importer.py'), importer_path)
+            os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
-        env['PYTHONPATH'] = os.path.abspath('test/runner/import/lib')
+        env['PYTHONPATH'] = os.path.abspath('test/sanity/import/lib')
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
