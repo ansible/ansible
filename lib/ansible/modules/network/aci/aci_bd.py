@@ -215,7 +215,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        arp_flooding=dict(type=bool]),
+        arp_flooding=dict(type='bool'),
         bd=dict(type='str', aliases=['bd_name', 'name']),
         bd_type=dict(type='str', choices=['ethernet', 'fc']),
         description=dict(type='str'),
