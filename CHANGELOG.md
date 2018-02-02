@@ -185,6 +185,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * openshift_raw
   * openshift_scale
 
+#### Crypto
+  * openssl_dhparam
+
 #### Database
 - influxdb
   * influxdb_query
