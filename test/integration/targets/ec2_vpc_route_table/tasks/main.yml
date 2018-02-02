@@ -545,7 +545,7 @@
         - recreate_private_table.changed
         - recreate_private_table.route_table.id != create_public_table.route_table.id
 
-- always:
+  always:
   #############################################################################
   # TEAR DOWN STARTS HERE
   #############################################################################
