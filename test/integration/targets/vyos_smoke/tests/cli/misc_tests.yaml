@@ -1,0 +1,13 @@
+# hit check conditional in module_utils.network.vyos -> load_config()
+- name: configure simple config command
+  vyos_config:
+    lines: set system host-name check-test
+  check_mode: yes
+
+- name: get host name
+  vyos_command:
+    commands: show host name
+  register: result
+
+- assert:
+    that: '"check-test" not in result.stdout'
