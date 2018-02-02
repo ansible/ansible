@@ -209,7 +209,7 @@ def main():
                 ),
             )
 
-            if aci.result['existing']:
+            if aci.existing:
                 aci.get_diff('configSnapshot')
 
                 # Mark Snapshot for Deletion

@@ -64,7 +64,7 @@
   assert:
     that:
       - create_dynamic.changed == true
-      - create_dynamic.existing == []
+      - create_dynamic.original == []
       - 'create_dynamic.config == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: Create static vlan pool again - idempotency works
@@ -76,7 +76,7 @@
   assert:
     that:
       - idempotent_static.changed == false
-      - 'idempotent_static.existing == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+      - 'idempotent_static.original == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_static.config == {}
 
 - name: Create dynamic vlan pool again - idempotency works
@@ -88,7 +88,7 @@
   assert:
     that:
       - idempotent_dynamic.changed == false
-      - 'idempotent_dynamic.existing == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+      - 'idempotent_dynamic.original == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_dynamic.config == {}
  
 - name: Update static vlan pool - update works
@@ -154,7 +154,7 @@
     that:
       - get_all_pools.changed == false
       - get_all_pools.method == "GET"
-      - get_all_pools.existing | length > 1
+      - get_all_pools.original | length > 1
 
 - name: Get created static vlan pool - get mo works
   aci_vlan_pool:
@@ -167,9 +167,9 @@
     that:
       - get_static_pool.changed == false
       - get_static_pool.method == "GET"
-      - get_static_pool.existing | length == 1
-      - get_static_pool.existing.0.fvnsVlanInstP.attributes.allocMode == "static"
-      - get_static_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - get_static_pool.original | length == 1
+      - get_static_pool.original.0.fvnsVlanInstP.attributes.allocMode == "static"
+      - get_static_pool.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: Get created dynamic vlan pool - get mo works
   aci_vlan_pool:
@@ -182,9 +182,9 @@
     that:
       - get_dynamic_pool.changed == false
       - get_dynamic_pool.method == "GET"
-      - get_dynamic_pool.existing | length == 1
-      - get_dynamic_pool.existing.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
-      - get_dynamic_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - get_dynamic_pool.original | length == 1
+      - get_dynamic_pool.original.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
+      - get_dynamic_pool.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: Delete static vlan pool - deletion works
   aci_vlan_pool:
@@ -196,8 +196,8 @@
     that:
       - delete_static.changed == true
       - delete_static.method == "DELETE"
-      - delete_static.existing.0.fvnsVlanInstP.attributes.allocMode == "static"
-      - delete_static.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - delete_static.original.0.fvnsVlanInstP.attributes.allocMode == "static"
+      - delete_static.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: Delete dynamic vlan pool - check mode works
   aci_vlan_pool:
@@ -220,8 +220,8 @@
     that:
       - delete_dynamic.changed == true
       - delete_dynamic.method == "DELETE"
-      - delete_dynamic.existing.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
-      - delete_dynamic.existing.0.fvnsVlanInstP.attributes.name == "anstest"
+      - delete_dynamic.original.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
+      - delete_dynamic.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
 - name: Delete static vlan pool again - idempotency works
   aci_vlan_pool:
@@ -232,7 +232,7 @@
   assert:
     that:
       - idempotent_delete_static.changed == false
-      - idempotent_delete_static.existing == []
+      - idempotent_delete_static.original == []
 
 - name: Delete dynamic vlan pool again - idempotency works
   aci_vlan_pool:
@@ -243,4 +243,4 @@
   assert:
     that:
       - idempotent_delete_dynamic.changed == false
-      - idempotent_delete_dynamic.existing == []
+      - idempotent_delete_dynamic.original == []

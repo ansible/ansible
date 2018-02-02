@@ -189,6 +189,10 @@ class ACIModule(object):
         # Ensure protocol is set
         self.define_protocol()
 
+        if self.module._debug:
+            self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
+            self.params['output_level'] = 'debug'
+
         if self.params['private_key']:
             # Perform signature-based authentication, no need to log on separately
             if not HAS_OPENSSL:
