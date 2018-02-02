@@ -61,8 +61,10 @@ Ansible Changes By Release
 * Be more tolerant about spaces when gathering virtual facts (https://github.com/ansible/ansible/pull/36042)
 * validate add_host name parameter (https://github.com/ansible/ansible/pull/36055)
 * spelling fixes (https://github.com/ansible/ansible/pull/36007)
+* avoid needles vault prompt on ansible-console (https://github.com/ansible/ansible/pull/36244)
+* fix callback function signatures (https://github.com/ansible/ansible/pull/35664)
 
-<a id="2.4.3"></a>
+<a id="2.4.3"></a
 
 ## 2.4.3 "Dancing Days" - 2018-01-31
 
