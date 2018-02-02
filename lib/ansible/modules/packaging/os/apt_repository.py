@@ -103,6 +103,7 @@ EXAMPLES = '''
 '''
 
 import glob
+import json
 import os
 import re
 import sys
@@ -122,12 +123,17 @@ except ImportError:
     distro = None
     HAVE_PYTHON_APT = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import fetch_url
+
+
 if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
 else:
     PYTHON_APT = 'python3-apt'
 
-DEFAULT_SOURCES_PERM = int('0644', 8)
+DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
