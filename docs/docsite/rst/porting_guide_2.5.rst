@@ -217,4 +217,4 @@ Developers
 * From Ansible 2.5, onwards, the Network platform specific code will reside in ``ansible.module_uitls.network.{{ platform }}``
   where ``{{ platform }}`` is platform specific shared functions. The network common shared functions which are
   platform independent will reside in ``ansible.module_utils.network.common``. This is noted in the module utilities
-  developer guide.
+  developer guide see :doc:`dev_guide/developing_module_utilities` for more information.
