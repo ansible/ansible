@@ -5,20 +5,20 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Remove console
   ios_logging:
     dest: console
     level: warnings
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Remove buffer
   ios_logging:
     dest: buffered
     size: 8000
-    authorize: yes
+    provider: "{{ cli }}"
     state: absent
 
 # start tests
@@ -28,7 +28,7 @@
     name: 172.16.0.1
     facility: local7
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -42,7 +42,7 @@
     dest: host
     name: 172.16.0.1
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -54,7 +54,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -67,7 +67,7 @@
     dest: host
     name: 172.16.0.1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -79,7 +79,7 @@
     dest: console
     level: warnings
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -91,7 +91,7 @@
   ios_logging:
     dest: buffered
     size: 8000
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -104,7 +104,7 @@
     aggregate:
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -119,7 +119,7 @@
       - { dest: console, level: notifications }
       - { dest: buffered, size: 9000 }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:

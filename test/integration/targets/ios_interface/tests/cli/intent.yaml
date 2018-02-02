@@ -7,7 +7,7 @@
     state: up
     tx_rate: ge(0)
     rx_rate: ge(0)
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -20,7 +20,7 @@
     state: down
     tx_rate: gt(0)
     rx_rate: lt(0)
-    authorize: yes
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -36,7 +36,7 @@
     name: "{{ test_interface }}"
     enabled: False
     state: down
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -47,7 +47,7 @@
   ios_interface:
     name: "{{ test_interface }}"
     enabled: False
-    authorize: yes
+    provider: "{{ cli }}"
     state: up
   ignore_errors: yes
   register: result
@@ -61,7 +61,7 @@
   ios_command:
     commands:
       - show lldp neighbors
-    authorize: yes
+    provider: "{{ cli }}"
   register: show_lldp_neighbors_result
 
 - block:
@@ -71,7 +71,7 @@
         neighbors:
           - port: eth0
             host: netdev
-        authorize: yes
+        provider: "{{ cli }}"
       register: result
 
     - assert:
@@ -84,7 +84,7 @@
         neighbors:
           - port: dummy_port
             host: dummy_host
-        authorize: yes
+        provider: "{{ cli }}"
       ignore_errors: yes
       register: result
 
@@ -101,7 +101,7 @@
       - name: "{{ test_interface }}"
         enabled: True
         state: up
-    authorize: yes
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -117,7 +117,7 @@
             neighbors:
               - port: eth0
                 host: netdev
-        authorize: yes
+        provider: "{{ cli }}"
       ignore_errors: yes
       register: result
 
@@ -134,7 +134,7 @@
             host: netdev
           - port: dummy_port
             host: dummy_host
-        authorize: yes
+        provider: "{{ cli }}"
       ignore_errors: yes
       register: result
 

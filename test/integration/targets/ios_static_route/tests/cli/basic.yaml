@@ -8,7 +8,7 @@
     next_hop: 10.0.0.8
     admin_distance: 1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: create static route
@@ -17,7 +17,7 @@
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,7 +31,7 @@
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -45,7 +45,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -60,7 +60,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -74,7 +74,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -89,7 +89,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -102,7 +102,7 @@
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -117,7 +117,7 @@
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -132,7 +132,7 @@
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
