@@ -91,7 +91,7 @@ class TestIosConfigModule(TestIosModule):
         args = self.run_commands.call_args[0][1]
         self.assertIn('copy running-config startup-config\r', args)
 
-    def test_aruba_config_save_changed_false(self):
+    def test_ios_config_save_changed_false(self):
         set_module_args(dict(save_when='changed'))
         self.execute_module(changed=False)
         self.assertEqual(self.run_commands.call_count, 0)
