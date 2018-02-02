@@ -46,7 +46,7 @@ options:
     description:
     - Determines if secure information should be included in the backup.
     - The APIC defaults new Export Policies to C(yes).
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'yes'
   max_count:
     description:
@@ -114,7 +114,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         export_policy=dict(type='str', aliases=['name']),
         format=dict(type='str', choices=['json', 'xml']),
-        include_secure=dict(type='str', choices=['no', 'yes']),
+        include_secure=dict(type='bool'),
         max_count=dict(type='int'),
         snapshot=dict(type='str'),
         state=dict(type='str', choices=['absent', 'present', 'query'], default='present'),
@@ -129,10 +129,12 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
     file_format = module.params['format']
-    include_secure = module.params['include_secure']
+    include_secure = aci.boolean(module.params['include_secure'])
     max_count = module.params['max_count']
     if max_count is not None:
         if max_count in range(1, 11):
@@ -143,8 +145,6 @@ def main():
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'present':
         aci.construct_url(
