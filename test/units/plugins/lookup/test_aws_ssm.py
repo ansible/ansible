@@ -22,7 +22,6 @@ from __future__ import (absolute_import, division, print_function)
 import pytest
 from copy import copy
 
-from ansible.compat.tests.mock import MagicMock, patch
 from ansible.errors import AnsibleError
 
 import ansible.plugins.lookup.aws_ssm as aws_ssm
@@ -32,7 +31,6 @@ try:
     from botocore.exceptions import ClientError
 except ImportError:
     pytestmark = pytest.mark.skip("This test requires the boto3 and botocore Python libraries")
-
 
 simple_variable_success_response = {
     'Parameters': [
@@ -76,31 +74,31 @@ dummy_credentials['aws_security_token'] = None
 dummy_credentials['region'] = 'eu-west-1'
 
 
-def test_lookup_variable():
+def test_lookup_variable(mocker):
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
-    boto3_double = MagicMock()
+    boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = simple_variable_success_response
     boto3_client_double = boto3_double.Session.return_value.client
 
-    with patch.object(boto3, 'session', boto3_double):
+    with mocker.patch.object(boto3, 'session', boto3_double):
         retval = lookup.run(["simple_variable"], {}, **dummy_credentials)
     assert(retval[0] == "simplevalue")
     boto3_client_double.assert_called_with('ssm', 'eu-west-1', aws_access_key_id='notakey',
                                            aws_secret_access_key="notasecret", aws_session_token=None)
 
 
-def test_path_lookup_variable():
+def test_path_lookup_variable(mocker):
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
-    boto3_double = MagicMock()
+    boto3_double = mocker.MagicMock()
     get_path_fn = boto3_double.Session.return_value.client.return_value.get_parameters_by_path
     get_path_fn.return_value = path_success_response
     boto3_client_double = boto3_double.Session.return_value.client
 
-    with patch.object(boto3, 'session', boto3_double):
+    with mocker.patch.object(boto3, 'session', boto3_double):
         args = copy(dummy_credentials)
         args["bypath"] = 'true'
         retval = lookup.run(["/testpath"], {}, **args)
@@ -111,15 +109,15 @@ def test_path_lookup_variable():
     get_path_fn.assert_called_with(Path="/testpath", Recursive=False, WithDecryption=True)
 
 
-def test_warn_missing_variable():
+def test_warn_missing_variable(mocker):
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
-    boto3_double = MagicMock()
+    boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_fail_response
 
     with pytest.raises(AnsibleError):
-        with patch.object(boto3, 'session', boto3_double):
+        with mocker.patch.object(boto3, 'session', boto3_double):
             lookup.run(["missing_variable"], {}, **dummy_credentials)
 
 
@@ -127,13 +125,13 @@ error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fak
 operation_name = 'FakeOperation'
 
 
-def test_warn_denied_variable():
+def test_warn_denied_variable(mocker):
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
-    boto3_double = MagicMock()
+    boto3_double = mocker.MagicMock()
     boto3_double.Session.return_value.client.return_value.get_parameters.side_effect = ClientError(error_response, operation_name)
 
     with pytest.raises(AnsibleError):
-        with patch.object(boto3, 'session', boto3_double):
+        with mocker.patch.object(boto3, 'session', boto3_double):
             lookup.run(["denied_variable"], {}, **dummy_credentials)
