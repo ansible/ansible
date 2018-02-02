@@ -6,19 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import json
-
-from ansible.module_utils.six.moves.urllib import parse as urllib_parse
-
-from ansible.module_utils.basic import AnsibleModule
-
-try:
-    import requests
-
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -114,6 +101,18 @@ EXAMPLES = '''
     routing_key: '*.info'
 '''
 
+import json
+
+try:
+    import requests
+
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
+from ansible.module_utils.basic import AnsibleModule
+
 
 class RabbitMqBinding(object):
     def __init__(self, module):
@@ -131,9 +130,9 @@ class RabbitMqBinding(object):
         self.destination_type = 'q' if self.module.params['destination_type'] == 'queue' else 'e'
         self.routing_key = self.module.params['routing_key']
         self.arguments = self.module.params['arguments']
-        self.base_url = 'http://{}:{}/api/bindings'.format(self.login_host,
+        self.base_url = 'http://{0}:{1}/api/bindings'.format(self.login_host,
                                                            self.login_port)
-        self.url = '{}/{}/e/{}/{}/{}/{}'.format(self.base_url,
+        self.url = '{0}/{1}/e/{2}/{3}/{4}/{5}'.format(self.base_url,
                                                 urllib_parse.quote(self.vhost),
                                                 urllib_parse.quote(self.name),
                                                 self.destination_type,
@@ -255,7 +254,7 @@ class RabbitMqBinding(object):
         """
         :return:
         """
-        self.url = '{}/{}/e/{}/{}/{}'.format(self.base_url,
+        self.url = '{0}/{1}/e/{2}/{3}/{4}'.format(self.base_url,
                                              urllib_parse.quote(self.vhost),
                                              urllib_parse.quote(self.name),
                                              self.destination_type,
