@@ -231,7 +231,7 @@ class CloudFrontInvalidationValidationManager(object):
             if caller_reference is not None:
                 valid_caller_reference = caller_reference
             else:
-                valid_caller_reference = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')
+                valid_caller_reference = datetime.datetime.now().isoformat()
             valid_invalidation_batch = {
                 'paths': self.create_aws_list(invalidation_batch),
                 'caller_reference': valid_caller_reference
