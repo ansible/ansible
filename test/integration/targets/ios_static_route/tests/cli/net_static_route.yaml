@@ -11,7 +11,7 @@
     next_hop: 10.0.0.8
     admin_distance: 1
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: create static route using platform agnostic module
@@ -20,7 +20,7 @@
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -35,7 +35,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - debug: msg="END ios cli/net_static_route.yaml on connection={{ ansible_connection }}"

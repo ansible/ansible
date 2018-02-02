@@ -57,15 +57,14 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_delete(self):
         set_module_args(dict(name='ansible', state='absent'))
         result = self.execute_module(changed=True)
-        cmd = json.loads(
-            '{"answer": "y", "newline": false, ' +
-            '"prompt": "This operation will remove all username related ' +
-            'configurations with same name", "command": "no username ansible"}'
-        )
+        cmd = {
+            "command": "no username ansible", "answer": "y", "newline": False,
+            "prompt": "This operation will remove all username related configurations with same name",
+        }
 
         result_cmd = []
         for i in result['commands']:
-            result_cmd.append(json.loads(i))
+            result_cmd.append(i)
 
         self.assertEqual(result_cmd, [cmd])
 
@@ -86,15 +85,14 @@ class TestIosUserModule(TestIosModule):
     def test_ios_user_purge(self):
         set_module_args(dict(purge=True))
         result = self.execute_module(changed=True)
-        cmd = json.loads(
-            '{"answer": "y", "newline": false, ' +
-            '"prompt": "This operation will remove all username related ' +
-            'configurations with same name", "command": "no username ansible"}'
-        )
+        cmd = {
+            "command": "no username ansible", "answer": "y", "newline": False,
+            "prompt": "This operation will remove all username related configurations with same name",
+        }
 
         result_cmd = []
         for i in result['commands']:
-            result_cmd.append(json.loads(i))
+            result_cmd.append(i)
 
         self.assertEqual(result_cmd, [cmd])
 

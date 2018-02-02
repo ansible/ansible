@@ -5,7 +5,7 @@
   ios_l3_interface:
     name: "{{ test_interface }}"
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: Setup - Ensure interfaces are switchport
@@ -14,6 +14,7 @@
       - no shutdown
     parents:
       - "interface {{ item }}"
+    provider: "{{ cli }}"
   loop:
     - "{{ test_interface }}"
     - "{{ test_interface2 }}"
@@ -23,7 +24,7 @@
     name: "{{ test_interface }}"
     ipv4: 192.168.0.1/24
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -37,7 +38,7 @@
     name: "{{ test_interface }}"
     ipv4: 192.168.0.1/24
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -49,7 +50,7 @@
     name: "{{ test_interface2 }}"
     ipv4: 192.168.0.1/24
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -63,7 +64,7 @@
     name: "{{ test_interface }}"
     ipv4: dhcp
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -77,7 +78,7 @@
     name: "{{ test_interface }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -91,7 +92,7 @@
     name: "{{ test_interface }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -103,7 +104,7 @@
     name: "{{ test_interface2 }}"
     ipv6: fd5d:12c9:2201:1::1/64
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   ignore_errors: yes
   register: result
 
@@ -117,7 +118,7 @@
     name: "{{ test_interface }}"
     ipv6: dhcp
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -130,7 +131,7 @@
   ios_l3_interface:
     name: "{{ test_interface }}"
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -144,14 +145,14 @@
   ios_l3_interface:
     name: "{{ test_interface }}"
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: Delete second interface ipv4 and ipv6 address (setup)
   ios_l3_interface:
     name: "{{ test_interface2 }}"
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: Configure ipv4 and ipv6 address using aggregate
@@ -159,7 +160,7 @@
     aggregate:
     - { name: "{{ test_interface }}", ipv4: 192.161.0.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -177,7 +178,7 @@
     aggregate:
     - { name: "{{ test_interface }}", ipv4: 192.161.0.1/24, ipv6: "fd5d:12c9:2201:2::2/64" }
     - { name: "{{ test_interface2 }}", ipv4: 192.162.0.2/16, ipv6: "fd5e:12c9:2201:3::3/32" }
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -189,7 +190,7 @@
     aggregate:
     - { name: "{{ test_interface }}", ipv4: 193.167.1.1/8, ipv6: "fd5a:12c9:2201:4::4/32" }
     - { name: "{{ test_interface2 }}", ipv4: 192.169.2.2/24, ipv6: "fd5b:12c9:2201:5::5/90" }
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -209,7 +210,7 @@
     - { name: "{{ test_interface }}" }
     - { name: "{{ test_interface2 }}" }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -228,7 +229,7 @@
     - { name: "{{ test_interface }}" }
     - { name: "{{ test_interface2 }}" }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:

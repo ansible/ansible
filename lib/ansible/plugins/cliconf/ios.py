@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import ast
 import re
 import json
 
@@ -58,9 +57,9 @@ class Cliconf(CliconfBase):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
-            cmd = b'show running-config all'
+            cmd = 'show running-config all'
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config'
 
         flags = [] if flags is None else flags
         cmd += ' '.join(flags)
@@ -71,13 +70,12 @@ class Cliconf(CliconfBase):
     @enable_mode
     def edit_config(self, command):
         for cmd in chain(['configure terminal'], to_list(command), ['end']):
-            try:
-                cmd = ast.literal_eval(cmd)
+            if isinstance(cmd, dict):
                 command = cmd['command']
                 prompt = cmd['prompt']
                 answer = cmd['answer']
                 newline = cmd.get('newline', True)
-            except:
+            else:
                 command = cmd
                 prompt = None
                 answer = None
