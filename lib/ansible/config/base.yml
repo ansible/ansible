@@ -260,7 +260,7 @@ COLOR_ERROR:
 COLOR_HIGHLIGHT:
   name: Color for highlighting
   default: white
-  description: Color used for highlights
+  description: Defines the color to use for highlighting
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
@@ -315,7 +315,7 @@ COMMAND_WARNINGS:
   default: True
   description:
     - By default Ansible will issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
-    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module optoin ``warn``.
+    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
   - {key: command_warnings, section: defaults}
@@ -842,7 +842,8 @@ DEFAULT_PRIVATE_KEY_FILE:
 DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
   default: False
-  description: ''
+  description:
+    - Makes role variables inaccessible from other roles (and the role that own the variables if replayed).
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
