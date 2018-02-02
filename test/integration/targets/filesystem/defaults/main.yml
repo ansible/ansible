@@ -11,4 +11,5 @@ tested_filesystems:
   ext2: {fssize: 10, grow: True}
   xfs: {fssize: 20, grow: False}  # grow requires a mounted filesystem
   btrfs: {fssize: 100, grow: False}  # grow not implemented
+  ocfs2: {fssize: 10, grow: False}  # grow not implemented
   # untested: lvm, requires a block device
