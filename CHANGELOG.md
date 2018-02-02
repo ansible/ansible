@@ -40,6 +40,7 @@ Ansible Changes By Release
 * nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
 * panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
+* vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
 
 See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
 

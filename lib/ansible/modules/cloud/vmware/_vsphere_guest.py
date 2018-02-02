@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -16,6 +16,10 @@ DOCUMENTATION = '''
 ---
 module: vsphere_guest
 short_description: Create/delete/manage a guest VM through VMware vSphere.
+deprecated:
+    removed_in: "2.9"
+    why: "Replaced by M(vmware_guest) module. Also, 'Pysphere' is deprecated in favor of VMware's Official Python bindings - 'Pyvmomi'."
+    alternative: Use M(vmware_guest) and other vmware guest related modules instead.
 description:
      - Create/delete/reconfigure a guest VM through VMware vSphere. This module has a dependency on pysphere >= 1.7
 version_added: "1.6"
@@ -1767,6 +1771,8 @@ def main():
             ['from_template', 'template_src'],
         ],
     )
+
+    module.deprecate("The 'vsphere_guest' module has been deprecated. Use 'vmware_guest' instead.", version=2.9)
 
     if not HAS_PYSPHERE:
         module.fail_json(msg='pysphere module required')
