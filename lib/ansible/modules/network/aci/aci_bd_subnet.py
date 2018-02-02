@@ -39,8 +39,8 @@ options:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
     - The APIC defaults new Subnets to C(no).
-    choices: [ no, yes ]
-    default: no
+    type: bool
+    default: 'no'
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
@@ -59,8 +59,8 @@ options:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
     - The APIC defaults new Subnets to C(no).
-    choices: [ no, yes ]
-    default: no
+    type: bool
+    default: 'no'
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
@@ -215,12 +215,12 @@ def main():
     argument_spec.update(
         bd=dict(type='str', aliases=['bd_name']),
         description=dict(type='str', aliases=['descr']),
-        enable_vip=dict(type='str', choices=['no', 'yes']),
+        enable_vip=dict(type='bool'),
         gateway=dict(type='str', aliases=['gateway_ip']),
         mask=dict(type='int', aliases=['subnet_mask']),
         subnet_name=dict(type='str', aliases=['name']),
         nd_prefix_policy=dict(type='str'),
-        preferred=dict(type='str', choices=['no', 'yes']),
+        preferred=dict(type='bool'),
         route_profile=dict(type='str'),
         route_profile_l3_out=dict(type='str'),
         scope=dict(
@@ -244,8 +244,10 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
-    enable_vip = module.params['enable_vip']
+    enable_vip = aci.boolean(module.params['enable_vip'])
     tenant = module.params['tenant']
     bd = module.params['bd']
     gateway = module.params['gateway']
@@ -257,7 +259,7 @@ def main():
         gateway = '{0}/{1}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
-    preferred = module.params['preferred']
+    preferred = aci.boolean(module.params['preferred'])
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
@@ -273,7 +275,6 @@ def main():
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',

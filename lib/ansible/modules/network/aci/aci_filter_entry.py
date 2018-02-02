@@ -151,7 +151,7 @@ def main():
         icmp6_msg_type=dict(type='str', choices=VALID_ICMP6_TYPES),
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        stateful=dict(type='str', choices=['no', 'yes']),
+        stateful=dict(type='bool'),
         tenant=dict(type="str", aliases=['tenant_name']),
     )
 
@@ -163,6 +163,8 @@ def main():
             ['state', 'present', ['entry', 'filter', 'tenant']],
         ],
     )
+
+    aci = ACIModule(module)
 
     arp_flag = module.params['arp_flag']
     if arp_flag is not None:
@@ -188,7 +190,7 @@ def main():
         icmp6_msg_type = ICMP6_MAPPING[icmp6_msg_type]
     ip_protocol = module.params['ip_protocol']
     state = module.params['state']
-    stateful = module.params['stateful']
+    stateful = aci.boolean(module.params['stateful'])
     tenant = module.params['tenant']
 
     # validate that dst_port is not passed with dst_start or dst_end
@@ -198,7 +200,6 @@ def main():
         dst_end = dst_port
         dst_start = dst_port
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
