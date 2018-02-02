@@ -116,56 +116,6 @@ URL_MAPPING = dict(
 '''
 
 
-def aci_response_error(result):
-    ''' Set error information when found '''
-    result['error_code'] = 0
-    result['error_text'] = 'Success'
-
-    # Handle possible APIC error information
-    if result['totalCount'] != '0':
-        try:
-            result['error_code'] = result['imdata'][0]['error']['attributes']['code']
-            result['error_text'] = result['imdata'][0]['error']['attributes']['text']
-        except (KeyError, IndexError):
-            pass
-
-
-def aci_response_json(result, rawoutput):
-    ''' Handle APIC JSON response output '''
-    try:
-        result.update(json.loads(rawoutput))
-    except Exception as e:
-        # Expose RAW output for troubleshooting
-        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
-        return
-
-    # Handle possible APIC error information
-    aci_response_error(result)
-
-
-def aci_response_xml(result, rawoutput):
-    ''' Handle APIC XML response output '''
-
-    # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
-    try:
-        xml = lxml.etree.fromstring(to_bytes(rawoutput))
-        xmldata = cobra.data(xml)
-    except Exception as e:
-        # Expose RAW output for troubleshooting
-        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
-        return
-
-    # Reformat as ACI does for JSON API output
-    try:
-        result.update(imdata=xmldata['imdata']['children'])
-    except KeyError:
-        result['imdata'] = dict()
-    result['totalCount'] = xmldata['imdata']['attributes']['totalCount']
-
-    # Handle possible APIC error information
-    aci_response_error(result)
-
-
 class ACIModule(object):
 
     def __init__(self, module):
@@ -174,17 +124,25 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
 
-        self.filter_string = None
+        # normal output
+        self.existing = None
+
+        # info output
+        self.config = None
+        self.original = None
+        self.proposed = None
+
+        # debug output
+        self.filter_string = ''
         self.method = None
         self.path = None
         self.response = None
         self.status = None
         self.url = None
 
-        self.config = None
-        self.existing = None
-        self.original = None
-        self.proposed = None
+        # aci_rest output
+        self.imdata = None
+        self.totalCount = None
 
         # Ensure protocol is set
         self.define_protocol()
@@ -259,7 +217,7 @@ class ACIModule(object):
             self.status = auth['status']
             try:
                 # APIC error
-                aci_response_json(self.result, auth['body'])
+                self.response_json(auth['body'])
                 self.module.fail_json(msg='Authentication failed: %(error_code)s %(error_text)s' % self.result, **self.result)
             except KeyError:
                 # Connection error
@@ -300,6 +258,58 @@ class ACIModule(object):
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
                                  'APIC-Request-Signature=%s' % sig_signature
 
+    def response_json(self, rawoutput):
+        ''' Handle APIC JSON response output '''
+        try:
+            jsondata = json.loads(rawoutput)
+        except Exception as e:
+            # Expose RAW output for troubleshooting
+            self.result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+            return
+
+        # Extract JSON API output
+        try:
+            self.imdata = jsondata['imdata']
+        except KeyError:
+            self.imdata = dict()
+        self.totalCount = int(jsondata['totalCount'])
+
+        # Handle possible APIC error information
+        self.response_error()
+
+    def response_xml(self, rawoutput):
+        ''' Handle APIC XML response output '''
+
+        # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
+        try:
+            xml = lxml.etree.fromstring(to_bytes(rawoutput))
+            xmldata = cobra.data(xml)
+        except Exception as e:
+            # Expose RAW output for troubleshooting
+            self.result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
+            return
+
+        # Reformat as ACI does for JSON API output
+        try:
+            self.imdata = xmldata['imdata']['children']
+        except KeyError:
+            self.imdata = dict()
+        self.totalCount = int(xmldata['imdata']['attributes']['totalCount'])
+
+        # Handle possible APIC error information
+        self.response_error()
+
+    def response_error(self):
+        ''' Set error information when found '''
+
+        # Handle possible APIC error information
+        if self.totalCount != 0:
+            try:
+                self.result['error_code'] = self.imdata[0]['error']['attributes']['code']
+                self.result['error_text'] = self.imdata[0]['error']['attributes']['text']
+            except (KeyError, IndexError):
+                pass
+
     def request(self, path, payload=None):
         ''' Perform a REST request '''
 
@@ -331,13 +341,13 @@ class ACIModule(object):
         if info['status'] != 200:
             try:
                 # APIC error
-                aci_response_json(self.result, info['body'])
+                self.response_json(info['body'])
                 self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
             except KeyError:
                 # Connection error
                 self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
 
-        aci_response_json(self.result, resp.read())
+        self.response_json(resp.read())
 
     def query(self, path):
         ''' Perform a query with no payload '''
@@ -367,7 +377,7 @@ class ACIModule(object):
             self.status = query['status']
             try:
                 # APIC error
-                aci_response_json(self.result, query['body'])
+                self.response_json(query['body'])
                 self.module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
             except KeyError:
                 # Connection error
@@ -634,11 +644,11 @@ class ACIModule(object):
             # Handle APIC response
             if info['status'] == 200:
                 self.result['changed'] = True
-                aci_response_json(self.result, resp.read())
+                self.response_json(resp.read())
             else:
                 try:
                     # APIC error
-                    aci_response_json(self.result, info['body'])
+                    self.response_json(info['body'])
                     self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
                 except KeyError:
                     # Connection error
@@ -771,7 +781,7 @@ class ACIModule(object):
         else:
             try:
                 # APIC error
-                aci_response_json(self.result, info['body'])
+                self.response_json(info['body'])
                 self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
             except KeyError:
                 # Connection error
@@ -867,11 +877,11 @@ class ACIModule(object):
             # Handle APIC response
             if info['status'] == 200:
                 self.result['changed'] = True
-                aci_response_json(self.result, resp.read())
+                self.response_json(resp.read())
             else:
                 try:
                     # APIC error
-                    aci_response_json(self.result, info['body'])
+                    self.response_json(info['body'])
                     self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
                 except KeyError:
                     # Connection error
