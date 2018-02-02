@@ -109,6 +109,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_ssm_parameter_store
   * aws_waf_condition
   * cloudfront_distribution
+  * cloudfront_invalidation
   * cloudfront_origin_access_identity
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
