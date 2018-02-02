@@ -192,24 +192,19 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     epg = module.params['epg']
     bd = module.params['bd']
     description = module.params['description']
     priority = module.params['priority']
     intra_epg_isolation = module.params['intra_epg_isolation']
     fwd_control = module.params['fwd_control']
+    preferred_group = aci.boolean(module.params['preferred_group'], 'include', 'exclude')
     state = module.params['state']
     tenant = module.params['tenant']
     ap = module.params['ap']
 
-    if module.params['preferred_group'] is True:
-        preferred_group = 'include'
-    elif module.params['preferred_group'] is False:
-        preferred_group = 'exclude'
-    else:
-        preferred_group = None
-
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
