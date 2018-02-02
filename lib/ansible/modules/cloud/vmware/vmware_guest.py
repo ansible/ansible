@@ -1540,9 +1540,8 @@ class PyVmomiHelper(PyVmomi):
         else:
             vm_obj = None
 
-        # need a resource pool if cloning from template
-        if self.params['resource_pool'] or self.params['template']:
-            resource_pool = self.get_resource_pool()
+        # always get a resource_pool
+        resource_pool = self.get_resource_pool()
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
@@ -1618,7 +1617,6 @@ class PyVmomiHelper(PyVmomi):
                                                         vmPathName="[" + datastore_name + "]")
 
                 clone_method = 'CreateVM_Task'
-                resource_pool = self.get_resource_pool()
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 except vmodl.fault.InvalidRequest as e:
