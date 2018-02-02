@@ -75,8 +75,8 @@ EXAMPLES = '''
   loop: '{{ query("aws_ssm", "/TEST/test-list", region="ap-southeast-2", bypath=true) }}'
 
 '''
-# FIXME the last one is probably not true yet.
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -116,19 +116,20 @@ def _boto3_conn(region, credentials):
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables, boto_profile=None, aws_secret_key=None, aws_access_key=None,
-            aws_security_token=None, region=None, bypath=False, shortnames=False, recursive=False,
-            decrypt=True):
+    def run(self, terms, variables=None, boto_profile=None,
+            aws_secret_key=None, aws_access_key=None, aws_security_token=None, region=None,
+            bypath=False, shortnames=False, recursive=False, decrypt=True):
         '''
-            :param terms: a list of lookups to run
+            :arg terms: a list of lookups to run.
                 e.g. ['parameter_name', 'parameter_name_too' ]
-            :param variables: ansible variables active at the time of the lookup
-            :keyword args: keyword arguments used for configuring the lookup
-                - aws_secret_key / aws_access_key / aws_security_token - AWS credentials
-                - region - the AWS region in which to do the lookup
-                - bypath - set to true to do a lookup of variables under a path
-                - recursive - set to true to do a recurse to paths below the path (needs bypath)
-            :return A list of parameter values or a list of dictionaries if doing a bypath lookup
+            :kwarg variables: ansible variables active at the time of the lookup
+            :kwarg aws_secret_key: identity of the AWS key to use
+            :kwarg aws_access_key: AWS seret key (matching identity)
+            :kwarg aws_security_token: AWS session key if using STS
+            :kwarg region: AWS region in which to do the lookup
+            :kwarg bypath: Set to True to do a lookup of variables under a path
+            :kwarg recursive: Set to True to recurse below the path (requires bypath=True)
+            :returns: A list of parameter values or a list of dictionaries if bypath=True.
         '''
 
         if not HAS_BOTO3:
@@ -157,7 +158,7 @@ class LookupModule(LookupBase):
                 try:
                     response = client.get_parameters_by_path(**ssm_dict)
                 except ClientError as e:
-                    raise AnsibleError("SSM lookup exception: {0}".format(e))
+                    raise AnsibleError("SSM lookup exception: {0}".format(to_native(e)))
                 paramlist = list()
                 paramlist.extend(response['Parameters'])
 
@@ -185,7 +186,7 @@ class LookupModule(LookupBase):
             try:
                 response = client.get_parameters(**ssm_dict)
             except ClientError as e:
-                raise AnsibleError("SSM lookup exception: {0}".format(e))
+                raise AnsibleError("SSM lookup exception: {0}".format(to_native(e)))
             if len(response['Parameters']) == len(terms):
                 ret = [p['Value'] for p in response['Parameters']]
             else:
