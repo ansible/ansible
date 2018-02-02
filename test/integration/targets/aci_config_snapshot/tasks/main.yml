@@ -27,7 +27,7 @@
 - name: update snapshot to include secure and use xml - update works
   aci_config_snapshot:
     <<: *create_snapshot
-    include_secure: "yes"
+    include_secure: yes
     format: xml
   register: create_update
 

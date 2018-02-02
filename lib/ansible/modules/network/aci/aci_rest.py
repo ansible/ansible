@@ -370,25 +370,28 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
-    aci.result['url'] = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
+    aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
         path += '?rsp-subtree=modified'
-        aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
+        aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
     # Sign and encode request as to APIC's wishes
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
     # Perform request
-    resp, info = fetch_url(module, aci.result['url'],
+    resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
                            method=aci.params['method'].upper(),
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
+    aci.result['method'] = aci.params['method'].upper()
+    #aci.result['path'] = aci.path
     aci.result['response'] = info['msg']
     aci.result['status'] = info['status']
+    aci.result['url'] = aci.url
 
     # Report failure
     if info['status'] != 200:

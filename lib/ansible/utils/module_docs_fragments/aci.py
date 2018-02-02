@@ -45,22 +45,22 @@ options:
     required: yes
   private_key:
     description:
-    - PEM formatted file that contains your private key to be used for client certificate authentication.
+    - PEM formatted file that contains your private key to be used for signature-based authentication.
     - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
     aliases: [ cert_key ]
   certificate_name:
     description:
-    - The X.509 certificate name attached to the APIC AAA user.
+    - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
     - It defaults to the C(private_key) basename, without extension.
     aliases: [ cert_name ]
     default: C(private_key) basename
   output_level:
     description:
     - Influence the output of the ACI module.
-    - C(default) means the normal output, incl. C(existing) dict
+    - C(normal) means the standard output, incl. C(existing) dict
     - C(info) means informational output, incl. C(original), C(config) and C(proposed) dicts
-    - C(debug) means debugging output, incl. C(method), C(response), C(status) and C(url)
-    choices: [normal, info, debug]
+    - C(debug) means debugging output, incl. C(filter_string), C(method), C(response), C(status) and C(url)
+    choices: [ debug, info, normal ]
     default: normal
   timeout:
     description:
@@ -69,8 +69,8 @@ options:
   use_proxy:
     description:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
-    default: 'yes'
     type: bool
+    default: 'yes'
   use_ssl:
     description:
     - If C(no), an HTTP connection will be used instead of the default HTTPS connection.

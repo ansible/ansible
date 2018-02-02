@@ -50,7 +50,7 @@
   assert:
     that:
       - create_static.changed == true
-      - create_static.existing == []
+      - create_static.original == []
       - create_static.config == create_check_mode.config
 
 - name: Create dynamic vlan pool - creation works

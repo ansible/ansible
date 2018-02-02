@@ -78,7 +78,7 @@
   assert:
     that:
       - idempotent_dynamic.changed == false
-      - 'idempotent_dynamic.existing == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+      - 'idempotent_dynamic.original == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
       - idempotent_dynamic.config == {}
  
 - name: update static vlan pool - update works
@@ -157,7 +157,7 @@
     that:
       - get_all_pools.changed == false
       - get_all_pools.method == "GET"
-      - get_all_pools.existing | length > 1
+      - get_all_pools.original | length > 1
 
 - name: get created static vlan pool - get mo works
   aci_encap_pool:
@@ -170,7 +170,7 @@
     that:
       - get_static_pool.changed == false
       - get_static_pool.method == "GET"
-      - get_static_pool.existing | length == 1
+      - get_static_pool.original | length == 1
       - get_static_pool.original.0.fvnsVlanInstP.attributes.allocMode == "static"
       - get_static_pool.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
@@ -185,7 +185,7 @@
     that:
       - get_dynamic_pool.changed == false
       - get_dynamic_pool.method == "GET"
-      - get_dynamic_pool.existing | length == 1
+      - get_dynamic_pool.original | length == 1
       - get_dynamic_pool.original.0.fvnsVlanInstP.attributes.allocMode == "dynamic"
       - get_dynamic_pool.original.0.fvnsVlanInstP.attributes.name == "anstest"
 
@@ -249,7 +249,7 @@
   assert:
     that:
       - idempotent_delete_static.changed == false
-      - idempotent_delete_static.existing == []
+      - idempotent_delete_static.original == []
 
 - name: delete dynamic vlan pool again - idempotency works
   aci_encap_pool:
@@ -260,4 +260,4 @@
   assert:
     that:
       - idempotent_delete_dynamic.changed == false
-      - idempotent_delete_dynamic.existing == []
+      - idempotent_delete_dynamic.original == []
