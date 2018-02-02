@@ -519,6 +519,13 @@ options:
             - "C(regexp) - Regular expression to set for custom property."
             - "C(value) - Value to set for custom property."
         version_added: "2.5"
+    watchdog:
+        description:
+            - "Assign watchdog device for the virtual machine."
+            - "Watchdogs is a dictionary which can have following values:"
+            - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
+            - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -1089,12 +1096,13 @@ class VmsModule(BaseModule):
                 self._module.params['template'] = 'Blank'
 
     def post_update(self, entity):
-        self.post_create(entity)
+        self.post_present(entity)
 
-    def post_create(self, entity):
+    def post_present(self, entity):
         # After creation of the VM, attach disks and NICs:
         self.changed = self.__attach_disks(entity)
         self.changed = self.__attach_nics(entity)
+        self.changed = self.__attach_watchdog(entity)
 
     def pre_remove(self, entity):
         # Forcibly stop the VM, if it's not in DOWN state:
@@ -1307,6 +1315,36 @@ class VmsModule(BaseModule):
                     self.param('cluster')
                 )
             )
+
+    def __attach_watchdog(self, entity):
+        watchdogs_service = self._service.service(entity.id).watchdogs_service()
+        watchdog = self.param('watchdog')
+        if watchdog is not None:
+            current_watchdog = next(iter(watchdogs_service.list()), None)
+            if watchdog.get('model') is None and current_watchdog:
+                watchdogs_service.watchdog_service(current_watchdog.id).remove()
+                return True
+            elif watchdog.get('model') is not None and current_watchdog is None:
+                watchdogs_service.add(
+                    otypes.Watchdog(
+                        model=otypes.WatchdogModel(watchdog.get('model').lower()),
+                        action=otypes.WatchdogAction(watchdog.get('action')),
+                    )
+                )
+                return True
+            elif current_watchdog is not None:
+                if (
+                    str(current_watchdog.model).lower() != watchdog.get('model').lower() or
+                    str(current_watchdog.action).lower() != watchdog.get('action').lower()
+                ):
+                    watchdogs_service.watchdog_service(current_watchdog.id).update(
+                        otypes.Watchdog(
+                            model=otypes.WatchdogModel(watchdog.get('model')),
+                            action=otypes.WatchdogAction(watchdog.get('action')),
+                        )
+                    )
+                    return True
+        return False
 
     def __attach_nics(self, entity):
         # Attach NICs to VM, if specified:
@@ -1693,6 +1731,7 @@ def main():
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
         custom_properties=dict(type='list'),
+        watchdog=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1733,6 +1772,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(vm)
 
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
@@ -1787,6 +1827,7 @@ def main():
                         action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
+            ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
                 vms_module.changed = import_vm(module, connection)
