@@ -276,7 +276,7 @@ def ensure_rule_absent(client, module):
     in_use_web_acls = find_rule_in_web_acls(client, module, rule_id)
     if in_use_web_acls:
         web_acl_names = ', '.join(in_use_web_acls)
-        module.fail_json("Rule %s is in use by Web ACL(s) %s" %
+        module.fail_json(msg="Rule %s is in use by Web ACL(s) %s" %
                          (module.params['name'], web_acl_names))
     if rule_id:
         remove_rule_conditions(client, module, rule_id)
