@@ -195,14 +195,12 @@ One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` var
     # show all the hosts in the inventory
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ groups['all'] }}"
+      loop: "{{ groups['all'] }}"
 
     # show all the hosts in the current play
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ ansible_play_batch }}"
+      loop: "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
