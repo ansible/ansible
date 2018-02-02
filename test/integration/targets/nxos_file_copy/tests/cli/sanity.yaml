@@ -7,7 +7,7 @@
   nxos_command: &remove_file
     commands:
       - terminal dont-ask
-      - delete nxos.yaml
+      - delete network-integration.cfg
     provider: "{{ cli }}"
   ignore_errors: yes
 
@@ -18,9 +18,9 @@
     provider: "{{ cli }}"
 
 - block:
-  - name: "Copy nxos.yaml to bootflash"
+  - name: "Copy network-integration.cfg to bootflash"
     nxos_file_copy: &copy_file_same_name
-      local_file: "./nxos.yaml"
+      local_file: "./network-integration.cfg"
       file_system: "bootflash:"
       provider: "{{ cli }}"
       username: "{{ ansible_ssh_user }}"
@@ -33,7 +33,7 @@
       that:
         - "result.changed == true"
 
-  - name: "Check Idempotence - Copy nxos.yaml to bootflash"
+  - name: "Check Idempotence - Copy network-integration.cfg to bootflash"
     nxos_file_copy: *copy_file_same_name
     register: result
 
@@ -45,10 +45,10 @@
     nxos_command: *remove_file
     register: result
 
-  - name: "Copy ios.yaml to bootflash as another name"
+  - name: "Copy inventory.networking.template to bootflash as another name"
     nxos_file_copy: &copy_file_different_name
-      local_file: "./ios.yaml"
-      remote_file: "nxos.yaml"
+      local_file: "./inventory.networking.template"
+      remote_file: "network-integration.cfg"
       file_system: "bootflash:"
       provider: "{{ cli }}"
       username: "{{ ansible_ssh_user }}"
@@ -59,7 +59,7 @@
 
   - assert: *true
 
-  - name: "Check Idempotence - Copy ios.yaml to bootflash as another name"
+  - name: "Check Idempotence - Copy inventory.networking.template to bootflash as another name"
     nxos_file_copy: *copy_file_different_name
     register: result
 
