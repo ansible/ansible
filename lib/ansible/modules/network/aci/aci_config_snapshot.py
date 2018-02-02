@@ -236,7 +236,7 @@ def main():
         if max_count in range(1, 11):
             max_count = str(max_count)
         else:
-            module.fail_json(msg='The "max_count" must be a number between 1 and 10')
+            module.fail_json(msg="Parameter 'max_count' must be a number between 1 and 10")
     snapshot = module.params['snapshot']
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot

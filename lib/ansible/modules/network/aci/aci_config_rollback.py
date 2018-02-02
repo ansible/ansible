@@ -348,7 +348,7 @@ def get_preview(aci):
         xml_to_json(aci, resp.read())
     else:
         aci.result['apic_response'] = resp.read()
-        aci.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+        aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
 
 
 def xml_to_json(aci, response_data):
