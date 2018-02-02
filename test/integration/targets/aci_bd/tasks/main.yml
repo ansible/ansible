@@ -75,7 +75,7 @@
   assert:
     that:
       - bd_present_check_mode.changed == true
-      - 'bd_present_check_mode.config == {"fvBD": {"attributes": {"descr": "Ansible Test"}}}'
+      - 'bd_present_check_mode.config == {"fvBD": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
       - bd_present.changed == true
       - bd_present.config == bd_present_check_mode.config
       - bd_present.original == []
