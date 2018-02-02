@@ -132,6 +132,8 @@ EXAMPLES = '''
 
 import re
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def query_package(module, name):
     """Search for the package by name.
@@ -382,8 +384,6 @@ def main():
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

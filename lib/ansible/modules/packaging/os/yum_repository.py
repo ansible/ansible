@@ -447,9 +447,10 @@ state:
 '''
 
 import os
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 class YumRepo(object):
