@@ -59,6 +59,17 @@
           nested_block_fail_always: true
       - meta: clear_host_errors
 
+  - block:
+    - block:
+      - name: EXPECTED FAILURE test triggering always by failing in nested block with any_errors_fatal set
+        fail:
+      any_errors_fatal: true
+    always:
+      - name: set block fail always run flag
+        set_fact:
+          nested_block_fail_always: true
+      - meta: clear_host_errors
+
   post_tasks:
   - assert:
       that:
