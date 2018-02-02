@@ -9,13 +9,13 @@
     parents:
       - interface Loopback999
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 
 - name: save config
   ios_config:
     save: true
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -29,7 +29,7 @@
 - name: save should always run
   ios_config:
     save: true
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 # FIXME https://github.com/ansible/ansible-modules-core/issues/5008
   ignore_errors: true
@@ -40,7 +40,7 @@
     lines:
       - "no ip http server"
     save_when: modified
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - name: save should always run
@@ -49,7 +49,7 @@
     lines:
       - "ip http server"
     save_when: modified
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -60,7 +60,7 @@
   ios_config:
     lines:
       - "no ip http server"
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - debug: msg="END cli/save.yaml on connection={{ ansible_connection }}"

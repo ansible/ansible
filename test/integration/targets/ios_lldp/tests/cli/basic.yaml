@@ -4,12 +4,12 @@
 - name: Make sure LLDP is not running before tests
   ios_config:
     lines: no lldp run
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: Enable LLDP service
   ios_lldp:
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -20,7 +20,7 @@
 - name: Enable LLDP service again (idempotent)
   ios_lldp:
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -30,7 +30,7 @@
 - name: Disable LLDP service
   ios_lldp:
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -41,7 +41,7 @@
 - name: Disable LLDP service (idempotent)
   ios_lldp:
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:

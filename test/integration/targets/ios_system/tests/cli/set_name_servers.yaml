@@ -6,7 +6,7 @@
     lines:
       - no ip name-server
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - name: configure name_servers
   ios_system:
@@ -14,7 +14,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -31,7 +31,7 @@
       - 1.1.1.1
       - 2.2.2.2
       - 3.3.3.3
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -72,7 +72,7 @@
     name_servers:
       - 1.1.1.1
       - 2.2.2.2
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -86,6 +86,6 @@
     lines:
       - no ip name-server
     match: none
-    authorize: yes
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/set_name_servers.yaml on connection={{ ansible_connection }}"
