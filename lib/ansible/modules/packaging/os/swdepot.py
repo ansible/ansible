@@ -69,7 +69,9 @@ EXAMPLES = '''
 '''
 
 import re
-import pipes
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def compare_package(version1, version2):
@@ -97,10 +99,10 @@ def query_package(module, name, depot=None):
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)),
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, shlex_quote(depot), shlex_quote(name), shlex_quote(name)),
                                                 use_unsafe_shell=True)
     else:
-        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, shlex_quote(name), shlex_quote(name)), use_unsafe_shell=True)
     if rc == 0:
         version = re.sub(r"\s\s+|\t", " ", stdout).strip().split()[1]
     else:
@@ -210,8 +212,6 @@ def main():
 
     module.exit_json(changed=changed, name=name, state=state, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
