@@ -841,7 +841,7 @@ def get_cache(module):
     try:
         cache = apt.Cache()
     except SystemError as e:
-        if '/var/lib/apt/lists/' in str(e).lower():
+        if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
             retries = 0
             while retries < 2:
@@ -850,7 +850,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
             # try again
             cache = apt.Cache()
         else:

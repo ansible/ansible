@@ -220,10 +220,10 @@ EXAMPLES = '''
     depclean: yes
 '''
 
-
 import os
-import pipes
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def query_package(module, package, action):
@@ -508,8 +508,6 @@ def main():
     elif p['state'] in portage_absent_states:
         unmerge_packages(module, packages)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
