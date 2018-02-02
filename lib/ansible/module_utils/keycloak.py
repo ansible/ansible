@@ -363,7 +363,7 @@ class KeycloakAPI(object):
 
         If the group does not exist, None is returned.
 
-        GID is a UUID provided by the Keycloak API
+        gid is a UUID provided by the Keycloak API
         :param gid: UUID of the group to be returned
         :param realm: Realm in which the group resides; default 'master'.
         """

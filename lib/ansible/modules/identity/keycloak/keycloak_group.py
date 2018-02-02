@@ -42,9 +42,8 @@ options:
     state:
         description:
             - State of the group.
-            - On C(present), the group will be created if it does not yet exist.
+            - On C(present), the group will be created if it does not yet exist, or updated with the parameters you provide.
             - On C(absent), the group will be removed if it exists.
-            - On C(updated), the group will be updated or created based on the parameters you provide.
         required: true
         default: 'present'
 
@@ -52,12 +51,10 @@ options:
         description:
             - Name of the group.
             - This parameter is required only when creating or updating the group.
-        required: false
 
     realm:
         description:
             - They Keycloak realm under which this group resides.
-        required: false
         default: 'master'
 
     id:
@@ -65,13 +62,11 @@ options:
             - The unique identifier for this group.
             - This parameter is not required for updating or deleting a group but
               providing it will reduce the number of API calls required.
-        required: false
 
     attributes:
         description:
             - A list of key/value pairs to set as custom attributes for the group.
             - Values may be single values (e.g. a string) or a list of strings.
-        required: false
 
 notes:
     - Presently, the I(realmRoles), I(clientRoles) and I(access) attributes returned by the Keycloak API
@@ -96,7 +91,6 @@ EXAMPLES = '''
     auth_realm: master
     auth_username: USERNAME
     auth_password: PASSWORD
-  register: kc_group_id
 
 - name: Delete a keycloak group
   local_action:
@@ -114,6 +108,7 @@ EXAMPLES = '''
   local_action:
     module: keycloak_group
     name: my-group-for-deletion
+    state: absent
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
@@ -289,7 +284,7 @@ def main():
             module.fail_json(msg='name must be specified when creating a new group')
 
         if module._diff:
-            result['diff'] = dict(before='', after=after_group)
+            result['diff'] = dict(before='', after=updated_group)
 
         if module.check_mode:
             module.exit_json(**result)
@@ -348,9 +343,6 @@ def main():
             result['msg'] = "Group {name} has been deleted".format(name=before_group['name'])
 
             module.exit_json(**result)
-
-        else:
-            module.fail_json(msg='Unknown state {state}'.format(state=state))
 
     module.exit_json(**result)
 
