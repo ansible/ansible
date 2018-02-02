@@ -124,6 +124,9 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
 
+        # error output
+        self.error = dict(code=None, text=None)
+
         # normal output
         self.existing = None
 
@@ -218,10 +221,10 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(auth['body'])
-                self.module.fail_json(msg='Authentication failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.fail_json(msg='Authentication failed: %(code) %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
+                self.fail_json(msg='Authentication connection failed for %(url)s. %(msg)s' % auth)
 
         # Retain cookie for later use
         self.headers['Cookie'] = resp.headers['Set-Cookie']
@@ -264,7 +267,8 @@ class ACIModule(object):
             jsondata = json.loads(rawoutput)
         except Exception as e:
             # Expose RAW output for troubleshooting
-            self.result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+            self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+            self.result['raw'] = rawoutput
             return
 
         # Extract JSON API output
@@ -286,7 +290,8 @@ class ACIModule(object):
             xmldata = cobra.data(xml)
         except Exception as e:
             # Expose RAW output for troubleshooting
-            self.result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
+            self.error = dict(code=-1, text="Unable to parse output as XML, see 'raw' output. %s" % e)
+            self.result['raw'] = rawoutput
             return
 
         # Reformat as ACI does for JSON API output
@@ -305,8 +310,7 @@ class ACIModule(object):
         # Handle possible APIC error information
         if self.totalCount != 0:
             try:
-                self.result['error_code'] = self.imdata[0]['error']['attributes']['code']
-                self.result['error_text'] = self.imdata[0]['error']['attributes']['text']
+                self.error = self.imdata[0]['error']['attributes']
             except (KeyError, IndexError):
                 pass
 
@@ -342,10 +346,10 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(info['body'])
-                self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                self.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
 
         self.response_json(resp.read())
 
@@ -378,10 +382,10 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(query['body'])
-                self.module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.fail_json(msg='Query failed: %(code)s %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Query failed for %(url)s. %(msg)s' % query)
+                self.fail_json(msg='Query connection failed for %(url)s. %(msg)s' % query)
 
         query = json.loads(resp.read())
 
@@ -649,10 +653,10 @@ class ACIModule(object):
                 try:
                     # APIC error
                     self.response_json(info['body'])
-                    self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                    self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
                 except KeyError:
                     # Connection error
-                    self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                    self.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
             self.method = 'DELETE'
@@ -782,10 +786,10 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(info['body'])
-                self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                self.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
 
     @staticmethod
     def get_nested_config(proposed_child, existing_children):
@@ -882,10 +886,10 @@ class ACIModule(object):
                 try:
                     # APIC error
                     self.response_json(info['body'])
-                    self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                    self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
                 except KeyError:
                     # Connection error
-                    self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                    self.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
             self.method = 'POST'
@@ -903,12 +907,36 @@ class ACIModule(object):
             self.result['status'] = self.status
             self.result['url'] = self.url
 
+        self.original = self.existing
         if self.params['state'] in ('absent', 'present'):
             self.get_existing()
         self.result['existing'] = self.existing
+
+        if self.module._diff and self.original != self.existing:
+            self.result['diff'] = dict(
+                before=self.original,
+                after=self.existing,
+            )
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['config'] = self.config
             self.result['proposed'] = self.proposed
 
         self.module.exit_json(**self.result)
+
+    def fail_json(self, msg, **kwargs):
+
+        if self.error['code'] is not None and self.error['text'] is not None:
+            self.result['error'] = self.error
+
+        if self.url is not None:
+            self.result['filter_string'] = self.filter_string
+            self.result['method'] = self.method
+            # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
+            self.result['response'] = self.response
+            self.result['status'] = self.status
+            self.result['url'] = self.url
+
+        self.result.update(**kwargs)
+        self.module.fail_json(msg=msg, **self.result)
+
