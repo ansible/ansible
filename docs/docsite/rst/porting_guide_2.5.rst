@@ -209,3 +209,11 @@ Using a provider dictionary with one of the new persistent connection types for 
 (network_cli, netconf, etc.) will result in a warning. When using these connections
 the standard Ansible infrastructure for controlling connections should be used.
 (Link to basic inventory documentation?)
+
+Developers:
+
+* The network specific shared code found in 'ansible.module_utils' is moved to 'ansible.module_utils.network'.
+* Going ahead all the Network platform specific code will reside in 'ansible.module_uitls.network.{{ platform }}'
+  where {{ platform }} is platform specific shared functions. The network common shared functions which are
+  platform independent will reside in 'ansible.module_utils.network.common'. This is noted in the module utilities
+  developer guide.
