@@ -226,14 +226,12 @@ class Btrfs(Filesystem):
             self.MKFS_FORCE_FLAGS = '-f'
             self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
-class Ocfs2(Filesystem):
-    MKFS = 'mkfs.ocfs2'
-    MKFS_FORCE_FLAGS = '-f'
 
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
     MKFS_FORCE_FLAGS = '-f'
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
@@ -259,6 +257,9 @@ class VFAT(Filesystem):
 =======
     
 >>>>>>> 5128847... Update filesystem.py
+=======
+
+>>>>>>> e8781e5... delete trailing spaces
 class LVM(Filesystem):
     MKFS = 'pvcreate'
     MKFS_FORCE_FLAGS = '-f'
