@@ -66,7 +66,7 @@
     that:
     - sw_leaf_selec_check_mode_present.changed == true
     - sw_leaf_selec_present.changed == true
-    - sw_leaf_selec_present.original == []
+    - sw_leaf_selec_present.previous == []
     - 'sw_leaf_selec_present.config ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}},{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-None"}}}]}}'
     - sw_leaf_selec_idempotent.changed == false
     - sw_leaf_selec_idempotent.config == {}
@@ -84,7 +84,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.original | length >= 1
+      - binding_query.previous | length >= 1
       - '"api/mo/uni/infra/nprof-sw_name_test/leaves-leaf_selector_name-typ-range.json" in binding_query.url'
 
 - name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
@@ -117,11 +117,11 @@
   assert:
     that:
       - sw_leaf_selec_check_mode_absent.changed == true
-      - sw_leaf_selec_check_mode_absent.original != []
+      - sw_leaf_selec_check_mode_absent.previous != []
       - sw_leaf_selec_absent.changed == true
-      - sw_leaf_selec_absent.original == sw_leaf_selec_check_mode_absent.original
+      - sw_leaf_selec_absent.previous == sw_leaf_selec_check_mode_absent.previous
       - sw_leaf_selec_absent_idempotent.changed == false
-      - sw_leaf_selec_absent_idempotent.original == []
+      - sw_leaf_selec_absent_idempotent.previous == []
       - sw_leaf_selec_absent_missing_param.failed == true
       - 'sw_leaf_selec_absent_missing_param.msg == "state is absent but all of the following are missing: leaf"'
 

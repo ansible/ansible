@@ -79,7 +79,7 @@
     that:
     - intftoleaf_check_mode_present.changed == true
     - intftoleaf_present.changed == true
-    - intftoleaf_present.original == []
+    - intftoleaf_present.previous == []
     - 'intftoleaf_present.config == {"infraRsAccPortP": {"attributes": {"tDn": "uni/infra/accportprof-leafintprftest"}}}'
     - intftoleaf_idempotent.changed == false
     - intftoleaf_idempotent.config == {}
@@ -95,7 +95,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.original | length >= 1
+      - binding_query.previous | length >= 1
       - '"api/mo/uni/infra/nprof-swleafprftest/rsaccPortP-[uni/infra/accportprof-leafintprftest].json" in binding_query.url'
 
 - name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
@@ -127,11 +127,11 @@
   assert:
     that:
       - intftoleaf_check_mode_absent.changed == true
-      - intftoleaf_check_mode_absent.original != []
+      - intftoleaf_check_mode_absent.previous != []
       - intftoleaf_absent.changed == true
-      - intftoleaf_absent.original == intftoleaf_check_mode_absent.original
+      - intftoleaf_absent.previous == intftoleaf_check_mode_absent.previous
       - intftoleaf_absent_idempotent.changed == false
-      - intftoleaf_absent_idempotent.original == []
+      - intftoleaf_absent_idempotent.previous == []
       - intftoleaf_absent_missing_param.failed == true
       - 'intftoleaf_absent_missing_param.msg == "state is absent but all of the following are missing: interface_selector"'
 

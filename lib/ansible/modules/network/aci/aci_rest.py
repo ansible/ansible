@@ -388,22 +388,23 @@ def main():
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    aci.result['filter_string'] = aci.filter_string
-    aci.result['method'] = aci.params['method'].upper()
-    # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
-    aci.result['url'] = aci.url
+    if aci.params['output_level'] == 'debug':
+        aci.result['filter_string'] = aci.filter_string
+        aci.result['method'] = aci.params['method'].upper()
+        # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
+        aci.result['response'] = info['msg']
+        aci.result['status'] = info['status']
+        aci.result['url'] = aci.url
 
     # Report failure
     if info['status'] != 200:
         try:
             # APIC error
             aci.response(info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+            aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
         except KeyError:
             # Connection error
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
+            aci.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
 
     aci.response_any(resp.read(), rest_type)
 

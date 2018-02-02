@@ -111,7 +111,7 @@
     that:
       - phys_check_mode_present.changed == true
       - phys_present.changed == true
-      - phys_present.original == []
+      - phys_present.previous == []
       - 'phys_present.config == {"fvRsDomAtt": {"attributes": {}}}'
       - '"[uni/phys-anstest].json" in phys_present.url'
       - phys_idempotent.changed == false
@@ -139,7 +139,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.original | length > 1
+      - binding_query.previous | length > 1
       - '"class/fvRsDomAtt.json" in binding_query.url'
 
 - name: delete domain epg binding - check mode
@@ -176,12 +176,12 @@
   assert:
     that:
       - epg_domain_check_mode_absent.changed == true
-      - epg_domain_check_mode_absent.original != []
+      - epg_domain_check_mode_absent.previous != []
       - epg_domain_absent.changed == true
-      - epg_domain_absent.original == epg_domain_check_mode_absent.original
+      - epg_domain_absent.previous == epg_domain_check_mode_absent.previous
       - epg_vmm_domain_absent.changed == true
       - idempotency_absent.changed == false
-      - idempotency_absent.original == []
+      - idempotency_absent.previous == []
       - absent_missing_param.failed == true
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
 
