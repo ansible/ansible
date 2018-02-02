@@ -120,7 +120,7 @@ def _boto3_conn(region, credentials):
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables=None, boto_profile=None,
+    def run(self, terms, variables=None, boto_profile=None, aws_profile=None,
             aws_secret_key=None, aws_access_key=None, aws_security_token=None, region=None,
             bypath=False, shortnames=False, recursive=False, decrypt=True):
         '''
@@ -145,7 +145,10 @@ class LookupModule(LookupBase):
         ssm_dict = {}
 
         credentials = {}
-        credentials['boto_profile'] = boto_profile
+        if aws_profile:
+            credentials['boto_profile'] = aws_profile
+        else:
+            credentials['boto_profile'] = boto_profile
         credentials['aws_secret_access_key'] = aws_secret_key
         credentials['aws_access_key_id'] = aws_access_key
         credentials['aws_session_token'] = aws_security_token
