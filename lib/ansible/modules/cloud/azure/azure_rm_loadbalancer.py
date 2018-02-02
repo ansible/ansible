@@ -49,8 +49,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the load balancer. Use 'present' to create or update a load balancer and
-              'absent' to delete a load balancer.
+            - Assert the state of the load balancer. Use C(present) to create or update a load balancer and
+              C(absent) to delete a load balancer.
         default: present
         choices:
             - absent
@@ -90,7 +90,7 @@ options:
             protocol:
                 description:
                     - The protocol of the end point.
-                    - "Possible values are: 'Http' or 'Tcp'."
+                    - "Possible values are: C(Http) or C(Tcp)."
                     - If 'Tcp' is specified, a received ACK is required for the probe to be successful.
                     - If 'Http' is specified, a 200 OK response from the specifies URI is required for the probe to be successful.
                 choices:
@@ -131,7 +131,7 @@ options:
                 description: A reference to frontend IP addresses.
                 required: True
             protocol:
-                description: "Possible values include: 'Udp', 'Tcp', 'All'."
+                description: "Possible values include: C(Udp), C(Tcp), C(All)."
                 choices:
                     - Tcp
                     - Udp
@@ -169,7 +169,7 @@ options:
                 description: The reference of the load balancer probe used by the load balancing rule.
                 required: True
             protocol:
-                description: "Possible values include: 'Udp', 'Tcp', 'All'."
+                description: "Possible values include: C(Udp), C(Tcp), C(All)."
                 choices:
                     - Tcp
                     - Udp
@@ -178,7 +178,7 @@ options:
             load_distribution:
                 description:
                     - The load distribution policy for this rule.
-                    - Possible values are 'Default', 'SourceIP', and 'SourceIPProtocol'.
+                    - Possible values are C(Default), C(SourceIP), and C(SourceIPProtocol).
                 choices:
                     - Default
                     - SourceIP
@@ -193,7 +193,8 @@ options:
             backend_port:
                 description:
                     - The port used for internal connections on the endpoint.
-                    - Acceptable values are between 0 and 65535. Note that value 0 enables "Any Port"
+                    - Acceptable values are between 0 and 65535.
+                    - Note that value 0 enables "Any Port"
             idle_timeout:
                 description:
                     - The timeout for the TCP idle connection.
@@ -616,7 +617,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         load_balancer = self.get_load_balancer()
 
         if self.state == 'present':
-            # compatiable parameters
+            # compatible parameters
             if not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools:
                 self.deprecate('Flatten setting is deprecated and will be removed.'
                                ' Using frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools list to define', version='2.9')
