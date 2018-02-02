@@ -267,7 +267,7 @@ class ACIModule(object):
             jsondata = json.loads(rawoutput)
         except Exception as e:
             # Expose RAW output for troubleshooting
-            #self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+            # self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. %s" % e)
             self.error = dict(code=str(self.status), text="Request failed: %s (see 'raw' output" % self.response)
             self.result['raw'] = rawoutput
             return
@@ -291,7 +291,7 @@ class ACIModule(object):
             xmldata = cobra.data(xml)
         except Exception as e:
             # Expose RAW output for troubleshooting
-            #self.error = dict(code=-1, text="Unable to parse output as XML, see 'raw' output. %s" % e)
+            # self.error = dict(code=-1, text="Unable to parse output as XML, see 'raw' output. %s" % e)
             self.error = dict(code=str(self.status), text="Request failed: %s (see 'raw' output)" % self.response)
             self.result['raw'] = rawoutput
             return
@@ -949,4 +949,3 @@ class ACIModule(object):
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
-

@@ -170,8 +170,8 @@ sent:
             }
         }
     }
-previous: The original configuration from the APIC before the module has started
-  description:
+previous:
+  description: The original configuration from the APIC before the module has started
   returned: info
   type: list
   sample:
@@ -206,13 +206,13 @@ filter_string:
   description: The filter string used for the request
   returned: failure or debug
   type: string
-  sample: ?rsp-prop-include=config-only
+  sample: '?rsp-prop-include=config-only'
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
   type: string
   sample: POST
-response
+response:
   description: The HTTP response from the APIC
   returned: failure or debug
   type: string

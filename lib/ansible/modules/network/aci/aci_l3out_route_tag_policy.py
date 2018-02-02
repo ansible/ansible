@@ -110,8 +110,8 @@ sent:
             }
         }
     }
-previous: The original configuration from the APIC before the module has started
-  description:
+previous:
+  description: The original configuration from the APIC before the module has started
   returned: info
   type: list
   sample:
@@ -152,7 +152,7 @@ method:
   returned: failure or debug
   type: string
   sample: POST
-response
+response:
   description: The HTTP response from the APIC
   returned: failure or debug
   type: string

@@ -129,7 +129,7 @@ EXAMPLES = r'''
 RETURN = r'''
 preview:
   description: A preview between two snapshots
-  returned:
+  returned: when state is preview
   type: string
 error:
   description: The error information as returned from the APIC
@@ -155,7 +155,7 @@ method:
   returned: failure or debug
   type: string
   sample: POST
-response
+response:
   description: The HTTP response from the APIC
   returned: failure or debug
   type: string
