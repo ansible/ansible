@@ -246,8 +246,8 @@ try:
 except:
     HAS_YAML = False
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec, aci_response_json, aci_response_xml
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
 
@@ -267,34 +267,35 @@ def update_qsl(url, params):
         return url + '?' + '&'.join(['%s=%s' % (k, v) for k, v in params.items()])
 
 
-def aci_changed(d):
-    ''' Check ACI response for changes '''
+class ACIRESTModule(ACIModule):
 
-    if isinstance(d, dict):
-        for k, v in d.items():
-            if k == 'status' and v in ('created', 'modified', 'deleted'):
-                return True
-            elif aci_changed(v) is True:
-                return True
-    elif isinstance(d, list):
-        for i in d:
-            if aci_changed(i) is True:
-                return True
+    def changed(self, d):
+        ''' Check ACI response for changes '''
 
-    return False
+        if isinstance(d, dict):
+            for k, v in d.items():
+                if k == 'status' and v in ('created', 'modified', 'deleted'):
+                    return True
+                elif self.changed(v) is True:
+                    return True
+        elif isinstance(d, list):
+            for i in d:
+                if self.changed(i) is True:
+                    return True
 
+        return False
 
-def aci_response(result, rawoutput, rest_type='xml'):
-    ''' Handle APIC response output '''
+    def response_any(self, rawoutput, rest_type='xml'):
+        ''' Handle APIC response output '''
 
-    if rest_type == 'json':
-        aci_response_json(result, rawoutput)
-    else:
-        aci_response_xml(result, rawoutput)
+        if rest_type == 'json':
+            self.response_json(rawoutput)
+        else:
+            self.response_xml(rawoutput)
 
-    # Use APICs built-in idempotency
-    if HAS_URLPARSE:
-        result['changed'] = aci_changed(result)
+        # Use APICs built-in idempotency
+        if HAS_URLPARSE:
+            self.result['changed'] = self.changed(self.imdata)
 
 
 def main():
@@ -336,7 +337,7 @@ def main():
     else:
         module.fail_json(msg='Failed to find REST API payload type (neither .xml nor .json).')
 
-    aci = ACIModule(module)
+    aci = ACIRESTModule(module)
 
     # We include the payload as it may be templated
     payload = content
@@ -370,37 +371,45 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci_request, but also supports XML)
-    aci.result['url'] = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
+    aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
     if aci.params['method'] != 'get':
         path += '?rsp-subtree=modified'
-        aci.result['url'] = update_qsl(aci.result['url'], {'rsp-subtree': 'modified'})
+        aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
     # Sign and encode request as to APIC's wishes
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
     # Perform request
-    resp, info = fetch_url(module, aci.result['url'],
+    resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
                            method=aci.params['method'].upper(),
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
+    if aci.params['output_level'] == 'debug':
+        aci.result['filter_string'] = aci.filter_string
+        aci.result['method'] = aci.params['method'].upper()
+        # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
+        aci.result['response'] = info['msg']
+        aci.result['status'] = info['status']
+        aci.result['url'] = aci.url
 
     # Report failure
     if info['status'] != 200:
         try:
             # APIC error
-            aci_response(aci.result, info['body'], rest_type)
-            module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+            aci.response(info['body'], rest_type)
+            aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
         except KeyError:
             # Connection error
-            module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info, **aci.result)
+            aci.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
 
-    aci_response(aci.result, resp.read(), rest_type)
+    aci.response_any(resp.read(), rest_type)
+
+    aci.result['imdata'] = aci.imdata
+    aci.result['totalCount'] = aci.totalCount
 
     # Report success
     module.exit_json(**aci.result)
