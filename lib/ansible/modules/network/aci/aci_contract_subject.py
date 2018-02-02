@@ -42,8 +42,8 @@ options:
     - Determines if the APIC should reverse the src and dst ports to allow the
       return traffic back, since ACI is stateless filter.
     - The APIC defaults new Contract Subjects to C(yes).
-    choices: [ yes, no ]
-    default: yes
+    type: bool
+    default: 'yes'
   priority:
     description:
     - The QoS class.
@@ -143,7 +143,7 @@ def main():
         subject=dict(type='str', aliases=['contract_subject', 'name', 'subject_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
         priority=dict(type='str', choices=['unspecified', 'level1', 'level2', 'level3']),
-        reverse_filter=dict(type='str', choices=['yes', 'no']),
+        reverse_filter=dict(type='bool'),
         dscp=dict(type='str', aliases=['target']),
         description=dict(type='str', aliases=['descr']),
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
@@ -164,9 +164,11 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     subject = module.params['subject']
     priority = module.params['priority']
-    reverse_filter = module.params['reverse_filter']
+    reverse_filter = aci.boolean(module.params['reverse_filter'])
     contract = module.params['contract']
     dscp = module.params['dscp']
     description = module.params['description']
@@ -184,7 +186,6 @@ def main():
     if directive is not None or filter_name is not None:
         module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',

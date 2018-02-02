@@ -168,20 +168,16 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
-    fail_on_decrypt = module.params['fail_on_decrypt']
-    if fail_on_decrypt is True:
-        fail_on_decrypt = 'yes'
-    elif fail_on_decrypt is False:
-        fail_on_decrypt = 'no'
+    fail_on_decrypt = aci.boolean(module.params['fail_on_decrypt'])
     import_mode = module.params['import_mode']
     import_policy = module.params['import_policy']
     import_type = module.params['import_type']
     snapshot = module.params['snapshot']
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'rollback':
         if snapshot.startswith('run-'):

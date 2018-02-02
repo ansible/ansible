@@ -184,12 +184,9 @@ def main():
 
     aci = ACIModule(module)
 
-    if module.params['enabled'] is True:
-        enabled = 'active'
-    elif module.params['enabled'] is False:
-        enabled = 'inactive'
-    else:
-        enabled = None
+    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
+    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
+    expires = aci.boolean(module.params['expires'])
 
     expiration = module.params['expiration']
     if expiration is not None and expiration != 'never':
@@ -197,18 +194,6 @@ def main():
             expiration = aci.iso8601_format(dateutil.parser.parse(expiration).replace(tzinfo=tzutc()))
         except Exception as e:
             module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params['expiration'], e))
-
-    expires = module.params['expires']
-    if expires is True:
-        expires = 'yes'
-    elif expires is False:
-        expires = 'no'
-
-    aaa_password_update_required = module.params['aaa_password_update_required']
-    if aaa_password_update_required is True:
-        aaa_password_update_required = 'yes'
-    elif aaa_password_update_required is False:
-        aaa_password_update_required = 'no'
 
     aci.construct_url(
         root_class=dict(

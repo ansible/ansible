@@ -83,7 +83,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
-        vepa=dict(type='str', choices=['disabled', 'enabled']),
+        vepa=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -103,7 +103,7 @@ def main():
     qinq = module.params['qinq']
     if qinq is not None:
         qinq = QINQ_MAPPING[qinq]
-    vepa = module.params['vepa']
+    vepa = aci.boolean(module.params['vepa'], 'enabled', 'disabled')
     description = module.params['description']
     state = module.params['state']
 

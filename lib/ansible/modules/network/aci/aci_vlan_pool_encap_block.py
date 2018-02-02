@@ -128,7 +128,7 @@ def main():
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['pool_name']),
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
-        block_name=dict(type='str', aliases=["name"]),
+        block_name=dict(type='str', aliases=['name']),
         block_end=dict(type='int', aliases=['end']),
         block_start=dict(type='int', aliases=["start"]),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

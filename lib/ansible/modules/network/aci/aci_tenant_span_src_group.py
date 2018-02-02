@@ -77,7 +77,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        admin_state=dict(type='str', choices=['enabled', 'disabled']),
+        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
         description=dict(type='str', aliases=['descr']),
         dst_group=dict(type='str'),
         src_group=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
@@ -96,7 +96,7 @@ def main():
         ],
     )
 
-    admin_state = module.params['admin_state']
+    admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     description = module.params['description']
     dst_group = module.params['dst_group']
     src_group = module.params['src_group']

@@ -69,7 +69,7 @@ def main():
     argument_spec.update(
         mcp=dict(type='str', required=False, aliases=['mcp_interface', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        admin_state=dict(type='str', choices=['disabled', 'enabled']),
+        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -86,7 +86,7 @@ def main():
 
     mcp = module.params['mcp']
     description = module.params['description']
-    admin_state = module.params['admin_state']
+    admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     state = module.params['state']
 
     aci = ACIModule(module)
