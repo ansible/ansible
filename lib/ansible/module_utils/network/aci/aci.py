@@ -884,7 +884,7 @@ class ACIModule(object):
         if self.params['output_level'] == 'debug':
             self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
-            #self.result['path'] = self.path
+            # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
             self.result['response'] = self.response
             self.result['status'] = self.status
             self.result['url'] = self.url
