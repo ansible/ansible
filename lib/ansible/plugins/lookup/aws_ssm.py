@@ -70,7 +70,7 @@ EXAMPLES = '''
     - 'bypath'
 '''
 
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -88,7 +88,7 @@ class LookupModule(LookupBase):
             :param terms: a list of plugin options
                           e.g. ['parameter_name', 'region=us-east-1', 'aws_profile=profile', 'decrypt=false']
             :param variables: config variables
-            :return The value of the SSM parameter or None
+            :return A list containing one entry with the value of the SSM parameter or None
         '''
 
         ret = {}
@@ -158,7 +158,9 @@ class LookupModule(LookupBase):
                         x['Name'] = x['Name'][x['Name'].rfind('/') + 1:]
 
                 if len(paramlist):
-                    return paramlist
+                    return boto3_tag_list_to_ansible_dict(paramlist,
+                                                          tag_name_key_name="Name",
+                                                          tag_value_key_name="Value")
                 else:
                     return None
             # Lookup by parameter name
@@ -168,7 +170,7 @@ class LookupModule(LookupBase):
                 if ret['Parameters']:
                     return [ret['Parameters'][0]['Value']]
                 else:
-                    return None
+                    raise AnsibleError('Undefined AWS SSM parameter: %s ' % terms[0])
 
         except ClientError as e:
             raise AnsibleError("SSM lookup exception: {0}".format(e))
