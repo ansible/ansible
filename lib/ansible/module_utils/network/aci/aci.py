@@ -914,8 +914,8 @@ class ACIModule(object):
 
         if self.module._diff and self.original != self.existing:
             self.result['diff'] = dict(
-                before=self.original,
-                after=self.existing,
+                before=json.dumps(self.original, sort_keys=True, indent=4),
+                after=json.dumps(self.existing, sort_keys=True, indent=4),
             )
 
         if self.params['output_level'] in ('debug', 'info'):
