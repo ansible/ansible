@@ -355,8 +355,8 @@ class KeycloakAPI(object):
             return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
                                       validate_certs=self.validate_certs))
         except Exception as e:
-            self.module.fail_json(msg="Could not fetch list of groups in realm {}: {}".format(
-                                        realm, str(e)))
+            self.module.fail_json(msg="Could not fetch list of groups in realm %s: %s"
+                                      % (realm, str(e)))
 
     def get_group_by_groupid(self, gid, realm="master"):
         """ Fetch a keycloak group from the provided realm using the group's unique ID.
@@ -376,11 +376,11 @@ class KeycloakAPI(object):
             if e.code == 404:
                 return None
             else:
-                self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
-                                           gid, realm, str(e)))
+                self.module.fail_json(msg="Could not fetch group %s in realm %s: %s"
+                                          % (gid, realm, str(e)))
         except Exception as e:
-            self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
-                                            gid, realm, str(e)))
+            self.module.fail_json(msg="Could not fetch group %s in realm %s: %s"
+                                      % (gid, realm, str(e)))
 
     def get_group_by_name(self, name, realm="master"):
         """ Fetch a keycloak group within a realm based on its name.
@@ -404,8 +404,8 @@ class KeycloakAPI(object):
             return None
 
         except Exception as e:
-            self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
-                                            name, realm, str(e)))
+            self.module.fail_json(msg="Could not fetch group %s in realm %s: %s"
+                                      % (name, realm, str(e)))
 
     def create_group(self, grouprep, realm="master"):
         """ Create a Keycloak group.
@@ -418,8 +418,8 @@ class KeycloakAPI(object):
             return open_url(groups_url, method='POST', headers=self.restheaders,
                             data=json.dumps(grouprep), validate_certs=self.validate_certs)
         except Exception as e:
-            self.module.fail_json(msg="Could not create group {} in realm {}: {}".format(
-                                            grouprep['name'], realm, str(e)))
+            self.module.fail_json(msg="Could not create group %s in realm %s: %s"
+                                      % (grouprep['name'], realm, str(e)))
 
     def update_group(self, grouprep, realm="master"):
         """ Update an existing group.
@@ -471,4 +471,4 @@ class KeycloakAPI(object):
                             validate_certs=self.validate_certs)
 
         except Exception as e:
-            module.fail_json(msg="Unable to delete group {}: {}".format(groupid, str(e)))
+            self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
