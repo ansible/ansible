@@ -297,7 +297,7 @@ For just my webservers in Boston::
 
     ansible-playbook -i production webservers.yml --limit boston
 
-Forjust the first 10, and then the next 10::
+For just the first 10, and then the next 10::
    
     ansible-playbook -i production webservers.yml --limit boston[0:9]
     ansible-playbook -i production webservers.yml --limit boston[10:19]
