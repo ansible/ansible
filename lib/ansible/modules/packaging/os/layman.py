@@ -83,6 +83,7 @@ EXAMPLES = '''
 '''
 
 import shutil
+
 from os import path
 
 try:
@@ -91,6 +92,10 @@ try:
     HAS_LAYMAN_API = True
 except ImportError:
     HAS_LAYMAN_API = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 USERAGENT = 'ansible-httpget'
 
@@ -262,8 +267,5 @@ def main():
         module.exit_json(changed=changed, name=name)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

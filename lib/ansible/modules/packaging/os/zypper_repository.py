@@ -143,9 +143,12 @@ EXAMPLES = '''
     runrefresh: yes
 '''
 
-REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
-
 from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+
+
+REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
 
 
 def _get_cmd(*args):
@@ -403,8 +406,6 @@ def main():
     else:
         module.fail_json(msg="Zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state, warnings=warnings)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
