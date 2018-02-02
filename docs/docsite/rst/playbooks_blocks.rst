@@ -45,7 +45,7 @@ Error Handling
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
 
 .. code-block:: YAML
- :emphasize-lines: 3,7,11
+ :emphasize-lines: 3,9,15
  :caption: Block error handling example
 
 
@@ -76,21 +76,8 @@ error did or did not occur in the ``block`` and ``rescue`` sections. It should b
 Another example is how to run handlers after an error occurred :
 
 .. code-block:: YAML
- :emphasize-lines: 5,9
+ :emphasize-lines: 6,10
  :caption: Block run handlers in error handling
-
-
-.. seealso::
-
-   :doc:`playbooks`
-       An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
-       Playbook organization by roles
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
-       Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
-
 
 
   tasks:
@@ -107,3 +94,17 @@ Another example is how to run handlers after an error occurred :
      - name: run me even after an error
        debug:
          msg: 'this handler runs even on error'
+
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_reuse_roles`
+       Playbook organization by roles
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+
+
