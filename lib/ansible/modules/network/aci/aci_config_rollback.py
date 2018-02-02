@@ -127,25 +127,10 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-current:
-  description: The existing configuration from the APIC after the module has finished
-  returned: success
-  type: list
-  sample:
-    [
-        {
-            "fvTenant": {
-                "attributes": {
-                    "descr": "Production environment",
-                    "dn": "uni/tn-production",
-                    "name": "production",
-                    "nameAlias": "",
-                    "ownerKey": "",
-                    "ownerTag": ""
-                }
-            }
-        }
-    ]
+preview:
+  description: A preview between two snapshots
+  returned:
+  type: string
 error:
   description: The error information as returned from the APIC
   returned: failure
@@ -155,50 +140,11 @@ error:
         "code": "122",
         "text": "unknown managed object class foo"
     }
-sent:
-  description: The actual/minimal configuration pushed to the APIC
-  returned: info
-  type: list
-  sample:
-    {
-        "fvTenant": {
-            "attributes": {
-                "descr": "Production environment"
-            }
-        }
-    }
-previous: The original configuration from the APIC before the module has started
-  description:
-  returned: info
-  type: list
-  sample:
-    [
-        {
-            "fvTenant": {
-                "attributes": {
-                    "descr": "Production",
-                    "dn": "uni/tn-production",
-                    "name": "production",
-                    "nameAlias": "",
-                    "ownerKey": "",
-                    "ownerTag": ""
-                }
-            }
-        }
-    ]
-proposed:
-  description: The assembled configuration from the user-provided parameters
-  returned: info
-  type: dict
-  sample:
-    {
-        "fvTenant": {
-            "attributes": {
-                "descr": "Production environment",
-                "name": "production"
-            }
-        }
-    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
@@ -321,14 +267,14 @@ def main():
         aci.post_config()
 
     elif state == 'preview':
-        aci.result['url'] = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
-        aci.result['filter_string'] = (
+        aci.url = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
+        aci.filter_string = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
             's2dn=uni/backupst/snapshots-[uni/fabric/configexp-%(compare_export_policy)s]/snapshot-%(compare_snapshot)s'
         ) % module.params
 
         # Generate rollback comparison
-        get_preview(aci)
+        aci.get_preview()
 
     aci.exit_json()
 
@@ -337,18 +283,18 @@ def get_preview(aci):
     '''
     This function is used to generate a preview between two snapshots and add the parsed results to the aci module return data.
     '''
-    uri = aci.result['url'] + aci.result['filter_string']
+    uri = aci.url + aci.filter_string
     resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params['timeout'], use_proxy=aci.module.params['use_proxy'])
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
-    aci.result['method'] = 'GET'
+    aci.method = 'GET'
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Handle APIC response
     if info['status'] == 200:
         xml_to_json(aci, resp.read())
     else:
-        aci.result['apic_response'] = resp.read()
-        aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
+        aci.result['raw'] = resp.read()
+        aci.fail_json(msg="Request failed: %(code)s %(text)s (see 'raw' output)" % aci.error)
 
 
 def xml_to_json(aci, response_data):
@@ -358,9 +304,9 @@ def xml_to_json(aci, response_data):
     if XML_TO_JSON:
         xml = lxml.etree.fromstring(to_bytes(response_data))
         xmldata = cobra.data(xml)
-        aci.result['diff'] = xmldata
+        aci.result['preview'] = xmldata
     else:
-        aci.result['diff'] = response_data
+        aci.result['preview'] = response_data
 
 
 if __name__ == "__main__":
