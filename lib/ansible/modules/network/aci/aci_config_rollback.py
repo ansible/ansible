@@ -274,7 +274,7 @@ def main():
         ) % module.params
 
         # Generate rollback comparison
-        aci.get_preview()
+        get_preview(aci)
 
     aci.exit_json()
 
