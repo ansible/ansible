@@ -422,7 +422,7 @@ def main():
                     if service_state not in set(['inactive', 'failed']):
                         action = 'stop'
                     elif service_state == 'failed':
-                        result['state'] = 'failed' 
+                        result['state'] = 'failed'
                 elif module.params['state'] == 'reloaded':
                     # unlike restart, reload won't take effect on services in any state but 'active'
                     if service_state in set(['inactive', 'deactivating', 'failed']):
@@ -431,7 +431,7 @@ def main():
                         # wait for startup, then trigger the reload
                         if not module.check_mode:
                             if module.params['no_block']:
-                                module.fail_json(msg="Unable to reload service %s: %s" % (unit, "could not wait for service startup to complete with --no-block"))
+                                module.fail_json(msg="Unable to reload service %s: %s" % (unit, "cannot wait for service startup to complete with --no-block"))
                             (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, 'start', unit))
                             if rc != 0:
                                 module.fail_json(msg="Unable to reload service %s: service failed to start" % (unit))
