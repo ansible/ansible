@@ -36,6 +36,7 @@ import json
 import os
 from copy import deepcopy
 
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
@@ -187,6 +188,27 @@ class ACIModule(object):
             self.login()
         else:
             self.module.fail_json(msg="Either parameter 'password' or 'private_key' is required for authentication")
+
+    def boolean(self, value, true='yes', false='no'):
+        ''' Return an acceptable value back '''
+        if value is None:
+            return None
+        elif value is True:
+            return true
+        elif value is False:
+            return false
+        elif boolean(value) is True:  # When type=raw, this supports Ansible booleans
+            return true
+        elif boolean(value) is False:  # When type=raw, this supports Ansible booleans
+            return false
+        elif value == true:  # When type=raw, this supports the original boolean values
+            self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
+            return true
+        elif value == false:  # When type=raw, this supports the original boolean values
+            self.module.deprecate("Boolean value '%s' is no longer valid, please use 'no' as a boolean value." % value, '2.9')
+            return false
+        else:  # When type=raw, escalate back to user
+            self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
 
     def iso8601_format(self, dt):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
