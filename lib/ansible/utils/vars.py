@@ -32,6 +32,8 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.vault import AnsibleVaultError
 
 try:
     from __main__ import display
@@ -92,10 +94,20 @@ def combine_vars(a, b):
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
         result = a.copy()
+        result.update(b)
+
         for key in b:
-            if key in result and result[key] != b[key]:
-                display.warning("Duplicate variable '%s' detected! The value will be overwritten!" % key)
-            result[key] = b[key]
+            if key in a:
+                if type(a[key]) is AnsibleVaultEncryptedUnicode:
+                    try:
+                        if a[key] != b[key]:
+                            display.warning("Duplicate variable '%s' detected! The value will be overwritten!" % key)
+                    except AnsibleVaultError:
+                        pass
+                else:
+                    if a[key] != b[key]:
+                        display.warning("Duplicate variable '%s' detected! The value will be overwritten!" % key)
+
         return result
 
 
