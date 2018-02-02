@@ -75,14 +75,14 @@
     that:
       - epg_present_check_mode.changed == true
       - epg_present_check_mode.previous == []
-      - epg_present_check_mode.config.fvAEPg.attributes != {}
-      - 'epg_present_check_mode.config.fvAEPg.children.0.fvRsBd.attributes.tnFvBDName == "anstest"'
+      - epg_present_check_mode.sent.fvAEPg.attributes != {}
+      - 'epg_present_check_mode.sent.fvAEPg.children.0.fvRsBd.attributes.tnFvBDName == "anstest"'
       - epg_present.changed == true
-      - epg_present.config == epg_present_check_mode.config
+      - epg_present.sent == epg_present_check_mode.sent
       - epg_present_idempotent.changed == false
-      - epg_present_idempotent.config == {}
+      - epg_present_idempotent.sent == {}
       - epg_present_update.changed == true
-      - 'epg_present_update.config == {"fvAEPg": {"attributes": {"descr": "Ansible Test Update"}}}'
+      - 'epg_present_update.sent == {"fvAEPg": {"attributes": {"descr": "Ansible Test Update"}}}'
       - epg_present_missing_param.failed == true
       - 'epg_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 

@@ -49,15 +49,15 @@
     <<: *create_snapshot
     state: preview
     compare_export_policy: anstest
-    compare_snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
-    snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
+    compare_snapshot: "{{ snapshots.previous.0.sentSnapshotCont.children[-1].sentSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.previous.0.sentSnapshotCont.children[-2].sentSnapshot.attributes.name }}"
   register: rollback_preview
 
 - name: rollback to snapshot
   aci_config_rollback: &aci_rollback
     <<: *create_snapshot
     state: rollback
-    snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.previous.0.sentSnapshotCont.children[-1].sentSnapshot.attributes.name }}"
   ignore_errors: yes
   register: rollback_missing_param
 
@@ -87,8 +87,8 @@
       - rollback_missing_param.failed == true
       - 'rollback_missing_param.msg == "state is rollback but all of the following are missing: import_policy"'
       - rollback_rollback.changed == true
-      - '"ce2_" in rollback_rollback.config.configImportP.attributes.fileName'
-      - '".tar.gz" in rollback_rollback.config.configImportP.attributes.fileName'
+      - '"ce2_" in rollback_rollback.sent.sentImportP.attributes.fileName'
+      - '".tar.gz" in rollback_rollback.sent.sentImportP.attributes.fileName'
       - '"fabric/configimp-anstest.json" in rollback_rollback.url'
       - tenant_removed.changed == false
       - tenant_removed.previous == []

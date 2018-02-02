@@ -80,9 +80,9 @@
     - intftoleaf_check_mode_present.changed == true
     - intftoleaf_present.changed == true
     - intftoleaf_present.previous == []
-    - 'intftoleaf_present.config == {"infraRsAccPortP": {"attributes": {"tDn": "uni/infra/accportprof-leafintprftest"}}}'
+    - 'intftoleaf_present.sent == {"infraRsAccPortP": {"attributes": {"tDn": "uni/infra/accportprof-leafintprftest"}}}'
     - intftoleaf_idempotent.changed == false
-    - intftoleaf_idempotent.config == {}
+    - intftoleaf_idempotent.sent == {}
 
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:

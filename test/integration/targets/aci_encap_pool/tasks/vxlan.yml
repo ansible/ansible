@@ -24,7 +24,7 @@
   assert:
     that:
       - create_vxlan_check_mode.changed == true
-      - 'create_vxlan_check_mode.config == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - 'create_vxlan_check_mode.sent == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: create vxlan pool - creation works
   aci_encap_pool:
@@ -36,7 +36,7 @@
     that:
       - create_vxlan.changed == true
       - create_vxlan.previous == []
-      - create_vxlan.config == create_vxlan_check_mode.config
+      - create_vxlan.sent == create_vxlan_check_mode.sent
 
 - name: create vxlan pool again - idempotency works
   aci_encap_pool:
@@ -48,7 +48,7 @@
     that:
       - idempotent_vxlan.changed == false
       - 'idempotent_vxlan.previous.0.fvnsVxlanInstP.attributes.name == "anstest"'
-      - idempotent_vxlan.config == {}
+      - idempotent_vxlan.sent == {}
 
 - name: update vxlan pool - update works
   aci_encap_pool:
@@ -60,7 +60,7 @@
   assert:
     that:
       - update_vxlan.changed == true
-      - 'update_vxlan.config == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+      - 'update_vxlan.sent == {"fvnsVxlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: create vxlan pool - used for query
   aci_encap_pool:

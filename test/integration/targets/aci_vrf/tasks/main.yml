@@ -64,17 +64,17 @@
   assert:
     that:
       - vrf_present_check_mode.changed == true
-      - 'vrf_present_check_mode.config == {"fvCtx": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - 'vrf_present_check_mode.sent == {"fvCtx": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
       - vrf_present.changed == true
-      - vrf_present.config == vrf_present_check_mode.config
+      - vrf_present.sent == vrf_present_check_mode.sent
       - vrf_present.previous == []
       - vrf_present_idempotent.changed == false
       - vrf_present_idempotent.previous != []
       - vrf_update.changed == true
       - vrf_update.previous != []
       - vrf_update.changed != vrf_update.proposed
-      - 'vrf_update.config == {"fvCtx": {"attributes": {"descr": "Ansible Test Update", "pcEnfPref": "unenforced"}}}'
-      - 'vrf_present_2.config.fvCtx.attributes == {"name": "anstest2", "pcEnfDir": "egress", "descr": "Ansible Test"}'
+      - 'vrf_update.sent == {"fvCtx": {"attributes": {"descr": "Ansible Test Update", "pcEnfPref": "unenforced"}}}'
+      - 'vrf_present_2.sent.fvCtx.attributes == {"name": "anstest2", "pcEnfDir": "egress", "descr": "Ansible Test"}'
       - vrf_present_missing_param.failed == true
       - 'vrf_present_missing_param.msg == "state is present but all of the following are missing: tenant"'
 

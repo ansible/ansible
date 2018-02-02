@@ -50,10 +50,10 @@
     that:
       - create.failed == false
       - create.changed == true
-      - 'create.config.configExportP.attributes.adminSt == "triggered"'
+      - 'create.sent.sentExportP.attributes.adminSt == "triggered"'
       - create_update.failed == false
       - create_update.changed == true
-      - 'create_update.config == {"configExportP": {"attributes": {"adminSt": "triggered", "format": "xml", "includeSecureFields": "yes"}}}'
+      - 'create_update.sent == {"configExportP": {"attributes": {"adminSt": "triggered", "format": "xml", "includeSecureFields": "yes"}}}'
       - invalid_max_count.failed == true
       - 'invalid_max_count.msg == "The \"max_count\" must be a number between 1 and 10"'
       - missing_param.failed == true
@@ -67,7 +67,7 @@
 
 - name: generate snapshot name
   set_fact:
-    test_snapshot: "{{ query_export.previous.0.configSnapshotCont.children.0.configSnapshot.attributes.rn.strip('snapshot-') }}"
+    test_snapshot: "{{ query_export.previous.0.sentSnapshotCont.children.0.sentSnapshot.attributes.rn.strip('snapshot-') }}"
 
 - name: query with export_policy and snapshot
   aci_config_snapshot: &query_both
@@ -94,8 +94,8 @@
       - query_export.failed == false
       - query_export.changed == false
       - '"snapshots-[uni/fabric/configexp-anstest].json" in query_export.url'
-      - 'query_export.previous.0.configSnapshotCont.attributes.name == "anstest"'
-      - query_export.previous.0.configSnapshotCont.children | length > 1
+      - 'query_export.previous.0.sentSnapshotCont.attributes.name == "anstest"'
+      - query_export.previous.0.sentSnapshotCont.children | length > 1
       - query_export_snapshot.failed == false
       - query_export_snapshot.changed == false
       - '"snapshots-[uni/fabric/configexp-anstest]/snapshot-{{ test_snapshot }}.json" in query_export_snapshot.url'
@@ -132,9 +132,9 @@
     that:
       - delete_snapshot.failed == false
       - delete_snapshot.changed == true
-      - 'delete_snapshot.config == {"configSnapshot": {"attributes": {"retire": "yes"}}}'
+      - 'delete_snapshot.sent == {"configSnapshot": {"attributes": {"retire": "yes"}}}'
       - delete_snapshot.previous != []
-      - delete_snapshot.previous.0.configSnapshot.attributes.name == test_snapshot
+      - delete_snapshot.previous.0.sentSnapshot.attributes.name == test_snapshot
       - delete_idempotent.failed == false
       - delete_idempotent.changed == false
       - delete_idempotent.previous == []

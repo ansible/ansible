@@ -58,7 +58,7 @@ options:
     description:
     - Influence the output of this ACI module.
     - C(normal) means the standard output, incl. C(current) dict
-    - C(info) means informational output, incl. C(previous), C(config) and C(proposed) dicts
+    - C(info) means informational output, incl. C(previous), C(proposed) and C(sent) dicts
     - C(debug) means debugging output, incl. C(filter_string), C(method), C(response), C(status) and C(url) information
     choices: [ debug, info, normal ]
     default: normal

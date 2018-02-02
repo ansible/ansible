@@ -39,7 +39,7 @@
   assert:
     that:
       - create_check_mode.changed == true
-      - 'create_check_mode.config == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "name": "anstest"}}}'
+      - 'create_check_mode.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: Create static vlan pool - creation works
   aci_vlan_pool:
@@ -51,7 +51,7 @@
     that:
       - create_static.changed == true
       - create_static.previous == []
-      - create_static.config == create_check_mode.config
+      - create_static.sent == create_check_mode.sent
 
 - name: Create dynamic vlan pool - creation works
   aci_vlan_pool: &aci_pool_present_dynamic
@@ -65,7 +65,7 @@
     that:
       - create_dynamic.changed == true
       - create_dynamic.previous == []
-      - 'create_dynamic.config == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
+      - 'create_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "name": "anstest"}}}'
 
 - name: Create static vlan pool again - idempotency works
   aci_vlan_pool:
@@ -77,7 +77,7 @@
     that:
       - idempotent_static.changed == false
       - 'idempotent_static.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "static", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-static", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
-      - idempotent_static.config == {}
+      - idempotent_static.sent == {}
 
 - name: Create dynamic vlan pool again - idempotency works
   aci_vlan_pool:
@@ -89,7 +89,7 @@
     that:
       - idempotent_dynamic.changed == false
       - 'idempotent_dynamic.previous == [{"fvnsVlanInstP": {"attributes": {"allocMode": "dynamic", "descr": "Ansible Test", "dn": "uni/infra/vlanns-[anstest]-dynamic", "name": "anstest", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
-      - idempotent_dynamic.config == {}
+      - idempotent_dynamic.sent == {}
  
 - name: Update static vlan pool - update works
   aci_vlan_pool:
@@ -101,7 +101,7 @@
   assert:
     that:
       - update_static.changed == true
-      - 'update_static.config == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+      - 'update_static.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: Update dynamic vlan pool - update works
   aci_vlan_pool:
@@ -113,7 +113,7 @@
   assert:
     that:
       - update_dynamic.changed == true
-      - 'update_dynamic.config == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
+      - 'update_dynamic.sent == {"fvnsVlanInstP": {"attributes": {"descr": "Ansible Test Change"}}}'
 
 - name: Missing param - failure message works
   aci_vlan_pool:

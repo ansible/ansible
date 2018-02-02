@@ -62,13 +62,13 @@
       - ap_present_check_mode.changed == true
       - ap_present.changed == true
       - ap_present.previous == []
-      - ap_present.config == ap_present_check_mode.config
-      - 'ap_present.config == {"fvAp": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
+      - ap_present.sent == ap_present_check_mode.sent
+      - 'ap_present.sent == {"fvAp": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
       - ap_present_idempotent.changed == false
       - ap_present_idempotent.previous != []
-      - ap_present_idempotent.config == {}
+      - ap_present_idempotent.sent == {}
       - ap_present_update.changed == true
-      - 'ap_present_update.config.fvAp.attributes == {"descr": "Ansible Test Update"}'
+      - 'ap_present_update.sent.fvAp.attributes == {"descr": "Ansible Test Update"}'
       - ap_present_missing_param.failed == true
       - 'ap_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 

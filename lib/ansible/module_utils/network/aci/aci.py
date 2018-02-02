@@ -922,7 +922,7 @@ class ACIModule(object):
         #     )
 
         if self.params['output_level'] in ('debug', 'info'):
-            self.result['config'] = self.config
+            self.result['sent'] = self.config
             self.result['proposed'] = self.proposed
 
         self.module.exit_json(**self.result)

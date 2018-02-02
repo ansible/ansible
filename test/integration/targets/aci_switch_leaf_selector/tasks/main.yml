@@ -67,11 +67,11 @@
     - sw_leaf_selec_check_mode_present.changed == true
     - sw_leaf_selec_present.changed == true
     - sw_leaf_selec_present.previous == []
-    - 'sw_leaf_selec_present.config ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}},{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-None"}}}]}}'
+    - 'sw_leaf_selec_present.sent ==  {"infraLeafS": {"attributes": {"name": "leaf_selector_name"}, "children": [{"infraNodeBlk": {"attributes": {"from_": "1011", "name": "node_blk_name", "to_": "1011"}}},{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-None"}}}]}}'
     - sw_leaf_selec_idempotent.changed == false
-    - sw_leaf_selec_idempotent.config == {}
+    - sw_leaf_selec_idempotent.sent == {}
     - sw_leaf_selec_update.changed == true
-    - 'sw_leaf_selec_update.config == {"infraLeafS": {"attributes": {},"children": [{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-anstest_policygroupname"}}}]}}'
+    - 'sw_leaf_selec_update.sent == {"infraLeafS": {"attributes": {},"children": [{"infraRsAccNodePGrp": {"attributes": {"tDn": "uni/infra/funcprof/accnodepgrp-anstest_policygroupname"}}}]}}'
 
 - name: Query Specific switch policy leaf profile selector
   aci_switch_leaf_selector:

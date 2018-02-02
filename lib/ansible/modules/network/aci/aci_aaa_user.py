@@ -153,7 +153,7 @@ error:
         "code": "122",
         "text": "unknown managed object class foo"
     }
-config:
+sent:
   description: The actual/minimal configuration pushed to the APIC
   returned: info
   type: list
@@ -185,7 +185,7 @@ previous: The original configuration from the APIC before the module has started
         }
     ]
 proposed:
-  description: The assembled configuration the user proposed before reducing
+  description: The assembled configuration from the user-provided parameters
   returned: info
   type: dict
   sample:

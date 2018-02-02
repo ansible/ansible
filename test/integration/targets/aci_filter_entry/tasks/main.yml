@@ -112,22 +112,22 @@
     that:
       - entry_present_check_mode.changed == true
       - entry_present_check_mode.previous == []
-      - 'entry_present_check_mode.config == {"vzEntry": {"attributes": {"dFromPort": "http","dToPort": "88","descr": "Ansible Test","etherT": "ip","name": "anstest","prot": "tcp"}}}'
+      - 'entry_present_check_mode.sent == {"vzEntry": {"attributes": {"dFromPort": "http","dToPort": "88","descr": "Ansible Test","etherT": "ip","name": "anstest","prot": "tcp"}}}'
       - entry_present.changed == true
       - entry_present.previous == []
-      - entry_present.config == entry_present_check_mode.config
+      - entry_present.sent == entry_present_check_mode.sent
       - entry_present_idempotent.changed == false
       - entry_present_idempotent.previous != []
-      - entry_present_idempotent.config == {}
+      - entry_present_idempotent.sent == {}
       - entry_present_update.changed == true
       - entry_present_update.previous != []
-      - entry_present_update.config != entry_present_update.proposed
+      - entry_present_update.sent != entry_present_update.proposed
       - entry_present_2.changed == true
-      - 'entry_present_2.config.vzEntry.attributes == {"arpOpc": "reply",  "etherT": "arp", "name": "anstest2"}'
+      - 'entry_present_2.sent.vzEntry.attributes == {"arpOpc": "reply",  "etherT": "arp", "name": "anstest2"}'
       - entry_present_3.changed == true
-      - 'entry_present_3.config.vzEntry.attributes == {"etherT": "ip", "icmpv4T": "echo", "name": "anstest3", "prot": "icmp"}'
+      - 'entry_present_3.sent.vzEntry.attributes == {"etherT": "ip", "icmpv4T": "echo", "name": "anstest3", "prot": "icmp"}'
       - entry_present_4.changed == true
-      - 'entry_present_4.config.vzEntry.attributes == {"dFromPort": "1000", "dToPort": "1000", "etherT": "ip", "name": "anstest4", "prot": "udp"}'
+      - 'entry_present_4.sent.vzEntry.attributes == {"dFromPort": "1000", "dToPort": "1000", "etherT": "ip", "name": "anstest4", "prot": "udp"}'
       - present_missing_param.failed == true
       - 'present_missing_param.msg == "state is present but all of the following are missing: entry"'
       - present_incompatible_params.failed == true

@@ -112,14 +112,14 @@
       - phys_check_mode_present.changed == true
       - phys_present.changed == true
       - phys_present.previous == []
-      - 'phys_present.config == {"fvRsDomAtt": {"attributes": {}}}'
+      - 'phys_present.sent == {"fvRsDomAtt": {"attributes": {}}}'
       - '"[uni/phys-anstest].json" in phys_present.url'
       - phys_idempotent.changed == false
-      - phys_idempotent.config == {}
+      - phys_idempotent.sent == {}
       - phys_update.changed == true
-      - 'phys_update.config == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
+      - 'phys_update.sent == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
       - vmm_present.changed == true
-      - 'vmm_present.config == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
+      - 'vmm_present.sent == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
       - '"[uni/vmmp-VMware/dom-anstest].json" in vmm_present.url'
       - present_missing_params.failed == true
       - 'present_missing_params.msg == "domain_type is vmm but all of the following are missing: vm_provider"'

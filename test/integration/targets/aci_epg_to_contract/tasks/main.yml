@@ -95,13 +95,13 @@
   assert:
     that:
       - provide_present_check_mode.changed == true
-      - 'provide_present_check_mode.config == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
+      - 'provide_present_check_mode.sent == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
       - provide_present.changed == true
-      - provide_present.config == provide_present_check_mode.config
+      - provide_present.sent == provide_present_check_mode.sent
       - provide_present.previous == []
       - consume_present.changed == true
       - consume_present.previous == []
-      - 'consume_present.config == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
+      - 'consume_present.sent == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
       - provide_present2.changed == true
       - provide_present2.previous == []
       - missing_param_present.failed == true

@@ -86,15 +86,15 @@
     that:
       - subject_filter_present_check_mode.changed == true
       - subject_filter_present_check_mode.previous == []
-      - 'subject_filter_present_check_mode.config == {"vzRsSubjFiltAtt": {"attributes": {"directives": "log", "tnVzFilterName": "anstest"}}}'
+      - 'subject_filter_present_check_mode.sent == {"vzRsSubjFiltAtt": {"attributes": {"directives": "log", "tnVzFilterName": "anstest"}}}'
       - subject_filter_present.changed == true
       - subject_filter_present.previous == []
-      - subject_filter_present.config == subject_filter_present_check_mode.config
+      - subject_filter_present.sent == subject_filter_present_check_mode.sent
       - subject_filter_present_2.changed == true
       - subject_filter_present_idempotent.changed == false
       - subject_filter_present_idempotent.previous != []
       - subject_filter_update.changed == true
-      - 'subject_filter_update.config.vzRsSubjFiltAtt.attributes == {"directives": ""}'
+      - 'subject_filter_update.sent.vzRsSubjFiltAtt.attributes == {"directives": ""}'
       - present_missing_param.failed == true
       - 'present_missing_param.msg == "state is present but all of the following are missing: contract, filter, subject"'
 

@@ -56,11 +56,11 @@
     - accessport_to_intf_check_mode_present.changed == true
     - accessport_to_intf_present.changed == true
     - accessport_to_intf_present.previous == []
-    - 'accessport_to_intf_present.config == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}, "children": [{"infraPortBlk": {"attributes": {"fromPort": "13", "name": "anstest_leafportblkname", "toPort": "16"}}}, {"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-None"}}}]}}'
+    - 'accessport_to_intf_present.sent == {"infraHPortS": {"attributes": {"name": "anstest_accessportselector"}, "children": [{"infraPortBlk": {"attributes": {"fromPort": "13", "name": "anstest_leafportblkname", "toPort": "16"}}}, {"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-None"}}}]}}'
     - accessport_to_intf_idempotent.changed == false
-    - accessport_to_intf_idempotent.config == {}
+    - accessport_to_intf_idempotent.sent == {}
     - accessport_to_intf_update.changed == true
-    - 'accessport_to_intf_update.config == {"infraHPortS": {"attributes": {},"children": [{"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-anstest_policygroupname"}}}]}}'
+    - 'accessport_to_intf_update.sent == {"infraHPortS": {"attributes": {},"children": [{"infraRsAccBaseGrp": {"attributes": {"tDn": "uni/infra/funcprof/accportgrp-anstest_policygroupname"}}}]}}'
 
 - name: Query Specific access_port_selector and leaf_interface_profile binding
   aci_access_port_to_interface_policy_leaf_profile:

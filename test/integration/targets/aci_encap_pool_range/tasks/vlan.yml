@@ -45,7 +45,7 @@
   assert:
     that:
       - range_present_check_mode.changed == true
-      - 'range_present_check_mode.config == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
+      - 'range_present_check_mode.sent == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
 
 - name: create vlan pool range - creation works
   aci_encap_pool_range:
@@ -57,8 +57,8 @@
     that:
       - range_present.changed == true
       - range_present.previous == []
-      - range_present.config == range_present_check_mode.config
-      - range_present.config == range_present.proposed
+      - range_present.sent == range_present_check_mode.sent
+      - range_present.sent == range_present.proposed
 
 - name: create vlan pool range - idempotency works
   aci_encap_pool_range:
@@ -83,7 +83,7 @@
     that:
       - range_present_update.changed == true
       - range_present_update.previous != []
-      - range_present_update.config != range_present.config
+      - range_present_update.sent != range_present.sent
 
 - name: create vlan pool range - used for query
   aci_encap_pool_range: &aci_range_present_2

@@ -61,13 +61,13 @@
     that:
       - present_check_mode.changed == true
       - present_check_mode.previous == []
-      - 'present_check_mode.config == {"vzBrCP": {"attributes": {"name": "anstest", "descr": "Ansible Test"}}}'
+      - 'present_check_mode.sent == {"vzBrCP": {"attributes": {"name": "anstest", "descr": "Ansible Test"}}}'
       - contract_present.changed == true
-      - contract_present.config == present_check_mode.config
+      - contract_present.sent == present_check_mode.sent
       - present_idempotent.changed == false
       - present_update.changed == true
-      - present_update.config != present_update.proposed
-      - 'present_update.config.vzBrCP.attributes.scope == "application-profile"'
+      - present_update.sent != present_update.proposed
+      - 'present_update.sent.vzBrCP.attributes.scope == "application-profile"'
       - present_missing_param.failed == true
       - 'present_missing_param.msg == "state is present but all of the following are missing: contract"'
 
