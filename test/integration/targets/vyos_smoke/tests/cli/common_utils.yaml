@@ -15,6 +15,8 @@
       - result.stdout_lines is defined
 
 # hit conditional() - used for declarative intent
+# Note, this can't be run on AWS because fully testing the vyos_interface dependencies
+# requires the ability to create and remove interfaces other than eth0
 - name: enable eth1
   vyos_interface:
     name: eth1
