@@ -23,7 +23,7 @@ from collections import Mapping
 
 from jinja2.utils import missing
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -105,6 +105,8 @@ class AnsibleJ2Vars(Mapping):
             value = None
             try:
                 value = self._templar.template(variable)
+            except AnsibleUndefinedVariable:
+                raise
             except Exception as e:
                 msg = getattr(e, 'message') or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
