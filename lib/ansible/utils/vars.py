@@ -33,6 +33,11 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 _MAXSIZE = 2 ** 32
 cur_id = 0
@@ -87,7 +92,10 @@ def combine_vars(a, b):
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
         result = a.copy()
-        result.update(b)
+        for key in b:
+            if key in result and result[key] != b[key]:
+                display.warning("Duplicate variable '%s' detected! The value will be overwritten!" % key)
+            result[key] = b[key]
         return result
 
 
