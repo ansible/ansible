@@ -68,9 +68,9 @@ options:
   netflow:
     description:
     - Determines if netflow should be enabled.
-    - The APIC defaults new EPG to Domain binings to C(disabled).
-    choices: [ disabled, enabled ]
-    default: disabled
+    - The APIC defaults new EPG to Domain binings to C(no).
+    type: bool
+    default: 'no'
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
@@ -129,7 +129,7 @@ def main():
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
         epg=dict(type='str', aliases=['name', 'epg_name']),
-        netflow=dict(type='str', choices=['disabled', 'enabled']),
+        netflow=dict(type='raw'),  # Turn into a boolean in v2.9
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -149,6 +149,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     allow_useg = module.params['allow_useg']
     ap = module.params['ap']
     deploy_immediacy = module.params['deploy_immediacy']
@@ -163,7 +165,7 @@ def main():
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
     epg = module.params['epg']
-    netflow = module.params['netflow']
+    netflow = aci.boolean(module.params['netflow'], 'enabled', 'disabled')
     primary_encap = module.params['primary_encap']
     if primary_encap is not None:
         if primary_encap in range(1, 4097):
@@ -185,7 +187,6 @@ def main():
     else:
         epg_domain = None
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
