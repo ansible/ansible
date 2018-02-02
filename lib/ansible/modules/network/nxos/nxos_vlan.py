@@ -404,7 +404,7 @@ def parse_interfaces(module, vlan):
     interfaces = vlan.get('vlanshowplist-ifidx')
     if interfaces:
         for i in interfaces.split(','):
-            if '-' in i:
+            if 'eth' in i.lower() and '-' in i:
                 int_range = i.split('-')
                 stop = int((int_range)[1])
                 start = int(int_range[0].split('/')[1])
