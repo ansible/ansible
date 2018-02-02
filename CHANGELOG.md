@@ -108,6 +108,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_ses_identity
   * aws_ssm_parameter_store
   * aws_waf_condition
+  * aws_waf_rule
   * cloudfront_distribution
   * cloudfront_invalidation
   * cloudfront_origin_access_identity
