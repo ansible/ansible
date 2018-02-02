@@ -226,10 +226,12 @@ class Btrfs(Filesystem):
             self.MKFS_FORCE_FLAGS = '-f'
             self.module.warn('Unable to identify mkfs.btrfs version (%r, %r)' % (stdout, stderr))
 
+            
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
     MKFS_FORCE_FLAGS = '-f'
 
+<<<<<<< HEAD
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
         MKFS = "newfs_msdos"
@@ -251,6 +253,9 @@ class VFAT(Filesystem):
         return [cmd, "-s", str(dev.size()), str(dev.path)]
 
 
+=======
+    
+>>>>>>> 5128847... Update filesystem.py
 class LVM(Filesystem):
     MKFS = 'pvcreate'
     MKFS_FORCE_FLAGS = '-f'
