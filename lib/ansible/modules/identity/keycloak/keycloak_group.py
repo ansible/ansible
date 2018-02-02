@@ -36,6 +36,8 @@ description:
     - When updating a group, where possible provide the group ID to the module. This removes a lookup
       to the API to translate the name into the group ID.
 
+version_added: "2.5"
+
 options:
     state:
         description:
@@ -51,29 +53,25 @@ options:
             - Name of the group.
             - This parameter is required only when creating or updating the group.
         required: false
-        type: 'str'
 
     realm:
         description:
             - They Keycloak realm under which this group resides.
         required: false
-        type: 'str'
         default: 'master'
 
     id:
         description:
-            - The unique identifier for this group. 
+            - The unique identifier for this group.
             - This parameter is not required for updating or deleting a group but
               providing it will reduce the number of API calls required.
         required: false
-        type: 'str'
 
     attributes:
         description:
             - A list of key/value pairs to set as custom attributes for the group.
             - Values may be single values (e.g. a string) or a list of strings.
         required: false
-        type: 'dict'
 
 notes:
     - Presently, the I(realmRoles), I(clientRoles) and I(access) attributes returned by the Keycloak API
@@ -175,7 +173,7 @@ proposed:
         ]
     },
     "name": "new-name"
-}
+  }
 
 existing:
   description: Group representation of the existing group, before modification or deletion. Sample is truncated.
@@ -197,7 +195,7 @@ end_state:
     "attributes": {
        "weather": [ "sunny" ],
        "cnames": [ "foo.bar.com", "bar.bar.com", "baz.bar.com" ]
-    }
+    },
     "id": "1aedffb3-7501-4863-8dfc-f42951649aa9"
   }
 '''
@@ -214,7 +212,7 @@ def main():
     """
     argument_spec = keycloak_argument_spec()
     meta_args = dict(
-        state=dict(default='present', choices=['present','absent']),
+        state=dict(default='present', choices=['present', 'absent']),
         realm=dict(default='master'),
 
         id=dict(type='str'),
@@ -253,8 +251,8 @@ def main():
     # via the API. attributes is a dict, so we'll transparently convert
     # the values to lists.
     if attributes is not None:
-        for key,val in module.params['attributes'].iteritems():
-            module.params['attributes'][key] = [val] if type(val) != list else val
+        for key, val in module.params['attributes'].items():
+            module.params['attributes'][key] = [val] if not isinstance(val, list) else val
 
     group_params = [x for x in module.params
                     if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm'] and
@@ -301,7 +299,8 @@ def main():
         after_group = kc.get_group_by_name(name, realm)
 
         result['end_state'] = after_group
-        result['msg'] = 'Group {} has been created with ID {}'.format(after_group['name'], after_group['id'])
+        result['msg'] = 'Group {name} has been created with ID {id}'.format(name=after_group['name'],
+                                                                            id=after_group['id'])
 
     else:
         if state == 'present':
@@ -309,7 +308,7 @@ def main():
             if updated_group == before_group:
                 result['changed'] = False
                 result['end_state'] = updated_group
-                result['msg'] = "No changes required to group {}.".format(before_group['name'])
+                result['msg'] = "No changes required to group {name}.".format(name=before_group['name'])
                 module.exit_json(**result)
 
             # update the existing group
@@ -327,7 +326,7 @@ def main():
             after_group = kc.get_group_by_groupid(updated_group['id'], realm=realm)
 
             result['end_state'] = after_group
-            result['msg'] = "Group {} has been updated".format(after_group['id'])
+            result['msg'] = "Group {id} has been updated".format(id=after_group['id'])
 
             module.exit_json(**result)
 
@@ -346,12 +345,12 @@ def main():
             kc.delete_group(groupid=gid, realm=realm)
 
             result['changed'] = True
-            result['msg'] = "Group {} has been deleted".format(before_group['name'])
+            result['msg'] = "Group {name} has been deleted".format(name=before_group['name'])
 
             module.exit_json(**result)
 
         else:
-            module.fail_json(msg='Unknown state {}'.format(state))
+            module.fail_json(msg='Unknown state {state}'.format(state=state))
 
     module.exit_json(**result)
 

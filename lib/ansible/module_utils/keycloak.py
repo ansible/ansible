@@ -46,6 +46,7 @@ URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
 
+
 def keycloak_argument_spec():
     """
     Returns argument_spec of options common to keycloak_*-modules
@@ -368,15 +369,15 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUP.format(url=self.baseurl, realm=realm, groupid=gid)
         try:
-            return json.load(open_url( groups_url, method="GET", headers=self.restheaders,
-                                        validate_certs=self.validate_certs ))
+            return json.load(open_url(groups_url, method="GET", headers=self.restheaders,
+                                      validate_certs=self.validate_certs))
 
         except HTTPError as e:
             if e.code == 404:
                 return None
             else:
-                 self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
-                                            gid, realm, str(e)))
+                self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
+                                           gid, realm, str(e)))
         except Exception as e:
             self.module.fail_json(msg="Could not fetch group {} in realm {}: {}".format(
                                             gid, realm, str(e)))
@@ -414,8 +415,8 @@ class KeycloakAPI(object):
         """
         groups_url = URL_GROUPS.format(url=self.baseurl, realm=realm)
         try:
-            return open_url( groups_url, method='POST', headers=self.restheaders,
-                             data=json.dumps(grouprep), validate_certs=self.validate_certs )
+            return open_url(groups_url, method='POST', headers=self.restheaders,
+                            data=json.dumps(grouprep), validate_certs=self.validate_certs)
         except Exception as e:
             self.module.fail_json(msg="Could not create group {} in realm {}: {}".format(
                                             grouprep['name'], realm, str(e)))
@@ -471,4 +472,3 @@ class KeycloakAPI(object):
 
         except Exception as e:
             module.fail_json(msg="Unable to delete group {}: {}".format(groupid, str(e)))
-
