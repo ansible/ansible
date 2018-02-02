@@ -39,6 +39,7 @@ Ansible Changes By Release
 * nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
 * nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
+* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 
 See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
 
@@ -72,6 +73,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_vpc.
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
+  https://github.com/ansible/ansible/issues/29387
 
 ### New Plugins
 
