@@ -176,15 +176,17 @@ class ACIModule(object):
         # Ensure protocol is set
         self.define_protocol()
 
-        if self.params['private_key'] is None:
-            if self.params['password'] is None:
-                self.module.fail_json(msg="Parameter 'password' is required for HTTP authentication")
-            # Only log in when password-based authentication is used
+        if self.params['private_key']:
+            # Perform signature-based authentication, no need to log on separately
+            if not HAS_OPENSSL:
+                self.module.fail_json(msg='Cannot use signature-based authentication because pyopenssl is not available')
+            elif self.params['password'] is not None:
+                self.module.warn("When doing ACI signatured-based authentication, providing parameter 'password' is not required")
+        elif self.params['password']:
+            # Perform password-based authentication, log on using password
             self.login()
-        elif not HAS_OPENSSL:
-            self.module.fail_json(msg='Cannot use signature-based authentication because pyopenssl is not available')
-        elif self.params['password'] is not None:
-            self.module.warn('When doing ACI signatured-based authentication, a password is not required')
+        else:
+            self.module.fail_json(msg="Either parameter 'password' or 'private_key' is required for authentication")
 
     def iso8601_format(self, dt):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
