@@ -131,9 +131,9 @@ class ACIModule(object):
         self.existing = None
 
         # info output
-        self.config = None
+        self.config = dict()
         self.original = None
-        self.proposed = None
+        self.proposed = dict()
 
         # debug output
         self.filter_string = ''
