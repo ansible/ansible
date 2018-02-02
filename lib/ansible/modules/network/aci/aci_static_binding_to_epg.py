@@ -70,16 +70,16 @@ options:
     default: access_interface
   pod:
     description:
-    - the pod number part of the tDn.
-    - C(pod) is usually an integer below 10
+    - The pod number part of the tDn.
+    - C(pod) is usually an integer below 10.
     aliases: [ pod_number ]
   paths:
     description:
-    - the C(paths) string value part of the tDn (also used for protpaths in the tDn when selecting C(virtual_port_channel) as the C(connection_type)).
+    - The C(paths) string value part of the tDn (also used for protpaths in the tDn when selecting C(virtual_port_channel) as the C(connection_type)).
     - C(paths) is usually something like '1011' or '1011-1012' depending on C(connection_type).
   interface:
     description:
-    - the C(interface) string value part of the tDn.
+    - The C(interface) string value part of the tDn.
     - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(connection_type).
   extpaths:
     description:
@@ -138,7 +138,7 @@ def main():
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         mode=dict(type='str', choices=['untagged', 'native', 'regular'], aliases=['mode_name']),
         connection_type=dict(type='str', choices=['access_interface', 'virtual_port_channel', 'direct_port_channel', 'fex'], required=True),
-        # NOTE: C(pod) is usually an integer below 10
+        # NOTE: C(pod) is usually an integer below 10.
         pod=dict(type='int', aliases=['pod_number']),
         # NOTE: C(paths) is usually something like '1011' or '1011-1012' depending on C(connection_type).
         paths=dict(type='str'),
