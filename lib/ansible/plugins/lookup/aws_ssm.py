@@ -8,40 +8,44 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    lookup: aws_ssm
-    author:
-      - Bill Wang <ozbillwang(at)gmail.com>
-      - Marat Bakeev <hawara(at)gmail.com>
-      - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com>
-    version_added: 2.5
-    short_description: Get the value for a SSM parameter or all parameters under a path.
-    description:
-      - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters.
-        The first argument you pass the lookup can either be a parameter name or a hierarchy of
-        parameters. Hierarchies start with a forward slash and end with the parameter name. Up to
-        5 layers may be specified.
-      - When explicitly looking up a parameter by name the parameter being missing will be an error.
-      - When looking up a path for parameters under it a dictionary will be returned for each path.
-        If there is no parameter under that path then the return will be successful but the
-        dictionary will be empty.
-    options:
-      region:
-        description: The region to use. You may use environment variables ar the default profile's region as an alternative.
-      aws_profile:
-        description: The boto profile to use. You may use environment variables or the default profile as an alternative.
-
-      decrypt:
-        description: A boolean to indicate whether to decrypt the parameter.
-        default: false
-      bypath:
-        description: A boolean to indicate whether the parameter is provided as a hierarchy.
-        default: false
-      recursive:
-        description: A boolean to indicate whether to retrieve all parameters within a hierarchy.
-        default: false
-      shortnames:
-        description: Indicates whether to return the shortened name if using a parameter hierarchy.
-        default: false
+lookup: aws_ssm
+author:
+  - Bill Wang <ozbillwang(at)gmail.com>
+  - Marat Bakeev <hawara(at)gmail.com>
+  - Michael De La Rue <siblemitcom.mddlr@spamgourmet.com>
+version_added: 2.5
+requirements:
+  - boto3
+  - botocore
+extends_documentation_fragment:
+- aws_credentials
+short_description: Get the value for a SSM parameter or all parameters under a path.
+description:
+  - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters.
+    The first argument you pass the lookup can either be a parameter name or a hierarchy of
+    parameters. Hierarchies start with a forward slash and end with the parameter name. Up to
+    5 layers may be specified.
+  - When explicitly looking up a parameter by name the parameter being missing will be an error.
+  - When looking up a path for parameters under it a dictionary will be returned for each path.
+    If there is no parameter under that path then the return will be successful but the
+    dictionary will be empty.
+options:
+  decrypt:
+    description: A boolean to indicate whether to decrypt the parameter.
+    default: false
+    type: boolean
+  bypath:
+    description: A boolean to indicate whether the parameter is provided as a hierarchy.
+    default: false
+    type: boolean
+  recursive:
+    description: A boolean to indicate whether to retrieve all parameters within a hierarchy.
+    default: false
+    type: boolean
+  shortnames:
+    description: Indicates whether to return the name only without path if using a parameter hierarchy.
+    default: false
+    type: boolean
 '''
 
 EXAMPLES = '''
@@ -126,6 +130,7 @@ class LookupModule(LookupBase):
             :kwarg aws_secret_key: identity of the AWS key to use
             :kwarg aws_access_key: AWS seret key (matching identity)
             :kwarg aws_security_token: AWS session key if using STS
+            :kwarg decrypt: Set to True to get decrypted parameters
             :kwarg region: AWS region in which to do the lookup
             :kwarg bypath: Set to True to do a lookup of variables under a path
             :kwarg recursive: Set to True to recurse below the path (requires bypath=True)
