@@ -308,7 +308,7 @@ class ACIModule(object):
         ''' Set error information when found '''
 
         # Handle possible APIC error information
-        if self.totalCount != 0:
+        if self.totalCount != '0':
             try:
                 self.error = self.imdata[0]['error']['attributes']
             except (KeyError, IndexError):
