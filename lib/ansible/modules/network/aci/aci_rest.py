@@ -388,7 +388,7 @@ def main():
                            use_proxy=aci.params['use_proxy'])
 
     aci.result['method'] = aci.params['method'].upper()
-    #aci.result['path'] = aci.path
+    # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
     aci.result['response'] = info['msg']
     aci.result['status'] = info['status']
     aci.result['url'] = aci.url
