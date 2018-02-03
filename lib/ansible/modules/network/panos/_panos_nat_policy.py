@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: panos_nat_policy
@@ -31,9 +35,9 @@ version_added: "2.3"
 requirements:
     - pan-python
 deprecated:
-  removed_in: "2.8"
-  why: M(panos_nat_rule) uses next generation SDK (PanDevice).
-  alternative: Use M(panos_nat_rule) instead.
+    alternative: Use M(panos_nat_rule) instead.
+    removed_in: '2.9'
+    why: This module depended on outdated and old SDK, use M(panos_nat_rule) instead.
 options:
     ip_address:
         description:
@@ -144,11 +148,6 @@ EXAMPLES = '''
 RETURN = '''
 # Default return values
 '''
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['deprecated'],
-                    'supported_by': 'community'}
-
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
