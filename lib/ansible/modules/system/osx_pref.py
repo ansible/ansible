@@ -32,12 +32,12 @@ DOCUMENTATION = '''
 module: osx_pref
 author: "John Calixto, @nordjc"
 version_added: "2.2"
-short_description: Manipulates OS X preferences including complex data types
+short_description: Manipulates macOS preferences including complex data types
 description:
-- This module allows users to create, read, update, and delete system and application preferences on OS X including deeply nested dictionary values like those in the C(com.apple.finder) domain.
+- This module allows users to create, read, update, and delete system and application preferences on macOS including deeply nested dictionary values like those in the C(com.apple.finder) domain.
 - It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very specifically target nested keys without having to assign unchanged peer or parent values.
 requirements:
-- Target machine should be running OS X
+- Target machine should be running macOS
 - PyObjC (preinstalled by Apple with the operating system)
 options:
   domain:
@@ -67,7 +67,7 @@ options:
     default: replace
     choices: ['merge', 'replace']
 notes:
-- This module uses the Core Foundation Preferences API of OS X directly instead of manipulating plists or passing arguments to `defaults`.  This ensures that cfprefsd is in the loop when values change.  It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
+- This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.  This ensures that cfprefsd is in the loop when values change.  It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
 - To retrieve the value of a key, use C(action=get) and register the result.  The value will be available in the C(value) attribute of the registered variable.
 - To delete a key and its associated value, use C(action=set) with C(value=null).
 '''
