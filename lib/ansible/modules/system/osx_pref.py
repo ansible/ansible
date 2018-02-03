@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 ---
 module: osx_pref
 author: "John Calixto, @nordjc"
-version_added: "2.2"
+version_added: "2.5"
 short_description: Manipulates macOS preferences including complex data types
 description:
 - This module allows users to create, read, update, and delete system and application preferences on macOS including deeply nested dictionary values like those in the C(com.apple.finder) domain.
