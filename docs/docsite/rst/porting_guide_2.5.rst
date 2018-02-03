@@ -141,6 +141,7 @@ The following modules will be removed in Ansible 2.9. Please update update your 
 * :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
 * :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
 * :ref:`panos_security_policy <panos_security_policy>` use :ref:`panos_security_rule <panos_security_rule>` instead.
+* :ref:`panos_nat_policy <panos_nat_policy>` use :ref:`panos_nat_rule <panos_nat_rule>` instead.
 * :ref:`vsphere_guest <vsphere_guest>` use :ref:`vmware_guest <vmware_guest>` instead.
 
 Noteworthy module changes
