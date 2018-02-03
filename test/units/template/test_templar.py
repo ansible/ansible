@@ -29,6 +29,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.plugins.lookup.list import LookupModule
 from units.mock.loader import DictDataLoader
 
 
@@ -340,6 +341,15 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
                                 self.templar._lookup,
                                 'dict',
                                 ['foo', 'bar'])
+
+    def test_lookup_jinja_list_dict_passed(self):
+        try:
+            module = LookupModule();
+            module.run({'foo': 'bar'})
+        except AnsibleError as e:
+            self.assertEqual("with_list expects a list", str(e))
+            return
+        raise AnsibleError("AnsibleError not raised")
 
     def test_lookup_jinja_kwargs(self):
         res = self.templar._lookup('list', 'blip', random_keyword='12345')
