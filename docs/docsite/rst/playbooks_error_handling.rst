@@ -89,7 +89,8 @@ In previous version of Ansible, this can still be accomplished as follows::
       ignore_errors: True
 
     - name: fail the play if the previous command did not succeed
-      fail: msg="the command failed"
+      fail:
+        msg: "the command failed"
       when: "'FAILED' in command_result.stderr"
 
 .. _override_the_changed_result:
