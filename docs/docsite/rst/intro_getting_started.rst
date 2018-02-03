@@ -43,7 +43,7 @@ Your first commands
 
 Now that you've installed Ansible, it's time to get started with some basics.
 
-Edit (or create) ``/etc/ansible/hosts`` and put one or more remote systems in it. Your
+Edit (or create) ``~/ansible/hosts`` and put one or more remote systems in it. Your
 public SSH key should be located in ``authorized_keys`` on those systems::
 
     192.0.2.50
@@ -67,7 +67,7 @@ Now ping all your nodes:
 
 .. code-block:: bash
 
-   $ ansible all -m ping
+   $ ansible -i ~/ansible/hosts all -m ping
 
 Ansible will attempt to remote connect to the machines using your current
 user name, just like SSH would.  To override the remote user name, just use the '-u' parameter.
@@ -77,17 +77,17 @@ If you would like to access sudo mode, there are also flags to do that:
 .. code-block:: bash
 
     # as bruce
-    $ ansible all -m ping -u bruce
+    $ ansible -i ~/ansible/hosts all -m ping -u bruce
     # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce --sudo 
+    $ ansible -i ~/ansible/hosts  all -m ping -u bruce --sudo 
     # as bruce, sudoing to batman
-    $ ansible all -m ping -u bruce --sudo --sudo-user batman
+    $ ansible -i ~/ansible/hosts all -m ping -u bruce --sudo --sudo-user batman
 
     # With latest version of ansible `sudo` is deprecated so use become
     # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce -b
+    $ ansible -i ~/ansible/hosts all -m ping -u bruce -b
     # as bruce, sudoing to batman
-    $ ansible all -m ping -u bruce -b --become-user batman
+    $ ansible -i ~/ansible/hosts all -m ping -u bruce -b --become-user batman
 
 (The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
 replacement.  Flags passed to sudo (like -H) can also be set there.)
@@ -96,7 +96,7 @@ Now run a live command on all of your nodes:
   
 .. code-block:: bash
 
-   $ ansible all -a "/bin/echo hello"
+   $ ansible -i ~/ansible/hosts all -a "/bin/echo hello"
 
 Congratulations!  You've just contacted your nodes with Ansible.  It's
 soon going to be time to: read about some more real-world cases in :doc:`intro_adhoc`, 
@@ -113,7 +113,7 @@ Example:
 
 .. code-block:: bash
 
-    $ ansible localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
+    $ ansible -i ~/ansible/hosts localhost -m ping -e 'ansible_python_interpreter="/usr/bin/env python"'
 
 You can specify localhost explicitly by adding this to your inventory file::
 
