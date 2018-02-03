@@ -33,7 +33,8 @@ One way of using lookups is to populate variables. These macros are evaluated ea
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
     tasks:
-      - debug: msg="motd value is {{ motd_value }}"
+      - debug:
+          msg: "motd value is {{ motd_value }}"
 
 For more details and a complete list of lookup plugins available, please see :doc:`plugins/lookup`.
 
