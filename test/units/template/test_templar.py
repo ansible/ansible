@@ -344,7 +344,7 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_list_dict_passed(self):
         try:
-            module = LookupModule();
+            module = LookupModule()
             module.run({'foo': 'bar'})
         except AnsibleError as e:
             self.assertEqual("with_list expects a list", str(e))
