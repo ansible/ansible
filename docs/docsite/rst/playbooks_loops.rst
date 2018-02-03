@@ -48,10 +48,14 @@ Some plugins like, the yum and apt modules can take lists directly to their opti
 See each action's documentation for details, for now here is an example::
 
    - name: optimal yum
-     yum: name={{list_of_packages}} state=present
+     yum:
+       name: "{{list_of_packages}}"
+       state: present
 
    - name: non optimal yum, not only slower but might cause issues with interdependencies
-     yum: name={{item}} state=present
+     yum:
+       name: "{{item}}"
+       state: present
      loop: "{{list_of_packages}}"
 
 Note that the types of items you iterate over do not have to be simple lists of strings.
