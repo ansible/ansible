@@ -121,7 +121,9 @@ Using this with the 'serial' keyword to control the number of hosts executing at
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        yum: name=acme-web-stack state=latest
+        yum: 
+          name: acme-web-stack
+          state: latest
 
       - name: add back to load balancer pool
         command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
