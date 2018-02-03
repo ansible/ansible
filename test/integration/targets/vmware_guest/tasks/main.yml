@@ -26,4 +26,5 @@
 - include: disk_type_d1_c1_f0.yml
 - include: create_nw_d1_c1_f0.yml
 - include: delete_vm.yml
+- include: non_existent_vm_ops.yml
 #- include: template_d1_c1_f0.yml
