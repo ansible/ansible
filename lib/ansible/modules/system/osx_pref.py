@@ -136,7 +136,7 @@ RETURN = '''
 value:
   description: The value associated with the preference domain and key
   returned: when action=get
-  type: Python object that maps closest to the data type of the OS X preference.  This can be an integer, float, string, dict, list, etc...
+  type: Python object that maps closest to the data type of the macOS preference.  This can be an integer, float, string, dict, list, etc...
   sample: "{'CustomViewStyleVersion': 1}"
 '''
 
