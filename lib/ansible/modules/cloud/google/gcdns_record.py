@@ -393,7 +393,7 @@ def create_record(module, gcdns, zone, record):
                 # not when combined (e.g., an 'A' record with "www.example.com"
                 # as its value).
                 module.fail_json(
-                    msg='value is invalid for the given type: ' +
+                    msg='server response: %s, value is invalid for the given type: ' % error.message +
                     "%s, got value: %s" % (record_type, record_data),
                     changed=False
                 )
