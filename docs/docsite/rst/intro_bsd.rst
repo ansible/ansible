@@ -30,6 +30,7 @@ On your control machine you can execute the following for most versions of FreeB
     ansible -m raw -a "pkg install -y python27" mybsdhost1
 
 Or for most versions of OpenBSD::
+
     ansible -m raw -a "pkg_add -z python-2.7"
 
 
@@ -37,7 +38,7 @@ Or for most versions of OpenBSD::
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
 .. note::
-    This example Demonstrated using pkg on FreeBSD and pkg_add on OpenBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
+    This example demonstrated using pkg on FreeBSD and pkg_add on OpenBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
 
 .. _python_location:
 
