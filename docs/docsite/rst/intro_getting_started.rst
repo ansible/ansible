@@ -26,17 +26,33 @@ Remote Connection Information
 `````````````````````````````
 
 Before we get started, it's important to understand how Ansible communicates with remote
-machines over SSH. 
+machines using  SSH. 
 
-By default, Ansible will try to use native 
-OpenSSH for remote communication when possible.  This enables ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup.  However, when using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
-OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
+By default, Ansible will try to use native OpenSSH for communicating with
+remote hosts when possible.  This enables ControlPersist (a performance
+feature), Kerberos authentication, and the use of any other options which can
+be specified in ``~/.ssh/config``.  However, when using Enterprise Linux 6
+operating systems as the control machine (Red Hat Enterprise Linux and
+derivatives such as CentOS), the version of OpenSSH may be too old to support
+ControlPersist. On these operating systems, Ansible will fallback into using a
+high-quality Python implementation of SSH called 'paramiko'.  If you wish to
+use features like Kerberized SSH or other OpenSSH features, consider using a
+newer Enterprise Linux Version, Fedora, OS X, or Ubuntu as your control machine.
+
 
 Occasionally you'll encounter a device that doesn't support SFTP. This is rare, but should it occur, you can switch to SCP mode in :doc:`intro_configuration`.
 
-When speaking with remote machines, Ansible by default assumes you are using SSH keys.  SSH keys are encouraged but password authentication can also be used where needed by supplying the option ``--ask-pass``.  If using sudo features and when sudo requires a password, also supply ``--ask-become-pass`` (previously ``--ask-sudo-pass`` which has been deprecated).
+When communicating with remote machines, Ansible by default assumes you are
+using SSH keys.  SSH keys are encouraged but password authentication can also
+be used where needed by supplying the option ``--ask-pass``.  If using become
+features which require a password, also supply ``--ask-become-pass`` (
+``--ask-sudo-pass`` in versions of ansible prior to 1.9 which has been
+deprecated).
 
-While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud.  In most cases this will work better than on the open Internet.
+It is worth sharing: Any management system benefits from being run near the
+machines being managed. If you are running Ansible in a cloud, consider running
+it from a machine inside that cloud.  In most cases this will work better than
+on the open Internet.
 
 As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
