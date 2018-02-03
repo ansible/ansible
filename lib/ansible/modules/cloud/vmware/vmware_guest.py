@@ -1363,6 +1363,11 @@ class PyVmomiHelper(PyVmomi):
                     datastore_name = datastore.name
 
         if not datastore:
+            if len(self.params['disk']) != 0 or self.params['template'] is None:
+                self.module.fail_json(msg="Unable to find the datastore with given parameters."
+                                          " This could mean, %s is a non-existent virtual machine and module tried to"
+                                          " deploy it as new virtual machine with no disk. Please specify disks parameter"
+                                          " or specify template to clone from." % self.params['name'])
             self.module.fail_json(msg="Failed to find a matching datastore")
 
         return datastore, datastore_name
