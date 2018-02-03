@@ -256,7 +256,9 @@ The following construct selects the first available file appropriate for the var
 The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
 
     - name: template a file
-      template: src={{ item }} dest=/etc/myapp/foo.conf
+      template:
+          src: "{{ item }}"
+          dest: /etc/myapp/foo.conf
       loop: "{{lookup('first_found', { 'files': myfiles, 'paths': mypaths})}}"
       vars:
         myfiles:
@@ -294,14 +296,18 @@ fields::
       hosts: all
       tasks:
 
-          - name: retrieve the list of home directories
-            command: ls /home
-            register: home_dirs
+        - name: retrieve the list of home directories
+          command: ls /home
+          register: home_dirs
 
-          - name: add home dirs to the backup spooler
-            file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
-            loop: "{{ home_dirs.stdout_lines }}"
-            # same as loop: "{{ home_dirs.stdout.split() }}"
+        - name: add home dirs to the backup spooler
+          file:
+            path: /mnt/bkspool/{{ item }}
+            src: /home/{{ item }}
+            state: link
+          loop: "{{ home_dirs.stdout_lines }}"
+          # same as loop: "{{ home_dirs.stdout.split() }}"
+
 
 As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 You may check the registered variable's string contents for emptiness::
@@ -316,7 +322,8 @@ You may check the registered variable's string contents for emptiness::
             register: contents
 
           - name: check contents for emptiness
-            debug: msg="Directory is empty"
+            debug: 
+              msg: "Directory is empty"
             when: contents.stdout == ""
 
 Commonly Used Facts
