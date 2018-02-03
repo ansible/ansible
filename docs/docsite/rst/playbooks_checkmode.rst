@@ -39,15 +39,17 @@ Instead of ``yes``/``no`` you can use a Jinja2 expression, just like the ``when`
 
 Example::
 
-    tasks:
+  tasks:
+    - name: this task will make changes to the system even in check mode
+      command: /something/to/run --even-in-check-mode
+      check_mode: no
 
-      - name: this task will make changes to the system even in check mode
-        command: /something/to/run --even-in-check-mode
-        check_mode: no
-
-      - name: this task will always run under checkmode and not change the system
-        lineinfile: line="important config" dest=/path/to/myconfig.conf state=present
-        check_mode: yes
+    - name: this task will always run under checkmode and not change the system
+      lineinfile:
+          line: "important config"
+          dest: /path/to/myconfig.conf
+          state: present
+      check_mode: yes
 
 
 Running single tasks with ``check_mode: yes`` can be useful to write tests for
@@ -67,17 +69,20 @@ which will be set to ``True`` during check mode.
 
 Example::
 
-    tasks:
 
-      - name: this task will be skipped in check mode
-        git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
-        when: not ansible_check_mode
+  tasks:
 
-      - name: this task will ignore errors in check mode
-        git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
-        ignore_errors: "{{ ansible_check_mode }}"
+    - name: this task will be skipped in check mode
+      git:
+        repo: ssh://git@github.com/mylogin/hello.git
+        dest: /home/mylogin/hello
+      when: not ansible_check_mode
 
-
+    - name: this task will ignore errors in check mode
+      git:
+        repo: ssh://git@github.com/mylogin/hello.git
+        dest: /home/mylogin/hello
+      ignore_errors: "{{ ansible_check_mode }}"
 
 .. _diff_mode:
 
