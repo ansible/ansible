@@ -9,12 +9,16 @@ Foreword
 ````````
 
 Now that you've read :doc:`intro_installation` and installed Ansible, it's time to get
-started with some ad-hoc commands.  
+started.
 
-What we are showing first are not the powerful configuration/deployment/orchestration features of Ansible.
-These features are handled by playbooks which are covered in a separate section.
+Before we begin to use the more powerful configuration management, deployment,
+and orchestration features of Ansible we will spend some time getting Ansible
+up and running.
 
-This section is about how to initially get Ansible running.  Once you understand these concepts, read :doc:`intro_adhoc` for some more detail, and then you'll be ready to begin learning about playbooks and explore the most interesting parts!
+Throughout this section we will be making use of the ad-hoc command feature of
+Ansible.  You can read more about it in the :doc:`intro_adhoc` section.  Once
+you understand thse concepts you'll be ready to learn more about playbooks and
+explore the more intersting aspects of Ansible.
 
 .. _remote_connection_information:
 
