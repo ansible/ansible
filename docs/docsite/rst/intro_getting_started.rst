@@ -69,25 +69,22 @@ Now ping all your nodes:
 
    $ ansible -i ~/ansible/hosts all -m ping
 
-Ansible will attempt to remote connect to the machines using your current
-user name, just like SSH would.  To override the remote user name, just use the '-u' parameter.
+By default Ansible will attempt to connect to machines using your current user
+name, just like SSH would.  To specify a different remote user name, use the
+`-u` parameter.
 
-If you would like to access sudo mode, there are also flags to do that:
+If you would like to become a different user on the remote host (such as root), there are also options to do that:
 
 .. code-block:: bash
 
-    # as bruce
+    # Connect as bruce
     $ ansible -i ~/ansible/hosts all -m ping -u bruce
-    # as bruce, sudoing to root
-    $ ansible -i ~/ansible/hosts  all -m ping -u bruce --sudo 
-    # as bruce, sudoing to batman
-    $ ansible -i ~/ansible/hosts all -m ping -u bruce --sudo --sudo-user batman
+    # Connect as bruce, become root.
+    $ ansible -i ~/ansible/hosts  all -m ping -u bruce --become
+    # Connect as bruce, become batman
+    $ ansible -i ~/ansible/hosts all -m ping -u bruce --become --become-user batman
 
-    # With latest version of ansible `sudo` is deprecated so use become
-    # as bruce, sudoing to root
-    $ ansible -i ~/ansible/hosts all -m ping -u bruce -b
-    # as bruce, sudoing to batman
-    $ ansible -i ~/ansible/hosts all -m ping -u bruce -b --become-user batman
+If you are using a version of ansible prior to 1.9 you will need to use the `--sudo` and `--sudo-user` options instead of `--become` and `--become-pass`
 
 (The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
 replacement.  Flags passed to sudo (like -H) can also be set there.)
