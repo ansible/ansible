@@ -328,6 +328,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * onyx_vlan
 - panos
   * panos_query_rules
+  * panos_dag_tags
 - radware
   * vdirect_commit
   * vdirect_runnable
