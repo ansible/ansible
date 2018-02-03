@@ -2,10 +2,13 @@
 - debug: msg="START TRANSPORT:{{ connection.transport }} nxos_bgp sanity test"
 
 - set_fact: neighbor_down_fib_accelerate="true"
-  when: not titanium
+  when: (not titanium) and ((imagetag != 'N1') and (imagetag != 'D1'))
 
 - set_fact: reconnect_interval="55"
-  when: not titanium
+  when: (not titanium) and ((imagetag != 'N1') and (imagetag != 'D1'))
+
+- set_fact: isolate="false"
+  when: platform is not match("N35")
 
 - name: "Enable feature BGP"
   nxos_feature:
@@ -75,7 +78,7 @@
       graceful_restart_helper: true
       graceful_restart_timers_restart: 130
       graceful_restart_timers_stalepath_time: 310
-      isolate: false
+      isolate: "{{isolate|default(omit)}}"
       log_neighbor_changes: true
       maxas_limit: 50
       neighbor_down_fib_accelerate: "{{neighbor_down_fib_accelerate|default(omit)}}"
