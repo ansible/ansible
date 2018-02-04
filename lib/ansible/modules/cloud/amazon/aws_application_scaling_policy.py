@@ -56,11 +56,13 @@ options:
         description: A target tracking policy. This parameter is required if you are creating a new policy and the policy type is TargetTrackingScaling.
         required: no
     minimum_tasks:
-        description: The minimum value to scale to in response to a scale in event. This parameter is required if you are creating a first new policy for the specified service.
+        description: The minimum value to scale to in response to a scale in event.
+        This parameter is required if you are creating a first new policy for the specified service.
         required: no
     maximum_tasks:
-        description: The maximum value to scale to in response to a scale out event. This parameter is required if you are creating a first new policy for the specified service.
-        required: no    
+        description: The maximum value to scale to in response to a scale out event.
+        This parameter is required if you are creating a first new policy for the specified service.
+        required: no
 extends_documentation_fragment:
     - aws
     - ec2
@@ -179,6 +181,7 @@ def delete_scaling_policy(connection, module):
     result = {"changed": changed}
     return result
 
+
 def create_scalable_target(connection, module):
     changed = False
 
@@ -225,6 +228,7 @@ def create_scalable_target(connection, module):
 
     result = {"changed": changed, "response": snaked_response}
     return result
+
 
 def create_scaling_policy(connection, module):
     scaling_policy = connection.describe_scaling_policies(
