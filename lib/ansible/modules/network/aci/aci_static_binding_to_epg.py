@@ -41,7 +41,7 @@ options:
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
-    - This acts as the secondary encap_Id when using micro-segmentation.
+    - This acts as the secondary C(encap_id) when using micro-segmentation.
     aliases: [ vlan, vlan_id ]
     choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   primary_encap_id:
@@ -99,7 +99,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Deploy Static EPG (Port Channel)
+- name: Deploy Static Path for EPG
   aci_static_binding_to_epg:
     host: apic
     username: admin
@@ -108,14 +108,12 @@ EXAMPLES = r'''
     ap: accessport_code_app
     epg: accessport_epg1
     encap_id: 222
-    # primary_encap: 11
     deploy_immediacy: lazy
     interface_mode: access
     interface_type: switch_port
     pod: 1
     leafs: 101
     interface: '1/7'
-    # extpaths: 1011
     state: present
 '''
 
@@ -156,7 +154,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap', 'interface_type', 'pod', 'leafs', 'interface']],
+            ['state', 'present', ['tenant', 'ap', 'epg', 'encap_id', 'interface_type', 'pod', 'leafs', 'interface']],
             ['interface_type', 'fex', ['extpaths']],
         ],
     )
