@@ -37,6 +37,7 @@
 
 - set_fact:
     remote_dir_expanded: '{{ echo.stdout }}'
+    remote_file_expanded: '{{ echo.stdout }}/foo.txt'
 
 - debug:
     var: copy_result
@@ -46,7 +47,7 @@
   assert:
     that:
       - "'changed' in copy_result"
-      - "'dest' in copy_result"
+      - copy_result.dest == remote_file_expanded
       - "'group' in copy_result"
       - "'gid' in copy_result"
       - "'md5sum' in copy_result"
@@ -110,6 +111,19 @@
   assert:
     that:
       - "copy_result2 is not changed"
+
+- name: Assert basic copy worked
+  assert:
+    that:
+      - "'changed' in copy_result2"
+      - copy_result2.dest == remote_file_expanded
+      - "'group' in copy_result2"
+      - "'gid' in copy_result2"
+      - "'checksum' in copy_result2"
+      - "'owner' in copy_result2"
+      - "'size' in copy_result2"
+      - "'state' in copy_result2"
+      - "'uid' in copy_result2"
 
 - name: Overwrite the file using the content system
   copy:
