@@ -340,12 +340,12 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
                                 "with_dict expects a dict",
                                 self.templar._lookup,
                                 'dict',
-                                ['FOO', 'BAR'])
+                                ['foo', 'bar'])
 
     def test_lookup_jinja_list_dict_passed(self):
         try:
             module = LookupModule()
-            module.run({'foo': 'bar'})
+            module.run({'FOO': 'BAR'})
         except AnsibleError as e:
             self.assertEqual("with_list expects a list", str(e))
             return
