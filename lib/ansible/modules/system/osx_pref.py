@@ -16,16 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-import collections
-import copy
-import sys
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-# Ensure that we have access to the pyobjc libraries that Apple shipped with
-# the operating system (e.g. even when using brew-installed python)
-sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
-import CoreFoundation
-from PyObjCTools.Conversion import pythonCollectionFromPropertyList
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
@@ -34,8 +32,10 @@ author: "John Calixto, @nordjc"
 version_added: "2.5"
 short_description: Manipulates macOS preferences including complex data types
 description:
-- This module allows users to create, read, update, and delete system and application preferences on macOS including deeply nested dictionary values like those in the C(com.apple.finder) domain.
-- It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very specifically target nested keys without having to assign unchanged peer or parent values.
+- This module allows users to create, read, update, and delete system and application preferences on macOS 
+including deeply nested dictionary values like those in the C(com.apple.finder) domain.
+- It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very 
+specifically target nested keys without having to assign unchanged peer or parent values.
 requirements:
 - Target machine should be running macOS
 - PyObjC (preinstalled by Apple with the operating system)
@@ -62,16 +62,19 @@ options:
     choices: ['get', 'set']
   dict_set_method:
     description:
-    - When setting a value to a dictionary, either C(replace) any existing value with the contents of C(value), or perform a deep C(merge) of nested dictionaries.
+    - When setting a value to a dictionary, either C(replace) any existing value with the contents 
+    of C(value), or perform a deep C(merge) of nested dictionaries.
     required: false
     default: replace
     choices: ['merge', 'replace']
 notes:
-- This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.  This ensures that cfprefsd is in the loop when values change.  It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
-- To retrieve the value of a key, use C(action=get) and register the result.  The value will be available in the C(value) attribute of the registered variable.
+- This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.  
+This ensures that cfprefsd is in the loop when values change. 
+It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
+- To retrieve the value of a key, use C(action=get) and register the result. 
+The value will be available in the C(value) attribute of the registered variable.
 - To delete a key and its associated value, use C(action=set) with C(value=null).
 '''
-
 
 EXAMPLES = '''
 # Get basic string value
@@ -131,15 +134,29 @@ EXAMPLES = '''
   register: rumour
 '''
 
-
 RETURN = '''
 value:
   description: The value associated with the preference domain and key
   returned: when action=get
-  type: Python object that maps closest to the data type of the macOS preference.  This can be an integer, float, string, dict, list, etc...
+  type: Python object that maps closest to the data type of the macOS preference.
+  This can be an integer, float, string, dict, list, etc...
   sample: "{'CustomViewStyleVersion': 1}"
 '''
 
+import collections
+import copy
+import sys
+from ansible.module_utils.basic import AnsibleModule
+
+# Ensure that we have access to the pyobjc libraries that Apple ships with
+# macOS (e.g. even when using brew-installed python)
+try:
+    sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
+    import CoreFoundation
+    from PyObjCTools.Conversion import pythonCollectionFromPropertyList
+    HAS_LIB=True
+except:
+    HAS_LIB=False
 
 class PrefActor(object):
     def __init__(self, module):
@@ -195,11 +212,11 @@ def deep_merge_dicts(base, incoming):
     :rtype:  None
 
     """
-    for ki, vi in incoming.iteritems():
+    for ki, vi in incoming.items():
         if (ki in base
                 and isinstance(vi, collections.MutableMapping)
                 and isinstance(base[ki], collections.MutableMapping)
-                ):
+            ):
             deep_merge_dicts(base[ki], vi)
         else:
             base[ki] = vi
@@ -207,8 +224,8 @@ def deep_merge_dicts(base, incoming):
 
 def get_pref(key, domain):
     return pythonCollectionFromPropertyList(
-            CoreFoundation.CFPreferencesCopyAppValue(key, domain)
-            )
+        CoreFoundation.CFPreferencesCopyAppValue(key, domain)
+    )
 
 
 def set_pref(key, value, domain):
@@ -216,37 +233,45 @@ def set_pref(key, value, domain):
     return CoreFoundation.CFPreferencesAppSynchronize(domain)
 
 
-ARG_SPEC = {
-        'domain': {
-            'default': 'NSGlobalDomain',
-            'type': 'str',
-            },
-        'key': {
-            'required': True,
-            'type': 'str',
-            },
-        'value': {},
-        'action': {
-            'choices': ['get', 'set'],
-            'default': 'get',
-            },
-        'dict_set_method': {
-            'choices': ['merge', 'replace'],
-            'default': 'replace',
-            },
-        }
+ARG_SPEC = dict(
+    domain=dict(
+        default="NSGlobalDomain",
+        type="str",
+    ),
+    key=dict(
+        required=True,
+        type="str",
+    ),
+    value=dict(),
+    action=dict(
+        choices=[
+            'get',
+            'set'
+        ],
+        default="get",
+    ),
+    dict_set_method=dict(
+        choices=[
+            'merge',
+            'replace'
+        ],
+        default="replace",
+    ),
+)
 
 
 def main():
     module = AnsibleModule(
-            argument_spec=ARG_SPEC,
-            supports_check_mode=True,
-            )
+        argument_spec=ARG_SPEC,
+        supports_check_mode=True
+    )
+
+    if HAS_LIB == False
+        module.fail_json(msg="PyObjC lib not found.")
+
     actor = PrefActor(module)
     actor.act()
 
-
-from ansible.module_utils.basic import *  # noqa
 if __name__ == '__main__':
     main()
     
