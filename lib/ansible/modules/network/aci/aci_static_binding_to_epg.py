@@ -57,11 +57,11 @@ options:
     default: lazy
   interface_mode:
     description:
-    - Determines how layer 2 tags will be read and added to frames.
+    - Determines how layer 2 tags will be read from and added to frames.
     - The APIC defaults the mode to C(trunk).
     choices: [ access, trunk, 802.1p ]
     default: trunk
-    aliases: [ interface_mode_name ]
+    aliases: [ mode, interface_mode_name ]
   connection_type:
     description:
     - The Path Type for the static EPG deployement.
@@ -136,7 +136,7 @@ def main():
         encap=dict(type='int', aliases=['encapsulation']),
         primary_encap=dict(type='int', aliases=['primary_encapsulation']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['interface_mode_name']),
+        interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['mode', 'interface_mode_name']),
         connection_type=dict(type='str', choices=['access_interface', 'virtual_port_channel', 'direct_port_channel', 'fex'], required=True),
         # NOTE: C(pod) is usually an integer below 10.
         pod=dict(type='int', aliases=['pod_number']),
