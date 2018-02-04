@@ -340,7 +340,7 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
                                 "with_dict expects a dict",
                                 self.templar._lookup,
                                 'dict',
-                                ['foo', 'bar'])
+                                ['FOO', 'BAR'])
 
     def test_lookup_jinja_list_dict_passed(self):
         try:
