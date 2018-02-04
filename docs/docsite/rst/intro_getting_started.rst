@@ -81,7 +81,7 @@ do:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to use Ansible's ``--private-key`` option to specify a pem file instead)
+Depending on your setup, you may wish to use Ansible's ``--private-key`` option to specify a pem file instead.
 
 Now ping all your nodes:
 
@@ -106,8 +106,8 @@ If you would like to become a different user on the remote host (such as root), 
 
 If you are using a version of ansible prior to 1.9 you will need to use the `--sudo` and `--sudo-user` options instead of `--become` and `--become-pass`
 
-(The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
-replacement.  Flags passed to sudo (like -H) can also be set there.)
+The sudo implementation is changeable in Ansible's configuration file if you want to use a sudo
+replacement.  Flags passed to sudo (like -H) can also be set there.
 
 Now run a live command on all of your nodes:
   
