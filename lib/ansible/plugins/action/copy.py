@@ -538,13 +538,13 @@ class ActionModule(ActionBase):
 
             changed = changed or module_return.get('changed', False)
 
-            # the file module returns the file path as 'path', but
-            # the copy module uses 'dest', so add it if it's not there
-            if 'path' in module_return and 'dest' not in module_return:
-                module_return['dest'] = module_return['path']
-
         if module_executed and len(source_files['files']) == 1:
             result.update(module_return)
+
+            # the file module returns the file path as 'path', but
+            # the copy module uses 'dest', so add it if it's not there
+            if 'path' in result and 'dest' not in result:
+                result['dest'] = result['path']
         else:
             result.update(dict(dest=dest, src=source, changed=changed))
 
