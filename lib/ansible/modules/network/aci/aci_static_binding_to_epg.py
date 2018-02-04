@@ -202,9 +202,6 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
-    if interface_type == 'fex' and extpaths is None:
-        module.fail_json(msg='extpaths must be defined')
-
     INTERFACE_TYPE_MAPPING = dict(
         # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
         switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
