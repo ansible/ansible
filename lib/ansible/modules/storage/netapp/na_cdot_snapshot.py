@@ -47,8 +47,6 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
-
 '''
 
 EXAMPLES = """
