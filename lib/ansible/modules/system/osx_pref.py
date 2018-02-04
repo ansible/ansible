@@ -17,6 +17,7 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -28,52 +29,54 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: osx_pref
-author: "John Calixto, @nordjc"
-version_added: "2.5"
+author: 
+    - John Calixto (@nordjc)
+    - Matthias Hollerbach (@kinglouie)
 short_description: Manipulates macOS preferences including complex data types
+version_added: "2.5"
 description:
-- This module allows users to create, read, update, and delete system and application preferences on macOS 
-including deeply nested dictionary values like those in the C(com.apple.finder) domain.
-- It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very 
-specifically target nested keys without having to assign unchanged peer or parent values.
-requirements:
-- Target machine should be running macOS
-- PyObjC (preinstalled by Apple with the operating system)
+    - This module allows users to create, read, update, and delete system and application preferences on macOS
+      including deeply nested dictionary values like those in the C(com.apple.finder) domain.
+    - It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very
+      specifically target nested keys without having to assign unchanged peer or parent values.
+      requirements:
+    - Target machine should be running macOS
+    - PyObjC (preinstalled by Apple with the operating system)
 options:
-  domain:
-    description:
-    - The preference domain.  E.g. com.apple.finder, /path/to/some.plist, NSGlobalDomain
-    required: false
-    default: NSGlobalDomain
-  key:
-    description:
-    - The preference key.
-    required: true
-  value:
-    description:
-    - The value that will be set for the specified key.
-    - Required when C(action=set).
-    required: false
-  action:
-    description:
-    - Whether to I(get) or I(set) the specified preference.
-    required: false
-    default: get
-    choices: ['get', 'set']
-  dict_set_method:
-    description:
-    - When setting a value to a dictionary, either C(replace) any existing value with the contents 
-    of C(value), or perform a deep C(merge) of nested dictionaries.
-    required: false
-    default: replace
-    choices: ['merge', 'replace']
+    domain:
+        description:
+            - The preference domain.  E.g. com.apple.finder, /path/to/some.plist, NSGlobalDomain
+        required: false
+        default: NSGlobalDomain
+    key:
+        description:
+            - The preference key.
+        required: true
+    value:
+        description:
+            - The value that will be set for the specified key.
+        - Required when C(action=set).
+        required: false
+    action:
+        description:
+            - Whether to I(get) or I(set) the specified preference.
+        required: false
+        default: get
+        choices: ['get', 'set']
+    dict_set_method:
+        description:
+            - When setting a value to a dictionary, either C(replace) any existing value with the contents
+              of C(value), or perform a deep C(merge) of nested dictionaries.
+        required: false
+        default: replace
+        choices: ['merge', 'replace']
 notes:
-- This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.  
-This ensures that cfprefsd is in the loop when values change. 
-It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
-- To retrieve the value of a key, use C(action=get) and register the result. 
-The value will be available in the C(value) attribute of the registered variable.
-- To delete a key and its associated value, use C(action=set) with C(value=null).
+    - This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.
+      This ensures that cfprefsd is in the loop when values change.
+      It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
+    - To retrieve the value of a key, use C(action=get) and register the result.
+      The value will be available in the C(value) attribute of the registered variable.
+    - To delete a key and its associated value, use C(action=set) with C(value=null).
 '''
 
 EXAMPLES = '''
@@ -107,7 +110,7 @@ EXAMPLES = '''
     action: set
 
 
-# Perform deep merge of dictionary keys.  I.e. use any existing values unless
+# Perform deep merge of dictionary keys. I.e. use any existing values unless
 # they are specified in the task below:
 - name: Configure finder kit standard view
   osx_pref:
@@ -154,9 +157,10 @@ try:
     sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
     import CoreFoundation
     from PyObjCTools.Conversion import pythonCollectionFromPropertyList
-    HAS_LIB=True
+    HAS_LIB = True
 except:
-    HAS_LIB=False
+    HAS_LIB = False
+
 
 class PrefActor(object):
     def __init__(self, module):
@@ -213,10 +217,11 @@ def deep_merge_dicts(base, incoming):
 
     """
     for ki, vi in incoming.items():
-        if (ki in base
-                and isinstance(vi, collections.MutableMapping)
-                and isinstance(base[ki], collections.MutableMapping)
-            ):
+        if (
+            ki in base
+            and isinstance(vi, collections.MutableMapping)
+            and isinstance(base[ki], collections.MutableMapping)
+        ):
             deep_merge_dicts(base[ki], vi)
         else:
             base[ki] = vi
@@ -266,7 +271,7 @@ def main():
         supports_check_mode=True
     )
 
-    if HAS_LIB == False
+    if not HAS_LIB:
         module.fail_json(msg="PyObjC lib not found.")
 
     actor = PrefActor(module)
@@ -274,4 +279,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
