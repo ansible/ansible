@@ -57,11 +57,11 @@ options:
         required: no
     minimum_tasks:
         description: The minimum value to scale to in response to a scale in event.
-        This parameter is required if you are creating a first new policy for the specified service.
+            This parameter is required if you are creating a first new policy for the specified service.
         required: no
     maximum_tasks:
         description: The maximum value to scale to in response to a scale out event.
-        This parameter is required if you are creating a first new policy for the specified service.
+            This parameter is required if you are creating a first new policy for the specified service.
         required: no
 extends_documentation_fragment:
     - aws
