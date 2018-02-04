@@ -129,7 +129,8 @@ EXAMPLES = '''
 RETURN = '''
 value:
     description: The value associated with the preference domain and key.
-                 Return type is a python object that maps closest to the data type of the macOS preference. This can be an integer, float, string, dict, list, etc...
+                 Return type is a python object that maps closest to the data type of the macOS preference. 
+                 This can be an integer, float, string, dict, list, etc...
     returned: when action=get
     type: string
     sample: "{'CustomViewStyleVersion': 1}"
