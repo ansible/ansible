@@ -21,14 +21,14 @@ module: osx_pref
 author:
     - John Calixto (@nordjc)
     - Matthias Hollerbach (@kinglouie)
-short_description: Manipulates macOS preferences including complex data types
+short_description: Manipulates macOS preferences including complex data types.
 version_added: "2.5"
 description:
     - This module allows users to create, read, update, and delete system and application preferences on macOS
       including deeply nested dictionary values like those in the C(com.apple.finder) domain.
     - It also provides a convenient C(merge) strategy for assignments in nested dictionaries so that users can very
       specifically target nested keys without having to assign unchanged peer or parent values.
-      requirements:
+requirements:
     - Target machine should be running macOS
     - PyObjC (preinstalled by Apple with the operating system)
 options:
@@ -78,7 +78,7 @@ EXAMPLES = '''
   register: finder_view_style
 - name: Only accept icon view
   fail: msg="Only icons are acceptable!"
-  when: "{{ finder_view_style.value != 'icnv' }}"
+  when: finder_view_style.value != 'icnv'
 
 
 # Set basic boolean value
@@ -159,6 +159,8 @@ class PrefActor(object):
         self.dict_set_method = params['dict_set_method']
         self.value = params.get('value')
         self.act = getattr(self, params['action'])
+        if not HAS_LIB:
+            module.fail_json(msg="PyObjC lib not found.")
 
     def get(self):
         value = get_pref(self.key, self.domain)
@@ -190,15 +192,15 @@ class PrefActor(object):
 def deep_merge_dicts(base, incoming):
     """
     Performs an *in-place* deep-merge of key-values from :attr:`incoming`
-    into :attr:`base`.  No attempt is made to preserve the original state of
+    into :attr:`base`. No attempt is made to preserve the original state of
     the objects passed in as arguments.
 
-    :param dict base:  The target container for the merged values.  This will
+    :param dict base:  The target container for the merged values. This will
         be modified *in-place*.
     :type base:  Any :class:`dict`-like object
 
     :param dict incoming:  The container from which incoming values will be
-        copied.  Nested dicts in this will be modified.
+        copied. Nested dicts in this will be modified.
     :type incoming:  Any :class:`dict`-like object
 
     :rtype:  None
@@ -237,7 +239,8 @@ ARG_SPEC = dict(
         required=True
     ),
     value=dict(
-        required=False
+        required=False,
+        type='raw'
     ),
     action=dict(
         choices=[
@@ -263,9 +266,6 @@ def main():
         argument_spec=ARG_SPEC,
         supports_check_mode=True
     )
-
-    if not HAS_LIB:
-        module.fail_json(msg="PyObjC lib not found.")
 
     actor = PrefActor(module)
     actor.act()
