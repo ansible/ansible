@@ -40,13 +40,13 @@ options:
     aliases: [ epg_name ]
   encap_id:
     description:
-    - The encapsulation ID associating the c(epg) with the interface path.
+    - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary encap_Id when using micro-segmentation.
     aliases: [ vlan, vlan_id ]
     choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   primary_encap_id:
     description:
-    - Determines the primary encapsulation ID associating the c(epg)
+    - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
     aliases: [ primary_vlan, primary_vlan_id ]
     choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
