@@ -1,20 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2016 - John Calixto <john.calixto@nordstrom.com> and Nordstrom, Inc.
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+# Copyright (c) 2016 - John Calixto <john.calixto@nordstrom.com> and Nordstrom, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 
@@ -29,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: osx_pref
-author: 
+author:
     - John Calixto (@nordjc)
     - Matthias Hollerbach (@kinglouie)
 short_description: Manipulates macOS preferences including complex data types
@@ -45,7 +34,7 @@ description:
 options:
     domain:
         description:
-            - The preference domain.  E.g. com.apple.finder, /path/to/some.plist, NSGlobalDomain
+            - The preference domain. E.g. com.apple.finder, /path/to/some.plist, NSGlobalDomain.
         required: false
         default: NSGlobalDomain
     key:
@@ -55,21 +44,21 @@ options:
     value:
         description:
             - The value that will be set for the specified key.
-        - Required when C(action=set).
+            - Required when C(action=set).
         required: false
     action:
         description:
             - Whether to I(get) or I(set) the specified preference.
         required: false
         default: get
-        choices: ['get', 'set']
+        choices: ["get", "set"]
     dict_set_method:
         description:
             - When setting a value to a dictionary, either C(replace) any existing value with the contents
               of C(value), or perform a deep C(merge) of nested dictionaries.
         required: false
         default: replace
-        choices: ['merge', 'replace']
+        choices: ["merge", "replace"]
 notes:
     - This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.
       This ensures that cfprefsd is in the loop when values change.
@@ -139,11 +128,10 @@ EXAMPLES = '''
 
 RETURN = '''
 value:
-  description: The value associated with the preference domain and key
-  returned: when action=get
-  type: Python object that maps closest to the data type of the macOS preference.
-  This can be an integer, float, string, dict, list, etc...
-  sample: "{'CustomViewStyleVersion': 1}"
+    description: The value associated with the preference domain and key
+    returned: when action=get
+    type: Python object that maps closest to the data type of the macOS preference. This can be an integer, float, string, dict, list, etc...
+    sample: "{'CustomViewStyleVersion': 1}"
 '''
 
 import collections
@@ -241,26 +229,31 @@ def set_pref(key, value, domain):
 ARG_SPEC = dict(
     domain=dict(
         default="NSGlobalDomain",
-        type="str",
+        type='str',
+        required=False
     ),
     key=dict(
-        required=True,
-        type="str",
+        type='str',
+        required=True
     ),
-    value=dict(),
+    value=dict(
+        required=False
+    ),
     action=dict(
         choices=[
-            'get',
-            'set'
+            "get",
+            "set"
         ],
         default="get",
+        required=False
     ),
     dict_set_method=dict(
         choices=[
-            'merge',
-            'replace'
+            "merge",
+            "replace"
         ],
         default="replace",
+        required=False
     ),
 )
 
