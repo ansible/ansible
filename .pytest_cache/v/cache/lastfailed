@@ -1,3 +1,0 @@
-{
-  "test/units/parsing/vault/test_vault.py::TestGetFileVaultSecret::test_file_not_found": true
-}

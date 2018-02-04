@@ -27,13 +27,13 @@ RETURN = """
   _list:
     description: basically the same as you fed in
 """
+import collections
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-
 
 class LookupModule(LookupBase):
 
     def run(self, terms, **kwargs):
-        if not isinstance(terms, list):
+        if not isinstance(terms, collections.Sequence):
             raise AnsibleError("with_list expects a list")
         return terms
