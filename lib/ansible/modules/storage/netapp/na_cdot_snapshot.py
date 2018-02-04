@@ -96,7 +96,7 @@ class NetAppCDOTSnapshot(object):
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
             volume_name=dict(required=True, type='str'),
-            vserver=dict(required=True, type='str', default=None),
+            vserver=dict(required=True, type='str'),
         ))
 
         self.module = AnsibleModule(
