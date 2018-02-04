@@ -166,19 +166,6 @@ class PyVmomiHelper(PyVmomi):
             self.remove_portgroup()
 
     # Get
-    def get_all_port_groups_by_host(self, host_system):
-        """
-        Function to get all Port Group by host
-        Args:
-            host_system: Name of Host System
-
-        Returns: List of Port Group Spec
-        """
-        pgs_list = []
-        for pg in host_system.config.network.portgroup:
-            pgs_list.append(pg)
-        return pgs_list
-
     def get_port_group_by_name(self, host_system, portgroup_name, vswitch_name):
         """
         Function to get specific port group by given name
