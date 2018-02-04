@@ -128,9 +128,10 @@ EXAMPLES = '''
 
 RETURN = '''
 value:
-    description: The value associated with the preference domain and key
+    description: The value associated with the preference domain and key.
+                 Return type is a python object that maps closest to the data type of the macOS preference. This can be an integer, float, string, dict, list, etc...
     returned: when action=get
-    type: Python object that maps closest to the data type of the macOS preference. This can be an integer, float, string, dict, list, etc...
+    type: string
     sample: "{'CustomViewStyleVersion': 1}"
 '''
 
@@ -145,9 +146,10 @@ try:
     sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
     import CoreFoundation
     from PyObjCTools.Conversion import pythonCollectionFromPropertyList
-    HAS_LIB = True
-except:
-    HAS_LIB = False
+except ImportError:
+    pyobjc_found = False
+else:
+    pyobjc_found = True
 
 
 class PrefActor(object):
@@ -159,8 +161,6 @@ class PrefActor(object):
         self.dict_set_method = params['dict_set_method']
         self.value = params.get('value')
         self.act = getattr(self, params['action'])
-        if not HAS_LIB:
-            module.fail_json(msg="PyObjC lib not found.")
 
     def get(self):
         value = get_pref(self.key, self.domain)
@@ -266,6 +266,9 @@ def main():
         argument_spec=ARG_SPEC,
         supports_check_mode=True
     )
+
+    if not pyobjc_found:
+            module.fail_json(msg="The PyObjC python module is required.")
 
     actor = PrefActor(module)
     actor.act()
