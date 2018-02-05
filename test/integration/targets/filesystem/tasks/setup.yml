@@ -7,6 +7,7 @@
     - e2fsprogs
     - xfsprogs
     - dosfstools
+    - ocfs2-tools
 
 - block:
   - name: install btrfs progs
@@ -29,12 +30,6 @@
     with_items:
       - python-xml
       - btrfsprogs
-
-  - name: install ocfs2 tools (Debian)
-    package:
-      name: ocfs2-tools
-      state: present
-    when: ansible_distribution == 'Debian'
   when: ansible_system == 'Linux'
 
 - block:
