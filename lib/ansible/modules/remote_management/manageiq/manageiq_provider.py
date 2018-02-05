@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director', 'OpenStack']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director', 'OpenStack', 'GCE']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -60,6 +60,11 @@ options:
     required: false
     default: null
     description: Microsoft Azure subscription ID. defaults to None.
+    version_added: "2.5"
+  project:
+    required: false
+    default: null
+    description: Google Compute Engine Project ID. defaults to None.
     version_added: "2.5"
   azure_tenant_id:
     required: false
@@ -535,6 +540,19 @@ EXAMPLES = '''
       port: 5666
       userid: admin
       password: password
+
+
+- name: Create a new GCE provider in ManageIQ
+  manageiq_provider:
+    name: 'EngGoogle'
+    type: 'GCE'
+    provider_region: 'europe-west1'
+    project: 'project1'
+    state: 'present'
+    provider:
+      hostname: 'gce.example.com'
+      auth_key: 'google_json_key'
+      verify_ssl: 'false'
 '''
 
 RETURN = '''
@@ -574,6 +592,9 @@ def supported_providers():
         OpenStack=dict(
             class_name='ManageIQ::Providers::Openstack::CloudManager',
         ),
+        GCE=dict(
+            class_name='ManageIQ::Providers::Google::CloudManager',
+        ),
     )
 
 
@@ -605,6 +626,7 @@ def endpoint_argument_spec():
         password=dict(no_log=True),
         auth_key=dict(no_log=True),
         subscription=dict(no_log=True),
+        project=dict(),
         uid_ems=dict(),
         path=dict(),
     )
@@ -732,7 +754,7 @@ class ManageIQProvider(object):
 
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
-                      subscription, uid_ems, tenant_mapping_enabled, api_version):
+                      subscription, project, uid_ems, tenant_mapping_enabled, api_version):
         """ Edit a user from manageiq.
 
         Returns:
@@ -748,6 +770,7 @@ class ManageIQProvider(object):
             host_default_vnc_port_start=host_default_vnc_port_start,
             host_default_vnc_port_end=host_default_vnc_port_end,
             subscription=subscription,
+            project=project,
             uid_ems=uid_ems,
             tenant_mapping_enabled=tenant_mapping_enabled,
             api_version=api_version,
@@ -774,7 +797,7 @@ class ManageIQProvider(object):
 
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
-                        subscription, uid_ems, tenant_mapping_enabled, api_version):
+                        subscription, project, uid_ems, tenant_mapping_enabled, api_version):
         """ Creates the user in manageiq.
 
         Returns:
@@ -796,6 +819,7 @@ class ManageIQProvider(object):
                 host_default_vnc_port_start=host_default_vnc_port_start,
                 host_default_vnc_port_end=host_default_vnc_port_end,
                 subscription=subscription,
+                project=project,
                 uid_ems=uid_ems,
                 tenant_mapping_enabled=tenant_mapping_enabled,
                 api_version=api_version,
@@ -820,6 +844,7 @@ def main():
         host_default_vnc_port_start=dict(),
         host_default_vnc_port_end=dict(),
         subscription=dict(),
+        project=dict(),
         azure_tenant_id=dict(aliases=['keystone_v3_domain_id']),
         tenant_mapping_enabled=dict(default=False, type='bool'),
         api_version=dict(),
@@ -848,6 +873,7 @@ def main():
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     subscription = module.params['subscription']
     uid_ems = module.params['azure_tenant_id']
+    project = module.params['project']
     tenant_mapping_enabled = module.params['tenant_mapping_enabled']
     api_version = module.params['api_version']
     state = module.params['state']
@@ -897,12 +923,12 @@ def main():
         if provider:
             res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
                                                        host_default_vnc_port_start, host_default_vnc_port_end,
-                                                       subscription, uid_ems, tenant_mapping_enabled, api_version)
+                                                       subscription, project, uid_ems, tenant_mapping_enabled, api_version)
         # if we do not have a provider, create it
         else:
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
                                                          host_default_vnc_port_start, host_default_vnc_port_end,
-                                                         subscription, uid_ems, tenant_mapping_enabled, api_version)
+                                                         subscription, project, uid_ems, tenant_mapping_enabled, api_version)
 
     module.exit_json(**res_args)
 
