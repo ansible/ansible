@@ -63,6 +63,8 @@ options:
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
         I(parents) arguments. It can be a Jinja2 template as well.
+        src file must have same indentation as a live switch config.
+        Arista EOS device config has 3 spaces indentation.
     required: false
     default: null
     version_added: "2.2"
@@ -279,7 +281,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = NetworkConfig(indent=3)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -298,7 +300,7 @@ def get_running_config(module, config=None):
             if module.params['defaults']:
                 flags.append('all')
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return NetworkConfig(indent=3, contents=contents)
 
 
 def main():
@@ -362,7 +364,7 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=2, contents=contents)
+        config = NetworkConfig(indent=3, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
