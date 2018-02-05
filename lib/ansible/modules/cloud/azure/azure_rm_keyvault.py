@@ -36,7 +36,6 @@ options:
     vault_tenant:
         description:
             - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
-            - Current tenant will be used as default if not specified.
     sku:
         description:
             - SKU details
@@ -60,8 +59,7 @@ options:
             tenant_id:
                 description:
                     - The Azure Active Directory tenant ID that should be used for authenticating requests to the key vault.
-                    - Current tenant id will be used if not specified.
-                required: True
+                    - Current keyvault C(tenant_id) value will be used if not specified.
             object_id:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
@@ -186,6 +184,7 @@ id:
     sample: id
 '''
 
+import collections
 import time
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
@@ -226,7 +225,18 @@ class AzureRMVaults(AzureRMModuleBase):
                 type='dict'
             ),
             access_policies=dict(
-                type='list'
+                type='list',
+                elements='dict',
+                options=dict(
+                    tenant_id=dict(type='str'),
+                    object_id=dict(type='str', required=True),
+                    application_id=dict(type='str'),
+                    # FUTURE: add `choices` support once choices supports lists of values
+                    keys=dict(type='list'),
+                    secrets=dict(type='list'),
+                    certificates=dict(type='list'),
+                    storage=dict(type='list')
+                )
             ),
             enabled_for_deployment=dict(
                 type='bool'
@@ -250,6 +260,8 @@ class AzureRMVaults(AzureRMModuleBase):
             )
         )
 
+        self.module_required_if = [['state', 'present', ['vault_tenant']]]
+
         self.resource_group = None
         self.vault_name = None
         self.parameters = dict()
@@ -261,11 +273,13 @@ class AzureRMVaults(AzureRMModuleBase):
 
         super(AzureRMVaults, self).__init__(derived_arg_spec=self.module_arg_spec,
                                             supports_check_mode=True,
-                                            supports_tags=False)
+                                            supports_tags=False,
+                                            required_if=self.module_required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
+        # translate Ansible input to SDK-formatted dict in self.parameters
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
@@ -291,8 +305,9 @@ class AzureRMVaults(AzureRMModuleBase):
                         if 'storage' in policy:
                             policy.setdefault("permissions", {})["storage"] = policy["storage"]
                             policy.pop("storage", None)
-                    if policy.get('tenant_id') is None:
-                        policy['tenant_id'] = self.credentials['tenant']
+                        if policy.get('tenant_id') is None:
+                            # default to key vault's tenant, since that's all that's currently supported anyway
+                            policy['tenant_id'] = kwargs['vault_tenant']
                     self.parameters.setdefault("properties", {})["access_policies"] = access_policies
                 elif key == "enabled_for_deployment":
                     self.parameters.setdefault("properties", {})["enabled_for_deployment"] = kwargs[key]
@@ -304,9 +319,6 @@ class AzureRMVaults(AzureRMModuleBase):
                     self.parameters.setdefault("properties", {})["enable_soft_delete"] = kwargs[key]
                 elif key == "recover_mode":
                     self.parameters.setdefault("properties", {})["create_mode"] = 'recover' if kwargs[key] else 'default'
-
-        if self.parameters.setdefault("properties", {}).setdefault('tenant_id', None) is None:
-            self.parameters['properties']['tenant_id'] = self.credentials['tenant']
 
         old_response = None
         response = None
@@ -349,32 +361,33 @@ class AzureRMVaults(AzureRMModuleBase):
                     self.to_do = Actions.Update
                 elif ('create_mode' in self.parameters) and (self.parameters['create_mode'] != old_response['create_mode']):
                     self.to_do = Actions.Update
-                elif 'access_policies' in self.parameters:
-                    if len(self.parameters['access_policies']) != len(old_response['access_policies']):
+                elif 'access_policies' in self.parameters['properties']:
+                    if len(self.parameters['properties']['access_policies']) != len(old_response['properties']['access_policies']):
                         self.to_do = Actions.Update
                     else:
-                        for i in range(len(old_response['access_policies'])):
-                            n = self.parameters['access_policies'][i]
-                            o = old_response['access_policies'][i]
+                        # FUTURE: this list isn't really order-dependent- we should be set-ifying the rules list for order-independent comparison
+                        for i in range(len(old_response['properties']['access_policies'])):
+                            n = self.parameters['properties']['access_policies'][i]
+                            o = old_response['properties']['access_policies'][i]
                             if n.get('tenant_id', False) != o.get('tenant_id', False):
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('object_id', False) != o.get('object_id', False):
+                            if n.get('object_id', None) != o.get('object_id', None):
                                 self.to_do = Actions.Update
                                 break
-                            if n.get('application_id', False) != o.get('application_id', False):
+                            if n.get('application_id', None) != o.get('application_id', None):
                                 self.to_do = Actions.Update
                                 break
-                            if sorted(n.get('keys', [])).cmp(sorted(o.get('keys', []))) != 0:
+                            if sorted(n.get('keys', [])) != sorted(o.get('keys', [])):
                                 self.to_do = Actions.Update
                                 break
-                            if sorted(n.get('secrets', [])).cmp(sorted(o.get('secrets', []))) != 0:
+                            if sorted(n.get('secrets', [])) != sorted(o.get('secrets', [])):
                                 self.to_do = Actions.Update
                                 break
-                            if sorted(n.get('certificates', [])).cmp(sorted(o.get('certificates', []))) != 0:
+                            if sorted(n.get('certificates', [])) != sorted(o.get('certificates', [])):
                                 self.to_do = Actions.Update
                                 break
-                            if sorted(n.get('storage', [])).cmp(sorted(o.get('storage', []))) != 0:
+                            if sorted(n.get('storage', [])) != sorted(o.get('storage', [])):
                                 self.to_do = Actions.Update
                                 break
 
