@@ -18,36 +18,38 @@ DOCUMENTATION = r'''
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
 description:
-- Create new virtual machines (from templates or not).
-- Power on/power off/restart a virtual machine.
+- Create new virtual machines from templates or other virtual machines.
+- Manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,.
 - Modify, rename or remove a virtual machine.
 version_added: '2.2'
 author:
 - James Tanner (@jctanner) <tanner.jc@gmail.com>
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 - Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
+- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:
-- Tested on vSphere 5.5 and 6.0
+- Tested on vSphere 5.5, 6.0 and 6.5
 requirements:
 - python >= 2.6
 - PyVmomi
 options:
   state:
     description:
-    - What state should the virtual machine be in?
+    - Specify state of the virtual machine be in.
     - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments.
-    required: yes
-    choices: [ 'present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest' ]
+    default: present
+    choices: [ present, absent, poweredon, poweredoff, restarted, suspended, shutdownguest, rebootguest ]
   name:
     description:
     - Name of the VM to work with.
     - VM names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    - This parameter is case sensitive.
     required: yes
   name_match:
     description:
     - If multiple VMs matching the name, use the first or last found.
     default: 'first'
-    choices: [ 'first', 'last' ]
+    choices: [ first, last ]
   uuid:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
@@ -58,16 +60,19 @@ options:
     - Template or existing VM used to create VM.
     - If this value is not set, VM is created without using a template.
     - If the VM exists already this setting will be ignored.
+    - This parameter is case sensitive.
   is_template:
     description:
     - Flag the instance as a template.
+    - This will mark VM instance as template.
     default: 'no'
     type: bool
     version_added: '2.3'
   folder:
     description:
     - Destination folder, absolute path to find an existing guest or create the new guest.
-    - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+    - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+    - This parameter is case sensitive.
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
     - '   folder: ha-datacenter/vm'
@@ -80,7 +85,8 @@ options:
     - '   folder: /folder1/datacenter1/vm/folder2'
   hardware:
     description:
-    - Manage some VM hardware attributes.
+    - Manage virtual machine's hardware attributes.
+    - All parameters case sensitive.
     - 'Valid attributes are:'
     - ' - C(hotadd_cpu) (boolean): Allow virtual CPUs to be added while the VM is running.'
     - ' - C(hotremove_cpu) (boolean): Allow virtual CPUs to be removed while the VM is running. version_added: 2.5'
@@ -109,42 +115,55 @@ options:
 
   guest_id:
     description:
-    - Set the guest ID (Debian, RHEL, Windows...).
+    - Set the guest ID.
+    - This parameter is case sensitive.
+    - 'Examples:'
+    - "  VM with RHEL7 64 bit, will be 'rhel7_64Guest'"
+    - "  VM with CensOS 64 bit, will be 'centos64Guest'"
+    - "  VM with Ubuntu 64 bit, will be 'ubuntu64Guest'"
     - This field is required when creating a VM.
     - >
          Valid values are referenced here:
-         https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
+         U(https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
     - A list of disks to add.
+    - This parameter is case sensitive.
+    - Resizing disks is not supported.
+    - Removing existing disks of virtual machine is not supported.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
     - ' - C(type) (string): Valid values are:'
-    - '   C(thin) thin disk, C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5, Default: C(None) thick disk, no eagerzero.'
+    - '     - C(thin) thin disk'
+    - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
+    - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
-    - ' - C(autoselect_datastore) (bool): select the less used datastore.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
   cdrom:
     description:
     - A CD-ROM configuration for the VM.
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
-    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is iso.'
+    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
     version_added: '2.5'
   resource_pool:
     description:
     - Affect machine to the given resource pool.
+    - This parameter is case sensitive.
     - Resource pool should be child of the selected host parent.
     version_added: '2.3'
   wait_for_ip_address:
     description:
     - Wait until vCenter detects an IP address for the VM.
     - This requires vmware-tools (vmtoolsd) to properly work after creation.
+    - "vmware-tools needs to be installed on given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
   snapshot_src:
     description:
-    - Name of an existing snapshot to use to create a clone of a VM.
+    - Name of the existing snapshot to use to create a clone of a VM.
+    - This parameter is case sensitive.
     version_added: '2.4'
   linked_clone:
     description:
@@ -155,31 +174,37 @@ options:
   force:
     description:
     - Ignore warnings and complete the actions.
+    - This parameter is useful while removing virtual machine which is powered on state.
     default: 'no'
     type: bool
   datacenter:
     description:
     - Destination datacenter for the deploy operation.
+    - This parameter is case sensitive.
     default: ha-datacenter
   cluster:
     description:
-    - The cluster name where the VM will run.
+    - The cluster name where the virtual machine will run.
+    - This parameter is case sensitive.
     version_added: '2.3'
   esxi_hostname:
     description:
-    - The ESXi hostname where the VM will run.
+    - The ESXi hostname where the virtual machine will run.
+    - This parameter is case sensitive.
   annotation:
     description:
-    - A note or annotation to include in the VM.
+    - A note or annotation to include in the virtual machine.
     version_added: '2.3'
   customvalues:
     description:
-    - Define a list of customvalues to set on VM.
-    - A customvalue object takes 2 fields C(key) and C(value).
+    - Define a list of custom values to set on virtual machine.
+    - A custom value object takes two fields C(key) and C(value).
+    - Incorrect key and values will be ignored.
     version_added: '2.3'
   networks:
     description:
     - A list of networks (in the order of the NICs).
+    - All parameters and VMware object names are case sensetive.
     - 'One of the below parameters is required per entry:'
     - ' - C(name) (string): Name of the portgroup for this interface.'
     - ' - C(vlan) (integer): VLAN number for this interface.'
@@ -200,6 +225,7 @@ options:
   customization:
     description:
     - Parameters for OS customization when cloning from template.
+    - All parameters and VMware object names are case sensetive.
     - 'Common parameters (Linux/Windows):'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter).'
@@ -341,7 +367,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 instance:
-    description: metadata about the new virtualmachine
+    description: metadata about the new virtual machine
     returned: always
     type: dict
     sample: None
