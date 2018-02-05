@@ -25,14 +25,20 @@ Bootstrapping BSD
 `````````````````
 
 As mentioned above, you can bootstrap Ansible with the ``raw`` module and remotely install Python on targets. The following example installs Python 2.7 which includes the json library required for full functionality of Ansible.
-On your control machine you can simply execute the following for most versions of FreeBSD::
+On your control machine you can execute the following for most versions of FreeBSD::
 
     ansible -m raw -a "pkg install -y python27" mybsdhost1
+
+Or for most versions of OpenBSD::
+
+    ansible -m raw -a "pkg_add -z python-2.7"
+
+
 
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
 .. note::
-    This example used pkg as used on FreeBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
+    This example demonstrated using pkg on FreeBSD and pkg_add on OpenBSD, however you should be able to substitute the appropriate package tool for your BSD; the package name may also differ. Refer to the package list or documentation of the BSD variant you are using for the exact Python package name you intend to install.
 
 .. _python_location:
 
@@ -42,6 +48,8 @@ Setting the Python interpreter
 To support a variety of Unix/Linux operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example::
 
     [freebsd:vars]
+    ansible_python_interpreter=/usr/local/bin/python2.7
+    [openbsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
 
 If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example::
