@@ -78,6 +78,9 @@ options:
     description:
       - JSON string describing the access policy of the cluster.
     required: true
+  wait:
+    description:
+      - Wait for cluster creation to finish
 
 extends_documentation_fragment:
     - aws
@@ -170,7 +173,10 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, compare_policies, ec2_argument_spec, get_aws_connection_info
 
-from botocore.exceptions import BotoCoreError, ClientError
+try:
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    pass # boto3_conn will handle missing dependencies
 
 
 def _create_elasticsearch_domain(connection, module):
