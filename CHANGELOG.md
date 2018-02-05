@@ -99,9 +99,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_batch_compute_environment
   * aws_batch_job_definition
   * aws_batch_job_queue
-  * aws_elasticbeanstalk_app
   * aws_direct_connect_gateway
   * aws_direct_connect_virtual_interface
+  * aws_elasticbeanstalk_app
   * aws_kms_facts
   * aws_region_facts
   * aws_s3_cors
@@ -130,6 +130,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * azure_rm_mysqlserver
   * azure_rm_postgresqldatabase
   * azure_rm_postgresqlserver
+  * azure_rm_sqldatabase
   * azure_rm_sqlserver
   * azure_rm_sqlserver_facts
 - cloudscale
@@ -168,8 +169,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vmware_host_acceptance
   * vmware_host_config_facts
   * vmware_host_config_manager
+  * vmware_host_datastore
   * vmware_host_facts
   * vmware_host_ntp
+  * vmware_host_package_facts
   * vmware_host_service_facts
   * vmware_host_service_manager
   * vmware_host_vmnic_facts
@@ -187,6 +190,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vr_user
 
 #### Clustering
+  * etcd3
 - k8s
   * k8s_raw
   * k8s_scale
@@ -206,9 +210,11 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 #### Identity
 - ipa
   * ipa_dnszone
+  * ipa_service
   * ipa_subca
 - keycloak
   * keycloak_client
+  * keycloak_clienttemplate
 
 #### Monitoring
   * grafana_dashboard
@@ -221,9 +227,16 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 #### Net Tools
   * ip_netns
+- nios
+  * nios_dns_view
+  * nios_host_record
+  * nios_network
+  * nios_network_view
+  * nios_zone
 
 #### Network
 - aci
+  * aci_aaa_user
   * aci_aaa_user_certificate
   * aci_access_port_to_interface_policy_leaf_profile
   * aci_aep_to_domain
@@ -232,27 +245,36 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aci_domain_to_vlan_pool
   * aci_encap_pool
   * aci_encap_pool_range
+  * aci_fabric_node
   * aci_firmware_source
+  * aci_interface_policy_fc
   * aci_interface_policy_leaf_policy_group
   * aci_interface_policy_leaf_profile
+  * aci_interface_policy_lldp
+  * aci_interface_policy_mcp
+  * aci_interface_policy_port_security
   * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_static_binding_to_epg
   * aci_switch_leaf_selector
   * aci_switch_policy_leaf_profile
   * aci_vlan_pool
   * aci_vlan_pool_encap_block
 - avi
   * avi_api_version
+  * avi_clusterclouddetails
   * avi_customipamdnsprofile
   * avi_errorpagebody
   * avi_errorpageprofile
   * avi_gslbservice_patch_member
   * avi_wafpolicy
+  * avi_wafprofile
 - enos
   * enos_command
   * enos_config
   * enos_facts
 - eos
   * eos_interface
+  * eos_l2_interface
   * eos_l3_interface
   * eos_linkagg
   * eos_lldp
@@ -285,6 +307,8 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * bigip_wait
   * bigiq_regkey_license
   * bigiq_regkey_pool
+- fortimanager
+  * fmgr_script
 - ios
   * ios_l2_interface
   * ios_l3_interface
@@ -298,7 +322,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * ironware_config
   * ironware_facts
 - junos
+  * junos_l2_interface
   * junos_scp
+- netact
+  * netact_cm_command
 - netscaler
   * netscaler_nitro_request
 - nso
@@ -331,9 +358,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * onyx_protocol
   * onyx_vlan
 - panos
-  * panos_query_rules
   * panos_dag_tags
   * panos_match_rule
+  * panos_query_rules
 - radware
   * vdirect_commit
   * vdirect_runnable
@@ -348,10 +375,12 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 #### Packaging
 - os
   * package_facts
+  * rhsm_repository
 
 #### Remote Management
 - manageiq
   * manageiq_alert_profiles
+  * manageiq_alerts
   * manageiq_policies
   * manageiq_tags
 - oneview
@@ -362,9 +391,12 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * oneview_san_manager_facts
 - ucs
   * ucs_ip_pool
+  * ucs_lan_connectivity
   * ucs_mac_pool
   * ucs_san_connectivity
   * ucs_vhba_template
+  * ucs_vlans
+  * ucs_vnic_template
   * ucs_vsans
   * ucs_wwn_pool
 
@@ -372,6 +404,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * mksysb
   * nosh
   * service_facts
+  * vdo
+
+#### Web Infrastructure
+  * jenkins_job_facts
 
 #### Windows
   * win_audit_policy_system
