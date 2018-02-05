@@ -136,7 +136,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
             self.results['loadbalancers'] = self.list_all()
 
         # old way of listing load balancers
-        self.results['ansible_facts']['azure_loadbalancers'] = [k  for  k in self.results['loadbalancers']]
+        self.results['ansible_facts']['azure_loadbalancers'] = [k for k in self.results['loadbalancers']]
 
         return self.results
 
@@ -199,6 +199,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
                 results[item.name] = item.as_dict()
 
         return results
+
 
 def main():
     """Main module execution code path"""
