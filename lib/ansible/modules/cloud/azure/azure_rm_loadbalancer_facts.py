@@ -128,48 +128,77 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['azure_loadbalancers'] = (
-            self.get_item() if self.name
-            else self.list_items()
-        )
+        if self.resource_group is not None and self.name is not None:
+            self.results['loadbalancers'] = self.get()
+        elif self.resource_group is not None:
+            self.results['loadbalancers'] = self.list_by_resource_group()
+        else:
+            self.results['loadbalancers'] = self.list_all()
+
+        # old way of listing load balancers
+        self.results['ansible_facts']['azure_loadbalancers'] = [k  for  k in self.results['loadbalancers']]
 
         return self.results
 
-    def get_item(self):
-        """Get a single load balancer"""
+    def get(self):
+        '''
+        Gets facts of the specified Load Balancer.
 
-        self.log('Get properties for {}'.format(self.name))
-
-        item = None
-        result = []
-
+        :return: deserialized Load Balancerinstance state dictionary
+        '''
+        response = None
+        results = {}
         try:
-            item = self.network_client.load_balancers.get(self.resource_group, self.name)
-        except CloudError:
-            pass
+            response = self.network_client.load_balancers.get(resource_group_name=self.resource_group,
+                                                              load_balancer_name=self.name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for LoadBalancers.')
 
-        if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_obj(item, AZURE_OBJECT_CLASS)]
-
-        return result
-
-    def list_items(self):
-        """Get all load balancers"""
-
-        self.log('List all load balancers')
-
-        try:
-            response = self.network_client.load_balancers.list()
-        except AzureHttpError as exc:
-            self.fail('Failed to list all items - {}'.format(str(exc)))
-
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_obj(item, AZURE_OBJECT_CLASS))
+        if response is not None:
+            results[response.name] = response.as_dict()
 
         return results
 
+    def list_by_resource_group(self):
+        '''
+        Get all Load Balancers in a specified resource group.
+
+        :return: deserialized Load Balancer instance state dictionary
+        '''
+        response = None
+        results = {}
+        try:
+            response = self.network_client.load_balancers.list(resource_group_name=self.resource_group)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Load Balancers.')
+
+        if response is not None:
+            for item in response:
+                results[item.name] = item.as_dict()
+
+        return results
+
+    def list_all(self):
+        '''
+        Get all Load Balancers in a specified resource group.
+
+        :return: deserialized Load Balancer instance state dictionary
+        '''
+        response = None
+        results = {}
+        try:
+            response = self.network_client.load_balancers.list_all()
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Load Balancers.')
+
+        if response is not None:
+            for item in response:
+                results[item.name] = item.as_dict()
+
+        return results
 
 def main():
     """Main module execution code path"""

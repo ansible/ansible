@@ -1,0 +1,50 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+- name: create public ip
+  azure_rm_publicipaddress:
+    name: ansiblepip{{ rpfx }}
+    resource_group: '{{ resource_group }}'
+
+- name: create load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lb{{ rpfx }}
+    public_ip: ansiblepip{{ rpfx }}
+
+- name: get load balancer facts
+  azure_rm_loadbalancer_facts:
+    resource_group: '{{ resource_group }}'
+    name: lb{{ rpfx }}
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.loadbalancers.lb{{ rpfx }}.id != None
+
+- name: get load balancer facts
+  azure_rm_loadbalancer_facts:
+    resource_group: '{{ resource_group }}'
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.loadbalancers.lb{{ rpfx }}.id != None
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: lb{{ rpfx }}
+    state: absent
+
+- name: delete ip
+  azure_rm_publicipaddress:
+    name: ansiblepip{{ rpfx }}
+    resource_group: '{{ resource_group }}'
+    state: absent
