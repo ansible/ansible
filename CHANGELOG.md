@@ -161,6 +161,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 - spotinst
   * spotinst_aws_elastigroup
 - vmware
+  * vcenter_folder
   * vmware_cfg_backup
   * vmware_datastore_facts
   * vmware_drs_rule_facts
@@ -170,7 +171,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vmware_host_config_facts
   * vmware_host_config_manager
   * vmware_host_datastore
+  * vmware_host_dns_facts
   * vmware_host_facts
+  * vmware_host_firewall_facts
+  * vmware_host_lockdown
   * vmware_host_ntp
   * vmware_host_package_facts
   * vmware_host_service_facts
@@ -178,6 +182,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vmware_host_vmnic_facts
   * vmware_local_role_manager
   * vmware_vm_vm_drs_rule
+  * vmware_vmkernel_facts
 - vultr
   * vr_account_facts
   * vr_dns_domain
