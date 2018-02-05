@@ -55,9 +55,15 @@ You can then use ``import_tasks`` or ``include_tasks`` to include this file in y
 You can also pass variables into imports and includes::
 
     tasks:
-    - import_tasks: wordpress.yml wp_user=timmy
-    - import_tasks: wordpress.yml wp_user=alice
-    - import_tasks: wordpress.yml wp_user=bob
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: timmy
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: alice
+    - import_tasks: wordpress.yml
+      vars:
+        wp_user: bob
 
 Variables can also be passed to include files using an alternative syntax, which also supports structured variables like dictionaries and lists::
 
