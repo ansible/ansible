@@ -23,6 +23,12 @@ options:
     description:
       - Domain name for cluster.
     required: true
+  state:
+    description:
+      - Create or destroy cluster
+    choices: [ "present", "absent" ]
+    default: present
+    required: false
   version:
     description:
       - Version of Elasticsearch to use.
@@ -155,17 +161,16 @@ access_policies:
     sample: '{"Statement": [{"Action": "*", "Resource": "arn:aws:iam::0000000000000:user/you", "Effect": "Allow"}]}'
 """
 
-import collections
+from collections import defaultdict
 import json
 import time
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils import ec2
+from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, compare_policies, ec2_argument_spec, get_aws_connection_info
 
-try:
-    import botocore.exceptions
-except ImportError:
-    pass  # will be detected by ec2.HAS_BOTO3
+from botocore.exceptions import BotoCoreError, ClientError
 
 
 def _create_elasticsearch_domain(connection, module):
@@ -180,51 +185,81 @@ def _create_elasticsearch_domain(connection, module):
         elasticsearch_cluster_config['DedicatedMasterType'] = module.params['dedicated_master_type']
         elasticsearch_cluster_config['DedicatedMasterCount'] = module.params['dedicated_master_count']
 
-    connection.create_elasticsearch_domain(
-        DomainName=module.params['domain'],
-        ElasticsearchVersion=module.params['version'],
-        ElasticsearchClusterConfig=elasticsearch_cluster_config,
-        EBSOptions={
-            'EBSEnabled': True,
-            'VolumeType': module.params['ebs_volume_type'],
-            'VolumeSize': module.params['ebs_volume_size'],
-        },
-        AccessPolicies=module.params['access_policies'],
-    )
+    try:
+        connection.create_elasticsearch_domain(
+            DomainName=module.params['domain'],
+            ElasticsearchVersion=module.params['version'],
+            ElasticsearchClusterConfig=elasticsearch_cluster_config,
+            EBSOptions={
+                'EBSEnabled': True,
+                'VolumeType': module.params['ebs_volume_type'],
+                'VolumeSize': module.params['ebs_volume_size'],
+            },
+            AccessPolicies=module.params['access_policies'],
+        )
+
+    except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(
+                e,
+                msg='Unable to create elasticsearch domain: {0}'.format(
+                    to_native(e))
+            )
 
     return True
 
 
 def ensure_present(connection, module):
-    domain = module.params['domain']
-    elasticserach_domain = is_present(connection, domain)
+    elasticserach_domain = is_present(connection, module)
     if elasticserach_domain:
         changed = False
     else:
         changed = True
         _create_elasticsearch_domain(connection, module)
-        elasticserach_domain = is_present(connection, domain)
+        elasticserach_domain = is_present(connection, module)
     return changed, elasticserach_domain
 
 
-def is_present(connection, name):
+def is_present(connection, module):
     """Get the current status of Elasticsearch domain"""
+    name = module.params['domain']
+
     try:
         response = connection.describe_elasticsearch_domain(
             DomainName=name
         )
 
-    except botocore.exceptions.ClientError as e:
+    except ClientError as e:
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             return None
         else:
-            raise
+            module.fail_json_aws(
+                e,
+                msg='Unexpected error {0}'.format(to_native(e))
+            )
 
     return response
 
 
+def ensure_deleted(connection, module):
+    try:
+        connection.delete_elasticsearch_domain(
+            DomainName=module.params['domain']
+        )
+
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'ResourceNotFoundException':
+            return False
+        else:
+            module.fail_json_aws(
+                e,
+                msg='Unexpected error {0}'.format(to_native(e))
+            )
+
+    return True
+
+
 def check_existing_config(module, domain):
-    modifications_needed = collections.defaultdict(dict)
+    modifications_needed = defaultdict(dict)
 
     existing_config = domain['DomainStatus']
     desired_config = module.params
@@ -253,124 +288,113 @@ def check_existing_config(module, domain):
             ]
         )
 
-    try:
-        for key_path, desired_value in config_to_check:
-            # Traverse key path to get existing value
-            existing_value = existing_config
-            for key in key_path:
-                existing_value = existing_value.get(key)
+    for key_path, desired_value in config_to_check:
+        # Traverse key path to get existing value
+        existing_value = existing_config
+        for key in key_path:
+            existing_value = existing_value.get(key)
 
-            if existing_value != desired_value:
-                # Traverse key path in modifications dictionary to submit to AWS
-                modification = modifications_needed
-                for key in key_path[:-1]:
-                    if key not in modification:
-                        modification[key] = {}
+        if existing_value != desired_value:
+            # Traverse key path in modifications dictionary to submit to AWS
+            modification = modifications_needed
+            for key in key_path[:-1]:
+                if key not in modification:
+                    modification[key] = {}
 
-                    modification = modification[key]
+                modification = modification[key]
 
-                modification[key_path[-1]] = desired_value
+            modification[key_path[-1]] = desired_value
 
-    except Exception as e:
-        module.fail_json(
-            msg=str(e), key_path=key_path, desired_value=desired_value,
-            existing_config=existing_config,
-            modifications_needed=modifications_needed)
-
-    # Config is JSON, so compare JSON dictionaries instead of strings
     existing_access_json = json.loads(domain['DomainStatus']['AccessPolicies'])
     supplied_access_json = json.loads(module.params['access_policies'])
 
-    if existing_access_json != supplied_access_json:
+    if compare_policies(existing_access_json, supplied_access_json):
         modifications_needed['AccessPolicies'] = module.params['access_policies']
 
     return modifications_needed
 
 
 def main():
-    argument_spec = ec2.ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             domain={'required': True},
-            version={'required': False, 'default': '5.1'},
-            instance_count={'required': False, 'type': 'int', 'default': 1},
-            instance_type={
-                'required': False, 'default': 't2.medium.elasticsearch'
-            },
-            zone_awareness={
-                'required': False, 'type': 'bool', 'default': True
-            },
+            state={'default': 'present', 'choices': ['present', 'absent']},
+            version={'default': '5.1'},
+            instance_count={'type': 'int', 'default': 1},
+            instance_type={'default': 't2.medium.elasticsearch'},
+            zone_awareness={'type': 'bool', 'default': True},
             dedicated_master_enabled={
-                'required': False, 'type': 'bool', 'default': False,
-                'choices': [True, False]
+                'type': 'bool', 'default': False, 'choices': [True, False]
             },
-            dedicated_master_type={'required': False},
-            dedicated_master_count={'required': False, 'type': 'int'},
+            dedicated_master_type={},
+            dedicated_master_count={'type': 'int'},
             ebs_volume_type={
-                'required': False, 'default': 'gp2',
-                'choices': ['standard', 'gp2', 'io1']
+                'default': 'gp2', 'choices': ['standard', 'gp2', 'io1']
             },
             ebs_volume_size={'required': True, 'type': 'int'},
             access_policies={'required': True},
-            wait={'required': False, 'type': 'bool'},
+            wait={'type': 'bool'},
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
     )
 
-    if not ec2.HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_kwargs = ec2.get_aws_connection_info(module)
-
-    if region:
-        try:
-            client = ec2.boto3_conn(
-                module, 'client', 'es', region,
-                profile_name=aws_connect_kwargs['profile_name'])
-        except Exception as e:
-            module.fail_json(msg=str(e))
-    else:
-        module.fail_json(msg='region must be specified')
-
-    changed, domain = ensure_present(client, module)
-    modifications_needed = check_existing_config(module, domain)
-
-    if modifications_needed:
-        changed = True
-        modifications_needed['DomainName'] = module.params['domain']
-        client.update_elasticsearch_domain_config(**modifications_needed)
-
-        # Reload after modifying
-        domain = is_present(client, module.params['domain'])
-
-    if module.params['wait']:
-        while not domain['DomainStatus'].get('Endpoint'):
-            time.sleep(10)
-            domain = is_present(client, module.params['domain'])
-
-    domain_status = domain['DomainStatus']
-    cluster_config_status = domain_status['ElasticsearchClusterConfig']
-    ebs_options = domain_status['EBSOptions']
-
-    module.exit_json(
-        changed=changed,
-        arn=domain_status['ARN'],
-        endpoint=domain_status.get('Endpoint'),
-        processing=domain_status['Processing'],
-        elasticsearch_version=domain_status['ElasticsearchVersion'],
-        instance_type=cluster_config_status['InstanceType'],
-        instance_count=cluster_config_status['InstanceCount'],
-        dedicated_master_enabled=cluster_config_status['DedicatedMasterEnabled'],
-        zone_awareness=cluster_config_status['ZoneAwarenessEnabled'],
-        dedicated_master_type=cluster_config_status.get('DedicatedMasterType', ''),
-        dedicated_master_count=cluster_config_status.get('DedicatedMasterCount', 0),
-        ebs_volume_type=ebs_options['VolumeType'],
-        ebs_volume_size=ebs_options['VolumeSize'],
-        access_policies=domain_status['AccessPolicies']
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
+        module, boto3=True
     )
+
+    client = boto3_conn(
+        module, conn_type='client', resource='es', region=region,
+        endpoint=ec2_url, **aws_connect_kwargs
+    )
+
+    if module.params['state'] not in ['present', 'absent']:
+        module.fail_json(msg='"state" must be "present" or "absent"')
+
+    if module.params['state'] == 'absent':
+        changed = ensure_deleted(client, module)
+        module.exit_json(changed=changed)
+
+    elif module.params['state'] == 'present':
+        changed, domain = ensure_present(client, module)
+        modifications_needed = check_existing_config(module, domain)
+
+        if modifications_needed:
+            changed = True
+            modifications_needed['DomainName'] = module.params['domain']
+            client.update_elasticsearch_domain_config(**modifications_needed)
+
+            # Reload after modifying
+            domain = is_present(client, module)
+
+        if module.params['wait']:
+            while not domain['DomainStatus'].get('Endpoint'):
+                time.sleep(10)
+                domain = is_present(client, module)
+
+        domain_status = domain['DomainStatus']
+        cluster_config_status = domain_status['ElasticsearchClusterConfig']
+        ebs_options = domain_status['EBSOptions']
+
+        module.exit_json(
+            changed=changed,
+            arn=domain_status['ARN'],
+            endpoint=domain_status.get('Endpoint'),
+            processing=domain_status['Processing'],
+            elasticsearch_version=domain_status['ElasticsearchVersion'],
+            instance_type=cluster_config_status['InstanceType'],
+            instance_count=cluster_config_status['InstanceCount'],
+            dedicated_master_enabled=cluster_config_status['DedicatedMasterEnabled'],
+            zone_awareness=cluster_config_status['ZoneAwarenessEnabled'],
+            dedicated_master_type=cluster_config_status.get('DedicatedMasterType', ''),
+            dedicated_master_count=cluster_config_status.get('DedicatedMasterCount', 0),
+            ebs_volume_type=ebs_options['VolumeType'],
+            ebs_volume_size=ebs_options['VolumeSize'],
+            access_policies=domain_status['AccessPolicies']
+        )
 
 
 if __name__ == '__main__':
