@@ -310,6 +310,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if tmp_rm_data.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
+            else:
+                self._connection._shell.tempdir = None
 
     def _transfer_file(self, local_path, remote_path):
         self._connection.put_file(local_path, remote_path)
