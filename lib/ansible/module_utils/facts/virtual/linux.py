@@ -114,6 +114,11 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
+        if bios_vendor == 'Amazon EC2':
+            virtual_facts['virtualization_type'] = 'kvm'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
         # FIXME: This does also match hyperv
@@ -139,6 +144,11 @@ class LinuxVirtual(Virtual):
 
         if sys_vendor == 'OpenStack Foundation':
             virtual_facts['virtualization_type'] = 'openstack'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+
+        if sys_vendor == 'Amazon EC2':
+            virtual_facts['virtualization_type'] = 'kvm'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
