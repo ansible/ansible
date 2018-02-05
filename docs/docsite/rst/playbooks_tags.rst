@@ -91,19 +91,17 @@ You may also apply tags to roles::
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
 
-And import/include statements::
+And import statements::
 
     - import_tasks: foo.yml
       tags: [web,foo]
 
-or::
-
-    - include_tasks: foo.yml
-      tags: [web,foo]
-
-All of these apply the specified tags to EACH task inside the play, included
+All of these apply the specified tags to EACH task inside the play, imported
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
+
+The above information does not apply to `include_tasks` or other dynamic includes,
+as the attributes applied to an include, only affect the include itself.
 
 Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies,
 the tag should be applied to the role, not to all the tasks within a role.
