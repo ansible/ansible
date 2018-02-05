@@ -31,8 +31,6 @@
   when: platform | match('N5K')
 
 - include: targets/nxos_nxapi/tasks/platform/default/assert_changes.yaml
-  when: not ( platform is search('N7K'))
-
   when: not ( platform is search('N7K')) and not (platform is search('N5K')) and not (platform is search('N35'))
 
 - name: Configure NXAPI again
