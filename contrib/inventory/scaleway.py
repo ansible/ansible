@@ -152,8 +152,13 @@ def generate_inv_from_api(config):
     try:
         inventory['all'] = copy.deepcopy(EMPTY_GROUP)
 
-        auth_token = env_or_param(
-            'SCALEWAY_TOKEN', config.get('auth', 'api_token'))
+        if config.has_option('auth', 'api_token'):
+            auth_token = config.get('auth', 'api_token')
+        auth_token = env_or_param('SCALEWAY_TOKEN', param=auth_token)
+        if auth_token is None:
+            sys.stderr.write('ERROR: missing authentication token for Scaleway API')
+            sys.exit(1)
+
         if config.has_option('compute', 'regions'):
             regions = config.get('compute', 'regions')
             if regions == 'all':
