@@ -37,6 +37,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
