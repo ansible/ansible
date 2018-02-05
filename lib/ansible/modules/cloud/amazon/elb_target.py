@@ -100,14 +100,15 @@ RETURN = '''
 '''
 
 import traceback
-from time import sleep
+from time import time, sleep
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError, BotoCoreError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -118,7 +119,11 @@ def convert_tg_name_to_arn(connection, module, tg_name):
     try:
         response = connection.describe_target_groups(Names=[tg_name])
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe target group {0}: {1}".format(tg_name, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
+        module.fail_json(msg="Unable to describe target group {0}: {1}".format(tg_name, to_native(e)),
+                         exception=traceback.format_exc())
 
     tg_arn = response['TargetGroups'][0]['TargetGroupArn']
 
@@ -143,7 +148,11 @@ def describe_targets(connection, module, tg_arn, target):
             return {}
         return targets[0]
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe target health for target {0}: {1}".format(target, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except BotoCoreError as e:
+        module.fail_json(msg="Unable to describe target health for target {0}: {1}".format(target, to_native(e)),
+                         exception=traceback.format_exc())
 
 
 def register_target(connection, module):
@@ -173,10 +182,7 @@ def register_target(connection, module):
     if target_port:
         target['Port'] = target_port
 
-    try:
-        target_description = describe_targets(connection, module, target_group_arn, [target])
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    target_description = describe_targets(connection, module, target_group_arn, [target])
 
     if 'Reason' in target_description['TargetHealth']:
         if target_description['TargetHealth']['Reason'] == "Target.NotRegistered":
@@ -186,7 +192,11 @@ def register_target(connection, module):
                 if target_status:
                     target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
             except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg="Unable to deregister target {0}: {1}".format(target, to_native(e)),
+                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            except BotoCoreError as e:
+                module.fail_json(msg="Unable to deregister target {0}: {1}".format(target, to_native(e)),
+                                 exception=traceback.format_exc())
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
@@ -219,28 +229,35 @@ def deregister_target(connection, module):
     if target_port:
         target['Port'] = target_port
 
-    try:
-        target_description = describe_targets(connection, module, target_group_arn, [target])
-        current_target_state = target_description['TargetHealth']['State']
-    except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    target_description = describe_targets(connection, module, target_group_arn, [target])
+    current_target_state = target_description['TargetHealth']['State']
+    current_target_reason = target_description['TargetHealth'].get('Reason')
 
-    if current_target_state == 'unused':
-        current_target_reason = target_description['TargetHealth']['Reason']
+    needs_deregister = False
 
-        # If target is registered and 'deregister_unused' is set then
-        if deregister_unused and current_target_reason != 'Target.NotRegistered':
-            try:
-                connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
-                changed = True
-                if target_status:
-                    target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
-            except ClientError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-        else:
-            if current_target_reason != 'Target.NotRegistered':
-                module.warn(warning="Your specified target has an 'unused' state but is still registered to the target group. " +
-                                    "To force deregistration use the 'deregister_unused' option.")
+    if deregister_unused and current_target_state == 'unused':
+        if current_target_reason != 'Target.NotRegistered':
+            needs_deregister = True
+    elif current_target_state not in ['unused', 'draining']:
+        needs_deregister = True
+
+    if needs_deregister:
+        try:
+            connection.deregister_targets(TargetGroupArn=target_group_arn, Targets=[target])
+            changed = True
+        except ClientError as e:
+            module.fail_json(msg="Unable to deregister target {0}: {1}".format(target, to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except BotoCoreError as e:
+            module.fail_json(msg="Unable to deregister target {0}: {1}".format(target, to_native(e)),
+                             exception=traceback.format_exc())
+    else:
+        if current_target_reason != 'Target.NotRegistered' and current_target_state != 'draining':
+            module.warn(warning="Your specified target has an 'unused' state but is still registered to the target group. " +
+                                "To force deregistration use the 'deregister_unused' option.")
+
+    if target_status:
+        target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout)
 
     # Get all targets for the target group
     target_descriptions = describe_targets(connection, module, target_group_arn, [])
@@ -249,15 +266,16 @@ def deregister_target(connection, module):
 
 
 def target_status_check(connection, module, target_group_arn, target, target_status, target_status_timeout):
-    retries = 0
-    while True:
+    reached_state = False
+    timeout = target_status_timeout + time()
+    while time() < timeout:
         health_state = describe_targets(connection, module, target_group_arn, [target])['TargetHealth']['State']
         if health_state == target_status:
+            reached_state = True
             break
-        if retries >= target_status_timeout:
-            module.fail_json(msg='Status check timeout of {} exceeded, last status was {}: '.format(target_status_timeout, health_state))
         sleep(1)
-        retries = retries + 1
+    if not reached_state:
+        module.fail_json(msg='Status check timeout of {0} exceeded, last status was {1}: '.format(target_status_timeout, health_state))
 
 
 def main():
@@ -285,11 +303,7 @@ def main():
         module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='elbv2', region=region, endpoint=ec2_url, **aws_connect_params)
 
     state = module.params.get("state")
 
