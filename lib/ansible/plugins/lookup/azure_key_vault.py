@@ -4,50 +4,50 @@ __metaclass__ = type
 DOCUMENTATION = """
   lookup: azure_key_vault
   author: James Johnson <james.johnson@hmcts.net>
-  short_description: Retrieve secrets from an Azure Key-Vault.
+  short_description: Retrieve secrets from an Azure Key Vault.
   requirements:
     - azure-keyvault (python library)
   description:
     - Retrieve secrets from an Azure Key-Vault.
   options:
     secret_name:
-      description: The name of the secret requested.
-      required: True
+      description: The name of the Azure secret requested.
+      required: True     
     vault_uri:
-      description: The URI of the Azure vault.
+      description: The URI of the Azure Key Vault to query.
       required: True
       env:
         - name: AZURE_VAULT_URI
-    azure_client_id:
-      description: The URI of the vault to query.
+    secret_version:
+      description: The version of Azure secret.
+      default: 'latest'         
+    client_id:
+      description: The Azure Client ID (also known as Application ID).
       required: True
       env:
-        - name: AZURE_CLIENT_ID
-    azure_client_secret:
+        - name: client_id
+    secret:
       description: Your Azure Active Directory Service Principal AppId.
       required: True
       env:
         - name: AZURE_SECRET
-    azure_tenant_id:
+    tenant:
       description: Your Azure Active Directory Application Key.
       required: True
       env:
         - name: AZURE_TENANT
-    secret_version:
-      description: your Azure Active Directory tenant id or domain.
-      default: 'latest'
 """
 
 EXAMPLES = """
-- name: Return a secret.
+- name: Return a secret, specifying minimal required parameters.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName') }}"
 
-- name: Return a secret from a specified vault_uri.
+- name: Return latest version of a secret from a specified vault_uri.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName vault_uri=https://yourvault.vault.azure.net/') }}"
 
-- name: Return a specific version of a secret.
+- name: Return a specific version of a secret with AZURE_VAULT_URI environment variable set.
   debug:
     msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}"
 
@@ -86,9 +86,9 @@ class LookupModule(LookupBase):
             'secret_name': None,
             'vault_uri': os.environ.get('AZURE_VAULT_URI', None),
             'secret_version': '',
-            'azure_client_id': os.environ.get('AZURE_CLIENT_ID', None),
-            'azure_client_secret': os.environ.get('AZURE_SECRET', None),
-            'azure_tenant_id': os.environ.get('AZURE_TENANT', None),
+            'client_id': os.environ.get('AZURE_CLIENT_ID', None),
+            'secret': os.environ.get('AZURE_SECRET', None),
+            'tenant': os.environ.get('AZURE_TENANT', None),
         }
 
         input_args = terms[0].split(' ')
@@ -104,28 +104,28 @@ class LookupModule(LookupBase):
                     "azure_key_vault lookup plugin needs key=value pairs, but received %s" %
                     terms)
         try:
-            if accepted_params['azure_client_id'] is None:
+            if accepted_params['client_id'] is None:
                 raise AnsibleError(
-                    "Please set AZURE_CLIENT_ID environment variable or provide azure_client_id=some_value parameter")
+                    "Please set AZURE_CLIENT_ID environment variable or provide client_id=some_value parameter")
 
-            if accepted_params['azure_client_secret'] is None:
-                raise AnsibleError("Please set AZURE_SECRET environment variable or provide azure_client_secret=some_value parameter")
+            if accepted_params['secret'] is None:
+                raise AnsibleError("Please set AZURE_SECRET environment variable or provide secret=some_value parameter")
 
-            if accepted_params['azure_tenant_id'] is None:
-                raise AnsibleError("Please set AZURE_TENANT environment variable or provide azure_tenant_id=some_value parameter")
+            if accepted_params['tenant'] is None:
+                raise AnsibleError("Please set AZURE_TENANT environment variable or provide tenant=some_value parameter")
 
             if accepted_params['secret_name'] is None:
                 raise AnsibleError(
-                    "Please provide a secret_name value in the form secret_name=some_value")
+                    "Please provide a secret_name parameter in the form secret_name=some_value")
 
             if accepted_params['vault_uri'] is None:
                 raise AnsibleError(
-                    "Please set AZURE_VAULT_URI environment variable or provide vault_uri value in the form vault_uri=https://myvault.vault.azure.net/")
+                    "Please set AZURE_VAULT_URI environment variable or provide vault_uri parameter in the form vault_uri=https://myvault.vault.azure.net/")
 
             credentials = ServicePrincipalCredentials(
-                client_id=accepted_params['azure_client_id'],
-                secret=accepted_params['azure_client_secret'],
-                tenant=accepted_params['azure_tenant_id'])
+                client_id=accepted_params['client_id'],
+                secret=accepted_params['secret'],
+                tenant=accepted_params['tenant'])
 
             key_vault_client = KeyVaultClient(credentials)
 
