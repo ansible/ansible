@@ -189,7 +189,7 @@ Not valid::
     foo: "E:\\path\\"rest\\of\\path
 
 In addition to ``'`` and ``"`` there are a number of characters that are special (or reserved) and cannot be used
-as the first character of an unquoted scalar: ``[] {} > | * & ` @ ,``.
+as the first character of an unquoted scalar: ``[] {} > | * & ! % # ` @ ,``.
 
 You should also be aware of ``? : -``. In YAML, they are allowed at the beginning of a string if a non-space
 character follows, but YAML processor implementations differ, so it's better to use quotes.
