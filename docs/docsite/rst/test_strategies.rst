@@ -26,7 +26,10 @@ things in your playbooks.
 .. code-block:: yaml
 
    tasks:
-     - service: name=foo state=started enabled=yes
+     - service:
+         name: foo
+         state: started
+         enabled: yes
 
 If you think the service may not be started, the best thing to do is request it to be started.  If the service fails to start, Ansible
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to
@@ -59,7 +62,9 @@ Certain playbook modules are particularly good for testing.  Below is an example
 
    tasks:
 
-     - wait_for: host={{ inventory_hostname }} port=22
+     - wait_for:
+         host: "{{ inventory_hostname }}"
+         port: 22
        delegate_to: localhost
       
 Here's an example of using the URI module to make sure a web service returns::
@@ -69,7 +74,8 @@ Here's an example of using the URI module to make sure a web service returns::
      - action: uri url=http://www.example.com return_content=yes
        register: webpage
 
-     - fail: msg='service is not happy'
+     - fail:
+         msg: 'service is not happy'
        when: "'AWESOME' not in webpage.content"
 
 It's easy to push an arbitrary script (in any language) on a remote host and the script will automatically fail if it has a non-zero return code::
@@ -97,7 +103,8 @@ Should you feel the need to test for existence of files that are not declarative
 
    tasks:
 
-      - stat: path=/path/to/something
+      - stat:
+          path: /path/to/something
         register: p
 
       - assert:
