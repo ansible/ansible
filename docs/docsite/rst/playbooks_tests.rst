@@ -41,13 +41,16 @@ To match strings against a substring or a regex, use the "match" or "search" fil
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - debug: "msg='matched pattern 1'"
+        - debug: 
+            msg: "matched pattern 1"
           when: url is match("http://example.com/users/.*/resources/.*")
 
-        - debug: "msg='matched pattern 2'"
+        - debug:
+            msg: "matched pattern 2"
           when: url is search("/users/.*/resources/.*")
 
-        - debug: "msg='matched pattern 3'"
+        - debug:
+            msg: "matched pattern 3"
           when: url is search("/users/")
 
 'match' requires a complete match in the string, while 'search' only requires matching a subset of the string.
@@ -96,10 +99,12 @@ To see if a list includes or is included by another list, you can use 'subset' a
         a: [1,2,3,4,5]
         b: [2,3]
     tasks:
-        - debug: msg="A includes B"
+        - debug:
+            msg: "A includes B"
           when: a is superset(b)
 
-        - debug: msg="B is included in A"
+        - debug:
+            msg: "B is included in A"
           when: b is subset(a)
 
 
@@ -119,10 +124,12 @@ You can use `any` and `all` to check if any or all elements in a list are true o
         - True
   tasks:
 
-    - debug: msg="all are true!"
+    - debug:
+        msg: "all are true!"
       when: mylist is all
 
-    - debug: msg="at least one is true"
+    - debug:
+        msg: "at least one is true"
       when: myotherlist is any
 
 
@@ -133,24 +140,31 @@ Testing paths
 
 The following tests can provide information about a path on the controller::
 
-    - debug: msg="path is a directory"
+    - debug:
+        msg: "path is a directory"
       when: mypath is directory
 
-    - debug: msg="path is a file"
+    - debug:
+        msg: "path is a file"
       when: mypath is file
 
-    - debug: msg="path is a symlink"
+    - debug:
+        msg: "path is a symlink"
       when: mypath is link
 
-    - debug: msg="path already exists"
+    - debug:
+        msg: "path already exists"
       when: mypath is exists
 
-    - debug: msg="path is {{ (mypath is abs)|ternary('absolute','relative')}}"
+    - debug:
+        msg: "path is {{ (mypath is abs)|ternary('absolute','relative')}}"
 
-    - debug: msg="path is the same file as path2"
+    - debug: 
+        msg: "path is the same file as path2"
       when: mypath is same_file(path2)
 
-    - debug: msg="path is a mount"
+    - debug:
+        msg: "path is a mount"
       when: mypath is mount
 
 
@@ -167,20 +181,25 @@ The following tasks are illustrative of the tests meant to check the status of t
         register: result
         ignore_errors: True
 
-      - debug: msg="it failed"
+      - debug:
+          msg: "it failed"
         when: result is failed
 
       # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
+      - debug:
+          msg: "it changed"
         when: result is changed
 
-      - debug: msg="it succeeded in Ansible >= 2.1"
+      - debug:
+          msg: "it succeeded in Ansible >= 2.1"
         when: result is succeeded
 
-      - debug: msg="it succeeded"
+      - debug:
+          msg: "it succeeded"
         when: result is success
 
-      - debug: msg="it was skipped"
+      - debug:
+          msg: "it was skipped"
         when: result is skipped
 
 .. note:: From 2.1, you can also use success, failure, change, and skip so that the grammar matches, for those who need to be strict about it.
