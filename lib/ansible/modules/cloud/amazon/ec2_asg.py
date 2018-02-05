@@ -141,6 +141,12 @@ options:
     version_added: "1.9"
     default: yes
     required: False
+  new_instances_protected_from_scale_in:
+    description:
+      - Protect newly created instances from being selected for termination during scale in
+    required: false
+    default: False
+    version_added: "2.5"
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
@@ -416,7 +422,7 @@ except ImportError:
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
                   'LoadBalancerNames', 'MaxSize', 'MinSize', 'AutoScalingGroupName', 'PlacementGroup',
-                  'TerminationPolicies', 'VPCZoneIdentifier')
+                  'NewInstancesProtectedFromScaleIn', 'TerminationPolicies', 'VPCZoneIdentifier')
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
 
@@ -580,6 +586,7 @@ def get_properties(autoscaling_group):
     properties['healthcheck_grace_period'] = autoscaling_group.get('HealthCheckGracePeriod')
     properties['healthcheck_type'] = autoscaling_group.get('HealthCheckType')
     properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
+    properties['new_instances_protected_from_scale_in'] = autoscaling_group.get('NewInstancesProtectedFromScaleIn')
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
@@ -804,6 +811,7 @@ def create_autoscaling_group(connection):
     default_cooldown = module.params.get('default_cooldown')
     wait_for_instances = module.params.get('wait_for_instances')
     wait_timeout = module.params.get('wait_timeout')
+    termination_protection = module.params.get('new_instances_protected_from_scale_in')
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
@@ -857,6 +865,7 @@ def create_autoscaling_group(connection):
             HealthCheckGracePeriod=health_check_period,
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
+            NewInstancesProtectedFromScaleIn=termination_protection,
             TerminationPolicies=termination_policies)
         if vpc_zone_identifier:
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
@@ -1034,6 +1043,7 @@ def create_autoscaling_group(connection):
             HealthCheckGracePeriod=health_check_period,
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
+            NewInstancesProtectedFromScaleIn=termination_protection,
             TerminationPolicies=termination_policies)
         if availability_zones:
             ag['AvailabilityZones'] = availability_zones
@@ -1401,7 +1411,8 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            new_instances_protected_from_scale_in=dict(type='bool', default=False),
         ),
     )
 
