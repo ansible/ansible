@@ -115,6 +115,9 @@ class AnsibleAWSModule(object):
     def debug(self, *args, **kwargs):
         return self._module.debug(*args, **kwargs)
 
+    def warn(self, *args, **kwargs):
+        return self._module.warn(*args, **kwargs)
+
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception
 
