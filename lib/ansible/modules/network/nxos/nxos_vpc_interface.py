@@ -194,11 +194,14 @@ def get_commands_to_config_vpc_interface(portchannel, delta, config_value, exist
     commands = []
 
     if delta.get('peer-link') is False and existing.get('peer-link') is True:
-        command = 'no vpc peer-link'
         commands.append('no vpc peer-link')
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
 
-    elif delta.get('peer-link') or not existing.get('vpc'):
+    elif delta.get('peer-link') and existing.get('peer-link') is not True:
+        commands.append('vpc peer-link')
+        commands.insert(0, 'interface port-channel{0}'.format(portchannel))
+
+    elif delta.get('vpc') and not existing.get('vpc'):
         command = 'vpc {0}'.format(config_value)
         commands.append(command)
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
