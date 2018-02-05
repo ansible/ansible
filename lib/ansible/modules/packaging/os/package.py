@@ -28,7 +28,7 @@ options:
   name:
     description:
       - "Package name, or package specifier with version, like C(name-1.0)."
-      - This can be a package name, or with most package managers, a file path to a package or a URL.
+      - This can be a package name or list of package names, or with most package managers, a file path to a package or a URL.
       - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
     required: true
   state:
@@ -51,6 +51,13 @@ EXAMPLES = '''
 - name: install ntpdate
   package:
     name: ntpdate
+    state: present
+
+- name: install packages
+  package:
+    name:
+      - ntpdate
+      - ruby
     state: present
 
 # This uses a variable as this changes per distribution.

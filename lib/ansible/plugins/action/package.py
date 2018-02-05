@@ -36,13 +36,14 @@ class ActionModule(ActionBase):
         if 'use' in new_args:
             del new_args['use']
 
-        # apt module requires a different option for files/URLs
+        # normalize the names to be a list
         names = new_args['name']
         if not isinstance(names, list):
             names = [names]
         if len(names) > 1 and any(name.endswith('.deb') for name in names):
             raise AnsibleActionFail("Only one .deb package path/URL can be passed at a time.")
-        if names[0].endswith('.deb'):
+        # apt module requires a different option for files/URLs
+        if names and names[0].endswith('.deb'):
             new_args['deb'] = names[0]
             del new_args['name']
 
