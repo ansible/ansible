@@ -271,10 +271,15 @@ def get_mode(cursor):
 
 
 def user_exists(cursor, user, host, host_all):
-    if host_all:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s", ([user]))
-    else:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user, host))
+    try:
+        if host_all:
+            cursor.execute("SELECT count(*) FROM mysql.user WHERE user = %s", ([user]))
+        else:
+            cursor.execute("SELECT count(*) FROM mysql.user WHERE user = %s AND host = %s", (user, host))
+    except Exception as db_ex:
+        if str(db_ex.args).startswith("(1142"):
+            # SELECT to mysql.user is denied, assume user exists
+            return 1
 
     count = cursor.fetchone()
     return count[0] > 0
@@ -324,9 +329,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             old_user_mgmt = server_version_check(cursor)
 
             if old_user_mgmt:
-                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
+                cursor.execute("SELECT password FROM mysql.user WHERE user = %s AND host = %s", (user, host))
             else:
-                cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
+                cursor.execute("SELECT authentication_string FROM mysql.user WHERE user = %s AND host = %s", (user, host))
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
@@ -380,7 +385,10 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    privileges_grant(cursor, user, host, db_table, priv)
+                    try:
+                        privileges_grant(cursor, user, host, db_table, priv)
+                    except Exception as e:
+                        module.fail_json(msg="Granting privs failed: %s" % to_native(e), exception=traceback.format_exc())
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
@@ -392,8 +400,14 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if module.check_mode:
                         return True
                     if not append_privs:
-                        privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
-                    privileges_grant(cursor, user, host, db_table, new_priv[db_table])
+                        try:
+                            privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
+                        except Exception as e:
+                            module.fail_json(msg="Revoking privs failed: %s" % to_native(e), exception=traceback.format_exc())
+                    try:
+                        privileges_grant(cursor, user, host, db_table, new_priv[db_table])
+                    except Exception as e:
+                        module.fail_json(msg="Revoking privs failed: %s" % to_native(e), exception=traceback.format_exc())
                     changed = True
 
     return changed
@@ -436,7 +450,11 @@ def privileges_get(cursor, user, host):
     The dictionary format is the same as that returned by privileges_unpack() below.
     """
     output = {}
-    cursor.execute("SHOW GRANTS FOR %s@%s", (user, host))
+    try:
+        cursor.execute("SHOW GRANTS FOR %s@%s", (user, host))
+    except:
+        output["*.*"] = ['USAGE']  # assume explicit privileges if SHOW GRANTS fails (in case you don't posess permissions)
+
     grants = cursor.fetchall()
 
     def pick(x):
@@ -587,7 +605,7 @@ def main():
     ssl_cert = module.params["ssl_cert"]
     ssl_key = module.params["ssl_key"]
     ssl_ca = module.params["ssl_ca"]
-    db = 'mysql'
+    db = None
     sql_log_bin = module.params["sql_log_bin"]
 
     if not mysqldb_found:
