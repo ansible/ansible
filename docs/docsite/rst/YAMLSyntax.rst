@@ -66,6 +66,8 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
     fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
 
+These are called "Flow collections".
+
 .. _truthiness:
 
 Ansible doesn't really use these too much, but you can also specify a boolean value (true/false) in several forms::
@@ -76,7 +78,8 @@ Ansible doesn't really use these too much, but you can also specify a boolean va
     likes_emacs: TRUE
     uses_cvs: false
 
-Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a ``|`` will include the newlines.  Using a ``>`` will ignore newlines; it's used to make what would otherwise be a very long line easier to read and edit.
+Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a "Literal Block Scalar" ``|`` will include the newlines and any trailing spaces.
+Using a "Folded Block Scalar" ``>`` will fold newlines to spaces; it's used to make what would otherwise be a very long line easier to read and edit.
 In either case the indentation will be ignored.
 Examples are::
 
@@ -85,11 +88,22 @@ Examples are::
                 will appear these three
                 lines of poetry
 
-    ignore_newlines: >
+    fold_newlines: >
                 this is really a
                 single line of text
                 despite appearances
 
+While in the above ``>`` example all newlines are folded into spaces, there are two ways to enforce a newline to be kept::
+
+    fold_some_newlines: >
+        a
+        b
+
+        c
+        d
+          e
+        f
+    same_as: "a b\nc d\n  e\nf\n"
 
 Let's combine what we learned so far in an arbitrary YAML example.
 This really has nothing to do with Ansible, but will give you a feel for the format::
@@ -119,7 +133,11 @@ That's all you really need to know about YAML to start writing `Ansible` playboo
 Gotchas
 -------
 
-While YAML is generally friendly, the following is going to result in a YAML syntax error::
+While you can put just about anything into an unquoted scalar, there are some exceptions.
+A colon followed by a space (or newline) ``: `` is an indicator for a mapping.
+A space followed by the pound sign `` #`` starts a comment.
+
+Because of this, the following is going to result in a YAML syntax error::
 
     foo: somebody said I should put a colon here: so I did
 
@@ -131,11 +149,29 @@ While YAML is generally friendly, the following is going to result in a YAML syn
 
 You will want to quote hash values using colons followed by a space or the end of the line::
 
+    foo: 'somebody said I should put a colon here: so I did'
+    
+    windows_drive: 'c:'
+
+...and then the colon will be preserved.
+
+Alternatively, you can use double quotes::
+
     foo: "somebody said I should put a colon here: so I did"
     
     windows_drive: "c:"
 
-...and then the colon will be preserved.
+The difference between single quotes and double quotes is that in double quotes
+you can use escapes::
+
+    foo: "a \t TAB and a \n NEWLINE"
+
+The list of allowed escapes can be found in the YAML Specification under "Escape Sequences" (YAML 1.1) or "Escape Characters" (YAML 1.2).
+
+The following is invalid YAML::
+
+    foo: "an escaped \' single quote"
+
 
 Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
 with a "{", YAML will think it is a dictionary, so you must quote it, like so::
@@ -152,7 +188,17 @@ Not valid::
 
     foo: "E:\\path\\"rest\\of\\path
 
-The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
+In addition to ``'`` and ``"`` there are a number of characters that are special (or reserved) and cannot be used
+as the first character of an unquoted scalar: ``[] {} > | * & ! % # ` @ ,``.
+
+You should also be aware of ``? : -``. In YAML, they are allowed at the beginning of a string if a non-space
+character follows, but YAML processor implementations differ, so it's better to use quotes.
+
+In Flow Collections, the rules are a bit more strict::
+
+    a scalar in block mapping: this } is [ all , valid
+
+    flow mapping: { key: "you { should [ use , quotes here" }
 
 Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
 In these cases just use quotes::
@@ -182,5 +228,10 @@ value::
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+       #ansible IRC chat channel and #yaml for YAML specific questions
+   `YAML 1.1 Specification <http://yaml.org/spec/1.1/>`_
+       The Specification for YAML 1.1, which PyYAML and libyaml are currently
+       implementing
+   `YAML 1.2 Specification <http://yaml.org/spec/1.2/>`_
+       For completeness, YAML 1.2 is the successor of 1.1
 
