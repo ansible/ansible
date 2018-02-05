@@ -72,7 +72,7 @@
 
     - name: Generate ca key
       command: >
-        openssl req -new -x509 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem
+        openssl req -new -x509 -days 3650 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem
           -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=ansible.http.tests"
 
     - name: Generate ansible.http.tests key
