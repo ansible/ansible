@@ -82,7 +82,6 @@ options:
     destination_ip:
         description:
             - The destination IP address.
-        required: true
     destination_port:
         description:
             - The destination port.
@@ -92,7 +91,6 @@ options:
     protocol:
         description:
             - The IP protocol number from 1 to 255.
-        required: true
     category:
         description:
             - URL category
@@ -291,9 +289,9 @@ def main():
         destination_zone=dict(default=None),
         category=dict(default=None),
         application=dict(default=None),
-        protocol=dict(default=None, required=True),
-        destination_ip=dict(default=None, required=True),
-        destination_port=dict(default=None, required=True)
+        protocol=dict(default=None),
+        destination_ip=dict(default=None),
+        destination_port=dict(default=None)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
