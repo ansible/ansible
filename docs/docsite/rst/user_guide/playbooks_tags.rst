@@ -5,12 +5,20 @@ If you have a large playbook it may become useful to be able to run a specific p
 
 Both plays and tasks support a "tags:" attribute for this reason.
 You can **ONLY** filter tasks based on tags from the command line with ``--tags`` or ``--skip-tags``.
-Adding "tags:" in any part of a play (including roles) adds those tags to the contained tasks.
+Adding ``tags:`` to a play, or to statically imported tasks and roles, adds
+those tags to the contained tasks.
 
-Example::
+Adding the tag ``bar`` to all tasks in a play::
+
+    - hosts: all
+      tags:
+        - bar
+      tasks:
+        ...
+
+Tagging indivdual tasks with different tags::
 
     tasks:
-
         - yum:
             name: "{{ item }}"
             state: installed
@@ -26,11 +34,11 @@ Example::
           tags:
              - configuration
 
-If you wanted to just run the "configuration" and "packages" part of a very long playbook, you could do this::
+If you wanted to just run the "configuration" and "packages" part of a very long playbook, you can use the ``--tags`` option on the command line::
 
     ansible-playbook example.yml --tags "configuration,packages"
 
-On the other hand, if you want to run a playbook *without* certain tasks, you could do this::
+On the other hand, if you want to run a playbook *without* certain tasks, you can use the ``--skip-tags`` command-line option::
 
     ansible-playbook example.yml --skip-tags "notification"
 
@@ -39,8 +47,8 @@ On the other hand, if you want to run a playbook *without* certain tasks, you co
 
 Tag Reuse
 ```````````````
-You can apply the same tag name to more than one task, in the same file
-or included files. This will run all tasks with that tag.
+You can apply the same tag to more than one task. When a play is run using
+the ``--tags`` command-line option, all tasks with that tag name will be run.
 
 Example::
 
@@ -73,7 +81,10 @@ Example::
 Tag Inheritance
 ```````````````
 
-You can apply tags to more than tasks, but they ONLY affect the tasks themselves. Applying tags anywhere else is just a convenience so you don't have to write it on every task::
+You can apply ``tags:`` to structures above tasks, but when Ansible processes
+them, ONLY the tasks they contain are tagged. Applying tags anywhere other than
+tasks is just a convenience so you don't have to tag all indivdual tasks. This
+example tags all tasks in a play::
 
     - hosts: all
       tags:
@@ -86,27 +97,42 @@ You can apply tags to more than tasks, but they ONLY affect the tasks themselves
       tasks:
         ...
 
-You may also apply tags to roles::
+You may also apply tags to ``roles:``:
 
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
 
-And import statements::
+And to ``import_role:`` and ``import_tasks:`` statements::
+
+    - import_role:
+        name: myrole
+      tags: [web,foo]
 
     - import_tasks: foo.yml
       tags: [web,foo]
+
 
 All of these apply the specified tags to EACH task inside the play, imported
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
 
-The above information does not apply to `include_tasks` or other dynamic includes,
-as the attributes applied to an include, only affect the include itself.
+Tags are inherited *down* the dependency chain. In order for tags to be
+applied to a role and all its dependencies, the tag should be applied to the
+role, not to all the tasks within a role.
 
-Tags are inherited *down* the dependency chain. In order for tags to be applied to a role and all its dependencies,
-the tag should be applied to the role, not to all the tasks within a role.
+You can see which tags are applied to tasks and imported tasks by running
+``ansible-playbook`` with the ``--list-tasks`` option. You can display all
+tags applied to the tasks with the ``--list-tags`` option.
 
-You can see which tags are applied to tasks by running ``ansible-playbook`` with the ``--list-tasks`` option. You can display all tags using the ``--list-tags`` option.
+.. note::
+    The above information does not apply to `include_tasks`, `include_roles`,
+    or other dynamic includes. Tags applied to either of these only tag the
+    include itself.
+
+    To use tags with tasks and roles intended for use as dynamic `include`s,
+    all needed tasks should be explicitly tagged at the task level; or
+    ``block:`` may be used to tag more than one task at once.
+
 
 .. _special_tags:
 
