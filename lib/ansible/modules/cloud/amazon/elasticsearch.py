@@ -176,7 +176,7 @@ from ansible.module_utils.ec2 import boto3_conn, compare_policies, ec2_argument_
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass # boto3_conn will handle missing dependencies
+    pass  # boto3_conn will handle missing dependencies
 
 
 def _create_elasticsearch_domain(connection, module):
