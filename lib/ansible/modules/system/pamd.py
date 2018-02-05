@@ -302,14 +302,13 @@ class PamdRule(object):
             complicated = True
         else:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9/_\-\.]+)\s*        # Rule Path
+                r"""([@\-A-Za-z0-9_]+)\s*        # Rule Type
+                    ([A-Za-z0-9_\-]+)\s*          # Rule Control
+                    ([A-Za-z0-9/_\-\.]*)\s*        # Rule Path
                     ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
-
         rule_type = result.group(1)
         if complicated:
             rule_control = '[' + result.group(2) + ']'
@@ -353,13 +352,13 @@ class PamdService(object):
             self.name = self.ansible.params["name"]
 
     def load_rules_from_file(self):
-        self.fname = self.path + "/" + self.name
+        self.fname = os.path.join(self.path, self.name)
         stringline = ''
         try:
             for line in open(self.fname, 'r'):
-                stringline += line.rstrip()
+                stringline += line.rstrip().lstrip()
                 stringline += '\n'
-            self.load_rules_from_string(stringline)
+            self.load_rules_from_string(stringline.replace("\\\n", ""))
 
         except IOError:
             e = get_exception()
@@ -375,6 +374,10 @@ class PamdService(object):
             elif (not line.startswith('#') and
                   not line.isspace() and
                   len(line) != 0):
+                try:
+                    self.ansible.log(msg="Creating rule from string %s" % stringline)
+                except AttributeError:
+                    pass
                 self.rules.append(PamdRule.rulefromstring(stringline))
 
     def write(self):
