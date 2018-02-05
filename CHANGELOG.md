@@ -153,6 +153,8 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
+- panos
+  * panos_op
 - spotinst
   * spotinst_aws_elastigroup
 - vmware
