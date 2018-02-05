@@ -97,7 +97,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-        if product_name == 'OpenStack Nova':
+        if product_name in ['OpenStack Compute', 'OpenStack Nova']:
             virtual_facts['virtualization_type'] = 'openstack'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
