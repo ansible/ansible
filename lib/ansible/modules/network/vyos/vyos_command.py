@@ -89,6 +89,8 @@ notes:
   - Tested against VYOS 1.1.7
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 """
 
 EXAMPLES = """
@@ -108,6 +110,13 @@ tasks:
         - show hardware cpu
       wait_for:
         - "result[0] contains 'VyOS 1.1.7'"
+
+  - name: run command that requires answering a prompt
+    vyos_command:
+      commands:
+        - command: 'rollback 1'
+          prompt: 'Proceed with reboot? [confirm][y]'
+          answer: y
 """
 
 RETURN = """
