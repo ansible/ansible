@@ -134,9 +134,11 @@ class ActionModule(ActionBase):
             new_task.args.pop('variable_start_string', None)
             new_task.args.pop('variable_end_string', None)
             new_task.args.pop('trim_blocks', None)
+
+            local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
+
             try:
-                tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-                result_file = os.path.join(tempdir, os.path.basename(source))
+                result_file = os.path.join(local_tempdir, os.path.basename(source))
                 with open(result_file, 'wb') as f:
                     f.write(to_bytes(resultant, errors='surrogate_or_strict'))
 
@@ -156,7 +158,8 @@ class ActionModule(ActionBase):
                                                                         shared_loader_obj=self._shared_loader_obj)
                 result.update(copy_action.run(task_vars=task_vars, tmp=tmp))
             finally:
-                shutil.rmtree(tempdir)
+                shutil.rmtree(local_tempdir)
+
         except AnsibleAction as e:
             result.update(e.result)
         finally:
