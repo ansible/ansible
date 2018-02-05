@@ -66,9 +66,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         tasks.  Everything else in this base class is a helper method for the
         action plugin to do that.
 
-        :kwarg tmp: Temporary directory.  Sometimes an action plugin sets up
-            a temporary directory and then calls another module.  This parameter
-            allows us to reuse the same directory for both.
+        :kwarg tmp: Deprecated parameter.  This is no longer used.  An action plugin that calls
+            another one and wants to use the same remote tmp for both will use _execute_module(tmp),
+            rather than this parameter.
         :kwarg task_vars: The variables (host vars, group vars, config vars,
             etc) associated with this task.
         :returns: dictionary of results from the module
@@ -77,6 +77,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         * Module parameters.  These are stored in self._task.args
         """
+
+        if tmp is not None:
+            display.warning('Passing tmp to an ActionModule.run() from another ActionModule is no longer supported.  It has no effect')
+        del tmp
 
         result = {}
 
@@ -87,10 +91,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
-        if not tmp and self._early_needs_tmp_path():
+        if self._early_needs_tmp_path():
             self._make_tmp_path()
         else:
-            self._connection._shell.tempdir = tmp
+            self._connection._shell.tempdir = None
 
         return result
 

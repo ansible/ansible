@@ -41,6 +41,10 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
+        if tmp is not None:
+            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
+        del tmp  # tmp no longer has any effect
+
         if self._play_context.connection != 'local':
             return dict(
                 failed=True,
@@ -83,5 +87,6 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
+
         return result

@@ -37,8 +37,7 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         module = self._task.args.get('use', 'auto').lower()
 
@@ -86,6 +85,6 @@ class ActionModule(ActionBase):
             result.update(e.result)
         finally:
             if not self._task.async_val:
-                self._remove_tmp_path(tmp)
+                self._remove_tmp_path(self._connection._shell.tempdir)
 
         return result

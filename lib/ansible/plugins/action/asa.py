@@ -41,6 +41,10 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
+        if tmp is not None:
+            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
+        del tmp  # tmp no longer has any effect
+
         if self._play_context.connection == 'local':
             provider = load_provider(asa_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
@@ -69,6 +73,6 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         return result
