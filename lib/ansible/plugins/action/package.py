@@ -79,5 +79,4 @@ class ActionModule(ActionBase):
                 # remove a temporary path we created
                 self._remove_tmp_path(self._connection._shell.tempdir)
 
-
         return result
