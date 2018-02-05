@@ -91,10 +91,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
-        if self._early_needs_tmp_path():
+        if self._connection._shell.tempdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
-        else:
-            self._connection._shell.tempdir = None
 
         return result
 
