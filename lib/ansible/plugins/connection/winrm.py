@@ -75,7 +75,7 @@ try:
     import ipaddress
     HAS_IPADDRESS = True
 except ImportError:
-    HAS_IPADRESS = False
+    HAS_IPADDRESS = False
 
 try:
     from __main__ import display
