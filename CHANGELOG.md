@@ -1110,7 +1110,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 <a id="2.3.3"></a>
 
-## 2.3.3 "Ramble On" - TBD
+## 2.3.3 "Ramble On"
 
 ### Bugfixes
 * Fix alternatives module handlling of non existing options
