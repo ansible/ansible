@@ -35,7 +35,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35332)
 * Fix nxos_snmp_user removing encryption from user on subsequent runs of the task
   (https://github.com/ansible/ansible/pull/35433)
-
+* Fix traceback in winrm module when the ipaddress module is not installed
+  https://github.com/ansible/ansible/pull/35723/files
 
 <a id="2.4.3"></a>
 
