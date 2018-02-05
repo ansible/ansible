@@ -407,7 +407,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     try:
                         privileges_grant(cursor, user, host, db_table, new_priv[db_table])
                     except Exception as e:
-                        module.fail_json(msg="Revoking privs failed: %s" % to_native(e), exception=traceback.format_exc())
+                        module.fail_json(msg="Granting privs failed: %s" % to_native(e), exception=traceback.format_exc())
                     changed = True
 
     return changed
