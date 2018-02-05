@@ -6,7 +6,7 @@ RUN set -x && \
     echo 1000 > /root/ca/serial && \
     touch /root/ca/index.txt && \
     sed -i 's/\.\/demoCA/\/root\/ca/g' /etc/ssl/openssl.cnf && \
-    openssl req -new -x509 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem \
+    openssl req -new -x509 -days 3650 -nodes -extensions v3_ca -keyout /root/ca/private/cakey.pem -out /root/ca/cacert.pem \
         -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=ansible.http.tests" && \
     openssl req -new -nodes -out /root/ca/ansible.http.tests-req.pem -keyout /root/ca/private/ansible.http.tests-key.pem \
         -subj "/C=US/ST=North Carolina/L=Durham/O=Ansible/CN=ansible.http.tests" && \
