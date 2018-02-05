@@ -112,6 +112,12 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+  - name: run command that requires answering a prompt
+    ios_command:
+      commands:
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: 'Clear "show interface" counters on this interface [confirm]'
+          answer: c
 """
 
 RETURN = """
