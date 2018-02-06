@@ -84,26 +84,17 @@ def _boto3_conn(region, credentials):
     return connection
 
 
-def _get_credentials(options):
-    credentials = {}
-    credentials['aws_profile'] = options['aws_profile']
-    credentials['aws_secret_access_key'] = options['aws_secret_key']
-    credentials['aws_access_key_id'] = options['aws_access_key']
-    credentials['aws_session_token'] = options['aws_security_token']
-
-    return credentials
-
-
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables, attribute=None, region=None, aws_profile=None, aws_access_key=None, aws_secret_key=None, aws_security_token=None, **kwargs):
+        boto_credentials = {
+            'aws_profile': aws_profile,
+            'aws_secret_access_key': aws_secret_key,
+            'aws_access_key_id': aws_access_key,
+            'aws_session_token': aws_security_token
+        }
 
-        self.set_options(var_options=variables, direct=kwargs)
-        boto_credentials = _get_credentials(self._options)
-
-        region = self._options['region']
         client = _boto3_conn(region, boto_credentials)
 
-        attribute = kwargs.get('attribute')
         params = {'AttributeNames': []}
         check_ec2_classic = False
         if 'has-ec2-classic' == attribute:

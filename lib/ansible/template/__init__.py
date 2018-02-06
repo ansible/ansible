@@ -621,7 +621,7 @@ class Templar:
             # safely catch run failures per #5059
             try:
                 instance.set_options(var_options=self._available_variables, direct=kwargs)
-                ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
+                ran = instance.run(loop_terms, variables=self._available_variables, **instance._options)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
