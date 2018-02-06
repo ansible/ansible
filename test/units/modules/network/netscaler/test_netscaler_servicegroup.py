@@ -161,12 +161,15 @@ class TestNetscalerServicegroupModule(TestModule):
         m = MagicMock(return_value=servicegroup_proxy_mock)
         servicegroup_exists_mock = Mock(side_effect=[False, True])
 
+        servicegroup_servicegroupmember_binding_mock = Mock(count=Mock(return_value=0))
+
         with patch.multiple(
             'ansible.modules.network.netscaler.netscaler_servicegroup',
             ConfigProxy=m,
             servicegroup_exists=servicegroup_exists_mock,
             servicemembers_identical=Mock(side_effect=[False, True]),
             do_state_change=Mock(return_value=Mock(errorcode=0)),
+            servicegroup_servicegroupmember_binding=servicegroup_servicegroupmember_binding_mock,
             nitro_exception=self.MockException,
         ):
             self.module = netscaler_servicegroup
