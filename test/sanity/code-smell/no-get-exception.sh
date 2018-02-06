@@ -7,27 +7,11 @@
 get_exception=$(find . -path ./test/runner/.tox -prune \
         -o -path ./lib/ansible/module_utils/pycompat24.py -prune \
         -o -path ./lib/ansible/module_utils/basic.py -prune \
-        -o -path ./lib/ansible/modules/storage/netapp -prune \
-        -o -path ./lib/ansible/modules/packaging/os/apt.py -prune \
-        -o -path ./lib/ansible/modules/packaging/os/apt_repository.py -prune \
-        -o -path ./lib/ansible/modules/packaging/os/yum_repository.py -prune \
         -o -path ./lib/ansible/modules/network/panos -prune \
         -o -path ./lib/ansible/modules/network/junos/junos_facts.py -prune \
-        -o -path ./lib/ansible/modules/network/junos/junos_scp.py -prune \
         -o -path ./lib/ansible/modules/network/junos/junos_package.py -prune \
-        -o -path ./lib/ansible/modules/network/vyos/vyos_command.py -prune \
-        -o -path ./lib/ansible/modules/network/fortios/fortios_address.py -prune \
         -o -path ./lib/ansible/modules/network/cloudengine/ce_file_copy.py -prune \
-        -o -path ./lib/ansible/modules/network/aos/aos_blueprint_param.py -prune \
-        -o -path ./lib/ansible/modules/network/aos/aos_blueprint.py -prune \
-        -o -path ./lib/ansible/modules/network/aos/aos_blueprint_virtnet.py -prune \
-        -o -path ./lib/ansible/modules/network/eos/eos_command.py -prune \
-        -o -path ./lib/ansible/modules/files/xattr.py -prune \
-        -o -path ./lib/ansible/modules/files/acl.py -prune \
         -o -path ./lib/ansible/modules/system -prune \
-        -o -path ./lib/ansible/modules/web_infrastructure/jenkins_plugin.py -prune \
-        -o -path ./lib/ansible/modules/web_infrastructure/taiga_issue.py -prune \
-        -o -path ./lib/ansible/modules/web_infrastructure/htpasswd.py -prune \
         -o -name '*.py' -type f -exec grep -H 'get_exception' '{}' '+')
 
 basic_failed=0
