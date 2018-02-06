@@ -88,6 +88,13 @@
     - "{{fail_checksum.results}}"
     - "{{fail.results}}"
 
+- name: ensure python modules for Older Python SNI verification are absent
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - ndg-httpsclient
+
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
     url: "https://{{ badssl_host }}/"
