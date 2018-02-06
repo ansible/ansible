@@ -289,6 +289,14 @@ except ImportError:
     pyopenssl_found = False
 else:
     pyopenssl_found = True
+    if OpenSSL.SSL.OPENSSL_VERSION_NUMBER >= 0x10100000:
+        # OpenSSL 1.1.0 or newer
+        MUST_STAPLE_NAME = b"tlsfeature"
+        MUST_STAPLE_VALUE = b"status_request"
+    else:
+        # OpenSSL 1.0.x or older
+        MUST_STAPLE_NAME = b"1.3.6.1.5.5.7.1.24"
+        MUST_STAPLE_VALUE = b"DER:30:03:02:01:05"
 
 
 class CertificateSigningRequestError(crypto_utils.OpenSSLObjectError):
@@ -372,9 +380,7 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
                 extensions.append(crypto.X509Extension(b"basicConstraints", self.basicConstraints_critical, usages.encode('ascii')))
 
             if self.ocspMustStaple:
-                extensions.append(crypto.X509Extension(b"1.3.6.1.5.5.7.1.24", self.ocspMustStaple_critical, b"DER:30:03:02:01:05"))
-                # With openssl version 1.1 or newer, you could also use:
-                #   extensions.append(crypto.X509Extension(b"tlsfeature", self.ocspMustStaple_critical, b"status_request"))
+                extensions.append(crypto.X509Extension(MUST_STAPLE_NAME, self.ocspMustStaple_critical, MUST_STAPLE_VALUE))
 
             if extensions:
                 req.add_extensions(extensions)
@@ -446,9 +452,10 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             return _check_keyUsage_(extensions, b'basicConstraints', self.basicConstraints, self.basicConstraints_critical)
 
         def _check_ocspMustStaple(extensions):
-            oms_ext = [ext for ext in extensions if ext.get_short_name() == b'UNDEF' and ext.get_data() == b'\x30\x03\x02\x01\x05']
-            oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'1.3.6.1.5.5.7.1.24' and str(ext) == 'DER:30:03:02:01:05'])
-            oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'tlsfeature' and str(ext) == 'status_request'])
+            oms_ext = [ext for ext in extensions if ext.get_short_name() == MUST_STAPLE_NAME and str(ext) == MUST_STAPLE_VALUE]
+            if OpenSSL.SSL.OPENSSL_VERSION_NUMBER < 0x10100000:
+                # Older versions of libssl don't know about OCSP Must Staple
+                oms_ext.extend([ext for ext in extensions if ext.get_short_name() == b'UNDEF' and ext.get_data() == b'\x30\x03\x02\x01\x05'])
             if self.ocspMustStaple:
                 return len(oms_ext) > 0 and oms_ext[0].get_critical() == self.ocspMustStaple_critical
             else:
