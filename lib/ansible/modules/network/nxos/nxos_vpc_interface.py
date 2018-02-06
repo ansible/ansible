@@ -193,11 +193,11 @@ def get_portchannel_vpc_config(module, portchannel):
 def get_commands_to_config_vpc_interface(portchannel, delta, config_value, existing):
     commands = []
 
-    if delta.get('peer-link') is False and existing.get('peer-link') is True:
+    if not delta.get('peer-link') and existing.get('peer-link'):
         commands.append('no vpc peer-link')
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
 
-    elif delta.get('peer-link') and existing.get('peer-link') is not True:
+    elif delta.get('peer-link') and not existing.get('peer-link'):
         commands.append('vpc peer-link')
         commands.insert(0, 'interface port-channel{0}'.format(portchannel))
 
