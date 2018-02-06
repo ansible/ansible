@@ -238,7 +238,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         b_destpath = os.path.dirname(b_dest)
         if not os.path.exists(b_destpath) and not module.check_mode:
-            os.makedirs(b_destpath)
+            try:
+                os.makedirs(b_destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+
         b_lines = []
     else:
         f = open(b_dest, 'rb')
