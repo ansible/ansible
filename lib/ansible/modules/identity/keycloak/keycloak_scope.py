@@ -98,11 +98,21 @@ options:
 
             composites:
                 description:
-                    - if I(composite) is set to True,
+                    - if I(composite) is set to True, this defines the composite role definition through
+                      a dict. The set of all the rolenames specified therein is the set of roles this
+                      composite role is comprised of. 
+                suboptions:
+                    client:
+                        description:
+                            - This is a dict whose keys are client names, while the keys are lists of
+                              client role names.
+                    realm:
+                        description:
+                            - This is a list of realm role names. 
 
             containerId:
                 description:
-                    - Container id of this role -- usually the realmname.
+                    - Container id of this role - usually the realmname.
 
             description:
                 description:
