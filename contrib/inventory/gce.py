@@ -247,6 +247,20 @@ class GceInventory(object):
             if states:
                 self.instance_states = states.split(',')
 
+        # Set the instance_tags filter
+        self.instance_tags = []
+        if config.has_option('gce', 'instance_tags'):
+            tags = config.get('gce', 'instance_tags')
+            # Ignore if instance_tags is an empty string.
+            if tags:
+                self.instance_tags = tags.split(',')
+        # Env var overrides config from file
+        if os.environ.get('GCE_INSTANCE_TAGS'):
+            self.instance_tags = os.environ.get('GCE_INSTANCE_TAGS').split(',')
+        # Cli param overrides both config and env var
+        if self.args.instance_tags:
+            self.instance_tags = self.args.instance_tags.split(',')
+
         # Caching
         cache_path = config.get('cache', 'cache_path')
         cache_max_age = config.getint('cache', 'cache_max_age')
@@ -338,6 +352,8 @@ class GceInventory(object):
                             help='List instances (default: True)')
         parser.add_argument('--host', action='store',
                             help='Get all information about an instance')
+        parser.add_argument('--instance-tags', action='store',
+                            help='Only include instances with this tags, separated by comma')
         parser.add_argument('--pretty', action='store_true', default=False,
                             help='Pretty format (default: False)')
         parser.add_argument(
@@ -428,6 +444,18 @@ class GceInventory(object):
             # If the instance_states list is _populated_ then check the current
             # state against the instance_states list
             if self.instance_states and not node.extra['status'] in self.instance_states:
+                continue
+
+            # This check filters on the desired instance tags defined in the
+            # config file with the instance_tags config option, env var GCE_INSTANCE_TAGS,
+            # or as the cli param --instance-tags.
+            #
+            # If the instance_tags list is _empty_ then _ALL_ instances are returned.
+            #
+            # If the instance_tags list is _populated_ then check the current
+            # instance tags against the instance_tags list. If the instance has
+            # at least one tag from the instance_tags list, it is returned.
+            if self.instance_tags and not set(self.instance_tags) & set(node.extra['tags']):
                 continue
 
             name = node.name
