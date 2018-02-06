@@ -212,3 +212,29 @@ Using a provider dictionary with one of the new persistent connection types for 
 (network_cli, netconf, etc.) will result in a warning. When using these connections
 the standard Ansible infrastructure for controlling connections should be used.
 (Link to basic inventory documentation?)
+
+Developers: Shared Module Utilities Moved
+-----------------------------------------
+
+Beginning with Ansible 2.5, shared module utilities for network modules moved to ``ansible.module_utils.network``. 
+
+* Platform-independent utilities are found in ``ansible.module_utils.network.common``
+
+* Platform-specific utilities are found in ``ansible.module_utils.network.{{ platform }}``
+
+If your module uses shared module utilities, you must update all references. For example, change:
+
+OLD In Ansible 2.4
+
+.. code-block:: python
+
+   from ansible.module_utils.vyos import get_config, load_config
+
+NEW In Ansible 2.5
+
+.. code-block:: python
+
+   from ansible.module_utils.network.vyos.vyos import get_config, load_config
+
+
+See the module utilities developer guide see :doc:`dev_guide/developing_module_utilities` for more information.
