@@ -42,6 +42,49 @@ options:
 '''
 
 EXAMPLES = '''
+- name: Create Model Device
+  hosts: FortiManager
+  connection: local
+  gather_facts: False
+
+  tasks:
+
+    - name: Create FGT1 Model Device
+      fmgr_provision:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        adom: "root"
+        vdom: "root"
+        policy_package: "default"
+        name: "FGT1"
+        group: "Ansible"
+        serial: "FGVM000000117994"
+        platform: "FortiGate-VM64"
+        description: "Provisioned by Ansible"
+        os_version: '6.0'
+        minor_release: 0
+        patch_release: 0
+        os_type: 'fos'
+
+
+    - name: Create FGT2 Model Device
+      fmgr_provision:
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        adom: "root"
+        vdom: "root"
+        policy_package: "test_pp"
+        name: "FGT2"
+        group: "Ansible"
+        serial: "FGVM000000117992"
+        platform: "FortiGate-VM64"
+        description: "Provisioned by Ansible"
+        os_version: '5.0'
+        minor_release: 6
+        patch_release: 0
+        os_type: 'fos'
 
 '''
 
@@ -58,7 +101,6 @@ from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiM
 # check for pyFMG lib
 try:
     from pyFMG.fortimgr import FortiManager
-
     HAS_PYFMGR = True
 except ImportError:
     HAS_PYFMGR = False
@@ -75,10 +117,6 @@ def dev_group_exists(fmg, dev_grp_name, adom):
     return response
 
 
-def sn_exists(fmg, serial, adom, vdom):
-    return
-
-
 def prov_template_exists(fmg, prov_template, adom, vdom):
     datagram = {
         'name': prov_template,
@@ -90,15 +128,8 @@ def prov_template_exists(fmg, prov_template, adom, vdom):
     return response
 
 
-def scripts_exist(fmg, scripts, adom, vdom):
-    return
-
-
-def pp_exists(fmg, pp_name, adom, vdom):
-    return
-
-
-def create_model_device(fmg, name, serial, group, platform, os_version, os_type, minor_release, patch_release = 0, adom='root'):
+def create_model_device(fmg, name, serial, group, platform, os_version,
+                        os_type, minor_release, patch_release=0, adom='root'):
     datagram = {
         'adom': adom,
         'flags': ['create_task','nonblocking'],
@@ -109,10 +140,10 @@ def create_model_device(fmg, name, serial, group, platform, os_version, os_type,
             'sn': serial,
             'mgmt_mode': 'fmg',
             'device action': 'add_model',
-             'platform_str': platform,
+            'platform_str': platform,
             'os_ver': os_version,
             'os_type': os_type,
-             'patch': patch_release,
+            'patch': patch_release,
             'desc': 'Provisioned by Ansible',
         }
     }
@@ -145,28 +176,27 @@ def assign_provision_template(fmg,template, adom, target):
     return response
 
 
-    def set_devprof_scope(self, provisioning_template, adom, provision_targets):
-        """
-        GET the DevProf (check to see if exists)
-        """
-        fields = dict()
-        targets = []
-        fields["name"] = provisioning_template
-        fields["type"] = "devprof"
-        fields["description"] = "CreatedByAnsible"
+def set_devprof_scope(self, provisioning_template, adom, provision_targets):
+    """
+    GET the DevProf (check to see if exists)
+    """
+    fields = dict()
+    targets = []
+    fields["name"] = provisioning_template
+    fields["type"] = "devprof"
+    fields["description"] = "CreatedByAnsible"
 
-        for target in provision_targets.strip().split(","):
-            # split the host on the space to get the mask out
-            new_target = {"name": target}
-            targets.append(new_target)
+    for target in provision_targets.strip().split(","):
+        # split the host on the space to get the mask out
+        new_target = {"name": target}
+        targets.append(new_target)
 
-        fields["scope member"] = targets
+    fields["scope member"] = targets
 
-        body = {"method": "set", "params": [{"url": "/pm/devprof/adom/{adom}".format(adom=adom),
-                                             "data": fields, "session": self.session}]}
-        response = self.make_request(body).json()
-        return response
-
+    body = {"method": "set", "params": [{"url": "/pm/devprof/adom/{adom}".format(adom=adom),
+                                         "data": fields, "session": self.session}]}
+    response = self.make_request(body).json()
+    return response
 
 
 def assign_dev_grp(fmg, grp_name, device_name, vdom, adom):
@@ -178,14 +208,6 @@ def assign_dev_grp(fmg, grp_name, device_name, vdom, adom):
     return response
 
 
-def assign_prov_template(fmg, device_name, prov_template):
-    return
-
-
-def run_scripts(fmg, scripts):
-    return
-
-
 def update_install_target(fmg, device, pp='default', vdom='root', adom='root'):
     datagram = {
         'scope member': [{'name': device, 'vdom': vdom}],
@@ -194,14 +216,6 @@ def update_install_target(fmg, device, pp='default', vdom='root', adom='root'):
     url = '/pm/pkg/adom/{adom}/{pkg_name}'.format(adom=adom, pkg_name=pp)
     response = fmg.update(url, datagram)
     return response
-
-
-'''
-        scope_list = list()
-        for dev_name in dev_name_list:
-            scope_list.append({'name': dev_name, 'vdom': vdom})
-        data['scope member'] = scope_list
-'''
 
 
 def install_pp(fmg, device, pp='default', vdom='root', adom='root'):
@@ -216,12 +230,12 @@ def install_pp(fmg, device, pp='default', vdom='root', adom='root'):
     return response
 
 
-
-def confirm_device(fmg, dev_name):
-    return
-
-
 def main():
+
+    # confirm PyFMG exists
+    if not HAS_PYFMGR:
+        raise ImportError("PyFMG module is required")
+
     argument_spec = dict(
         adom=dict(required=False, type="str"),
         vdom=dict(required=False, type="str"),
@@ -233,38 +247,18 @@ def main():
         group=dict(required=False, type="str"),
         serial=dict(required=True, type="str"),
         platform=dict(required=True, type="str"),
-        firmware=dict(required=True, type="str"),
         description=dict(required=False, type="str"),
         os_version=dict(required=True, type="str"),
-        minor_release=dict(required=True, type="str"),
-        patch_release=dict(required=True, type="str"),
-        os_type=dict(required=True, type="str"),
-
-'''
-        'adom': adom,
-        'flags': ['create_task','nonblocking'],
-        # 'groups': [{'name': group, 'vdom':'root'}],
-        'device': {
-            'mr': 6,
-            'name': name,
-            'sn': serial,
-            'mgmt_mode': 'fmg',
-            'device action': 'add_model',
-             'platform': 'FortiGate-VM64',
-            'os_ver': '5.0',
-            'os_type': 'fos',
-            # 'patch': '0',
-            'desc': 'Provisioned by Ansible',
-        }
-'''
-
+        minor_release=dict(required=False, type="str"),
+        patch_release=dict(required=False, type="str"),
+        os_type=dict(required=False, type="str"),
 
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=True, )
 
     # check if params are set
-    if module.params["platform"] is None or module.params["os_ver"] is None or module.params["os_type"] is None:
+    if module.params["platform"] is None or module.params["os_version"] is None:
         module.fail_json(msg="Additional parameters are required for connection")
 
     # check if params are set
@@ -277,13 +271,14 @@ def main():
         module.params["adom"] = 'root'
     if module.params["vdom"] is None:
         module.params["vdom"] = 'root'
+    if module.params["platform"] is None:
+        module.params["platform"] = 'FortiGate-VM64'
+    if module.params["os_type"] is None:
+        module.params["os_type"] = 'fos'
 
     # check if login failed
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
     response = fmg.login()
-
-    #print(response)
-    #sys.exit()
 
     if "FortiManager instance connnected" not in str(response):
         module.fail_json(msg="Connection to FortiManager Failed")

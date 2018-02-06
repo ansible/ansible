@@ -23,7 +23,7 @@ from nose.plugins.skip import SkipTest
 
 try:
     from ansible.modules.network.fortimanager import fmgr_provisioning
-    from .fortimanager_module import TestFortimanagerModule
+    from library.module_utils.network.fortimanager import TestFortimanagerModule
     from units.modules.utils import set_module_args
 except ImportError:
     raise SkipTest("Could not load required modules for testing")
