@@ -176,6 +176,7 @@ options:
         description:
             - Type of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
+            - I(high_performance) is supported since Ansible 2.5 and oVirt/RHV 4.2.
         choices: [ desktop, server, high_performance ]
     quota_id:
         description:
