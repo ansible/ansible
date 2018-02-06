@@ -97,7 +97,7 @@ def main():
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     conn = boto3_conn(module, conn_type='client', resource='redshift',
-                        region=region, endpoint=ec2_url, **aws_connect_params)
+                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     cluster_roles = conn.describe_clusters(ClusterIdentifier=target_cluster)['Clusters'][0]['IamRoles']
     current_roles = [x['IamRoleArn'] for x in cluster_roles]
