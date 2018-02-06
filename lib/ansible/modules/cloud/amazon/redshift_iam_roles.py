@@ -106,7 +106,7 @@ def main():
     if desired_state == 'present':
         roles_to_add = list(set(target_roles) - set(current_roles))
         roles_to_remove = list(set(current_roles) - set(target_roles))
-        if not definitive_roles:
+        if not roles_to_add:
             module.exit_json(**result)
         try:
             response = conn.modify_cluster_iam_roles(
@@ -115,12 +115,12 @@ def main():
                 RemoveIamRoles=roles_to_remove
             )
             result['changed'] = True
-        except:
+        except Exception as e:
             module.fail_json(msg="Unable to modify IAM role(s): {0}".format(e),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if desired_state == 'absent':
-        if not matching_roles:
+        if not current_roles:
             module.exit_json(**result)
         try:
             response = conn.modify_cluster_iam_roles(
@@ -128,7 +128,7 @@ def main():
                 RemoveIamRoles=current_roles
             )
             result['changed'] = True
-        except:
+        except Exception as e:
             module.fail_json(msg="Unable to modify IAM role(s): {0}".format(e),
                              exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
