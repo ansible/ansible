@@ -17,8 +17,6 @@ version_added: 2.5
 requirements:
   - boto3
   - botocore
-extends_documentation_fragment:
-- aws_credentials
 short_description: Get the value for a SSM parameter or all parameters under a path.
 description:
   - Get the value for an Amazon Simple Systems Manager parameter or a heirarchy of parameters.
