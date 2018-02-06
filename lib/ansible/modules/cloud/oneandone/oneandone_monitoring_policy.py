@@ -68,7 +68,7 @@ options:
     required: false
   thresholds:
     description:
-      - Monitoring policy thresholds. Each of the suboptins have warning and critical,
+      - Monitoring policy thresholds. Each of the suboptions have warning and critical,
         which both have alert and value suboptions. Warning is used to set limits for
         warning alerts, critical is used to set critical alerts. alert enables alert,
         and value is used to advise when the value is exceeded.
