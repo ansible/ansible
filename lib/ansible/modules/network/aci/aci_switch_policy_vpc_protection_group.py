@@ -31,6 +31,7 @@ options:
   protection_group_id:
     description:
     - The Explicit vPC Protection Group ID.
+    aliases: [ id ]
     required: yes
   vpc_domain_policy:
     description:
@@ -88,7 +89,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         protection_group=dict(type='str', aliases=['name', 'protection_group_name']),
-        protection_group_id=dict(type='int'),
+        protection_group_id=dict(type='int', aliases=['id']),
         vpc_domain_policy=dict(type='str', aliases=['vpc_domain_policy_name']),
         switch_1_id=dict(type='int'),
         switch_2_id=dict(type='int'),
@@ -172,7 +173,7 @@ def main():
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":
