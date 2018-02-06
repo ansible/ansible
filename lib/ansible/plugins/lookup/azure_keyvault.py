@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-  lookup: azure_key_vault
+  lookup: azure_keyvault
   author: James Johnson <james.johnson@hmcts.net>
   short_description: Retrieve secrets from an Azure Key Vault.
   requirements:
@@ -12,7 +12,7 @@ DOCUMENTATION = """
   options:
     secret_name:
       description: The name of the Azure secret requested.
-      required: True     
+      required: True
     vault_uri:
       description: The URI of the Azure Key Vault to query.
       required: True
@@ -25,7 +25,7 @@ DOCUMENTATION = """
       description: The Azure Client ID (also known as Application ID).
       required: True
       env:
-        - name: client_id
+        - name: AZURE_CLIENT_ID
     secret:
       description: Your Azure Active Directory Service Principal AppId.
       required: True
@@ -41,19 +41,19 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: Return a secret, specifying minimal required parameters.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName') }}"
+    msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName') }}"
 
 - name: Return latest version of a secret from a specified vault_uri.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName vault_uri=https://yourvault.vault.azure.net/') }}"
+    msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName vault_uri=https://yourvault.vault.azure.net/') }}"
 
 - name: Return a specific version of a secret with AZURE_VAULT_URI environment variable set.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}"
+    msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName secret_version=169591fbe36742beb109478459f426ce') }}"
 
  - name: Return a specific version of a secret from a specified vault_uri.
   debug:
-    msg: "{{ lookup('azure_key_vault', 'secret_name=someSecretName secret_version=169591fb vault_uri=https://anothervault.vault.azure.net/') }}"
+    msg: "{{ lookup('azure_keyvault', 'secret_name=someSecretName secret_version=169591fb vault_uri=https://anothervault.vault.azure.net/') }}"
 """
 
 RETURN = """
@@ -73,7 +73,7 @@ try:
 
 except ImportError:
     raise AnsibleError(
-        "Please run 'pip install azure-keyvault' to use the azure_key_vault lookup module.")
+        "Please run 'pip install azure-keyvault' to use the azure_keyvault lookup module.")
 
 
 class LookupModule(LookupBase):
@@ -101,7 +101,7 @@ class LookupModule(LookupBase):
                 accepted_params[key] = value
             except (ValueError, AssertionError):
                 raise AnsibleError(
-                    "azure_key_vault lookup plugin needs key=value pairs, but received %s" %
+                    "azure_keyvault lookup plugin needs key=value pairs, but received %s" %
                     terms)
         try:
             if accepted_params['client_id'] is None:
