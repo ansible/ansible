@@ -42,7 +42,7 @@ class TestFmgrProvisioningModule(TestFortimanagerModule):
         self.assertEqual(result['msg'], 'Connection to FortiManager Failed')
 
     def test_fmg_script_login_fail_host(self):
-        set_module_args(dict( username='admin', password='admin', adom='root',
+        set_module_args(dict(username='admin', password='admin', adom='root',
                              vdom='root', policy_package='root', name='FGT1', serial='FGVM000000117992',
                              platform='FortiGate-VM64', os_version='5.0', minor_release='6',
                              patch_release='0', os_type='fos'))
