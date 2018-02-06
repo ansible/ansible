@@ -527,6 +527,13 @@ options:
             - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
             - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
         version_added: "2.5"
+    graphical_console:
+        description:
+            - "Assign graphical console to the virtual machine."
+            - "Graphical console is a dictionary which can have following values:"
+            - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
+            - "C(protocol) - Graphical protocol, one of I(VNC), I(SPICE), or both."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -1050,6 +1057,7 @@ class VmsModule(BaseModule):
             return True
 
         cpu_mode = getattr(entity.cpu, 'mode')
+        vm_display = entity.display
         return (
             check_cpu_pinning() and
             check_custom_properties() and
@@ -1064,7 +1072,7 @@ class VmsModule(BaseModule):
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
-            equal(self.param('smartcard_enabled'), entity.display.smartcard_enabled) and
+            equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
             equal(self.param('io_threads_enabled'), bool(entity.io.threads)) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
@@ -1097,13 +1105,15 @@ class VmsModule(BaseModule):
                 self._module.params['template'] = 'Blank'
 
     def post_update(self, entity):
-        self.post_present(entity)
+        self.post_present(entity.id)
 
-    def post_present(self, entity):
+    def post_present(self, entity_id):
         # After creation of the VM, attach disks and NICs:
+        entity = self._service.service(entity_id).get()
         self.changed = self.__attach_disks(entity)
         self.changed = self.__attach_nics(entity)
         self.changed = self.__attach_watchdog(entity)
+        self.changed = self.__attach_graphical_console(entity)
 
     def pre_remove(self, entity):
         # Forcibly stop the VM, if it's not in DOWN state:
@@ -1248,6 +1258,51 @@ class VmsModule(BaseModule):
                     timeout=self.param('timeout'),
                 )
         return True
+
+    def __attach_graphical_console(self, entity):
+        graphical_console = self.param('graphical_console')
+        if not graphical_console:
+            return
+
+        vm_service = self._service.service(entity.id)
+        gcs_service = vm_service.graphics_consoles_service()
+        graphical_consoles = gcs_service.list()
+
+        # Remove all graphical consoles if there are any:
+        if bool(graphical_console.get('headless_mode')):
+            if not self._module.check_mode:
+                for gc in graphical_consoles:
+                    gcs_service.console_service(gc.id).remove()
+            return len(graphical_consoles) > 0
+
+        # If there are not gc add any gc to be added:
+        protocol = graphical_console.get('protocol')
+        if isinstance(protocol, str):
+            protocol = [protocol]
+
+        current_protocols = [str(gc.protocol) for gc in graphical_consoles]
+        if not current_protocols:
+            if not self._module.check_mode:
+                for p in protocol:
+                    gcs_service.add(
+                        otypes.GraphicsConsole(
+                            protocol=otypes.GraphicsType(p),
+                        )
+                    )
+            return True
+
+        # Update consoles:
+        if sorted(protocol) != sorted(current_protocols):
+            if not self._module.check_mode:
+                for gc in graphical_consoles:
+                    gcs_service.console_service(gc.id).remove()
+                for p in protocol:
+                    gcs_service.add(
+                        otypes.GraphicsConsole(
+                            protocol=otypes.GraphicsType(p),
+                        )
+                    )
+            return True
 
     def __attach_disks(self, entity):
         if not self.param('disks'):
@@ -1733,6 +1788,7 @@ def main():
         rng_device=dict(type='str'),
         custom_properties=dict(type='list'),
         watchdog=dict(type='dict'),
+        graphical_console=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1773,7 +1829,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
-            vms_module.post_present(vm)
+            vms_module.post_present(ret['id'])
 
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
@@ -1838,6 +1894,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(ret['id'])
             if module.params['force']:
                 ret = vms_module.action(
                     action='stop',
@@ -1859,6 +1916,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(ret['id'])
             ret = vms_module.action(
                 action='suspend',
                 pre_action=vms_module._pre_suspend_action,
