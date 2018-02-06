@@ -42,6 +42,11 @@ options:
       - Authenticating API token provided by 1&1. Overrides the
         ONEANDONE_AUTH_TOKEN environement variable.
     required: true
+  api_url:
+    description:
+      - Custom API URL. Overrides the
+        ONEANDONE_API_URL environement variable.
+    required: false
   datacenter:
     description:
       - The datacenter location.
@@ -118,6 +123,12 @@ options:
       - User's public SSH key (contents, not path).
     required: false
     default: None
+  server_type:
+    description:
+      - The type of server to be built.
+    required: false
+    default: "cloud"
+    choices: [ "cloud", "baremetal", "k8s_node" ]
   wait:
     description:
       - Wait for the server to be in state 'running' before returning.
@@ -131,6 +142,10 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 600
+  wait_interval:
+    description:
+      - Defines the number of seconds to wait when using the wait_for methods
+    default: 5
   auto_increment:
     description:
       - When creating multiple servers at once, whether to differentiate
@@ -178,6 +193,7 @@ EXAMPLES = '''
     count: 3
     wait: yes
     wait_timeout: 600
+    wait_interval: 10
     ssh_key: SSH_PUBLIC_KEY
 
 # Removing server
@@ -203,8 +219,8 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-machines:
-    description: Information about each machine that was processed
+servers:
+    description: Information about each server that was processed
     type: list
     sample: '[{"hostname": "my-server", "id": "server-id"}]'
     returned: always
@@ -257,7 +273,8 @@ def _create_server(module, oneandone_conn, hostname, description,
                    fixed_instance_size_id, vcore, cores_per_processor, ram,
                    hdds, datacenter_id, appliance_id, ssh_key,
                    private_network_id, firewall_policy_id, load_balancer_id,
-                   monitoring_policy_id, wait, wait_timeout):
+                   monitoring_policy_id, server_type, wait, wait_timeout,
+                   wait_interval):
 
     try:
         existing_server = get_server(oneandone_conn, hostname)
@@ -284,14 +301,16 @@ def _create_server(module, oneandone_conn, hostname, description,
                 private_network_id=private_network_id,
                 firewall_policy_id=firewall_policy_id,
                 load_balancer_id=load_balancer_id,
-                monitoring_policy_id=monitoring_policy_id,), hdds)
+                monitoring_policy_id=monitoring_policy_id,
+                server_type=server_type,), hdds)
 
         if wait:
             wait_for_resource_creation_completion(
                 oneandone_conn,
                 OneAndOneResources.server,
                 server['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
             server = oneandone_conn.get_server(server['id'])  # refresh
 
         return server
@@ -335,8 +354,10 @@ def create_server(module, oneandone_conn):
     monitoring_policy = module.params.get('monitoring_policy')
     firewall_policy = module.params.get('firewall_policy')
     load_balancer = module.params.get('load_balancer')
+    server_type = module.params.get('server_type')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     datacenter_id = get_datacenter(oneandone_conn, datacenter)
     if datacenter_id is None:
@@ -434,8 +455,10 @@ def create_server(module, oneandone_conn):
             monitoring_policy_id=monitoring_policy_id,
             firewall_policy_id=firewall_policy_id,
             load_balancer_id=load_balancer_id,
+            server_type=server_type,
             wait=wait,
-            wait_timeout=wait_timeout)
+            wait_timeout=wait_timeout,
+            wait_interval=wait_interval)
         if server:
             servers.append(server)
 
@@ -468,6 +491,7 @@ def remove_server(module, oneandone_conn):
     server_id = module.params.get('server')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     changed = False
     removed_server = None
@@ -481,7 +505,8 @@ def remove_server(module, oneandone_conn):
                 wait_for_resource_deletion_completion(oneandone_conn,
                                                       OneAndOneResources.server,
                                                       server['id'],
-                                                      wait_timeout)
+                                                      wait_timeout,
+                                                      wait_interval)
             changed = True
         except Exception as ex:
             module.fail_json(
@@ -512,6 +537,7 @@ def startstop_server(module, oneandone_conn):
     server_id = module.params.get('server')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     changed = False
 
@@ -545,7 +571,7 @@ def startstop_server(module, oneandone_conn):
             operation_completed = False
             wait_timeout = time.time() + wait_timeout
             while wait_timeout > time.time():
-                time.sleep(5)
+                time.sleep(wait_interval)
                 server = oneandone_conn.get_server(server['id'])  # refresh
                 server_state = server['status']['state']
                 if state == 'stopped' and server_state == 'POWERED_OFF':
@@ -603,6 +629,9 @@ def main():
                 type='str',
                 default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
                 no_log=True),
+            api_url=dict(
+                type='str',
+                default=os.environ.get('ONEANDONE_API_URL')),
             hostname=dict(type='str'),
             description=dict(type='str'),
             appliance=dict(type='str'),
@@ -622,8 +651,10 @@ def main():
             firewall_policy=dict(type='str'),
             load_balancer=dict(type='str'),
             monitoring_policy=dict(type='str'),
+            server_type=dict(type='str', default='cloud', choices=['cloud', 'baremetal', 'k8s_node']),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
+            wait_interval=dict(type='int', default=5),
             state=dict(type='str', default='present', choices=['present', 'absent', 'running', 'stopped']),
         ),
         supports_check_mode=True,
@@ -640,8 +671,12 @@ def main():
             msg='The "auth_token" parameter or ' +
             'ONEANDONE_AUTH_TOKEN environment variable is required.')
 
-    oneandone_conn = oneandone.client.OneAndOneService(
-        api_token=module.params.get('auth_token'))
+    if not module.params.get('api_url'):
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'))
+    else:
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'), api_url=module.params.get('api_url'))
 
     state = module.params.get('state')
 
