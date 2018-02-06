@@ -17,11 +17,10 @@
 
 NAME = ansible
 OS = $(shell uname -s)
+PREFIX ?= '/usr/local'
 
-# Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-
 MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
@@ -208,6 +207,10 @@ python:
 .PHONY: install
 install:
 	$(PYTHON) setup.py install
+
+install_manpages:
+	gzip -9 $(wildcard ./docs/man/man1/ansible*.1)
+	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
 .PHONY: sdist
 sdist: clean docs
