@@ -28,9 +28,9 @@ DOCUMENTATION = '''
 ---
 module: panos_object
 short_description: create/read/update/delete object in PAN-OS or Panorama
-description: >
+description:
     - Policy objects form the match criteria for policy rules and many other functions in PAN-OS. These may include
-    address object, address groups, service objects, service groups, and tag.
+      address object, address groups, service objects, service groups, and tag.
 author: "Bob Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
