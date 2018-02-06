@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, s3ql ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -227,6 +227,11 @@ class LVM(Filesystem):
         return block_count
 
 
+class S3QL(Filesystem):
+    MKSF = 'mkfs.s3ql --plain'
+    MKFS_FORCE_FLAGS = '--force'
+
+
 FILESYSTEMS = {
     'ext2': Ext2,
     'ext3': Ext3,
@@ -236,6 +241,7 @@ FILESYSTEMS = {
     'xfs': XFS,
     'btrfs': Btrfs,
     'LVM2_member': LVM,
+    's3ql': S3QL,
 }
 
 
