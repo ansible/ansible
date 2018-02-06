@@ -73,6 +73,7 @@ options:
   instance_type:
     description:
      - Define whether the instance is a server, desktop or high_performance.
+     - I(high_performance) is supported since Ansible 2.5 and oVirt/RHV 4.2.
     choices: [ desktop, server, high_performance ]
     default: server
     aliases: [ vmtype ]
