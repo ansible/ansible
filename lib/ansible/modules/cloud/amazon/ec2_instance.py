@@ -64,7 +64,7 @@ options:
     description:
       - The subnet ID in which to launch the instance (VPC)
       - If none is provided, ec2_instance will chose the default zone of the default VPC
-  assign_public_ip:
+  network.assign_public_ip:
     description:
       - When provisioning within vpc, assign a public IP address. If not specified, the subnet default will be used.
       - This cannot be changed after an instance is created.
@@ -74,7 +74,7 @@ options:
       - Whether to enable termination protection.
       - This module will not terminate an instance with termination protection active, it must be turned off first.
     default: false
-  ebs_optimized:
+  network.ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
   filters:
@@ -480,7 +480,7 @@ instances:
                       returned: always
                       type: string
                       sample: my-security-group
-        source_dest_check:
+        network.source_dest_check:
             description: Indicates whether source/destination checking is enabled.
             returned: always
             type: bool
@@ -552,7 +552,7 @@ from ansible.module_utils.ec2 import (boto3_conn,
                                       ansible_dict_to_boto3_tag_list,
                                       camel_dict_to_snake_dict)
 
-from ansible.module_utils.aws.core import AnsibleAWSModule, HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 module = None
 
@@ -575,6 +575,10 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
         """
         return to_native(textwrap.dedent(script_tpl).format(PASS=passwd, SCRIPT=script_url))
     elif not windows:
+        for p in ['tower_address', 'job_template_id', 'host_config_key']:
+            if p not in tower_conf:
+                module.fail_json(msg="Incomplete tower_callback configuration. tower_callback.{0} not set.".format(p))
+
         tpl = string.Template(textwrap.dedent("""
         #!/bin/bash
         exec > /tmp/tower_callback.log 2>&1
@@ -639,14 +643,11 @@ def build_network_spec(params, ec2=None):
 
     interfaces = []
     network = params.get('network') or {}
-    if network or not params.get('network_interfaces'):
+    if not network.get('interfaces'):
         # they only specified one interface
         spec = {
             'DeviceIndex': 0,
         }
-        if network.get('source_dest_check') is not None:
-            raise Exception("Uhoh - srcdest not supported")
-            # TODO special setting via ec2-attrs
         if network.get('assign_public_ip') is not None:
             spec['AssociatePublicIpAddress'] = network['assign_public_ip']
 
@@ -655,7 +656,7 @@ def build_network_spec(params, ec2=None):
         else:
             default_vpc = get_default_vpc(ec2)
             if default_vpc is None:
-                raise ValueError("You must include a VPC subnet ID to create an instance")
+                raise module.fail_json(msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) to create an instance")
             else:
                 sub = get_default_subnet(ec2, default_vpc)
                 spec['SubnetId'] = sub['SubnetId']
@@ -665,8 +666,8 @@ def build_network_spec(params, ec2=None):
         # TODO more special snowflake network things
         return [spec]
 
-    # handle list of `network_interfaces` options
-    for idx, interface_params in enumerate(params.get('network_interfaces', [])):
+    # handle list of `network.interfaces` options
+    for idx, interface_params in enumerate(network.get('interfaces', [])):
         spec = {
             'DeviceIndex': idx,
         }
@@ -675,7 +676,13 @@ def build_network_spec(params, ec2=None):
             # naive case where user gave
             # network_interfaces: [eni-1234, eni-4567, ....]
             # put into normal data structure so we don't dupe code
-            interface_params = {'eni_id': interface_params}
+            interface_params = {'id': interface_params}
+
+        if interface_params.get('id') is not None:
+            # if an ID is provided, we don't want to set any other parameters.
+            spec['NetworkInterfaceId'] = interface_params['id']
+            interfaces.append(spec)
+            continue
 
         spec['DeleteOnTermination'] = interface_params.get('delete_on_termination', True)
 
@@ -683,23 +690,27 @@ def build_network_spec(params, ec2=None):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
             spec['Ipv6AddressCount'] = len(spec['Ipv6Addresses'])
 
+        if interface_params.get('private_ip_address'):
+            spec['PrivateIpAddress'] = interface_params.get('private_ip_address')
+
         if interface_params.get('description'):
             spec['Description'] = interface_params.get('description')
 
-        spec['SubnetId'] = interface_params.get('subnet_id', params.get('vpc_subnet_id'))
-        if not spec['SubnetId']:
+        if interface_params.get('subnet_id', params.get('vpc_subnet_id')):
+            spec['SubnetId'] = interface_params.get('subnet_id', params.get('vpc_subnet_id'))
+        elif not spec.get('SubnetId') and not interface_params['id']:
             # TODO grab a subnet from default VPC
             raise ValueError('Failed to assign subnet to interface {0}'.format(interface_params))
 
-        if interface_params.get('eni_id') is not None:
-            spec['NetworkInterfaceId'] = interface_params['eni_id']
         interfaces.append(spec)
     return interfaces
 
 
 def warn_if_public_ip_assignment_changed(instance):
     # This is a non-modifiable attribute.
-    assign_public_ip = module.params.get('assign_public_ip')
+    assign_public_ip = (module.params.get('network') or {}).get('assign_public_ip')
+    if assign_public_ip is None:
+        return
 
     # Check that public ip assignment is the same and warn if not
     public_dns_name = instance.get('PublicDnsName')
@@ -775,7 +786,7 @@ def build_top_level_options(params):
         if 'kernel' in image:
             spec['KernelId'] = image['kernel']
     if not spec.get('ImageId') and not params.get('launch_template'):
-        raise ValueError("You must include an image_id or image.id parameter to create an instance")
+        module.fail_json(msg="You must include an image_id or image.id parameter to create an instance, or use a launch_template.")
 
     if params.get('user_data') is not None:
         spec['UserData'] = to_native(params.get('user_data'))
@@ -786,8 +797,22 @@ def build_top_level_options(params):
             passwd=params.get('tower_callback').get('set_password'),
         )
 
+    if params.get('launch_template') is not None:
+        spec['LaunchTemplate'] = {}
+        if not params.get('launch_template').get('id') or params.get('launch_template').get('name'):
+            module.fail_json(msg="Could not create instance with launch template. Either launch_template.name or launch_template.id parameters are required")
+
+        if params.get('launch_template').get('id') is not None:
+            spec['LaunchTemplate']['LaunchTemplateId'] = params.get('launch_template').get('id')
+        if params.get('launch_template').get('name') is not None:
+            spec['LaunchTemplate']['LaunchTemplateName'] = params.get('launch_template').get('name')
+        if params.get('launch_template').get('version') is not None:
+            spec['LaunchTemplate']['Version'] = to_native(params.get('launch_template').get('version'))
+
     if params.get('detailed_monitoring', False):
         spec['Monitoring'] = {'Enabled': True}
+    if (params.get('network') or {}).get('ebs_optimized') is not None:
+        spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
@@ -830,7 +855,7 @@ def build_run_instance_spec(params, ec2=None):
     spec['TagSpecifications'] = build_instance_tags(params)
 
     # IAM profile
-    if params.get('iam_profile'):
+    if params.get('instance_role'):
         spec['IamInstanceProfile'] = dict(Arn=determine_iam_role(params.get('iam_profile')))
 
     spec['InstanceType'] = params['instance_type']
@@ -849,7 +874,7 @@ def await_instances(ids, state='OK'):
         'RUNNING': 'instance_running',
     }
     if state not in state_opts:
-        raise ValueError("Cannot wait for state {0}, invalid state".format(state))
+        module.fail_json(msg="Cannot wait for state {0}, invalid state".format(state))
     waiter = module.client('ec2').get_waiter(state_opts[state])
     try:
         waiter.wait(
@@ -896,6 +921,15 @@ def diff_instance_and_params(instance, params, ec2=None):
                 arguments[mapping.instance_key] = mapping.add_value(params.get(mapping.param_key))
                 changes_to_apply.append(arguments)
 
+    if (params.get('network') or {}).get('source_dest_check') is not None:
+        # network.source_dest_check is nested, so needs to be treated separately
+        check = bool(params.get('network').get('source_dest_check'))
+        if instance['SourceDestCheck'] != check:
+            changes_to_apply.append(dict(
+                InstanceId=instance['InstanceId'],
+                SourceDestCheck={'Value': check},
+            ))
+
     return changes_to_apply
 
 
@@ -910,16 +944,6 @@ def find_instances(ec2, ids=None, filters=None):
         # probably subnet-id + name
         return []
         module.fail_json(msg="No filters provided when they were required")
-        base_filters = {
-            'subnet-id': module.params.get('name')
-        }
-        if module.params.get('vpc_subnet_id'):
-            base_filters['subnet-id'] = module.params.get('vpc_subnet_id')
-        if module.params.get('name'):
-            base_filters['tag:Name'] = module.params.get('name')
-        return paginator.paginate(
-            Filters=ansible_dict_to_boto3_filter_list(base_filters)
-        ).search('Reservations[].Instances[]')
     elif filters is not None:
         for key in filters.keys():
             if not key.startswith("tag:"):
@@ -1038,25 +1062,30 @@ def change_instance_state(filters, desired_state, ec2=None):
         ec2 = module.client('ec2')
 
     changed = set()
-    to_change = set(i['InstanceId'] for i in find_instances(ec2, filters=filters))
+    instances = find_instances(ec2, filters=filters)
+    to_change = set(i['InstanceId'] for i in instances)
+    unchanged = set()
 
-    for id_ in to_change:
+    for inst in instances:
         try:
             if desired_state == 'TERMINATED':
-                resp = ec2.terminate_instances(InstanceIds=[id_])
+                resp = ec2.terminate_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['TerminatingInstances']]
             if desired_state == 'STOPPED':
-                resp = ec2.stop_instances(InstanceIds=[id_])
+                if inst['State']['Name'] == 'stopping':
+                    unchanged.add(inst['InstanceId'])
+                    continue
+                resp = ec2.stop_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['StoppingInstances']]
             if desired_state == 'RUNNING':
-                resp = ec2.start_instances(InstanceIds=[id_])
+                resp = ec2.start_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['StartingInstances']]
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
             # we don't care about exceptions here, as we'll fail out if any instances failed to terminate
             pass
 
     if changed:
-        await_instances(ids=list(changed), state=desired_state)
+        await_instances(ids=list(changed) + list(unchanged), state=desired_state)
 
     change_failed = list(to_change - changed)
     instances = find_instances(ec2, ids=list(to_change))
@@ -1082,7 +1111,6 @@ def determine_iam_role(name_or_arn, iam):
             module.fail_json_aws(msg="Could not find instance_role {0}".format(name_or_arn))
         module.fail_json_aws(msg="An error occurred while searching for instance_role "
                                  "{0}. Please try supplying the full ARN.".format(name_or_arn))
-    module.fail_json(msg="Could not retrieve instance_role {0}".format(name_or_arn))
 
 
 def main():
@@ -1099,23 +1127,23 @@ def main():
           ramdisk: ....
           kernel: ....
         instance_type: t2.micro
+        ebs_optimized: yes
         network:
-          ebs_optimized: yes
           assign_public_ip: yes
           private_ip_address: 10.0.0.9
           ipv6_addresses:
           - dead:beef:cafe:8080
           source_dest_check: yes
+          interfaces:
+            - public_ip_address: yes
+              source_dest_check: yes
+              ......
+            # mutex w/ network
         user_data: .....
         placement_group: .....
         tower_job_template:
           # mutex w/ UserData
           template_id: ....
-        network_interfaces:
-          - public_ip_address: yes
-            source_dest_check: yes
-            ......
-          # mutex w/ network
         vpc_subnet_id: subnet-123456
         security_group: id_or_name (alias for a single-item list of security_groups)
         security_groups:
@@ -1139,7 +1167,6 @@ def main():
         wait=dict(default=True, type='bool'),
         wait_timeout=dict(default=600, type='int'),
         # count=dict(default=1, type='int'),
-        assign_public_ip=dict(type='bool'),
         image=dict(type='dict'),
         image_id=dict(type='str'),
         instance_type=dict(default='t2.micro', type='str'),
@@ -1164,15 +1191,19 @@ def main():
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['network_interfaces', 'network'],
             ['security_groups', 'security_group'],
-            ['network_interfaces', 'security_group'],
-            ['network_interfaces', 'security_groups'],
             ['tower_callback', 'user_data'],
             ['image_id', 'image'],
         ],
         supports_check_mode=True
     )
+
+    if module.params.get('network'):
+        if module.params.get('network').get('interfaces'):
+            if module.params.get('security_group'):
+                module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
+            if module.params.get('security_groups'):
+                module.fail_json(msg="Parameter network.interfaces can't be used with security_groups")
 
     def client(self, service):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
@@ -1196,7 +1227,7 @@ def main():
         }
         if state == 'stopped':
             # only need to change instances that aren't already stopped
-            filters['instance-state-name'] = ['pending', 'running']
+            filters['instance-state-name'] = ['stopping', 'pending', 'running']
 
         if isinstance(module.params.get('instance_ids'), text_type):
             filters['instance-id'] = [module.params.get('instance_ids')]
@@ -1204,8 +1235,17 @@ def main():
             filters['instance-id'] = module.params.get('instance_ids')
         else:
             if not module.params.get('vpc_subnet_id'):
-                sub = get_default_subnet(ec2, get_default_vpc(ec2))
-                if sub is not None:
+                if module.params.get('network'):
+                    # grab AZ from one of the ENIs
+                    ints = module.params.get('network').get('interfaces')
+                    if ints:
+                        filters['network-interface.network-interface-id'] = []
+                        for i in ints:
+                            if isinstance(i, dict):
+                                i = i['id']
+                            filters['network-interface.network-interface-id'].append(i)
+                else:
+                    sub = get_default_subnet(ec2, get_default_vpc(ec2))
                     filters['subnet-id'] = sub['SubnetId']
             else:
                 filters['subnet-id'] = [module.params.get('vpc_subnet_id')]
@@ -1226,17 +1266,22 @@ def main():
     if state not in ('terminated', 'absent') and existing_matches:
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
+            old_tags = boto3_tag_list_to_ansible_dict(match['Tags'])
             tags_to_set, tags_to_delete = compare_aws_tags(
-                boto3_tag_list_to_ansible_dict(match['Tags']),
+                old_tags,
                 module.params.get('tags') or {},
                 purge_tags=module.params.get('purge_tags'),
             )
             if tags_to_set:
-                ec2.create_tags(Resources=[match['InstanceId']], Tags=ansible_dict_to_boto3_tag_list(tags_to_set))
+                ec2.create_tags(
+                    Resources=[match['InstanceId']],
+                    Tags=ansible_dict_to_boto3_tag_list(tags_to_set))
                 changed |= True
             if tags_to_delete:
-                delete_with_current_values = {k: match['Tags'].get(k) for k in tags_to_delete}
-                ec2.delete_tags(Resources=[match['InstanceId']], Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values))
+                delete_with_current_values = {k: old_tags.get(k) for k in tags_to_delete}
+                ec2.delete_tags(
+                    Resources=[match['InstanceId']],
+                    Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values))
                 changed |= True
 
     if state in ('present', 'running', 'started'):
@@ -1250,7 +1295,6 @@ def main():
                 )
             changes = diff_instance_and_params(existing_matches[0], module.params)
             for c in changes:
-                module.warn(str(c))
                 ec2.modify_instance_attribute(**c)
             altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
             module.exit_json(
