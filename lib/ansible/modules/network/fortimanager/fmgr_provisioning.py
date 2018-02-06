@@ -189,8 +189,8 @@ def create_model_device(fmg, name, serial, group, platform, os_version,
                         os_type, minor_release, patch_release=0, adom='root'):
     datagram = {
         'adom': adom,
-        'flags': ['create_task','nonblocking'],
-        'groups': [{'name': group, 'vdom':'root'}],
+        'flags': ['create_task', 'nonblocking'],
+        'groups': [{'name': group, 'vdom': 'root'}],
         'device': {
             'mr': minor_release,
             'name': name,
