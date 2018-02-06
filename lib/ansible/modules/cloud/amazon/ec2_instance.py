@@ -1311,7 +1311,9 @@ def main():
 
             for ins in instances:
                 # some things (src_dest_check, etc) are instance-attr only and cannot be set at `RunInstance` time
-                diff_instance_and_params(ins, module.params)
+                changes = diff_instance_and_params(ins, module.params)
+                for c in changes:
+                    ec2.modify_instance_attribute(**c)
 
             await_instances(instance_ids)
             instances = ec2.get_paginator('describe_instances').paginate(

@@ -47,6 +47,9 @@
 - name: check that instance IDs match anyway
   assert:
     that: 'remake_in_test_vpc.instance_ids[0] == in_test_vpc.instance_ids[0]'
+- name: check that source_dest_check was set to false
+  assert:
+    that: 'not remake_in_test_vpc.instances[0].source_dest_check'
 
 - name: Alter it by adding tags
   ec2_instance:
