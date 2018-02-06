@@ -256,7 +256,8 @@ def set_devprof_scope(self, provisioning_template, adom, provision_targets):
 
 def assign_dev_grp(fmg, grp_name, device_name, vdom, adom):
     datagram = {
-        'name': device_name, 'vdom': vdom
+        'name': device_name,
+        'vdom': vdom,
     }
     url = "/dvmdb/adom/{adom}/group/{grp_name}/object member".format(adom=adom, grp_name=grp_name)
     response = fmg.set(url, datagram)
@@ -293,6 +294,7 @@ def main():
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
+
         policy_package=dict(required=False, type="str"),
         name=dict(required=False, type="str"),
         group=dict(required=False, type="str"),
@@ -309,23 +311,8 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True, )
 
     # check if params are set
-    if module.params["platform"] is None or module.params["os_version"] is None:
-        module.fail_json(msg="Additional parameters are required for connection")
-
-    # check if params are set
     if module.params["host"] is None or module.params["username"] is None:
         module.fail_json(msg="Host and username are required for connection")
-
-    if module.params["policy_package"] is None:
-        module.params["policy_package"] = 'default'
-    if module.params["adom"] is None:
-        module.params["adom"] = 'root'
-    if module.params["vdom"] is None:
-        module.params["vdom"] = 'root'
-    if module.params["platform"] is None:
-        module.params["platform"] = 'FortiGate-VM64'
-    if module.params["os_type"] is None:
-        module.params["os_type"] = 'fos'
 
     # check if login failed
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
@@ -334,6 +321,17 @@ def main():
     if "FortiManager instance connnected" not in str(response):
         module.fail_json(msg="Connection to FortiManager Failed")
     else:
+
+        if module.params["policy_package"] is None:
+            module.params["policy_package"] = 'default'
+        if module.params["adom"] is None:
+            module.params["adom"] = 'root'
+        if module.params["vdom"] is None:
+            module.params["vdom"] = 'root'
+        if module.params["platform"] is None:
+            module.params["platform"] = 'FortiGate-VM64'
+        if module.params["os_type"] is None:
+            module.params["os_type"] = 'fos'
 
         results = create_model_device(fmg,
                                       module.params["name"],
