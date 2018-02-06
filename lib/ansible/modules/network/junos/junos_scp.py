@@ -86,7 +86,7 @@ changed:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     from jnpr.junos import Device
@@ -117,9 +117,8 @@ def connect(module):
         device = Device(host, **kwargs)
         device.open()
         device.timeout = get_param(module, 'timeout') or 10
-    except ConnectError:
-        exc = get_exception()
-        module.fail_json('unable to connect to %s: %s' % (host, str(exc)))
+    except ConnectError as exc:
+        module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
 
     return device
 
@@ -158,7 +157,7 @@ def main():
     if not HAS_PYEZ:
         module.fail_json(
             msg='junos-eznc is required but does not appear to be installed. '
-                'It can be installed using `pip  install junos-eznc`'
+                'It can be installed using `pip install junos-eznc`'
         )
 
     result = dict(changed=True)
@@ -170,7 +169,7 @@ def main():
             transfer_files(module, device)
         except Exception as ex:
             module.fail_json(
-                msg=str(ex)
+                msg=to_native(ex)
             )
         finally:
             try:
