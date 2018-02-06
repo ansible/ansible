@@ -211,7 +211,7 @@ class AzureRMKeyVaultKey(AzureRMModuleBase):
         def _to_bytes(hex_string):
             # zero pads and decodes a hex string
             if len(hex_string) % 2:
-                hex_string = '0{}'.format(hex_string)
+                hex_string = '{0}'.format(hex_string)
             return codecs.decode(hex_string, 'hex_codec')
 
         def _set_rsa_parameters(dest, src):
