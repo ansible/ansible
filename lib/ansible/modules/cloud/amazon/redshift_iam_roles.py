@@ -40,6 +40,9 @@ options:
         description:
             - "This is a list of IAM roles (Full ARN) to add to the Redshift cluster. Roles attached to the cluster that are not on the list will be removed."
         required: true
+extends_documentation_fragment:
+    - ec2
+    - aws
 '''
 
 EXAMPLES = '''
