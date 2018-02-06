@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultkey
-version_added: "2.4"
+version_added: 2.5
 short_description: Use Azure KeyVault keys.
 description:
     - Create or delete a key within a given keyvault. By using Key Vault, you can encrypt
@@ -30,6 +30,18 @@ options:
     key_name:
         description:
             - Name of the keyvault key.
+        required: true
+    byok_file:
+        description:
+            - BYOK file.
+        required: true
+    pem_file:
+        description:
+            - PEM file.
+        required: true
+    pem_password:
+        description:
+            - PEM password.
         required: true
     state:
         description:
