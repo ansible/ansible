@@ -24,7 +24,7 @@ DOCUMENTATION = '''
         description: The region to use. You may use environment variables ar the default profile's region as an alternative.
       decrypt:
         description: A boolean to indicate whether to decrypt the parameter.
-        default: false
+        default: true
       bypath:
         description: A boolean to indicate whether the parameter is provided as a hierarchy.
         default: false
@@ -55,6 +55,9 @@ EXAMPLES = '''
 
 - name: lookup ssm parameter store with all options.
   debug: msg="{{ lookup('aws_ssm', 'Hello', 'decrypt=false', 'region=us-east-2', 'aws_profile=myprofile') }}"
+
+- name: lookup a single ssm parameter at the end of a path.
+  debug: msg="{{ lookup('aws_ssm', '/PATH/to/params/Hello', 'aws_profile=myprofile') }}"
 
 - name: return a dictionary of ssm parameters from a hierarchy path
   debug: msg="{{ lookup('aws_ssm', '/PATH/to/params', 'region=ap-southeast-2', 'bypath', 'recursive=true' ) }}"
