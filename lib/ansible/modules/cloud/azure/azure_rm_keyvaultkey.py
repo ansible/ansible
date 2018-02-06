@@ -34,15 +34,12 @@ options:
     byok_file:
         description:
             - BYOK file.
-        required: true
     pem_file:
         description:
             - PEM file.
-        required: true
     pem_password:
         description:
             - PEM password.
-        required: true
     state:
         description:
             - Assert the state of the key. Use 'present' to create a key and
