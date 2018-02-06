@@ -1,6 +1,9 @@
 Getting started with Cisco ACI
 ==============================
 
+.. contents:: Topics
+
+.. _aci_intro:
 
 What is Cisco ACI ?
 -------------------
@@ -46,7 +49,8 @@ For instance ensuring that a specific tenant exists, is done using the following
 
 .. code-block:: yaml
 
-    - aci_tenant:
+    - name: Ensure tenant customer-xyz exists
+      aci_tenant:
         host: my-apic-1
         username: admin
         password: my-password
@@ -61,17 +65,19 @@ Standard module parameters
 ..........................
 Every Ansible ACI module accepts the following parameters that influence the module's communication with the APIC REST API:
 
-- `host` -- Hostname or IP address of the APIC
-- `port` -- Port to use for communication *(defaults to `443` for HTTPS, and `80` for HTTP)*
-- `username` -- User name used to log on to the APIC *(defaults to `admin`)*
-- `password` -- Password for `username` to log on to the APIC (using password-based authentication)
-- `private_key` -- Private key for `username` to log on to APIC (using signature-based authentication)
-- `certificate_name` -- Name of the certificate in the ACI Web GUI *(defaults to `private_key` file baseename)*
-- `validate_certs` -- Validate certificate when using HTTPS communication *(defaults to `yes`)*
-- `use_ssl` -- Use HTTPS or HTTP for APIC REST communication *(defaults to `yes`)*
-- `use_proxy` -- Use system proxy settings *(defaults to `yes`)*
-- `timeout` -- Timeout value for socket-level communication
+- ``host`` -- Hostname or IP address of the APIC
+- ``port`` -- Port to use for communication *(defaults to `443` for HTTPS, and `80` for HTTP)*
+- ``username`` -- User name used to log on to the APIC *(defaults to `admin`)*
+- ``password`` -- Password for ``username`` to log on to the APIC (using password-based authentication)
+- ``private_key`` -- Private key for ``username`` to log on to APIC (using signature-based authentication)
+- ``certificate_name`` -- Name of the certificate in the ACI Web GUI *(defaults to `private_key` file baseename)*
+- ``validate_certs`` -- Validate certificate when using HTTPS communication *(defaults to `yes`)*
+- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication *(defaults to `yes`)*
+- ``use_proxy`` -- Use system proxy settings *(defaults to `yes`)*
+- ``timeout`` -- Timeout value for socket-level communication
 
+
+.. _aci_auth:
 
 ACI authentication
 ------------------
@@ -87,7 +93,12 @@ If you want to logon using a username and password, you can use the following pa
 
 Password-based authentication is very simple to work with, but it is not the most efficient form of authentication from ACI's point-of-view as it requires a separate login-request and an open session to work. To avoid having your session time-out and requiring another login, you can use the more efficient Signature-based authentication.
 
-**NOTE:** Password-based authentication also may trigger anti-DoS measures in ACI v3.1+ that causes session throttling and results in HTTP 503 errors and login failures. 
+.. note:: Password-based authentication also may trigger anti-DoS measures in ACI v3.1+ that causes session throttling and results in HTTP 503 errors and login failures.
+
+.. warning:: Never store passwords in plain text.
+
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
+
 
 
 Signature-based authentication using certificates
@@ -104,11 +115,18 @@ Signature-based authentication requires a (self-signed) X.509 certificate with p
 
 Configure your local user
 ,,,,,,,,,,,,,,,,,,,,,,,,,
-Then add the X.509 certificate to your ACI AAA local user at **ADMIN > AAA**. Then click **AAA Authentication** and check that in the **Authentication** field the **Realm** field displays **Local**. Expand **Security Management > Local Users**
+Perform the following steps:
 
-Click the name of the user you want to add a certificate to, in the **User Certificates** area, click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field (If you use the basename of your private key here, you don't need to enter **certificate_name** in Ansible) and copy&paste your X.509 certificate in the **Data** field.
+- Add the X.509 certificate to your ACI AAA local user at **ADMIN > AAA**
+- Click **AAA Authentication**
+- Check that in the **Authentication** field the **Realm** field displays **Local**
+- Expand **Security Management > Local Users**
+- Click the name of the user you want to add a certificate to, in the **User Certificates** area
+- Click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field
+- If you use the basename of your private key here, you don't need to enter **certificate_name** in Ansible)
+- Copy and paste your X.509 certificate in the **Data** field.
 
-Obviously you can automate this by using the following Ansible task:
+You can automate this by using the following Ansible task:
 
 .. code-block:: yaml
 
@@ -122,12 +140,12 @@ Obviously you can automate this by using the following Ansible task:
         certificate_name: admin
         certificate: "{{ lookup('file', 'pki/admin.crt') }}"  # This wil read the certificate data from a local file
 
-**NOTE:** Signature-based authentication only works with local users.
+.. note:: Signature-based authentication only works with local users.
 
 
 Use Signature-based Authentication with Ansible
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
- You need the following parameters with your ACI module(s) for it to work:
+You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
 
@@ -135,27 +153,30 @@ Use Signature-based Authentication with Ansible
     private_key: pki/admin.key
     certificate_name: admin  # This could be left out !
 
-**NOTE:** If you use a certificate name in ACI that matches the private key's basename, you can leave out the `certificate_name` parameter like the example above.
+.. note:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
 
 More information
 ,,,,,,,,,,,,,,,,
 More information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
 
+
+.. _aci_rest:
+
 Using ACI REST with Ansible
 ---------------------------
 While already a lot of ACI modules exists in the Ansible distribution, and the most common actions can be performed with these existing modules, there's always something that may not be possible with off-the-shelf modules.
 
-The **aci_rest** module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortless.
+The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortless.
 
 Using the aci-rest module
 .........................
-The **aci_rest** module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with `.xml` whereas JSON or YAML require path to end with `.json`.
+The :ref:`aci_rest <aci_rest>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
 
 When you're making modifications, you can use the POST or DELETE methods, whereas doing just queries require the GET method.
 
 For instance, if you would like to ensure a specific tenant exists on ACI, these below four examples are identical:
 
-**XML** (native)
+**XML** (Native ACI)
 
 .. code-block:: yaml
 
@@ -168,7 +189,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         content: |
           <fvTenant name="customer-xyz" descr="Customer XYZ"/>
 
-**JSON** (native)
+**JSON** (Native ACI)
 
 .. code-block:: yaml
 
@@ -188,7 +209,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
             }
           }
 
-**YAML** (ansible)
+**YAML** (Ansible-style)
 
 .. code-block:: yaml
 
@@ -204,7 +225,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
               name: customer-xyz
               descr: Customer XYZ
 
-**Ansible task** (dedicated module)
+**Ansible task** (Dedicated module)
 
 .. code-block:: yaml
 
@@ -221,14 +242,17 @@ More information
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
 
 
+
+.. _aci_issues:
+
 Known issues
 ............
-The **aci_rest** module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the **aci_rest** module.
+The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
 
 
 Specific requests may not reflects changes correctly
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path `api/node/mo/uni/infra.xml` fails, where `api/node/mo/uni/infra/.xml` does work correctly.
+There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
 
 This issue has been reported to the vendor.
 
@@ -239,14 +263,16 @@ More information from: `#35401 aci_rest: change not detected <https://github.com
 
 Specific requests are known to not be idempotent
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-The behaviour of the APIC is inconsistent to the use of `status="created"` and `status="deleted"`. The result is that when you use `status="created"` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with `status="deleted"` where such call to an non-existing object does not cause any failure whatsoever.
+The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
 
 This issue has been reported to the vendor.
 
-**NOTE:** A workaround is to avoid using `status="created"` and instead use `status="modified"` when idempotency is essential to your workflow..
+.. note:: A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
 
 More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
 
+
+.. _aci_ops:
 
 Operational examples
 --------------------
@@ -255,7 +281,7 @@ Feel free to contribute more snippets that are useful for others.
 
 Waiting for all controllers to be ready
 .......................................
-You can use the below task after you started to build your APICs and configured the cluster to wait until all the APICs have come online. It will wait until the number of controllers equals the number listed in the `apic` inventory group.
+You can use the below task after you started to build your APICs and configured the cluster to wait until all the APICs have come online. It will wait until the number of controllers equals the number listed in the ``apic`` inventory group.
 
 .. code-block:: yaml
 
