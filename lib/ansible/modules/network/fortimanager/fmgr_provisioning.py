@@ -31,8 +31,9 @@ version_added: "2.5"
 author: Andrew Welsh
 short_description: Provision devices via FortiMananger
 description:
-  -  Add model devices on the FortiManager using jsonrpc API and have them pre-configured, so when central management
-     is configured, the configuration is pushed down to the registering devices
+  - Add model devices on the FortiManager using jsonrpc API and have them pre-configured,
+    so when central management is configured, the configuration is pushed down to the 
+    registering devices
 
 options:
   adom:
