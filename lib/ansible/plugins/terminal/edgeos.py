@@ -26,7 +26,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"\n\s*Set failed"),
     ]
 
-    terminal_length = os.getenv('ANSIBLE_VYOS_TERMINAL_LENGTH', 10000)
+    terminal_length = os.getenv('ANSIBLE_EDGEOS_TERMINAL_LENGTH', 10000)
 
     def on_open_shell(self):
         try:
