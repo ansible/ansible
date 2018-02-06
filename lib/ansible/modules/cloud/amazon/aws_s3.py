@@ -52,6 +52,14 @@ options:
       - When set for PUT mode, asks for server-side encryption.
     default: True
     version_added: "2.0"
+  encryption_mode:
+    description:
+      - What encryption mode to use if C(encrypt) is set
+    default: AES256
+    choices:
+      - AES256
+      - aws:kms
+    version_added: "2.6"
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
@@ -140,6 +148,14 @@ options:
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
         ignore_nonexistent_bucket: True."
     version_added: "2.3"
+  use_v4_signature:
+    description:
+      - Uses AWS v4 signature for signing API requests. This is required for downloading files encrypted with KMS.
+    version_added: "2.6"
+    default: False
+  kms_key_id:
+    description:
+      - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
 
 requirements: [ "boto3", "botocore" ]
 author:
@@ -443,7 +459,9 @@ def create_dirkey(module, s3, bucket, obj, encrypt):
     try:
         params = {'Bucket': bucket, 'Key': obj, 'Body': b''}
         if encrypt:
-            params['ServerSideEncryption'] = 'AES256'
+            params['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            params['SSEKMSKeyId'] = module.params['kms_key_id']
 
         s3.put_object(**params)
         for acl in module.params.get('permission'):
@@ -481,7 +499,9 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
     try:
         extra = {}
         if encrypt:
-            extra['ServerSideEncryption'] = 'AES256'
+            extra['ServerSideEncryption'] = module.params['encryption_mode']
+        if module.params['kms_key_id'] and module.params['encryption_mode'] == 'aws:kms':
+            extra['SSEKMSKeyId'] = module.params['kms_key_id']
         if metadata:
             extra['Metadata'] = {}
 
@@ -607,6 +627,8 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url):
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=walrus, **aws_connect_kwargs)
     else:
         params = dict(module=module, conn_type='client', resource='s3', region=location, endpoint=s3_url, **aws_connect_kwargs)
+        if module.params['use_v4_signature']:
+            params['config'] = botocore.client.Config(signature_version='s3v4')
     return boto3_conn(**params)
 
 
@@ -617,6 +639,7 @@ def main():
             bucket=dict(required=True),
             dest=dict(default=None, type='path'),
             encrypt=dict(default=True, type='bool'),
+            encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
             expiry=dict(default=600, type='int', aliases=['expiration']),
             headers=dict(type='dict'),
             marker=dict(default=""),
@@ -632,7 +655,9 @@ def main():
             s3_url=dict(aliases=['S3_URL']),
             rgw=dict(default='no', type='bool'),
             src=dict(),
-            ignore_nonexistent_bucket=dict(default=False, type='bool')
+            ignore_nonexistent_bucket=dict(default=False, type='bool'),
+            use_v4_signature=dict(default=False, type='bool'),
+            kms_key_id=dict()
         ),
     )
     module = AnsibleModule(
