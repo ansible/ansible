@@ -1,13 +1,8 @@
 - name: 'Recreate "disk" file'
   command: 'dd if=/dev/zero of={{ dev }} bs=1M count={{ fssize }}'
 
-- name: 'Create a vfat filesystem'
-  command: 'mkfs.vfat {{ dev }}'
-  when: ansible_system != 'FreeBSD'
-
-- name: 'Create a vfat filesystem'
-  command: 'newfs_msdos -F12 {{ dev }}'
-  when: ansible_system == 'FreeBSD'
+- name: 'Create a swap filesystem'
+  command: 'mkswap {{ dev }}'
 
 - command: 'blkid -c /dev/null -o value -s UUID {{ dev }}'
   register: uuid
