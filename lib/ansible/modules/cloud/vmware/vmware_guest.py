@@ -1323,20 +1323,33 @@ class PyVmomiHelper(PyVmomi):
         """
         if datastore_cluster_obj is None:
             return None
-        pod_sel_spec = vim.storageDrs.PodSelectionSpec()
-        pod_sel_spec.storagePod = datastore_cluster_obj
-        storage_spec = vim.storageDrs.StoragePlacementSpec()
-        storage_spec.podSelectionSpec = pod_sel_spec
-        storage_spec.type = 'create'
+        # Check if Datastore Cluster provided by user is SDRS ready
+        sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
+        if sdrs_status:
+            # We can get storage recommendation only if SDRS is enabled on given datastorage cluster
+            pod_sel_spec = vim.storageDrs.PodSelectionSpec()
+            pod_sel_spec.storagePod = datastore_cluster_obj
+            storage_spec = vim.storageDrs.StoragePlacementSpec()
+            storage_spec.podSelectionSpec = pod_sel_spec
+            storage_spec.type = 'create'
 
-        try:
-            rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
-            rec_action = rec.recommendations[0].action[0]
-            real_datastore_name = rec_action.destination.name
-        except Exception as e:
-            # There is some error so we fall back to general workflow
-            return None
-        return real_datastore_name
+            try:
+                rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
+                rec_action = rec.recommendations[0].action[0]
+                return rec_action.destination.name
+            except Exception as e:
+                # There is some error so we fall back to general workflow
+                pass
+        datastore = None
+        datastore_freespace = 0
+        for ds in datastore_cluster_obj.childEntity:
+            if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
+                # If datastore field is provided, filter destination datastores
+                datastore = ds
+                datastore_freespace = ds.summary.freeSpace
+        if datastore:
+            return datastore.name
+        return None
 
     def select_datastore(self, vm_obj=None):
         datastore = None
