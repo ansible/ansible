@@ -10,27 +10,36 @@
 
 - name: Making sure interface_policy_leaf_policy_group doesn't exist at beggining of test (PC)
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_link_absent
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: link
     state: absent
 
 - name: Making sure interface_policy_leaf_policy_group doesn't exist at beggining of test (VPC)
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_node_absent
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: node
     state: absent
 
 - name: Making sure interface_policy_leaf_policy_group doesn't exist at beggining of test (Leaf Access Port)
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_leaf_absent
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: leaf
     state: absent
@@ -40,9 +49,12 @@
 
 - name: Adding a interface policy leaf policy group (PC) - check mode works
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_link_present
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: link
     link_level_policy: linklevelpolicy
@@ -82,9 +94,12 @@
 
 - name: Query interface policy leaf policy group (PC)
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: link
     state: query
@@ -115,9 +130,12 @@
 
 - name: Remove interface policy leaf policy group (PC) - check mode
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     #lag_type: link
     state: absent
@@ -147,9 +165,12 @@
 
 - name: Adding a interface policy leaf policy group (VPC) - check mode works
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_node_present
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: node
     link_level_policy: linklevelpolicy
@@ -189,9 +210,12 @@
 
 - name: Query interface policy leaf policy group (VPC)
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: node
     state: query
@@ -222,9 +246,12 @@
 
 - name: Remove interface policy leaf policy group (VPC) - check mode
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     #lag_type: node
     state: absent
@@ -254,9 +281,12 @@
 
 - name: Adding a interface policy leaf policy group (Leaf Access Port) - check mode works
   aci_interface_policy_leaf_policy_group: &aci_interface_policy_leaf_policy_group_leaf_present
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: leaf
     link_level_policy: linklevelpolicy
@@ -304,9 +334,12 @@
 
 - name: Query interface policy leaf policy group (Leaf Access Port)
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     lag_type: leaf
     state: query
@@ -337,9 +370,12 @@
 
 - name: Remove interface policy leaf policy group (Leaf Access Port) - check mode
   aci_interface_policy_leaf_policy_group:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
     policy_group: policygroupname
     #lag_type: leaf
     state: absent
