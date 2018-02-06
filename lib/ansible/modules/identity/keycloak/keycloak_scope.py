@@ -100,15 +100,10 @@ options:
                 description:
                     - if I(composite) is set to True, this defines the composite role definition through
                       a dict. The set of all the rolenames specified therein is the set of roles this
-                      composite role is comprised of. 
-                suboptions:
-                    client:
-                        description:
-                            - This is a dict whose keys are client names, while the keys are lists of
-                              client role names.
-                    realm:
-                        description:
-                            - This is a list of realm role names. 
+                      composite role is comprised of. The dict contains the keys I(client) and I(realm).
+                    - I(client) contains another dict with client names as keys and lists of client
+                      role names as values.
+                    - I(realm) contains a list of realm role names.
 
             containerId:
                 description:
