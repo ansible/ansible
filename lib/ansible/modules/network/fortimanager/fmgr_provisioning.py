@@ -159,8 +159,6 @@ def update_flags(fmg, name):
     }
     url = 'dvmdb/device/{name}'.format(name=name)
     response = fmg.update(url, datagram)
-    # print(response)
-    # sys.exit()
     return response
 
 
@@ -231,10 +229,6 @@ def install_pp(fmg, device, pp='default', vdom='root', adom='root'):
 
 
 def main():
-
-    # confirm PyFMG exists
-    if not HAS_PYFMGR:
-        raise ImportError("PyFMG module is required")
 
     argument_spec = dict(
         adom=dict(required=False, type="str"),
