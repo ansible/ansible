@@ -1,4 +1,18 @@
 #!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -9,7 +23,8 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 module: redshift_iam_roles
 short_description: This module adds/removes IAM roles to/from Redshift clusters.
-version_added: 2.4
+version_added: 2.5
+author: Aaron Smith (@slapula)
 description:
     - "This module adds or removes a list of IAM roles to a give Redshift Cluster"
 options:
@@ -23,7 +38,7 @@ options:
         required: true
     roles:
         description:
-            - "This is a list of IAM roles (Full ARN) to add to a given Redshift cluster.  Roles attached to the cluster that are not on the list will be removed."
+            - "This is a list of IAM roles (Full ARN) to add to the Redshift cluster. Roles attached to the cluster that are not on the list will be removed."
         required: true
 '''
 
@@ -45,8 +60,8 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict, HAS_BOTO3
-import boto3
 import traceback
 
 try:
@@ -54,9 +69,8 @@ try:
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
-def main():
-    client = boto3.client('redshift')
 
+def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
@@ -82,7 +96,11 @@ def main():
         'changed': False
     }
 
-    cluster_roles = client.describe_clusters(ClusterIdentifier=target_cluster)['Clusters'][0]['IamRoles']
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    conn = boto3_conn(module, conn_type='client', resource='redshift',
+                            region=region, endpoint=ec2_url, **aws_connect_params)
+
+    cluster_roles = conn.describe_clusters(ClusterIdentifier=target_cluster)['Clusters'][0]['IamRoles']
     current_roles = [x['IamRoleArn'] for x in cluster_roles]
 
     if desired_state == 'present':
@@ -91,7 +109,7 @@ def main():
         if not definitive_roles:
             module.exit_json(**result)
         try:
-            response = client.modify_cluster_iam_roles(
+            response = conn.modify_cluster_iam_roles(
                 ClusterIdentifier=target_cluster,
                 AddIamRoles=roles_to_add,
                 RemoveIamRoles=roles_to_remove
@@ -105,7 +123,7 @@ def main():
         if not matching_roles:
             module.exit_json(**result)
         try:
-            response = client.modify_cluster_iam_roles(
+            response = conn.modify_cluster_iam_roles(
                 ClusterIdentifier=target_cluster,
                 RemoveIamRoles=current_roles
             )
