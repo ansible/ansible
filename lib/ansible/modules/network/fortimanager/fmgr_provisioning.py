@@ -32,7 +32,7 @@ author: Andrew Welsh
 short_description: Provision devices via FortiMananger
 description:
   - Add model devices on the FortiManager using jsonrpc API and have them pre-configured,
-    so when central management is configured, the configuration is pushed down to the 
+    so when central management is configured, the configuration is pushed down to the
     registering devices
 
 options:
@@ -190,7 +190,7 @@ def create_model_device(fmg, name, serial, group, platform, os_version,
     datagram = {
         'adom': adom,
         'flags': ['create_task','nonblocking'],
-        # 'groups': [{'name': group, 'vdom':'root'}],
+        'groups': [{'name': group, 'vdom':'root'}],
         'device': {
             'mr': minor_release,
             'name': name,
@@ -219,7 +219,7 @@ def update_flags(fmg, name):
     return response
 
 
-def assign_provision_template(fmg,template, adom, target):
+def assign_provision_template(fmg, template, adom, target):
     datagram = {
         'name': template,
         'type': 'devprof',
@@ -360,7 +360,7 @@ def main():
         if not results[0] == 0:
             module.fail_json(msg="Adding device target to package failed", **results)
 
-        results = install_pp(fmg, module.params["name"],module.params["policy_package"])
+        results = install_pp(fmg, module.params["name"], module.params["policy_package"])
         if not results[0] == 0:
             module.fail_json(msg="Installing policy package failed", **results)
 
