@@ -233,7 +233,7 @@ class GalaxyCLI(CLI):
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
-            dirs[:] = [d for d in dirs if not any(r.match(os.path.join(rel_root, d)) for r in skeleton_ignore_re)]
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)
