@@ -83,7 +83,9 @@ class ImportTest(SanityMultipleVersion):
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
+            run_command(args, generate_pip_install('pip', 'sanity.import', packages=['setuptools']), env=env)
             run_command(args, generate_pip_install('pip', 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
 
         cmd = ['importer.py'] + paths
