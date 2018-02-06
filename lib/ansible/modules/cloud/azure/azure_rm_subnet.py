@@ -171,7 +171,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.state = None
-        self.virtual_etwork_name = None
+        self.virtual_network_name = None
         self.address_prefix_cidr = None
         self.security_group_name = None
 
