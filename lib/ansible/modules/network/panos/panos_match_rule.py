@@ -28,10 +28,8 @@ DOCUMENTATION = '''
 ---
 module: panos_match_rule
 short_description: Test for match against a security rule on PAN-OS devices or Panorama management console.
-description: >
+description:
     - Security policies allow you to enforce rules and take action, and can be as general or specific as needed.
-    The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches
-    the traffic is applied, the more specific rules must precede the more general ones.
 author: "Robert Hagen (@rnh556)"
 version_added: "2.5"
 requirements:
@@ -284,14 +282,14 @@ def main():
         source_zone=dict(default=None),
         source_ip=dict(default=None),
         source_user=dict(default=None),
-        source_port=dict(default=None),
+        source_port=dict(default=None, type=int),
         to_interface=dict(default=None),
         destination_zone=dict(default=None),
         category=dict(default=None),
         application=dict(default=None),
-        protocol=dict(default=None),
+        protocol=dict(default=None, type=int),
         destination_ip=dict(default=None),
-        destination_port=dict(default=None)
+        destination_port=dict(default=None, type=int)
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
