@@ -31,6 +31,20 @@
       - btrfsprogs
   when: ansible_system == 'Linux'
 
+- block:
+  - name: install fatresize
+    package:
+      name: fatresize
+      state: present
+  - command: fatresize --help
+    register: fatresize
+  - set_fact:
+      fatresize_version: '{{ fatresize.stdout_lines[0] | regex_search("[0-9]+\.[0-9]+\.[0-9]+")  }}'
+  when:
+    - ansible_system == 'Linux'
+    - ansible_os_family != 'Suse'
+    - ansible_os_family != 'RedHat' or (ansible_distribution == 'CentOS' and ansible_distribution_version is version('7.0', '>='))
+
 - command: mke2fs -V
   register: mke2fs
 
@@ -43,3 +57,5 @@
     # Mke2fs no longer complains if the user tries to create a file system
     # using the entire block device.
     force_creation: "{{ e2fsprogs_version is version('1.43', '<') }}"
+    # Earlier versions have a segfault bug
+    resize_vfat: "{{ fatresize_version|default('0.0') is version('1.0.4', '>=') }}"
