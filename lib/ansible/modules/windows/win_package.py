@@ -142,7 +142,7 @@ notes:
   different structure but this module should support any format.
 - By default all msi installs and uninstalls will be run with the options
   C(/log, /qn, /norestart).
-- It is recommended you download the pacakge first from the URL using the
+- It is recommended you download the package first from the URL using the
   M(win_get_url) module as it opens up more flexibility with what must be set
   when calling C(win_package).
 - Packages will be temporarily downloaded or copied locally when path is a
@@ -243,7 +243,7 @@ log:
   type: str
   sample: Installation completed successfully
 rc:
-  description: The return code of the pacakge process.
+  description: The return code of the package process.
   returned: change occured
   type: int
   sample: 0
