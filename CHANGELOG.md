@@ -333,6 +333,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 - panos
   * panos_query_rules
   * panos_dag_tags
+  * panos_match_rule
 - radware
   * vdirect_commit
   * vdirect_runnable
