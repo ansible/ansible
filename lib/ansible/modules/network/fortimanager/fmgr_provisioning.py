@@ -37,8 +37,64 @@ description:
 options:
   adom:
     description:
-      - The ADOM the configuration should belong to.
+      - The administrative domain (admon) the configuration belongs to
     required: true
+  vdom:
+    description:
+      - The virtual domain (vdom) the configuration belongs to
+  host:
+    description:
+      - The FortiManager's Address.
+    required: true
+  username:
+    description:
+      - The username to log into the FortiManager
+    required: true
+  password:
+    description:
+      - The password associated with the username account.
+    required: false
+
+  policy_package:
+    description:
+      - The name of the policy package to be assigned to the device.
+    required: True
+  name:
+    description:
+      - The name of the device to be provisioned.
+    required: True
+  group:
+    description:
+      - The name of the device group the provisioned device can belong to.
+    required: False
+  serial:
+    description:
+      - The serial number of the device that will be provisioned.
+    required: True
+  platform:
+    description:
+      - The platform of the device, such as model number or VM.
+    required: True
+  description:
+    description:
+      - Description of the device to be provisioned.
+    required: False
+  os_version:
+    description:
+      - The Fortinet OS version to be used for the device, such as 5.0 or 6.0.
+    required: True
+  minor_release:
+    description:
+      - The minor release number such as 6.X.1, as X being the minor release.
+    required: False
+  patch_release:
+    description:
+      - The patch release number such as 6.0.X, as X being the patch release.
+    required: False
+  os_type:
+    description:
+      - The Fortinet OS type to be pushed to the device, such as 'FOS' for FortiOS.
+    required: True
 '''
 
 EXAMPLES = '''
