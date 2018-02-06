@@ -7,16 +7,20 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['deprecated'],
+    'supported_by': 'community'
+}
 
 DOCUMENTATION = '''
 ---
 module: github_hooks
 short_description: Manages GitHub service hooks.
+deprecated:
+  removed_in: "2.9"
+  why: Replaced by more granular modules
+  alternative: Use M(github_webhook) and M(github_webhook_facts) instead.
 description:
      - Adds service hooks and removes service hooks that have an error status.
 version_added: "1.4"
@@ -92,7 +96,8 @@ def request(module, url, user, oauthkey, data='', method='GET'):
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, headers=headers, data=data, method=method)
+    response, info = fetch_url(
+        module, url, headers=headers, data=data, method=method)
     return response, info
 
 
@@ -138,7 +143,8 @@ def _create(module, hookurl, oauthkey, repo, user, content_type):
         }
     }
     data = json.dumps(values)
-    response, info = request(module, url, user, oauthkey, data=data, method='POST')
+    response, info = request(
+        module, url, user, oauthkey, data=data, method='POST')
     if info['status'] != 200:
         return 0, '[]'
     else:
@@ -152,17 +158,15 @@ def _delete(module, oauthkey, repo, user, hookid):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(required=True, choices=['list', 'clean504', 'cleanall', 'create']),
-            hookurl=dict(required=False),
-            oauthkey=dict(required=True, no_log=True),
-            repo=dict(required=True),
-            user=dict(required=True),
-            validate_certs=dict(default='yes', type='bool'),
-            content_type=dict(default='json', choices=['json', 'form']),
-        )
-    )
+    module = AnsibleModule(argument_spec=dict(
+        action=dict(
+            required=True, choices=['list', 'clean504', 'cleanall', 'create']),
+        hookurl=dict(required=False),
+        oauthkey=dict(required=True, no_log=True),
+        repo=dict(required=True),
+        user=dict(required=True),
+        validate_certs=dict(default='yes', type='bool'),
+        content_type=dict(default='json', choices=['json', 'form']), ))
 
     action = module.params['action']
     hookurl = module.params['hookurl']
@@ -181,7 +185,8 @@ def main():
         (rc, out) = _cleanall(module, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = _create(module, hookurl, oauthkey, repo, user, content_type)
+        (rc, out) = _create(module, hookurl, oauthkey, repo, user,
+                            content_type)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)

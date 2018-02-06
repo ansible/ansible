@@ -41,6 +41,8 @@ Ansible Changes By Release
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
 * panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 * vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
+* github_hooks is deprecated in Ansible 2.5. Use github_webhooks and
+  github_webhook_facts instead.
 
 See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
 
