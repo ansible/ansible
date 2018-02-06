@@ -223,6 +223,12 @@ def main():
         if not module.boolean(params['create']):
             module.fail_json(rc=257,
                              msg='Path %s does not exist !' % path)
+        destpath = os.path.dirname(path)
+        if not os.path.exists(destpath) and not module.check_mode:
+            try:
+                os.makedirs(destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (destpath, e[0], e[1]))
         original = None
         lines = []
     else:
