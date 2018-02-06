@@ -254,19 +254,25 @@ All below issues have been reported to the vendor.
 
 - **Specific requests may not reflect changes correctly**
 
-  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly. More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
+  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
+
+  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
 
   **NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
 
 - **Specific requests are known to not be idempotent**
 
-  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever. More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
+  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
+
+  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
 
   **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
 
 - **Setting user password is not idempotent**
 
-  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``. More information from: `35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
+  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
+
+  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
 
   **NOTE:** There is no workaround for this issue.
 
