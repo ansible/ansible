@@ -214,7 +214,7 @@ def main():
         # NOTE: C(interface) can be a policy group like: "test-IntPolGrp", C(leafs) can be something like 101-102'
         virtual_port_channel='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leafs, interface),
         # NOTE: C(interface) can be of the following format: "1/7", C(leafs) can only be like '101', C(extpaths) can only be like '1011'
-        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, paths, extpaths, interface),
+        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, leafs, extpaths, interface),
     )
 
     static_path = CONNECTION_TYPE_MAPPING[connection_type]
