@@ -61,6 +61,12 @@ options:
         default: null
         aliases: ['options']
         version_added: "2.2"
+    accept_external_apps:
+        description:
+            - allow external apps
+        required: false
+        default: False
+        version_added: "2.5.0"
 '''
 EXAMPLES = '''
 - homebrew_cask:
@@ -80,6 +86,11 @@ EXAMPLES = '''
     name: alfred
     state: present
     install_options: 'debug,appdir=/Applications'
+
+- homebrew_cask:
+    name: alfred
+    state: present
+    allow_external_apps: True
 
 - homebrew_cask:
     name: alfred
@@ -308,13 +319,15 @@ class HomebrewCask(object):
     # /class properties -------------------------------------------- }}}
 
     def __init__(self, module, path=path, casks=None, state=None,
-                 update_homebrew=False, install_options=None):
+                 update_homebrew=False, install_options=None,
+                 accept_external_apps=False):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, casks=casks,
                                   state=state, update_homebrew=update_homebrew,
-                                  install_options=install_options,)
+                                  install_options=install_options,
+                                  accept_external_apps=accept_external_apps,)
 
         self._prep()
 
@@ -470,6 +483,12 @@ class HomebrewCask(object):
             self.changed = True
             self.message = 'Cask installed: {0}'.format(self.current_cask)
             return True
+        elif self.accept_external_apps and re.search(r"Error: It seems there is already an App at", err):
+            self.unchanged_count += 1
+            self.message = 'Cask already installed: {0}'.format(
+                self.current_cask,
+            )
+            return True
         else:
             self.failed = True
             self.message = err.strip()
@@ -559,6 +578,10 @@ def main():
                 default=None,
                 aliases=['options'],
                 type='list',
+            ),
+            accept_external_apps=dict(
+                default=False,
+                type='bool',
             )
         ),
         supports_check_mode=True,
@@ -588,9 +611,12 @@ def main():
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
+    accept_external_apps = p['accept_external_apps']
+
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
                              state=state, update_homebrew=update_homebrew,
-                             install_options=install_options)
+                             install_options=install_options,
+                             accept_external_apps=accept_external_apps)
     (failed, changed, message) = brew_cask.run()
     if failed:
         module.fail_json(msg=message)
