@@ -153,20 +153,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerregistry.models import (
-        Registry,
-        RegistryUpdateParameters,
-        StorageAccountProperties,
-        Sku,
-        SkuName,
-        SkuTier,
-        ProvisioningState,
-        PasswordName,
-        WebhookCreateParameters,
-        WebhookUpdateParameters,
-        WebhookAction,
-        WebhookStatus
-    )
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
 except ImportError as exc:
     # This is handled in azure_rm_common
@@ -246,7 +232,8 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.state = None
         self.sku = None
         self.tags = None
-        self._containerregistry_mgmt_client = None
+        self.client = None
+        self.models = None
 
         self.results = dict(changed=False, state=dict())
 
@@ -263,6 +250,10 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         resource_group = None
         response = None
         to_do = Actions.NoAction
+
+        self.client = self.get_mgmt_svc_client(ContainerRegistryManagementClient,
+                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        self.models = self.client.registries.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -316,14 +307,14 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         try:
             if to_do != Actions.NoAction:
                 if to_do == Actions.Create:
-                    name_status = self.containerregistry_mgmt_client.registries.check_name_availability(self.name)
+                    name_status = self.client.registries.check_name_availability(self.name)
                     if name_status.name_available:
-                        poller = self.containerregistry_mgmt_client.registries.create(
+                        poller = self.client.registries.create(
                             resource_group_name=self.resource_group,
                             registry_name=self.name,
-                            registry=Registry(
+                            registry=self.models.Registry(
                                 location=self.location,
-                                sku=Sku(
+                                sku=self.models.Sku(
                                     name=self.sku
                                 ),
                                 tags=self.tags,
@@ -333,13 +324,13 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                     else:
                         raise Exception("Invalid registry name. reason: " + name_status.reason + " message: " + name_status.message)
                 else:
-                    registry = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
+                    registry = self.client.registries.get(self.resource_group, self.name)
                     if registry is not None:
-                        poller = self.containerregistry_mgmt_client.registries.update(
+                        poller = self.client.registries.update(
                             resource_group_name=self.resource_group,
                             registry_name=self.name,
-                            registry_update_parameters=RegistryUpdateParameters(
-                                sku=Sku(
+                            registry_update_parameters=self.models.RegistryUpdateParameters(
+                                sku=self.models.Sku(
                                     name=self.sku
                                 ),
                                 tags=self.tags,
@@ -350,7 +341,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                         raise Exception("Update registry failed as registry '" + self.name + "' doesn't exist.")
                 response = self.get_poller_result(poller)
                 if self.admin_user_enabled:
-                    credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
+                    credentials = self.client.registries.list_credentials(self.resource_group, self.name)
                 else:
                     self.log('Cannot perform credential operations as admin user is disabled')
                     credentials = None
@@ -370,7 +361,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         '''
         self.log("Deleting the container registry instance {0}".format(self.name))
         try:
-            self.containerregistry_mgmt_client.registries.delete(self.resource_group, self.name).wait()
+            self.client.registries.delete(self.resource_group, self.name).wait()
         except CloudError as e:
             self.log('Error attempting to delete the container registry instance.')
             self.fail("Error deleting the container registry instance: {0}".format(str(e)))
@@ -386,7 +377,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         self.log("Checking if the container registry instance {0} is present".format(self.name))
         found = False
         try:
-            response = self.containerregistry_mgmt_client.registries.get(self.resource_group, self.name)
+            response = self.client.registries.get(self.resource_group, self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Container registry instance : {0} found".format(response.name))
@@ -398,7 +389,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
             response = None
         if found is True and self.admin_user_enabled is True:
             try:
-                credentials = self.containerregistry_mgmt_client.registries.list_credentials(self.resource_group, self.name)
+                credentials = self.client.registries.list_credentials(self.resource_group, self.name)
             except CloudError as e:
                 self.fail('List registry credentials failed: {0}'.format(str(e)))
                 credentials = None
@@ -407,18 +398,6 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
         else:
             return None
         return create_containerregistry_dict(response, credentials)
-
-    @property
-    def containerregistry_mgmt_client(self):
-        self.log('Getting container registry mgmt client')
-        if not self._containerregistry_mgmt_client:
-            self._containerregistry_mgmt_client = self.get_mgmt_svc_client(
-                ContainerRegistryManagementClient,
-                base_url=self._cloud_environment.endpoints.resource_manager,
-                api_version='2017-10-01'
-            )
-
-        return self._containerregistry_mgmt_client
 
 
 def main():
