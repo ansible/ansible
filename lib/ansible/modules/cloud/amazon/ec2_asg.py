@@ -146,7 +146,7 @@ options:
       - Protect newly created instances from being selected for termination during scale in
     required: false
     default: False
-    version_added: "2.5"
+    version_added: "2.6"
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
