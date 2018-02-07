@@ -609,6 +609,27 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
     raise NotImplementedError("Only windows with remote-prep or non-windows with tower job callback supported so far.")
 
 
+def manage_tags(match, new_tags, purge_tags, ec2):
+    changed = False
+    old_tags = boto3_tag_list_to_ansible_dict(match['Tags'])
+    tags_to_set, tags_to_delete = compare_aws_tags(
+        old_tags, new_tags,
+        purge_tags=purge_tags,
+        )
+    if tags_to_set:
+        ec2.create_tags(
+            Resources=[match['InstanceId']],
+            Tags=ansible_dict_to_boto3_tag_list(tags_to_set))
+        changed |= True
+    if tags_to_delete:
+        delete_with_current_values = {k: old_tags.get(k) for k in tags_to_delete}
+        ec2.delete_tags(
+            Resources=[match['InstanceId']],
+            Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values))
+        changed |= True
+    return changed
+
+
 def build_network_spec(params, ec2=None):
     """
     Returns list of interfaces [complex]
@@ -656,7 +677,8 @@ def build_network_spec(params, ec2=None):
         else:
             default_vpc = get_default_vpc(ec2)
             if default_vpc is None:
-                raise module.fail_json(msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) to create an instance")
+                raise module.fail_json(
+                    msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) to create an instance")
             else:
                 sub = get_default_subnet(ec2, default_vpc)
                 spec['SubnetId'] = sub['SubnetId']
@@ -721,9 +743,25 @@ def warn_if_public_ip_assignment_changed(instance):
                 assign_public_ip, instance['InstanceId']))
 
 
-def discover_security_groups(group, groups, parent_vpc_id, ec2=None):
+def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, ec2=None):
     if ec2 is None:
         ec2 = module.client('ec2')
+
+    if subnet_id is not None:
+        try:
+            sub = ec2.describe_subnets(SubnetIds=[subnet_id])
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'InvalidGroup.NotFound':
+                module.fail_json(
+                    "Could not find subnet {0} to associate security groups. Please check the vpc_subnet_id and security_groups parameters.".format(
+                        subnet_id
+                    )
+                )
+            module.fail_json_aws(e, msg="Error while searching for subnet {0} parent VPC.".format(subnet_id))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json_aws(e, msg="Error while searching for subnet {0} parent VPC.".format(subnet_id))
+        parent_vpc_id = sub['VpcId']
+
     vpc = {
         'Name': 'vpc-id',
         'Values': [parent_vpc_id]
@@ -771,7 +809,7 @@ def discover_security_groups(group, groups, parent_vpc_id, ec2=None):
             ).paginate(
                 Filters=f_set
             ).search('SecurityGroups[]'))
-    return list({g['GroupId']: g for g in found_groups}.values())
+    return list(dict((g['GroupId'], g) for g in found_groups).values())
 
 
 def build_top_level_options(params):
@@ -940,9 +978,6 @@ def find_instances(ec2, ids=None, filters=None):
             InstanceIds=ids,
         ).search('Reservations[].Instances[]'))
     elif filters is None:
-        # TODO use default filters to find instances
-        # probably subnet-id + name
-        return []
         module.fail_json(msg="No filters provided when they were required")
     elif filters is not None:
         for key in filters.keys():
@@ -1108,8 +1143,8 @@ def determine_iam_role(name_or_arn, iam):
         return role['InstanceProfile']['Arn']
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
-            module.fail_json_aws(msg="Could not find instance_role {0}".format(name_or_arn))
-        module.fail_json_aws(msg="An error occurred while searching for instance_role "
+            module.fail_json_aws(e, msg="Could not find instance_role {0}".format(name_or_arn))
+        module.fail_json_aws(e, msg="An error occurred while searching for instance_role "
                                  "{0}. Please try supplying the full ARN.".format(name_or_arn))
 
 
@@ -1205,19 +1240,6 @@ def main():
             if module.params.get('security_groups'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_groups")
 
-    def client(self, service):
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='client', resource=service,
-                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
-    def resource(self, service):
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='resource', resource=service,
-                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
-    module.client = lambda x: client(module, x)
-    module.resource = resource
-
     state = module.params.get('state')
     ec2 = module.client('ec2')
     if module.params.get('filters') is None:
@@ -1266,23 +1288,7 @@ def main():
     if state not in ('terminated', 'absent') and existing_matches:
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
-            old_tags = boto3_tag_list_to_ansible_dict(match['Tags'])
-            tags_to_set, tags_to_delete = compare_aws_tags(
-                old_tags,
-                module.params.get('tags') or {},
-                purge_tags=module.params.get('purge_tags'),
-            )
-            if tags_to_set:
-                ec2.create_tags(
-                    Resources=[match['InstanceId']],
-                    Tags=ansible_dict_to_boto3_tag_list(tags_to_set))
-                changed |= True
-            if tags_to_delete:
-                delete_with_current_values = {k: old_tags.get(k) for k in tags_to_delete}
-                ec2.delete_tags(
-                    Resources=[match['InstanceId']],
-                    Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values))
-                changed |= True
+            changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
         if len(existing_matches):
@@ -1327,8 +1333,7 @@ def main():
                 spec=instance_spec,
             )
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg=instance_spec)
-        module.exit_json(changed=True, spec=instance_spec)
+            module.fail_json_aws(e, msg="Failed to create new EC2 instance", spec=instance_spec)
     elif state in ('restarted', 'rebooted', 'stopped', 'absent', 'terminated'):
         if existing_matches:
             ensure_instance_state(state, ec2)
