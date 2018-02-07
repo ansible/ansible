@@ -103,7 +103,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(tmp=self._connection._shell.tempdir, task_vars=task_vars))
+                result.update(self._execute_module(task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -123,7 +123,7 @@ class ActionModule(ActionBase):
 
             path_checksum = checksum_s(path)
             dest = self._remote_expand_user(dest)
-            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=self._connection._shell.tempdir)
+            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
 
             diff = {}
 
@@ -155,12 +155,12 @@ class ActionModule(ActionBase):
 
                 new_module_args.update(dict(src=xfered,))
 
-                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir)
+                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
                 if diff:
                     res['diff'] = diff
                 result.update(res)
             else:
-                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir))
+                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
 
         except AnsibleAction as e:
             result.update(e.result)

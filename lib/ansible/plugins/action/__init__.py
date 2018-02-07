@@ -67,8 +67,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         action plugin to do that.
 
         :kwarg tmp: Deprecated parameter.  This is no longer used.  An action plugin that calls
-            another one and wants to use the same remote tmp for both will use _execute_module(tmp),
-            rather than this parameter.
+            another one and wants to use the same remote tmp for both should set
+            self._connection._shell.tempdir rather than this parameter.
         :kwarg task_vars: The variables (host vars, group vars, config vars,
             etc) associated with this task.
         :returns: dictionary of results from the module
@@ -81,7 +81,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         result = {}
 
         if tmp is not None:
-            result['warning'] = ['Passing tmp to an ActionModule.run() from another ActionModule is no longer supported.  It has no effect']
+            result['warning'] = ['ActionModule.run() no longer honors the tmp parameter. Action'
+                                 ' plugins should set self._connection._shell.tempdir to share'
+                                 ' the tempdir']
         del tmp
 
         if self._task.async_val and not self._supports_async:

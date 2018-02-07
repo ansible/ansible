@@ -281,8 +281,7 @@ class ActionModule(ActionBase):
 
         copy_result = self._execute_module(module_name="copy",
                                            module_args=copy_args,
-                                           task_vars=task_vars,
-                                           tmp=tmp)
+                                           task_vars=task_vars)
 
         return copy_result
 
@@ -325,8 +324,7 @@ class ActionModule(ActionBase):
 
         module_return = self._execute_module(module_name='copy',
                                              module_args=copy_args,
-                                             task_vars=task_vars,
-                                             tmp=tmp)
+                                             task_vars=task_vars)
         os.removedirs(os.path.dirname(zip_path))
         return module_return
 
@@ -483,8 +481,7 @@ class ActionModule(ActionBase):
 
         query_args.pop('content', None)
         query_return = self._execute_module(module_args=query_args,
-                                            task_vars=task_vars,
-                                            tmp=self._connection._shell.tempdir)
+                                            task_vars=task_vars)
 
         if query_return.get('failed') is True:
             result.update(query_return)

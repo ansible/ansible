@@ -224,7 +224,7 @@ class ActionModule(ActionBase):
             dest_file = dest
 
         # Attempt to get remote file info
-        dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=self._connection._shell.tempdir, checksum=force)
+        dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and dest_status['isdir']:
             # The dest is a directory.
@@ -237,7 +237,7 @@ class ActionModule(ActionBase):
             else:
                 # Append the relative source location to the destination and get remote stats again
                 dest_file = self._connection._shell.join_path(dest, source_rel)
-                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=self._connection._shell.tempdir, checksum=force)
+                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and not force:
             # remote_file exists so continue to next iteration.
@@ -297,7 +297,7 @@ class ActionModule(ActionBase):
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir)
+            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -312,7 +312,7 @@ class ActionModule(ActionBase):
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
             # change it to point to the source of the link.
             if follow:
-                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, tmp=self._connection._shell.tempdir, follow=False)
+                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
                 if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
                     dest = dest_status_nofollow['lnk_source']
 
@@ -331,7 +331,7 @@ class ActionModule(ActionBase):
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -517,7 +517,7 @@ class ActionModule(ActionBase):
             new_module_args['state'] = 'directory'
             new_module_args['mode'] = self._task.args.get('directory_mode', None)
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
             changed = changed or module_return.get('changed', False)
 
@@ -529,7 +529,7 @@ class ActionModule(ActionBase):
             new_module_args['state'] = 'link'
             new_module_args['force'] = True
 
-            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=self._connection._shell.tempdir)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):
