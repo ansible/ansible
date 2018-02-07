@@ -122,6 +122,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * cloudfront_distribution
   * cloudfront_invalidation
   * cloudfront_origin_access_identity
+  * cloudwatchlogs_log_group_facts
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
