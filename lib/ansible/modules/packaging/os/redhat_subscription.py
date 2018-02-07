@@ -23,6 +23,10 @@ version_added: "1.2"
 author: "Barnaby Court (@barnabycourt)"
 notes:
     - In order to register a system, subscription-manager requires either a username and password, or an activationkey and an Organization ID.
+    - Since 2.5 values for I(server_hostname), I(server_insecure), I(rhsm_baseurl),
+      I(server_proxy_hostname), I(server_proxy_port), I(server_proxy_user) and
+      I(server_proxy_password) are no longer taken from the C(/etc/rhsm/rhsm.conf)
+      config file and default to None.
 requirements:
     - subscription-manager
 options:
@@ -46,40 +50,33 @@ options:
         description:
             - Specify an alternative Red Hat Subscription Management or Sat6 server
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
         description:
             - Enable or disable https server certificate verification when connecting to C(server_hostname)
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_proxy_hostname:
         description:
             - Specify a HTTP proxy hostname
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_port:
         description:
             - Specify a HTTP proxy port
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_user:
         description:
             - Specify a user for HTTP proxy with basic authentication
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     server_proxy_password:
         description:
             - Specify a password for HTTP proxy with basic authentication
         required: False
-        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
         version_added: "2.4"
     auto_attach:
         description:
@@ -231,7 +228,6 @@ import os
 import re
 import shutil
 import tempfile
-import functools
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -291,32 +287,7 @@ class RegistrationBase(object):
 class Rhsm(RegistrationBase):
     def __init__(self, module, username=None, password=None):
         RegistrationBase.__init__(self, module, username, password)
-        self.config = self._read_config()
         self.module = module
-
-    def _read_config(self, rhsm_conf='/etc/rhsm/rhsm.conf'):
-        '''
-            Load RHSM configuration from /etc/rhsm/rhsm.conf.
-            Returns:
-             * ConfigParser object
-        '''
-
-        # Read RHSM defaults ...
-        cp = configparser.ConfigParser()
-        cp.read(rhsm_conf)
-
-        # Add support for specifying a default value w/o having to standup some configuration
-        # Yeah, I know this should be subclassed ... but, oh well
-        def get_option_default(self, key, default=''):
-            sect, opt = key.split('.', 1)
-            if self.has_section(sect) and self.has_option(sect, opt):
-                return self.get(sect, opt)
-            else:
-                return default
-
-        cp.get_option = functools.partial(get_option_default, cp)
-
-        return cp
 
     def enable(self):
         '''
@@ -340,7 +311,7 @@ class Rhsm(RegistrationBase):
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--server.hostname'.
         for k, v in kwargs.items():
-            if re.search(r'^(server|rhsm)_', k):
+            if re.search(r'^(server|rhsm)_', k) and v is not None:
                 args.append('--%s=%s' % (k.replace('_', '.', 1), v))
 
         self.module.run_command(args, check_rc=True)
@@ -669,11 +640,11 @@ def main():
             password=dict(default=None,
                           required=False,
                           no_log=True),
-            server_hostname=dict(default=rhsm.config.get_option('server.hostname'),
+            server_hostname=dict(default=None,
                                  required=False),
-            server_insecure=dict(default=rhsm.config.get_option('server.insecure'),
+            server_insecure=dict(default=None,
                                  required=False),
-            rhsm_baseurl=dict(default=rhsm.config.get_option('rhsm.baseurl'),
+            rhsm_baseurl=dict(default=None,
                               required=False),
             auto_attach=dict(aliases=['autosubscribe'], default=False, type='bool'),
             activationkey=dict(default=None,
@@ -696,13 +667,13 @@ def main():
                              required=False),
             force_register=dict(default=False,
                                 type='bool'),
-            server_proxy_hostname=dict(default=rhsm.config.get_option('server.proxy_hostname'),
+            server_proxy_hostname=dict(default=None,
                                        required=False),
-            server_proxy_port=dict(default=rhsm.config.get_option('server.proxy_port'),
+            server_proxy_port=dict(default=None,
                                    required=False),
-            server_proxy_user=dict(default=rhsm.config.get_option('server.proxy_user'),
+            server_proxy_user=dict(default=None,
                                    required=False),
-            server_proxy_password=dict(default=rhsm.config.get_option('server.proxy_password'),
+            server_proxy_password=dict(default=None,
                                        required=False,
                                        no_log=True),
         ),
