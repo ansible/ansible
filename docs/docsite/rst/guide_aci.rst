@@ -158,7 +158,7 @@ You can automate this by using the following Ansible task:
 .. note:: Signature-based authentication only works with local users.
 
 
-Use Signature-based Authentication with Ansible
+Use signature-based authentication with Ansible
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 You need the following parameters with your ACI module(s) for it to work:
 
