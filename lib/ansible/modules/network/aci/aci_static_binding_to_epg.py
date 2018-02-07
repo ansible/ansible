@@ -38,17 +38,18 @@ options:
     description:
     - The name of the end point group.
     aliases: [ epg_name ]
-  encap:
+  encap_id:
     description:
-    - The VLAN encapsulation for the EPG.
-    - This acts as the secondary encap when using useg.
-    aliases: [ encapsulation ]
-    choices: [ range from 1 to 4096 ]
-  primary_encap:
+    - The encapsulation ID associating the C(epg) with the interface path.
+    - This acts as the secondary C(encap_id) when using micro-segmentation.
+    aliases: [ vlan, vlan_id ]
+    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
+  primary_encap_id:
     description:
-    - Determines the primary VLAN ID when using useg.
-    aliases: [ primary_encapsulation ]
-    choices: [ range from 1 to 4096 ]
+    - Determines the primary encapsulation ID associating the C(epg)
+      with the interface path when using micro-segmentation.
+    aliases: [ primary_vlan, primary_vlan_id ]
+    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   deploy_immediacy:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
@@ -98,7 +99,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Deploy Static EPG (Port Channel)
+- name: Deploy Static Path for EPG
   aci_static_binding_to_epg:
     host: apic
     username: admin
@@ -106,15 +107,13 @@ EXAMPLES = r'''
     tenant: accessport-code-cert
     ap: accessport_code_app
     epg: accessport_epg1
-    encap: 222
-    # primary_encap: 11
+    encap_id: 222
     deploy_immediacy: lazy
     interface_mode: access
     interface_type: switch_port
     pod: 1
     leafs: 101
     interface: '1/7'
-    # extpaths: 1011
     state: present
 '''
 
@@ -134,8 +133,8 @@ def main():
         tenant=dict(type='str', aliases=['tenant_name']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
         epg=dict(type='str', aliases=['epg_name']),
-        encap=dict(type='int', aliases=['encapsulation']),
-        primary_encap=dict(type='int', aliases=['primary_encapsulation']),
+        encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
+        primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['mode', 'interface_mode_name']),
         interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
@@ -155,7 +154,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap', 'interface_type', 'pod', 'leafs', 'interface']],
+            ['state', 'present', ['tenant', 'ap', 'epg', 'encap_id', 'interface_type', 'pod', 'leafs', 'interface']],
             ['interface_type', 'fex', ['extpaths']],
         ],
     )
@@ -163,8 +162,8 @@ def main():
     tenant = module.params['tenant']
     ap = module.params['ap']
     epg = module.params['epg']
-    encap = module.params['encap']
-    primary_encap = module.params['primary_encap']
+    encap_id = module.params['encap_id']
+    primary_encap_id = module.params['primary_encap_id']
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
@@ -190,15 +189,15 @@ def main():
     state = module.params['state']
     static_path = ''
 
-    if encap is not None:
-        if encap in range(1, 4097):
-            encap = 'vlan-{0}'.format(encap)
+    if encap_id is not None:
+        if encap_id in range(1, 4097):
+            encap_id = 'vlan-{0}'.format(encap_id)
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
-    if primary_encap is not None:
-        if primary_encap in range(1, 4097):
-            primary_encap = 'vlan-{0}'.format(primary_encap)
+    if primary_encap_id is not None:
+        if primary_encap_id in range(1, 4097):
+            primary_encap_id = 'vlan-{0}'.format(primary_encap_id)
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
@@ -250,8 +249,8 @@ def main():
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
-                encap=encap,
-                primaryEncap=primary_encap,
+                encap=encap_id,
+                primaryEncap=primary_encap_id,
                 instrImedcy=deploy_immediacy,
                 mode=interface_mode,
                 tDn=static_path,
