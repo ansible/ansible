@@ -488,8 +488,7 @@ class AzureRMContainerService(AzureRMModuleBase):
         # self.log("vm_diagnostics : {0}".format(parameters.diagnostics_profile.vm_diagnostics))
 
         try:
-            poller = self.client.container_services.create_or_update(self.resource_group, self.name,
-                                                                                      parameters)
+            poller = self.client.container_services.create_or_update(self.resource_group, self.name, parameters)
             response = self.get_poller_result(poller)
         except CloudError as exc:
             self.log('Error attempting to create the ACS instance.')
