@@ -502,9 +502,9 @@ options:
         description:
             - "If I(true), use smart card authentication."
         version_added: "2.5"
-    io_threads_enabled:
+    io_threads:
         description:
-            - "If I(true), use IO threads."
+            - "Number of IO threads used by virtual machine. I(0) means IO threading disabled."
         version_added: "2.5"
     ballooning_enabled:
         description:
@@ -1033,8 +1033,8 @@ class VmsModule(BaseModule):
                 smartcard_enabled=self.param('smartcard_enabled')
             ) if self.param('smartcard_enabled') is not None else None,
             io=otypes.Io(
-                threads=int(self.param('io_threads_enabled')),
-            ) if self.param('io_threads_enabled') is not None else None,
+                threads=self.param('io_threads'),
+            ) if self.param('io_threads') is not None else None,
             rng_device=otypes.RngDevice(
                 source=otypes.RngSource(self.param('rng_device')),
             ) if self.param('rng_device') else None,
@@ -1085,7 +1085,7 @@ class VmsModule(BaseModule):
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
             equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
             equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
-            equal(self.param('io_threads_enabled'), bool(entity.io.threads)) and
+            equal(self.param('io_threads'), entity.io.threads) and
             equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
@@ -1803,7 +1803,7 @@ def main():
         cpu_pinning=dict(type='list'),
         soundcard_enabled=dict(type='bool', default=None),
         smartcard_enabled=dict(type='bool', default=None),
-        io_threads_enabled=dict(type='bool', default=None),
+        io_threads=dict(type='int', default=None),
         ballooning_enabled=dict(type='bool', default=None),
         rng_device=dict(type='str'),
         custom_properties=dict(type='list'),
