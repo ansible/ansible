@@ -143,6 +143,9 @@ EXAMPLES = '''
     fmgr_ha_mode: "master"
     fmgr_ha_cluster_pw: "fortinet"
     fmgr_ha_cluster_id: "1"
+    fmgr_ha_hb_threshold: "10"
+    fmgr_ha_hb_interval: "15"
+    fmgr_ha_file_quota: "2048"
 '''
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
