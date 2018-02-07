@@ -112,7 +112,7 @@ if ($headers) {
             Content-Length { $client.ContentLength = $header.Value }
             Content-Type { $client.ContentType = $header.Value }
             Expect { $client.Expect = $header.Value }
-            Date { $client.Date = $hader.Value }
+            Date { $client.Date = $header.Value }
             Host { $client.Host = $header.Value }
             If-Modified-Since { $client.IfModifiedSince = $header.Value }
             Range { $client.AddRange($header.Value) }

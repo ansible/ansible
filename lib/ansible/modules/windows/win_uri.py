@@ -62,9 +62,10 @@ options:
       how to set this.
   use_basic_parsing:
     description:
-    - As of Ansible 2.5, this option is no longer valid and cannot be changed from C(yes).
-    - This will be removed in Ansible 2.7
-    - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage.
+    - As of Ansible 2.5, this option is no longer valid and cannot be changed from C(yes), this option will be removed
+      in Ansible 2.7.
+    - Before Ansible 2.5, this module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine
+      to parse a webpage.
     - There's an edge-case where if a user hasn't run IE before, this will fail.
     - The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script.
     - That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
