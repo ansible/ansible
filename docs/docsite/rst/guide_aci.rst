@@ -68,15 +68,16 @@ Standard module parameters
 Every Ansible ACI module accepts the following parameters that influence the module's communication with the APIC REST API:
 
 - ``host`` -- Hostname or IP address of the APIC
-- ``port`` -- Port to use for communication *(defaults to `443` for HTTPS, and `80` for HTTP)*
-- ``username`` -- User name used to log on to the APIC *(defaults to `admin`)*
+- ``port`` -- Port to use for communication (defaults to ``443`` for HTTPS, and ``80`` for HTTP)
+- ``username`` -- User name used to log on to the APIC (defaults to ``admin``)
 - ``password`` -- Password for ``username`` to log on to the APIC (using password-based authentication)
 - ``private_key`` -- Private key for ``username`` to log on to APIC (using signature-based authentication)
-- ``certificate_name`` -- Name of the certificate in the ACI Web GUI *(defaults to `private_key` file baseename)*
-- ``validate_certs`` -- Validate certificate when using HTTPS communication *(defaults to `yes`)*
-- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication *(defaults to `yes`)*
-- ``use_proxy`` -- Use system proxy settings *(defaults to `yes`)*
+- ``certificate_name`` -- Name of the certificate in the ACI Web GUI (defaults to ``private_key`` file base name)
 - ``timeout`` -- Timeout value for socket-level communication
+- ``use_proxy`` -- Use system proxy settings (defaults to ``yes``)
+- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication (defaults to ``yes``)
+- ``validate_certs`` -- Validate certificate when using HTTPS communication (defaults to ``yes``)
+- ``output_level`` -- Influence the level of detail ACI modules return to the user (one of ``normal``, ``info`` or ``debug``)
 
 Module return values
 ....................
@@ -85,6 +86,8 @@ By default the ACI modules (excluding :ref:`aci_rest <aci_rest>`) return the res
 By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
 
 For troubleshooting purposes setting ``output_level: debug`` or defining environment variable ``ANSIBLE_DEBUG=1`` enables more detailed information on the actual APIC REST communication, incl. ``filter_string``, ``method``, ``response``, ``status`` and ``url``.
+
+.. note:: The module return values are documented in detail as part of each module's documentation.
 
 
 .. _aci_auth:
@@ -133,7 +136,9 @@ Perform the following steps:
 - Expand **Security Management > Local Users**
 - Click the name of the user you want to add a certificate to, in the **User Certificates** area
 - Click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field
-  - If you use the basename of your private key here, you don't need to enter `certificate_name` in Ansible
+
+  * If you use the basename of your private key here, you don't need to enter ``certificate_name`` in Ansible
+
 - Copy and paste your X.509 certificate in the **Data** field.
 
 You can automate this by using the following Ansible task:
