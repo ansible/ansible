@@ -24,57 +24,75 @@ options:
   instance_ids:
     description:
       - If you specify one or more instance IDs, only instances that have the specified IDs are returned.
-    required: false
   state:
     description:
-    - Goal state for the instances
+      - Goal state for the instances
     choices: [present, terminated, running, started, stopped, restarted, rebooted, absent]
     default: present
   wait:
     description:
-    - Whether or not to wait for the desired state (use wait_timeout to customize this)
+      - Whether or not to wait for the desired state (use wait_timeout to customize this)
     default: true
   wait_timeout:
     description:
-    - How long to wait (in seconds) for the instance to finish booting/terminating
+      - How long to wait (in seconds) for the instance to finish booting/terminating
     default: 600
   instance_type:
     description:
       - Instance type to use for the instance, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
-      - Only required when instance is not already present
-    required: true
+        Only required when instance is not already present
     default: t2.micro
   user_data:
     description:
       - Opaque blob of data which is made available to the ec2 instance
-    required: false
+  tower_callback:
+    description:
+      - A tower configuration that may contain keys 'windows' and 'set_password'. Mutually exclusive with I(user_data).
   tags:
     description:
       - A hash/dictionary of tags to add to the new instance or to add/remove from an existing one.
   purge_tags:
     description:
-    - Delete any tags not specified in the task that are on the instance.
-    - This means you have to specify all the desired tags on each task affecting an instance.
+      - Delete any tags not specified in the task that are on the instance.
+        This means you have to specify all the desired tags on each task affecting an instance.
     default: false
+  image:
+    description:
+      - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
+        One of I(image) or I(image_id) are required when instance is not already present.
   image_id:
     description:
-       - I(ami) ID to use for the instance
-    required: true
+       - I(ami) ID to use for the instance. One of I(image) or I(image_id) are required when instance is not already present.
+  security_groups:
+    description:
+      - A list of security group IDs or names. Mutually exclusive with I(security_group).
+  security_group:
+    description:
+      - A security group ID or name. Mutually exclusive with I(security_groups).
+  name:
+    description:
+      - The Name tag for the instance.
   vpc_subnet_id:
     description:
       - The subnet ID in which to launch the instance (VPC)
-      - If none is provided, ec2_instance will chose the default zone of the default VPC
-  network.assign_public_ip:
+        If none is provided, ec2_instance will chose the default zone of the default VPC
+  network:
     description:
-      - When provisioning within vpc, assign a public IP address. If not specified, the subnet default will be used.
-      - This cannot be changed after an instance is created.
+      - Either a dictionary containing the key 'interfaces' corresponding to a list of network interface IDs or
+        containing specifications for a single network interface.
+      - If specifications for a single network are given, accepted keys are assign_public_ip (bool),
+        private_ip_address (str), ipv6_addresses (list), source_dest_check (bool), description (str),
+        delete_on_termination (bool), device_index (int), groups (list of security group IDs),
+        private_ip_addresses (list), subnet_id (str).
+  instance_initiated_shutdown_behavior:
+    description:
+      - Whether to stop or terminate an instance upon shutdown.
+    choices: ['stop', 'terminate']
   termination_protection:
-    version_added: "2.0"
     description:
       - Whether to enable termination protection.
-      - This module will not terminate an instance with termination protection active, it must be turned off first.
-    default: false
-  network.ebs_optimized:
+        This module will not terminate an instance with termination protection active, it must be turned off first.
+  ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
   filters:
@@ -83,14 +101,13 @@ options:
         consists of a filter key and a filter value. See
         U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html)
         for possible filters. Filter names and values are case sensitive.
-      - By default, instances are filtered for counting by their "Name" tag, base AMI, state (running, by default), and
-        subnet ID. Any queryable filter can be used. Good candidates are: specific tags, SSH keys, or security groups.
-    required: false
+        By default, instances are filtered for counting by their "Name" tag, base AMI, state (running, by default), and
+        subnet ID. Any queryable filter can be used. Good candidates are specific tags, SSH keys, or security groups.
     default: {"tag:Name": "<provided-Name-attribute>", "subnet-id": "<provided-or-default subnet>"}
   instance_role:
     description:
-    - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in the format
-      arn:aws:iam::... then the ListInstanceProfiles permission must also be granted.
+    - The ARN or name of an EC2-enabled instance role to be used. If a name is not provided in arn format
+      then the ListInstanceProfiles permission must also be granted.
       U(https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListInstanceProfiles.html) If no full ARN is provided,
       the role with a matching name will be used from the active AWS account.
 
