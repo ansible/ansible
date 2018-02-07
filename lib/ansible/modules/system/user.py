@@ -929,6 +929,22 @@ class FreeBsdUser(User):
         return (rc, out, err)
 
 
+class DragonFlyUser(FreeBsdUser):
+    """
+    This is a DragonFlyBSD User manipulation class - it inherits the
+    behavior of the FreeBsdUser class, including using the pw command
+    to manipulate the user database, followed by the chpass command
+    to change the password.
+
+    This overrides the following methods from the generic class:-
+      - create_user()
+      - remove_user()
+      - modify_user()
+    """
+
+    platform = 'DragonFly'
+
+
 class OpenBSDUser(User):
     """
     This is a OpenBSD User manipulation class.
