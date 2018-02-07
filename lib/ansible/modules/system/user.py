@@ -119,7 +119,8 @@ options:
         default: "no"
     login_class:
         description:
-            - Optionally sets the user's login class for FreeBSD, OpenBSD and NetBSD systems.
+            - Optionally sets the user's login class for FreeBSD, DragonFlyBSD, OpenBSD and
+              NetBSD systems.
     remove:
         description:
             - When used with C(state=absent), behavior is as with C(userdel --remove).
@@ -170,7 +171,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux and FreeBSD.
+              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     local:
         description:
@@ -927,6 +928,17 @@ class FreeBsdUser(User):
             return self.execute_command(cmd)
 
         return (rc, out, err)
+
+
+class DragonFlyBsdUser(FreeBsdUser):
+    """
+    This is a DragonFlyBSD User manipulation class - it inherits the
+    FreeBsdUser class behaviors, such as using the pw command to
+    manipulate the user database, followed by the chpass command
+    to change the password.
+    """
+
+    platform = 'DragonFly'
 
 
 class OpenBSDUser(User):
