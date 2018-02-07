@@ -64,7 +64,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        ret = None
+        ret = []
         if variables is not None:
             self._templar.set_available_variables(variables)
         myvars = getattr(self._templar, '_available_variables', {})
@@ -91,10 +91,11 @@ class LookupModule(LookupBase):
                 value = myvars['hostvars'][term]
             else:
                 raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
-            ret = self._templar.template(value, fail_on_undefined=True)
+            ret = [self._templar.template(value, fail_on_undefined=True)]
         except AnsibleUndefinedVariable:
-            if default is None:
-                ret = default
+            if default is not None:
+                ret = [default]
             else:
                 raise
+
         return ret
