@@ -45,7 +45,7 @@ options:
       required: False
       default: null
     extattrs:
-      descrpition: a dict object that is used to filter on extattrs
+      description: a dict object that is used to filter on extattrs
       required: false
       default: null
 """
