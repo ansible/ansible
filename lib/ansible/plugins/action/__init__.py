@@ -78,11 +78,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
 
-        if tmp is not None:
-            display.warning('Passing tmp to an ActionModule.run() from another ActionModule is no longer supported.  It has no effect')
-        del tmp
-
         result = {}
+
+        if tmp is not None:
+            result['warning'] = ['Passing tmp to an ActionModule.run() from another ActionModule is no longer supported.  It has no effect']
+        del tmp
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')

@@ -7,18 +7,10 @@ __metaclass__ = type
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        if tmp is not None:
-            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
         del tmp  # tmp no longer has any effect
 
         # Shell module is implemented via command

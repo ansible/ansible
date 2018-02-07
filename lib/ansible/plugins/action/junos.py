@@ -41,8 +41,6 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if tmp is not None:
-            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
         del tmp  # tmp no longer has any effect
 
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))

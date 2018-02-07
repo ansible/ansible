@@ -26,12 +26,6 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
 
 class ActionModule(ActionBase):
 
@@ -86,8 +80,6 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
-        if tmp is not None:
-            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
         del tmp  # tmp no longer has any effect
 
         if task_vars is None:

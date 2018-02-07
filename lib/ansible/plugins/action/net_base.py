@@ -44,8 +44,6 @@ _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
-        if tmp is not None:
-            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
         del tmp  # tmp no longer has any effect
 
         socket_path = None

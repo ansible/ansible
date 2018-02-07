@@ -40,9 +40,6 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-
-        if tmp is not None:
-            display.warning('tmp is no longer a supported parameter of ActionModule.run().  It has no effect')
         del tmp  # tmp no longer has any effect
 
         if self._play_context.connection != 'local':
