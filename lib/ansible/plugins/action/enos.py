@@ -44,6 +44,7 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
 
         socket_path = None
         if self._play_context.connection == 'local':
@@ -85,5 +86,5 @@ class ActionModule(_ActionModule):
         else:
             conn.send_command('enable')
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result
