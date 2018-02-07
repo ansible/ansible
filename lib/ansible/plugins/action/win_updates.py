@@ -133,6 +133,7 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         category_names = self._task.args.get('category_names', [
             'CriticalUpdates',
