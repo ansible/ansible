@@ -144,6 +144,12 @@ EXAMPLES = '''
     fmgr_ha_hb_interval: "15"
     fmgr_ha_file_quota: "2048"
 '''
+RETURN = """
+api_result:
+  description: full API response, includes status code and message
+  returned: always
+  type: string
+"""
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
