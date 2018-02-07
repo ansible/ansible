@@ -615,14 +615,14 @@ def manage_tags(match, new_tags, purge_tags, ec2):
     tags_to_set, tags_to_delete = compare_aws_tags(
         old_tags, new_tags,
         purge_tags=purge_tags,
-        )
+    )
     if tags_to_set:
         ec2.create_tags(
             Resources=[match['InstanceId']],
             Tags=ansible_dict_to_boto3_tag_list(tags_to_set))
         changed |= True
     if tags_to_delete:
-        delete_with_current_values = {k: old_tags.get(k) for k in tags_to_delete}
+        delete_with_current_values = dict((k, old_tags.get(k)) for k in tags_to_delete)
         ec2.delete_tags(
             Resources=[match['InstanceId']],
             Tags=ansible_dict_to_boto3_tag_list(delete_with_current_values))
@@ -685,7 +685,17 @@ def build_network_spec(params, ec2=None):
 
         if network.get('private_ip_address'):
             spec['PrivateIpAddress'] = network['private_ip_address']
+
+        if params.get('security_group') or params.get('security_groups'):
+            groups = discover_security_groups(
+                group=params.get('security_group'),
+                groups=params.get('security_groups'),
+                subnet_id=spec['SubnetId'],
+                ec2=ec2
+            )
+            spec['Groups'] = [g['GroupId'] for g in groups]
         # TODO more special snowflake network things
+
         return [spec]
 
     # handle list of `network.interfaces` options
@@ -760,7 +770,7 @@ def discover_security_groups(group, groups, parent_vpc_id=None, subnet_id=None, 
             module.fail_json_aws(e, msg="Error while searching for subnet {0} parent VPC.".format(subnet_id))
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json_aws(e, msg="Error while searching for subnet {0} parent VPC.".format(subnet_id))
-        parent_vpc_id = sub['VpcId']
+        parent_vpc_id = sub['Subnets'][0]['VpcId']
 
     vpc = {
         'Name': 'vpc-id',
@@ -1144,8 +1154,7 @@ def determine_iam_role(name_or_arn, iam):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'NoSuchEntity':
             module.fail_json_aws(e, msg="Could not find instance_role {0}".format(name_or_arn))
-        module.fail_json_aws(e, msg="An error occurred while searching for instance_role "
-                                 "{0}. Please try supplying the full ARN.".format(name_or_arn))
+        module.fail_json_aws(e, msg="An error occurred while searching for instance_role {0}. Please try supplying the full ARN.".format(name_or_arn))
 
 
 def main():
