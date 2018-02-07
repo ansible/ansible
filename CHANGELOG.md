@@ -126,6 +126,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * azure_rm_containerinstance
   * azure_rm_containerregistry
   * azure_rm_image
+  * azure_rm_keyvault
+  * azure_rm_keyvaultkey
+  * azure_rm_keyvaultsecret
   * azure_rm_mysqldatabase
   * azure_rm_mysqlserver
   * azure_rm_postgresqldatabase
@@ -145,19 +148,18 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * digital_ocean_certificate
   * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
-- google:
+- google
   * gcp_dns_managed_zone
 - misc
   * terraform
 - oneandone
+  * oneandone_monitoring_policy
   * oneandone_server
 - openstack
   * os_keystone_endpoint
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
-- panos
-  * panos_op
 - spotinst
   * spotinst_aws_elastigroup
 - vmware
@@ -174,6 +176,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vmware_host_dns_facts
   * vmware_host_facts
   * vmware_host_firewall_facts
+  * vmware_host_firewall_manager
   * vmware_host_lockdown
   * vmware_host_ntp
   * vmware_host_package_facts
@@ -262,6 +265,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aci_static_binding_to_epg
   * aci_switch_leaf_selector
   * aci_switch_policy_leaf_profile
+  * aci_switch_policy_vpc_protection_group
   * aci_vlan_pool
   * aci_vlan_pool_encap_block
 - avi
@@ -365,6 +369,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 - panos
   * panos_dag_tags
   * panos_match_rule
+  * panos_op
   * panos_query_rules
 - radware
   * vdirect_commit
