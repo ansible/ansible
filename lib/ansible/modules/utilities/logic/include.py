@@ -19,10 +19,6 @@ DOCUMENTATION = '''
 author: Ansible Core Team (@ansible)
 module: include
 short_description: Include a play or task list
-deprecated:
-  removed_in: "2.8"
-  why: The include action was too confusing, dealing with both plays and tasks, being both dynamic and static. This module will be removed in version 2.8.
-  alternative: Use M(include_tasks), M(import_playbook), M(import_tasks).
 description:
   - Includes a file with a list of plays or tasks to be executed in the current playbook.
   - Files with a list of plays can only be included at the top level. Lists of tasks can only be included where tasks
@@ -41,7 +37,10 @@ options:
       - This module allows you to specify the name of the file directly without any other options.
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
-  - This module is also supported for Windows targets.
+  - Include has some unintuitive behaviours depending on if it is running in a static or dynamic in play or in playbook context,
+    in an effort to clarify behaviours we are moving to a new set modules (M(include_tasks), M(include_role), M(import_playbook), M(import_tasks))
+    that have well established and clear behaviours.
+    This module will still be supported for some time but we are looking at deprecating it in the near future.
 '''
 
 EXAMPLES = """
