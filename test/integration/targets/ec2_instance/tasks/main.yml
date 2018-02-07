@@ -92,6 +92,7 @@
     - include_tasks: tasks/termination_protection.yml
     - include_tasks: tasks/tags_and_vpc_settings.yml
     - include_tasks: tasks/external_resource_attach.yml
+    - include_tasks: tasks/block_devices.yml
     - include_tasks: tasks/default_vpc_tests.yml
 
 
