@@ -26,11 +26,10 @@ description:
 options:
   commands:
     description:
-      - The commands to send to the remote NXOS device over the
-        configured provider.  The resulting output from the command
-        is returned.  If the I(wait_for) argument is provided, the
-        module is not returned until the condition is satisfied or
-        the number of retires as expired.
+      - The commands to send to the remote NXOS device.  The resulting
+        output from the command is returned.  If the I(wait_for)
+        argument is provided, the module is not returned until the
+        condition is satisfied or the number of retires as expired.
       - The I(commands) argument also accepts an alternative form
         that allows for complex values that specify the command
         to run and the output format to return.   This can be done
@@ -79,34 +78,21 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
-
 ---
 - name: run show version on remote devices
   nxos_command:
     commands: show version
-    provider: "{{ cli }}"
 
 - name: run show version and check to see if output contains Cisco
   nxos_command:
     commands: show version
     wait_for: result[0] contains Cisco
-    provider: "{{ cli }}"
 
 - name: run multiple commands on remote nodes
   nxos_command:
     commands:
       - show version
       - show interfaces
-    provider: "{{ cli }}"
 
 - name: run multiple commands and evaluate the output
   nxos_command:
@@ -116,14 +102,12 @@ vars:
     wait_for:
       - result[0] contains Cisco
       - result[1] contains loopback0
-    provider: "{{ cli }}"
 
 - name: run commands and specify the output format
   nxos_command:
     commands:
       - command: show version
         output: json
-    provider: "{{ cli }}"
 """
 
 RETURN = """
