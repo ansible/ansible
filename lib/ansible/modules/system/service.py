@@ -1073,6 +1073,17 @@ class FreeBsdService(Service):
         return ret
 
 
+class DragonFlyBsdService(FreeBsdService):
+    """
+    This is the DragonFly BSD Service manipulation class - it uses the /etc/rc.conf
+    file for controlling services started at boot and the 'service' binary to
+    check status and perform direct service manipulation.
+    """
+
+    platform = 'DragonFly'
+    distribution = None
+
+
 class OpenBsdService(Service):
     """
     This is the OpenBSD Service manipulation class - it uses rcctl(8) or
