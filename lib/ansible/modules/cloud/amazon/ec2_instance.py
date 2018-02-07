@@ -99,7 +99,8 @@ options:
   volumes:
     description:
     - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
-    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id, ebs.iops, and ebs.delete_on_termination.
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id,
+      ebs.iops, and ebs.delete_on_termination.
     - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
     description:
@@ -689,7 +690,7 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
-    return [ec2_utils.snake_dict_to_camel_dict(v,  capitalize_first=True) for v in volumes]
+    return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
 def build_network_spec(params, ec2=None):
@@ -1024,7 +1025,8 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
     param_mappings = [
         ParamMapper('ebs_optimized', 'EbsOptimized', 'ebsOptimized', value_wrapper),
         ParamMapper('termination_protection', 'DisableApiTermination', 'disableApiTermination', value_wrapper),
-        ParamMapper('user_data', 'UserData', 'userData', value_wrapper),
+        # user data is an immutable property
+        # ParamMapper('user_data', 'UserData', 'userData', value_wrapper),
     ]
 
     for mapping in param_mappings:
@@ -1317,52 +1319,6 @@ def ensure_present(existing_matches, changed, ec2, state):
 
 def main():
     global module
-    '''
-    - ec2_instance:
-        name: foobar # shortcut for `tags: {Name: foobar}`
-        tags:
-          foo: bar
-          bas: quuux
-        image: ami-1234 # or can be an object as below
-        image:
-          id: ami-1234
-          ramdisk: ....
-          kernel: ....
-        instance_type: t2.micro
-        ebs_optimized: yes
-        network:
-          assign_public_ip: yes
-          private_ip_address: 10.0.0.9
-          ipv6_addresses:
-          - dead:beef:cafe:8080
-          source_dest_check: yes
-          interfaces:
-            - public_ip_address: yes
-              source_dest_check: yes
-              ......
-            # mutex w/ network
-        user_data: .....
-        placement_group: .....
-        tower_job_template:
-          # mutex w/ UserData
-          template_id: ....
-        vpc_subnet_id: subnet-123456
-        security_group: id_or_name (alias for a single-item list of security_groups)
-        security_groups:
-        - id_or_name
-        tenancy: dedicated|shared
-        detailed_monitoring: yes
-        termination_protection: yes
-        instance_initiated_shutdown_behavior: stop|terminate
-        instance_role: [arn or name]
-        elastic_gpu: ....
-        spot_market:
-          interrupt_behavior:
-          price:
-          type:  onetime|persistent
-          launch_group:
-          wait_timeout: 300
-    '''
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'started', 'running', 'stopped', 'restarted', 'rebooted', 'terminated', 'absent']),
