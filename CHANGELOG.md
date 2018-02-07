@@ -130,6 +130,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * ec2_placement_group
   * ec2_placement_group_facts
   * ec2_vpc_egress_igw
+  * ec2_vpc_vpn
   * ecs_taskdefinition_facts
   * elasticache_facts
   * elb_target
