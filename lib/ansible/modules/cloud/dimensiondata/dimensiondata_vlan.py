@@ -220,6 +220,14 @@ class DimensionDataVlanModule(DimensionDataModule):
 
         vlan = self._get_vlan(network_domain)
         if not vlan:
+            if self.module.check_mode:
+                self.module.exit_json(
+                    msg='VLAN "{}" is absent from network domain "{}" (should be present).'.format(
+                        self.name, self.network_domain_selector
+                    ),
+                    changed=False
+                )
+
             vlan = self._create_vlan(network_domain)
             self.module.exit_json(
                 msg='Created VLAN "{}" in network domain "{}".'.format(
@@ -260,7 +268,14 @@ class DimensionDataVlanModule(DimensionDataModule):
                         )
                 )
 
-                return
+            if self.module.check_mode:
+                self.module.exit_json(
+                    msg='VLAN "{}" is present in network domain "{}" (changes detected).'.format(
+                        self.name, self.network_domain_selector
+                    ),
+                    vlan=vlan_to_dict(vlan),
+                    changed=False
+                )
 
             if diff.needs_edit():
                 vlan.name = self.name
@@ -310,13 +325,22 @@ class DimensionDataVlanModule(DimensionDataModule):
         vlan = self._get_vlan(network_domain)
         if not vlan:
             self.module.exit_json(
-                msg='VLAN "{}" does not exist in network domain "{}".'.format(
+                msg='VLAN "{}" is absent from network domain "{}".'.format(
                     self.name, self.network_domain_selector
                 ),
                 changed=False
             )
 
             return
+
+        if self.module.check_mode:
+            self.module.exit_json(
+                msg='VLAN "{}" is present in network domain "{}" (should be absent).'.format(
+                    self.name, self.network_domain_selector
+                ),
+                vlan=vlan_to_dict(vlan),
+                changed=False
+            )
 
         self._delete_vlan(vlan)
 
