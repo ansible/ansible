@@ -406,6 +406,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.differences = None
         self.load_balancer = None
 
+        self.compute_models = None
+
         self.results = dict(
             changed=False,
             actions=[],
@@ -434,6 +436,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         subnet = None
         image_reference = None
         custom_image = False
+
+        self.compute_models = self.compute_client.virtual_machine_scale_sets.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:

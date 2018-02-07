@@ -398,6 +398,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.open_ports = None
         self.ip_configurations = None
 
+        self.network_models = None
+
         self.results = dict(
             changed=False,
             state=dict(),
@@ -411,6 +413,8 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.network_models = self.network_client.network_interfaces.models
 
         results = None
         changed = False

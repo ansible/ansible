@@ -175,6 +175,8 @@ class AzureRMSubnet(AzureRMModuleBase):
         self.address_prefix_cidr = None
         self.security_group_name = None
 
+        self.network_models = None
+
         super(AzureRMSubnet, self).__init__(self.module_arg_spec,
                                             supports_check_mode=True,
                                             required_if=required_if)
@@ -183,6 +185,8 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         nsg = None
         subnet = None
+
+        self.network_models = self.network_client.subnets.models
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])

@@ -137,12 +137,16 @@ class AzureRMImage(AzureRMModuleBase):
         self.os_type = None
         self.tags = None
 
+        self.compute_models = None
+
         super(AzureRMImage, self).__init__(self.module_arg_spec, supports_check_mode=True, required_if=required_if)
 
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
+        
+        self.compute_models = self.compute_client.virtual_machine_images.models
 
         results = None
         changed = False

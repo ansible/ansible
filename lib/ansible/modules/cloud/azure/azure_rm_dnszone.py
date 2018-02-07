@@ -101,7 +101,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -128,6 +127,7 @@ class AzureRMDNSZone(AzureRMModuleBase):
         self.name = None
         self.state = None
         self.tags = None
+        self.models = None
 
         super(AzureRMDNSZone, self).__init__(self.module_arg_spec,
                                              supports_check_mode=True,
@@ -139,6 +139,8 @@ class AzureRMDNSZone(AzureRMModuleBase):
         zone = None
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.models = self.dns_client.zones.models
 
         self.results['check_mode'] = self.check_mode
 

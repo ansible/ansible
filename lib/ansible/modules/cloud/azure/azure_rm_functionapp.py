@@ -112,7 +112,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.web.models import Site, SiteConfig, NameValuePair, SiteSourceControl
     from azure.mgmt.resource.resources import ResourceManagementClient
 except ImportError:
     # This is handled in azure_rm_common
@@ -147,6 +146,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
         self.location = None
         self.storage_account = None
         self.app_settings = None
+        self.models = None
 
         required_if = [('state', 'present', ['storage_account'])]
 
@@ -162,6 +162,8 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
         if self.app_settings is None:
             self.app_settings = dict()
+
+        self.models = self.web_client.web_apps.models
 
         try:
             resource_group = self.rm_client.resource_groups.get(self.resource_group)
@@ -196,10 +198,10 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                 self.results['changed'] = False
         else:
             if not exists:
-                function_app = Site(
+                function_app = self.models.Site(
                     location=self.location,
                     kind='functionapp',
-                    site_config=SiteConfig(
+                    site_config=self.models.SiteConfig(
                         app_settings=self.aggregated_app_settings(),
                         scm_type='LocalGit'
                     )
@@ -233,7 +235,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         changed, target_app_settings = self.update_app_settings(source_app_settings.properties)
 
-        source_function_app.site_config = SiteConfig(
+        source_function_app.site_config = self.models.SiteConfig(
             app_settings=target_app_settings,
             scm_type='LocalGit'
         )
@@ -252,10 +254,10 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         function_app_settings = []
         for key in ['AzureWebJobsStorage', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'AzureWebJobsDashboard']:
-            function_app_settings.append(NameValuePair(name=key, value=self.storage_connection_string))
-        function_app_settings.append(NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
-        function_app_settings.append(NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.storage_account))
+            function_app_settings.append(self.models.NameValuePair(name=key, value=self.storage_connection_string))
+        function_app_settings.append(self.models.NameValuePair(name='FUNCTIONS_EXTENSION_VERSION', value='~1'))
+        function_app_settings.append(self.models.NameValuePair(name='WEBSITE_NODE_DEFAULT_VERSION', value='6.5.0'))
+        function_app_settings.append(self.models.NameValuePair(name='WEBSITE_CONTENTSHARE', value=self.storage_account))
         return function_app_settings
 
     def aggregated_app_settings(self):
@@ -263,7 +265,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
 
         function_app_settings = self.necessary_functionapp_settings()
         for app_setting_key in self.app_settings:
-            function_app_settings.append(NameValuePair(
+            function_app_settings.append(self.models.NameValuePair(
                 name=app_setting_key,
                 value=self.app_settings[app_setting_key]
             ))

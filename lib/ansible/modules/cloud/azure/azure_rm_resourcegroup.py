@@ -128,6 +128,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
         self.tags = None
         self.force = None
 
+        self.rm_models = None
+
         self.results = dict(
             changed=False,
             contains_resources=False,
@@ -147,6 +149,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
         changed = False
         rg = None
         contains_resources = False
+
+        self.rm_models = self.rm_client.resources.models
 
         try:
             self.log('Fetching resource group {0}'.format(self.name))
