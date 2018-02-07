@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_ha
-version_added: "1.0"
+version_added: "2.5"
 author: Luke Weighall, Andrew Welsh
 short_description: Manages the High-Availability State of FortiManager Clusters and Nodes
 description: Change HA state or settings of Fortimanager nodes (Standalone/Master/Slave)
@@ -51,20 +51,17 @@ options:
       - Sets the role of the fortimanager host for HA
     required: false
     default: False
-    type: str
     choices: ["standalone","master","slave"]
   fmgr_ha_peer_ipv4:
     description:
       - Sets the IPv4 address of a HA peer.
     required: false
     default: False
-    type: str
   fmgr_ha_peer_ipv6:
     description:
       - Sets the IPv6 address of a HA peer.
     required: false
     default: False
-    type: str
   fmgr_ha_peer_sn:
     description:
       - Sets the HA Peer Serial Number
@@ -239,8 +236,6 @@ def set_ha_peer(fmg, fmgr_ha_peer_status, fmgr_ha_peer_sn, fmgr_ha_peer_ipv4, fm
 
 def main():
     argument_spec = dict(
-        adom=dict(required=False, type="str"),
-        vdom=dict(required=False, type="str"),
         host=dict(required=True, type="str"),
         password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"]), no_log=True),
