@@ -31,7 +31,7 @@ try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
-    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
+    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
 
@@ -48,7 +48,7 @@ BYTES_MAP = {
 def check_sdk(module):
     if not HAS_SDK:
         module.fail_json(
-            msg='ovirtsdk4 version 4.0.0 or higher is required for this module'
+            msg='ovirtsdk4 version 4.2.4 or higher is required for this module'
         )
 
 
