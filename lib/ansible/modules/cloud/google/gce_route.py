@@ -57,6 +57,7 @@ options:
             - Packets destined to this destination will be routed according to the route.
             - It should be either an IP address or a subnet range in CIDR notation.
         required: true
+        aliases: ['destRange']
     priority:
         description:
             - The priority of the rule.
@@ -67,7 +68,7 @@ options:
             - The route will apply only to traffic stemming from instances that have these tags.
             - If empty, the route will apply to all traffic.
             - Example [tag1, tag2]
-        aliases: ['value']
+        aliases: ['tags']
     next_hop:
         description:
             - Where traffic should be directed next.
