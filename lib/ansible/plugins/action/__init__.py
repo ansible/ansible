@@ -679,10 +679,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if task_vars is None:
             task_vars = dict()
 
-        remote_module_path = None
-        args_file_path = None
-        remote_files = []
-
         # if a module name was not specified for this execution, use the action from the task
         if module_name is None:
             module_name = self._task.action
@@ -697,16 +693,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        if not self._is_pipelining_enabled(module_style, wrap_async):
+        tempdir = self._connection._shell.tempdir
+        remote_module_path = None
 
+        if not self._is_pipelining_enabled(module_style, wrap_async):
             # we might need remote temp dir
-            if self._connection._shell.tempdir is None:
+            if tempdir is None:
                 self._make_tmp_path()
-            tempdir = self._connection._shell.tempdir
+                tempdir = self._connection._shell.tempdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tempdir, remote_module_filename)
 
+        args_file_path = None
         if module_style in ('old', 'non_native_want_json', 'binary'):
             # we'll also need a temp file to hold our module arguments
             args_file_path = self._connection._shell.join_path(tempdir, 'args')
@@ -730,6 +729,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
+        remote_files = []
         if tempdir and remote_module_path:
             remote_files = [tempdir, remote_module_path]
 
