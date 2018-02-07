@@ -201,18 +201,13 @@ class LdapAttr(object):
         self.name = self.module.params['name']
         self.server_uri = self.module.params['server_uri']
         self.start_tls = self.module.params['start_tls']
-        self.state = self.module.params['state']
         self.verify_cert = self.module.params['validate_certs']
 
         # Normalize values
-        if isinstance(self.module.params['values'], list):
-            self.values = map(str, self.module.params['values'])
-        elif self.module.params['values'] is None:
-            if self.state != 'absent':
-                self.module.fail_json(
-                    "Must provide a value if state is not 'absent'"
-                )
+        if self.module.params['values'] is None:
             self.values = None
+        elif isinstance(self.module.params['values'], list):
+            self.values = map(str, self.module.params['values'])
         else:
             self.values = [str(self.module.params['values'])]
 
@@ -220,6 +215,8 @@ class LdapAttr(object):
         self.connection = self._connect_to_ldap()
 
     def add(self):
+        if self.values is None:
+            self.module.fail_json("Must provide a value when adding values")
         values_to_add = filter(self._is_value_absent, self.values)
 
         if len(values_to_add) > 0:
@@ -246,6 +243,8 @@ class LdapAttr(object):
         return modlist
 
     def exact(self):
+        if self.values is None:
+            self.module.fail_json("Must provide a value when setting values")
         try:
             results = self.connection.search_s(
                 self.dn, ldap.SCOPE_BASE, attrlist=[self.name])
