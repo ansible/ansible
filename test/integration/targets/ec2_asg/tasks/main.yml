@@ -1,6 +1,5 @@
 ---
 # tasks file for test_ec2_asg
-# tasks file for test_ec2_asg
 
 - name: Test incomplete credentials with ec2_asg
 
