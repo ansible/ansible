@@ -77,4 +77,13 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
+  - name: "Remove interface aggregate after testing"
+    nxos_l2_interface:
+      aggregate:
+        - { name: "{{ intname1 }}", mode: access, access_vlan: 6 }
+        - { name: "{{ intname2 }}", mode: access, access_vlan: 15 }
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
 - debug: msg="END connection={{ ansible_connection }} nxos_l2_interface aggregate test"
