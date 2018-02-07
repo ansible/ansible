@@ -76,8 +76,8 @@ options:
   leafs:
     description:
     - The switch ID(s) that the C(interface) belongs to.
-    - When C(interface_type) is C(switch_port) or C(fex), C(leafs) is a string of the leaf ID.
-    - When C(interface_type) is C(vpc) or C(port_channel), C(leafs) is a list with both leaf IDs.
+    - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
+    - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
     aliases: [ paths, leaves, nodes, switches ]
   interface:
     description:
