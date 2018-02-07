@@ -268,9 +268,6 @@ class HostsModule(BaseModule):
             ssh=otypes.Ssh(
                 authentication_method=otypes.SshAuthenticationMethod.PUBLICKEY,
             ) if self.param('public_key') else None,
-            kdump_status=otypes.KdumpStatus(
-                self.param('kdump_integration')
-            ) if self.param('kdump_integration') else None,
             spm=otypes.Spm(
                 priority=self.param('spm_priority'),
             ) if self.param('spm_priority') else None,
@@ -283,14 +280,15 @@ class HostsModule(BaseModule):
             ) if self.param('kernel_params') else None,
             power_management=otypes.PowerManagement(
                 enabled=self.param('power_management_enabled'),
-            ) if self.param('power_management_enabled') is not None else None,
+                kdump_detection=self.param('kdump_integration') == 'enabled',
+            ) if self.param('power_management_enabled') is not None or self.param('kdump_integration') else None,
         )
 
     def update_check(self, entity):
         kernel_params = self.param('kernel_params')
         return (
             equal(self.param('comment'), entity.comment) and
-            equal(self.param('kdump_integration'), entity.kdump_status) and
+            equal(self.param('kdump_integration'), 'enabled' if entity.power_management.kdump_detection else 'disabled') and
             equal(self.param('spm_priority'), entity.spm.priority) and
             equal(self.param('power_management_enabled'), entity.power_management.enabled) and
             equal(self.param('override_display'), getattr(entity.display, 'address', None)) and
