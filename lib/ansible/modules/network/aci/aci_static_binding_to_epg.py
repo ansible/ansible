@@ -62,12 +62,12 @@ options:
     choices: [ access, trunk, 802.1p ]
     default: trunk
     aliases: [ mode, interface_mode_name ]
-  connection_type:
+  interface_type:
     description:
-    - The Path Type for the static EPG deployement.
-    - The APIC defaults the Path Type to C(access_interface) which is the same as C(Port).
-    choices: [ access_interface, virtual_port_channel, direct_port_channel, fex ]
-    default: access_interface
+    - The type of interface for the static EPG deployement.
+    - The APIC defaults the C(interface_type) to C(switch_port).
+    choices: [ switch_port, vpc, port_channel, fex ]
+    default: switch_port
   pod:
     description:
     - The pod number part of the tDn.
@@ -75,19 +75,19 @@ options:
     aliases: [ pod_number ]
   leafs:
     description:
-    - The switch or switches ID(s) that the C(interface) belongs to.
-    - When C(connection_type) is C(access_interface) or C(fex), C(leafs) is a string of the leaf ID
-    - When C(connection_type) is C(virtual_port_channel) or C(direct_port_channel), C(leafs) is a list with both leaf IDs
+    - The switch ID(s) that the C(interface) belongs to.
+    - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
+    - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
     aliases: [ paths, leaves, nodes, switches ]
   interface:
     description:
     - The C(interface) string value part of the tDn.
-    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(connection_type).
+    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(interface_type).
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
-    - C(extpaths) is only used if C(connection_type) is C(fex).
-    - Usually something like '1011'(int).
+    - C(extpaths) is only used if C(interface_type) is C(fex).
+    - Usually something like '1011'.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -110,7 +110,7 @@ EXAMPLES = r'''
     # primary_encap: 11
     deploy_immediacy: lazy
     interface_mode: access
-    connection_type: access_interface
+    interface_type: switch_port
     pod: 1
     leafs: 101
     interface: '1/7'
@@ -126,7 +126,6 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 # TODO: change 'deploy_immediacy' to 'resolution_immediacy' (as seen in aci_epg_to_domain)?
-# TODO: change C(access_interface) to C(Port) or C(port_channel) as seen on GUI in the 'connection_type' parameter
 
 
 def main():
@@ -139,14 +138,14 @@ def main():
         primary_encap=dict(type='int', aliases=['primary_encapsulation']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['mode', 'interface_mode_name']),
-        connection_type=dict(type='str', choices=['access_interface', 'virtual_port_channel', 'direct_port_channel', 'fex'], required=True),
+        interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
         # NOTE: C(pod) is usually an integer below 10.
         pod=dict(type='int', aliases=['pod_number']),
         # NOTE: C(leafs) is usually something like '101' or '101-102' depending on C(connection_type).
         leafs=dict(type='list', aliases=['paths', 'leaves', 'nodes', 'switches']),
-        # NOTE: C(interface) is usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(connection_type).
+        # NOTE: C(interface) is usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(interface_type).
         interface=dict(type='str'),
-        # NOTE: C(extpaths) is only used if C(connection_type) is C(fex), it is usually something like '1011'(int)
+        # NOTE: C(extpaths) is only used if C(interface_type) is C(fex), it is usually something like '1011'(int)
         extpaths=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -155,9 +154,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            # NOTE: extpaths is a requirement if 'connection_type' is 'fex'
-            ['state', 'absent', ['tenant', 'ap', 'epg', 'pod', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap', 'connection_type', 'pod', 'leafs', 'interface']],
+            ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod', 'leafs', 'interface']],
+            ['state', 'present', ['tenant', 'ap', 'epg', 'encap', 'interface_type', 'pod', 'leafs', 'interface']],
+            ['interface_type', 'fex', ['extpaths']],
         ],
     )
 
@@ -168,21 +167,21 @@ def main():
     primary_encap = module.params['primary_encap']
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
-    connection_type = module.params['connection_type']
+    interface_type = module.params['interface_type']
     pod = module.params['pod']
     # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
     leafs = [str(leaf) for leaf in module.params['leafs']]
     if leafs is not None:
         if len(leafs) == 1:
-            if connection_type != 'virtual_port_channel':
+            if interface_type != 'vpc':
                 leafs = leafs[0]
             else:
-                module.fail_json(msg='A connection_type of "virtual_port_channel" requires 2 leafs')
+                module.fail_json(msg='A interface_type of "vpc" requires 2 leafs')
         elif len(leafs) == 2:
-            if connection_type == 'virtual_port_channel':
+            if interface_type == 'vpc':
                 leafs = "-".join(leafs)
             else:
-                module.fail_json(msg='The connection_types "access_interface", "direct_port_channel", and "fex" \
+                module.fail_json(msg='The interface_types "switch_port", "port_channel", and "fex" \
                     do not support using multiple leafs for a single binding')
         else:
             module.fail_json(msg='The "leafs" parameter must not have more than 2 entries')
@@ -203,21 +202,18 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
-    if connection_type == 'fex' and extpaths is None:
-        module.fail_json(msg='extpaths must be defined')
-
-    CONNECTION_TYPE_MAPPING = dict(
-        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or of following format: "1/7", C(leafs) can only be something like '101'
-        access_interface='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp" or of following format: "1/7", C(leafs) can only be something like '101'
-        direct_port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: "test-IntPolGrp", C(leafs) can be something like 101-102'
-        virtual_port_channel='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be of the following format: "1/7", C(leafs) can only be like '101', C(extpaths) can only be like '1011'
+    INTERFACE_TYPE_MAPPING = dict(
+        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
+        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
+        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
+        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
+        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp', C(leafs) can be something like '101-102'
+        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leafs, interface),
+        # NOTE: C(interface) can be of the following format: '1/7', C(leafs) can only be like '101', C(extpaths) can only be like '1011'
         fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, leafs, extpaths, interface),
     )
 
-    static_path = CONNECTION_TYPE_MAPPING[connection_type]
+    static_path = INTERFACE_TYPE_MAPPING[interface_type]
 
     aci = ACIModule(module)
     aci.construct_url(
