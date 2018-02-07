@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 module: os_project_access
 short_description: Manage OpenStack compute flavors acceess
 extends_documentation_fragment: openstack
-version_added: "2.4"
+version_added: "2.5"
 author: "Roberto Polli (@ioggstream)"
 description:
     - Add or remove flavor, volume_type or other resources access
