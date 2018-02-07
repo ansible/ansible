@@ -196,6 +196,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
         self.force = None
         self.kind = None
         self.access_tier = None
+        self.storage_models = None
 
         super(AzureRMStorageAccount, self).__init__(self.module_arg_spec,
                                                     supports_check_mode=True)
@@ -204,6 +205,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.storage_models = self.storage_client.storage_accounts.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:

@@ -188,10 +188,10 @@ class AzureRMDNSZone(AzureRMModuleBase):
                 if not zone:
                     # create new zone
                     self.log('Creating zone {0}'.format(self.name))
-                    zone = Zone(location='global', tags=self.tags)
+                    zone = self.models.Zone(location='global', tags=self.tags)
                 else:
                     # update zone
-                    zone = Zone(
+                    zone = self.models.Zone(
                         location='global',
                         tags=results['tags']
                     )

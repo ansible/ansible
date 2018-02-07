@@ -34,7 +34,7 @@ AZURE_COMMON_ARGS = dict(
     password=dict(type='str', no_log=True),
     cloud_environment=dict(type='str'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
-    api_profile=dict(type='str', default='latest')
+    api_profile=dict(type='str', default='latest', choices=['latest', '2017-03-09-profile'])
     # debug=dict(type='bool', default=False),
 )
 
@@ -56,7 +56,7 @@ AZURE_API_PROFILES = {
     'latest': {
         'ContainerInstanceManagementClient': '2018-02-01-preview',
         'ComputeManagementClient': dict(
-            default_api_version='2017-12-01',
+            default_api_version='2017-03-30',
             resource_skus='2017-09-01',
             disks='2017-03-30',
             snapshots='2017-03-30',

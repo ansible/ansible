@@ -145,7 +145,7 @@ class AzureRMImage(AzureRMModuleBase):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        
+
         self.compute_models = self.compute_client.virtual_machine_images.models
 
         results = None
