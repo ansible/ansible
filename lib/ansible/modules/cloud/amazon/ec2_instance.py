@@ -96,6 +96,11 @@ options:
         private_ip_addresses (list), subnet_id (str).
       - I(network.interfaces) should be a list of ENI IDs (strings) or a list of objects containing the key I(id).
       - Use the ec2_eni to create ENIs with special settings.
+  volumes:
+    description:
+    - A list of block device mappings, by default this will always use the AMI root device so the volumes option is primarily for adding more storage.
+    - A mapping contains the (optional) keys device_name, virtual_name, ebs.device_type, ebs.device_size, ebs.kms_key_id, ebs.iops, and ebs.delete_on_termination.
+    - For more information about each parameter, see U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BlockDeviceMapping.html)
   launch_template:
     description:
       - The EC2 launch template to base instance configuration on.
@@ -682,6 +687,11 @@ def manage_tags(match, new_tags, purge_tags, ec2):
     return changed
 
 
+def build_volume_spec(params):
+    volumes = params.get('volumes') or []
+    return [ec2_utils.snake_dict_to_camel_dict(v,  capitalize_first=True) for v in volumes]
+
+
 def build_network_spec(params, ec2=None):
     """
     Returns list of interfaces [complex]
@@ -953,6 +963,7 @@ def build_run_instance_spec(params, ec2=None):
     )
     # network parameters
     spec['NetworkInterfaces'] = build_network_spec(params, ec2)
+    spec['BlockDeviceMappings'] = build_volume_spec(params)
     spec.update(**build_top_level_options(params))
     spec['TagSpecifications'] = build_instance_tags(params)
 
@@ -1373,6 +1384,7 @@ def main():
         termination_protection=dict(type='bool'),
         instance_ids=dict(default=[], type='list'),
         network=dict(default=None, type='dict'),
+        volumes=dict(default=None, type='list'),
     ))
     # running/present are synonyms
     # as are terminated/absent
