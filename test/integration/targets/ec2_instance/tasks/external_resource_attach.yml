@@ -9,7 +9,7 @@
 # Make custom ENIs and attach via the `network` parameter
 - ec2_eni:
     delete_on_termination: true
-    subnet_id: "{{ testing_subnet_a.subnet.id }}"
+    subnet_id: "{{ testing_subnet_b.subnet.id }}"
     security_groups:
       - "{{ sg.group_id }}"
     <<: *aws_connection_info
@@ -29,6 +29,7 @@
       interfaces:
         - id: "{{ eni_a.interface.id }}"
     image_id: "{{ ec2_ami_image[aws_region] }}"
+    availability_zone: '{{ aws_region }}b'
     tags:
       TestId: "{{ resource_prefix }}"
     instance_type: t2.micro

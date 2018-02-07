@@ -627,6 +627,7 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
     raise NotImplementedError("Only windows with remote-prep or non-windows with tower job callback supported so far.")
 
 
+@AWSRetry.jittered_backoff()
 def manage_tags(match, new_tags, purge_tags, ec2):
     changed = False
     old_tags = boto3_tag_list_to_ansible_dict(match['Tags'])
@@ -877,6 +878,10 @@ def build_top_level_options(params):
 
     if params.get('detailed_monitoring', False):
         spec['Monitoring'] = {'Enabled': True}
+    if params.get('cpu_credit_specification') is not None:
+        spec['CreditSpecification'] = params.get('cpu_credit_specification')
+    if params.get('tenancy') is not None:
+        spec['Placement'] = {'Tenancy': params.get('tenancy')}
     if (params.get('network') or {}).get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
@@ -974,12 +979,13 @@ def diff_instance_and_params(instance, params, ec2=None):
     param_mappings = [
         ParamMapper('ebs_optimized', 'EbsOptimized', 'ebsOptimized', value_wrapper),
         ParamMapper('termination_protection', 'DisableApiTermination', 'disableApiTermination', value_wrapper),
+        ParamMapper('user_data', 'UserData', 'userData', value_wrapper),
     ]
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None:
             value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
-            if value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
+            if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
                     InstanceId=instance['InstanceId'],
                     # Attribute=mapping.attribute_name,
@@ -998,6 +1004,26 @@ def diff_instance_and_params(instance, params, ec2=None):
 
     return changes_to_apply
 
+
+def change_network_attachments(instance, params, ec2):
+    if (params.get('network') or {}).get('interfaces') is not None:
+        new_ids = []
+        for inty in params.get('network').get('interfaces'):
+            if isinstance(inty, dict) and 'id' in inty:
+                new_ids.append(inty['id'])
+            elif isinstance(inty, text_type):
+                new_ids.append(inty)
+        # network.interfaces can create the need to attach new interfaces
+        old_ids = [inty['NetworkInterfaceId'] for inty in instance['NetworkInterfaces']]
+        to_attach = set(new_ids) - set(old_ids)
+        for eni_id in to_attach:
+            ec2.attach_network_interface(
+                DeviceIndex=new_ids.index(eni_id),
+                InstanceId=instance['InstanceId'],
+                NetworkInterfaceId=eni_id,
+            )
+        return bool(len(to_attach))
+    return False
 
 def find_instances(ec2, ids=None, filters=None):
     paginator = ec2.get_paginator('describe_instances')
@@ -1026,7 +1052,7 @@ def get_default_vpc(ec2):
 
 
 @AWSRetry.jittered_backoff()
-def get_default_subnet(ec2, vpc):
+def get_default_subnet(ec2, vpc, availability_zone=None):
     subnets = ec2.describe_subnets(
         Filters=ansible_dict_to_boto3_filter_list({
             'vpc-id': vpc['VpcId'],
@@ -1035,6 +1061,11 @@ def get_default_subnet(ec2, vpc):
         })
     )
     if len(subnets.get('Subnets', [])):
+        if availability_zone is not None:
+            subs_by_az = dict((subnet['AvailabilityZone'], subnet) for subnet in subnets.get('Subnets'))
+            if availability_zone in subs_by_az:
+                return subs_by_az[availability_zone]
+
         # to have a deterministic sorting order, we sort by AZ so we'll always pick the `a` subnet first
         # there can only be one default-for-az subnet per AZ, so the AZ key is always unique in this list
         by_az = sorted(subnets.get('Subnets'), key=lambda s: s['AvailabilityZone'])
@@ -1119,6 +1150,7 @@ def ensure_instance_state(state, ec2=None):
         )
 
 
+@AWSRetry.jittered_backoff()
 def change_instance_state(filters, desired_state, ec2=None):
     """Takes STOPPED/RUNNING/TERMINATED"""
     if ec2 is None:
@@ -1132,6 +1164,8 @@ def change_instance_state(filters, desired_state, ec2=None):
     for inst in instances:
         try:
             if desired_state == 'TERMINATED':
+                # TODO use a client-token to prevent double-sends of these start/stop/terminate commands
+                # https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html
                 resp = ec2.terminate_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['TerminatingInstances']]
             if desired_state == 'STOPPED':
@@ -1173,6 +1207,63 @@ def determine_iam_role(name_or_arn, iam):
         if e.response['Error']['Code'] == 'NoSuchEntity':
             module.fail_json_aws(e, msg="Could not find instance_role {0}".format(name_or_arn))
         module.fail_json_aws(e, msg="An error occurred while searching for instance_role {0}. Please try supplying the full ARN.".format(name_or_arn))
+
+
+def handle_existing(existing_matches, changed, ec2, state):
+    if state in ('running', 'started') and [i for i in existing_matches if i['State']['Name'] != 'running']:
+        ins_changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        module.exit_json(
+            changed=bool(len(ins_changed)) or changed,
+            instances=[pretty_instance(i) for i in instances],
+            instance_ids=[i['InstanceId'] for i in instances],
+        )
+    changes = diff_instance_and_params(existing_matches[0], module.params)
+    for c in changes:
+        ec2.modify_instance_attribute(**c)
+    changed |= change_network_attachments(existing_matches[0], module.params, ec2)
+    altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
+    module.exit_json(
+        changed=bool(len(changes)) or changed,
+        instances=[pretty_instance(i) for i in altered],
+        instance_ids=[i['InstanceId'] for i in altered],
+        changes=changes,
+    )
+
+
+def ensure_present(existing_matches, changed, ec2, state):
+    if len(existing_matches):
+        try:
+            handle_existing(existing_matches, changed, ec2, state)
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(
+                e, msg="Failed to handle existing instances {0}".format(', '.join([i['InstanceId'] for i in existing_matches])),
+                # instances=[pretty_instance(i) for i in existing_matches],
+                # instance_ids=[i['InstanceId'] for i in existing_matches],
+            )
+    try:
+        instance_spec = build_run_instance_spec(module.params)
+        instance_response = AWSRetry.jittered_backoff()(ec2.run_instances)(**instance_spec)
+        instances = instance_response['Instances']
+        instance_ids = [i['InstanceId'] for i in instances]
+
+        for ins in instances:
+            changes = diff_instance_and_params(ins, module.params)
+            for c in changes:
+                ec2.modify_instance_attribute(**c)
+
+        await_instances(instance_ids)
+        instances = ec2.get_paginator('describe_instances').paginate(
+            InstanceIds=instance_ids
+        ).search('Reservations[].Instances[]')
+
+        module.exit_json(
+            changed=True,
+            instances=[pretty_instance(i) for i in instances],
+            instance_ids=instance_ids,
+            spec=instance_spec,
+        )
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to create new EC2 instance")
 
 
 def main():
@@ -1236,6 +1327,7 @@ def main():
         tower_callback=dict(type='dict'),
         ebs_optimized=dict(type='bool'),
         vpc_subnet_id=dict(type='str', aliases=['subnet_id']),
+        availability_zone=dict(type='str'),
         security_groups=dict(default=[], type='list'),
         security_group=dict(type='str'),
         instance_role=dict(type='str'),
@@ -1243,6 +1335,8 @@ def main():
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=False),
         filters=dict(type='dict', default=None),
+        cpu_credit_specification=dict(type='str', choices=['standard', 'unlimited']),
+        tenancy=dict(type='str', choices=['dedicated', 'default']),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
         instance_ids=dict(default=[], type='list'),
@@ -1254,6 +1348,7 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive=[
             ['security_groups', 'security_group'],
+            ['availability_zone', 'vpc_subnet_id'],
             ['tower_callback', 'user_data'],
             ['image_id', 'image'],
         ],
@@ -1294,7 +1389,7 @@ def main():
                                 i = i['id']
                             filters['network-interface.network-interface-id'].append(i)
                 else:
-                    sub = get_default_subnet(ec2, get_default_vpc(ec2))
+                    sub = get_default_subnet(ec2, get_default_vpc(ec2), availability_zone=module.params.get('availability_zone'))
                     filters['subnet-id'] = sub['SubnetId']
             else:
                 filters['subnet-id'] = [module.params.get('vpc_subnet_id')]
@@ -1318,49 +1413,7 @@ def main():
             changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
-        if len(existing_matches):
-            if state in ('running', 'started') and [i for i in existing_matches if i['State']['Name'] != 'running']:
-                ins_changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
-                module.exit_json(
-                    changed=bool(len(ins_changed)) or changed,
-                    instances=[pretty_instance(i) for i in instances],
-                    instance_ids=[i['InstanceId'] for i in instances],
-                )
-            changes = diff_instance_and_params(existing_matches[0], module.params)
-            for c in changes:
-                ec2.modify_instance_attribute(**c)
-            altered = find_instances(ec2, ids=[i['InstanceId'] for i in existing_matches])
-            module.exit_json(
-                changed=bool(len(changes)) or changed,
-                instances=[pretty_instance(i) for i in altered],
-                instance_ids=[i['InstanceId'] for i in altered],
-                changes=changes,
-            )
-        try:
-            instance_spec = build_run_instance_spec(module.params)
-            instance_response = ec2.run_instances(**instance_spec)
-            instances = instance_response['Instances']
-            instance_ids = [i['InstanceId'] for i in instances]
-
-            for ins in instances:
-                # some things (src_dest_check, etc) are instance-attr only and cannot be set at `RunInstance` time
-                changes = diff_instance_and_params(ins, module.params)
-                for c in changes:
-                    ec2.modify_instance_attribute(**c)
-
-            await_instances(instance_ids)
-            instances = ec2.get_paginator('describe_instances').paginate(
-                InstanceIds=instance_ids
-            ).search('Reservations[].Instances[]')
-
-            module.exit_json(
-                changed=True,
-                instances=[pretty_instance(i) for i in instances],
-                instance_ids=instance_ids,
-                spec=instance_spec,
-            )
-        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Failed to create new EC2 instance", spec=instance_spec)
+        ensure_present(existing_matches=existing_matches, changed=changed, ec2=ec2, state=state)
     elif state in ('restarted', 'rebooted', 'stopped', 'absent', 'terminated'):
         if existing_matches:
             ensure_instance_state(state, ec2)
