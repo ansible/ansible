@@ -28,4 +28,4 @@
     - in_test_vpc is changed
     - in_test_vpc.instances[0].block_device_mappings[0]
     - in_test_vpc.instances[0].block_device_mappings[1]
-    - in_test_vpc.instances[0].block_device_mappings[1].device_name == '/dev/sdb/'
+    - in_test_vpc.instances[0].block_device_mappings[1].device_name == '/dev/sdb'
