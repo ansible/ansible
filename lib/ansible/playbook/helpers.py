@@ -112,9 +112,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             task_list.append(t)
         else:
             if 'include' in task_ds or 'import_tasks' in task_ds or 'include_tasks' in task_ds:
-                if 'include' in task_ds:
-                    display.deprecated("The use of 'include' for tasks has been deprecated. "
-                                       "Use 'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions")
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
