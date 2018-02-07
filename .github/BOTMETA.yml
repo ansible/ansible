@@ -336,6 +336,7 @@ files:
   $modules/clustering/consul_acl.py: sgargan
   $modules/clustering/consul_kv.py: sgargan
   $modules/clustering/consul_session.py: sgargan
+  $modules/clustering/etcd3.py: evrardjp
   $modules/clustering/k8s: chouseknecht sdoran maxamillion fabianvf flaper87
   $modules/clustering/kubernetes.py: erjohnso supertom
   $modules/clustering/openshift: chouseknecht sdoran maxamillion fabianvf flaper87
