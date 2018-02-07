@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
             return {"failed": True, "msg": "'msg' and 'var' are incompatible options"}
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         # get task verbosity
         verbosity = int(self._task.args.get('verbosity', 0))

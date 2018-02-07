@@ -164,6 +164,7 @@ class ActionModule(ActionBase):
         _tmp_args = self._task.args.copy()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         # Store remote connection type
         self._remote_transport = self._connection.transport
