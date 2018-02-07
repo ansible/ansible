@@ -38,7 +38,6 @@ Engine improvements
 - Normalize temp dir usage across all subsystems
 - Currently ignored keywords do not notify user they were ignored, throw a warning on these.
 - Deprecation version enforcement
-- Force jinja to use native types
 - sysvinit service module
 - Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'
 
