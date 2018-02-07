@@ -160,7 +160,10 @@ def get_interface_mode(name, module):
 
     try:
         body = run_commands(module, [command])[0]
-        interface_table = body['TABLE_interface']['ROW_interface']
+        if not isinstance(body, dict):
+            return mode
+        else:
+            interface_table = body['TABLE_interface']['ROW_interface']
     except (KeyError, AttributeError, IndexError):
         return mode
 
