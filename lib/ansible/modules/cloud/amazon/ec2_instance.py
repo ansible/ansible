@@ -76,6 +76,7 @@ options:
     description:
       - The subnet ID in which to launch the instance (VPC)
         If none is provided, ec2_instance will chose the default zone of the default VPC
+    aliases: ['subnet_id']
   network:
     description:
       - Either a dictionary containing the key 'interfaces' corresponding to a list of network interface IDs or
