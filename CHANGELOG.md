@@ -121,6 +121,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * ec2_vpc_egress_igw
   * ecs_taskdefinition_facts
   * elasticache_facts
+  * elb_target
   * iam_role_facts
   * iam_user
 - azure
