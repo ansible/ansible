@@ -25,7 +25,9 @@ DOCUMENTATION = """
 ---
 module: edgeos_onfig
 version_added: "2.5"
-author: "Nathaniel Case (@qalthos)"
+author:
+    - "Nathaniel Case (@qalthos)"
+    - "Sam Doran (@samdoran)"
 short_description: Manage EdgeOS configuration on remote device
 description:
   - This module provides configuration file management of EdgeOS
@@ -126,15 +128,13 @@ backup_path:
   description: The full path to the backup file
   returned: when backup is yes
   type: string
-  sample: /playbooks/ansible/backup/edgeos_onfig.2016-07-16@22:28:34
+  sample: /playbooks/ansible/backup/edgeos_config.2016-07-16@22:28:34
 """
 import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, run_commands
-from ansible.module_utils.network.edgeos.edgeos import vyos_argument_spec
-
 
 DEFAULT_COMMENT = 'configured by edgeos_onfig'
 
@@ -239,7 +239,7 @@ def run(module, result):
 
 
 def main():
-    argument_spec = dict(
+    spec = dict(
         src=dict(type='path'),
         lines=dict(type='list'),
 
@@ -253,12 +253,10 @@ def main():
         save=dict(type='bool', default=False),
     )
 
-    argument_spec.update(vyos_argument_spec)
-
     mutually_exclusive = [('lines', 'src')]
 
     module = AnsibleModule(
-        argument_spec=argument_spec,
+        argument_spec=spec,
         mutually_exclusive=mutually_exclusive,
         supports_check_mode=True
     )
