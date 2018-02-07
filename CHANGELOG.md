@@ -95,6 +95,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
 
+## Filters
+* parse_xml
+
 ### New Modules
 
 #### Cloud
