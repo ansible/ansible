@@ -486,13 +486,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Get information from remote file.
         '''
+        if tmp is not None:
+            display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
+                            ' plugins should set self._connection._shell.tempdir to share'
+                            ' the tempdir')
+        del tmp  # No longer used
+
         module_args = dict(
             path=path,
             follow=follow,
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
                                       wrap_async=False)
 
         if mystat.get('failed'):
@@ -653,10 +659,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         update.update(options)
         self.connection.set_options(update)
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
         '''
+        if tmp is not None:
+            display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
+                            ' should set self._connection._shell.tempdir to share the tempdir')
+        del tmp  # No longer used
+        if delete_remote_tmp is not None:
+            display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
+                            ' Action plugins should check self._connection._shell.tempdir to'
+                            ' see if a tempdir existed before they were called to determine'
+                            ' if they are responsible for removing it.')
+        del delete_remote_tmp  # No longer used
+
         if task_vars is None:
             task_vars = dict()
 
@@ -680,19 +697,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not self._is_pipelining_enabled(module_style, wrap_async):
 
-            # we might need remote tmp dir
-            if not tmp:
-                if not self._connection._shell.tempdir or tmp is None or 'tmp' not in tmp:
-                    tmp = self._make_tmp_path()
-                else:
-                    tmp = self._connection._shell.tempdir
+            # we might need remote temp dir
+            if self._connection._shell.tempdir is None:
+                self._make_tmp_path()
+            tempdir = self._connection._shell.tempdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
-            remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
+            remote_module_path = self._connection._shell.join_path(tempdir, remote_module_filename)
 
         if module_style in ('old', 'non_native_want_json', 'binary'):
             # we'll also need a temp file to hold our module arguments
-            args_file_path = self._connection._shell.join_path(tmp, 'args')
+            args_file_path = self._connection._shell.join_path(tempdir, 'args')
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote %s" % remote_module_path)
@@ -713,8 +728,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
-        if tmp and remote_module_path:
-            remote_files = [tmp, remote_module_path]
+        if tempdir and remote_module_path:
+            remote_files = [tempdir, remote_module_path]
 
         if args_file_path:
             remote_files.append(args_file_path)
@@ -728,7 +743,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
                                                                                                          task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
-            remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
+            remote_async_module_path = self._connection._shell.join_path(tempdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
@@ -750,7 +765,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # maintain a fixed number of positional parameters for async_wrapper
                 async_cmd.append('_')
 
-            if not self._should_remove_tmp_path(tmp):
+            if not self._should_remove_tmp_path(tempdir):
                 async_cmd.append("-preserve_tmp")
 
             cmd = " ".join(to_text(x) for x in async_cmd)
@@ -764,7 +779,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
 
-        # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
+        # Fix permissions of the tempdir path and tempdir files. This should be called after all
+        # files have been transferred.
         if remote_files:
             # remove none/empty
             remote_files = [x for x in remote_files if x]
