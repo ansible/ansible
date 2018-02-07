@@ -47,7 +47,7 @@ options:
       - Opaque blob of data which is made available to the ec2 instance
   tower_callback:
     description:
-      - Preconfigured user-data to enable an instance to perform a Tower callback. 
+      - Preconfigured user-data to enable an instance to perform a Tower callback.
       - Requires parameters I(tower_callback.tower_address), I(tower_callback.job_template_id), and I(tower_callback.host_config_key).
       - Mutually exclusive with I(user_data).
       - For Windows instances, to enable remote access via Ansible set I(tower_callback.windows) to true, and optionally set an admin password.
@@ -1005,10 +1005,13 @@ def await_instances(ids, state='OK'):
             ', '.join(ids), state, to_native(e)))
 
 
-def diff_instance_and_params(instance, params, ec2=None):
+def diff_instance_and_params(instance, params, ec2=None, skip=None):
     """boto3 instance obj, module params"""
     if ec2 is None:
         ec2 = module.client('ec2')
+
+    if skip is None:
+        skip = []
 
     changes_to_apply = []
     id_ = instance['InstanceId']
@@ -1025,7 +1028,7 @@ def diff_instance_and_params(instance, params, ec2=None):
     ]
 
     for mapping in param_mappings:
-        if params.get(mapping.param_key) is not None:
+        if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
             value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
             if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
@@ -1290,9 +1293,12 @@ def ensure_present(existing_matches, changed, ec2, state):
         instance_ids = [i['InstanceId'] for i in instances]
 
         for ins in instances:
-            changes = diff_instance_and_params(ins, module.params)
+            changes = diff_instance_and_params(ins, module.params, skip=['UserData', 'EbsOptimized'])
             for c in changes:
-                ec2.modify_instance_attribute(**c)
+                try:
+                    AWSRetry.jittered_backoff()(ec2.modify_instance_attribute)(**c)
+                except botocore.exceptions.ClientError as e:
+                    module.fail_json_aws(e, msg="Could not apply change {0} to new instance.".format(str(c)))
 
         await_instances(instance_ids)
         instances = ec2.get_paginator('describe_instances').paginate(
@@ -1378,10 +1384,12 @@ def main():
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=False),
         filters=dict(type='dict', default=None),
+        launch_template=dict(type='dict'),
         cpu_credit_specification=dict(type='str', choices=['standard', 'unlimited']),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
         termination_protection=dict(type='bool'),
+        detailed_monitoring=dict(type='bool'),
         instance_ids=dict(default=[], type='list'),
         network=dict(default=None, type='dict'),
         volumes=dict(default=None, type='list'),
