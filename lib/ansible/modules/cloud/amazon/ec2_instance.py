@@ -47,7 +47,11 @@ options:
       - Opaque blob of data which is made available to the ec2 instance
   tower_callback:
     description:
-      - A tower configuration that may contain keys 'windows' and 'set_password'. Mutually exclusive with I(user_data).
+      - Preconfigured user-data to enable an instance to perform a Tower callback. 
+      - Requires parameters I(tower_callback.tower_address), I(tower_callback.job_template_id), and I(tower_callback.host_config_key).
+      - Mutually exclusive with I(user_data).
+      - For Windows instances, to enable remote access via Ansible set I(tower_callback.windows) to true, and optionally set an admin password.
+      - If using 'windows' and 'set_password', callback to Tower will not be performed but the instance will be ready to receive winrm connections from Ansible.
   tags:
     description:
       - A hash/dictionary of tags to add to the new instance or to add/remove from an existing one.
@@ -60,12 +64,17 @@ options:
     description:
       - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
         One of I(image) or I(image_id) are required when instance is not already present.
+      - Complex object containing I(image.id), I(image.ramdisk), and I(image.kernel).
+      - I(image.id) is the AMI ID.
+      - I(image.ramdisk) overrides the AMI's default ramdisk ID.
+      - I(image.kernel) is a string AKI to override the AMI kernel.
   image_id:
     description:
        - I(ami) ID to use for the instance. One of I(image) or I(image_id) are required when instance is not already present.
+       - This is an alias for I(image.id).
   security_groups:
     description:
-      - A list of security group IDs or names. Mutually exclusive with I(security_group).
+      - A list of security group IDs or names (strings). Mutually exclusive with I(security_group).
   security_group:
     description:
       - A security group ID or name. Mutually exclusive with I(security_groups).
@@ -85,14 +94,38 @@ options:
         private_ip_address (str), ipv6_addresses (list), source_dest_check (bool), description (str),
         delete_on_termination (bool), device_index (int), groups (list of security group IDs),
         private_ip_addresses (list), subnet_id (str).
+      - I(network.interfaces) should be a list of ENI IDs (strings) or a list of objects containing the key I(id).
+      - Use the ec2_eni to create ENIs with special settings.
+  launch_template:
+    description:
+      - The EC2 launch template to base instance configuration on.
+      - I(launch_template.id) the ID or the launch template (optional if name is specified)
+      - I(launch_template.name) the pretty name of the launch template (optional if id is specified)
+      - I(launch_template.version) the specific version of the launch template to use. If unspecified, the template default is chosen.
+  availability_zone:
+    description:
+    - Specify an availability zone to use the default subnet it. Useful if not specifying the I(vpc_subnet_id) parameter.
+    - If no subnet, ENI, or availability zone is provided, the default subnet in the default VPC will be used in the first AZ (alphabetically sorted).
   instance_initiated_shutdown_behavior:
     description:
       - Whether to stop or terminate an instance upon shutdown.
     choices: ['stop', 'terminate']
+  tenancy:
+    description:
+      - What type of tenancy to allow an instance to use. Default is shared tenancy. Dedicated tenancy will incur additional charges.
+    choices: ['dedicated', 'default']
   termination_protection:
     description:
       - Whether to enable termination protection.
         This module will not terminate an instance with termination protection active, it must be turned off first.
+  cpu_credit_specification:
+    description:
+      - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
+      - Choose I(unlimited) to enable buying additional CPU credits.
+    choices: [unlimited, standard]
+  detailed_monitoring:
+    description:
+      - Whether to allow detailed cloudwatch metrics to be collected, enabling more detailed alerting.
   ebs_optimized:
     description:
       - Whether instance is should use optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
@@ -892,8 +925,6 @@ def build_top_level_options(params):
 
 
 def build_instance_tags(params, propagate_tags_to_volumes=True):
-    # TODO read existing tags
-    # TODO distinguish between tags=None and tags={} for clearing tags vs. not changing tags
     tags = params.get('tags', {})
     if params.get('name') is not None:
         if tags is None:
@@ -1024,6 +1055,7 @@ def change_network_attachments(instance, params, ec2):
             )
         return bool(len(to_attach))
     return False
+
 
 def find_instances(ec2, ids=None, filters=None):
     paginator = ec2.get_paginator('describe_instances')
