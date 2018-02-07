@@ -556,6 +556,7 @@ EXAMPLES = '''
     state: present
     name: myvm
     template: rhel7_template
+    cluster: mycluster
 
 - name: Register VM
   ovirt_vms:
