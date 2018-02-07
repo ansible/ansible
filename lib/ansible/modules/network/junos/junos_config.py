@@ -152,7 +152,6 @@ EXAMPLES = """
   junos_config:
     src: srx.cfg
     comment: update config
-    provider: "{{ netconf }}"
 
 - name: load configure lines into device
   junos_config:
@@ -160,22 +159,18 @@ EXAMPLES = """
       - set interfaces ge-0/0/1 unit 0 description "Test interface"
       - set vlans vlan01 description "Test vlan"
     comment: update config
-    provider: "{{ netconf }}"
 
 - name: rollback the configuration to id 10
   junos_config:
     rollback: 10
-    provider: "{{ netconf }}"
 
 - name: zero out the current configuration
   junos_config:
     zeroize: yes
-    provider: "{{ netconf }}"
 
 - name: confirm a previous commit
   junos_config:
     confirm_commit: yes
-    provider: "{{ netconf }}"
 """
 
 RETURN = """
