@@ -236,6 +236,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aci_interface_policy_leaf_policy_group
   * aci_interface_policy_leaf_profile
   * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_static_binding_to_epg
   * aci_switch_leaf_selector
   * aci_switch_policy_leaf_profile
   * aci_vlan_pool
