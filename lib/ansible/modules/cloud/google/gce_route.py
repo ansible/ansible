@@ -237,12 +237,13 @@ def get_resources(module, client, cparams):
 
     params = module.params
 
-    # A dict to store resources retrieved from GCE. A value of 'None' means that
+    # A dict to store resources retrieved from GCE. An empty value means that
     # no resource was found.
     resources = {
-        'instances': [],
+        'instances': {},
         'route': {},
         'network': {},
+        'subnets': {},
     }
 
     # INSTANCE
@@ -263,17 +264,20 @@ def get_resources(module, client, cparams):
 
     # NETWORK
     req = client.networks().get(project=cparams['project_id'], network=params['network'])
-    resources['network'] = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
+    network = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
+    resources['network'] = network if network else {}
 
     # SUBNETS
-    resources['subnets'] = client.subnetworks().aggregatedList(
-        project=cparams['project_id'],
-        filter="network eq %s" % resources['network']['selfLink']
-    ).execute()
+    if resources['network']:
+        resources['subnets'] = client.subnetworks().aggregatedList(
+            project=cparams['project_id'],
+            filter="network eq %s" % resources['network']['selfLink']
+        ).execute()
 
     # ROUTE
     req = client.routes().get(project=cparams['project_id'], route=params['name'])
-    resources['route'] = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
+    route = GCPUtils.execute_api_client_req(req, client=client, raise_404=False)
+    resources['route'] = route if route else {}
 
     return resources
 
@@ -389,9 +393,10 @@ def check_cidr_masking(params, resources):
 
     # Custom / Auto mode networks
     regions = []  # regions with  subnets
-    for region in resources['subnets']['items']:
-        if 'subnetworks' in resources['subnets']['items'][region]:
-            regions.insert(-1, region)
+    if 'items' in resources['subnets']:
+        for region in resources['subnets']['items']:
+            if 'subnetworks' in resources['subnets']['items'][region]:
+                regions.insert(-1, region)
 
     subnets = (subnet for region in regions for subnet in resources['subnets']['items'][region]['subnetworks'])
 
