@@ -242,41 +242,6 @@ More information
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
 
 
-
-.. _aci_issues:
-
-Known issues
-............
-The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
-
-All below issues have been reported to the vendor.
-
-
-- **Specific requests may not reflect changes correctly**
-
-  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
-
-  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
-
-  **NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
-
-- **Specific requests are known to not be idempotent**
-
-  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
-
-  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
-
-  **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
-
-- **Setting user password is not idempotent**
-
-  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
-
-  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
-
-  **NOTE:** There is no workaround for this issue.
-
-
 .. _aci_ops:
 
 Operational examples
@@ -327,3 +292,45 @@ The below example waits until the cluster is fully-fit. In this example you know
     #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in aci_fit.imdata)
       retries: 30
       delay: 30
+
+
+.. _aci_issues:
+
+Known issues
+------------
+The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
+
+All below issues either have been reported to the vendor, or can simply be avoided.
+
+- **Too many consecutive API calls may result in connection throttling**
+
+  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using passwod-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but it is advisable to use signature-based authentication as this also improves performance in general.
+
+  **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
+
+
+- **Specific requests may not reflect changes correctly**
+
+  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
+
+  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
+
+  **NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
+
+
+- **Specific requests are known to not be idempotent**
+
+  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
+
+  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
+
+  **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
+
+
+- **Setting user password is not idempotent**
+
+  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
+
+  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
+
+  **NOTE:** There is no workaround for this issue.
