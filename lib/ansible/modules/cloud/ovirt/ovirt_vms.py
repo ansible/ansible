@@ -1107,7 +1107,7 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity)) and
             equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
-            self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts]
+            self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts or []]
         )
 
     def pre_create(self, entity):
