@@ -21,7 +21,7 @@ description:
   - This command module allows running one or more commands on a remote
     device running EdgeOS, such as the Ubiquiti EdgeRouter.
   - This module does not support running commands in configuration mode.
-  - Certain C(show) commands in VyOS produce many lines of output and
+  - Certain C(show) commands in EdgeOS produce many lines of output and
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_EDGEOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
