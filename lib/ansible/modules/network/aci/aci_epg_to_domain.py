@@ -24,6 +24,9 @@ version_added: '2.4'
 notes:
 - The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
+- OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
+  by the Cisco APIC Neutron plugin as part of the installation and configuration.
+  This module can be used to query status of an OpenStack VMM domain.
 options:
   allow_useg:
     description:
