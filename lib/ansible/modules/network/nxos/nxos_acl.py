@@ -210,7 +210,6 @@ EXAMPLES = '''
     src: 1.1.1.1/24
     dest: any
     state: present
-    provider: "{{ nxos_provider }}"
 '''
 
 RETURN = '''
