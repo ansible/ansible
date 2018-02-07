@@ -298,6 +298,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
 
+        if tmp_path is None and self._connection._shell.tempdir:
+            tmp_path = self._connection._shell.tempdir
+
         if self._should_remove_tmp_path(tmp_path):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
