@@ -59,9 +59,6 @@ class TestEdgeosModule(ModuleTestCase):
             self.assertEqual(result['changed'], changed, result)
 
         if commands is not None:
-            print(commands)
-            print(sorted(result['commands']))
-            print(result['commands'])
             if sort:
                 self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
             else:
