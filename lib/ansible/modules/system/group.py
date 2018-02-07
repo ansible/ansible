@@ -248,6 +248,15 @@ class FreeBsdGroup(Group):
         return (None, '', '')
 
 
+class DragonFlyBsdGroup(FreeBsdGroup):
+    """
+    This is a DragonFlyBSD Group manipulation class.
+    It inherits all behaviors from FreeBsdGroup class.
+    """
+
+    platform = 'DragonFly'
+
+
 # ===========================================
 
 class DarwinGroup(Group):
