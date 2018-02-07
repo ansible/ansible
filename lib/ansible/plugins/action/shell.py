@@ -11,6 +11,8 @@ from ansible.utils.vars import merge_hash
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         # Shell module is implemented via command
         self._task.action = 'command'
         self._task.args['_uses_shell'] = True

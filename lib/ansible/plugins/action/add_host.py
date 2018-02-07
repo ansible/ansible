@@ -44,6 +44,7 @@ class ActionModule(ActionBase):
         self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))

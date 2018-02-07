@@ -74,6 +74,7 @@ class ActionModule(ActionBase):
             return dict(skipped=True)
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
@@ -86,9 +87,9 @@ class ActionModule(ActionBase):
 
             # Use win_ping on winrm/powershell, else use ping
             if hasattr(self._connection, '_shell_type') and self._connection._shell_type == 'powershell':
-                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
+                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
             else:
-                ping_result = self._execute_module(module_name='ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
+                ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':
