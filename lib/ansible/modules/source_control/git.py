@@ -715,9 +715,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
                 # 1.8.3 is broken, 1.9.x works
                 # ensure that remote branch is available as both local and remote ref
                 refspecs.append('+refs/heads/%s:refs/heads/%s' % (version, version))
-                refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
-            else:
-                refspecs.append(version)
+            refspecs.append('+refs/heads/%s:refs/remotes/%s/%s' % (version, remote, version))
         elif is_remote_tag(git_path, module, dest, repo, version):
             refspecs.append('+refs/tags/' + version + ':refs/tags/' + version)
         if refspecs:
