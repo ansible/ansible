@@ -78,6 +78,14 @@ Every Ansible ACI module accepts the following parameters that influence the mod
 - ``use_proxy`` -- Use system proxy settings *(defaults to `yes`)*
 - ``timeout`` -- Timeout value for socket-level communication
 
+Module return values
+....................
+By default the ACI modules (excluding :ref:`aci_rest <aci_rest>`) return the resulting state of the managed object in a key ``current``.
+
+By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
+
+For troubleshooting purposes setting ``output_level: debug`` or defining environment variable ``ANSIBLE_DEBUG=1`` enables more detailed information on the actual APIC REST communication, incl. ``filter_string``, ``method``, ``response``, ``status`` and ``url``.
+
 
 .. _aci_auth:
 
