@@ -167,6 +167,7 @@ import os
 import socket
 import traceback
 from io import BytesIO
+import signal
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six import PY3
@@ -349,12 +350,20 @@ class Connection(NetworkConnectionBase):
         self._matched_cmd_prompt = None
         matched_prompt_window = window_count = 0
 
+        signal_handler = signal.getsignal(signal.SIGALRM)
+        if signal_handler == signal.SIG_DFL:
+            signal_handler = None
+
         while True:
             data = self._ssh_shell.recv(256)
 
             # when a channel stream is closed, received data will be empty
             if not data:
                 break
+
+            if signal_handler:
+                display.debug("cli command_timeout extended on new data")
+                signal.alarm(self._play_context.timeout)
 
             recv.write(data)
             offset = recv.tell() - 256 if recv.tell() > 256 else 0
