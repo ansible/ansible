@@ -559,7 +559,6 @@ class AssertOnlyCertificate(Certificate):
                 current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in cert_subject]
                 if (not self.subject_strict and not all(x in current_subject for x in expected_subject)) or \
                    (self.subject_strict and not set(expected_subject) == set(current_subject)):
-                    diff = [item for item in self.subject if item not in current_subject]
                     self.message.append(
                         'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject)
                     )
@@ -571,7 +570,6 @@ class AssertOnlyCertificate(Certificate):
                 current_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in cert_issuer]
                 if (not self.issuer_strict and not all(x in current_issuer for x in expected_issuer)) or \
                    (self.issuer_strict and not set(expected_issuer) == set(current_issuer)):
-                    diff = [item for item in self.issuer if item not in current_issuer]
                     self.message.append(
                         'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
                     )
