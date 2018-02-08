@@ -134,8 +134,8 @@ def map_obj_to_commands(want, have, module):
         mask = w['mask']
         next_hop = w['next_hop']
         admin_distance = w.get('admin_distance')
-        if not admin_distance and h and h.get('admin_distance'):
-            w['admin_distance'] = admin_distance = h.get('admin_distance')
+        if not admin_distance and h:
+            w['admin_distance'] = admin_distance = h['admin_distance']
         state = w['state']
         del w['state']
 
