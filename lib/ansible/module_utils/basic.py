@@ -157,7 +157,7 @@ except ImportError:
     except ImportError:
         pass
 
-from ansible.module_utils.pycompat24 import literal_eval
+from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (
     PY2,
     PY3,
