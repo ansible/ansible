@@ -1,22 +1,16 @@
 Tags
 ====
 
-If you have a large playbook it may become useful to be able to run a specific part of the configuration without running the whole playbook.
+If you have a large playbook, it may become useful to be able to run only
+a specific part of it rather than running *everything* in the playbook.
+Ansible supports a "tags:" attribute for this reason.
 
-Both plays and tasks support a "tags:" attribute for this reason.
-You can **ONLY** filter tasks based on tags from the command line with ``--tags`` or ``--skip-tags``.
-Adding ``tags:`` to a play, or to statically imported tasks and roles, adds
-those tags to the contained tasks.
+You can **ONLY** filter tasks based on tags from the command line with the 
+``--tags`` or ``--skip-tags`` options.
 
-Adding the tag ``bar`` to all tasks in a play::
-
-    - hosts: all
-      tags:
-        - bar
-      tasks:
-        ...
-
-Tagging indivdual tasks with different tags::
+Tags can be applied to *many* structures in Ansible (see "tag inheritance",
+below), but its simplest use is with indivdual tasks. Here is an example
+that tags two tasks with different tags::
 
     tasks:
         - yum:
@@ -38,9 +32,10 @@ If you wanted to just run the "configuration" and "packages" part of a very long
 
     ansible-playbook example.yml --tags "configuration,packages"
 
-On the other hand, if you want to run a playbook *without* certain tasks, you can use the ``--skip-tags`` command-line option::
+On the other hand, if you want to run a playbook *without* certain tagged
+tasks, you can use the ``--skip-tags`` command-line option::
 
-    ansible-playbook example.yml --skip-tags "notification"
+    ansible-playbook example.yml --skip-tags "packages"
 
 
 .. _tag_reuse:
@@ -50,7 +45,7 @@ Tag Reuse
 You can apply the same tag to more than one task. When a play is run using
 the ``--tags`` command-line option, all tasks with that tag name will be run.
 
-Example::
+This example tags several tasks with one tag, "ntp"::
 
     ---
     # file: roles/common/tasks/main.yml
@@ -81,11 +76,18 @@ Example::
 Tag Inheritance
 ```````````````
 
-When tagging items other than dynamic inclusions (see 'include_role' and
-'include_tasks'), you can apply ``tags:`` to structures above tasks. When
-Ansible processes these, ONLY the tasks they contain are tagged. Applying tags
-anywhere other than tasks is just a convenience so you don't have to tag all
-indivdual tasks. This example tags all tasks in a play::
+Adding ``tags:`` to a play, or to statically imported tasks and roles, adds
+those tags to all of the contained tasks. This is referred to as *tag
+inheritance*. Tag inheritance is *not* applicable to dynamic inclusions
+such as ``include_role`` and ``include_tasks``.
+
+When you apply ``tags:`` attributes to structures other than tasks,
+Ansible processes the tag attribute to apply ONLY to the tasks they contain.
+Applying tags anywhere other than tasks is just a convenience so you don't
+have to tag tasks indivdually.
+
+This example tags all tasks in the two plays. The first play has all its tasks
+tagged with 'bar', and the second has all its tasks tagged with 'foo'::
 
     - hosts: all
       tags:
@@ -117,13 +119,13 @@ All of these apply the specified tags to EACH task inside the play, imported
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
 
-Tags are inherited *down* the dependency chain. In order for tags to be
-applied to a role and all its dependencies, the tag should be applied to the
-role, not to all the tasks within a role.
+Tags are applied *down* the dependency chain. In order for a tag to be
+inherited to a dependent role's tasks, the tag should be applied to the
+role declaration or static import, not to all the tasks within the role.
 
-You can see which tags are applied to tasks and imported tasks by running
-``ansible-playbook`` with the ``--list-tasks`` option. You can display all
-tags applied to the tasks with the ``--list-tags`` option.
+You can see which tags are applied to tasks, roles, and static imports 
+by running ``ansible-playbook`` with the ``--list-tasks`` option. You can
+display all tags applied to the tasks with the ``--list-tags`` option.
 
 .. note::
     The above information does not apply to `include_tasks`, `include_roles`,
