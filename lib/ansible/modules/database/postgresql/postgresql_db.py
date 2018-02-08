@@ -389,9 +389,6 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
-
     db = module.params["db"]
     owner = module.params["owner"]
     template = module.params["template"]
@@ -428,28 +425,31 @@ def main():
         target = "{0}/{1}.sql".format(os.getcwd(), db)
         target = os.path.expanduser(target)
 
-    try:
-        pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
-        db_connection = psycopg2.connect(database=maintenance_db, **kw)
+    if not state in ["dump", "restore"]:
+        if not HAS_PSYCOPG2:
+            module.fail_json(msg="the python psycopg2 module is required KAPOUE")
+        try:
+            pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
+            db_connection = psycopg2.connect(database="postgres", **kw)
 
-        # Enable autocommit so we can create databases
-        if psycopg2.__version__ >= '2.4.2':
-            db_connection.autocommit = True
-        else:
-            db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            # Enable autocommit so we can create databases
+            if psycopg2.__version__ >= '2.4.2':
+                db_connection.autocommit = True
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+            cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    except pgutils.LibraryError as e:
-        module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
+        except pgutils.LibraryError as e:
+            module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
 
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
-                             exception=traceback.format_exc())
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+        except TypeError as e:
+            if 'sslrootcert' in e.args[0]:
+                module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
+                                 exception=traceback.format_exc())
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+        except Exception as e:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
