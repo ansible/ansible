@@ -55,6 +55,9 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.results[-1]['tasks'].append(self._new_task(task))
 
+    def v2_playbook_on_handler_task_start(self, task):
+        self.results[-1]['tasks'].append(self._new_task(task))
+
     def v2_runner_on_ok(self, result, **kwargs):
         host = result._host
         self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
