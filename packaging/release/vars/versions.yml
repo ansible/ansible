@@ -1,4 +1,8 @@
 versions:
+- "2.6":
+    code_name: "Heartbreaker"
+    releases:
+    - "0": TBD
 - "2.5":
     code_name: "Kashmir"
     releases:
