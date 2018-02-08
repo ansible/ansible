@@ -74,7 +74,19 @@ options:
 
 
 EXAMPLES = '''
-
+- name: create simple infoblox nameserver group
+  nios_nsgroup:
+    provider:
+      username: admin 
+      password: password 
+      host: infoblox-test.example.com
+      wapi_version: 2.1
+    name: my-simple-group 
+    comment: "this is a simple nameserver group"
+    grid_primary:
+      - name: infoblox-test.example.com
+  state: present
+  connection: local
 
 - name: create infoblox nameserver group with external primaries 
   nios_nsgroup:
@@ -82,7 +94,7 @@ EXAMPLES = '''
       username: admin
       password: password 
       host: infoblox-test.examplecom
-      wapi_version: 2.2
+      wapi_version: 2.1
     name: my-example-group 
     use_external_primary: true
     comment: "this is my example nameserver group"
@@ -92,6 +104,7 @@ EXAMPLES = '''
         lead: True
         preferred_primaries: "{{ ext_nameservers }}"
   state: present
+  connection: local
 '''
 
 RETURN = ''' # '''
