@@ -179,29 +179,32 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module, required_together=None):
+    keys = ['prefix', 'mask', 'next_hop', 'admin_distance', 'state']
     obj = []
 
     aggregate = module.params.get('aggregate')
     if aggregate:
         for item in aggregate:
-            for key in item:
-                if item.get(key) is None:
-                    item[key] = module.params[key]
+            route = item.copy()
+            for key in keys:
+                if route.get(key) is None:
+                    route[key] = module.params.get(key)
 
-            module._check_required_together(required_together, item)
-            obj.append(item.copy())
+            module._check_required_together(required_together, route)
+            obj.append(route)
     else:
+        module._check_required_together(required_together, module.params)
         obj.append({
             'prefix': module.params['prefix'].strip(),
             'mask': module.params['mask'].strip(),
             'next_hop': module.params['next_hop'].strip(),
-            'state': module.params['state']
+            'admin_distance': module.params.get('admin_distance'),
+            'state': module.params['state'],
         })
 
-    admin_distance = module.params.get('admin_distance')
-    if admin_distance:
-        for route in obj:
-            route['admin_distance'] = str(admin_distance)
+    for route in obj:
+        if route['admin_distance']:
+            route['admin_distance'] = str(route['admin_distance'])
 
     return obj
 
@@ -236,7 +239,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
-                           required_together=required_together,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
