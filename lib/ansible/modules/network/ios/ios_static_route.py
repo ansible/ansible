@@ -101,9 +101,9 @@ import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config
+from ansible.module_utils.network.ios.ios import load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 try:
@@ -153,27 +153,50 @@ def map_obj_to_commands(want, have, module):
 def map_config_to_obj(module):
     obj = []
 
-    rc, out, err = exec_command(module, 'show ip static route')
-    match = re.search(r'.*Static local RIB for default\s*(.*)$', out, re.DOTALL)
+    try:
+        out = run_commands(module, 'show ip static route')[0]
+        match = re.search(r'.*Static local RIB for default\s*(.*)$', out, re.DOTALL)
 
-    if match and match.group(1):
-        for r in match.group(1).splitlines():
-            splitted_line = r.split()
+        if match and match.group(1):
+            for r in match.group(1).splitlines():
+                splitted_line = r.split()
 
-            code = splitted_line[0]
+                code = splitted_line[0]
 
-            if code != 'M':
+                if code != 'M':
+                    continue
+
+                cidr = ip_network(to_text(splitted_line[1]))
+                prefix = str(cidr.network_address)
+                mask = str(cidr.netmask)
+                next_hop = splitted_line[4]
+                admin_distance = splitted_line[2][1]
+
+                obj.append({
+                    'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                    'admin_distance': admin_distance
+                })
+
+    except ConnectionError:
+        out = run_commands(module, 'show running-config | include ip route')[0]
+
+        for line in out.splitlines():
+            splitted_line = line.split()
+            if len(splitted_line) not in (5, 6):
                 continue
 
-            cidr = ip_network(to_text(splitted_line[1]))
-            prefix = str(cidr.network_address)
-            mask = str(cidr.netmask)
+            prefix = splitted_line[2]
+            mask = splitted_line[3]
             next_hop = splitted_line[4]
-            admin_distance = splitted_line[2][1]
+            if len(splitted_line) == 6:
+                admin_distance = splitted_line[5]
+            else:
+                admin_distance = '1'
 
-            obj.append({'prefix': prefix, 'mask': mask,
-                        'next_hop': next_hop,
-                        'admin_distance': admin_distance})
+            obj.append({
+                'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                'admin_distance': admin_distance
+            })
 
     return obj
 
