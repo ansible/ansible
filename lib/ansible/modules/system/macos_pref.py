@@ -17,12 +17,12 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: osx_pref
+module: macos_pref
 author:
-    - John Calixto (@nordjc)
     - Matthias Hollerbach (@kinglouie)
+    - John Calixto (@nordjc)
 short_description: Manipulates macOS preferences including complex data types.
-version_added: "2.5"
+version_added: "2.6"
 description:
     - This module allows users to create, read, update, and delete system and application preferences on macOS
       including deeply nested dictionary values like those in the C(com.apple.finder) domain.
@@ -34,7 +34,7 @@ requirements:
 options:
     domain:
         description:
-            - The preference domain. E.g. com.apple.finder, /path/to/some.plist, NSGlobalDomain.
+            - The preference domain. E.g. C(com.apple.finder), C(/path/to/some.plist), C(NSGlobalDomain).
         required: false
         default: NSGlobalDomain
     key:
@@ -44,85 +44,115 @@ options:
     value:
         description:
             - The value that will be set for the specified key.
-            - Required when C(action=set).
         required: false
-    action:
+    state:
         description:
-            - Whether to I(get) or I(set) the specified preference.
-        required: false
-        default: get
-        choices: ["get", "set"]
-    dict_set_method:
-        description:
-            - When setting a value to a dictionary, either C(replace) any existing value with the contents
-              of C(value), or perform a deep C(merge) of nested dictionaries.
+            - The state of the preference key, C(replace) replaces any existing value with the contents
+              of C(value), C(merge) performs a deep merge of nested dictionaries and C(absent) deletes the key if present.
         required: false
         default: replace
-        choices: ["merge", "replace"]
+        choices: ["replace", "merge", "absent"]
 notes:
     - This module uses the Core Foundation Preferences API of macOS directly instead of manipulating plists or passing arguments to `defaults`.
       This ensures that cfprefsd is in the loop when values change.
       It also allows users to retrieve and assign all of the complex data structures supported by the preferences API (e.g. nested dicts).
-    - To retrieve the value of a key, use C(action=get) and register the result.
       The value will be available in the C(value) attribute of the registered variable.
-    - To delete a key and its associated value, use C(action=set) with C(value=null).
+    - To delete a key and its associated value, use C(state=absent).
 '''
 
 EXAMPLES = '''
-# Get basic string value
-- name: Discover finder view style
-  osx_pref:
+# Set a string key
+- name: Set preferred view style
+  macos_pref:
+    domain: com.apple.finder
     key: FXPreferredViewStyle
+    value: Nlsv
+
+
+# Read a string key
+- name: Read preferred view style
+  macos_pref:
     domain: com.apple.finder
-    action: get
+    key: FXPreferredViewStyle
   register: finder_view_style
-- name: Only accept icon view
-  fail: msg="Only icons are acceptable!"
-  when: finder_view_style.value != 'icnv'
+
+- name: Check preferred view style
+  fail: msg="Only list view is acceptable!"
+  when: finder_view_style.value != 'Nlnv'
 
 
-# Set basic boolean value
-- name: Do not show connected servers on desktop
-  osx_pref:
-    key: ShowMountedServersOnDesktop
-    value: false
+# Set a boolean key
+- name: Show all files
+  macos_pref:
     domain: com.apple.finder
-    action: set
+    key: AppleShowAllFiles
+    value: true
 
 
-# Set basic string value
-- name: Set Terminal default window settings
-  osx_pref:
-    key: Default Window Settings
-    value: Pro
-    domain: com.apple.Terminal
-    action: set
+# Read a boolean key
+- name: Show all files
+  macos_pref:
+    domain: com.apple.finder
+    key: AppleShowAllFiles
+  register: show_all_files
+
+- name: Check show all files
+  fail: msg="Only show all files is acceptable!"
+  when: not show_all_files.value
 
 
-# Perform deep merge of dictionary keys. I.e. use any existing values unless
-# they are specified in the task below:
-- name: Configure finder kit standard view
-  osx_pref:
+# Set (replace) a dictionary key
+- name: Set desktop and finder icon view settings
+  macos_pref:
+    domain: com.apple.finder
     key: FK_StandardViewSettings
     value:
       IconViewSettings:
         arrangeBy: name
-        gridSpacing: 43
+        gridSpacing: 44
         iconSize: 36
         showIconPreview: true
         showItemInfo: false
         labelOnBottom: true
         textSize: 12
+
+
+# Set (merge) a dictionary key
+- name: Set desktop and finder icon size
+  macos_pref:
     domain: com.apple.finder
-    action: set
-    dict_set_method: merge
+    key: FK_StandardViewSettings
+    value:
+      IconViewSettings:
+        iconSize: 50
+    state: merge
+
+
+# Read a dictionary key
+- name: Show all files
+  macos_pref:
+    domain: com.apple.finder
+    key: FK_StandardViewSettings
+  register: finder_view_settings
+
+- name: Check show all files
+  fail: msg="Only iconSize=50 is acceptable!"
+  when: finder_view_settings.value.IconViewSettings.iconSize != 50
+
+
+# Delete a key
+- name: Set Terminal default window settings
+  macos_pref:
+    domain: com.apple.Terminal
+    key: Default Window Settings
+    state: absent 
 
 
 # Read directly from a plist file (also works for writing)
 - name: Read rumour from file
-  osx_pref:
-    key: Rumour
+  macos_pref:
     domain: /tmp/rumours.plist
+    key: Rumour
   register: rumour
 '''
 
@@ -131,8 +161,8 @@ value:
     description: The value associated with the preference domain and key.
                  Return type is a python object that maps closest to the data type of the macOS preference.
                  This can be an integer, float, string, dict, list, etc...
-    returned: when action=get
     type: string
+    returned: on success
     sample: "{'CustomViewStyleVersion': 1}"
 '''
 
@@ -153,41 +183,74 @@ else:
     pyobjc_found = True
 
 
-class PrefActor(object):
-    def __init__(self, module):
-        self.module = module
-        params = module.params
-        self.key = params['key']
-        self.domain = params['domain']
-        self.dict_set_method = params['dict_set_method']
-        self.value = params.get('value')
-        self.act = getattr(self, params['action'])
+class MacOSPrefException(Exception):
+    pass
 
-    def get(self):
-        value = get_pref(self.key, self.domain)
-        self.module.exit_json(changed=False, value=value)
 
-    def set(self):
-        changed = False
-        success = True
-        current = get_pref(self.key, self.domain)
-        if (isinstance(current, collections.MutableMapping)
-                and self.dict_set_method == 'merge'):
-            new = copy.deepcopy(current)
+class MacOSPref(object):
+
+    global pyobjc_found
+
+    def __init__(self, **kwargs):
+        # Exit if PyObjC module is not available
+        if not pyobjc_found:
+            raise MacOSPrefException("The PyObjC python module is required.")
+
+        # Set all given parameters
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+
+        # Set initial var values
+        self.current_value = None
+        self.changed = False
+        self.success = True
+        self.return_value = None
+
+    def read(self):
+        self.current_value = get_pref(self.key, self.domain)
+        self.return_value = self.current_value
+
+    def delete(self):
+        if self.current_value is None:
+            return
+
+        self.changed = True
+        self.return_value = None
+
+        if self.module.check_mode:
+            return
+
+        set_pref(self.key, None, self.domain)
+
+    def write(self):
+        if (isinstance(self.current_value, collections.MutableMapping)
+                and self.state == 'merge'):
+            new = copy.deepcopy(self.current_value)
             deep_merge_dicts(new, self.value)
         else:
             new = self.value
 
-        if new != current:
-            changed = True
-            if not self.module.check_mode:
-                if not set_pref(self.key, new, self.domain):
-                    success = False
+        if self.current_value == new:
+            return
 
-        if success:
-            self.module.exit_json(changed=changed)
-        else:
-            self.module.fail_json(changed=changed)
+        self.changed = True
+        self.return_value = new
+
+        if self.module.check_mode:
+            return
+
+        if not set_pref(self.key, new, self.domain):
+            self.success = False        
+    
+    def run(self):
+
+        self.read()
+
+        if self.state == "absent":
+            self.delete()
+
+        elif self.value is not None:
+            self.write()
 
 
 def deep_merge_dicts(base, incoming):
@@ -229,50 +292,46 @@ def set_pref(key, value, domain):
     return CoreFoundation.CFPreferencesAppSynchronize(domain)
 
 
-ARG_SPEC = dict(
-    domain=dict(
-        default="NSGlobalDomain",
-        type='str',
-        required=False
-    ),
-    key=dict(
-        type='str',
-        required=True
-    ),
-    value=dict(
-        required=False,
-        type='raw'
-    ),
-    action=dict(
-        choices=[
-            "get",
-            "set"
-        ],
-        default="get",
-        required=False
-    ),
-    dict_set_method=dict(
-        choices=[
-            "merge",
-            "replace"
-        ],
-        default="replace",
-        required=False
-    ),
-)
-
-
 def main():
     module = AnsibleModule(
-        argument_spec=ARG_SPEC,
+        argument_spec=dict(
+            domain=dict(
+                default="NSGlobalDomain",
+                type='str',
+                required=False
+            ),
+            key=dict(
+                type='str',
+                required=True
+            ),
+            value=dict(
+                required=False,
+                type='raw'
+            ),
+            state=dict(
+                choices=[
+                    "replace",
+                    "merge",
+                    "absent"
+                ],
+                default="replace",
+                required=False
+            ),
+        ),
         supports_check_mode=True
     )
 
-    if not pyobjc_found:
-            module.fail_json(msg="The PyObjC python module is required.")
-
-    actor = PrefActor(module)
-    actor.act()
+    domain = module.params['domain']
+    key = module.params['key']
+    value = module.params.get('value')
+    state = module.params['state']
+    
+    try:
+        macospref = MacOSPref(module=module, domain=domain, key=key, value=value, state=state)
+        macospref.run()
+        module.exit_json(changed=macospref.changed, value=macospref.return_value)
+    except MacOSPrefException as e:
+        module.fail_json(msg=e.message)
 
 if __name__ == '__main__':
     main()
