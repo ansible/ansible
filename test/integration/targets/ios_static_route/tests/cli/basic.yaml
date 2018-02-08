@@ -58,11 +58,18 @@
       - 'result.commands == ["ip route 172.16.31.0 255.255.255.0 10.0.0.8 2"]'
 
 - name: modify admin distance of static route again (idempotent)
+  ios_static_route: *admin2
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == false'
+
+- name: Verify idempotence with unspecified admin_distance
   ios_static_route:
     prefix: 172.16.31.0
     mask: 255.255.255.0
     next_hop: 10.0.0.8
-    admin_distance: 2
     state: present
     provider: "{{ cli }}"
   register: result
