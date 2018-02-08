@@ -20,10 +20,13 @@
 #   - Adam Friedman  <tintoy@tintoy.io>
 #
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community',
-    'version': '1.0'
+    'metadata_version': '1.1'
 }
 
 DOCUMENTATION = '''
@@ -35,7 +38,8 @@ extends_documentation_fragment:
   - dimensiondata_wait
 description:
   - Manage VLANs in Cloud Control network domains.
-version_added: "2.3"
+version_added: "2.5"
+metadata_version: "1"
 author: 'Adam Friedman (@tintoy)'
 options:
   name:
@@ -110,7 +114,7 @@ RETURN = '''
 vlan:
     description: Dictionary describing the VLAN.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: VLAN ID.
@@ -159,11 +163,10 @@ vlan:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.dimensiondata import DimensionDataModule, DimensionDataAPIException, UnknownNetworkError
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.dimensiondata import DimensionDataModule, UnknownNetworkError
 
 try:
-    from libcloud.common.dimensiondata import DimensionDataVlan
+    from libcloud.common.dimensiondata import DimensionDataVlan, DimensionDataAPIException
 
     HAS_LIBCLOUD = True
 
@@ -222,7 +225,7 @@ class DimensionDataVlanModule(DimensionDataModule):
         if not vlan:
             if self.module.check_mode:
                 self.module.exit_json(
-                    msg='VLAN "{}" is absent from network domain "{}" (should be present).'.format(
+                    msg='VLAN "{0}" is absent from network domain "{1}" (should be present).'.format(
                         self.name, self.network_domain_selector
                     ),
                     changed=False
@@ -230,7 +233,7 @@ class DimensionDataVlanModule(DimensionDataModule):
 
             vlan = self._create_vlan(network_domain)
             self.module.exit_json(
-                msg='Created VLAN "{}" in network domain "{}".'.format(
+                msg='Created VLAN "{0}" in network domain "{1}".'.format(
                     self.name, self.network_domain_selector
                 ),
                 vlan=vlan_to_dict(vlan),
@@ -240,7 +243,7 @@ class DimensionDataVlanModule(DimensionDataModule):
             diff = VlanDiff(vlan, self.module.params)
             if not diff.has_changes():
                 self.module.exit_json(
-                    msg='VLAN "{}" is present in network domain "{}" (no changes detected).'.format(
+                    msg='VLAN "{0}" is present in network domain "{1}" (no changes detected).'.format(
                         self.name, self.network_domain_selector
                     ),
                     vlan=vlan_to_dict(vlan),
@@ -251,26 +254,25 @@ class DimensionDataVlanModule(DimensionDataModule):
 
             try:
                 diff.ensure_legal_change()
-            except InvalidVlanChangeError:
-                invalid_vlan_change = get_exception()
-
+            except InvalidVlanChangeError as invalid_vlan_change:
                 self.module.fail_json(
-                    msg='Unable to update VLAN "{}" in network domain "{}": {}'.format(
+                    msg='Unable to update VLAN "{0}" in network domain "{1}": {2}'.format(
                         self.name, self.network_domain_selector, invalid_vlan_change
                     )
                 )
 
             if diff.needs_expand() and not self.allow_expand:
                 self.module.fail_json(
-                    msg='The configured private IPv4 network size ({}-bit prefix) for the VLAN differs from its current network size ({}-bit prefix) ' +
-                        'and needs to be expanded. Use allow_expand=true if this is what you want.'.format(
-                            self.private_ipv4_prefix_size, vlan.private_ipv4_range_size
-                        )
+                    msg='The configured private IPv4 network size ({0}-bit prefix) for '.format(
+                        self.private_ipv4_prefix_size
+                    ) + 'the VLAN differs from its current network size ({0}-bit prefix) '.format(
+                        vlan.private_ipv4_range_size
+                    ) + 'and needs to be expanded. Use allow_expand=true if this is what you want.'
                 )
 
             if self.module.check_mode:
                 self.module.exit_json(
-                    msg='VLAN "{}" is present in network domain "{}" (changes detected).'.format(
+                    msg='VLAN "{0}" is present in network domain "{1}" (changes detected).'.format(
                         self.name, self.network_domain_selector
                     ),
                     vlan=vlan_to_dict(vlan),
@@ -288,7 +290,7 @@ class DimensionDataVlanModule(DimensionDataModule):
                 self.driver.ex_expand_vlan(vlan)
 
             self.module.exit_json(
-                msg='Updated VLAN "{}" in network domain "{}".'.format(
+                msg='Updated VLAN "{0}" in network domain "{1}".'.format(
                     self.name, self.network_domain_selector
                 ),
                 vlan=vlan_to_dict(vlan),
@@ -310,7 +312,7 @@ class DimensionDataVlanModule(DimensionDataModule):
             )
         else:
             self.module.fail_json(
-                msg='VLAN "{}" does not exist in network domain "{}".'.format(
+                msg='VLAN "{0}" does not exist in network domain "{1}".'.format(
                     self.name, self.network_domain_selector
                 )
             )
@@ -325,7 +327,7 @@ class DimensionDataVlanModule(DimensionDataModule):
         vlan = self._get_vlan(network_domain)
         if not vlan:
             self.module.exit_json(
-                msg='VLAN "{}" is absent from network domain "{}".'.format(
+                msg='VLAN "{0}" is absent from network domain "{1}".'.format(
                     self.name, self.network_domain_selector
                 ),
                 changed=False
@@ -335,7 +337,7 @@ class DimensionDataVlanModule(DimensionDataModule):
 
         if self.module.check_mode:
             self.module.exit_json(
-                msg='VLAN "{}" is present in network domain "{}" (should be absent).'.format(
+                msg='VLAN "{0}" is present in network domain "{1}" (should be absent).'.format(
                     self.name, self.network_domain_selector
                 ),
                 vlan=vlan_to_dict(vlan),
@@ -345,7 +347,7 @@ class DimensionDataVlanModule(DimensionDataModule):
         self._delete_vlan(vlan)
 
         self.module.exit_json(
-            msg='Deleted VLAN "{}" from network domain "{}".'.format(
+            msg='Deleted VLAN "{0}" from network domain "{1}".'.format(
                 self.name, self.network_domain_selector
             ),
             changed=True
@@ -392,11 +394,9 @@ class DimensionDataVlanModule(DimensionDataModule):
             if self.wait:
                 self._wait_for_vlan_state(vlan, 'NOT_FOUND')
 
-        except DimensionDataAPIException:
-            api_exception = get_exception()
-
+        except DimensionDataAPIException as api_exception:
             self.module.fail_json(
-                msg='Failed to delete VLAN "{}" due to unexpected error from the CloudControl API: {}'.format(
+                msg='Failed to delete VLAN "{0}" due to unexpected error from the CloudControl API: {1}'.format(
                     vlan.id, api_exception.msg
                 )
             )
@@ -418,9 +418,7 @@ class DimensionDataVlanModule(DimensionDataModule):
                 vlan
             )
 
-        except DimensionDataAPIException:
-            api_exception = get_exception()
-
+        except DimensionDataAPIException as api_exception:
             if api_exception.code != 'RESOURCE_NOT_FOUND':
                 raise
 
@@ -452,7 +450,7 @@ class DimensionDataVlanModule(DimensionDataModule):
             )
         except UnknownNetworkError:
             self.module.fail_json(
-                msg='Cannot find network domain "{}" in datacenter "{}".'.format(
+                msg='Cannot find network domain "{0}" in datacenter "{1}".'.format(
                     self.network_domain_selector, self.location
                 )
             )
