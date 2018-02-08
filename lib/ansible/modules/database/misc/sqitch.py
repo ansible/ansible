@@ -18,17 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 module: sqitch
 short_description: Manage databases using sqitch
 description:
   - Manage PostgreSQL, SQLite, Oracle, MySQL, Firebird and Vertica database changes using sqitch
-version_added: "2.3"
+version_added: "2.5"
 author: "Dawid Wolski, @merito"
 requirements:
   - sqitch
@@ -139,6 +141,10 @@ EXAMPLES = '''
       - defuser='Homer Simpson'
 '''
 
+RETURN = '''
+#only defaults
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -214,23 +220,22 @@ def get_set_deploy(cmd, set_deploy):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command     = dict(default='deploy', choices=["deploy", "rebase", "revert",
-                                                          "status", "verify"]),
-            plan_file   = dict(),
-            target      = dict(),
-            engine      = dict(),
-            cwd         = dict(),
-            to_change   = dict(),
+            command = dict(default='deploy', choices=["deploy", "rebase", "revert",
+                                                      "status", "verify"]),
+            plan_file = dict(),
+            target = dict(),
+            engine = dict(),
+            cwd = dict(),
+            to_change = dict(),
             from_change = dict(),
-            dest_dir    = dict(),
-            verify      = dict(type='bool'),
-            mode        = dict(choices=["all", "tag", "change"]),
-            set         = dict(default=[], type='list'),
-            log_only    = dict(type='bool'),
-            onto        = dict(),
-            upto        = dict(),
-            set_revert  = dict(default=[], type='list'),
-            set_deploy  = dict(default=[], type='list')
+            verify = dict(type='bool'),
+            mode = dict(choices=["all", "tag", "change"]),
+            set = dict(default=[], type='list'),
+            log_only = dict(type='bool'),
+            onto = dict(),
+            upto = dict(),
+            set_revert = dict(default=[], type='list'),
+            set_deploy = dict(default=[], type='list')
         )
     )
 
