@@ -617,7 +617,7 @@ Extracting values from containers
 The `slice` filter can be used to extract the values of specific keys from a
 hash::
 
-    {{ {'x': 1, 'y': 2, 'z': 3 } | slice('x', 'z') }}
+    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
 
 This will result in::
 
