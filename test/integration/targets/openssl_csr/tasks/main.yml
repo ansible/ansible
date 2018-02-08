@@ -51,6 +51,21 @@
         privatekey_path: '{{ output_dir }}/privatekey.pem'
         commonName: www.ansible.com
 
+    - name: Generate CSR with OCSP Must Staple
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ocsp.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject_alt_name: "DNS:www.ansible.com"
+        ocsp_must_staple: true
+
+    - name: Generate CSR with OCSP Must Staple (test idempotency)
+      openssl_csr:
+        path: '{{ output_dir }}/csr_ocsp.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject_alt_name: "DNS:www.ansible.com"
+        ocsp_must_staple: true
+      register: csr_ocsp_idempotency
+
     - import_tasks: ../tests/validate.yml
 
   when: pyopenssl_version.stdout is version('0.15', '>=')
