@@ -614,6 +614,7 @@ setting in `ansible.cfg`.
 Extracting values from containers
 `````````````````````````````````
 .. versionadded:: 2.5
+
 The `slice` filter can be used to extract the values of specific keys from a
 hash::
 
