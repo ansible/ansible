@@ -27,7 +27,7 @@ import pwd
 import re
 import time
 
-from collections import Sequence
+from collections import Sequence, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -356,7 +356,7 @@ class Templar:
                 clean_list.append(self._clean_data(list_item))
             ret = clean_list
 
-        elif isinstance(orig_data, dict):
+        elif isinstance(orig_data, (dict, Mapping)):
             clean_dict = {}
             for k in orig_data:
                 clean_dict[self._clean_data(k)] = self._clean_data(orig_data[k])
@@ -509,7 +509,7 @@ class Templar:
                     overrides=overrides,
                     disable_lookups=disable_lookups,
                 ) for v in variable]
-            elif isinstance(variable, dict):
+            elif isinstance(variable, (dict, Mapping)):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
