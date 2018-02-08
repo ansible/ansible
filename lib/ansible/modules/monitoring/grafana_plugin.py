@@ -154,7 +154,7 @@ def grafana_plugin(module, params):
                             'changed': False,
                             'version': grafana_plugin_version}
                 else:
-                    if params['version'] == 'latest':
+                    if params['version'] == 'latest' or params['version'] is None:
                         cmd = '{} update {}'.format(grafana_cli, params['name'])
                     else:
                         cmd = '{} install {} {}'.format(grafana_cli, params['name'], params['version'])
@@ -164,7 +164,7 @@ def grafana_plugin(module, params):
                         'version': grafana_plugin_version}
         else:
             if 'version' in params:
-                if params['version'] == 'latest':
+                if params['version'] == 'latest' or params['version'] is None:
                     cmd = '{} install {}'.format(grafana_cli, params['name'])
                 else:
                     cmd = '{} install {} {}'.format(grafana_cli, params['name'], params['version'])
