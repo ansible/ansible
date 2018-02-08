@@ -108,6 +108,9 @@ options:
       - I(launch_template.id) the ID or the launch template (optional if name is specified)
       - I(launch_template.name) the pretty name of the launch template (optional if id is specified)
       - I(launch_template.version) the specific version of the launch template to use. If unspecified, the template default is chosen.
+  key_name:
+    description:
+    - Name of the SSH access key to assign to the instance - must exist in the region the instance is created.
   availability_zone:
     description:
     - Specify an availability zone to use the default subnet it. Useful if not specifying the I(vpc_subnet_id) parameter.
@@ -899,6 +902,8 @@ def build_top_level_options(params):
     if not spec.get('ImageId') and not params.get('launch_template'):
         module.fail_json(msg="You must include an image_id or image.id parameter to create an instance, or use a launch_template.")
 
+    if params.get('key_name') is not None:
+        spec['KeyName'] = params.get('key_name')
     if params.get('user_data') is not None:
         spec['UserData'] = to_native(params.get('user_data'))
     elif params.get('tower_callback') is not None:
@@ -1341,6 +1346,7 @@ def main():
         purge_tags=dict(type='bool', default=False),
         filters=dict(type='dict', default=None),
         launch_template=dict(type='dict'),
+        key_name=dict(type='str'),
         cpu_credit_specification=dict(type='str', choices=['standard', 'unlimited']),
         tenancy=dict(type='str', choices=['dedicated', 'default']),
         instance_initiated_shutdown_behavior=dict(type='str', choices=['stop', 'terminate']),
