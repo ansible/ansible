@@ -94,7 +94,7 @@ mount_point:
     description: url of file system
     returned: always
     type: str
-    sample: .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+    sample: fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
 mount_targets:
     description: list of mount targets
     returned: always
