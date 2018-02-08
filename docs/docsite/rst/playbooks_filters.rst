@@ -893,7 +893,7 @@ To create a UUID from a string (new in version 1.9)::
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
 
-   - debug: 
+   - debug:
        msg: test
      when: some_string_value | bool
 
@@ -903,6 +903,17 @@ To make use of one attribute from each item in a list of complex variables, use 
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
+
+.. versionadded:: 2.5
+
+The `slice` filter can be used to extract the values of specific keys from a
+hash::
+
+    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
+
+This will result in::
+
+    [1, 2]
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
@@ -919,7 +930,7 @@ This set of filters returns a list of combined lists.
 To get permutations of a list::
 
     - name: give me largest permutations (order matters)
-      debug: 
+      debug:
         msg: "{{ [1,2,3,4,5]|permutations|list }}"
 
     - name: give me permutations of sets of three
