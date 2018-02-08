@@ -122,7 +122,7 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.7.
+        will be removed in Ansible 2.6.
     required: false
     default: false
     type: bool
@@ -410,7 +410,7 @@ def main():
         save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.7')
+        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(ios_argument_spec)
