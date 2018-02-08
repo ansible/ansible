@@ -1,0 +1,12 @@
+%syntax-version=1.0.0
+%project=sqitch
+%uri=https://github.com/merito/ansible
+
+# schema
+schemas 2016-06-02T08:11:55Z Dawid Wolski <merito@local> # Add scheme
+
+# type
+types [schemas] 2016-09-06T08:43:51Z Dawid Wolski <merito@local> # Add type
+
+# table
+tests 2016-06-23T12:03:41Z Dawid Wolski <merito@local> # Add some SQL
