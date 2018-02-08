@@ -132,6 +132,10 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 
 
+# Note: `python-consul==0.7.2` kv `put` utf-8 encodes data - it cannot be configured
+_ENCODING = "utf-8"
+
+
 def execute(module):
 
     state = module.params.get('state')
@@ -159,7 +163,7 @@ def lock(module, state):
 
     index, existing = consul_api.kv.get(key)
 
-    changed = not existing or (existing and existing['Value'] != value)
+    changed = not existing or (existing and existing['Value'].decode(_ENCODING) != value)
     if changed and not module.check_mode:
         if state == 'acquire':
             changed = consul_api.kv.put(key, value,
@@ -186,7 +190,7 @@ def add_value(module):
 
     index, existing = consul_api.kv.get(key)
 
-    changed = not existing or (existing and existing['Value'] != value)
+    changed = not existing or (existing and existing['Value'].decode(_ENCODING) != value)
     if changed and not module.check_mode:
         changed = consul_api.kv.put(key, value,
                                     cas=module.params.get('cas'),
