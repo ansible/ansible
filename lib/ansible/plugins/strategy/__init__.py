@@ -763,7 +763,8 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
-            ti_copy = included_file._task.copy()
+            ti_copy = included_file._task.copy(exclude_parent=True)
+            ti_copy._parent = included_file._task._parent
             temp_vars = ti_copy.vars.copy()
             temp_vars.update(included_file._args)
             # pop tags out of the include args, if they were specified there, and assign
