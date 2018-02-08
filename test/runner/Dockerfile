@@ -49,6 +49,9 @@ RUN ln -s python2.7 /usr/bin/python2
 RUN ln -s python3.6 /usr/bin/python3
 RUN ln -s python3   /usr/bin/python
 
+# Install dotnet core SDK, pwsh, and other PS/.NET sanity test tools.
+# For now, we need to manually purge XML docs and other items from a Nuget dir to vastly reduce the image size.
+# See https://github.com/dotnet/dotnet-docker/issues/237 for details.
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     apt-transport-https \
@@ -60,6 +63,8 @@ RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     dotnet-sdk-2.1.4 \
     powershell \
+    && \
+    find /usr/share/dotnet/sdk/NuGetFallbackFolder/ -name '*.xml' -type f -delete \
     && \
     apt-get clean
 RUN dotnet --version
