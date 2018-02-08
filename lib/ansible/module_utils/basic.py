@@ -170,7 +170,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -1778,7 +1778,16 @@ class AnsibleModule(object):
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
                 if k in param:
-                    if param[k] not in choices:
+                    # Allow one or more when type='list' param with choices
+                    if isinstance(param[k], list):
+                        diff_list = ", ".join([item for item in param[k] if item not in choices])
+                        if diff_list:
+                            choices_str = ", ".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                            if self._options_context:
+                                msg += " found in %s" % " -> ".join(self._options_context)
+                            self.fail_json(msg=msg)
+                    elif param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
