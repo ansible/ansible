@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -93,9 +92,9 @@ state:
     sample: present
 '''
 
-import re
 
 from ansible.module_utils.basic import AnsibleModule
+import re
 
 
 class NICTAG(object):
@@ -122,7 +121,7 @@ class NICTAG(object):
         cmd.append('exists')
         cmd.append(self.name)
 
-        (rc, _, _) = self.module.run_command(cmd)
+        (rc, dummy, dummy) = self.module.run_command(cmd)
 
         if rc == 0:
             return True
