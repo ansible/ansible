@@ -4,8 +4,10 @@
 # (c) 2018, Bruce Smith <Bruce.Smith.IT@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function 
 __metaclass__ = type
+
+import re
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -14,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nictagadm
-short_description: Manage NIC tags on Solaris/Illumos systems. 
+short_description: Manage NIC tags on SmartOS systems. 
 description:
-  - Create of delete NIC tags on Solaris/Illumos systems.
+  - Create of delete NIC tags on SmartOS systems.
 version_added: "2.5"
 author: Bruce Smith (@SmithX10)
 options:
@@ -38,14 +40,14 @@ options:
         description:
             - MTU size of the NIC tag
         required: false
-        default: 1500
+        default: None 
     force:
         description:
             - When State.Absent is set this switch will use the -f parameter and delete the NIC tag regardless of existing VMs
         default: false
     state:
         description:
-            - Create or delete a Solaris/illumos NIC tag.
+            - Create or delete a SmartOS NIC tag.
         required: false
         default: "present"
         choices: [ "present", "absent" ]
@@ -66,17 +68,17 @@ name:
     type: string
     sample: storage0
 mac: 
-    description: MAC Address that the nic tag was attached to. (Ignored if etherstub is specified)
+    description: MAC Address that the nic tag was attached to. mac and etherstub are mutually exclusive.
     returned: always
     type: string
     sample: 00:1b:21:a3:f5:4d 
 etherstub:
-    description: specifies if the NIC tag will create and attach to an etherstub.
+    description: specifies if the NIC tag will create and attach to an etherstub.  etherstub is mutually exclusive with both mac, and mtu.
     returned: always
     type: boolean
     sample: False
 mtu:
-    description: specifies which MTU size was passed during the nictagadm add command.  (Ignored if etherstub is specified)
+    description: specifies which MTU size was passed during the nictagadm add command. mtu and etherstub are mutually exclusive.
     returned: always
     type: int
     sample: 1500
@@ -105,7 +107,13 @@ class NICTAG(object):
       self.mtu = module.params['mtu']
       self.force = module.params['force']
       self.state = module.params['state']
-    
+
+    def is_valid_mac(self):
+        if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", self.mac.lower()):
+            return True
+        else:
+            return False
+
     def nictag_exists(self):
         cmd = [self.module.get_bin_path('nictagadm', True)]
 
@@ -127,8 +135,8 @@ class NICTAG(object):
 
         if self.etherstub:
             cmd.append('-l')
-            self.mac = None
-            self.mtu = None
+            # self.mac = None
+            # self.mtu = None
 
         if self.mtu:
             cmd.append('-p')
@@ -161,10 +169,14 @@ def main():
             name=dict(required=True, type='str'),
             mac=dict(default=None, type='str'),
             etherstub=dict(default=False, type='bool'),
-            mtu=dict(default=1500, type='int'),
+            mtu=dict(default=None, type='int'),
             force=dict(default=False, type='bool'),
             state=dict(default='present', choices=['absent', 'present']),
         ),
+        mutually_exclusive=[
+            ['etherstub', 'mac'],
+            ['etherstub', 'mtu'],
+        ],
         required_if=[
             ['etherstub', False, ['name', 'mac']],
             ['state', 'absent', ['name', 'force']],
@@ -184,6 +196,16 @@ def main():
     result['mtu'] = nictag.mtu
     result['force'] = nictag.force
     result['state'] = nictag.state
+
+    if not nictag.is_valid_mac():
+        module.fail_json(msg='Invalid MAC Address Value',
+                         name=nictag.name,
+                         mac=nictag.mac,
+                         etherstub=nictag.etherstub,
+                         mtu=nictag.mtu,
+                         force=nictag.force,
+                         state=nictag.state)
+    result['mac'] = nictag.mac
 
     if nictag.state == 'absent':
         if nictag.nictag_exists():
