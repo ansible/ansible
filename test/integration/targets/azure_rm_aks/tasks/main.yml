@@ -4,6 +4,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+     kubernetes_version: 1.7.7
      linux_profile:
          - admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSPmiqkvDH1/+MDAVDZT8381aYqp73Odz8cnD5hegNhqtXajqtiH0umVg7HybX3wt1HjcrwKJovZURcIbbcDvzdH2bnYbF93T4OLXA0bIfuIp6M86x1iutFtXdpN3TTicINrmSXEE2Ydm51iMu77B08ZERjVaToya2F7vC+egfoPvibf7OLxE336a5tPCywavvNihQjL8sjgpDT5AAScjb3YqK/6VLeQ18Ggt8/ufINsYkb+9/Ji/3OcGFeflnDXq80vPUyF3u4iIylob6RSZenC38cXmQB05tRNxS1B6BXCjMRdy0v4pa7oKM2GA4ADKpNrr0RI9ed+peRFwmsclH test@ansible
@@ -18,6 +19,28 @@
      that:
        - output.changed
        - output.state.provisioning_state == 'Succeeded'
+
+ - name: Upgrade the AKS instance
+   azure_rm_aks:
+     name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+     resource_group: "{{ resource_group }}"
+     location: eastus
+     dns_prefix: "aks{{ resource_group | hash('md5') | truncate(10, True, '') }}"
+     kubernetes_version: 1.8.1
+     linux_profile:
+         - admin_username: azureuser
+           ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDSPmiqkvDH1/+MDAVDZT8381aYqp73Odz8cnD5hegNhqtXajqtiH0umVg7HybX3wt1HjcrwKJovZURcIbbcDvzdH2bnYbF93T4OLXA0bIfuIp6M86x1iutFtXdpN3TTicINrmSXEE2Ydm51iMu77B08ZERjVaToya2F7vC+egfoPvibf7OLxE336a5tPCywavvNihQjL8sjgpDT5AAScjb3YqK/6VLeQ18Ggt8/ufINsYkb+9/Ji/3OcGFeflnDXq80vPUyF3u4iIylob6RSZenC38cXmQB05tRNxS1B6BXCjMRdy0v4pa7oKM2GA4ADKpNrr0RI9ed+peRFwmsclH test@ansible
+     agent_pool_profiles:
+         - name: default
+           count: 1
+           vm_size: Standard_A0
+   register: output
+
+ - name: Assert the AKS instance is upgraded
+   assert:
+      that:
+       - output.changed
+       - output.state.kubernetes_version == '1.8.1'
 
  - name: Scale the AKS instance agent count from 1 to 2
    azure_rm_aks:
