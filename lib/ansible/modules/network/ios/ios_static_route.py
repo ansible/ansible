@@ -50,7 +50,6 @@ options:
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
   aggregate:
     description: List of static route definitions.
   state:
@@ -98,14 +97,14 @@ commands:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
 from copy import deepcopy
+import re
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
-import re
 
 try:
     from ipaddress import ip_network
@@ -114,23 +113,39 @@ except ImportError:
     HAS_IPADDRESS = False
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(want, have, module):
     commands = list()
-    want, have = updates
 
     for w in want:
+        # Try to match an existing config with the desired config
+        for h in have:
+            for key in ['prefix', 'mask', 'next_hop']:
+                # If any key doesn't match, skip to the next set
+                if w[key] != h[key]:
+                    break
+            # If all keys match, don't execute final else
+            else:
+                break
+        # If no matches found, clear `h`
+        else:
+            h = None
+
         prefix = w['prefix']
         mask = w['mask']
         next_hop = w['next_hop']
-        admin_distance = w['admin_distance']
+        admin_distance = w.get('admin_distance')
+        if not admin_distance and h and h.get('admin_distance'):
+            w['admin_distance'] = admin_distance = h.get('admin_distance')
         state = w['state']
         del w['state']
 
         if state == 'absent' and w in have:
             commands.append('no ip route %s %s %s' % (prefix, mask, next_hop))
         elif state == 'present' and w not in have:
-            commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop,
-                                                      admin_distance))
+            if admin_distance:
+                commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop, admin_distance))
+            else:
+                commands.append('ip route %s %s %s' % (prefix, mask, next_hop))
 
     return commands
 
@@ -174,18 +189,19 @@ def map_params_to_obj(module, required_together=None):
                     item[key] = module.params[key]
 
             module._check_required_together(required_together, item)
-            d = item.copy()
-            d['admin_distance'] = str(module.params['admin_distance'])
-
-            obj.append(d)
+            obj.append(item.copy())
     else:
         obj.append({
             'prefix': module.params['prefix'].strip(),
             'mask': module.params['mask'].strip(),
             'next_hop': module.params['next_hop'].strip(),
-            'admin_distance': str(module.params['admin_distance']),
             'state': module.params['state']
         })
+
+    admin_distance = module.params.get('admin_distance')
+    if admin_distance:
+        for route in obj:
+            route['admin_distance'] = str(admin_distance)
 
     return obj
 
@@ -197,7 +213,7 @@ def main():
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
-        admin_distance=dict(default=1, type='int'),
+        admin_distance=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -236,7 +252,7 @@ def main():
     want = map_params_to_obj(module, required_together=required_together)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:
@@ -246,6 +262,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
