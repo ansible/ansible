@@ -1,29 +1,19 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+# Copyright (c) 2018 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
 DOCUMENTATION = """
 ---
-module: edgeos_onfig
+module: edgeos_config
 version_added: "2.5"
 author:
     - "Nathaniel Case (@qalthos)"
@@ -79,7 +69,7 @@ options:
         when the configuration is committed. If the configuration is
         not changed or committed, this argument is ignored.
     required: false
-    default: 'configured by edgeos_onfig'
+    default: 'configured by edgeos_config'
   config:
     description:
       - The C(config) argument specifies the base configuration to use
@@ -101,14 +91,14 @@ options:
 
 EXAMPLES = """
 - name: configure the remote device
-  edgeos_onfig:
+  edgeos_config:
     lines:
       - set system host-name {{ inventory_hostname }}
       - set service lldp
       - delete service dhcp-server
 
 - name: backup and load from file
-  edgeos_onfig:
+  edgeos_config:
     src: edgeos.cfg
     backup: yes
 """
@@ -130,13 +120,14 @@ backup_path:
   type: string
   sample: /playbooks/ansible/backup/edgeos_config.2016-07-16@22:28:34
 """
+
 import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, run_commands
 
-DEFAULT_COMMENT = 'configured by edgeos_onfig'
+DEFAULT_COMMENT = 'configured by edgeos_config'
 
 CONFIG_FILTERS = [
     re.compile(r'set system login user \S+ authentication encrypted-password')
