@@ -72,7 +72,7 @@
     name: lbtestfromansible
     state: absent
 
-- name: create load balancer with mutilple parameters
+- name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
     name: lbtestfromansible
@@ -95,7 +95,10 @@
       - name: lbrbalancingrule0
         frontend_ip_configuration: frontendipconf0
         backend_address_pool: backendaddrpool0
+        frontend_port: 80
+        backend_port: 80
         probe: prob0
+  register: output
 
 - name: assert complex load balancer created
   assert:

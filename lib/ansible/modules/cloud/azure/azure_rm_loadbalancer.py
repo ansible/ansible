@@ -1,22 +1,6 @@
 #!/usr/bin/python
-#
 # Copyright (c) 2016 Thomas Stringer, <tomstr@microsoft.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -49,50 +33,47 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the load balancer. Use C(present) to create or update a load balancer and
-              C(absent) to delete a load balancer.
+            - Assert the state of the load balancer. Use C(present) to create/update a load balancer, or
+              C(absent) to delete one.
         default: present
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     frontend_ip_configurations:
-        description: Object representing the frontend IPs to be used for the load balancer.
+        description: List of frontend IPs to be used
         suboptions:
             name:
-                description: name of the frontend ip configurations.
+                description: Name of the frontend ip configuration.
                 required: True
             public_ip_address:
-                description: Name of an existing public IP address object to associate with the security group.
+                description: Name of an existing public IP address object in the current resource group to associate with the security group.
                 required: True
         version_added: 2.5
     backend_address_pools:
-        description: Collection of backend address pools used by a load balancer.
+        description: List of backend address pools
         suboptions:
             name:
-                description: name of the backend address pool.
+                description: Name of the backend address pool.
                 required: True
         version_added: 2.5
     probes:
-        description: Collection of probe objects used in the load balancer.
+        description: List of probe definitions used to check endpoint health.
         suboptions:
             name:
-                description: name of the probe.
+                description: Name of the probe.
                 required: True
             port:
-                description: The port for communicating the probe. Possible values range from 1 to 65535, inclusive.
+                description: Probe port for communicating the probe. Possible values range from 1 to 65535, inclusive.
                 required: True
             protocol:
                 description:
-                    - The protocol of the end point.
-                    - "Possible values are: C(Http) or C(Tcp)."
+                    - The protocol of the end point to be probed.
                     - If 'Tcp' is specified, a received ACK is required for the probe to be successful.
-                    - If 'Http' is specified, a 200 OK response from the specifies URI is required for the probe to be successful.
+                    - If 'Http' is specified, a 200 OK response from the specified URL is required for the probe to be successful.
                 choices:
                     - Tcp
                     - Http
@@ -103,13 +84,13 @@ options:
                     - Slightly less than half the allocated timeout period, which allows two full probes before taking the instance out of rotation.
                     - The default value is 15, the minimum value is 5.
                 default: 15
-            number_of_probes:
+            fail_count:
                 description:
                     - The number of probes where if no response, will result in stopping further traffic from being delivered to the endpoint.
                     - This values allows endpoints to be taken out of rotation faster or slower than the typical times used in Azure.
                 default: 3
                 aliases:
-                    - fail_count
+                    - number_of_probes
             request_path:
                 description:
                     - The URI used for requesting health status from the VM.
@@ -125,13 +106,13 @@ options:
             - They have to reference individual inbound NAT rules.
         suboptions:
             name:
-                description: name of the inbound nat pool.
+                description: Name of the inbound NAT pool.
                 required: True
             frontend_ip_configuration_name:
                 description: A reference to frontend IP addresses.
                 required: True
             protocol:
-                description: "Possible values include: C(Udp), C(Tcp), C(All)."
+                description: IP protocol for the NAT pool
                 choices:
                     - Tcp
                     - Udp
@@ -139,12 +120,12 @@ options:
                 default: Tcp
             frontend_port_range_start:
                 description:
-                    - The first port number in the range of external ports that will be used to provide Inbound Nat to NICs associated with a load balancer.
+                    - The first port in the range of external ports that will be used to provide inbound NAT to NICs associated with the load balancer.
                     - Acceptable values range between 1 and 65534.
                 required: True
             frontend_port_range_end:
                 description:
-                    - The last port number in the range of external ports that will be used to provide Inbound Nat to NICs associated with a load balancer.
+                    - The last port in the range of external ports that will be used to provide inbound NAT to NICs associated with the load balancer.
                     - Acceptable values range between 1 and 65535.
                 required: True
             backend_port:
@@ -166,10 +147,10 @@ options:
                 description: A reference to a pool of DIPs. Inbound traffic is randomly load balanced across IPs in the backend IPs.
                 required: True
             probe:
-                description: The reference of the load balancer probe used by the load balancing rule.
+                description: The name of the load balancer probe this rule should use for health checks.
                 required: True
             protocol:
-                description: "Possible values include: C(Udp), C(Tcp), C(All)."
+                description: IP protocol for the load balancing rule.
                 choices:
                     - Tcp
                     - Udp
@@ -177,8 +158,7 @@ options:
                 default: Tcp
             load_distribution:
                 description:
-                    - The load distribution policy for this rule.
-                    - Possible values are C(Default), C(SourceIP), and C(SourceIPProtocol).
+                    - The session persistence policy for this rule; C(Default) is no persistence.
                 choices:
                     - Default
                     - SourceIP
@@ -187,7 +167,7 @@ options:
             frontend_port:
                 description:
                     - The port for the external endpoint.
-                    - Port numbers for each rule must be unique within the Load Balancer.
+                    - Frontend port numbers must be unique across all rules within the load balancer.
                     - Acceptable values are between 0 and 65534.
                     - Note that value 0 enables "Any Port"
             backend_port:
@@ -207,8 +187,8 @@ options:
         version_added: 2.5
     public_ip_address_name:
         description:
-            - (Deprecate) Name of an existing public IP address object to associate with the security group.
-            - This option will be deprecated in 2.9, use I(frontend_ip_configurations) instead.
+            - (deprecated) Name of an existing public IP address object to associate with the security group.
+            - This option has been deprecated, and will be removed in 2.9. Use I(frontend_ip_configurations) instead.
         aliases:
             - public_ip_address
             - public_ip_name
@@ -216,46 +196,46 @@ options:
         required: false
     probe_port:
         description:
-            - (Deprecate) The port that the health probe will use.
-            - This option will be deprecated in 2.9, use I(probes) instead.
+            - (deprecated) The port that the health probe will use.
+            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         required: false
     probe_protocol:
         description:
-            - (Deprecate) The protocol to use for the health probe.
-            - This option will be deprecated in 2.9, use I(probes) instead.
+            - (deprecated) The protocol to use for the health probe.
+            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         required: false
         choices:
             - Tcp
             - Http
     probe_interval:
         description:
-            - (Deprecate) How much time (in seconds) to probe the endpoint for health.
-            - This option will be deprecated in 2.9, use I(probes) instead.
+            - (deprecated) Time (in seconds) between endpoint health probes.
+            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         default: 15
         required: false
     probe_fail_count:
         description:
-            - (Deprecate) The amount of probe failures for the load balancer to make a health determination.
-            - This option will be deprecated in 2.9, use I(probes) instead.
+            - (deprecated) The amount of probe failures for the load balancer to make a health determination.
+            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         default: 3
         required: false
     probe_request_path:
         description:
-            - (Deprecate) The URL that an HTTP probe will use (only relevant if probe_protocol is set to Http).
-            - This option will be deprecated in 2.9, use I(probes) instead.
+            - (deprecated) The URL that an HTTP probe will use (only relevant if probe_protocol is set to Http).
+            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
         required: false
     protocol:
         description:
-            - (Deprecate) The protocol (TCP or UDP) that the load balancer will use.
-            - This option will be deprecated in 2.9, use I(load_balancing_rules) instead.
+            - (deprecated) The protocol (TCP or UDP) that the load balancer will use.
+            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         required: false
         choices:
             - Tcp
             - Udp
     load_distribution:
         description:
-            - (Deprecate) The type of load distribution that the load balancer will employ.
-            - This option will be deprecated in 2.9, use I(load_balancing_rules) instead.
+            - (deprecated) The type of load distribution that the load balancer will employ.
+            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         required: false
         choices:
             - Default
@@ -263,39 +243,39 @@ options:
             - SourceIPProtocol
     frontend_port:
         description:
-            - (Deprecate) Frontend port that will be exposed for the load balancer.
-            - This option will be deprecated in 2.9, use I(load_balancing_rules) instead.
+            - (deprecated) Frontend port that will be exposed for the load balancer.
+            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         required: false
     backend_port:
         description:
-            - (Deprecate) Backend port that will be exposed for the load balancer.
-            - This option will be deprecated in 2.9, use I(load_balancing_rules) instead.
+            - (deprecated) Backend port that will be exposed for the load balancer.
+            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         required: false
     idle_timeout:
         description:
-            - (Deprecate) Timeout for TCP idle connection in minutes.
-            - This option will be deprecated in 2.9, use I(load_balancing_rules) instead.
+            - (deprecated) Timeout for TCP idle connection in minutes.
+            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
         default: 4
         required: false
     natpool_frontend_port_start:
         description:
-            - (Deprecate) Start of the port range for a NAT pool.
-            - This option will be deprecated in 2.9, use I(inbound_nat_pools) instead.
+            - (deprecated) Start of the port range for a NAT pool.
+            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
         required: false
     natpool_frontend_port_end:
         description:
-            - (Deprecate) End of the port range for a NAT pool.
-            - This option will be deprecated in 2.9, use I(inbound_nat_pools) instead.
+            - (deprecated) End of the port range for a NAT pool.
+            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
         required: false
     natpool_backend_port:
         description:
-            - (Deprecate) Backend port used by the NAT pool.
-            - This option will be deprecated in 2.9, use I(inbound_nat_pools) instead.
+            - (deprecated) Backend port used by the NAT pool.
+            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
         required: false
     natpool_protocol:
         description:
-            - (Deprecate) The protocol for the NAT pool.
-            - This option will be deprecated in 2.9, use I(inbound_nat_pools) instead.
+            - (deprecated) The protocol for the NAT pool.
+            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
         required: false
 extends_documentation_fragment:
     - azure
@@ -307,6 +287,7 @@ author:
 '''
 
 EXAMPLES = '''
+    # TODO: this example needs update for 2.5+ module args
     - name: Create a load balancer
       azure_rm_loadbalancer:
         name: myloadbalancer
@@ -388,10 +369,10 @@ probes_spec = dict(
         type='int',
         default=15
     ),
-    number_of_probes=dict(
+    fail_count=dict(
         type='int',
         default=3,
-        aliases=['fail_count']
+        aliases=['number_of_probes']
     ),
     request_path=dict(
         type='str'
@@ -456,7 +437,8 @@ load_balancing_rule_spec = dict(
         default='Default'
     ),
     frontend_port=dict(
-        type='int'
+        type='int',
+        required=True
     ),
     backend_port=dict(
         type='int'
@@ -619,8 +601,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         if self.state == 'present':
             # compatible parameters
             if not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools:
-                self.deprecate('Flatten setting is deprecated and will be removed.'
-                               ' Using frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools list to define', version='2.9')
+                self.deprecate('Discrete load balancer config settings are deprecated and will be removed.'
+                               ' Use frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools lists instead.', version='2.9')
                 frontend_ip_name = 'frontendip0'
                 backend_address_pool_name = 'backendaddrp0'
                 prob_name = 'prob0'
@@ -638,7 +620,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                     port=self.probe_port,
                     protocol=self.probe_protocol,
                     interval=self.probe_interval,
-                    number_of_probes=self.probe_fail_count,
+                    fail_count=self.probe_fail_count,
                     request_path=self.probe_request_path
                 )] if self.probe_protocol else None
                 self.inbound_nat_pools = [dict(
@@ -689,7 +671,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 protocol=item.get('protocol'),
                 interval_in_seconds=item.get('interval'),
                 request_path=item.get('request_path'),
-                number_of_probes=item.get('number_of_probes')
+                number_of_probes=item.get('fail_count')
             ) for item in self.probes] if self.probes else None
 
             inbound_nat_pools_param = [self.network_models.InboundNatPool(
@@ -745,7 +727,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 frontend_ip_configurations=frontend_ip_configurations_param,
                 backend_address_pools=backend_address_pools_param,
                 probes=probes_param,
-                inbound_nat_pools=inbound_nat_pools_param
+                inbound_nat_pools=inbound_nat_pools_param,
+                load_balancing_rules=load_balancing_rules_param
             )
 
             self.create_or_update_load_balancer(param)
