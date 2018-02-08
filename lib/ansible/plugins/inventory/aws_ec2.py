@@ -46,7 +46,7 @@ DOCUMENTATION = '''
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
-              use the syntax tag:Name=Value to use the hostname Name_Value.
+              use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
@@ -75,6 +75,7 @@ simple_config_file:
     strict_permissions: False
     hostnames:
       - tag:Name=Tag1,Name=Tag2
+      - tag:CustomDNSName
       - dns-name
 
     # constructed features may be used to create custom groups
@@ -324,11 +325,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             tag_hostnames = tag_hostnames.split(',')
         else:
             tag_hostnames = [tag_hostnames]
+        tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
         for v in tag_hostnames:
-            tag_name, tag_value = v.split('=')
-            tags = boto3_tag_list_to_ansible_dict(instance.get('Tags', []))
-            if tags.get(tag_name) == tag_value:
-                return to_text(tag_name) + "_" + to_text(tag_value)
+            if '=' in v:
+                tag_name, tag_value = v.split('=')
+                if tags.get(tag_name) == tag_value:
+                    return to_text(tag_name) + "_" + to_text(tag_value)
+            else:
+                tag_value = tags.get(v)
+                if tag_value:
+                    return to_text(tag_value)
         return None
 
     def _get_hostname(self, instance, hostnames):
