@@ -227,7 +227,7 @@ class DimensionDataVlanModule(DimensionDataModule):
                     msg='VLAN "{0}" is absent from network domain "{1}" (should be present).'.format(
                         self.name, self.network_domain_selector
                     ),
-                    changed=False
+                    changed=True
                 )
 
             vlan = self._create_vlan(network_domain)
@@ -275,7 +275,7 @@ class DimensionDataVlanModule(DimensionDataModule):
                         self.name, self.network_domain_selector
                     ),
                     vlan=vlan_to_dict(vlan),
-                    changed=False
+                    changed=True
                 )
 
             if diff.needs_edit():
@@ -340,7 +340,7 @@ class DimensionDataVlanModule(DimensionDataModule):
                     self.name, self.network_domain_selector
                 ),
                 vlan=vlan_to_dict(vlan),
-                changed=False
+                changed=True
             )
 
         self._delete_vlan(vlan)
