@@ -44,11 +44,11 @@ options:
         required: false
     dns_prefix:
         description:
-            - DNS Prefix
+            - DNS prefix specified when creating the managed cluster.
         required: true
     kubernetes_version:
         description:
-            - Kubernetes Version
+            - Version of Kubernetes specified when creating the managed cluster.
         required: false
     linux_profile:
         description:
@@ -80,6 +80,18 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
+            os_disk_size_gb:
+                description:
+                    - Size of the OS disk.
+                required: false
+            storage_profile:
+                description:
+                    - Storage profile specifies what kind of storage used.
+                required: false
+                choices:
+                    - StorageAccount
+                    - ManagedDisks
+                default: ManagedDisks
     service_principal:
         description:
             - The service principal suboptions.
@@ -156,15 +168,14 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from msrestazure.azure_exceptions import CloudError
     from azure.mgmt.containerservice.models import (
-        ManagedCluster,
-        ContainerServiceServicePrincipalProfile,
-        ContainerServiceAgentPoolProfile,
-        ContainerServiceLinuxProfile, ContainerServiceSshConfiguration,
-        ContainerServiceSshPublicKey
+        ManagedCluster, ContainerServiceServicePrincipalProfile,
+        ContainerServiceAgentPoolProfile, ContainerServiceLinuxProfile,
+        ContainerServiceSshConfiguration, ContainerServiceSshPublicKey
     )
 except ImportError:
     # This is handled in azure_rm_common
     pass
+
 
 def create_agent_pool_profile_instance(self, agentpoolprofile):
     '''
@@ -175,8 +186,11 @@ def create_agent_pool_profile_instance(self, agentpoolprofile):
     return ContainerServiceAgentPoolProfile(
         name=agentpoolprofile['name'],
         count=agentpoolprofile['count'],
-        vm_size=agentpoolprofile['vm_size']
+        vm_size=agentpoolprofile['vm_size'],
+        os_disk_size_gb=agentpoolprofile['os_disk_size_gb'],
+        storage_profile=agentpoolprofile['storage_profile']
     )
+
 
 def create_service_principal_profile_instance(self, spnprofile):
     '''
@@ -214,6 +228,7 @@ def create_ssh_configuration_instance(self, sshconf):
     return ContainerServiceSshConfiguration(
         public_keys=listssh
     )
+
 
 def create_aks_dict(aks):
     '''
@@ -271,6 +286,8 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
         count=profile.count,
         vm_size=profile.vm_size,
         name=profile.name,
+        os_disk_size_gb=profile.os_disk_size_gb,
+        storage_profile=profile.storage_profile,
     ) for profile in agentpoolprofiles]
 
 
@@ -333,8 +350,8 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMManagedContainerService, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                      supports_check_mode=True,
-                                                      supports_tags=True)
+                                                             supports_check_mode=True,
+                                                             supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -478,7 +495,7 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
 
         try:
             poller = self.containerservice_client.managed_clusters.create_or_update(self.resource_group, self.name,
-                                                                                      parameters)
+                                                                                    parameters)
             response = self.get_poller_result(poller)
         except CloudError as exc:
             self.log('Error attempting to create the AKS instance.')
