@@ -28,22 +28,22 @@ description:
     - Add or remove flavor, volume_type or other resources access
       from OpenStack.
 options:
-   state:
-     description:
-        - Indicate desired state of the resource.
-     choices: ['present', 'absent']
-     required: false
-     default: present
-   target_project_id:
-     description:
-        - Project id.
-     required: true
-   resource_type:
-     description:
-        - The resource type (eg. nova_flavor, cinder_volume_type).
-   resource_name:
-     description:
-        - The resource name (eg. tiny).
+  state:
+    description:
+      - Indicate desired state of the resource.
+    choices: ['present', 'absent']
+    required: false
+    default: present
+  target_project_id:
+    description:
+      - Project id.
+    required: true
+  resource_type:
+    description:
+      - The resource type (eg. nova_flavor, cinder_volume_type).
+  resource_name:
+    description:
+      - The resource name (eg. tiny).
 requirements:
     - "shade"
 
@@ -95,8 +95,7 @@ except ImportError:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec
-
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
 
 def _get_allowed_projects(cloud, flavor_id):
     return [x.tenant_id
