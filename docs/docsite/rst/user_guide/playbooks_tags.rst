@@ -129,7 +129,7 @@ tags applied to the tasks with the ``--list-tags`` option.
     or other dynamic includes. Tags applied to either of these only tag the
     include itself.
 
-    To use tags with tasks and roles intended for use as dynamic `include`s,
+    To use tags with tasks and roles intended for dynamic inclusions,
     all needed tasks should be explicitly tagged at the task level; or
     ``block:`` may be used to tag more than one task at once. The include
     itself should also be tagged.
