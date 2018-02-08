@@ -629,19 +629,24 @@ class Templar:
                                        "original message: %s" % (name, type(e), e))
                 ran = None
 
+            if ran is None and wantlist:
+                ran = []
+
             if ran and not allow_unsafe:
+                # We wish lookup plugins always returned lists but we haven't enforced it until now.
+                # Note that previous to adding the following conversion in 2.5, strings would have
+                # output: "t.h.i.s. .s.t.r.i.n.g" and wantlist=True would have output the input
+                # terms instead of a list.  A single integer or float would have worked correctly,
+                # though.
+                if not isinstance(ran, Sequence) or isinstance(ran, (text_type, binary_type)):
+                    ran = [ran]
+
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
                     try:
                         ran = UnsafeProxy(",".join(ran))
                     except TypeError:
-                        # Lookup Plugins should always return lists.  Throw an error if that's not
-                        # the case:
-                        if not isinstance(ran, Sequence):
-                            raise AnsibleError("The lookup plugin '%s' did not return a list."
-                                               % name)
-
                         # The TypeError we can recover from is when the value *inside* of the list
                         # is not a string
                         if len(ran) == 1:
