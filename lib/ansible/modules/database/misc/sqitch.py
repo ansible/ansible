@@ -219,23 +219,22 @@ def get_set_deploy(cmd, set_deploy):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            command = dict(default='deploy', choices=["deploy", "rebase", "revert",
-                                                      "status", "verify"]),
-            plan_file = dict(),
-            target = dict(),
-            engine = dict(),
-            cwd = dict(),
-            to_change = dict(),
-            from_change = dict(),
-            verify = dict(type='bool'),
-            mode = dict(choices=["all", "tag", "change"]),
-            set = dict(default=[], type='list'),
-            log_only = dict(type='bool'),
-            onto = dict(),
-            upto = dict(),
-            set_revert = dict(default=[], type='list'),
-            set_deploy = dict(default=[], type='list')
+        argument_spec=dict(
+            command=dict(default='deploy', choices=["deploy", "rebase", "revert", "status", "verify"]),
+            plan_file=dict(),
+            target=dict(),
+            engine=dict(),
+            cwd=dict(),
+            to_change=dict(),
+            from_change=dict(),
+            verify=dict(type='bool'),
+            mode=dict(choices=["all", "tag", "change"]),
+            set=dict(default=[], type='list'),
+            log_only=dict(type='bool'),
+            onto=dict(),
+            upto=dict(),
+            set_revert=dict(default=[], type='list'),
+            set_deploy=dict(default=[], type='list')
         )
     )
 
