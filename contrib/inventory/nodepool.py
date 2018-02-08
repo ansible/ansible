@@ -7,7 +7,8 @@ Nodepool external inventory script
 Generates an inventory that Ansible can understand by making Zookeeper calls
 to the Nodepool service using the kazoo library.
 Zookeeper IP and port are read from environment variables NODEPOOL_ZK_IP and
-NODEPOOL_ZK_PORT respectively. If those variables are not set, the script defaults
+NODEPOOL_ZK_PORT respectively. If those variables are not set, the script checks if
+/etc/nodepool/nodepool.yaml exists and reads values from there, otherwise it defaults
 to 127.0.0.1 for the address and 2181 for the port.
 Example:
 
@@ -54,6 +55,7 @@ When run against a specific host, this script returns the following variables:
 import argparse
 import os
 import sys
+import yaml
 
 try:
     import json
@@ -91,10 +93,23 @@ class NodepoolInventory(object):
         return parser.parse_args()
 
     def initialize_zk(self):
-        zk_address = os.environ.get('NODEPOOL_ZK_IP', '127.0.0.1')
-        zk_port = os.environ.get('NODEPOOL_ZK_PORT', '2181')
-        self.zk = kazoo.client.KazooClient(hosts='{0}:{1}'.format(zk_address, zk_port))
+        if 'NODEPOOL_ZK_IP' in os.environ:
+            zk_address = os.environ['NODEPOOL_ZK_IP']
+            zk_port = os.environ.get('NODEPOOL_ZK_PORT', '2181')
+        elif os.path.isfile('/etc/nodepool/nodepool.yaml'):
+            with open('/etc/nodepool/nodepool.yaml') as f:
+                try:
+                    y = yaml.load(f)
+                    zk = y['zookeeper-servers'][0]
+                    zk_address = zk['host']
+                    zk_port = zk.get('port', 2181)
+                except:
+                    sys.exit("Unable to parse /etc/nodepool/nodepool.yaml as valid YAML file")
+        else:
+            zk_address = '127.0.0.1'
+            zk_port = '2181'
 
+        self.zk = kazoo.client.KazooClient(hosts='{0}:{1}'.format(zk_address, zk_port))
         try:
             self.zk.start()
         except:
@@ -102,8 +117,7 @@ class NodepoolInventory(object):
             sys.exit("Unable to connect to Zookeeper on {0}:{1}".format(zk_address, zk_port))
 
     def get_list(self):
-        data = {'all': {'hosts': []},
-                '_meta': {'hostvars': {}}}
+        data = {'all': {'hosts': []}, '_meta': {'hostvars': {}}}
 
         for n in self.zk.get_children('/nodepool/nodes'):
             node = json.loads(self.zk.get('/nodepool/nodes/' + n)[0])
