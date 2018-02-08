@@ -63,8 +63,6 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        ret = []
         if variables is not None:
             self._templar.set_available_variables(variables)
         myvars = getattr(self._templar, '_available_variables', {})
@@ -72,30 +70,25 @@ class LookupModule(LookupBase):
         self.set_options(direct=kwargs)
         default = self.get_option('default')
 
-        # Assumes listify_plugin_terms is called previous to run so each term is already templated and terms is always a list
-        if isinstance(terms, list):
-            term = terms[0]
-        elif isinstance(terms, string_types):
-            term = terms
-        else:
-            raise AnsibleError('Invalid terms passed to "var" lookup, "%s" is not a string, its a %s' % (terms, type(terms)))
+        ret = []
+        for term in terms:
+            if not isinstance(term, string_types):
+                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
 
-        if not isinstance(term, string_types):
-            raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+            try:
+                if term in myvars:
+                    value = myvars[term]
+                elif 'hostvars' in myvars and term in myvars['hostvars']:
+                    # maybe it is a host var?
+                    value = myvars['hostvars'][term]
+                else:
+                    raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
+                ret.append(self._templar.template(value, fail_on_undefined=True))
 
-        try:
-            if term in myvars:
-                value = myvars[term]
-            elif 'hostvars' in myvars and term in myvars['hostvars']:
-                # maybe it is a host var?
-                value = myvars['hostvars'][term]
-            else:
-                raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
-            ret = [self._templar.template(value, fail_on_undefined=True)]
-        except AnsibleUndefinedVariable:
-            if default is not None:
-                ret = [default]
-            else:
-                raise
+            except AnsibleUndefinedVariable:
+                if default is not None:
+                    ret.append(default)
+                else:
+                    raise
 
         return ret
