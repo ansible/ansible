@@ -1,5 +1,6 @@
 posix/ci/group1
 skip/freebsd
 skip/osx
-skip/rhel
+skip/linux/opensuse42.3
+skip/linux/ubuntu1404
 destructive

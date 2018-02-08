@@ -9,7 +9,24 @@
   postgresql_db: name=anstest encoding='UTF-8' state=present template=template0
 
 - name: Install sqitch
-  apt: name=sqitch state=present
+  package: name=sqitch state=present
+  when: ansible_os_family == "Debian"
+
+- name: Install CPAN
+  package: name={{ item }} state=present
+  with_items:
+    - perl-devel
+    - perl-CPAN
+    - perl-DBD-Pg
+  when: ansible_os_family == "RedHat"
+
+- name: Install cpanminus
+  shell: "curl -L http://cpanmin.us | perl - --sudo App::cpanminus"
+  when: ansible_os_family == "RedHat"
+
+- name: Install sqitch
+  shell: "cpanm --sudo --quiet --notest App::Sqitch"
+  when: ansible_os_family == "RedHat"
 
 - name: Deploy to change
   sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest verify=true to_change=types
