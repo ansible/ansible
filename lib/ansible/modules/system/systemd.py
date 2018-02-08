@@ -33,6 +33,10 @@ options:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
         type: bool
+    force:
+        description:
+            - Whether to override existing symlinks.
+        type: bool
     masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
@@ -285,6 +289,7 @@ def main():
             name=dict(type='str', aliases=['service', 'unit']),
             state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
+            force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             user=dict(type='bool', default=False),
@@ -299,6 +304,8 @@ def main():
         systemctl = systemctl + " --user"
     if module.params['no_block']:
         systemctl = systemctl + " --no-block"
+    if module.params['force']:
+        systemctl = systemctl + " --force"
     unit = module.params['name']
     rc = 0
     out = err = ''
