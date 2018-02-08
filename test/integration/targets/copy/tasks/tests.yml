@@ -1262,6 +1262,60 @@
     - stat_circular_symlink_result.stat.exists
     - stat_circular_symlink_result.stat.islnk
 
+# Relative paths in dest:
+- name: Smoketest that copying content to an implicit relative path works
+  copy:
+    content: 'testing'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying to an implicit relative path reported changed
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Test that copying the same content with an implicit relative path reports no change
+  copy:
+    content: 'testing'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying the same content with an implicit relative path reports no change
+  assert:
+    that:
+      - 'not relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Test that copying different content with an implicit relative path reports change
+  copy:
+    content: 'testing2'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying different content with an implicit relative path reports changed
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "596b29ec9afea9e461a20610d150939b9c399d93"'
+
+- name: Smoketest that explicit relative path works
+  copy:
+    content: 'testing'
+    dest: './ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that explicit relative paths reports change
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Cleanup relative path tests
+  file:
+    path: 'ansible-testing.txt'
+    state: absent
+
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # checks that dest is created
 - include: dest_in_non_existent_directories.yml
