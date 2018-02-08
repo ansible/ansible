@@ -805,8 +805,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # remove internal keys
         remove_internal_keys(data)
 
-        # FIXME: for backwards compat, figure out if still makes sense
         if wrap_async:
+            # async_wrapper will clean up its tempdir on its own so we want the controller side to
+            # forget about it now
+            self._connection._shell.tempdir = None
+
+            # FIXME: for backwards compat, figure out if still makes sense
             data['changed'] = True
 
         # pre-split stdout/stderr into lines if needed
