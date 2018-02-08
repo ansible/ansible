@@ -48,7 +48,7 @@ additional methods for connecting to AWS using the standard module arguments
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
@@ -112,6 +112,22 @@ class AnsibleAWSModule(object):
     def fail_json(self, *args, **kwargs):
         return self._module.fail_json(*args, **kwargs)
 
+    def debug(self, *args, **kwargs):
+        return self._module.debug(*args, **kwargs)
+
+    def warn(self, *args, **kwargs):
+        return self._module.warn(*args, **kwargs)
+
+    def client(self, service):
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
+        return boto3_conn(self, conn_type='client', resource=service,
+                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
+
+    def resource(self, service):
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
+        return boto3_conn(self, conn_type='resource', resource=service,
+                          region=region, endpoint=ec2_url, **aws_connect_kwargs)
+
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception
 
@@ -142,6 +158,3 @@ class AnsibleAWSModule(object):
         else:
             self._module.fail_json(msg=message, exception=last_traceback,
                                    **camel_dict_to_snake_dict(response))
-
-    def warn(self, msg):
-        self._module.warn(msg)

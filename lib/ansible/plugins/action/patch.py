@@ -35,7 +35,6 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         src = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'), strict=False)

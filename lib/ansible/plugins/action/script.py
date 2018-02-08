@@ -41,7 +41,6 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         try:
             creates = self._task.args.get('creates')
