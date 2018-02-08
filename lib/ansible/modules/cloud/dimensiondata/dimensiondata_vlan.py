@@ -39,7 +39,6 @@ extends_documentation_fragment:
 description:
   - Manage VLANs in Cloud Control network domains.
 version_added: "2.5"
-metadata_version: "1"
 author: 'Adam Friedman (@tintoy)'
 options:
   name:
