@@ -81,10 +81,11 @@ Example::
 Tag Inheritance
 ```````````````
 
-You can apply ``tags:`` to structures above tasks, but when Ansible processes
-them, ONLY the tasks they contain are tagged. Applying tags anywhere other than
-tasks is just a convenience so you don't have to tag all indivdual tasks. This
-example tags all tasks in a play::
+When tagging items other than dynamic inclusions (see 'include_role' and
+'include_tasks'), you can apply ``tags:`` to structures above tasks. When
+Ansible processes these, ONLY the tasks they contain are tagged. Applying tags
+anywhere other than tasks is just a convenience so you don't have to tag all
+indivdual tasks. This example tags all tasks in a play::
 
     - hosts: all
       tags:
