@@ -27,7 +27,7 @@ import pwd
 import re
 import time
 
-from collections import Sequence
+from collections import Iterable, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -45,7 +45,7 @@ from jinja2.utils import concat as j2_concat
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types, text_type, binary_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
@@ -638,7 +638,7 @@ class Templar:
                 # output: "t.h.i.s. .s.t.r.i.n.g" and wantlist=True would have output the input
                 # terms instead of a list.  A single integer or float would have worked correctly,
                 # though.
-                if not isinstance(ran, Sequence) or isinstance(ran, (text_type, binary_type)):
+                if not isinstance(ran, Iterable) or isinstance(ran, (text_type, binary_type)) or isinstance(ran, Mapping):
                     ran = [ran]
 
                 if wantlist:
