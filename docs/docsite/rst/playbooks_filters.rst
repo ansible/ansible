@@ -609,10 +609,24 @@ override those in `b`, and so on.
 This behaviour does not depend on the value of the `hash_behaviour`
 setting in `ansible.cfg`.
 
-.. _extract_filter:
+.. _extract_filters:
 
 Extracting values from containers
 `````````````````````````````````
+.. versionadded:: 2.5
+The `slice` filter can be used to extract the values of specific keys from a
+hash::
+
+    {{ {'x': 1, 'y': 2, 'z': 3 } | slice('x', 'z') }}
+
+This will result in::
+
+    [1, 2]
+
+The filter is especially useful when you have a list of hashes and want to
+return the value of a key common to all hashes::
+
+    {{ variable_registered_in_loop.results | map('slice', 'stdout') | list }}
 
 .. versionadded:: 2.1
 
@@ -893,7 +907,7 @@ To create a UUID from a string (new in version 1.9)::
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
 
-   - debug: 
+   - debug:
        msg: test
      when: some_string_value | bool
 
@@ -919,7 +933,7 @@ This set of filters returns a list of combined lists.
 To get permutations of a list::
 
     - name: give me largest permutations (order matters)
-      debug: 
+      debug:
         msg: "{{ [1,2,3,4,5]|permutations|list }}"
 
     - name: give me permutations of sets of three
