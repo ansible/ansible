@@ -38,6 +38,9 @@ Ansible Changes By Release
 * Fix traceback in winrm module when the ipaddress module is not installed
   https://github.com/ansible/ansible/pull/35723/files
 * Fix bug in `lineinfile` where the line would not be inserted when using `insertbefore` or `insertafter` if the pattern occured anywhere in the file. (https://github.com/ansible/ansible/issues/28721)
+* Fix connection local getting overridden by network_cli for transport nxapi,eapi for platform agnostic modules
+  (https://github.com/ansible/ansible/pull/35590)
+
 
 <a id="2.4.3"></a>
 

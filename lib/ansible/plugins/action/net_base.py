@@ -23,6 +23,8 @@ import copy
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
+from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils.six import iteritems
 
@@ -53,6 +55,9 @@ class ActionModule(ActionBase):
         if play_context.network_os == 'junos':
             play_context.connection = 'netconf'
             play_context.port = int(self.provider['port'] or self._play_context.port or 830)
+        elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
+            play_context.connection = play_context.connection
+            play_context.port = int(self.provider['port'] or self._play_context.port or 22)
         else:
             play_context.connection = 'network_cli'
             play_context.port = int(self.provider['port'] or self._play_context.port or 22)
@@ -66,8 +71,13 @@ class ActionModule(ActionBase):
             play_context.become = self.provider['authorize'] or False
             play_context.become_pass = self.provider['auth_pass']
 
-        socket_path = self._start_connection(play_context)
-        task_vars['ansible_socket'] = socket_path
+        if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
+            self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
+        elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
+            self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
+        else:
+            socket_path = self._start_connection(play_context)
+            task_vars['ansible_socket'] = socket_path
 
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
