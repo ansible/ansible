@@ -47,6 +47,7 @@ URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
 URL_REALM = "{url}/admin/realms/{realm}"
 URL_REALMS = "{url}/admin/realms"
 
+
 def keycloak_argument_spec():
     """
     Returns argument_spec of options common to keycloak_*-modules

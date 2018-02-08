@@ -27,7 +27,7 @@ description:
       used must have the requisite access rights. In a default Keycloak installation, admin-cli
       and an admin user would work, as would a separate client definition with the scope tailored
       to your needs and a user having the expected roles.
-      
+
     - The names of module options are snake_cased versions of the camelCase ones found in the
       Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.4/rest-api/).
       Aliases are provided (if an option has an alias, it is the camelCase'd version used in the
@@ -75,7 +75,7 @@ options:
         description:
             - Access token lifespan in seconds.
         aliases:
-            - acccessTokenLifespan
+            - accessTokenLifespan
 
     access_token_lifespan_for_implicit_flow:
         description:
@@ -853,7 +853,7 @@ def main():
         access_code_lifespan_login=dict(type='int', aliases=['accessCodeLifespanLogin']),
         access_code_lifespan_user_action=dict(type='int', aliases=['accessCodeLifespanUserAction']),
         access_token_lifespan=dict(type='int', aliases=['accessTokenLifespan']),
-        access_token_lifespan_for_implicit_flow=dict(type='int', aliases=['accesstokenLifespanForImplicitFlow']),
+        access_token_lifespan_for_implicit_flow=dict(type='int', aliases=['accessTokenLifespanForImplicitFlow']),
         account_theme=dict(type='str', aliases=['accountTheme']),
         action_token_generated_by_admin_lifespan=dict(type='int', aliases=['actionTokenGeneratedByAdminLifespan']),
         action_token_generated_by_user_lifespan=dict(type='int', aliases=['actionTokenGeneratedByUserLifespan']),
