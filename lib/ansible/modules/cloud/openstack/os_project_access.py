@@ -13,7 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -28,22 +31,25 @@ description:
     - Add or remove flavor, volume_type or other resources access
       from OpenStack.
 options:
-   state:
-     description:
-        - Indicate desired state of the resource.
-     choices: ['present', 'absent']
-     required: false
-     default: present
-   target_project_id:
-     description:
-        - Project id.
-     required: true
-   resource_type:
-     description:
-        - The resource type (eg. nova_flavor, cinder_volume_type).
-   resource_name:
-     description:
-        - The resource name (eg. tiny).
+  state:
+    description:
+      - Indicate desired state of the resource.
+    choices: ['present', 'absent']
+    required: false
+    default: present
+  target_project_id:
+    description:
+      - Project id.
+    required: true
+  resource_type:
+    description:
+      - The resource type (eg. nova_flavor, cinder_volume_type).
+  resource_name:
+    description:
+      - The resource name (eg. tiny).
+  availability_zone:
+    description:
+      - The availabity zone for the resource.
 requirements:
     - "shade"
 
