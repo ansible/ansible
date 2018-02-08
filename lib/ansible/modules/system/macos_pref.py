@@ -37,6 +37,12 @@ options:
             - The preference domain. E.g. C(com.apple.finder), C(/path/to/some.plist), C(NSGlobalDomain).
         required: false
         default: NSGlobalDomain
+    host:
+        description:
+            - The host on which the preference should apply.
+        required: false
+        default: anyHost
+        choices: ["anyHost", "currentHost"]
     key:
         description:
             - The preference key.
@@ -154,6 +160,19 @@ EXAMPLES = '''
     domain: /tmp/rumours.plist
     key: Rumour
   register: rumour
+
+
+# Set a dict on currentHost
+- name: Set screensaver
+  macos_pref:
+    domain: com.apple.screensaver
+    host: currentHost
+    key: moduleDict
+    value:
+      moduleName: Flurry
+      displayName: Flurry
+      path: /System/Library/Screen Savers/Flurry.saver
+      type: 0
 '''
 
 RETURN = '''
@@ -176,6 +195,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
     import CoreFoundation
+    from Foundation import kCFPreferencesCurrentUser, kCFPreferencesAnyUser, kCFPreferencesCurrentHost, kCFPreferencesAnyHost
     from PyObjCTools.Conversion import pythonCollectionFromPropertyList
 except ImportError:
     pyobjc_found = False
@@ -206,8 +226,14 @@ class MacOSPref(object):
         self.success = True
         self.return_value = None
 
+    def _host_arg(self):
+        if self.host == 'currentHost':
+            return kCFPreferencesCurrentHost
+        else:
+            return kCFPreferencesAnyHost
+
     def read(self):
-        self.current_value = get_pref(self.key, self.domain)
+        self.current_value = get_pref(self.key, self.domain, kCFPreferencesCurrentUser, self._host_arg())
         self.return_value = self.current_value
 
     def delete(self):
@@ -239,7 +265,7 @@ class MacOSPref(object):
         if self.module.check_mode:
             return
 
-        if not set_pref(self.key, new, self.domain):
+        if not set_pref(self.key, new, self.domain, kCFPreferencesCurrentUser, self._host_arg()):
             self.success = False        
     
     def run(self):
@@ -281,14 +307,14 @@ def deep_merge_dicts(base, incoming):
             base[ki] = vi
 
 
-def get_pref(key, domain):
+def get_pref(key, domain, username, hostname):
     return pythonCollectionFromPropertyList(
-        CoreFoundation.CFPreferencesCopyAppValue(key, domain)
+        CoreFoundation.CFPreferencesCopyValue(key, domain, username, hostname)
     )
 
 
-def set_pref(key, value, domain):
-    CoreFoundation.CFPreferencesSetAppValue(key, value, domain)
+def set_pref(key, value, domain, username, hostname):
+    CoreFoundation.CFPreferencesSetValue(key, value, domain, username, hostname)
     return CoreFoundation.CFPreferencesAppSynchronize(domain)
 
 
@@ -298,6 +324,14 @@ def main():
             domain=dict(
                 default="NSGlobalDomain",
                 type='str',
+                required=False
+            ),
+            host=dict(
+                choices=[
+                    "anyHost",
+                    "currentHost"
+                ],
+                default="anyHost",
                 required=False
             ),
             key=dict(
@@ -322,12 +356,13 @@ def main():
     )
 
     domain = module.params['domain']
+    host = module.params['host']
     key = module.params['key']
     value = module.params.get('value')
     state = module.params['state']
     
     try:
-        macospref = MacOSPref(module=module, domain=domain, key=key, value=value, state=state)
+        macospref = MacOSPref(module=module, domain=domain,host=host, key=key, value=value, state=state)
         macospref.run()
         module.exit_json(changed=macospref.changed, value=macospref.return_value)
     except MacOSPrefException as e:
