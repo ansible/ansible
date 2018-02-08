@@ -4,10 +4,9 @@
 # (c) 2018, Bruce Smith <Bruce.Smith.IT@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function 
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import re
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nictagadm
-short_description: Manage NIC tags on SmartOS systems. 
+short_description: Manage NIC tags on SmartOS systems.
 description:
   - Create of delete NIC tags on SmartOS systems.
 version_added: "2.5"
@@ -28,19 +27,19 @@ options:
         required: true
     mac:
         description:
-            - MAC Address to attach the NIC tag to when not using an etherstub
-        required: false 
+            - MAC Address to attach the NIC tag to when not using an etherstub. mac and etherstub are mutually exclusive.
+        required: false
         default: None
     etherstub:
         description:
-            - Specifies that the NIC tag will be attached to a created etherstub.  By specifying Etherstub as true MAC and MTU will be ignored and set to the value None. 
+            - Specifies that the NIC tag will be attached to a created etherstub. etherstub is mutually exclusive with both mtu, and mac.
         required: false
         default: false
     mtu:
         description:
-            - MTU size of the NIC tag
+            - MTU size of the NIC tag. mtu and etherstub are mutually exclusive.
         required: false
-        default: None 
+        default: None
     force:
         description:
             - When State.Absent is set this switch will use the -f parameter and delete the NIC tag regardless of existing VMs
@@ -57,7 +56,7 @@ EXAMPLES = '''
 - name: Create 'strage0' on '00:1b:21:a3:f5:4d'
   nictagadm: name=storage0 mac=00:1b:21:a3:f5:4d mtu=9000 state=present
 
-- name: Remove 'storage0' NIC tag 
+- name: Remove 'storage0' NIC tag
   nictagadm: name=storage0 state=absent force=false
 '''
 
@@ -67,13 +66,13 @@ name:
     returned: always
     type: string
     sample: storage0
-mac: 
-    description: MAC Address that the nic tag was attached to. mac and etherstub are mutually exclusive.
+mac:
+    description: MAC Address that the nic tag was attached to.
     returned: always
     type: string
-    sample: 00:1b:21:a3:f5:4d 
+    sample: 00:1b:21:a3:f5:4d
 etherstub:
-    description: specifies if the NIC tag will create and attach to an etherstub.  etherstub is mutually exclusive with both mac, and mtu.
+    description: specifies if the NIC tag will create and attach to an etherstub.
     returned: always
     type: boolean
     sample: False
@@ -94,19 +93,22 @@ state:
     sample: present
 '''
 
+import re
+
 from ansible.module_utils.basic import AnsibleModule
+
 
 class NICTAG(object):
 
     def __init__(self, module):
-      self.module = module
+        self.module = module
 
-      self.name = module.params['name']
-      self.mac = module.params['mac']
-      self.etherstub = module.params['etherstub']
-      self.mtu = module.params['mtu']
-      self.force = module.params['force']
-      self.state = module.params['state']
+        self.name = module.params['name']
+        self.mac = module.params['mac']
+        self.etherstub = module.params['etherstub']
+        self.mtu = module.params['mtu']
+        self.force = module.params['force']
+        self.state = module.params['state']
 
     def is_valid_mac(self):
         if re.match("[0-9a-f]{2}([:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", self.mac.lower()):
@@ -130,7 +132,7 @@ class NICTAG(object):
     def add_nictag(self):
         cmd = [self.module.get_bin_path('nictagadm', True)]
 
-        cmd.append('-v')        
+        cmd.append('-v')
         cmd.append('add')
 
         if self.etherstub:
@@ -143,23 +145,24 @@ class NICTAG(object):
         if self.mac:
             cmd.append('-p')
             cmd.append('mac=' + str(self.mac))
-        
+
         cmd.append(self.name)
 
         return self.module.run_command(cmd)
-    
+
     def delete_nictag(self):
         cmd = [self.module.get_bin_path('nictagadm', True)]
-        
+
         cmd.append('-v')
         cmd.append('delete')
-        
+
         if self.force:
-            cmd.append('-f') 
+            cmd.append('-f')
 
         cmd.append(self.name)
 
         return self.module.run_command(cmd)
+
 
 def main():
     module = AnsibleModule(
@@ -183,7 +186,7 @@ def main():
     )
 
     nictag = NICTAG(module)
-    
+
     rc = None
     out = ''
     err = ''
@@ -230,7 +233,7 @@ def main():
     if err:
         result['stderr'] = err
 
-    module.exit_json(**result) 
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
