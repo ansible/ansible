@@ -609,25 +609,10 @@ override those in `b`, and so on.
 This behaviour does not depend on the value of the `hash_behaviour`
 setting in `ansible.cfg`.
 
-.. _extract_filters:
+.. _extract_filter:
 
 Extracting values from containers
 `````````````````````````````````
-.. versionadded:: 2.5
-
-The `slice` filter can be used to extract the values of specific keys from a
-hash::
-
-    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
-
-This will result in::
-
-    [1, 2]
-
-The filter is especially useful when you have a list of hashes and want to
-return the value of a key common to all hashes::
-
-    {{ variable_registered_in_loop.results | map('slice', 'stdout') | list }}
 
 .. versionadded:: 2.1
 
@@ -918,6 +903,17 @@ To make use of one attribute from each item in a list of complex variables, use 
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
+
+.. versionadded:: 2.5
+
+The `slice` filter can be used to extract the values of specific keys from a
+hash::
+
+    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
+
+This will result in::
+
+    [1, 2]
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
