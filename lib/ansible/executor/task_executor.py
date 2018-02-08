@@ -729,7 +729,12 @@ class TaskExecutor:
                 except AttributeError:
                     pass
 
-            time_left -= self._task.poll
+                # Little hack to raise the exception if we've exhausted the timeout period
+                time_left -= self._task.poll
+                if time_left <= 0:
+                    raise
+            else:
+                time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
