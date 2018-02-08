@@ -1,0 +1,78 @@
+- name: get the default python version
+  command: "{{ ansible_python_interpreter }} -V"
+  register: default_python_version
+
+- name: find the default python
+  command: which python
+  register: which_python
+
+- name: find the default pip
+  command: which pip
+  register: which_pip
+
+- name: preserve the default python
+  command: cp -av "{{ which_python.stdout }}" "{{ which_python.stdout }}.default"
+
+- name: preserve the default pip
+  command: cp -av "{{ which_pip.stdout }}" "{{ which_pip.stdout }}.default"
+
+# using the apt module prevents autoremove from working, so call apt-get via shell instead
+- name: install mercurial (apt)
+  shell: apt-get -y update && apt-get -y install mercurial
+  when: ansible_pkg_mgr == 'apt'
+
+- name: install mercurial (dnf)
+  dnf:
+    name: mercurial
+  when: ansible_pkg_mgr == 'dnf'
+
+- name: install mercurial (yum)
+  yum:
+    name: mercurial
+  when: ansible_pkg_mgr == 'yum'
+
+- name: install mercurial (pkgng)
+  pkgng:
+    name: mercurial
+  when: ansible_pkg_mgr == 'pkgng'
+
+- name: preserve the updated python
+  command: cp -av "{{ which_python.stdout }}" "{{ which_python.stdout }}.updated"
+
+- name: preserve the updated pip
+  command: cp -av "{{ which_pip.stdout }}" "{{ which_pip.stdout }}.updated"
+
+- name: locate mercurial
+  command: which hg
+  register: which_hg
+
+- name: get the mercurial interpreter
+  command: head -n 1 "{{ which_hg.stdout }}"
+  register: hg_interpreter
+
+- name: stat the mercurial interpreter
+  stat:
+    path: "{{ hg_interpreter.stdout[2:] }}"
+  register: stat_hg_interpreter
+
+- name: bypass the mercurial python interpreter symlink (if needed)
+  lineinfile:
+    path: "{{ which_hg.stdout }}"
+    regexp: "^#!.*$"
+    line: "#!{{ stat_hg_interpreter.stat.lnk_source }}"
+  when: stat_hg_interpreter.stat.islnk
+
+- name: restore the default python
+  command: cp -av "{{ which_python.stdout }}.default" "{{ which_python.stdout }}"
+
+- name: restore the default pip
+  command: cp -av "{{ which_pip.stdout }}.default" "{{ which_pip.stdout }}"
+
+- name: get the current python version
+  command: "{{ ansible_python_interpreter }} -V"
+  register: current_python_version
+
+- name: verify the python version has not changed
+  assert:
+    that:
+      - default_python_version.stdout == current_python_version.stdout
