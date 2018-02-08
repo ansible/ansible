@@ -135,8 +135,6 @@ class NICTAG(object):
 
         if self.etherstub:
             cmd.append('-l')
-            # self.mac = None
-            # self.mtu = None
 
         if self.mtu:
             cmd.append('-p')
