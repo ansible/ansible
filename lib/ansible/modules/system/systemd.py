@@ -69,10 +69,14 @@ requirements:
 
 EXAMPLES = '''
 - name: Make sure a service is running
-  systemd: state=started name=httpd
+  systemd:
+    state: started
+    name: httpd
 
 - name: stop service cron on debian, if running
-  systemd: name=cron state=stopped
+  systemd:
+    name: cron
+    state: stopped
 
 - name: restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   systemd:
@@ -98,7 +102,8 @@ EXAMPLES = '''
     enabled: True
 
 - name: just force systemd to reread configs (2.4 and above)
-  systemd: daemon_reload=yes
+  systemd:
+    daemon_reload: yes
 '''
 
 RETURN = '''
