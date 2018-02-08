@@ -127,6 +127,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
+  * ec2_instance
   * ec2_placement_group
   * ec2_placement_group_facts
   * ec2_vpc_egress_igw
