@@ -41,7 +41,8 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
+
+        tmp = self._connection._shell.tempdir
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -155,13 +156,13 @@ class ActionModule(ActionBase):
                                                                         loader=self._loader,
                                                                         templar=self._templar,
                                                                         shared_loader_obj=self._shared_loader_obj)
-                result.update(copy_action.run(task_vars=task_vars))
+                result.update(copy_action.run(task_vars=task_vars, tmp=tmp))
             finally:
                 shutil.rmtree(local_tempdir)
 
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return result

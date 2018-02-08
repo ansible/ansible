@@ -43,7 +43,6 @@ class ActionModule(_ActionModule):
                 return dict(failed=True, msg=exc.message)
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
 
         return result
 

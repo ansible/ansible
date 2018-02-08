@@ -84,7 +84,8 @@ class ActionModule(ActionBase):
         self._supports_check_mode = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
+
+        tmp = self._connection._shell.tempdir
 
         if task_vars is None:
             task_vars = dict()
@@ -103,7 +104,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(task_vars=task_vars))
+                result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -123,7 +124,7 @@ class ActionModule(ActionBase):
 
             path_checksum = checksum_s(path)
             dest = self._remote_expand_user(dest)
-            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
+            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=tmp)
 
             diff = {}
 
@@ -147,24 +148,24 @@ class ActionModule(ActionBase):
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(self._connection._shell.tempdir, 'src')
+                remote_path = self._connection._shell.join_path(tmp, 'src')
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
+                self._fixup_perms2((tmp, remote_path))
 
                 new_module_args.update(dict(src=xfered,))
 
-                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
                 if diff:
                     res['diff'] = diff
                 result.update(res)
             else:
-                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp))
 
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return result

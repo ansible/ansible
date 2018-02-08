@@ -41,7 +41,8 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
+
+        tmp = self._connection._shell.tempdir
 
         try:
             creates = self._task.args.get('creates')
@@ -89,7 +90,7 @@ class ActionModule(ActionBase):
 
             if not self._play_context.check_mode:
                 # transfer the file to a remote tmp location
-                tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, os.path.basename(source))
+                tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
 
                 # Convert raw_params to text for the purpose of replacing the script since
                 # parts and tmp_src are both unicode strings and raw_params will be different
@@ -133,6 +134,6 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return result

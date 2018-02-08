@@ -14,17 +14,18 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         self._supports_async = True
         results = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
+
+        tmp = self._connection._shell.tempdir
 
         # Command module has a special config option to turn off the command nanny warnings
         if 'warn' not in self._task.args:
             self._task.args['warn'] = C.COMMAND_WARNINGS
 
         wrap_async = self._task.async_val and not self._connection.has_native_async
-        results = merge_hash(results, self._execute_module(task_vars=task_vars, wrap_async=wrap_async))
+        results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars, wrap_async=wrap_async))
 
         if not wrap_async:
             # remove a temporary path we created
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return results

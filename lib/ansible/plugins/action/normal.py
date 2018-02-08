@@ -30,7 +30,8 @@ class ActionModule(ActionBase):
         self._supports_async = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del tmp  # tmp no longer has any effect
+
+        tmp = self._connection._shell.tempdir
 
         if not result.get('skipped'):
 
@@ -43,7 +44,7 @@ class ActionModule(ActionBase):
             wrap_async = self._task.async_val and not self._connection.has_native_async
 
             # do work!
-            result = merge_hash(result, self._execute_module(task_vars=task_vars, wrap_async=wrap_async))
+            result = merge_hash(result, self._execute_module(tmp=tmp, task_vars=task_vars, wrap_async=wrap_async))
 
             # hack to keep --verbose from showing all the setup module result
             # moved from setup module as now we filter out all _ansible_ from result
@@ -52,6 +53,6 @@ class ActionModule(ActionBase):
 
         if not wrap_async:
             # remove a temporary path we created
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(tmp)
 
         return result
