@@ -218,6 +218,7 @@ state:
 '''
 
 import os
+import os.path
 import shutil
 import tempfile
 import traceback
@@ -279,6 +280,9 @@ def main():
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
     dest = module.params['dest']
+    # Make sure we always have a directory component for later processing
+    if os.path.sep not in dest:
+        dest = '.{0}{1}'.format(os.path.sep, dest)
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backup = module.params['backup']
     force = module.params['force']
