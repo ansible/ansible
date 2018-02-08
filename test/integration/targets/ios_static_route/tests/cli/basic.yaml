@@ -2,17 +2,16 @@
 - debug: msg="START ios cli/ios_static_route.yaml on connection={{ ansible_connection }}"
 
 - name: Clear all static routes
-  ios_static_route:
-    prefix: "{{ item }}"
+  ios_static_route: &delete_all
+    aggregate:
+      - { prefix: 172.16.31.0 }
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0 }
+      - { prefix: 172.16.34.0 }
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: absent
     provider: "{{ cli }}"
-  with_items:
-    - 172.16.31.0
-    - 172.16.32.0
-    - 172.16.33.0
-    - 172.16.34.0
 
 - name: create static route
   ios_static_route:
@@ -103,8 +102,10 @@
 - name: Add static route aggregates
   ios_static_route:
     aggregate:
-      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
-      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0 }
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
     state: present
     provider: "{{ cli }}"
   register: result
@@ -117,9 +118,11 @@
 - name: Add and remove static route aggregates with overrides
   ios_static_route:
     aggregate:
-      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
-      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
-      - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
+      - { prefix: 172.16.32.0 }
+      - { prefix: 172.16.33.0, state: absent }
+      - { prefix: 172.16.34.0 }
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
     state: present
     provider: "{{ cli }}"
   register: result
@@ -130,13 +133,7 @@
       - 'result.commands == ["no ip route 172.16.33.0 255.255.255.0 10.0.0.8", "ip route 172.16.34.0 255.255.255.0 10.0.0.8"]'
 
 - name: Remove static route aggregates
-  ios_static_route:
-    aggregate:
-      - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
-      - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
-      - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
-    state: absent
-    provider: "{{ cli }}"
+  ios_static_route: *delete_all
   register: result
 
 - assert:
