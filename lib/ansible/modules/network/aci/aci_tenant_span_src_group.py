@@ -197,6 +197,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     description = module.params['description']
     dst_group = module.params['dst_group']
@@ -204,7 +206,6 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
