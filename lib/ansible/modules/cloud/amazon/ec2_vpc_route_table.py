@@ -654,6 +654,12 @@ def ensure_route_table_present(connection, module):
                         sleep(2)
                     else:
                         break
+                #from ansible.module_utils.aws import waiters as extra_waiters
+                #extra_waiters.get_waiter(
+                #    ec2, 'route_table_exists'
+                #).wait(
+                #    RouteTableIds=[route_table['RouteTable']['RouteTableId']],
+                #)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Error creating route table")
         else:
