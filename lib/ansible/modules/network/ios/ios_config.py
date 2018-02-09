@@ -48,7 +48,7 @@ options:
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
@@ -236,6 +236,27 @@ EXAMPLES = """
       - description test interface
       - ip address 172.31.1.1 255.255.255.0
     parents: interface Ethernet1
+
+- name: configure ip helpers on multiple interfaces
+  ios_config:
+    lines:
+      - ip helper-address 172.26.1.10
+      - ip helper-address 172.26.3.8
+    parents: "{{ item }}"
+  with_items:
+    - interface Ethernet1
+    - interface Ethernet2
+    - interface GigabitEthernet1
+
+- name: configure policer in Scavenger class
+  ios_config:
+    lines:
+      - conform-action transmit
+      - exceed-action drop
+    parents:
+      - policy-map Foo
+      - class Scavenger
+      - police cir 64000
 
 - name: load new acl into device
   ios_config:
