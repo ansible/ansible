@@ -194,13 +194,14 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     lldp_policy = module.params['lldp_policy']
     description = module.params['description']
     receive_state = aci.boolean(module.params['receive_state'], 'enabled', 'disabled')
     transmit_state = aci.boolean(module.params['transmit_state'], 'enabled', 'disabled')
     state = module.params['state']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='lldpIfPol',

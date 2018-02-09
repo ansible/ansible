@@ -199,6 +199,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     l2_policy = module.params['l2_policy']
     vlan_scope = module.params['vlan_scope']
     qinq = module.params['qinq']
@@ -208,7 +210,6 @@ def main():
     description = module.params['description']
     state = module.params['state']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='l2IfPol',

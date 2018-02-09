@@ -109,7 +109,7 @@
       - modify_subnet.changed != modify_subnet.proposed
       - 'modify_subnet.sent == {"fvSubnet": {"attributes": {"ctrl": "querier", "scope": "public,shared"}}}'
       - create_bad_scope.failed == true
-      - 'create_bad_scope.msg.startswith("value of scope must be one of")'
+      - create_bad_scope.msg.startswith("Parameter 'scope' cannot be both 'private' and 'public'")
       - create_incomplete_data.failed == true
       - 'create_incomplete_data.msg == "state is present but all of the following are missing: bd"'
 
