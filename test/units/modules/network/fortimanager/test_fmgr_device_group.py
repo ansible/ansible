@@ -22,7 +22,7 @@ __metaclass__ = type
 from nose.plugins.skip import SkipTest
 
 try:
-    from ansible.modules.network.fortimanager import fmgr_ha
+    from ansible.modules.network.fortimanager import fmgr_device_group
     from .fortimanager_module import TestFortimanagerModule
     from units.modules.utils import set_module_args
 except ImportError:
@@ -34,27 +34,24 @@ except ImportError:
     raise SkipTest("FortiManager tests require pyFMG package")
 
 
-class TestFmgrHaModule(TestFortimanagerModule):
+class TestFmgrDeviceGroupModule(TestFortimanagerModule):
 
-    module = fmgr_ha
+    module = fmgr_device_group
 
-    def test_fmg_ha_fail_connect(self):
-        set_module_args(dict(host='10.1.1.1', username='ansible', password='fortinet', fmgr_ha_mode='master',
-                             fmgr_ha_cluster_pw='fortinet', fmgr_ha_cluster_id='2', fmgr_ha_hb_threshold="10",
-                             fmgr_ha_hb_interval="8", fmgr_ha_file_quota="2048"))
+    def test_fmgr_device_group_fail_connect(self):
+        set_module_args(dict(host='10.1.1.1', username='ansible', password='fortinet', state='present',
+                             grp_name='AnsibleTest', adom='ansible'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'Connection to FortiManager Failed')
 
-    def test_fmg_ha_login_fail_host(self):
-        set_module_args(dict(username='ansible', password='fortinet', fmgr_ha_mode='master',
-                             fmgr_ha_cluster_pw='fortinet', fmgr_ha_cluster_id='2', fmgr_ha_hb_threshold="10",
-                             fmgr_ha_hb_interval="8", fmgr_ha_file_quota="2048"))
+    def test_fmgr_device_group_login_fail_host(self):
+        set_module_args(dict(username='ansible', password='fortinet', state='present',
+                             grp_name='AnsibleTest', adom='ansible'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'missing required arguments: host')
 
-    def test_fmg_ha_login_fail_username(self):
-        set_module_args(dict(host='10.1.1.1', password='fortinet', fmgr_ha_mode='master',
-                             fmgr_ha_cluster_pw='fortinet', fmgr_ha_cluster_id='2', fmgr_ha_hb_threshold="10",
-                             fmgr_ha_hb_interval="8", fmgr_ha_file_quota="2048"))
+    def test_fmgr_device_group_login_fail_username(self):
+        set_module_args(dict(host='10.1.1.1', password='fortinet', state='present',
+                             grp_name='AnsibleTest', adom='ansible'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'Host and username are required for connection')

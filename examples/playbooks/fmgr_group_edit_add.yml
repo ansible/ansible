@@ -1,0 +1,37 @@
+---
+
+- name: CREATE FGT GRP
+  hosts: FortiManager
+  connection: local
+  gather_facts: False
+
+  tasks:
+
+  - name: ADD DEVICES TO DEVICE GROUP
+    fmgr_device_group:
+      #GETTING FORTIMANAGER HOST IP OR NAME FROM ANSIBLE INVENTORY FOR HOSTS GROUP ABOVE
+      host: "{{ inventory_hostname }}"
+      #DYNAMIC MAPPING FOR THE FORTIMANAGER LOGIN AS SPECIFIED IN INVENTORY FILE
+      username: "{{ username }}"
+      password: "{{ password }}"
+      #STATE if "present" ADD THE GROUP MEMBERS, IF "absent" DELETE THE GROUP MEMBERS
+      state: "present"
+      #GROUP NAME TO ADD THE DEVICES TO
+      grp_name: "TestGroup"
+      #FRIENDLY NAME OF DEVICES IN FORTIMANAGER YOU WISH TO ADD TO THE GROUP
+      #MULTIPLE DEVICES CAN BE SPECIFIED BY COMMA SEPARATION (CSV)
+      grp_members: "FGT1,FGT2"
+      #ADOM TO CREATE THE GROUP IN
+      adom: "ansible"
+      vdom: "root"
+
+  - name: ADD DEVICES TO DEVICE GROUP 2
+    fmgr_device_group:
+      host: "{{ inventory_hostname }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      state: "present"
+      grp_name: "testtest"
+      grp_members: "FGT3"
+      adom: "ansible"
+      vdom: "root"
