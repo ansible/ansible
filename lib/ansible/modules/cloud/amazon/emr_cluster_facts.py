@@ -17,7 +17,7 @@ module: emr_cluster_facts
 short_description: Get information about an Amazon EMR cluster
 description:
     - Module gets information about an Amazon EMR cluster
-version_added: "2.5"
+version_added: "2.6"
 requirements: [ boto3 ]
 author:
     - "Aaron Smith (@slapula)"
@@ -190,7 +190,7 @@ cluster:
           type: bool
           sample: 'true'
         termination_protected:
-          description: Indicates whether Amazon EMR will lock the cluster to prevent the EC2 instances from being terminated by an API call or user intervention, or in the event of a cluster error
+          description: Indicates whether Amazon EMR will lock the cluster to prevent the EC2 instances from being terminated
           returned: always
           type: bool
           sample: 'true'
@@ -284,9 +284,7 @@ class EMRConnection(object):
             self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
-
         self.region = region
-
 
     def get_emr_cluster(self, cluster_id=None):
         try:
@@ -305,7 +303,7 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
 
-    region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, conn, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EMRConnection(module, region, **aws_connect_params)
 
     cluster_id = module.params.get('id')
