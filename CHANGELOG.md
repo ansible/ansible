@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.6"></a>
 
-## 2.5 "Heartbreaker" - ACTIVE DEVELOPMENT
+## 2.6 "Heartbreaker" - ACTIVE DEVELOPMENT
 
 ### Major Changes
 
