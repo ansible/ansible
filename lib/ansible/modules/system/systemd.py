@@ -37,6 +37,7 @@ options:
         description:
             - Whether to override existing symlinks.
         type: bool
+        version_added: 2.6
     masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
