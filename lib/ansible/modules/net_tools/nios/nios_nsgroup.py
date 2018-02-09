@@ -116,17 +116,17 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 
 # from infoblox documentation
 # Fields List
-# Field		Type		Req	R/O	Base	Search
-# comment		String		N	N	Y	: = ~
-# extattrs		Extattr		N	N	N	ext
-# external_primaries	[struct]	N	N	N	N/A
-# external_secondaries	[struct]	N	N	N	N/A
-# grid_primary		[struct]	N	N	N	N/A
-# grid_secondaries	[struct]	N	N	N	N/A
-# is_grid_default	Bool		N	N	N	N/A
-# is_multimaster	Bool		N	Y	N	N/A
-# name			String		Y		N	Y	: = ~
-# use_external_primary	Bool		N	N	N	N/A
+# Field         Type            Req     R/O     Base    Search
+# comment               String          N       N       Y       : = ~
+# extattrs              Extattr         N       N       N       ext
+# external_primaries    [struct]        N       N       N       N/A
+# external_secondaries  [struct]        N       N       N       N/A
+# grid_primary          [struct]        N       N       N       N/A
+# grid_secondaries      [struct]        N       N       N       N/A
+# is_grid_default       Bool            N       N       N       N/A
+# is_multimaster        Bool            N       Y       N       N/A
+# name                  String          Y               N       Y       : = ~
+# use_external_primary  Bool            N       N       N       N/A
 
 
 def main():
