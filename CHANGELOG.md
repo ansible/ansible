@@ -46,6 +46,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/35588
 * Fix the removed_in_version to 2.6 ios_config force option
   https://github.com/ansible/ansible/pull/35853
+* Fix memory ballooning caused as a result of task caching changes
+  https://github.com/ansible/ansible/pull/35921
 
 
 <a id="2.4.3"></a>
