@@ -185,12 +185,13 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     mcp = module.params['mcp']
     description = module.params['description']
     admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     state = module.params['state']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='mcpIfPol',

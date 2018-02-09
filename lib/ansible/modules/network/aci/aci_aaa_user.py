@@ -269,27 +269,24 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
     aaa_password = module.params['aaa_password']
     aaa_password_lifetime = module.params['aaa_password_lifetime']
-    aaa_password_update_required = module.params['aaa_password_update_required']
+    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
     aaa_user = module.params['aaa_user']
     clear_password_history = module.params['clear_password_history']
     description = module.params['description']
     email = module.params['email']
-    enabled = module.params['enabled']
+    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
+    expires = aci.boolean(module.params['expires'])
     first_name = module.params['first_name']
     last_name = module.params['last_name']
     phone = module.params['phone']
     state = module.params['state']
-
-    aci = ACIModule(module)
-
-    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
-    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
-    expires = aci.boolean(module.params['expires'])
 
     expiration = module.params['expiration']
     if expiration is not None and expiration != 'never':
