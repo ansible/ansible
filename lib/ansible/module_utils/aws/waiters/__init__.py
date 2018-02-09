@@ -4,7 +4,7 @@ import botocore.waiter as core_waiter
 vpc_config = {
   "version": 2,
   "waiters": {
-    "": {
+    "RouteTableExists": {
       "delay": 5,
       "maxAttempts": 40,
       "operation": "DescribeRouteTables",
