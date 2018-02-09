@@ -291,13 +291,13 @@ test/units/modules/.../test/my_new_test_module.py``
 Going Further
 =============
 
-If you are planning on contributing back to the main Ansible repository
-by either a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
+If you would like to contribute to the main Ansible repository
+by by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
 of the Ansible repository and develop against a new feature
 branch using the ``devel`` branch as a starting point.
 
-When you believe you have a good working code change,
-submit a pull request to the Ansible repository where you select
+When you you have a good working code change,
+submit a pull request to the Ansible repository by you selecting
 your feature branch as a source and the Ansible devel branch as
 a target.
 
