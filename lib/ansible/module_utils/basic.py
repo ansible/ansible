@@ -47,6 +47,7 @@ PASS_VARS = {
     'module_name': '_name',
     'no_log': 'no_log',
     'remote_tmp': '_remote_tmp',
+    'live_updates': '_provide_updates',
     'selinux_special_fs': '_selinux_special_fs',
     'shell_executable': '_shell',
     'socket': '_socket_path',
@@ -807,6 +808,7 @@ class AnsibleModule(object):
         see library/* for examples
         '''
 
+        self._updates = 0
         self._name = os.path.basename(__file__)  # initialize name until we can parse from options
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
@@ -832,6 +834,7 @@ class AnsibleModule(object):
         self._socket_path = None
         self._shell = None
         self._verbosity = 0
+        self._provide_updates = False
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
@@ -2214,6 +2217,10 @@ class AnsibleModule(object):
             else:
                 self._log_to_syslog(syslog_msg)
 
+            # TODO: does 'return log data' need diff setting?
+            if self._debug and syslog_msg:
+                self.update_json({'log': syslog_msg})
+
     def _log_invocation(self):
         ''' log that ansible ran the module '''
         # TODO: generalize a separate log function and make log_invocation use it
@@ -2316,36 +2323,38 @@ class AnsibleModule(object):
 
         self.add_path_info(kwargs)
 
-        if 'invocation' not in kwargs:
-            kwargs['invocation'] = {'module_args': self.params}
+        if '_ansible_update' not in kwargs:
 
-        if 'warnings' in kwargs:
-            if isinstance(kwargs['warnings'], list):
-                for w in kwargs['warnings']:
-                    self.warn(w)
-            else:
-                self.warn(kwargs['warnings'])
+            if 'invocation' not in kwargs:
+                kwargs['invocation'] = {'module_args': self.params}
 
-        if self._warnings:
-            kwargs['warnings'] = self._warnings
+            # TODO: possibly add warnings/deprecations to update, but need to 'clear cache'
+            if 'warnings' in kwargs:
+                if isinstance(kwargs['warnings'], list):
+                    for w in kwargs['warnings']:
+                        self.warn(w)
+                else:
+                    self.warn(kwargs['warnings'])
 
-        if 'deprecations' in kwargs:
-            if isinstance(kwargs['deprecations'], list):
-                for d in kwargs['deprecations']:
-                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
-                        self.deprecate(d[0], version=d[1])
-                    elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version', None))
-                    else:
-                        self.deprecate(d)
-            else:
-                self.deprecate(kwargs['deprecations'])
+            if self._warnings:
+                kwargs['warnings'] = self._warnings
 
-        if self._deprecations:
-            kwargs['deprecations'] = self._deprecations
+            if 'deprecations' in kwargs:
+                if isinstance(kwargs['deprecations'], list):
+                    for d in kwargs['deprecations']:
+                        if isinstance(d, SEQUENCETYPE) and len(d) == 2:
+                            self.deprecate(d[0], version=d[1])
+                        else:
+                            self.deprecate(d)
+                else:
+                    self.deprecate(kwargs['deprecations'])
+
+            if self._deprecations:
+                kwargs['deprecations'] = self._deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
+        sys.stdout.flush()
 
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
@@ -2374,6 +2383,14 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
+
+    def update_json(self, data):
+
+        if self._provide_updates:
+            self._updates += 1
+            data['_ansible_update'] = self._updates
+            self._return_formatted(data)
+            self.log('update #%s' % self._updates)
 
     def fail_on_missing_params(self, required_params=None):
         ''' This is for checking for required params when we can not check via argspec because we
@@ -2650,7 +2667,6 @@ class AnsibleModule(object):
             data = os.read(file_descriptor.fileno(), 9000)
             if data == b(''):
                 rpipes.remove(file_descriptor)
-
         return data
 
     def _clean_args(self, args):
@@ -2869,6 +2885,10 @@ class AnsibleModule(object):
         try:
             if self._debug:
                 self.log('Executing: ' + self._clean_args(args))
+
+            if self._provide_updates:
+                kwargs['bufsize'] = 0
+
             cmd = subprocess.Popen(args, **kwargs)
             if before_communicate_callback:
                 before_communicate_callback(cmd)
@@ -2890,28 +2910,27 @@ class AnsibleModule(object):
 
             while True:
                 rfds, wfds, efds = select.select(rpipes, [], rpipes, 1)
-                stdout += self._read_from_pipes(rpipes, rfds, cmd.stdout)
-                stderr += self._read_from_pipes(rpipes, rfds, cmd.stderr)
-                # if we're checking for prompts, do it now
-                if prompt_re:
-                    if prompt_re.search(stdout) and not data:
-                        if encoding:
-                            stdout = to_native(stdout, encoding=encoding, errors=errors)
-                        else:
-                            stdout = stdout
-                        return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
-                # only break out if no pipes are left to read or
-                # the pipes are completely read and
-                # the process is terminated
-                if (not rpipes or not rfds) and cmd.poll() is not None:
-                    break
-                # No pipes are left to read but process is not yet terminated
-                # Only then it is safe to wait for the process to be finished
-                # NOTE: Actually cmd.poll() is always None here if rpipes is empty
-                elif not rpipes and cmd.poll() is None:
-                    cmd.wait()
-                    # The process is terminated. Since no pipes to read from are
-                    # left, there is no need to call select() again.
+
+                if rfds or rpipes:
+                    stdout_tmp = self._read_from_pipes(rpipes, rfds, cmd.stdout)
+                    stderr_tmp = self._read_from_pipes(rpipes, rfds, cmd.stderr)
+
+                    if stdout_tmp or stderr_tmp:
+                        self.update_json({'stdout': stdout_tmp, 'stderr': stderr_tmp})
+
+                    stdout += stdout_tmp
+                    stderr += stderr_tmp
+
+                    # if we're checking for prompts, do it now
+                    if prompt_re:
+                        if prompt_re.search(stdout) and not data:
+                            if encoding:
+                                stdout = to_native(stdout, encoding=encoding, errors=errors)
+                            else:
+                                stdout = stdout
+                            return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+                elif cmd.poll() is not None:
+                    # only break out if (no pipes are left to read or the pipes are completely read) and the process is terminated
                     break
 
             cmd.stdout.close()

@@ -406,6 +406,7 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = 'copy'
         mock_task.args = dict(a=1, b=2, c=3)
+        mock_task.live = False
 
         # create a mock connection, so we don't actually try and connect to things
         def build_module_command(env_string, shebang, cmd, arg_path=None):

@@ -616,7 +616,7 @@ def _is_binary(b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment):
+                       become_method, become_user, become_password, become_flags, environment, live_updates):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -787,6 +787,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             minute=now.minute,
             second=now.second,
             coverage=coverage,
+            live_updates=live_updates,
         )))
         b_module_data = output.getvalue()
 
@@ -827,7 +828,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
 
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, live_updates=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -859,7 +860,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment)
+                                                                environment=environment, live_updates=live_updates)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))

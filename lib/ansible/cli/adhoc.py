@@ -53,6 +53,7 @@ class AdHocCLI(CLI):
             fork_opts=True,
             module_opts=True,
             basedir_opts=True,
+            live_opts=True,
             desc="Define and run a single task 'playbook' against a set of hosts",
             epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )

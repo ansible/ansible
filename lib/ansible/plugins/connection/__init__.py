@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import fcntl
 import gettext
+import json
 import os
 import shlex
 from abc import abstractmethod, abstractproperty
@@ -14,6 +15,7 @@ from functools import wraps
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.json_utils import _consume_json
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
@@ -275,6 +277,25 @@ class ConnectionBase(AnsiblePlugin):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def _handle_updates(self, data):
+
+        is_update = False
+        rest_data = ''
+        if b'_ansible_update' in data:
+            # consume update data
+            try:
+                updates, rest_data = _consume_json(to_text(data))
+            except ValueError:
+                # improper json, incomplete, ignore try later
+                updates = None
+
+            if updates and updates.strip():
+                is_update = True
+                # TODO: once callbacks are expanded use those instead of restricting
+                display.display('[U]: <%s> %s' % (self._play_context.remote_addr, updates), color=C.COLOR_DEPRECATE, screen_only=True)
+
+        return is_update, to_bytes(rest_data)
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")

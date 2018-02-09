@@ -172,7 +172,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                     become_user=self._play_context.become_user,
                                                                     become_password=self._play_context.become_pass,
                                                                     become_flags=self._play_context.become_flags,
-                                                                    environment=final_environment)
+                                                                    environment=final_environment,
+                                                                    live_updates=bool(self._task.live))
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -628,6 +629,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
+
         else:
             module_args['_ansible_check_mode'] = False
 
@@ -678,6 +680,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         except KeyError:
             # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
             module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
+        # enable live updates
+        module_args['_ansible_live_updates'] = self._task.live
 
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
@@ -864,7 +868,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             self._fixup_perms2(remote_files, self._play_context.remote_user)
 
         # actually execute
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, live=bool(self._task.live))
 
         # parse the main result
         data = self._parse_returned_data(res)
@@ -930,7 +934,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None, live=False):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to

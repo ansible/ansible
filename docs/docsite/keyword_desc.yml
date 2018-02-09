@@ -38,6 +38,7 @@ handlers: "A section with tasks that are treated as handlers, these won't get ex
 hosts: "A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target."
 ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
 ignore_unreachable: Boolean that allows you to ignore unreachable hosts and continue with play. This does not affect other task errors (see :term:`ignore_errors`) but is useful for groups of volatile/ephemeral hosts.
+live: "Signals that a task should return 'live updates' if the module supports it"
 loop: "Takes a list for the task to iterate over, saving each list element into the ``item`` variable (configurable via loop_control)"
 loop_control: |
     Several keys here allow you to modify/set loop behaviour in a task.

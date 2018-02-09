@@ -88,6 +88,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             fork_opts=True,
             module_opts=True,
             basedir_opts=True,
+            live_opts=True,
             desc="REPL console for executing Ansible tasks.",
             epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
@@ -302,6 +303,14 @@ class ConsoleCLI(CLI, cmd.Cmd):
             self.set_prompt()
         else:
             display.display("Please specify become value, e.g. `become yes`")
+
+    def do_live(self, arg):
+        """Toggle whether plays run with become"""
+        if arg:
+            self.options.live = boolean(arg, strict=False)
+            display.v("live changed to %s" % self.options.live)
+        else:
+            display.display("Please specify live value, e.g. `live yes`")
 
     def do_remote_user(self, arg):
         """Given a username, set the remote user plays are run by"""

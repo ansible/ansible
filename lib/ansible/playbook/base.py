@@ -584,6 +584,7 @@ class Base(FieldAttributeBase):
     _check_mode = FieldAttribute(isa='bool')
     _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool')
+    _live = FieldAttribute(isa='bool')
 
     # explicitly invoke a debugger on tasks
     _debugger = FieldAttribute(isa='string')

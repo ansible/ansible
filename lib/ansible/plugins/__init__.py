@@ -49,6 +49,24 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
     def __init__(self):
         self._options = {}
+        self._display = display
+
+    @staticmethod
+    def warn(msg):
+        # FIXME: move from display to use callback queue
+        display.warning(msg)
+
+    @staticmethod
+    def deprecated(msg, version=None, removed=False):
+        display.deprecated(msg, version, removed)
+
+    @staticmethod
+    def debug(msg):
+        display.debug(msg)
+
+    @staticmethod
+    def info(msg, host=None, level=1):
+        display.verbose(msg, host=host, caplevel=level)
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
@@ -73,7 +91,3 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         # this is needed to support things like winrm that can have extended protocol options we don't direclty handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
-
-    def _check_required(self):
-        # FIXME: standarize required check based on config
-        pass
