@@ -26,6 +26,10 @@ description:
 requirements:
   - infoblox_client
 options:
+  name:
+    description:
+      - name of the nameserver group
+    required: true
   external_primaries:
     description:
       - list of external primary nameservers
@@ -36,18 +40,13 @@ options:
   grid_primary:
     description:
       - list of grid member primary nameservers
-  grid_secondary:
+  grid_secondaries:
     description:
      - list of grid member secondary nameservers
-  grid_default:
+  is_grid_default:
     description:
       - make this nameserver group the grid default
     required: false
-  is_multimaster:
-    description:
-      - is the group a multi master group
-    required: false
-    default: false
   use_external_primary:
     description:
       - This flag controls whether the group is using an external primary.
