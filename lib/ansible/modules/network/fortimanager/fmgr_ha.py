@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_ha
-version_added: "2.5"
+version_added: "2.6"
 author: Luke Weighall, Andrew Welsh
 short_description: Manages the High-Availability State of FortiManager Clusters and Nodes
 description: Change HA state or settings of Fortimanager nodes (Standalone/Master/Slave)
