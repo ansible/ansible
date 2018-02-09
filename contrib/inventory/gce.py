@@ -253,8 +253,8 @@ class GceInventory(object):
         if self.args.instance_tags:
             self.instance_tags = self.args.instance_tags
         else:
-            self.instance_tags = os.environ.get('GCE_INSTANCE_TAGS',
-                    config.get('gce', 'instance_tags'))
+            self.instance_tags = os.environ.get(
+                'GCE_INSTANCE_TAGS', config.get('gce', 'instance_tags'))
         if self.instance_tags:
             self.instance_tags = self.instance_tags.split(',')
 
