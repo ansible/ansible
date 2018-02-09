@@ -61,4 +61,4 @@
   - name: Remove resources
     file: path=/tmp/sqitch_test state=absent
   when: (not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "14.04")) and
-        (not (ansible_distribution == "OpenSuse"))
+        (not (ansible_os_family == "Suse"))
