@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: fmgr_device_group
-version_added: "2.5"
+version_added: "2.6"
 author: Luke Weighall, Andrew Welsh
 short_description: Alter FortiManager device groups
 description:
