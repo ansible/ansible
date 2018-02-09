@@ -685,8 +685,9 @@ def ensure_route_table_present(connection, module):
                                             purge_subnets=purge_subnets)
         changed = changed or result['changed']
 
-    # pause to allow route table routes/subnets/associations to be updated before exiting with final state
-    sleep(5)
+    if any(x is not None for x in [routes, subnets, propagating_vgw_ids]) or (not tags_valid and tags is not None):
+        # pause to allow route table routes/subnets/associations to be updated before exiting with final state
+        sleep(5)
     module.exit_json(changed=changed, route_table=get_route_table_info(connection, module, route_table))
 
 
