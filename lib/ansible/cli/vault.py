@@ -181,7 +181,6 @@ class VaultCLI(CLI):
             if not vault_secrets:
                 raise AnsibleOptionsError("A vault password is required to use Ansible's Vault")
 
-
         if self.action in ['encrypt', 'encrypt_string', 'create']:
 
             encrypt_vault_id = None

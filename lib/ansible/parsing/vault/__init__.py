@@ -776,7 +776,6 @@ class VaultEditor:
         # TODO: it may be more useful to just make VaultSecrets and index of VaultLib objects...
         self.vault = vault or VaultLib()
 
-
     # TODO: mv shred file stuff to it's own class
     def _shred_file_custom(self, tmp_path):
         """"Destroy a file, when shred (core-utils) is not available
