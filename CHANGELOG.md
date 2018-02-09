@@ -42,6 +42,10 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35590)
 * Include dest i nthe results from file copy:
   https://github.com/ansible/ansible/pull/35702/
+* Fix eos_config second-level indent idempotece
+  https://github.com/ansible/ansible/pull/35588
+* Fix the removed_in_version to 2.6 ios_config force option
+  https://github.com/ansible/ansible/pull/35853
 
 
 <a id="2.4.3"></a>
