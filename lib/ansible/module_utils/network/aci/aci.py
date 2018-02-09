@@ -918,7 +918,7 @@ class ACIModule(object):
             self.result['changed'] = True
             self.method = 'POST'
 
-    def exit_json(self):
+    def exit_json(self, **kwargs):
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['previous'] = self.existing
@@ -947,6 +947,7 @@ class ACIModule(object):
             self.result['sent'] = self.config
             self.result['proposed'] = self.proposed
 
+        self.result.update(**kwargs)
         self.module.exit_json(**self.result)
 
     def fail_json(self, msg, **kwargs):
@@ -954,6 +955,9 @@ class ACIModule(object):
         # Return error information, if we have it
         if self.error['code'] is not None and self.error['text'] is not None:
             self.result['error'] = self.error
+
+        if self.params['output_level'] in ('debug', 'info'):
+            self.result['previous'] = self.existing
 
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
@@ -968,6 +972,10 @@ class ACIModule(object):
                 self.result['response'] = self.response
                 self.result['status'] = self.status
                 self.result['url'] = self.url
+
+        if self.params['output_level'] in ('debug', 'info'):
+            self.result['sent'] = self.config
+            self.result['proposed'] = self.proposed
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
