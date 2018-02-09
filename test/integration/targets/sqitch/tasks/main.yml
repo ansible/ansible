@@ -1,61 +1,64 @@
 ---
-- name: Create dir for resources
-  file: path=/tmp/sqitch_test state=directory mode=0755
-
-- name: Copy resources to tmp dir
-  copy: src=files/ dest=/tmp/sqitch_test
-
-- name: Create DB for tests
-  postgresql_db: name=anstest encoding='UTF-8' state=present template=template0
-
-- name: Install sqitch
-  package: name=sqitch state=present
-  when: ansible_os_family == "Debian"
-
-- name: Install CPAN
-  package: name={{ item }} state=present
-  with_items:
-    - perl-devel
-    - perl-CPAN
-    - perl-DBD-Pg
-  when: ansible_os_family == "RedHat"
-
-- name: Install cpanminus
-  shell: "curl -L http://cpanmin.us | perl - --sudo App::cpanminus"
-  when: ansible_os_family == "RedHat"
-
-- name: Install sqitch
-  shell: "cpanm --sudo --quiet --notest App::Sqitch"
-  when: ansible_os_family == "RedHat"
-
-- name: Deploy to change
-  sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest verify=true to_change=types
-
-- name: Rebase
-  sqitch:
-    command: rebase
-    cwd: "/tmp/sqitch_test"
-    plan_file: sqitch.plan
-    target: anstest
-    verify: true
-
-- name: Revert to change
-  sqitch: command=revert cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest to_change=schemas
-
-- name: Deploy whole plan
-  sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest
-
-- name: Verify
-  sqitch: command=verify cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest from_change=types to_change=tests
-
-- name: Check status
-  sqitch: command=status cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest
-
-- name: Revert whole plan to change
-  sqitch: command=revert cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest to_change=schemas
-
-- name: Destroy DB
-  postgresql_db: name=anstest state=absent
-
-- name: Remove resources
-  file: path=/tmp/sqitch_test state=absent
+- block:
+  - name: Create dir for resources
+    file: path=/tmp/sqitch_test state=directory mode=0755
+  
+  - name: Copy resources to tmp dir
+    copy: src=files/ dest=/tmp/sqitch_test
+  
+  - name: Create DB for tests
+    postgresql_db: name=anstest encoding='UTF-8' state=present template=template0
+  
+  - name: Install sqitch
+    package: name=sqitch state=present
+    when: ansible_os_family == "Debian"
+  
+  - name: Install CPAN
+    package: name={{ item }} state=present
+    with_items:
+      - perl-devel
+      - perl-CPAN
+      - perl-DBD-Pg
+    when: ansible_os_family == "RedHat"
+  
+  - name: Install cpanminus
+    shell: "curl -L http://cpanmin.us | perl - --sudo App::cpanminus"
+    when: ansible_os_family == "RedHat"
+  
+  - name: Install sqitch
+    shell: "cpanm --sudo --quiet --notest App::Sqitch"
+    when: ansible_os_family == "RedHat"
+  
+  - name: Deploy to change
+    sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest verify=true to_change=types
+  
+  - name: Rebase
+    sqitch:
+      command: rebase
+      cwd: "/tmp/sqitch_test"
+      plan_file: sqitch.plan
+      target: anstest
+      verify: true
+  
+  - name: Revert to change
+    sqitch: command=revert cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest to_change=schemas
+  
+  - name: Deploy whole plan
+    sqitch: command=deploy cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest
+  
+  - name: Verify
+    sqitch: command=verify cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest from_change=types to_change=tests
+  
+  - name: Check status
+    sqitch: command=status cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest
+  
+  - name: Revert whole plan to change
+    sqitch: command=revert cwd=/tmp/sqitch_test plan_file=sqitch.plan target=anstest to_change=schemas
+  
+  - name: Destroy DB
+    postgresql_db: name=anstest state=absent
+  
+  - name: Remove resources
+    file: path=/tmp/sqitch_test state=absent
+  when: (not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "14.04")) and
+        (not (ansible_distribution == "OpenSuse"))
