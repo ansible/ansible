@@ -12,6 +12,7 @@
 # Note that nir0s/distro has many more tests in it's test suite. The tests here are
 # primarily for testing the vendoring.
 
+import platform
 import pytest
 
 from ansible.module_utils import distro
@@ -30,3 +31,30 @@ class TestDistro():
         linux_dist = distro.linux_distribution()
         assert isinstance(linux_dist, tuple), \
             'linux_distrution() returned %s (%s) which is not a tuple' % (linux_dist, type(linux_dist))
+
+
+# compare distro.py results with platform.linux_distribution() if we have it
+# Depending on the platform, it is okay if these don't match exactly as long as the
+# distro result is what we expect and special cased.
+class TestDistroCompat():
+    '''Verify that distro.linux_distribution matches plain platform.linux_distribution'''
+
+    _platform_supported_dists = platform._supported_dists
+
+    def test_linux_distribution(self):
+        platform_linux_dist = platform.linux_distribution(supported_dists=self._platform_supported_dists)
+        distro_linux_dist = distro.linux_distribution()
+
+        assert isinstance(distro_linux_dist, type(platform_linux_dist)), \
+            'linux_distrution() returned type (%s) which is different from platform.linux_distribution type (%s)' % \
+            (type(distro_linux_dist), type(platform_linux_dist))
+
+        # TODO: add the cases where we expect them to differ
+
+        # The third item in the tuple is different.
+        assert distro_linux_dist[0] == platform_linux_dist[0]
+        assert distro_linux_dist[1] == platform_linux_dist[1]
+
+        # FIXME: This fails on at least Fedora
+        # platform returns the 'id', while distro returns the 'codename'
+        assert distro_linux_dist[2] == platform_linux_dist[2]
