@@ -25,7 +25,6 @@ description:
       WAPI interface over REST.
 requirements:
   - infoblox_client
-extends_documentation_fragment: nios
 options:
   external_primaries:
     description:
@@ -66,12 +65,12 @@ options:
       - Configures a text string comment to be associated with the instance
         of this object.  The provided text string will be configured on the
         object instance.
-   required: false
-   state:
-     description:
-       - Should the resource be C(present) or C(absent).
-     choices: [present, absent]
-     default: present
+    required: false
+  state:
+    description:
+      - Should the resource be C(present) or C(absent).
+    choices: [present, absent]
+    default: present
 '''
 
 EXAMPLES = '''
@@ -131,7 +130,7 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 
 
 def main():
-    ''' entrypoint for module execution'''
+    '''entrypoint for module execution.'''
     argument_spec = dict(
         provider=dict(required=True),
         state=dict(default='present', choices=['present', 'absent']),
