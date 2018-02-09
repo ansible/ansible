@@ -401,7 +401,7 @@ class TaskExecutor:
                         if template_no_item != template_with_item:
                             display.deprecated(
                                 'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
-                                'Instead of using a loop to supply multiple packages and specifying `%s: %s`, '
+                                'Instead of using a loop to supply multiple items and specifying `%s: %s`, '
                                 'please use `%s: %r` and remove the loop' % (self._task.action, found, name, found, self._task.loop),
                                 version=2.9
                             )
