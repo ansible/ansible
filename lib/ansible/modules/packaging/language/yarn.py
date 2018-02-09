@@ -1,22 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, David Gunter <david.gunter@tivix.com>, Chris Hoffman <christopher.hoffman@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 David Gunter <david.gunter@tivix.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,7 +18,7 @@ DOCUMENTATION = '''
 module: yarn
 short_description: Manage node.js packages with Yarn
 description:
-  - Manage node.js packages with Yarn (https://yarnpkg.com/)
+  - Manage node.js packages with the Yarn package manager (https://yarnpkg.com/)
 version_added: "2.6"
 author: 
   - "David Gunter (@dsgunter)" 
@@ -36,14 +27,16 @@ options:
   name:
     description:
       - The name of a node.js library to install
+      - If omitted all packages in package.json are installed.
     required: false
   path:
     description:
-      - The base path where to install the node.js libraries
+      - The base path where Node.js packages will be installed.
     required: false
   version:
     description:
-      - The version to be installed
+      - The version of the library to be installed.
+      - Must be in semver format
     required: false
   global:
     description:
@@ -62,10 +55,10 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: no
-    version_added: "1.8"
   production:
     description:
-      - Install dependencies in production mode, excluding devDependencies
+      - Install dependencies in production mode.
+      - Yarn will ignore any dependencies under devDependencies in package.json
     required: false
     choices: [ "yes", "no" ]
     default: no
@@ -73,78 +66,53 @@ options:
     description:
       - The registry to install modules from.
     required: false
-    version_added: "1.6"
   state:
     description:
-      - The state of the node.js library
+      - Installation state of the named node.js library
+      - If absent is selected, a name option must be provided
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+requirements:
+    - Yarn installed in bin path (typically /usr/local/bin) 
 '''
 
 EXAMPLES = '''
-description: Install "coffee-script" node.js package.
-- yarn: name=coffee-script path=/app/location
-
-description: Install "coffee-script" node.js package on version 1.6.1.
-- yarn: name=coffee-script version=1.6.1 path=/app/location
-
-description: Install "coffee-script" node.js package globally.
-- yarn: name=coffee-script global=yes
-
-description: Remove the globally package "coffee-script".
-- yarn: name=coffee-script global=yes state=absent
-
-description: Install "coffee-script" node.js package from custom registry.
-- yarn: name=coffee-script registry=http://registry.mysite.com
-
-description: Install packages based on package.json.
-- yarn: path=/app/location
-
-description: Update packages based on package.json to their latest version.
-- yarn: path=/app/location state=latest
-
-description: Install packages based on package.json using a specific yarn executable
-- yarn: path=/app/location executable=/Users/someuser/.yarn/bin state=present
-'''
-
-RETURN = '''
-changed:
-    description: Whether Yarn changed any package data
-    returned: always
-    type: boolean
-    sample: true
-msg:
-    description: Provides an error message if Yarn syntax was incorrect
-    returned: failure
-    type: string
-    sample: "path must be specified when not using global"
-invocation:
-    description: Parameters and values used during execution
-    returned: success
-    type: dictionary
-    sample: {
-            "module_args": {
-                "executable": null, 
-                "global": false, 
-                "ignore_scripts": false, 
-                "name": null, 
-                "path": "/some/path/folder", 
-                "production": false, 
-                "registry": null, 
-                "state": "present", 
-                "version": null
-            }
-        } 
-out:
-    description: Output generated from Yarn with emojis removed.
-    returned: always
-    type: string
-    sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4] Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
-...
+- name: Install "imagemin" node.js package.
+  yarn:
+    name: imagemin
+    path: /app/location
+- name: Install "imagemin" node.js package on version 5.3.1
+  yarn:
+    name: imagemin
+    version: '5.3.1'
+    path: /app/location
+- name: Install "imagemin" node.js package globally.
+  yarn:
+    name: imagemin
+    global: yes
+- name: Remove the globally-installed package "imagemin".
+  yarn:
+    name: imagemin
+    global: yes
+    state: absent
+- name: Install "imagemin" node.js package from custom registry.
+  yarn:
+    name: imagemin
+    registry: 'http://registry.mysite.com'
+- name: Install packages based on package.json.
+  yarn:
+    path: /app/location
+- name: Update all packages in package.json to their latest version.
+  yarn:
+    path: /app/location
+    state: latest
 '''
 
 import os
+import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 try:
     import json
@@ -155,13 +123,11 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
-from ansible.module_utils.basic import AnsibleModule
-
 
 class Yarn(object):
     def __init__(self, module, **kwargs):
         self.module = module
-        self.glbl = kwargs['glbl']
+        self.globally = kwargs['globally']
         self.name = kwargs['name']
         self.version = kwargs['version']
         self.path = kwargs['path']
@@ -183,7 +149,7 @@ class Yarn(object):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
             cmd = self.executable + args
 
-            if self.glbl:
+            if self.globally:
                 # Yarn global arg is inserted before the command (e.g. `yarn global {some-command}`)
                 cmd = self.executable + ['global'] + args
             if self.production:
@@ -199,10 +165,11 @@ class Yarn(object):
             # always run Yarn without emojis when called via Ansible
             cmd.append('--no-emoji')
 
-            #If path is specified, cd into that path and run the command.
+            # If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
                 if not os.path.exists(self.path):
+                    # Module will make directory if not exists.
                     os.makedirs(self.path)
                 if not os.path.isdir(self.path):
                     self.module.fail_json(msg="Path provided %s is not a directory" % self.path)
@@ -228,17 +195,17 @@ class Yarn(object):
                     installed.append(dep)
             if self.name and self.name not in installed:
                 missing.append(self.name)
-        #Named dependency not installed
+        # Named dependency not installed
         else:
             missing.append(self.name)
 
         return installed, missing
 
     def install(self):
-        # Yarn has 2 separate install commands: one for specific packages and oen that installs
-        # all packages from package.json.
         if self.name or self.name_version:
+            # Yarn has a separate command for installing packages by name...
             return self._exec(['add'])
+        # And one for installing all packages in package.json
         return self._exec(['install'])
 
     def update(self):
@@ -254,7 +221,7 @@ class Yarn(object):
             if dep:
                 # node.js v0.10.22 changed the `npm outdated` module separator
                 # from "@" to " ". Split on both for backwards compatibility.
-                pkg, other = re.split('\s|@', dep, 1)
+                pkg, other = re.split(r'\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated
@@ -280,20 +247,27 @@ def main():
     name = module.params['name']
     path = module.params['path']
     version = module.params['version']
-    glbl = module.params['global']
+    globally = module.params['global']
     production = module.params['production']
     executable = module.params['executable']
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
 
-    if not path and not glbl:
+    if not path and not globally:
         module.fail_json(msg='Path must be specified when not using global arg')
     if state == 'absent' and not name:
         module.fail_json(msg='Uninstalling a package is only available for named packages')
 
-    yarn = Yarn(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts)
+    yarn = Yarn(module,
+                name=name,
+                path=path,
+                version=version,
+                globally=globally,
+                production=production,
+                executable=executable,
+                registry=registry,
+                ignore_scripts=ignore_scripts)
 
     changed = False
     if state == 'present':
@@ -310,7 +284,8 @@ def main():
         if len(outdated):
             changed = True
             out = yarn.update()
-    else: #absent
+    else:
+        # state == absent
         installed, missing = yarn.list()
         if name in installed:
             changed = True
