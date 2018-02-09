@@ -1,9 +1,24 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.6"></a>
+
+## 2.5 "Heartbreaker" - ACTIVE DEVELOPMENT
+
+### Major Changes
+
+### Deprecations (to be removed in 2.10)
+
+### Minor Changes
+
+#### Removed modules (previously deprecated)
+
+### New Modules
+
+
 <a id="2.5"></a>
 
-## 2.5 "TBD" - ACTIVE DEVELOPMENT
+## 2.5 "Kashmir" - March 2018 (estimated)
 
 [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html)
 
@@ -78,7 +93,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 ### New Plugins
 
-## Lookups
+#### Lookups
 * aws_ssm: Query AWS ssm data
 * aws_account_attribute: Query AWS account attributes such as EC2-Classic
     availability
@@ -86,16 +101,16 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * openshift: Return info from Openshift installation
 * redis: look up date from Redis DB, deprecates the redis_kv one.
 
-## Callbacks
+#### Callbacks
 * yaml
 
-## Connections
+#### Connections
 * network_cli
 * netconf
 
 While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
 
-## Filters
+#### Filters
 * parse_xml
 
 ### New Modules
