@@ -319,7 +319,7 @@ def main():
         # Filter out module params with null values
         aci.payload(
             aci_class=domain_class,
-            class_config=dict(name=domain_mo),
+            class_config=dict(name=domain),
             child_configs=[
                 {'infraRsVlanNs': {'attributes': {'tDn': aci_mo}}},
             ]
