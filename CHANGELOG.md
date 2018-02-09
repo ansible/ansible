@@ -1,21 +1,6 @@
 Ansible Changes By Release
 ==========================
 
-<a id="2.6"></a>
-
-## 2.5 "Heartbreaker" - ACTIVE DEVELOPMENT
-
-### Major Changes
-
-### Deprecations (to be removed in 2.10)
-
-### Minor Changes
-
-#### Removed modules (previously deprecated)
-
-### New Modules
-
-
 <a id="2.5"></a>
 
 ## 2.5 "Kashmir" - March 2018 (estimated)
@@ -94,21 +79,31 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 ### New Plugins
 
 #### Lookups
-* aws_ssm: Query AWS ssm data
 * aws_account_attribute: Query AWS account attributes such as EC2-Classic
     availability
+* aws_service_ip_ranges: Query AWS IP ranges for services such as EC2/S3
+* aws_ssm: Query AWS ssm data
 * config: Lookup Ansible settings
+* conjur_variable: Fetch credentials from CyberArk Conjur
+* k8s: Query the K8s API
+* nios: Query Infoblox NIOS objects
 * openshift: Return info from Openshift installation
 * redis: look up date from Redis DB, deprecates the redis_kv one.
 
+
 #### Callbacks
+* null
+* unixy
 * yaml
 
-#### Connections
-* network_cli
-* netconf
 
-While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
+#### Connections
+* kubectl
+* netconf
+* network_cli
+* oc
+
+While neither network_cli nor netconf are technically new plugins, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
 
 #### Filters
 * parse_xml
@@ -137,8 +132,8 @@ While neither is technically a new plugin, these connections may now be used dir
   * cloudfront_distribution
   * cloudfront_invalidation
   * cloudfront_origin_access_identity
+  * cloudwatchlogs_log_group
   * cloudwatchlogs_log_group_facts
-  * cloudwatchlogs_log_group.py
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
@@ -146,7 +141,6 @@ While neither is technically a new plugin, these connections may now be used dir
   * ec2_placement_group
   * ec2_placement_group_facts
   * ec2_vpc_egress_igw
-  * ec2_vpc_vpn
   * ecs_taskdefinition_facts
   * elasticache_facts
   * elb_target
@@ -183,10 +177,15 @@ While neither is technically a new plugin, these connections may now be used dir
 - misc
   * terraform
 - oneandone
+  * oneandone_firewall_policy
+  * oneandone_load_balancer
   * oneandone_monitoring_policy
+  * oneandone_private_network
+  * oneandone_public_ip
   * oneandone_server
 - openstack
   * os_keystone_endpoint
+  * os_project_access
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
@@ -285,12 +284,8 @@ While neither is technically a new plugin, these connections may now be used dir
   * aci_encap_pool_range
   * aci_fabric_node
   * aci_firmware_source
-  * aci_interface_policy_fc
   * aci_interface_policy_leaf_policy_group
   * aci_interface_policy_leaf_profile
-  * aci_interface_policy_lldp
-  * aci_interface_policy_mcp
-  * aci_interface_policy_port_security
   * aci_interface_selector_to_switch_policy_leaf_profile
   * aci_static_binding_to_epg
   * aci_switch_leaf_selector
@@ -307,6 +302,12 @@ While neither is technically a new plugin, these connections may now be used dir
   * avi_gslbservice_patch_member
   * avi_wafpolicy
   * avi_wafprofile
+- dimension data
+  * dimensiondata_vlan
+- edgeos
+  * edgeos_command
+  * edgeos_config
+  * edgeos_facts
 - enos
   * enos_command
   * enos_config
@@ -327,6 +328,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * bigip_device_trust
   * bigip_gtm_server
   * bigip_iapplx_package
+  * bigip_monitor_http
   * bigip_monitor_https
   * bigip_monitor_snmp_dca
   * bigip_monitor_udp
