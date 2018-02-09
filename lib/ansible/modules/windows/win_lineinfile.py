@@ -43,6 +43,8 @@ options:
     description:
       - Required for C(state=present). The line to insert/replace into the file. If C(backrefs) is set, may contain backreferences that will get
         expanded with the C(regexp) capture groups if the regexp matches.
+      - Be aware that the line is processed first on the controller and thus is dependent on yaml quoting rules. Any double quoted line
+        will have control characters, such as '\r\n', expanded. To print such characters literally, use single or no quotes.
   backrefs:
     required: false
     default: "no"
@@ -110,6 +112,11 @@ notes:
 
 EXAMPLES = r'''
 # Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+- name: insert path without converting \r\n
+  win_lineinfile:
+    path: c:\file.txt
+    line: c:\return\new
+
 - win_lineinfile:
     path: C:\temp\example.conf
     regexp: '^name='

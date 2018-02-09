@@ -653,6 +653,7 @@
     path: "{{win_output_dir}}/test_linebreak.txt"
   register: result
 
+# (Get-FileHash -path C:\ansible\test\integration\targets\win_lineinfile\files\test_linebreak.txt -Algorithm sha1).hash.tolower()
 - name: check win_stat file result
   assert:
     that:
@@ -666,17 +667,21 @@
   win_lineinfile:
     dest: "{{win_output_dir}}/test_linebreak.txt"
     line: c:\return\new
-  register: result
+  register: result_literal
 
-- debug:
-    var: result
-    verbosity: 1
+- name: insert path "c:\return\new" to test file, will cause line breaks
+  win_lineinfile:
+    dest: "{{win_output_dir}}/test_linebreak.txt"
+    line: "c:\return\new"
+  register: result_expand
 
-- name: assert that the line was inserted
+- name: assert that the lines were inserted
   assert:
     that:
-    - result.changed == true
-    - result.msg == 'line added'
+    - result_literal.changed == true
+    - result_literal.msg == 'line added'
+    - result_expand.changed == true
+    - result_expand.msg == 'line added'
 
 - name: stat the test file
   win_stat:
@@ -687,7 +692,12 @@
     var: result
     verbosity: 1
 
-- name: assert that the file path is inserted without line breaks
+# expect that the file looks like this:
+# c:\return\new
+# c:
+# eturn
+# ew
+- name: assert that one line is literal and the other has breaks
   assert:
     that:
-    - result.stat.checksum == 'bb952ff0904eddf71a5f44b68d499672d45cc61f'
+    - result.stat.checksum == '3738b9874eb00778c276426c2f7a3f7d661f5f76'
