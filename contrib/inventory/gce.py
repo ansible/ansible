@@ -222,6 +222,7 @@ class GceInventory(object):
             'gce_project_id': '',
             'gce_zone': '',
             'libcloud_secrets': '',
+            'instance_tags': '',
             'inventory_ip_type': '',
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': '300'
@@ -247,19 +248,15 @@ class GceInventory(object):
             if states:
                 self.instance_states = states.split(',')
 
-        # Set the instance_tags filter
-        self.instance_tags = []
-        if config.has_option('gce', 'instance_tags'):
-            tags = config.get('gce', 'instance_tags')
-            # Ignore if instance_tags is an empty string.
-            if tags:
-                self.instance_tags = tags.split(',')
-        # Env var overrides config from file
-        if os.environ.get('GCE_INSTANCE_TAGS'):
-            self.instance_tags = os.environ.get('GCE_INSTANCE_TAGS').split(',')
-        # Cli param overrides both config and env var
+        # Set the instance_tags filter, env var overrides config from file
+        # and cli param overrides all
         if self.args.instance_tags:
-            self.instance_tags = self.args.instance_tags.split(',')
+            self.instance_tags = self.args.instance_tags
+        else:
+            self.instance_tags = os.environ.get('GCE_INSTANCE_TAGS',
+                    config.get('gce', 'instance_tags'))
+        if self.instance_tags:
+            self.instance_tags = self.instance_tags.split(',')
 
         # Caching
         cache_path = config.get('cache', 'cache_path')
