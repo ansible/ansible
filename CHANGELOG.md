@@ -172,6 +172,8 @@ While neither network_cli nor netconf are technically new plugins, these connect
   * digital_ocean_certificate
   * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
+- dimensiondata
+  * dimensiondata_vlan
 - google
   * gcp_dns_managed_zone
 - misc
