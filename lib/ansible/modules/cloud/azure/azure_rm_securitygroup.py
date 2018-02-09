@@ -334,6 +334,7 @@ state:
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.network import NetworkManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -369,7 +370,7 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('access'):
         rule['access'] = 'Allow'
 
-    access_names = [member.value for member in self.network_models.SecurityRuleAccess]
+    access_names = [member.value for member in self.nsg_models.SecurityRuleAccess]
     if rule['access'] not in access_names:
         raise Exception("Rule access must be one of [{0}]".format(', '.join(access_names)))
 
@@ -382,14 +383,14 @@ def validate_rule(self, rule, rule_type=None):
     if not rule.get('protocol'):
         rule['protocol'] = '*'
 
-    protocol_names = [member.value for member in self.network_models.SecurityRuleProtocol]
+    protocol_names = [member.value for member in self.nsg_models.SecurityRuleProtocol]
     if rule['protocol'] not in protocol_names:
         raise Exception("Rule protocol must be one of [{0}]".format(', '.join(protocol_names)))
 
     if not rule.get('direction'):
         rule['direction'] = 'Inbound'
 
-    direction_names = [member.value for member in self.network_models.SecurityRuleDirection]
+    direction_names = [member.value for member in self.nsg_models.SecurityRuleDirection]
     if rule['direction'] not in direction_names:
         raise Exception("Rule direction must be one of [{0}]".format(', '.join(direction_names)))
 
@@ -439,7 +440,7 @@ def create_rule_instance(self, rule):
     :param rule: dict
     :return: SecurityRule
     '''
-    return self.network_models.SecurityRule(
+    return self.nsg_models.SecurityRule(
         protocol=rule['protocol'],
         source_address_prefix=rule['source_address_prefix'],
         destination_address_prefix=rule['destination_address_prefix'],
@@ -535,6 +536,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.rules = None
         self.state = None
         self.tags = None
+        self.client = None  # type: azure.mgmt.network.NetworkManagementClient
+        self.nsg_models = None  # type: azure.mgmt.network.models
 
         self.results = dict(
             changed=False,
@@ -545,6 +548,11 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                                                    supports_check_mode=True)
 
     def exec_module(self, **kwargs):
+        self.client = self.get_mgmt_svc_client(NetworkManagementClient)
+        # tighten up poll interval for security groups; default 30s is an eternity
+        # this value is still overridden by the response Retry-After header (which is set on the initial operation response to 10s)
+        self.client.config.long_running_operation_timeout = 3
+        self.nsg_models = self.client.network_security_groups.models
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -572,7 +580,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
                     self.fail("Error validating default rule {0} - {1}".format(rule, str(exc)))
 
         try:
-            nsg = self.network_client.network_security_groups.get(self.resource_group, self.name)
+            nsg = self.client.network_security_groups.get(self.resource_group, self.name)
             results = create_network_security_group_dict(nsg)
             self.log("Found security group:")
             self.log(results, pretty_print=True)
@@ -582,7 +590,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             elif self.state == 'absent':
                 self.log("CHANGED: security group found but state is 'absent'")
                 changed = True
-        except CloudError:
+        except CloudError:  # TODO: actually check for ResourceMissingError
             if self.state == 'present':
                 self.log("CHANGED: security group not found and state is 'present'")
                 changed = True
@@ -640,7 +648,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
             self.results['changed'] = changed
             self.results['state'] = results
-            if not self.check_mode:
+            if not self.check_mode and changed:
                 self.results['state'] = self.create_or_update(results)
 
         elif self.state == 'present' and changed:
@@ -681,7 +689,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         return self.results
 
     def create_or_update(self, results):
-        parameters = self.network_models.NetworkSecurityGroup()
+        parameters = self.nsg_models.NetworkSecurityGroup()
         if results.get('rules'):
             parameters.security_rules = []
             for rule in results.get('rules'):
@@ -694,9 +702,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         parameters.location = results.get('location')
 
         try:
-            poller = self.network_client.network_security_groups.create_or_update(self.resource_group,
-                                                                                  self.name,
-                                                                                  parameters)
+            poller = self.client.network_security_groups.create_or_update(resource_group_name=self.resource_group,
+                                                                          network_security_group_name=self.name,
+                                                                          parameters=parameters)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             self.fail("Error creating/updating security group {0} - {1}".format(self.name, str(exc)))
@@ -704,7 +712,7 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
     def delete(self):
         try:
-            poller = self.network_client.network_security_groups.delete(self.resource_group, self.name)
+            poller = self.client.network_security_groups.delete(resource_group_name=self.resource_group, network_security_group_name=self.name)
             result = self.get_poller_result(poller)
         except CloudError as exc:
             raise Exception("Error deleting security group {0} - {1}".format(self.name, str(exc)))
