@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: link
     state: absent
@@ -28,6 +29,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: node
     state: absent
@@ -40,6 +42,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: leaf
     state: absent
@@ -55,6 +58,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: link
     link_level_policy: linklevelpolicy
@@ -85,12 +89,12 @@
     that:
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
-    - intf_policy_leaf_polgrp_present.existing == []
-    - 'intf_policy_leaf_polgrp_present.config ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "link","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "link","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
-    - intf_policy_leaf_polgrp_idempotent.config == {}
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
-    - 'intf_policy_leaf_polgrp_update.config == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
 
 - name: Query interface policy leaf policy group (PC)
   aci_interface_policy_leaf_policy_group:
@@ -100,6 +104,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: link
     state: query
@@ -109,7 +114,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.existing | length >= 1
+      - binding_query.previous | length >= 1
       - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (PC) - check mode
@@ -136,6 +141,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     #lag_type: link
     state: absent
@@ -146,11 +152,11 @@
   assert:
     that:
       - intf_policy_leaf_polgrp_check_mode_absent.changed == true
-      - intf_policy_leaf_polgrp_check_mode_absent.existing != []
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
       - intf_policy_leaf_polgrp_absent.changed == true
-      - intf_policy_leaf_polgrp_absent.existing == intf_policy_leaf_polgrp_absent.existing
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
       - intf_policy_leaf_polgrp_absent_idempotent.changed == false
-      - intf_policy_leaf_polgrp_absent_idempotent.existing == []
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
       - intf_policy_leaf_polgrp_absent_missing_param.failed == true
       - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "state is absent but all of the following are missing: lag_type"'
 
@@ -171,6 +177,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: node
     link_level_policy: linklevelpolicy
@@ -201,12 +208,12 @@
     that:
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
-    - intf_policy_leaf_polgrp_present.existing == []
-    - 'intf_policy_leaf_polgrp_present.config ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "node","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "node","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
-    - intf_policy_leaf_polgrp_idempotent.config == {}
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
-    - 'intf_policy_leaf_polgrp_update.config == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccBndlGrp": {"attributes": {"descr": "policygroup description"}}}'
 
 - name: Query interface policy leaf policy group (VPC)
   aci_interface_policy_leaf_policy_group:
@@ -216,6 +223,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: node
     state: query
@@ -225,7 +233,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.existing | length >= 1
+      - binding_query.previous | length >= 1
       - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (VPC) - check mode
@@ -252,6 +260,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     #lag_type: node
     state: absent
@@ -262,11 +271,11 @@
   assert:
     that:
       - intf_policy_leaf_polgrp_check_mode_absent.changed == true
-      - intf_policy_leaf_polgrp_check_mode_absent.existing != []
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
       - intf_policy_leaf_polgrp_absent.changed == true
-      - intf_policy_leaf_polgrp_absent.existing == intf_policy_leaf_polgrp_absent.existing
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
       - intf_policy_leaf_polgrp_absent_idempotent.changed == false
-      - intf_policy_leaf_polgrp_absent_idempotent.existing == []
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
       - intf_policy_leaf_polgrp_absent_missing_param.failed == true
       - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "state is absent but all of the following are missing: lag_type"'
 
@@ -287,6 +296,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: leaf
     link_level_policy: linklevelpolicy
@@ -313,11 +323,11 @@
 
 - name: hello
   debug:
-    msg: "{{ intf_policy_leaf_polgrp_present.config }}"
+    msg: "{{ intf_policy_leaf_polgrp_present.sent }}"
 
 - name: hello
   debug:
-    msg: "{{ intf_policy_leaf_polgrp_update.config }}"
+    msg: "{{ intf_policy_leaf_polgrp_update.sent }}"
 
 # TODO: also test for errors
 - name: present assertions
@@ -325,12 +335,12 @@
     that:
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
-    - intf_policy_leaf_polgrp_present.existing == []
-    - 'intf_policy_leaf_polgrp_present.config ==  {"infraAccPortGrp": {"attributes": {"dn": "uni/infra/funcprof/accportgrp-policygroupname","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - intf_policy_leaf_polgrp_present.previous == []
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"dn": "uni/infra/funcprof/accportgrp-policygroupname","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
-    - intf_policy_leaf_polgrp_idempotent.config == {}
+    - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
-    - 'intf_policy_leaf_polgrp_update.config == {"infraAccPortGrp": {"attributes": {"descr": "policygroup description"}}}'
+    - 'intf_policy_leaf_polgrp_update.sent == {"infraAccPortGrp": {"attributes": {"descr": "policygroup description"}}}'
 
 - name: Query interface policy leaf policy group (Leaf Access Port)
   aci_interface_policy_leaf_policy_group:
@@ -340,6 +350,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     lag_type: leaf
     state: query
@@ -349,7 +360,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.existing | length >= 1
+      - binding_query.previous | length >= 1
       - '"/api/mo/uni/infra/funcprof/accportgrp-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (Leaf Access Port) - check mode
@@ -376,6 +387,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     policy_group: policygroupname
     #lag_type: leaf
     state: absent
@@ -386,11 +398,11 @@
   assert:
     that:
       - intf_policy_leaf_polgrp_check_mode_absent.changed == true
-      - intf_policy_leaf_polgrp_check_mode_absent.existing != []
+      - intf_policy_leaf_polgrp_check_mode_absent.previous != []
       - intf_policy_leaf_polgrp_absent.changed == true
-      - intf_policy_leaf_polgrp_absent.existing == intf_policy_leaf_polgrp_absent.existing
+      - intf_policy_leaf_polgrp_absent.previous == intf_policy_leaf_polgrp_absent.previous
       - intf_policy_leaf_polgrp_absent_idempotent.changed == false
-      - intf_policy_leaf_polgrp_absent_idempotent.existing == []
+      - intf_policy_leaf_polgrp_absent_idempotent.previous == []
       - intf_policy_leaf_polgrp_absent_missing_param.failed == true
       - 'intf_policy_leaf_polgrp_absent_missing_param.msg == "state is absent but all of the following are missing: lag_type"'
 
