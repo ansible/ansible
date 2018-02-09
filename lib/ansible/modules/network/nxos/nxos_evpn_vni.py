@@ -71,7 +71,7 @@ options:
     default: null
   route_target_export:
     description:
-      - Sets the route-target 'import' extended communities.
+      - Sets the route-target 'export' extended communities.
     required: false
     default: null
   state:
@@ -104,7 +104,6 @@ commands:
 '''
 
 import re
-import time
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -158,10 +157,10 @@ def get_existing(module, args):
                     existing[arg] = get_route_target_value(arg, config, module)
 
         existing_fix = dict((k, v) for k, v in existing.items() if v)
-        if existing_fix:
-            existing['vni'] = module.params['vni']
-        else:
+        if not existing_fix:
             existing = existing_fix
+
+        existing['vni'] = module.params['vni']
 
     return existing
 
@@ -205,12 +204,21 @@ def state_present(module, existing, proposed):
                         commands.append('no {0} {1}'.format(key, target))
             elif not isinstance(value, list):
                 value = [value]
+
             for target in value:
+                if target == 'default':
+                    continue
                 if existing:
                     if target not in existing.get(key.replace('-', '_').replace(' ', '_')):
                         commands.append('{0} {1}'.format(key, target))
                 else:
                     commands.append('{0} {1}'.format(key, target))
+
+            if existing.get(key.replace('-', '_').replace(' ', '_')):
+                for exi in existing.get(key.replace('-', '_').replace(' ', '_')):
+                    if exi not in value:
+                        commands.append('no {0} {1}'.format(key, exi))
+
         elif value == 'default':
             existing_value = existing_commands.get(key)
             if existing_value:
@@ -273,24 +281,6 @@ def main():
         commands, parents = state_absent(module, existing, proposed)
 
     if commands:
-        if (existing.get('route_distinguisher') and
-                proposed.get('route_distinguisher')):
-            if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
-                    proposed['route_distinguisher'] != 'default'):
-                warnings.append('EVPN RD {0} was automatically removed. '
-                                'It is highly recommended to use a task '
-                                '(with default as value) to explicitly '
-                                'unconfigure it.'.format(existing['route_distinguisher']))
-                remove_commands = ['no rd {0}'.format(existing['route_distinguisher'])]
-
-                candidate = CustomNetworkConfig(indent=3)
-                candidate.add(remove_commands, parents=parents)
-                load_config(module, candidate)
-                results['changed'] = True
-                results['commands'] = candidate.items_text()
-                time.sleep(30)
-
-        else:
             candidate = CustomNetworkConfig(indent=3)
             candidate.add(commands, parents=parents)
             candidate = candidate.items_text()
