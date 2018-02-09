@@ -208,14 +208,15 @@ def read_interfaces_lines(module, line_strings):
                 "down": [],
                 "post-up": []
             }
-            iface_name, address_family_name, method_name = words[1:4]
-            if len(words) != 4:
-                module.fail_json(msg="Incorrect number of parameters (%d) in line %d, must be exectly 3" % (len(words), i))
-                # TODO: put line and count parameters
-                return None, None
-
-            currif['address_family'] = address_family_name
-            currif['method'] = method_name
+            iface_name = words[1]
+            try:
+                currif['address_family'] = words[2]
+            except IndexError:
+                currif['address_family'] = None
+            try:
+                currif['method'] = words[3]
+            except IndexError:
+                currif['method'] = None
 
             ifaces[iface_name] = currif
             lines.append({'line': line, 'iface': iface_name, 'line_type': 'iface', 'params': currif})
