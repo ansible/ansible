@@ -22,9 +22,14 @@
     <<: *aws_connection_info
   register: eni_b
 
+- ec2_key:
+    name: "{{ resource_prefix }}_test_key"
+    <<: *aws_connection_info
+
 - name: Make instance in the testing subnet created in the test VPC
   ec2_instance:
     name: "{{ resource_prefix }}-test-eni-vpc"
+    key_name: "{{ resource_prefix }}_test_key"
     network:
       interfaces:
         - id: "{{ eni_a.interface.id }}"
@@ -35,6 +40,11 @@
     instance_type: t2.micro
     <<: *aws_connection_info
   register: in_test_vpc
+
+- assert:
+    that:
+      - 'in_test_vpc.instances[0].key_name == "{{ resource_prefix }}_test_key"'
+      - '(in_test_vpc.instances[0].network_interfaces | length) == 1'
 
 - name: Add a second interface
   ec2_instance:
@@ -68,6 +78,10 @@
 - assert:
     that: not result.changed
 
+- ec2_key:
+    name: "{{ resource_prefix }}_test_key"
+    state: absent
+    <<: *aws_connection_info
 
 - ec2_eni:
     eni_id: "{{ item }}"
