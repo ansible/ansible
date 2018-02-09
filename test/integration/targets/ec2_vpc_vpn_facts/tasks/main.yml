@@ -1,0 +1,32 @@
+---
+- block:
+
+  # ============================================================
+  - name: test success with no parameters
+    ec2_vpc_vpn_facts:
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+    register: result
+
+  - name: assert failure with no parameters
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.vpn_connections == [] or result.vpn_connections != []'
+
+  # ============================================================
+  - name: test success with no parameters
+    ec2_vpc_vpn_facts:
+      filters:
+        state: available
+      region: '{{ ec2_region }}'
+      aws_access_key: '{{ aws_access_key }}'
+      aws_secret_key: '{{ aws_secret_key }}'
+    register: result
+
+  - name: assert failure with no parameters
+    assert:
+      that:
+        - 'result.changed == false'
+        - 'result.vpn_connections == [] or result.vpn_connections != []'
