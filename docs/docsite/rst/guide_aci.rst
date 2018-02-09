@@ -2,6 +2,8 @@ Getting started with Cisco ACI
 ==============================
 
 .. contents:: Topics
+   :depth: 2
+   :local:
 
 .. _aci_intro:
 
@@ -66,15 +68,26 @@ Standard module parameters
 Every Ansible ACI module accepts the following parameters that influence the module's communication with the APIC REST API:
 
 - ``host`` -- Hostname or IP address of the APIC
-- ``port`` -- Port to use for communication *(defaults to `443` for HTTPS, and `80` for HTTP)*
-- ``username`` -- User name used to log on to the APIC *(defaults to `admin`)*
+- ``port`` -- Port to use for communication (defaults to ``443`` for HTTPS, and ``80`` for HTTP)
+- ``username`` -- User name used to log on to the APIC (defaults to ``admin``)
 - ``password`` -- Password for ``username`` to log on to the APIC (using password-based authentication)
 - ``private_key`` -- Private key for ``username`` to log on to APIC (using signature-based authentication)
-- ``certificate_name`` -- Name of the certificate in the ACI Web GUI *(defaults to `private_key` file baseename)*
-- ``validate_certs`` -- Validate certificate when using HTTPS communication *(defaults to `yes`)*
-- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication *(defaults to `yes`)*
-- ``use_proxy`` -- Use system proxy settings *(defaults to `yes`)*
+- ``certificate_name`` -- Name of the certificate in the ACI Web GUI (defaults to ``private_key`` file base name)
 - ``timeout`` -- Timeout value for socket-level communication
+- ``use_proxy`` -- Use system proxy settings (defaults to ``yes``)
+- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication (defaults to ``yes``)
+- ``validate_certs`` -- Validate certificate when using HTTPS communication (defaults to ``yes``)
+- ``output_level`` -- Influence the level of detail ACI modules return to the user (one of ``normal``, ``info`` or ``debug``)
+
+Module return values
+....................
+By default the ACI modules (excluding :ref:`aci_rest <aci_rest>`) return the resulting state of the managed object in a key ``current``.
+
+By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
+
+For troubleshooting purposes setting ``output_level: debug`` or defining environment variable ``ANSIBLE_DEBUG=1`` enables more detailed information on the actual APIC REST communication, incl. ``filter_string``, ``method``, ``response``, ``status`` and ``url``.
+
+.. note:: The module return values are documented in detail as part of each module's documentation.
 
 
 .. _aci_auth:
@@ -123,7 +136,9 @@ Perform the following steps:
 - Expand **Security Management > Local Users**
 - Click the name of the user you want to add a certificate to, in the **User Certificates** area
 - Click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field
-- If you use the basename of your private key here, you don't need to enter **certificate_name** in Ansible)
+
+  * If you use the basename of your private key here, you don't need to enter ``certificate_name`` in Ansible
+
 - Copy and paste your X.509 certificate in the **Data** field.
 
 You can automate this by using the following Ansible task:
@@ -143,7 +158,7 @@ You can automate this by using the following Ansible task:
 .. note:: Signature-based authentication only works with local users.
 
 
-Use Signature-based Authentication with Ansible
+Use signature-based authentication with Ansible
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 You need the following parameters with your ACI module(s) for it to work:
 
@@ -166,7 +181,7 @@ Using ACI REST with Ansible
 ---------------------------
 While already a lot of ACI modules exists in the Ansible distribution, and the most common actions can be performed with these existing modules, there's always something that may not be possible with off-the-shelf modules.
 
-The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortless.
+The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
 
 Using the aci-rest module
 .........................
@@ -242,36 +257,6 @@ More information
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
 
 
-
-.. _aci_issues:
-
-Known issues
-............
-The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
-
-
-Specific requests may not reflects changes correctly
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
-
-This issue has been reported to the vendor.
-
-**NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
-
-More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
-
-
-Specific requests are known to not be idempotent
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
-
-This issue has been reported to the vendor.
-
-.. note:: A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
-
-More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
-
-
 .. _aci_ops:
 
 Operational examples
@@ -322,3 +307,45 @@ The below example waits until the cluster is fully-fit. In this example you know
     #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in aci_fit.imdata)
       retries: 30
       delay: 30
+
+
+.. _aci_issues:
+
+Known issues
+------------
+The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
+
+All below issues either have been reported to the vendor, or can simply be avoided.
+
+- **Too many consecutive API calls may result in connection throttling**
+
+  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using passwod-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but it is advisable to use signature-based authentication as this also improves performance in general.
+
+  **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
+
+
+- **Specific requests may not reflect changes correctly**
+
+  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
+
+  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
+
+  **NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
+
+
+- **Specific requests are known to not be idempotent**
+
+  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
+
+  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
+
+  **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
+
+
+- **Setting user password is not idempotent**
+
+  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
+
+  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
+
+  **NOTE:** There is no workaround for this issue.
