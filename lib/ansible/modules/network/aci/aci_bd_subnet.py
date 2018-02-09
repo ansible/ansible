@@ -310,7 +310,7 @@ SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip
 
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, SEQUENCETYPE
 
 
 def main():
@@ -326,10 +326,7 @@ def main():
         preferred=dict(type='bool'),
         route_profile=dict(type='str'),
         route_profile_l3_out=dict(type='str'),
-        scope=dict(
-            type='list',
-            choices=[['private'], ['public'], ['shared'], ['private', 'shared'], ['shared', 'private'], ['public', 'shared'], ['shared', 'public']],
-        ),
+        scope=dict(type='list', choices=['private', 'public', 'shared']),
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),
@@ -366,13 +363,11 @@ def main():
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
-    if scope:
-        if len(scope) == 1:
-            scope = scope[0]
-        elif 'public' in scope:
-            scope = 'public,shared'
+    if isinstance(scope, SEQUENCETYPE):
+        if 'private' in scope and 'public' in scope:
+            module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
         else:
-            scope = 'private,shared'
+            scope = ','.join(sorted(scope))
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:
