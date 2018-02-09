@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2017 Sertac Ozercan, <seozerca@microsoft.com>
+# Copyright (c) 2018 Sertac Ozercan, <seozerca@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_aks
-version_added: "2.5"
+version_added: "2.6"
 short_description: Manage a managed Azure Container Service (AKS) Instance.
 description:
     - Create, update and delete a managed Azure Container Service (AKS) Instance.
@@ -84,14 +84,6 @@ options:
                 description:
                     - Size of the OS disk.
                 required: false
-            storage_profile:
-                description:
-                    - Storage profile specifies what kind of storage used.
-                required: false
-                choices:
-                    - StorageAccount
-                    - ManagedDisks
-                default: ManagedDisks
     service_principal:
         description:
             - The service principal suboptions.
@@ -136,11 +128,7 @@ EXAMPLES = '''
         tags:
             Environment: Production
 
-# Deletes the specified container service in the specified subscription and resource group.
-# The operation does not delete other resources created as part of creating a container service,
-# including storage accounts, VMs, and availability sets. All the other resources created with the container
-# service are part of the same resource group and can be deleted individually.
-    - name: Remove an azure container services instance
+    - name: Remove a managed Azure Container Services (AKS) instance
       azure_rm_aks:
         name: acctestaks3
         location: eastus
@@ -188,7 +176,6 @@ def create_agent_pool_profile_instance(self, agentpoolprofile):
         count=agentpoolprofile['count'],
         vm_size=agentpoolprofile['vm_size'],
         os_disk_size_gb=agentpoolprofile['os_disk_size_gb'],
-        storage_profile=agentpoolprofile['storage_profile']
     )
 
 
@@ -287,11 +274,10 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
         vm_size=profile.vm_size,
         name=profile.name,
         os_disk_size_gb=profile.os_disk_size_gb,
-        storage_profile=profile.storage_profile,
     ) for profile in agentpoolprofiles]
 
 
-class AzureRMManagedContainerService(AzureRMModuleBase):
+class AzureRMManagedCluster(AzureRMModuleBase):
     """Configuration class for an Azure RM container service (AKS) resource"""
 
     def __init__(self):
@@ -349,9 +335,9 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
 
         self.results = dict(changed=False, state=dict())
 
-        super(AzureRMManagedContainerService, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                             supports_check_mode=True,
-                                                             supports_tags=True)
+        super(AzureRMManagedCluster, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                    supports_check_mode=True,
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -426,6 +412,9 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
                     # if len(response['agent_pool_profiles']) != len(self.agent_pool_profiles):
                     #    self.log("Agent Pool count is diff, need to updated")
                     #    to_be_updated = True
+
+                    if response['kubernetes_version'] != self.kubernetes_version:
+                        to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
                         matched = False
@@ -504,10 +493,7 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
 
     def delete_aks(self):
         '''
-        Deletes the specified container service in the specified subscription and resource group.
-        The operation does not delete other resources created as part of creating a managed Azure container service (AKS),
-        including storage accounts, VMs, and availability sets.
-        All the other resources created with the container service are part of the same resource group and can be deleted individually.
+        Deletes the specified managed container service (AKS) in the specified subscription and resource group.
 
         :return: True
         '''
@@ -544,7 +530,7 @@ class AzureRMManagedContainerService(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMManagedContainerService()
+    AzureRMManagedCluster()
 
 
 if __name__ == '__main__':
