@@ -175,4 +175,4 @@ def get_waiter(client, waiter_name):
         return waiters_by_name[(client.__class__.__name__, waiter_name)](client)
     except KeyError:
         raise NotImplementedError("Waiter {0} could not be found for client {1}. Available waiters: {2}".format(
-            waiter_name, type(client), ', '.join(repr(k) for k in waiters_by_name.keys())))
+            waiter_name, type(client), ', '.join(repr(k) for k in ec2_waiters.waiters_by_name.keys())))
