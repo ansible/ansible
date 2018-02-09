@@ -259,10 +259,6 @@ def main():
 
     module = AnsibleModule(argument_spec, supports_check_mode=True,)
 
-    # CHECK IF PARAMS ARE SET
-    if module.params["host"] is None or module.params["username"] is None:
-        module.fail_json(msg="Host and username are required for connection")
-
     # VALIDATE PARAMS BEFORE ATTEMPTING TO CONNECT
     fmgr_ha_mode = module.params["fmgr_ha_mode"]
     fmgr_ha_cluster_pw = module.params["fmgr_ha_cluster_pw"]
@@ -317,18 +313,17 @@ def main():
                                      "Fill in one of"
                                      " three parameters peer_ipv4 or v6 or serial_num")
 
-    # CHECK IF LOGIN FAILED
+    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
+    # check if params are set
+    if module.params["host"] is None or module.params["username"] is None:
+        module.fail_json(msg="Host and username are required for connection")
+
+        # CHECK IF LOGIN FAILED
     fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
     response = fmg.login()
-    if response._sid is None:
-        fmg_logged_in = 0
-    else:
-        fmg_logged_in = 1
-
-    if fmg_logged_in == 0:
+    if "FortiManager instance connnected" not in str(response):
         module.fail_json(msg="Connection to FortiManager Failed")
     else:
-
         # START SESSION LOGIC
 
         # IF HA MODE IS NOT NULL, SWITCH THAT
