@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2017 David Gunter <david.gunter@tivix.com>
+# Copyright (c) 2017 Chris Hoffman <christopher.hoffman@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
@@ -20,8 +21,8 @@ short_description: Manage node.js packages with Yarn
 description:
   - Manage node.js packages with the Yarn package manager (https://yarnpkg.com/)
 version_added: "2.6"
-author: 
-  - "David Gunter (@dsgunter)" 
+author:
+  - "David Gunter (@verkaufer)"
   - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
 options:
   name:
@@ -74,7 +75,7 @@ options:
     default: present
     choices: [ "present", "absent", "latest" ]
 requirements:
-    - Yarn installed in bin path (typically /usr/local/bin) 
+    - Yarn installed in bin path (typically /usr/local/bin)
 '''
 
 EXAMPLES = '''
@@ -107,6 +108,42 @@ EXAMPLES = '''
   yarn:
     path: /app/location
     state: latest
+'''
+
+RETURN = '''
+changed:
+    description: Whether Yarn changed any package data
+    returned: always
+    type: boolean
+    sample: true
+msg:
+    description: Provides an error message if Yarn syntax was incorrect
+    returned: failure
+    type: string
+    sample: "Package must be explicitly named when uninstalling."
+invocation:
+    description: Parameters and values used during execution
+    returned: success
+    type: dictionary
+    sample: {
+            "module_args": {
+                "executable": null,
+                "globally": false,
+                "ignore_scripts": false, 
+                "name": null,
+                "path": "/some/path/folder", 
+                "production": false,
+                "registry": null,
+                "state": "present", 
+                "version": null
+            }
+        }
+out:
+    description: Output generated from Yarn with emojis removed.
+    returned: always
+    type: string
+    sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4] 
+    Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
 '''
 
 import os
@@ -257,7 +294,7 @@ def main():
     if not path and not globally:
         module.fail_json(msg='Path must be specified when not using global arg')
     if state == 'absent' and not name:
-        module.fail_json(msg='Uninstalling a package is only available for named packages')
+        module.fail_json(msg='Package must be explicitly named when uninstalling.')
 
     yarn = Yarn(module,
                 name=name,
@@ -292,3 +329,7 @@ def main():
             out = yarn.uninstall()
 
     module.exit_json(changed=changed, out=out)
+
+
+if __name__ == '__main__':
+    main()
