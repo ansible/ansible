@@ -224,8 +224,8 @@ def main():
 
     try:
         result = connection.publish(topic=arn_topic, subject=subject,
-                           message_structure=message_structure, message=json_msg,
-                           message_attributes=message_attributes)
+                                    message_structure=message_structure, message=json_msg,
+                                    message_attributes=message_attributes)
     except boto.exception.BotoServerError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
