@@ -18,13 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: yarn
 short_description: Manage node.js packages with Yarn
 description:
   - Manage node.js packages with Yarn (https://yarnpkg.com/)
-version_added: "2.3"
+version_added: "2.6"
 author: 
   - "David Gunter (@dsgunter)" 
   - "Chris Hoffman (@chrishoffman, creator of NPM Ansible module)"
@@ -150,6 +154,9 @@ except ImportError:
     except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 class Yarn(object):
     def __init__(self, module, **kwargs):
@@ -310,7 +317,3 @@ def main():
             out = yarn.uninstall()
 
     module.exit_json(changed=changed, out=out)
-
-# import module snippets
-from ansible.module_utils.basic import *
-main()
