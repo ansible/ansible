@@ -137,8 +137,8 @@ While neither is technically a new plugin, these connections may now be used dir
   * cloudfront_distribution
   * cloudfront_invalidation
   * cloudfront_origin_access_identity
+  * cloudwatchlogs_log_group
   * cloudwatchlogs_log_group_facts
-  * cloudwatchlogs_log_group.py
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
@@ -146,7 +146,6 @@ While neither is technically a new plugin, these connections may now be used dir
   * ec2_placement_group
   * ec2_placement_group_facts
   * ec2_vpc_egress_igw
-  * ec2_vpc_vpn
   * ecs_taskdefinition_facts
   * elasticache_facts
   * elb_target
@@ -178,15 +177,22 @@ While neither is technically a new plugin, these connections may now be used dir
   * digital_ocean_certificate
   * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
+- dimensiondata
+  * dimensiondata_vlan
 - google
   * gcp_dns_managed_zone
 - misc
   * terraform
 - oneandone
+  * oneandone_firewall_policy
+  * oneandone_load_balancer
   * oneandone_monitoring_policy
+  * oneandone_private_network
+  * oneandone_public_ip
   * oneandone_server
 - openstack
   * os_keystone_endpoint
+  * os_project_access
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
@@ -307,6 +313,10 @@ While neither is technically a new plugin, these connections may now be used dir
   * avi_gslbservice_patch_member
   * avi_wafpolicy
   * avi_wafprofile
+- edgeos
+  * edgeos_command
+  * edgeos_config
+  * edgeos_facts
 - enos
   * enos_command
   * enos_config
