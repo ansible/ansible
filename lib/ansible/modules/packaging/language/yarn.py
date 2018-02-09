@@ -129,12 +129,12 @@ invocation:
             "module_args": {
                 "executable": null,
                 "globally": false,
-                "ignore_scripts": false, 
+                "ignore_scripts": false,
                 "name": null,
-                "path": "/some/path/folder", 
+                "path": "/some/path/folder",
                 "production": false,
                 "registry": null,
-                "state": "present", 
+                "state": "present",
                 "version": null
             }
         }
@@ -142,7 +142,7 @@ out:
     description: Output generated from Yarn with emojis removed.
     returned: always
     type: string
-    sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4] 
+    sample: "yarn add v0.16.1[1/4] Resolving packages...[2/4] Fetching packages...[3/4] Linking dependencies...[4/4]
     Building fresh packages...success Saved lockfile.success Saved 1 new dependency..left-pad@1.1.3 Done in 0.59s."
 '''
 
