@@ -639,21 +639,19 @@ def tower_callback_script(tower_conf, windows=False, passwd=None):
             if p not in tower_conf:
                 module.fail_json(msg="Incomplete tower_callback configuration. tower_callback.{0} not set.".format(p))
 
-        tpl = string.Template(textwrap.dedent("""
-        #!/bin/bash
-        exec > /tmp/tower_callback.log 2>&1
+        tpl = string.Template(textwrap.dedent("""#!/bin/bash
         set -x
 
         retry_attempts=10
         attempt=0
         while [[ $attempt -lt $retry_attempts ]]
         do
-          status_code=`curl -k -s -i \
+          status_code=`curl --max-time 10 -v -k -s -i \
                   --data "host_config_key=${host_config_key}" \
                   https://${tower_address}/api/v1/job_templates/${template_id}/callback/ \
                   | head -n 1 \
                   | awk '{print $2}'`
-          if [[ $status_code == 202 ]]
+          if [[ $status_code == 201 ]]
             then
             exit 0
           fi
@@ -928,7 +926,7 @@ def build_top_level_options(params):
     if params.get('detailed_monitoring', False):
         spec['Monitoring'] = {'Enabled': True}
     if params.get('cpu_credit_specification') is not None:
-        spec['CreditSpecification'] = params.get('cpu_credit_specification')
+        spec['CreditSpecification'] = {'CpuCredits': params.get('cpu_credit_specification')}
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
     if (params.get('network') or {}).get('ebs_optimized') is not None:
