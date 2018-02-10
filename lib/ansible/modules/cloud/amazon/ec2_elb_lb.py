@@ -739,7 +739,7 @@ class ElbManager(object):
 
     def _create_elb_listeners(self, listeners):
         """Takes a list of listener tuples and creates them
-        
+
         Arguments:
             listeners (list): list of tuples
 
@@ -748,14 +748,14 @@ class ElbManager(object):
 
         Raises:
             IndexError: If HTTPS is specified as a listener but SSL cert is not specified.
-        
+
         """
         try:
             self.changed = self.elb_conn.create_load_balancer_listeners(self.name,
-                                                                    complex_listeners=listeners)
+                                                                        complex_listeners=listeners)
         except IndexError as e:
-            self.module.fail_json(msg='unable to create listener for port 443 HTTPS without specifying an SSL cert: %s' 
-                                       % e.message, exception=traceback.format_exc())
+            self.module.fail_json(msg='unable to create listener for port 443 HTTPS without specifying an SSL cert: %s'
+                                  % e.message, exception=traceback.format_exc())
 
     def _delete_elb_listeners(self, listeners):
         """Takes a list of listener tuples and deletes them from the elb"""
