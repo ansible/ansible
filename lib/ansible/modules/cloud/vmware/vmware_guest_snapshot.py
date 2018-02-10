@@ -241,11 +241,13 @@ class PyVmomiHelper(PyVmomi):
         memory_dump = False
         quiesce = False
         # Check if there is a latest snapshot already present as specified by user
-        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
-                                                          self.module.params["snapshot_name"])
-        if snap_obj:
-            # Snapshot already exists, do not anything.
-            self.module.exit_json(changed=False, msg="Snapshot named [%(snapshot_name)s] already exists." % self.module.params)
+        if vm.snapshot is not None:
+            snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                              self.module.params["snapshot_name"])
+            if snap_obj:
+                # Snapshot already exists, do not anything.
+                self.module.exit_json(changed=False,
+                                      msg="Snapshot named [%(snapshot_name)s] already exists and is current." % self.module.params)
         # Check if Virtual Machine provides capabilities for Quiesce and Memory Snapshots
         if vm.capability.quiescedSnapshotsSupported:
             quiesce = self.module.params['quiesce']
