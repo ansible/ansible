@@ -45,7 +45,7 @@ options:
         choices: ["anyUser", "currentUser"]
     host:
         description:
-            - The host on which the preference should apply. Most Apple preferences live in the C(anyHost) domain. 
+            - The host on which the preference should apply. Most Apple preferences live in the C(anyHost) domain.
             - See U(https://developer.apple.com/library/content/documentation/CoreFoundation/Conceptual/CFPreferences/Concepts/PreferenceDomains.html)
               for further information.
         required: false
@@ -185,11 +185,10 @@ EXAMPLES = '''
 
 RETURN = '''
 value:
-    description: 
-        - The value associated with the preference domain and key.
-          Return type is a python object that maps closest to the data type of the macOS preference.
-          This can be an integer, float, string, dict, list, etc...
-        - In case the preference was changed, the new value of C(key) will be returned.
+    description: The value associated with the preference domain and key.
+                 Return type is a python object that maps closest to the data type of the macOS preference.
+                 This can be an integer, float, string, dict, list, etc...
+                 In case the preference was changed, the new value of C(key) will be returned.
     type: string
     returned: on success
     sample: "{'CustomViewStyleVersion': 1}"
@@ -216,6 +215,7 @@ else:
 class CFPreferencesException(Exception):
     pass
 
+
 class CFPreferences(object):
 
     global pyobjc_found
@@ -237,7 +237,6 @@ class CFPreferences(object):
         elif host == "currentHost":
             self.host = Foundation.kCFPreferencesCurrentHost
 
-
     def read(self, key):
         if self._is_current_app_and_user():
             value = pythonCollectionFromPropertyList(
@@ -249,10 +248,8 @@ class CFPreferences(object):
             )
         return value
 
-
     def delete(self, key):
         self.write(key, None)
-
 
     def write(self, key, value, method=None):
         if method == "merge":
@@ -261,7 +258,7 @@ class CFPreferences(object):
                 new = copy.deepcopy(current_value)
                 self._deep_merge_dicts(new, value)
         else:
-            new = value    
+            new = value
 
         if self._is_current_app_and_user():
             CoreFoundation.CFPreferencesSetAppValue(key, new, self.domain)
@@ -310,9 +307,10 @@ class CFPreferences(object):
 class MacOSPrefException(Exception):
     pass
 
+
 class MacOSPref(object):
     def __init__(self, domain, user, host, key, value, state, check_mode):
-        
+
         try:
             self.prefs = CFPreferences(domain=domain, user=user, host=host)
         except CFPreferencesException as e:
@@ -406,11 +404,11 @@ def main():
     try:
         macospref = MacOSPref(
             domain=module.params['domain'],
-            user=module.params['user'], 
-            host=module.params['host'], 
-            key=module.params['key'], 
-            value=module.params.get('value'), 
-            state=module.params['state'], 
+            user=module.params['user'],
+            host=module.params['host'],
+            key=module.params['key'],
+            value=module.params.get('value'),
+            state=module.params['state'],
             check_mode=module.check_mode
         )
         macospref.run()
