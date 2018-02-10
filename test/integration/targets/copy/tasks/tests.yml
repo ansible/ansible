@@ -9,10 +9,6 @@
   set_fact:
     remote_file: "{{ remote_dir }}/foo.txt"
 
-- name: Locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
-
 - name: Initiate a basic copy, and also test the mode
   copy:
     src: foo.txt
