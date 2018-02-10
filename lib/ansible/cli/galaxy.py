@@ -476,23 +476,37 @@ class GalaxyCLI(CLI):
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.options.roles_path
+
+            # Keep track of whether at least one valid role path has
+            # been found so we can present user with a warning if not.
+            valid_path_found = False
+
             for path in roles_path:
                 role_path = os.path.expanduser(path)
                 if not os.path.exists(role_path):
-                    raise AnsibleOptionsError("- the path %s does not exist. Please specify a valid path with --roles-path" % role_path)
+                    display.debug("- the role path '%s' does not exist (ignoring)" % role_path)
                 elif not os.path.isdir(role_path):
-                    raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % role_path)
-                path_files = os.listdir(role_path)
-                for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, path_file)
-                    if gr.metadata:
-                        install_info = gr.install_info
-                        version = None
-                        if install_info:
-                            version = install_info.get("version", None)
-                        if not version:
-                            version = "(unknown version)"
-                        display.display("- %s, %s" % (path_file, version))
+                    display.debug("- the role path '%s' exists, but is not a directory (ignoring)" % role_path)
+                else:
+                    valid_path_found = True
+
+                    path_files = os.listdir(role_path)
+                    for path_file in path_files:
+                        gr = GalaxyRole(self.galaxy, path_file)
+                        if gr.metadata:
+                            install_info = gr.install_info
+                            version = None
+                            if install_info:
+                                version = install_info.get("version", None)
+                            if not version:
+                                version = "(unknown version)"
+                            display.display("- %s, %s" % (path_file, version))
+
+            if not valid_path_found:
+                display.warning("- Could not locate a single valid role path (%s)."
+                                "Check your ANSIBLE_ROLE_PATHS environment variable, "
+                                "ansible.cfg configuration file, or --roles-path parameter."
+                                % ":".join(roles_path))
         return 0
 
     def execute_search(self):
