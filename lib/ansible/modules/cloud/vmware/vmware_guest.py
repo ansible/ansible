@@ -1009,58 +1009,81 @@ class PyVmomiHelper(PyVmomi):
             if not x.get('id'):
                 self.module.fail_json(msg="id is required to set vApp property")
 
-        spec = vim.vApp.VmConfigSpec()
+        is_vapp_changed = False
+
+        new_vmconfig_spec = vim.vApp.VmConfigSpec()
 
         # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
-        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else spec
+        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
 
-        vappProperties = dict((x.id, x) for x in orig_spec.property)
-        propsToChange = dict((x['id'], x) for x in self.params['vapp_properties'])
+        vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
+        vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
 
         # each property must have a unique key
         # init key counter with max value + 1
-        allKeys = [x.key for x in orig_spec.property]
-        newPropIndex = max(allKeys) + 1 if allKeys else 0
+        all_keys = [x.key for x in orig_spec.property]
+        new_property_index = max(all_keys) + 1 if all_keys else 0
 
-        for k, v in propsToChange.items():
-            tmp = vim.VAppPropertySpec()
-            if k in vappProperties.keys():
-                tmp.operation = v.get('operation', 'edit')
-                if tmp.operation == 'remove':
-                    tmp.removeKey = vappProperties[k].key
+        for property_id, property_spec in vapp_properties_to_change.items():
+
+            new_vapp_property_spec = vim.vApp.PropertySpec()
+
+            if property_id in vapp_properties_current.keys():
+                new_vapp_property_spec.operation = property_spec.get('operation', 'edit')
+
+                if new_vapp_property_spec.operation == 'remove':
+                    new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
+                    is_vapp_changed = True
                 else:
                     # this is 'edit' branch
                     # updating only required properties
-                    tmp.info = vappProperties[k]
+                    new_vapp_property_spec.info = vapp_properties_current[property_id]
                     try:
-                        for infoPropName, infoPropVal in v.items():
-                            setattr(tmp.info, infoPropName, infoPropVal)
+                        for property_name, property_value in property_spec.items():
+
+                            if property_name == 'operation':
+                                # operation is not an info object property
+                                # if set to anything other than 'remove' we don't fail
+                                continue
+
+                            # Updating attributes only if needed
+                            if getattr(new_vapp_property_spec.info, property_name) != property_value:
+                                setattr(new_vapp_property_spec.info, property_name, property_value)
+                                is_vapp_changed = True
+
                     except Exception as e:
-                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error was: %s"
-                                              % (infoPropName, infoPropVal, to_text(e)))
+                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error: %s"
+                                              % (property_name, property_value, to_text(e)))
             else:
-                if v.get('operation') == 'remove':
+                if property_spec.get('operation') == 'remove':
                     # attemp to delete non-existent property
                     continue
-                tmp.operation = 'add'
-                tmp.info = vim.VAppPropertyInfo()
-                tmp.info.key = newPropIndex
-                newPropIndex += 1  # maybe use cycle from itertools?
-                tmp.info.classId = v.get('classId')
-                tmp.info.instanceId = v.get('instanceId')
-                tmp.info.id = v.get('id')
-                tmp.info.category = v.get('category')
-                tmp.info.label = v.get('label')
-                tmp.info.type = v.get('type', 'string')
-                tmp.info.userConfigurable = v.get('userConfigurable', True)
-                tmp.info.defaultValue = v.get('defaultValue')
-                tmp.info.value = v.get('value', '')
-                tmp.info.description = v.get('description')
 
-            spec.property.append(tmp)
+                # this is add new property branch
+                new_vapp_property_spec.operation = 'add'
 
-        if len(spec.property) > 0:
-            self.configspec.vAppConfig = spec
+                property_info = vim.vApp.PropertyInfo()
+                property_info.classId = property_spec.get('classId')
+                property_info.instanceId = property_spec.get('instanceId')
+                property_info.id = property_spec.get('id')
+                property_info.category = property_spec.get('category')
+                property_info.label = property_spec.get('label')
+                property_info.type = property_spec.get('type', 'string')
+                property_info.userConfigurable = property_spec.get('userConfigurable', True)
+                property_info.defaultValue = property_spec.get('defaultValue')
+                property_info.value = property_spec.get('value', '')
+                property_info.description = property_spec.get('description')
+
+                new_vapp_property_spec.info = property_info
+                new_vapp_property_spec.info.key = new_property_index
+                new_property_index += 1
+
+                is_vapp_changed = True
+
+            new_vmconfig_spec.property.append(new_vapp_property_spec)
+
+        if is_vapp_changed:
+            self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
     def customize_customvalues(self, vm_obj, config_spec):

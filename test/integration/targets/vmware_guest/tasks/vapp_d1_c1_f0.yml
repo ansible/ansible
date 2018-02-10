@@ -50,12 +50,6 @@
 
 - debug: var=vapp_vm
 
-- name: assert the vApp prepeties were created
-  assert:
-    that:
-      - "vapp_vm.failed == false"
-      - "vapp_vm.changed == true"
-
 - name:  Define vApp properties for the new VM
   vmware_guest:
     validate_certs: False
@@ -81,7 +75,7 @@
 
 - debug: var=vapp_vm
 
-- name: assert the VM was changed
+- name: assert the vApp propeties were created
   assert:
     that:
       - "vapp_vm.failed == false"
