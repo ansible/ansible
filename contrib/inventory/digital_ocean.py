@@ -313,7 +313,7 @@ class DigitalOceanInventory(object):
             self.write_to_cache()
 
         if self.args.pretty:
-            print(json.dumps(json_data, sort_keys=True, indent=2))
+            print(json.dumps(json_data, indent=2))
         else:
             print(json.dumps(json_data))
 
@@ -517,7 +517,7 @@ class DigitalOceanInventory(object):
     def write_to_cache(self):
         """ Writes data in JSON format to a file """
         data = {'data': self.data, 'inventory': self.inventory}
-        json_data = json.dumps(data, sort_keys=True, indent=2)
+        json_data = json.dumps(data, indent=2)
 
         with open(self.cache_filename, 'w') as cache:
             cache.write(json_data)
