@@ -87,6 +87,9 @@ matrix:
 
     - env: T=cloud/default/2.7/4
     - env: T=cloud/default/3.6/4
+
+    - env: T=cloud/default/2.7/5
+    - env: T=cloud/default/3.6/5
 branches:
   except:
     - "*-patch-*"
