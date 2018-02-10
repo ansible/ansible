@@ -37,6 +37,12 @@ options:
             - The preference domain. E.g. C(com.apple.finder), C(/path/to/some.plist), C(NSGlobalDomain).
         required: false
         default: NSGlobalDomain
+    user:
+        description:
+            - The user on which the preference should apply.
+        required: false
+        default: currentUser
+        choices: ["anyUser", "currentUser"]
     host:
         description:
             - The host on which the preference should apply. Most Apple preferences live in the C(anyHost) domain. 
@@ -207,22 +213,111 @@ else:
     pyobjc_found = True
 
 
-class MacOSPrefException(Exception):
+class CFPreferencesException(Exception):
     pass
 
-
-class MacOSPref(object):
+class CFPreferences(object):
 
     global pyobjc_found
 
-    def __init__(self, domain, host, key, value, state, check_mode):
-        # Exit if PyObjC module is not available
-        if not pyobjc_found:
-            raise MacOSPrefException("The PyObjC python module is required.")
+    def __init__(self, domain, user, host):
 
-        # Set all given parameters
+        if not pyobjc_found:
+            raise CFPreferencesException("The PyObjC python module was not found.")
+
         self.domain = domain
-        self.host = host
+
+        if user == "currentUser":
+            self.user = Foundation.kCFPreferencesCurrentUser
+        elif user == "anyUser":
+            self.user = Foundation.kCFPreferencesAnyUser
+
+        if host == "anyHost":
+            self.host = Foundation.kCFPreferencesAnyHost
+        elif host == "currentHost":
+            self.host = Foundation.kCFPreferencesCurrentHost
+
+
+    def read(self, key):
+        if self._is_current_app_and_user():
+            value = pythonCollectionFromPropertyList(
+                CoreFoundation.CFPreferencesCopyAppValue(key, self.domain)
+            )
+        else:
+            value = pythonCollectionFromPropertyList(
+                CoreFoundation.CFPreferencesCopyValue(key, self.domain, self.user, self.host)
+            )
+        return value
+
+
+    def delete(self, key):
+        self.write(key, None)
+
+
+    def write(self, key, value, method=None):
+        if method == "merge":
+            current_value = self.read(key)
+            if isinstance(current_value, collections.MutableMapping):
+                new = copy.deepcopy(current_value)
+                self._deep_merge_dicts(new, value)
+        else:
+            new = value    
+
+        if self._is_current_app_and_user():
+            CoreFoundation.CFPreferencesSetAppValue(key, new, self.domain)
+            CoreFoundation.CFPreferencesAppSynchronize(self.domain)
+        else:
+            CoreFoundation.CFPreferencesSetValue(
+                key, new, self.domain, self.user, self.host
+            )
+            CoreFoundation.CFPreferencesSynchronize(
+                self.domain, self.user, self.host
+            )
+
+    def _is_current_app_and_user(self):
+        return (self.domain != Foundation.kCFPreferencesAnyApplication and
+                self.user != Foundation.kCFPreferencesAnyUser and
+                self.host == Foundation.kCFPreferencesAnyHost)
+
+    def _deep_merge_dicts(self, base, incoming):
+        """
+        Performs an *in-place* deep-merge of key-values from :attr:`incoming`
+        into :attr:`base`. No attempt is made to preserve the original state of
+        the objects passed in as arguments.
+
+        :param dict base:  The target container for the merged values. This will
+            be modified *in-place*.
+        :type base:  Any :class:`dict`-like object
+
+        :param dict incoming:  The container from which incoming values will be
+            copied. Nested dicts in this will be modified.
+        :type incoming:  Any :class:`dict`-like object
+
+        :rtype:  None
+
+        """
+        for ki, vi in incoming.items():
+            if (
+                ki in base
+                and isinstance(vi, collections.MutableMapping)
+                and isinstance(base[ki], collections.MutableMapping)
+            ):
+                self._deep_merge_dicts(base[ki], vi)
+            else:
+                base[ki] = vi
+
+
+class MacOSPrefException(Exception):
+    pass
+
+class MacOSPref(object):
+    def __init__(self, domain, user, host, key, value, state, check_mode):
+        
+        try:
+            self.prefs = CFPreferences(domain=domain, user=user, host=host)
+        except CFPreferencesException as e:
+            raise MacOSPrefException(e.message)
+
         self.key = key
         self.value = value
         self.state = state
@@ -234,96 +329,33 @@ class MacOSPref(object):
         self.success = True
         self.return_value = None
 
-    def _host_arg(self):
-        if self.host == 'currentHost':
-            return Foundation.kCFPreferencesCurrentHost
-        else:
-            return Foundation.kCFPreferencesAnyHost
-
-    def read(self):
-        self.current_value = get_pref(self.key, self.domain, Foundation.kCFPreferencesCurrentUser, self._host_arg())
-        self.return_value = self.current_value
-
-    def delete(self):
-        if self.current_value is None:
-            return
-
-        self.changed = True
-        self.return_value = None
-
-        if self.check_mode:
-            return
-
-        set_pref(self.key, None, self.domain)
-
-    def write(self):
-        if (isinstance(self.current_value, collections.MutableMapping)
-                and self.state == 'merge'):
-            new = copy.deepcopy(self.current_value)
-            deep_merge_dicts(new, self.value)
-        else:
-            new = self.value
-
-        if self.current_value == new:
-            return
-
-        self.changed = True
-        self.return_value = new
-
-        if self.check_mode:
-            return
-
-        if not set_pref(self.key, new, self.domain, Foundation.kCFPreferencesCurrentUser, self._host_arg()):
-            self.success = False
-
     def run(self):
 
-        self.read()
+        self.current_value = self.return_value = self.prefs.read(self.key)
 
         if self.state == "absent":
-            self.delete()
+            if self.current_value is None:
+                return
+
+            self.changed = True
+            self.return_value = None
+
+            if self.check_mode:
+                return
+
+            self.prefs.delete(self.key)
 
         elif self.value is not None:
-            self.write()
+            if self.current_value == self.value:
+                return
 
+            self.changed = True
+            self.return_value = self.value
 
-def deep_merge_dicts(base, incoming):
-    """
-    Performs an *in-place* deep-merge of key-values from :attr:`incoming`
-    into :attr:`base`. No attempt is made to preserve the original state of
-    the objects passed in as arguments.
+            if self.check_mode:
+                return
 
-    :param dict base:  The target container for the merged values. This will
-        be modified *in-place*.
-    :type base:  Any :class:`dict`-like object
-
-    :param dict incoming:  The container from which incoming values will be
-        copied. Nested dicts in this will be modified.
-    :type incoming:  Any :class:`dict`-like object
-
-    :rtype:  None
-
-    """
-    for ki, vi in incoming.items():
-        if (
-            ki in base
-            and isinstance(vi, collections.MutableMapping)
-            and isinstance(base[ki], collections.MutableMapping)
-        ):
-            deep_merge_dicts(base[ki], vi)
-        else:
-            base[ki] = vi
-
-
-def get_pref(key, domain, username, hostname):
-    return pythonCollectionFromPropertyList(
-        CoreFoundation.CFPreferencesCopyValue(key, domain, username, hostname)
-    )
-
-
-def set_pref(key, value, domain, username, hostname):
-    CoreFoundation.CFPreferencesSetValue(key, value, domain, username, hostname)
-    return CoreFoundation.CFPreferencesAppSynchronize(domain)
+            self.prefs.write(self.key, self.value, self.state)
 
 
 def main():
@@ -332,6 +364,14 @@ def main():
             domain=dict(
                 default="NSGlobalDomain",
                 type='str',
+                required=False
+            ),
+            user=dict(
+                choices=[
+                    "anyUser",
+                    "currentUser"
+                ],
+                default="currentUser",
                 required=False
             ),
             host=dict(
@@ -365,7 +405,8 @@ def main():
 
     try:
         macospref = MacOSPref(
-            domain=module.params['domain'], 
+            domain=module.params['domain'],
+            user=module.params['user'], 
             host=module.params['host'], 
             key=module.params['key'], 
             value=module.params.get('value'), 
