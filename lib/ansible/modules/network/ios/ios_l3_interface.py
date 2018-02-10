@@ -107,7 +107,7 @@ from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import conditional, remove_default_spec
-from ansible.module_utils.network.common.utils import is_netmask, is_masklen, to_subnet, to_netmask, to_masklen
+from ansible.module_utils.network.common.utils import is_netmask, is_masklen, to_netmask, to_masklen
 
 
 def validate_ipv4(value, module):
