@@ -225,7 +225,7 @@ options:
     - ' - C(value) (string): Property value'
     - ' - C(type) (string): Value type, string type by default.'
     - ' - C(operation) (string): add, edit, remove. Required only when removing properties. If property present the parameter will be defaulted to "edit".'
-    version_added: '2.5'
+    version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
 
