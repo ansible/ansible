@@ -138,8 +138,22 @@ def get_version(pacman_output):
     return None
 
 
-def find_provider(output, target_package):
-    """Parses a pacman info dump to find the package providing `target_package`"""
+def find_provider(module, pacman_path, target_package):
+    """Find the package providing `target_package`"""
+    cmd = "%s -Q %s" % (pacman_path, target_package)
+    rc, output, stderr = module.run_command(cmd, check_rc=False)
+    if rc == 0:
+        realname = output.split()[0]
+        version = output.split()[1]
+        return (realname, version)
+
+    # Unable to find package named `target_package` - scan full package dump
+    cmd = "%s -Qqei" % pacman_path
+    rc, output, stderr = module.run_command(cmd, check_rc=False)
+    if rc != 0:
+        # some unknown error
+        return (None, None)
+
     target_package = target_package.lower()
     provider = None
     version = None
@@ -175,21 +189,9 @@ def query_package(module, pacman_path, name, state="present"):
     boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
     """
     if state == "present":
-        lcmd = "%s -Q %s" % (pacman_path, name)
-        lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
-        if lrc != 0:
-            # Package was not found, see if it's provided by some other package
-            lcmd = "%s -Qqei" % pacman_path
-            lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
-            if lrc != 0:
-                # some unknown error
-                return False, False, False
-            realname, lversion = find_provider(lstdout, name)
-            if not realname:
-                return False, False, False
-        else:
-            realname = lstdout.split()[0]
-            lversion = lstdout.split()[1]
+        realname, lversion = find_provider(module, pacman_path, name)
+        if not realname:
+            return False, False, False
 
         rcmd = "%s -Si %s" % (pacman_path, realname)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
@@ -272,8 +274,9 @@ def remove_packages(module, pacman_path, packages):
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        installed, updated, unknown = query_package(module, pacman_path, package)
-        if not installed:
+        package, version = find_provider(module, pacman_path, package)
+        if not package:
+            # Not found locally, assume not installed
             continue
 
         cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
