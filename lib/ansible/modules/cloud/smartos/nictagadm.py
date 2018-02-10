@@ -17,7 +17,7 @@ module: nictagadm
 short_description: Manage nic tags on SmartOS systems.
 description:
   - Create of delete nic tags on SmartOS systems.
-version_added: "2.5"
+version_added: "2.6"
 author: Bruce Smith (@SmithX10)
 options:
     name:
