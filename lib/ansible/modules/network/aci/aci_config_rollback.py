@@ -127,7 +127,49 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-#
+preview:
+  description: A preview between two snapshots
+  returned: when state is preview
+  type: string
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -168,20 +210,16 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
-    fail_on_decrypt = module.params['fail_on_decrypt']
-    if fail_on_decrypt is True:
-        fail_on_decrypt = 'yes'
-    elif fail_on_decrypt is False:
-        fail_on_decrypt = 'no'
+    fail_on_decrypt = aci.boolean(module.params['fail_on_decrypt'])
     import_mode = module.params['import_mode']
     import_policy = module.params['import_policy']
     import_type = module.params['import_type']
     snapshot = module.params['snapshot']
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'rollback':
         if snapshot.startswith('run-'):
@@ -225,8 +263,8 @@ def main():
         aci.post_config()
 
     elif state == 'preview':
-        aci.result['url'] = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
-        aci.result['filter_string'] = (
+        aci.url = '%(protocol)s://%(host)s/mqapi2/snapshots.diff.xml' % module.params
+        aci.filter_string = (
             '?s1dn=uni/backupst/snapshots-[uni/fabric/configexp-%(export_policy)s]/snapshot-%(snapshot)s&'
             's2dn=uni/backupst/snapshots-[uni/fabric/configexp-%(compare_export_policy)s]/snapshot-%(compare_snapshot)s'
         ) % module.params
@@ -234,25 +272,25 @@ def main():
         # Generate rollback comparison
         get_preview(aci)
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 def get_preview(aci):
     '''
     This function is used to generate a preview between two snapshots and add the parsed results to the aci module return data.
     '''
-    uri = aci.result['url'] + aci.result['filter_string']
+    uri = aci.url + aci.filter_string
     resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params['timeout'], use_proxy=aci.module.params['use_proxy'])
-    aci.result['response'] = info['msg']
-    aci.result['status'] = info['status']
-    aci.result['method'] = 'GET'
+    aci.method = 'GET'
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Handle APIC response
     if info['status'] == 200:
         xml_to_json(aci, resp.read())
     else:
-        aci.result['apic_response'] = resp.read()
-        aci.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % aci.result, **aci.result)
+        aci.result['raw'] = resp.read()
+        aci.fail_json(msg="Request failed: %(code)s %(text)s (see 'raw' output)" % aci.error)
 
 
 def xml_to_json(aci, response_data):
@@ -262,9 +300,9 @@ def xml_to_json(aci, response_data):
     if XML_TO_JSON:
         xml = lxml.etree.fromstring(to_bytes(response_data))
         xmldata = cobra.data(xml)
-        aci.result['diff'] = xmldata
+        aci.result['preview'] = xmldata
     else:
-        aci.result['diff'] = response_data
+        aci.result['preview'] = response_data
 
 
 if __name__ == "__main__":

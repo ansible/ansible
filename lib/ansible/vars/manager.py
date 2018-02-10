@@ -151,26 +151,6 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
         self._options_vars = value.copy()
 
-    def _preprocess_vars(self, a):
-        '''
-        Ensures that vars contained in the parameter passed in are
-        returned as a list of dictionaries, to ensure for instance
-        that vars loaded from a file conform to an expected state.
-        '''
-
-        if a is None:
-            return None
-        elif not isinstance(a, list):
-            data = [a]
-        else:
-            data = a
-
-        for item in data:
-            if not isinstance(item, MutableMapping):
-                raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
-
-        return data
-
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -255,7 +235,7 @@ class VariableManager:
                 ''' merges all entities by inventory source '''
                 data = {}
                 for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir:  # skip host lists
+                    if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
                     elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)

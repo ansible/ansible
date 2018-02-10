@@ -250,17 +250,24 @@ Below is an example tasks file that explains how a role works.  Our common role 
     # file: roles/common/tasks/main.yml
 
     - name: be sure ntp is installed
-      yum: name=ntp state=installed
+      yum:
+        name: ntp
+        state: installed
       tags: ntp
 
     - name: be sure ntp is configured
-      template: src=ntp.conf.j2 dest=/etc/ntp.conf
+      template:
+        src: ntp.conf.j2
+        dest: /etc/ntp.conf
       notify:
         - restart ntpd
       tags: ntp
 
     - name: be sure ntpd is running and enabled
-      service: name=ntpd state=started enabled=yes
+      service:
+        name: ntpd
+        state: started
+        enabled: yes
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end
@@ -269,7 +276,9 @@ of each play::
     ---
     # file: roles/common/handlers/main.yml
     - name: restart ntpd
-      service: name=ntpd state=restarted
+      service:
+        name: ntpd
+        state: restarted
 
 See :doc:`playbooks_reuse_roles` for more information.
 
@@ -297,10 +306,10 @@ For just my webservers in Boston::
 
     ansible-playbook -i production webservers.yml --limit boston
 
-Forjust the first 10, and then the next 10::
+For just the first 10, and then the next 10::
    
-    ansible-playbook -i production webservers.yml --limit boston[1:10]
-    ansible-playbook -i production webservers.yml --limit boston[11:20]
+    ansible-playbook -i production webservers.yml --limit boston[0:9]
+    ansible-playbook -i production webservers.yml --limit boston[10:19]
 
 And of course just basic ad-hoc stuff is also possible::
 
@@ -383,16 +392,17 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
 
    ---
 
-   # talk to all hosts just so we can learn about them 
-   - hosts: all
-     tasks:
-        - group_by: key=os_{{ ansible_distribution }}
+    # talk to all hosts just so we can learn about them 
+    - hosts: all
+      tasks:
+        - group_by: 
+            key: os_{{ ansible_distribution }}
 
-   # now just on the CentOS hosts...
+    # now just on the CentOS hosts...
 
-   - hosts: os_CentOS
-     gather_facts: False
-     tasks:
+    - hosts: os_CentOS
+      gather_facts: False
+      tasks:
         - # tasks that only happen on CentOS go here
 
 This will throw all systems into a dynamic group based on the operating system name.
@@ -415,7 +425,8 @@ Alternatively, if only variables are needed::
     - hosts: all
       tasks:
         - include_vars: "os_{{ ansible_distribution }}.yml"
-        - debug: var=asdf
+        - debug:
+            var: asdf
 
 This will pull in variables based on the OS name.  
 

@@ -97,7 +97,7 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
-        if product_name == 'OpenStack Nova':
+        if product_name in ['OpenStack Compute', 'OpenStack Nova']:
             virtual_facts['virtualization_type'] = 'openstack'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
@@ -111,6 +111,11 @@ class LinuxVirtual(Virtual):
 
         if bios_vendor == 'innotek GmbH':
             virtual_facts['virtualization_type'] = 'virtualbox'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+
+        if bios_vendor == 'Amazon EC2':
+            virtual_facts['virtualization_type'] = 'kvm'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
@@ -139,6 +144,11 @@ class LinuxVirtual(Virtual):
 
         if sys_vendor == 'OpenStack Foundation':
             virtual_facts['virtualization_type'] = 'openstack'
+            virtual_facts['virtualization_role'] = 'guest'
+            return virtual_facts
+
+        if sys_vendor == 'Amazon EC2':
+            virtual_facts['virtualization_type'] = 'kvm'
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
@@ -209,7 +219,8 @@ class LinuxVirtual(Virtual):
 
                 else:
                     virtual_facts['virtualization_type'] = 'kvm'
-                virtual_facts['virtualization_role'] = 'host'
+                    virtual_facts['virtualization_role'] = 'host'
+
                 return virtual_facts
 
             if 'vboxdrv' in modules:

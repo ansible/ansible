@@ -134,11 +134,17 @@ If you look in the example, there are group variables for the ``webservers`` gro
 These variables are used in a variety of places. You can use them in playbooks, like this, in ``roles/db/tasks/main.yml``::
 
    - name: Create Application Database
-     mysql_db: name={{ dbname }} state=present
+     mysql_db:
+       name: "{{ dbname }}"
+       state: present
 
    - name: Create Application DB User
-     mysql_user: name={{ dbuser }} password={{ upassword }}
-                 priv=*.*:ALL host='%' state=present
+     mysql_user:
+       name: "{{ dbuser }}"
+       password: "{{ upassword }}"
+       priv: "*.*:ALL"
+       host: '%'
+       state: present
 
 You can also use these variables in templates, like this, in ``roles/common/templates/ntp.conf.j2``::
 
@@ -211,7 +217,10 @@ Here is the next part of the update play::
 
   pre_tasks:
   - name: disable nagios alerts for this host webserver service
-    nagios: action=disable_alerts host={{ inventory_hostname }} services=webserver
+    nagios: 
+      action: disable_alerts 
+      host: "{{ inventory_hostname }}"
+      services: webserver
     delegate_to: "{{ item }}"
     loop: "{{ groups.monitoring }}"
 
@@ -219,7 +228,6 @@ Here is the next part of the update play::
     shell: echo "disable server myapplb/{{ inventory_hostname }}" | socat stdio /var/lib/haproxy/stats
     delegate_to: "{{ item }}"
     loop: "{{ groups.lbservers }}"
-
 
 .. note::
    - The ``serial`` keyword forces the play to be executed in 'batches'. Each batch counts as a full play with a subselection of hosts.
@@ -247,7 +255,10 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
     loop: "{{ groups.lbservers }}"
 
   - name: re-enable nagios alerts
-    nagios: action=enable_alerts host={{ inventory_hostname }} services=webserver
+    nagios:
+      action: enable_alerts
+      host: "{{ inventory_hostname }}"
+      services: webserver
     delegate_to: "{{ item }}"
     loop: "{{ groups.monitoring }}"
 

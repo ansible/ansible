@@ -708,11 +708,6 @@ class TestVaultLib(unittest.TestCase):
                                 v.encrypt,
                                 plaintext)
 
-    def test_is_encrypted(self):
-        self.assertFalse(self.v.is_encrypted(b"foobar"), msg="encryption check on plaintext yielded false positive")
-        b_data = b"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
-        self.assertTrue(self.v.is_encrypted(b_data), msg="encryption check on headered text failed")
-
     def test_format_vaulttext_envelope(self):
         cipher_name = "TEST"
         b_ciphertext = b"ansible"

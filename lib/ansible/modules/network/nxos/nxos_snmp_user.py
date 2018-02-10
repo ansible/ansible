@@ -289,9 +289,6 @@ def main():
                 reset = True
                 proposed['encrypt'] = 'aes-128'
 
-            elif encrypt:
-                proposed['encrypt'] = 'aes-128'
-
             delta = dict(set(proposed.items()).difference(existing.items()))
 
             if delta.get('pwd'):
@@ -299,6 +296,9 @@ def main():
 
             if delta:
                 delta['group'] = group
+
+            if delta and encrypt:
+                delta['encrypt'] = 'aes-128'
 
             command = config_snmp_user(delta, user, reset, new)
             commands.append(command)

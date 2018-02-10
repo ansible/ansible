@@ -60,13 +60,6 @@ options:
         description:
           - The name of the grid secondary server
         required: true
-  restart_if_needed:
-    description:
-      - Restart the services (if necessary) when objects are added or
-        removed
-    required: false
-    default: false
-    type: bool
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -96,12 +89,12 @@ EXAMPLES = '''
 - name: configure a zone on the system
   nios_zone:
     name: ansible.com
-    restart_if_needed: yes
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: update the comment and ext attributes for an existing zone
   nios_zone:
@@ -114,6 +107,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: remove the dns zone
   nios_zone:
@@ -123,12 +117,13 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
+from ansible.module_utils.net_tools.nios.api import WapiModule
 
 
 def main():
@@ -145,8 +140,6 @@ def main():
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
         grid_secondaries=dict(type='list', elements='dict', options=grid_spec),
 
-        restart_if_needed=dict(type='bool', default=False),
-
         extattrs=dict(type='dict'),
         comment=dict()
     )
@@ -157,12 +150,12 @@ def main():
     )
 
     argument_spec.update(ib_spec)
-    argument_spec.update(get_provider_spec())
+    argument_spec.update(WapiModule.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    wapi = Wapi(module)
+    wapi = WapiModule(module)
     result = wapi.run('zone_auth', ib_spec)
 
     module.exit_json(**result)

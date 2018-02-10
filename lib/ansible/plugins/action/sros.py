@@ -37,6 +37,7 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.connection == 'network_cli':
             provider = self._task.args.get('provider', {})
@@ -69,5 +70,5 @@ class ActionModule(_ActionModule):
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

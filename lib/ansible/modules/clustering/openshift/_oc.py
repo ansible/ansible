@@ -17,7 +17,10 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 author:
   - "Kenneth D. Evensen (@kevensen)"
-deprecated: In 2.5 use M(openshift_raw) instead.
+deprecated:
+  removed_in: "2.9"
+  why: This module used the oc command line tool, where as M(openshift_raw) goes over the REST API.
+  alternative: Use M(openshift_raw) instead.
 description:
   - This module allows management of resources in an OpenShift cluster. The
     inventory host can be any host with network connectivity to the OpenShift

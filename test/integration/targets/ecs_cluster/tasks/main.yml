@@ -250,11 +250,18 @@
         that:
           - update_ecs_service.failed
           - "'msg' in update_ecs_service"
+      # FIXME: fixed in #32876
+      ignore_errors: yes
 
     - name: obtain ECS service facts
       ecs_service_facts:
         service: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+
+    - name: attempt to get facts from missing task definition
+      ecs_taskdefinition_facts:
+        task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
   always:

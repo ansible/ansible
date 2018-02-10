@@ -84,7 +84,7 @@ import json
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 
@@ -97,8 +97,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
                      force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                      url_username=url_username, url_password=url_password, http_agent=http_agent,
                      force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
+    except HTTPError as err:
         r = err.fp
 
     try:
@@ -145,10 +144,9 @@ def oldest_image(module, ssid, api_url, api_pwd, api_usr, name):
     try:
         (ret, images) = request(url, url_username=api_usr, url_password=api_pwd, headers=HEADERS,
                                 validate_certs=module.params['validate_certs'])
-    except:
-        err = get_exception()
+    except Exception as err:
         module.fail_json(msg="Failed to get snapshot images for group. Group [%s]. Id [%s]. Error [%s]" %
-                             (name, ssid, str(err)))
+                             (name, ssid, to_native(err)))
     if not images:
         module.exit_json(msg="There are no snapshot images to remove.  Group [%s]. Id [%s]." % (name, ssid))
 
@@ -188,8 +186,7 @@ def delete_image(module, ssid, api_url, pwd, user, snapshot_group):
     try:
         (ret, image_data) = request(url, method='DELETE', url_username=user, url_password=pwd, headers=HEADERS,
                                     validate_certs=module.params['validate_certs'])
-    except Exception:
-        e = get_exception()
+    except Exception as e:
         image_data = (e[0], e[1])
 
     if ret == 204:

@@ -78,10 +78,14 @@ class IncludedFile:
 
                     include_variables = include_result.get('include_variables', dict())
                     loop_var = 'item'
+                    index_var = None
                     if original_task.loop_control:
                         loop_var = original_task.loop_control.loop_var
+                        index_var = original_task.loop_control.index_var
                     if loop_var in include_result:
                         task_vars[loop_var] = include_variables[loop_var] = include_result[loop_var]
+                    if index_var and index_var in include_result:
+                        task_vars[index_var] = include_variables[index_var] = include_result[index_var]
 
                     if original_task.action in ('include', 'include_tasks'):
                         include_file = None
@@ -109,7 +113,16 @@ class IncludedFile:
                                     include_target = templar.template(include_result['include'])
                                     if original_task._role:
                                         new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
-                                        include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
+                                        candidates = [loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target),
+                                                      loader.path_dwim_relative(new_basedir, 'tasks', include_target)]
+                                        for include_file in candidates:
+                                            try:
+                                                # may throw OSError
+                                                os.stat(include_file)
+                                                # or select the task file if it exists
+                                                break
+                                            except OSError:
+                                                pass
                                     else:
                                         include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 

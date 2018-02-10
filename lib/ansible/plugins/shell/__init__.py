@@ -23,6 +23,7 @@ import random
 import re
 import time
 
+import ansible.constants as C
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins import AnsiblePlugin
@@ -36,21 +37,17 @@ class ShellBase(AnsiblePlugin):
         super(ShellBase, self).__init__()
 
         self.env = {}
+        if C.DEFAULT_MODULE_SET_LOCALE:
+            module_locale = C.DEFAULT_MODULE_LANG
+            self.env = {'LANG': module_locale,
+                        'LC_ALL': module_locale,
+                        'LC_MESSAGES': module_locale}
+
         self.tempdir = None
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-
-        # not all shell modules have this option
-        if self.get_option('set_module_language'):
-            self.env.update(
-                dict(
-                    LANG=self.get_option('module_language'),
-                    LC_ALL=self.get_option('module_language'),
-                    LC_MESSAGES=self.get_option('module_language'),
-                )
-            )
 
         # set env
         self.env.update(self.get_option('environment'))

@@ -35,6 +35,7 @@ options:
     description:
       - "Network domain for the VPC."
       - "All networks inside the VPC will belong to this domain."
+      - "Only considered while creating the VPC, can not be changed."
   vpc_offering:
     description:
       - "Name of the VPC offering."
@@ -265,6 +266,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         args = {
             'name': self.module.params.get('name'),
             'displaytext': self.get_or_fallback('display_text', 'name'),
+            'networkdomain': self.module.params.get('network_domain'),
             'vpcofferingid': self.get_vpc_offering(key='id'),
             'cidr': self.module.params.get('cidr'),
             'account': self.get_account(key='name'),

@@ -38,7 +38,6 @@ Engine improvements
 - Normalize temp dir usage across all subsystems
 - Currently ignored keywords do not notify user they were ignored, throw a warning on these.
 - Deprecation version enforcement
-- Force jinja to use native types
 - sysvinit service module
 - Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'
 
@@ -90,7 +89,7 @@ PluginLoader
     hardcoded powershell module_utils file.  If we add generic module_utils
     for powershell, we'll need to decide how to organize the code.
 
-Static Loop Keyword 
+Static Loop Keyword
 -------------------
 **(done)**
 
@@ -101,14 +100,14 @@ Static Loop Keyword
 
 Vault
 -----
-- In some cases diff users might want to use the same play with different access levels, 
+- In some cases diff users might want to use the same play with different access levels,
   being able to change vault failure to decrypt to a warning or something else allows for this.
 - Allow vault password files to be vault encrypted
 - Vault secrets client inc new 'keyring' client **(done)**
 
 Role Versioning
 ---------------
-- ansible-galaxy will install roles using name + version 
+- ansible-galaxy will install roles using name + version
 - On role install, If an existing role is found in the 'bare name' handle version
 - removing roles should detect multiple versions and prompt for 'all' or a specific version(s)
 - When referencing a role in a play, ansible-playbook should now also check if version is specified and use that if found
@@ -129,7 +128,7 @@ Runtime Check on Modules for Blacklisting
 
 Windows
 -------
-- Implement gather_subset on Windows facts 
+- Implement gather_subset on Windows facts
 - Move setup.ps1 guts to module_utils to allow arbitrary modules to call/refresh individual facts.
 - Fix Windows binary module support to work properly with become/env/async in all cases.
 - Fix Windows async + become to allow them to work together
@@ -147,7 +146,7 @@ Windows
 - Module updates
 
   - win_updates
-  
+
     - Fix win_updates to detect (or request) become
     - Add whitelist/blacklist features to win_updates
   - win_dsc further improvements
@@ -167,7 +166,7 @@ AWS
 - Triage existing merges for modules
 - Module work
 
-  - ec2_instance 
+  - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
   - AWS Network Load Balancer support (NLB module, ASG support, etc)
   - rds_instance
@@ -181,10 +180,10 @@ Azure
 Network Roadmap
 ---------------
 - Refactor common network shared code into package **(done)**
-- Convert various nxos modules to leverage declarative intent 
+- Convert various nxos modules to leverage declarative intent **(done)**
 - Refactor various modules to leverage the cliconf plugin **(done)**
-- Add various missing declarative modules for supported platforms and functions
-- Implement a feature that handles platform differences and feature unavailability
+- Add various missing declarative modules for supported platforms and functions **(done)**
+- Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
 - Create netconf connection plugin **(done)**
 - Create netconf fact module
@@ -192,7 +191,7 @@ Network Roadmap
 - Implements jsonrpc message passing for ansible-connection **(done)**
 - Improve logging for ansible-connection **(done)**
 - Improve stdout output for failures whilst using persistent connection **(done)**
-- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**
 - Refactor junos modules to use netconf plugin **(done)**
 - Filters: Add a filter to convert XML response from a network device to JSON object **(done)**
 
@@ -202,12 +201,10 @@ Documentation
 - Document vault-password-client scripts.
 - Network Documentation
 
-  - refactor intro_networking.rst 
-  - Document different authentication options
-  - Create network module index and TOC
-  - Use Case: Getting Started
-  - Use Case: set hostname network documentation
-  - Use Case: _command show version
+  - New landing page (to replace intro_networking)
+  - Platform specific guides
+  - Walk through: Getting Started
+  - Networking and ``become`` **(done)**
   - Best practice **(done)**
 
 Contributor Quality of Life

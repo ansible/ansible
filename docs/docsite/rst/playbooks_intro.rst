@@ -62,16 +62,25 @@ For starters, here's a playbook that contains just one play::
       remote_user: root
       tasks:
       - name: ensure apache is at the latest version
-        yum: name=httpd state=latest
+        yum: 
+          name: httpd
+          state: latest
       - name: write the apache config file
-        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+        template:
+          src: /srv/httpd.j2
+          dest: /etc/httpd.conf
         notify:
         - restart apache
       - name: ensure apache is running (and enable it at boot)
-        service: name=httpd state=started enabled=yes
+        service:
+          name: httpd
+          state: started
+          enabled: yes
       handlers:
         - name: restart apache
-          service: name=httpd state=restarted
+          service:
+            name: httpd
+            state: restarted
 
 When working with tasks that have really long parameters or modules that take 
 many parameters, you can break tasks items over multiple lines to improve the 
@@ -242,7 +251,8 @@ You can also control the order in which hosts are run. The default is to follow 
       order: sorted
       gather_facts: False
       tasks:
-        - debug: var=inventory_hostname
+        - debug:
+            var: inventory_hostname
 
 Possible values for order are:
 

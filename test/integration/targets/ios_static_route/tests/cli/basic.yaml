@@ -1,11 +1,23 @@
 ---
+- debug: msg="START ios cli/ios_static_route.yaml on connection={{ ansible_connection }}"
+
+- name: delete static route - setup
+  net_static_route:
+    prefix: 172.16.31.0
+    mask: 255.255.255.0
+    next_hop: 10.0.0.8
+    admin_distance: 1
+    state: absent
+    provider: "{{ cli }}"
+  register: result
+
 - name: create static route
   ios_static_route:
     prefix: 172.16.31.0
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -19,7 +31,7 @@
     mask: 255.255.255.0
     next_hop: 10.0.0.8
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -33,7 +45,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -48,7 +60,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -62,7 +74,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -77,7 +89,7 @@
     next_hop: 10.0.0.8
     admin_distance: 2
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -90,7 +102,7 @@
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -105,7 +117,7 @@
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8, state: absent }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: present
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -120,10 +132,12 @@
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.34.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
     state: absent
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - 'result.changed == true'
       - 'result.commands == ["no ip route 172.16.32.0 255.255.255.0 10.0.0.8", "no ip route 172.16.34.0 255.255.255.0 10.0.0.8"]'
+
+- debug: msg="END ios cli/ios_static_route.yaml on connection={{ ansible_connection }}"

@@ -152,7 +152,25 @@ SCHEMA_DATA = {
 ''',
     '/test:test': '''
 {
-    "meta": {},
+    "meta": {
+        "types": {
+            "http://example.com/test:t15": [
+               {
+                  "leaf_type":[
+                     {
+                        "name":"string"
+                     }
+                  ],
+                  "list_type":[
+                     {
+                        "name":"http://example.com/test:t15",
+                        "leaf-list":true
+                     }
+                  ]
+               }
+            ]
+        }
+    },
     "data": {
         "kind": "list",
         "name":"test",
@@ -206,6 +224,15 @@ SCHEMA_DATA = {
                         ]
                     }
                 ]
+            },
+            {
+               "kind":"leaf-list",
+               "name":"device-list",
+               "qname":"test:device-list",
+               "type": {
+                  "namespace":"http://example.com/test",
+                  "name":"t15"
+               }
             }
         ]
     }
@@ -254,6 +281,34 @@ def get_schema_response(path):
     return MockResponse(
         'get_schema', {'path': path}, 200, '{{"result": {0}}}'.format(
             SCHEMA_DATA[path]))
+
+
+class TestJsonRpc(unittest.TestCase):
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_exists(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            MockResponse('exists', {'path': '/exists'}, 200, '{"result": {"exists": true}}'),
+            MockResponse('exists', {'path': '/not-exists'}, 200, '{"result": {"exists": false}}')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc')
+        self.assertEquals(True, client.exists('/exists'))
+        self.assertEquals(False, client.exists('/not-exists'))
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_exists_data_not_found(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            MockResponse('exists', {'path': '/list{missing-parent}/list{child}'}, 200, '{"error":{"type":"data.not_found"}}')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc')
+        self.assertEquals(False, client.exists('/list{missing-parent}/list{child}'))
+
+        self.assertEqual(0, len(calls))
 
 
 class TestValueBuilder(unittest.TestCase):
@@ -334,6 +389,28 @@ class TestValueBuilder(unittest.TestCase):
         self.assertEquals('{0}{{nested}}/nested-child'.format(parent), value.path)
         self.assertEquals('set', value.state)
         self.assertEquals('nested-value', value.value)
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_leaf_list_type(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            get_schema_response('/test:test')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+
+        parent = "/test:test"
+        schema_data = json.loads(
+            SCHEMA_DATA['/test:test'])
+        schema = schema_data['data']
+
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc'))
+        vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
+        self.assertEquals(1, len(vb.values))
+        value = vb.values[0]
+        self.assertEquals('{0}/device-list'.format(parent), value.path)
+        self.assertEquals(['one', 'two'], value.value)
 
         self.assertEqual(0, len(calls))
 

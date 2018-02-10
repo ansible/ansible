@@ -49,33 +49,19 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
----
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all
-    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - ios_facts:
     gather_subset:
       - config
-    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - ios_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -88,15 +74,15 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: str
+  type: string
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
@@ -105,6 +91,14 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: string
+ansible_net_stacked_models:
+  description: The model names of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
+ansible_net_stacked_serialnums:
+  description: The serial numbers of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
 
 # hardware
 ansible_net_filesystems:
@@ -124,7 +118,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: str
+  type: string
 
 # interfaces
 ansible_net_all_ipv4_addresses:
@@ -163,10 +157,10 @@ class FactsBase(object):
         self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
+        self.responses = run_commands(self.module, commands=self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
-        return run_commands(self.module, cmd, check_rc=False)
+        return run_commands(self.module, commands=cmd, check_rc=False)
 
 
 class Default(FactsBase):
@@ -182,6 +176,7 @@ class Default(FactsBase):
             self.facts['model'] = self.parse_model(data)
             self.facts['image'] = self.parse_image(data)
             self.facts['hostname'] = self.parse_hostname(data)
+            self.parse_stacks(data)
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
@@ -194,13 +189,9 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        match = re.search(r'^[Cc]isco (\S+).+bytes of .*memory', data, re.M)
         if match:
-            return match
-        else:
-            match = re.search(r'^[Cc]isco (\S+).+bytes of memory', data, re.M)
-            if match:
-                return [match.group(1)]
+            return match.group(1)
 
     def parse_image(self, data):
         match = re.search(r'image file is "(.+)"', data)
@@ -208,13 +199,18 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_serialnum(self, data):
+        match = re.search(r'board ID (\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_stacks(self, data):
+        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        if match:
+            self.facts['stacked_models'] = match
+
         match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
         if match:
-            return match
-        else:
-            match = re.search(r'board ID (\S+)', data)
-            if match:
-                return [match.group(1)]
+            self.facts['stacked_serialnums'] = match
 
 
 class Hardware(FactsBase):

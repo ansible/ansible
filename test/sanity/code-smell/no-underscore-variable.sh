@@ -101,7 +101,7 @@ TO_BE_FIXED='
 ./lib/ansible/plugins/strategy/linear.py
 ./test/legacy/cleanup_gce.py
 ./test/legacy/gce_credentials.py
-./test/runner/importer.py
+./test/sanity/import/importer.py
 ./test/runner/lib/cloud/cs.py
 ./test/runner/lib/core_ci.py
 ./test/runner/lib/delegation.py

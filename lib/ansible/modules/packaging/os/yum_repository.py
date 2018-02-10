@@ -447,9 +447,10 @@ state:
 '''
 
 import os
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 class YumRepo(object):
@@ -566,32 +567,29 @@ class YumRepo(object):
             # Write data into the file
             try:
                 fd = open(self.params['dest'], 'w')
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot open repo file %s." % self.params['dest'],
-                    details=str(e))
+                    details=to_native(e))
 
             self.repofile.write(fd)
 
             try:
                 fd.close()
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot write repo file %s." % self.params['dest'],
-                    details=str(e))
+                    details=to_native(e))
         else:
             # Remove the file if there are not repos
             try:
                 os.remove(self.params['dest'])
-            except OSError:
-                e = get_exception()
+            except OSError as e:
                 self.module.fail_json(
                     msg=(
                         "Cannot remove empty repo file %s." %
                         self.params['dest']),
-                    details=str(e))
+                    details=to_native(e))
 
     def remove(self):
         # Remove section if exists

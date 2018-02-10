@@ -199,6 +199,7 @@ class SunOSHardware(Hardware):
         # sderr:0:sd0,err:Vendor  ATA
 
         device_facts = {}
+        device_facts['devices'] = {}
 
         disk_stats = {
             'Product': 'product',
@@ -263,3 +264,5 @@ class SunOSHardware(Hardware):
 class SunOSHardwareCollector(HardwareCollector):
     _fact_class = SunOSHardware
     _platform = 'SunOS'
+
+    required_facts = set(['platform'])

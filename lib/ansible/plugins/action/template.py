@@ -41,8 +41,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -134,9 +133,11 @@ class ActionModule(ActionBase):
             new_task.args.pop('variable_start_string', None)
             new_task.args.pop('variable_end_string', None)
             new_task.args.pop('trim_blocks', None)
+
+            local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
+
             try:
-                tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-                result_file = os.path.join(tempdir, os.path.basename(source))
+                result_file = os.path.join(local_tempdir, os.path.basename(source))
                 with open(result_file, 'wb') as f:
                     f.write(to_bytes(resultant, errors='surrogate_or_strict'))
 
@@ -154,12 +155,13 @@ class ActionModule(ActionBase):
                                                                         loader=self._loader,
                                                                         templar=self._templar,
                                                                         shared_loader_obj=self._shared_loader_obj)
-                result.update(copy_action.run(task_vars=task_vars, tmp=tmp))
+                result.update(copy_action.run(task_vars=task_vars))
             finally:
-                shutil.rmtree(tempdir)
+                shutil.rmtree(local_tempdir)
+
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tempdir)
 
         return result

@@ -25,9 +25,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
+
 from functools import partial
 
 from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 
 try:
     from infoblox_client.connector import Connector
@@ -42,32 +45,92 @@ nios_provider_spec = {
     'username': dict(),
     'password': dict(no_log=True),
     'ssl_verify': dict(type='bool', default=False),
+    'silent_ssl_warnings': dict(type='bool', default=True),
     'http_request_timeout': dict(type='int', default=10),
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
     'max_retries': dict(type='int', default=3),
     'wapi_version': dict(default='1.4'),
+    'max_results': dict(type='int', default=1000)
 }
 
 
-def get_provider_spec():
-    return {'provider': dict(type='dict', options=nios_provider_spec)}
+def get_connector(*args, **kwargs):
+    ''' Returns an instance of infoblox_client.connector.Connector
 
+    :params args: positional arguments are silently ignored
+    :params kwargs: dict that is passed to Connector init
 
-def get_connector(module):
+    :returns: Connector
+    '''
     if not HAS_INFOBLOX_CLIENT:
-        module.fail_json(msg='infoblox-client is required but does not appear '
-                             'to be installed.  It can be installed using the '
-                             'command `pip install infoblox-client`')
-    return Connector(module.params['provider'])
+        raise Exception('infoblox-client is required but does not appear '
+                        'to be installed.  It can be installed using the '
+                        'command `pip install infoblox-client`')
+
+    if not set(kwargs.keys()).issubset(nios_provider_spec.keys()):
+        raise Exception('invalid or unsupported keyword argument for connector')
+
+    for key, value in iteritems(nios_provider_spec):
+        if key not in kwargs:
+            # apply default values from nios_provider_spec since we cannot just
+            # assume the provider values are coming from AnsibleModule
+            if 'default' in value:
+                kwargs[key] = value['default']
+
+            # override any values with env variables unless they were
+            # explicitly set
+            env = ('INFOBLOX_%s' % key).upper()
+            if env in os.environ:
+                kwargs[key] = os.environ.get(env)
+
+    return Connector(kwargs)
+
+
+def normalize_extattrs(value):
+    ''' Normalize extattrs field to expected format
+
+    The module accepts extattrs as key/value pairs.  This method will
+    transform the key/value pairs into a structure suitable for
+    sending across WAPI in the format of:
+
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+    '''
+    return dict([(k, {'value': v}) for k, v in iteritems(value)])
+
+
+def flatten_extattrs(value):
+    ''' Flatten the key/value struct for extattrs
+
+    WAPI returns extattrs field as a dict in form of:
+
+        extattrs: {
+            key: {
+                value: <value>
+            }
+        }
+
+    This method will flatten the structure to:
+
+        extattrs: {
+            key: value
+        }
+
+    '''
+    return dict([(k, v['value']) for k, v in iteritems(value)])
 
 
 class WapiBase(object):
     ''' Base class for implementing Infoblox WAPI API '''
 
-    def __init__(self, module):
-        self.module = module
-        self.connector = get_connector(module)
+    provider_spec = {'provider': dict(type='dict', options=nios_provider_spec)}
+
+    def __init__(self, provider):
+        self.connector = get_connector(**provider)
 
     def __getattr__(self, name):
         try:
@@ -82,19 +145,49 @@ class WapiBase(object):
             method = getattr(self.connector, name)
             return method(*args, **kwargs)
         except InfobloxException as exc:
-            self.module.fail_json(
-                msg=exc.response['text'],
-                type=exc.response['Error'].split(':')[0],
-                code=exc.response.get('code'),
-                action=name
-            )
-
-    def run(self, ib_obj_type, ib_spec):
-        raise NotImplementedError
+            if hasattr(self, 'handle_exception'):
+                self.handle_exception(name, exc)
+            else:
+                raise
 
 
-class Wapi(WapiBase):
+class WapiLookup(WapiBase):
+    ''' Implements WapiBase for lookup plugins '''
+    pass
+
+
+class WapiInventory(WapiBase):
+    ''' Implements WapiBase for dynamic inventory script '''
+    pass
+
+
+class WapiModule(WapiBase):
     ''' Implements WapiBase for executing a NIOS module '''
+
+    def __init__(self, module):
+        self.module = module
+        provider = module.params['provider']
+
+        try:
+            super(WapiModule, self).__init__(provider)
+        except Exception as exc:
+            self.module.fail_json(msg=to_text(exc))
+
+    def handle_exception(self, method_name, exc):
+        ''' Handles any exceptions raised
+
+        This method will be called if an InfobloxException is raised for
+        any call to the instance of Connector.  This method will then
+        gracefully fail the module.
+
+        :args exc: instance of InfobloxException
+        '''
+        self.module.fail_json(
+            msg=exc.response['text'],
+            type=exc.response['Error'].split(':')[0],
+            code=exc.response.get('code'),
+            operation=method_name
+        )
 
     def run(self, ib_obj_type, ib_spec):
         ''' Runs the module and performans configuration tasks
@@ -116,7 +209,7 @@ class Wapi(WapiBase):
         if ib_obj:
             current_object = ib_obj[0]
             if 'extattrs' in current_object:
-                current_object['extattrs'] = self.flatten_extattrs(current_object['extattrs'])
+                current_object['extattrs'] = flatten_extattrs(current_object['extattrs'])
             ref = current_object.pop('_ref')
         else:
             current_object = obj_filter
@@ -133,7 +226,7 @@ class Wapi(WapiBase):
         modified = not self.compare_objects(current_object, proposed_object)
 
         if 'extattrs' in proposed_object:
-            proposed_object['extattrs'] = self.normalize_extattrs(proposed_object['extattrs'])
+            proposed_object['extattrs'] = normalize_extattrs(proposed_object['extattrs'])
 
         if state == 'present':
             if ref is None:
@@ -187,41 +280,6 @@ class Wapi(WapiBase):
             self.module.fail_json(msg='Network view %s does not exist, please create '
                                       'it using nios_network_view first' % name)
         return res
-
-    def normalize_extattrs(self, value):
-        ''' Normalize extattrs field to expected format
-
-        The module accepts extattrs as key/value pairs.  This method will
-        transform the key/value pairs into a structure suitable for
-        sending across WAPI in the format of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-        '''
-        return dict([(k, {'value': v}) for k, v in iteritems(value)])
-
-    def flatten_extattrs(self, value):
-        ''' Flatten the key/value struct for extattrs
-
-        WAPI returns extattrs field as a dict in form of:
-
-            extattrs: {
-                key: {
-                    value: <value>
-                }
-            }
-
-        This method will flatten the structure to:
-
-            extattrs: {
-                key: value
-            }
-
-        '''
-        return dict([(k, v['value']) for k, v in iteritems(value)])
 
     def issubset(self, item, objects):
         ''' Checks if item is a subset of objects

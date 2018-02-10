@@ -38,11 +38,12 @@ Alternatively, you may be reading in some already formatted data::
 
 for example::
 
-    tasks:
-      - shell: cat /some/path/to/file.json
-        register: result
+  tasks:
+    - shell: cat /some/path/to/file.json
+      register: result
 
-      - set_fact: myvar="{{ result.stdout | from_json }}"
+    - set_fact:
+        myvar: "{{ result.stdout | from_json }}"
 
 .. _forcing_variables_to_be_defined:
 
@@ -316,7 +317,8 @@ Or, alternatively::
 In this example, we get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
-      debug: var=item
+      debug:
+        var: item
       loop: "{{domain_definition|json_query(server_name_cluster1_query)}}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
@@ -891,7 +893,8 @@ To create a UUID from a string (new in version 1.9)::
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
 
-   - debug: msg=test
+   - debug:
+       msg: test
      when: some_string_value | bool
 
 .. versionadded:: 1.6
@@ -900,6 +903,17 @@ To make use of one attribute from each item in a list of complex variables, use 
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
+
+.. versionadded:: 2.5
+
+The `slice` filter can be used to extract the values of specific keys from a
+hash::
+
+    {{ {'x': 1, 'y': 2, 'z': 3 } | slice(['x', 'z']) }}
+
+This will result in::
+
+    [1, 2]
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
@@ -916,29 +930,35 @@ This set of filters returns a list of combined lists.
 To get permutations of a list::
 
     - name: give me largest permutations (order matters)
-      debug: msg="{{ [1,2,3,4,5]|permutations|list }}"
+      debug:
+        msg: "{{ [1,2,3,4,5]|permutations|list }}"
 
     - name: give me permutations of sets of three
-      debug: msg="{{ [1,2,3,4,5]|permutations(3)|list }}"
+      debug:
+        msg: "{{ [1,2,3,4,5]|permutations(3)|list }}"
 
 Combinations always require a set size::
 
     - name: give me combinations for sets of two
-      debug: msg="{{ [1,2,3,4,5]|combinations(2)|list }}"
+      debug:
+        msg: "{{ [1,2,3,4,5]|combinations(2)|list }}"
 
 
 To get a list combining the elements of other lists use ``zip``::
 
     - name: give me list combo of two lists
-      debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+      debug:
+       msg: "{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
 
     - name: give me shortest combo of two lists
-      debug: msg="{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+      debug:
+        msg: "{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
 
 To always exhaust all list use ``zip_longest``::
 
     - name: give me longest combo of three lists , fill with X
-      debug: msg="{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+      debug:
+        msg: "{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
 
 
 .. versionadded:: 2.4

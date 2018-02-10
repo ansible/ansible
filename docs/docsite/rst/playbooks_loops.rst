@@ -48,10 +48,14 @@ Some plugins like, the yum and apt modules can take lists directly to their opti
 See each action's documentation for details, for now here is an example::
 
    - name: optimal yum
-     yum: name={{list_of_packages}} state=present
+     yum:
+       name: "{{list_of_packages}}"
+       state: present
 
    - name: non optimal yum, not only slower but might cause issues with interdependencies
-     yum: name={{item}} state=present
+     yum:
+       name: "{{item}}"
+       state: present
      loop: "{{list_of_packages}}"
 
 Note that the types of items you iterate over do not have to be simple lists of strings.
@@ -120,7 +124,7 @@ Using register with a loop
 
 After using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
-Here is an example of using ``register`` with ``with_items``::
+Here is an example of using ``register`` with ``loop``::
 
     - shell: "echo {{ item }}"
       loop:
@@ -195,14 +199,12 @@ One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` var
     # show all the hosts in the inventory
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ groups['all'] }}"
+      loop: "{{ groups['all'] }}"
 
     # show all the hosts in the current play
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ ansible_play_batch }}"
+      loop: "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
@@ -285,6 +287,19 @@ Another option to loop control is ``pause``, which allows you to control the tim
       loop_control:
         pause: 3
 
+.. versionadded:: 2.7
+
+If you need to keep track of where you are in a loop, you can use the ``index_var`` option to loop control to specify a variable name to contain the current loop index.::
+
+    - name: count our fruit
+      debug:
+        msg: "{{ item }} with index {{ my_idx }}"
+      loop:
+        - apple
+        - banana
+        - pear
+      loop_control:
+        index_var: my_idx
 
 .. _loops_and_includes_2.0:
 

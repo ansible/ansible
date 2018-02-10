@@ -121,7 +121,9 @@ Using this with the 'serial' keyword to control the number of hosts executing at
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        yum: name=acme-web-stack state=latest
+        yum: 
+          name: acme-web-stack
+          state: latest
 
       - name: add back to load balancer pool
         command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
@@ -251,6 +253,13 @@ use the default remote connection type::
 
     - hosts: 127.0.0.1
       connection: local
+
+.. note::
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not  
+    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in           
+    host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
+
+
 
 .. _interrupt_execution_on_any_error:
 

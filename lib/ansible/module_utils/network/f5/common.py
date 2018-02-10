@@ -6,6 +6,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import exec_command
@@ -84,6 +86,7 @@ f5_top_spec = {
     ),
     'transport': dict(
         removed_in_version=2.9,
+        default='rest',
         choices=['cli', 'rest']
     )
 }
@@ -92,6 +95,14 @@ f5_argument_spec.update(f5_top_spec)
 
 def get_provider_argspec():
     return f5_provider_spec
+
+
+def load_params(params):
+    provider = params.get('provider') or dict()
+    for key, value in iteritems(provider):
+        if key in f5_argument_spec:
+            if params.get(key) is None and value is not None:
+                params[key] = value
 
 
 # Fully Qualified name (with the partition)
@@ -143,7 +154,33 @@ def cleanup_tokens(client):
 def is_cli(module):
     transport = module.params['transport']
     provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'cli' in (transport, provider_transport)
+    result = 'cli' in (transport, provider_transport)
+    return result
+
+
+def is_valid_hostname(host):
+    """Reasonable attempt at validating a hostname
+
+    Compiled from various paragraphs outlined here
+    https://tools.ietf.org/html/rfc3696#section-2
+    https://tools.ietf.org/html/rfc1123
+
+    Notably,
+    * Host software MUST handle host names of up to 63 characters and
+      SHOULD handle host names of up to 255 characters.
+    * The "LDH rule", after the characters that it permits. (letters, digits, hyphen)
+    * If the hyphen is used, it is not permitted to appear at
+      either the beginning or end of a label
+
+    :param host:
+    :return:
+    """
+    if len(host) > 255:
+        return False
+    host = host.rstrip(".")
+    allowed = re.compile(r'(?!-)[A-Z0-9-]{1,63}(?<!-)$', re.IGNORECASE)
+    result = all(allowed.match(x) for x in host.split("."))
+    return result
 
 
 class Noop(object):
@@ -163,6 +200,8 @@ class Noop(object):
 class F5BaseClient(object):
     def __init__(self, *args, **kwargs):
         self.params = kwargs
+        load_params(self.params)
+        self._client = None
 
     @property
     def api(self):
@@ -183,7 +222,7 @@ class F5BaseClient(object):
         :return:
         :raises iControlUnexpectedHTTPError
         """
-        self.api = self.mgmt
+        self._client = self.mgmt
 
 
 class AnsibleF5Parameters(object):
@@ -191,12 +230,17 @@ class AnsibleF5Parameters(object):
         self._values = defaultdict(lambda: None)
         self._values['__warnings'] = []
         self.client = kwargs.pop('client', None)
+        self._module = kwargs.pop('module', None)
+        self._params = {}
+
         params = kwargs.pop('params', None)
         if params:
             self.update(params=params)
+            self._params.update(params)
 
     def update(self, params=None):
         if params:
+            self._params.update(params)
             for k, v in iteritems(params):
                 if self.api_map is not None and k in self.api_map:
                     map_key = self.api_map[k]

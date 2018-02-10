@@ -449,7 +449,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
@@ -634,7 +634,7 @@ def _hashable_policy(policy, policy_list):
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
-    elif isinstance(policy, string_types):
+    elif isinstance(policy, string_types) or isinstance(policy, binary_type):
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
@@ -776,8 +776,8 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
-hese may not be able to be used out of the box.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ
+    these may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:

@@ -235,7 +235,7 @@ def rand(environment, end, start=None, step=None, seed=None):
             start = 0
         if not step:
             step = 1
-        return r.randrange(start, end, step)
+        return r.randrange(start, end + 1, step)
     elif hasattr(end, '__iter__'):
         if start or step:
             raise AnsibleFilterError('start and step can only be used with integer values')
@@ -488,22 +488,6 @@ def flatten(mylist, levels=None):
     return ret
 
 
-def dict_slice(mydict, keys):
-    ''' takes a dictionary and a list of keys and returns a list of values corresponding to those keys, if they exist '''
-
-    if not isinstance(mydict, MutableMapping):
-        raise AnsibleFilterError("The slice filter requires a mapping to operate on, got a %s." % type(mydict))
-
-    if not isinstance(keys, MutableSequence):
-
-        if isinstance(keys, string_types):
-            keys = [keys]
-        else:
-            AnsibleFilterError("The slice filter requires a key or list of keys, got %s instead." % type(keys))
-
-    return [mydict[key] for key in keys if key in mydict]
-
-
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -590,5 +574,4 @@ class FilterModule(object):
             'combine': combine,
             'extract': extract,
             'flatten': flatten,
-            'slice': dict_slice,
         }

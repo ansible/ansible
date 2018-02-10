@@ -28,9 +28,9 @@ DOCUMENTATION = '''
 ---
 module: panos_object
 short_description: create/read/update/delete object in PAN-OS or Panorama
-description: >
+description:
     - Policy objects form the match criteria for policy rules and many other functions in PAN-OS. These may include
-    address object, address groups, service objects, service groups, and tag.
+      address object, address groups, service objects, service groups, and tag.
 author: "Bob Hagen (@rnh556)"
 version_added: "2.4"
 requirements:
@@ -167,7 +167,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -392,9 +392,8 @@ def main():
         if match:
             try:
                 match.delete()
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
 
             module.exit_json(changed=True, msg='Object \'%s\' successfully deleted' % obj_name)
         else:
@@ -424,9 +423,8 @@ def main():
                     color=color
                 )
                 changed = add_object(device, dev_group, new_object)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
         module.exit_json(changed=changed, msg='Object \'%s\' successfully added' % obj_name)
     elif operation == "update":
         # Search for the object. Update if found.
@@ -451,9 +449,8 @@ def main():
                     color=color
                 )
                 changed = add_object(device, dev_group, new_object)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Object \'%s\' successfully updated.' % obj_name)
         else:
             module.fail_json(msg='Object \'%s\' does not exist. Use operation: \'add\' to add it.' % obj_name)

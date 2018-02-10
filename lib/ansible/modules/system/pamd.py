@@ -255,7 +255,7 @@ dest:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 import os
 import re
 import time
@@ -302,14 +302,13 @@ class PamdRule(object):
             complicated = True
         else:
             pattern = re.compile(
-                r"""([\-A-Za-z0-9_]+)\s*        # Rule Type
-                    ([A-Za-z0-9_]+)\s*          # Rule Control
-                    ([A-Za-z0-9/_\-\.]+)\s*        # Rule Path
+                r"""([@\-A-Za-z0-9_]+)\s*        # Rule Type
+                    ([A-Za-z0-9_\-]+)\s*          # Rule Control
+                    ([A-Za-z0-9/_\-\.]*)\s*        # Rule Path
                     ([A-Za-z0-9,_=<>\-\s\./]*)""",  # Rule Args
                 re.X)
 
         result = pattern.match(stringline)
-
         rule_type = result.group(1)
         if complicated:
             rule_control = '[' + result.group(2) + ']'
@@ -353,19 +352,18 @@ class PamdService(object):
             self.name = self.ansible.params["name"]
 
     def load_rules_from_file(self):
-        self.fname = self.path + "/" + self.name
+        self.fname = os.path.join(self.path, self.name)
         stringline = ''
         try:
             for line in open(self.fname, 'r'):
-                stringline += line.rstrip()
+                stringline += line.rstrip().lstrip()
                 stringline += '\n'
-            self.load_rules_from_string(stringline)
+            self.load_rules_from_string(stringline.replace("\\\n", ""))
 
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.ansible.fail_json(msg='Unable to open/read PAM module \
                                    file %s with error %s.  And line %s' %
-                                   (self.fname, str(e), stringline))
+                                   (self.fname, to_native(e), stringline))
 
     def load_rules_from_string(self, stringvalue):
         for line in stringvalue.splitlines():
@@ -375,6 +373,10 @@ class PamdService(object):
             elif (not line.startswith('#') and
                   not line.isspace() and
                   len(line) != 0):
+                try:
+                    self.ansible.log(msg="Creating rule from string %s" % stringline)
+                except AttributeError:
+                    pass
                 self.rules.append(PamdRule.rulefromstring(stringline))
 
     def write(self):
@@ -683,6 +685,7 @@ def main():
     module.params['dest'] = pamd.fname
 
     module.exit_json(changed=change, ansible_facts=facts)
+
 
 if __name__ == '__main__':
     main()

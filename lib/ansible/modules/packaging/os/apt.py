@@ -252,7 +252,6 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_url
 
@@ -588,9 +587,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             # to install so they're all done in one shot
             deps_to_install.extend(pkg.missing_deps)
 
-        except Exception:
-            e = get_exception()
-            m.fail_json(msg="Unable to install package: %s" % str(e))
+        except Exception as e:
+            m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
@@ -805,9 +803,8 @@ def download(module, deb):
             f.write(data)
         f.close()
         deb = package
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, e))
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
 
     return deb
 
@@ -843,9 +840,8 @@ def get_cache(module):
     cache = None
     try:
         cache = apt.Cache()
-    except SystemError:
-        e = get_exception()
-        if '/var/lib/apt/lists/' in str(e).lower():
+    except SystemError as e:
+        if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
             retries = 0
             while retries < 2:
@@ -854,7 +850,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
             # try again
             cache = apt.Cache()
         else:

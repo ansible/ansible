@@ -36,8 +36,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -85,7 +84,7 @@ class ActionModule(ActionBase):
 
             if not remote_src:
                 # transfer the file to a remote tmp location
-                tmp_src = self._connection._shell.join_path(tmp, 'source')
+                tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, 'source')
                 self._transfer_file(source, tmp_src)
 
             # handle diff mode client side
@@ -93,7 +92,7 @@ class ActionModule(ActionBase):
 
             if not remote_src:
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((tmp, tmp_src))
+                self._fixup_perms2((self._connection._shell.tempdir, tmp_src))
                 # Build temporary module_args.
                 new_module_args = self._task.args.copy()
                 new_module_args.update(
@@ -121,5 +120,5 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tempdir)
         return result

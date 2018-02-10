@@ -31,7 +31,7 @@ try:
     from enum import Enum  # enum is a ovirtsdk4 requirement
     import ovirtsdk4 as sdk
     import ovirtsdk4.version as sdk_version
-    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.0.0')
+    HAS_SDK = LooseVersion(sdk_version.VERSION) >= LooseVersion('4.2.4')
 except ImportError:
     HAS_SDK = False
 
@@ -48,7 +48,7 @@ BYTES_MAP = {
 def check_sdk(module):
     if not HAS_SDK:
         module.fail_json(
-            msg='ovirtsdk4 version 4.0.0 or higher is required for this module'
+            msg='ovirtsdk4 version 4.2.4 or higher is required for this module'
         )
 
 
@@ -218,20 +218,22 @@ def equal(param1, param2, ignore_case=False):
     return True
 
 
-def search_by_attributes(service, **kwargs):
+def search_by_attributes(service, list_params=None, **kwargs):
     """
     Search for the entity by attributes. Nested entities don't support search
     via REST, so in case using search for nested entity we return all entities
     and filter them by specified attributes.
     """
+    list_params = list_params or {}
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items())
+            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items()),
+            **list_params
         )
     else:
         res = [
-            e for e in service.list() if len([
+            e for e in service.list(**list_params) if len([
                 k for k, v in kwargs.items() if getattr(e, k, None) == v
             ]) == len(kwargs)
         ]
@@ -269,13 +271,16 @@ def search_by_name(service, name, **kwargs):
     return res[0]
 
 
-def get_entity(service):
+def get_entity(service, get_params=None):
     """
     Ignore SDK Error in case of getting an entity from service.
     """
     entity = None
     try:
-        entity = service.get()
+        if get_params is not None:
+            entity = service.get(**get_params)
+        else:
+            entity = service.get()
     except sdk.Error:
         # We can get here 404, we should ignore it, in case
         # of removing entity for example.
@@ -757,7 +762,7 @@ class BaseModule(object):
                     return entity
                 time.sleep(poll_interval)
 
-    def search_entity(self, search_params=None):
+    def search_entity(self, search_params=None, list_params=None):
         """
         Always first try to search by `ID`, if ID isn't specified,
         check if user constructed special search in `search_params`,
@@ -766,10 +771,10 @@ class BaseModule(object):
         entity = None
 
         if 'id' in self._module.params and self._module.params['id'] is not None:
-            entity = get_entity(self._service.service(self._module.params['id']))
+            entity = get_entity(self._service.service(self._module.params['id']), get_params=list_params)
         elif search_params is not None:
-            entity = search_by_attributes(self._service, **search_params)
+            entity = search_by_attributes(self._service, list_params=list_params, **search_params)
         elif self._module.params.get('name') is not None:
-            entity = search_by_attributes(self._service, name=self._module.params['name'])
+            entity = search_by_attributes(self._service, list_params=list_params, name=self._module.params['name'])
 
         return entity

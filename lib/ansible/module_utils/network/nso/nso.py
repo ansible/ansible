@@ -140,8 +140,16 @@ class JsonRpc(object):
 
     def exists(self, path):
         payload = {'method': 'exists', 'params': {'path': path}}
-        resp, resp_json = self._read_call(payload)
-        return resp_json['result']['exists']
+        try:
+            resp, resp_json = self._read_call(payload)
+            return resp_json['result']['exists']
+        except NsoException as ex:
+            # calling exists on a sub-list when the parent list does
+            # not exists will cause data.not_found errors on recent
+            # NSO
+            if 'type' in ex.error and ex.error['type'] == 'data.not_found':
+                return False
+            raise
 
     def create(self, th, path):
         payload = {'method': 'create', 'params': {'th': th, 'path': path}}
@@ -438,14 +446,20 @@ class ValueBuilder(object):
 
         schema = self._find_child(parent_path, parent_schema, key)
         if self._is_leaf(schema):
-            path_type = schema['type']
-            if path_type.get('primitive', False):
-                return path_type['name']
-            else:
-                path_type_key = '{0}:{1}'.format(
-                    path_type['namespace'], path_type['name'])
-                type_info = meta['types'][path_type_key]
-                return type_info[-1]['name']
+            def get_type(meta, curr_type):
+                if curr_type.get('primitive', False):
+                    return curr_type['name']
+                if 'namespace' in curr_type:
+                    curr_type_key = '{0}:{1}'.format(
+                        curr_type['namespace'], curr_type['name'])
+                    type_info = meta['types'][curr_type_key][-1]
+                    return get_type(meta, type_info)
+                if 'leaf_type' in curr_type:
+                    return get_type(meta, curr_type['leaf_type'][-1])
+                return curr_type['name']
+
+            return get_type(meta, schema['type'])
+
         return None
 
     def _ensure_schema_cached(self, path):

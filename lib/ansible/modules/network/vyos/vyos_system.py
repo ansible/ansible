@@ -72,7 +72,7 @@ commands:
 EXAMPLES = """
 - name: configure hostname and domain-name
   vyos_system:
-    hostname: vyos01
+    host_name: vyos01
     domain_name: test.example.com
 
 - name: remove all configuration

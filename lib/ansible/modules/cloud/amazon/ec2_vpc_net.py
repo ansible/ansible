@@ -356,6 +356,11 @@ def main():
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, "Failed to update enabled dns hostnames attribute")
 
+        try:
+            connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id])
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be available.".format(vpc_id))
+
         final_state = camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id))
         final_state['tags'] = boto3_tag_list_to_ansible_dict(final_state.get('tags', []))
         final_state['id'] = final_state.pop('vpc_id')

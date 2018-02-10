@@ -1000,6 +1000,37 @@ class PyVmomi(object):
             folder_name = '/' + folder_name
         return folder_name
 
+    def get_vm_or_template(self, template_name=None):
+        """
+        Function to find the virtual machine or virtual machine template using name
+        used for cloning purpose.
+        Args:
+            template_name: Name of virtual machine or virtual machine template
+
+        Returns: virtual machine or virtual machine template object
+
+        """
+        template_obj = None
+
+        if template_name:
+            objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+            templates = []
+
+            for temp_vm_object in objects:
+                if len(temp_vm_object.propSet) != 1:
+                    continue
+                for temp_vm_object_property in temp_vm_object.propSet:
+                    if temp_vm_object_property.val == template_name:
+                        templates.append(temp_vm_object.obj)
+                        break
+
+            if len(templates) > 1:
+                # We have found multiple virtual machine templates
+                self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
+            elif templates:
+                template_obj = templates[0]
+        return template_obj
+
     # Cluster related functions
     def find_cluster_by_name(self, cluster_name, datacenter_name=None):
         """
@@ -1056,3 +1087,16 @@ class PyVmomi(object):
             if portgroup.spec.name == portgroup_name:
                 return portgroup
         return False
+
+    def get_all_port_groups_by_host(self, host_system):
+        """
+        Function to get all Port Group by host
+        Args:
+            host_system: Name of Host System
+
+        Returns: List of Port Group Spec
+        """
+        pgs_list = []
+        for pg in host_system.config.network.portgroup:
+            pgs_list.append(pg)
+        return pgs_list

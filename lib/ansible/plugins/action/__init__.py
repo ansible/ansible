@@ -66,9 +66,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         tasks.  Everything else in this base class is a helper method for the
         action plugin to do that.
 
-        :kwarg tmp: Temporary directory.  Sometimes an action plugin sets up
-            a temporary directory and then calls another module.  This parameter
-            allows us to reuse the same directory for both.
+        :kwarg tmp: Deprecated parameter.  This is no longer used.  An action plugin that calls
+            another one and wants to use the same remote tmp for both should set
+            self._connection._shell.tempdir rather than this parameter.
         :kwarg task_vars: The variables (host vars, group vars, config vars,
             etc) associated with this task.
         :returns: dictionary of results from the module
@@ -80,6 +80,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         result = {}
 
+        if tmp is not None:
+            result['warning'] = ['ActionModule.run() no longer honors the tmp parameter. Action'
+                                 ' plugins should set self._connection._shell.tempdir to share'
+                                 ' the tempdir']
+        del tmp
+
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
@@ -87,10 +93,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
-        if not tmp and self._early_needs_tmp_path():
+        if self._connection._shell.tempdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
-        else:
-            self._connection._shell.tempdir = tmp
 
         return result
 
@@ -298,6 +302,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _remove_tmp_path(self, tmp_path):
         '''Remove a temporary path we created. '''
 
+        if tmp_path is None and self._connection._shell.tempdir:
+            tmp_path = self._connection._shell.tempdir
+
         if self._should_remove_tmp_path(tmp_path):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
@@ -308,6 +315,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if tmp_rm_data.get('rc', 0) != 0:
                 display.warning('Error deleting remote temporary files (rc: %s, stderr: %s})'
                                 % (tmp_rm_res.get('rc'), tmp_rm_res.get('stderr', 'No error string available.')))
+            else:
+                self._connection._shell.tempdir = None
 
     def _transfer_file(self, local_path, remote_path):
         self._connection.put_file(local_path, remote_path)
@@ -383,7 +392,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * If the chown fails we can set the file to be world readable so that
           the second unprivileged user can read the file.
           Since this could allow other users to get access to private
-          information we only do this ansible is configured with
+          information we only do this if ansible is configured with
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
@@ -431,7 +440,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
                                        'Unprivileged become user would be unable to read the file.')
                 elif res['rc'] != 0:
-                    if self._connection._shell('allow_world_readable_temp'):
+                    if C.ALLOW_WORLD_READABLE_TMPFILES:
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
@@ -482,13 +491,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Get information from remote file.
         '''
+        if tmp is not None:
+            display.warning('_execute_remote_stat no longer honors the tmp parameter. Action'
+                            ' plugins should set self._connection._shell.tempdir to share'
+                            ' the tempdir')
+        del tmp  # No longer used
+
         module_args = dict(
             path=path,
             follow=follow,
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
                                       wrap_async=False)
 
         if mystat.get('failed'):
@@ -631,6 +646,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure all commands use the designated shell executable
         module_args['_ansible_shell_executable'] = self._play_context.executable
 
+        # make sure all commands use the designated temporary directory
+        module_args['_ansible_tempdir'] = self._connection._shell.tempdir
+
     def _update_connection_options(self, options, variables=None):
         ''' ensures connections have the appropriate information '''
         update = {}
@@ -646,16 +664,23 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         update.update(options)
         self.connection.set_options(update)
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
         '''
+        if tmp is not None:
+            display.warning('_execute_module no longer honors the tmp parameter. Action plugins'
+                            ' should set self._connection._shell.tempdir to share the tempdir')
+        del tmp  # No longer used
+        if delete_remote_tmp is not None:
+            display.warning('_execute_module no longer honors the delete_remote_tmp parameter.'
+                            ' Action plugins should check self._connection._shell.tempdir to'
+                            ' see if a tempdir existed before they were called to determine'
+                            ' if they are responsible for removing it.')
+        del delete_remote_tmp  # No longer used
+
         if task_vars is None:
             task_vars = dict()
-
-        remote_module_path = None
-        args_file_path = None
-        remote_files = []
 
         # if a module name was not specified for this execution, use the action from the task
         if module_name is None:
@@ -671,21 +696,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
-        if not self._is_pipelining_enabled(module_style, wrap_async):
+        tempdir = self._connection._shell.tempdir
+        remote_module_path = None
 
-            # we might need remote tmp dir
-            if not tmp:
-                if not self._connection._shell.tempdir or tmp is None or 'tmp' not in tmp:
-                    tmp = self._make_tmp_path()
-                else:
-                    tmp = self._connection._shell.tempdir
+        if not self._is_pipelining_enabled(module_style, wrap_async):
+            # we might need remote temp dir
+            if tempdir is None:
+                self._make_tmp_path()
+                tempdir = self._connection._shell.tempdir
 
             remote_module_filename = self._connection._shell.get_remote_filename(module_path)
-            remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
+            remote_module_path = self._connection._shell.join_path(tempdir, remote_module_filename)
 
+        args_file_path = None
         if module_style in ('old', 'non_native_want_json', 'binary'):
             # we'll also need a temp file to hold our module arguments
-            args_file_path = self._connection._shell.join_path(tmp, 'args')
+            args_file_path = self._connection._shell.join_path(tempdir, 'args')
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote %s" % remote_module_path)
@@ -706,8 +732,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         environment_string = self._compute_environment_string()
 
-        if tmp and remote_module_path:
-            remote_files = [tmp, remote_module_path]
+        remote_files = []
+        if tempdir and remote_module_path:
+            remote_files = [tempdir, remote_module_path]
 
         if args_file_path:
             remote_files.append(args_file_path)
@@ -721,7 +748,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
                                                                                                          task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
-            remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
+            remote_async_module_path = self._connection._shell.join_path(tempdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
             remote_files.append(remote_async_module_path)
 
@@ -743,7 +770,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # maintain a fixed number of positional parameters for async_wrapper
                 async_cmd.append('_')
 
-            if not self._should_remove_tmp_path(tmp):
+            if not self._should_remove_tmp_path(tempdir):
                 async_cmd.append("-preserve_tmp")
 
             cmd = " ".join(to_text(x) for x in async_cmd)
@@ -757,7 +784,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path).strip()
 
-        # Fix permissions of the tmp path and tmp files. This should be called after all files have been transferred.
+        # Fix permissions of the tempdir path and tempdir files. This should be called after all
+        # files have been transferred.
         if remote_files:
             # remove none/empty
             remote_files = [x for x in remote_files if x]
@@ -777,8 +805,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # remove internal keys
         remove_internal_keys(data)
 
-        # FIXME: for backwards compat, figure out if still makes sense
         if wrap_async:
+            # async_wrapper will clean up its tempdir on its own so we want the controller side to
+            # forget about it now
+            self._connection._shell.tempdir = None
+
+            # FIXME: for backwards compat, figure out if still makes sense
             data['changed'] = True
 
         # pre-split stdout/stderr into lines if needed

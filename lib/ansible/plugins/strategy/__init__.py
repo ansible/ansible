@@ -179,6 +179,7 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = getattr(tqm._options, 'step', False)
         self._diff = getattr(tqm._options, 'diff', False)
+        self.flush_cache = getattr(tqm._options, 'flush_cache', False)
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -762,7 +763,8 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
-            ti_copy = included_file._task.copy()
+            ti_copy = included_file._task.copy(exclude_parent=True)
+            ti_copy._parent = included_file._task._parent
             temp_vars = ti_copy.vars.copy()
             temp_vars.update(included_file._args)
             # pop tags out of the include args, if they were specified there, and assign
@@ -956,7 +958,7 @@ class StrategyBase:
         elif meta_action == 'flush_handlers':
             self.run_handlers(iterator, play_context)
             msg = "ran handlers"
-        elif meta_action == 'refresh_inventory':
+        elif meta_action == 'refresh_inventory' or self.flush_cache:
             self._inventory.refresh_inventory()
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':

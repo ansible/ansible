@@ -25,7 +25,10 @@ DOCUMENTATION = '''
 module: nxos_portchannel
 extends_documentation_fragment: nxos
 version_added: "2.2"
-deprecated: Deprecated in 2.5. Use M(nxos_linkagg) instead.
+deprecated:
+  removed_in: "2.9"
+  why: Replaced with common C(*_linkagg) network modules.
+  alternative: Use M(nxos_linkagg) instead.
 short_description: Manages port-channel interfaces.
 description:
   - Manages port-channel specific configuration parameters.
