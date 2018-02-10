@@ -24,7 +24,7 @@ description:
       the Kubernetes server API. Users can specify in-line API data, or
       specify an existing Kubernetes YAML file.
     - Currently, this module
-      (1) Only supports HTTP Basic Auth
+      (1) Only supports HTTP Basic Auth and Bearer token
       (2) Only supports 'strategic merge' for update, http://goo.gl/fCPYxT
       SSL certs are not working, use C(validate_certs=off) to disable.
 options:
@@ -72,8 +72,10 @@ options:
     description:
       - The HTTP Basic Auth username for the API I(endpoint). This should be set
         unless using the C('insecure') option.
-    default: admin
     aliases: [ username ]
+  token:
+    description:
+      - The Bearer token for the kubernetes serviceaccount. From kubernetes 1.6, RBAC is enabled by default.
   insecure:
     description:
       - Reverts the connection to using HTTP instead of HTTPS. This option should
@@ -124,6 +126,15 @@ EXAMPLES = '''
   kubernetes:
     api_endpoint: 123.45.67.89
     insecure: true
+    file_reference: /path/to/create_namespace.yaml
+    state: present
+
+# Do the same thing, but using the bearer token. From kubernetes 1.6, the basic auth is disabled by default.
+- name: Create a kubernetes namespace
+  kubernetes:
+    api_endpoint: 123.45.67.89
+    force_basic_auth: no
+    token: redacted
     file_reference: /path/to/create_namespace.yaml
     state: present
 
@@ -254,6 +265,10 @@ def api_request(module, url, method="GET", headers=None, data=None):
     body = None
     if data:
         data = json.dumps(data)
+    token =  module.params.get('token')
+    if token:
+        headers["Authorization"] = "Bearer " + token
+
     response, info = fetch_url(module, url, method=method, headers=headers, data=data)
     if int(info['status']) == -1:
         module.fail_json(msg="Failed to execute the API request: %s" % info['msg'], url=url, method=method, headers=headers)
@@ -333,9 +348,10 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             http_agent=dict(type='str', default=USER_AGENT),
-            url_username=dict(type='str', default='admin', aliases=['username']),
+            url_username=dict(type='str', default='', aliases=['username']),
             url_password=dict(type='str', default='', no_log=True, aliases=['password']),
             force_basic_auth=dict(type='bool', default=True),
+            token=dict(default="", no_log=True),
             validate_certs=dict(type='bool', default=False),
             certificate_authority_data=dict(type='str'),
             insecure=dict(type='bool', default=False),
@@ -348,7 +364,8 @@ def main():
         ),
         mutually_exclusive=(('file_reference', 'inline_data'),
                             ('url_username', 'insecure'),
-                            ('url_password', 'insecure')),
+                            ('url_password', 'insecure'),
+                            ('url_username', 'token')),
         required_one_of=(('file_reference', 'inline_data')),
     )
 
