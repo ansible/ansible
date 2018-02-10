@@ -9,10 +9,6 @@
   set_fact:
     remote_file: "{{ remote_dir }}/foo.txt"
 
-- name: Locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
-
 - name: Initiate a basic copy, and also test the mode
   copy:
     src: foo.txt
@@ -1141,7 +1137,7 @@
     - stat_link_result.stat.islnk
 
 - name: Get the checksum of the link target
-  shell: "{{ sha1sum.stdout }} {{remote_dir}}/follow_test | cut -f1 -sd ' '"
+  shell: "{{ ansible_python_interpreter }} -c 'import hashlib; print(hashlib.sha1(open(\"{{remote_dir | expanduser}}/follow_test\", \"rb\").read()).hexdigest())'"
   register: target_file_result
 
 - name: Assert that the link target was updated
