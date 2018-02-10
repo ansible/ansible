@@ -21,7 +21,7 @@ module: macos_pref
 author:
     - Matthias Hollerbach (@kinglouie)
     - John Calixto (@nordjc)
-short_description: Manipulates macOS preferences including complex data types.
+short_description: Manipulates macOS preferences including complex data types
 version_added: "2.6"
 description:
     - This module allows users to create, read, update, and delete system and application preferences on macOS
@@ -30,7 +30,7 @@ description:
       specifically target nested keys without having to assign unchanged peer or parent values.
 requirements:
     - Target machine should be running macOS
-    - PyObjC (preinstalled by Apple with the operating system)
+    - PyObjC (preinstalled by Apple with the operating system since macOS 10.5 Leopard)
 options:
     domain:
         description:
@@ -39,7 +39,9 @@ options:
         default: NSGlobalDomain
     host:
         description:
-            - The host on which the preference should apply.
+            - The host on which the preference should apply. Most Apple preferences live in the C(anyHost) domain. 
+            - See U(https://developer.apple.com/library/content/documentation/CoreFoundation/Conceptual/CFPreferences/Concepts/PreferenceDomains.html)
+              for further information.
         required: false
         default: anyHost
         choices: ["anyHost", "currentHost"]
@@ -49,7 +51,7 @@ options:
         required: true
     value:
         description:
-            - The value that will be set for the specified key.
+            - The value that will be set for the specified key. If value is omitted the preference value of C(key) will be returned.
         required: false
     state:
         description:
@@ -151,7 +153,7 @@ EXAMPLES = '''
   macos_pref:
     domain: com.apple.Terminal
     key: Default Window Settings
-    state: absent 
+    state: absent
 
 
 # Read directly from a plist file (also works for writing)
@@ -177,9 +179,11 @@ EXAMPLES = '''
 
 RETURN = '''
 value:
-    description: The value associated with the preference domain and key.
-                 Return type is a python object that maps closest to the data type of the macOS preference.
-                 This can be an integer, float, string, dict, list, etc...
+    description: 
+        - The value associated with the preference domain and key.
+          Return type is a python object that maps closest to the data type of the macOS preference.
+          This can be an integer, float, string, dict, list, etc...
+        - In case the preference was changed, the new value of C(key) will be returned.
     type: string
     returned: on success
     sample: "{'CustomViewStyleVersion': 1}"
@@ -195,7 +199,7 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     sys.path.insert(0, '/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/PyObjc')
     import CoreFoundation
-    from Foundation import kCFPreferencesCurrentUser, kCFPreferencesAnyUser, kCFPreferencesCurrentHost, kCFPreferencesAnyHost
+    import Foundation
     from PyObjCTools.Conversion import pythonCollectionFromPropertyList
 except ImportError:
     pyobjc_found = False
@@ -211,14 +215,18 @@ class MacOSPref(object):
 
     global pyobjc_found
 
-    def __init__(self, **kwargs):
+    def __init__(self, domain, host, key, value, state, check_mode):
         # Exit if PyObjC module is not available
         if not pyobjc_found:
             raise MacOSPrefException("The PyObjC python module is required.")
 
         # Set all given parameters
-        for key, val in kwargs.items():
-            setattr(self, key, val)
+        self.domain = domain
+        self.host = host
+        self.key = key
+        self.value = value
+        self.state = state
+        self.check_mode = check_mode
 
         # Set initial var values
         self.current_value = None
@@ -228,12 +236,12 @@ class MacOSPref(object):
 
     def _host_arg(self):
         if self.host == 'currentHost':
-            return kCFPreferencesCurrentHost
+            return Foundation.kCFPreferencesCurrentHost
         else:
-            return kCFPreferencesAnyHost
+            return Foundation.kCFPreferencesAnyHost
 
     def read(self):
-        self.current_value = get_pref(self.key, self.domain, kCFPreferencesCurrentUser, self._host_arg())
+        self.current_value = get_pref(self.key, self.domain, Foundation.kCFPreferencesCurrentUser, self._host_arg())
         self.return_value = self.current_value
 
     def delete(self):
@@ -243,7 +251,7 @@ class MacOSPref(object):
         self.changed = True
         self.return_value = None
 
-        if self.module.check_mode:
+        if self.check_mode:
             return
 
         set_pref(self.key, None, self.domain)
@@ -262,12 +270,12 @@ class MacOSPref(object):
         self.changed = True
         self.return_value = new
 
-        if self.module.check_mode:
+        if self.check_mode:
             return
 
-        if not set_pref(self.key, new, self.domain, kCFPreferencesCurrentUser, self._host_arg()):
-            self.success = False        
-    
+        if not set_pref(self.key, new, self.domain, Foundation.kCFPreferencesCurrentUser, self._host_arg()):
+            self.success = False
+
     def run(self):
 
         self.read()
@@ -355,14 +363,15 @@ def main():
         supports_check_mode=True
     )
 
-    domain = module.params['domain']
-    host = module.params['host']
-    key = module.params['key']
-    value = module.params.get('value')
-    state = module.params['state']
-    
     try:
-        macospref = MacOSPref(module=module, domain=domain,host=host, key=key, value=value, state=state)
+        macospref = MacOSPref(
+            domain=module.params['domain'], 
+            host=module.params['host'], 
+            key=module.params['key'], 
+            value=module.params.get('value'), 
+            state=module.params['state'], 
+            check_mode=module.check_mode
+        )
         macospref.run()
         module.exit_json(changed=macospref.changed, value=macospref.return_value)
     except MacOSPrefException as e:
