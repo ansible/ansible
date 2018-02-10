@@ -2,6 +2,8 @@
 
 set -eux -o pipefail
 
+ansible-playbook setup.yml
+
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 
