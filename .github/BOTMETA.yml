@@ -1229,6 +1229,20 @@ files:
   packaging/:
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
+  test/runner/:
+    notify: mattclay
+  test/sanity/:
+    notify: mattclay
+  test/utils/docker/:
+    notify: mattclay
+  test/utils/shippable/:
+    notify: mattclay
+  test/integration/group_vars/:
+    notify: mattclay
+  test/integration/host_vars/:
+    notify: mattclay
+  test/integration/roles/:
+    notify: mattclay
   test/integration/targets/nxos:
     maintainers: $team_nxos
     labels:
@@ -1246,6 +1260,14 @@ files:
     - nxos
   test/sanity/pep8/legacy-files.txt:
     labels: pep8
+  hacking/report.py:
+    notify: mattclay
+  shippable.yml:
+    notify: mattclay
+  .yamllint:
+    notify: mattclay
+  tox.ini:
+    notify: mattclay
 macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
