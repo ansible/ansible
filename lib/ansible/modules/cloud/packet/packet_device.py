@@ -88,8 +88,7 @@ options:
 
   public_ipv4_subnet_size:
     description:
-      - Size of the public IPv4 subnet
-      - This can be set to any available size from packet (/31, /30, /29, /28, /27)
+      - Size of the public IPv4 subnet.  If nothing is selected the default for your deployment will be selected - U(https://help.packet.net/technical/networking/custom-subnet-size)
     choices: [31, 30, 29, 28, 27]
     version_added: "2.5"
 
