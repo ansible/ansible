@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     short_description: shows only items that need attention
     description:
       - Use this callback when you dont care about OK nor Skipped.
-      - This callback suppreses any non Failed or Changed status.
+      - This callback suppresses any non Failed or Changed status.
     version_added: "2.1"
     extends_documentation_fragment:
       - default_callback
