@@ -59,7 +59,8 @@ Ansible Changes By Release
 * Fix docker_service so a build is not triggered every time
   https://github.com/ansible/ansible/issues/36145
 * Be more tolerant about spaces when gathering virtual facts (https://github.com/ansible/ansible/pull/36042)
-
+* validate add_host name parameter (https://github.com/ansible/ansible/pull/36055)
+* spelling fixes (https://github.com/ansible/ansible/pull/36007)
 
 <a id="2.4.3"></a>
 
