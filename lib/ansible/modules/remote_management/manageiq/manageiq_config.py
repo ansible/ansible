@@ -24,11 +24,12 @@ description:
 
 options:
     name:
-        description:
-            - Name of the ManageIQ config element to modify.
+        description: Name of the ManageIQ config element to modify.
         required: True
     value:
-        description: Dictionary to set as the value for the ManageIQ config option. Any values not given will be left at current value.
+        description:
+            - Dictionary to set as the value for the ManageIQ config option.
+            - This performs a deep merge of the given value with the existing value, therefor any parts of the value dictionary not given are not affected.
         required: False
         default: {}
     vmdb_path:
