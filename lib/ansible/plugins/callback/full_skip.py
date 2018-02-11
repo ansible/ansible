@@ -9,7 +9,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: full_skip
     type: stdout
-    short_description: suppreses tasks if all hosts skipped
+    short_description: suppresses tasks if all hosts skipped
     description:
       - Use this plugin when you dont care about any output for tasks that were completly skipped
     version_added: "2.4"
