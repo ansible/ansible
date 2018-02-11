@@ -297,7 +297,7 @@ of the Ansible repository and develop against a new feature
 branch using the ``devel`` branch as a starting point.
 
 When you you have a good working code change,
-submit a pull request to the Ansible repository by you selecting
+submit a pull request to the Ansible repository by selecting
 your feature branch as a source and the Ansible devel branch as
 a target.
 
