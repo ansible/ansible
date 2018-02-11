@@ -179,7 +179,8 @@ def main():
         (update_value_rc, update_value_out, update_value_err) = module.run_command([
             "rails",
             "r",
-            "MiqServer.my_server.set_config(:%s => JSON.parse('%s')); MiqServer.my_server.save!" % (module.params['name'], json.dumps(expected_value))
+            "Vmdb::Settings.save!(MiqServer.my_server, :%s => JSON.parse(ARGV.last))" % (module.params['name']),
+            json.dumps(expected_value)
         ], cwd=module.params['vmdb_path'])
         result['changed'] = True
         if update_value_rc != 0:
