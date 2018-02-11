@@ -292,7 +292,7 @@ Going Further
 =============
 
 If you would like to contribute to the main Ansible repository
-by by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
+by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
 of the Ansible repository and develop against a new feature
 branch using the ``devel`` branch as a starting point.
 
