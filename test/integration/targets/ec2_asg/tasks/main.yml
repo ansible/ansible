@@ -214,6 +214,31 @@
         state: absent
         <<: *aws_connection_info
       async: 300
+    # ============================================================
+
+    - name: create asg with asg metrics enabled
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        metrics_collection: true
+        launch_config_name: "{{ resource_prefix }}-lc"
+        desired_capacity: 0
+        min_size: 0
+        max_size: 0
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        state: present
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+        - "'Group' in output.metrics_collection.0.Metric"
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
 
     # ============================================================
 

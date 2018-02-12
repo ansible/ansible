@@ -173,6 +173,30 @@ options:
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable ASG metrics collection
+    default: False
+    type: bool
+    version_added: "2.5"
+  metrics_granularity:
+    description:
+      - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
+    default: "1minute"
+    version_added: "2.5"
+  metrics_list:
+    description:
+      - List of autoscaling metrics to collect when enabling metrics_collection
+    default:
+        - 'GroupMinSize'
+        - 'GroupMaxSize'
+        - 'GroupDesiredCapacity'
+        - 'GroupInServiceInstances'
+        - 'GroupPendingInstances'
+        - 'GroupStandbyInstances'
+        - 'GroupTerminatingInstances'
+        - 'GroupTotalInstances'
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -399,6 +423,16 @@ vpc_zone_identifier:
     returned: success
     type: str
     sample: "subnet-a31ef45f"
+metrics_collection:
+    description: List of enabled AutosSalingGroup metrics
+    returned: success
+    type: list
+    sample: [
+        {
+            "Granularity": "1Minute",
+            "Metric": "GroupInServiceInstances"
+        }
+    ]
 '''
 
 import time
@@ -583,6 +617,7 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -807,6 +842,9 @@ def create_autoscaling_group(connection):
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    metrics_collection = module.params.get('metrics_collection')
+    metrics_granularity = module.params.get('metrics_granularity')
+    metrics_list = module.params.get('metrics_list')
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -871,6 +909,8 @@ def create_autoscaling_group(connection):
 
         try:
             create_asg(connection, **ag)
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
 
             all_ag = describe_autoscaling_groups(connection, group_name)
             if len(all_ag) == 0:
@@ -1041,6 +1081,12 @@ def create_autoscaling_group(connection):
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
         try:
             update_asg(connection, **ag)
+
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
+            else:
+                connection.disable_metrics_collection(AutoScalingGroupName=group_name, Metrics=metrics_list)
+
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json(msg="Failed to update autoscaling group: %s" % to_native(e),
                              exception=traceback.format_exc())
@@ -1401,7 +1447,19 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            metrics_collection=dict(type='bool', default=False),
+            metrics_granularity=dict(type='str', default='1Minute'),
+            metrics_list=dict(type='list', default=[
+                'GroupMinSize',
+                'GroupMaxSize',
+                'GroupDesiredCapacity',
+                'GroupInServiceInstances',
+                'GroupPendingInstances',
+                'GroupStandbyInstances',
+                'GroupTerminatingInstances',
+                'GroupTotalInstances'
+            ])
         ),
     )
 
