@@ -286,6 +286,7 @@ class AzureRM(object):
         self._compute_client = None
         self._resource_client = None
         self._network_client = None
+        self._subscription_client = None
         self._adfs_authority_url = None
         self._resource = None
 
@@ -548,23 +549,35 @@ class AzureRM(object):
             self._register('Microsoft.Compute')
         return self._compute_client
 
+    @property
+    def subscription_client(self):
+        self.log('Getting subscription client')
+        if not self._subscription_client:
+            self._subscription_client = SubscriptionClient(
+                self.azure_credentials,
+                base_url=self._cloud_environment.endpoints.resource_manager,
+            )
+            self._register('Microsoft.Subscription')
+        return self._subscription_client
+
 
 class AzureInventory(object):
 
     def __init__(self):
-
         self._args = self._parse_cli_args()
 
         try:
-            rm = AzureRM(self._args)
+            self.rm = AzureRM(self._args)
         except Exception as e:
             sys.exit("{0}".format(str(e)))
 
-        self._compute_client = rm.compute_client
-        self._network_client = rm.network_client
-        self._resource_client = rm.rm_client
+        self._compute_client = self.rm.compute_client
+        self._network_client = self.rm.network_client
+        self._resource_client = self.rm.rm_client
+        self._subscription_client = self.rm.subscription_client
         self._security_groups = None
 
+        self.subscription_name = self._subscription_client.subscriptions.get(self.rm.subscription_id).display_name
         self.resource_groups = []
         self.tags = None
         self.locations = None
@@ -582,6 +595,8 @@ class AzureInventory(object):
             ),
             azure=[]
         )
+
+        self._inventory[self.subscription_name] = dict(children=['azure'])
 
         self._get_settings()
 
@@ -817,16 +832,19 @@ class AzureInventory(object):
         if self.group_by_resource_group:
             if not self._inventory.get(resource_group):
                 self._inventory[resource_group] = []
+                self._inventory[self.subscription_name]['children'].append(resource_group)
             self._inventory[resource_group].append(host_name)
 
         if self.group_by_location:
             if not self._inventory.get(vars['location']):
                 self._inventory[vars['location']] = []
+                self._inventory[self.subscription_name]['children'].append(vars['location'])
             self._inventory[vars['location']].append(host_name)
 
         if self.group_by_security_group and security_group:
             if not self._inventory.get(security_group):
                 self._inventory[security_group] = []
+                self._inventory[self.subscription_name]['children'].append(security_group)
             self._inventory[security_group].append(host_name)
 
         self._inventory['_meta']['hostvars'][host_name] = vars
@@ -842,6 +860,10 @@ class AzureInventory(object):
                     self._inventory[safe_value] = []
                 self._inventory[safe_key].append(host_name)
                 self._inventory[safe_value].append(host_name)
+                if safe_key not in self._inventory[self.subscription_name]['children']:
+                    self._inventory[self.subscription_name]['children'].append(safe_key)
+                if safe_value not in self._inventory[self.subscription_name]['children']:
+                    self._inventory[self.subscription_name]['children'].append(safe_value)
 
     def _json_format_dict(self, pretty=False):
         # convert inventory to json
