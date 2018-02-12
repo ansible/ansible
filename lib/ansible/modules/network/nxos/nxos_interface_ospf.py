@@ -97,14 +97,14 @@ options:
       - Algorithm used for authentication among neighboring routers
         within an area. Valid values are 'md5' and 'default'.
     required: false
-    choices: ['md5']
+    choices: ['md5', 'default']
     default: null
   message_digest_encryption_type:
     description:
       - Specifies the scheme used for encrypting message_digest_password.
         Valid values are '3des' or 'cisco_type_7' encryption or 'default'.
     required: false
-    choices: ['cisco_type_7','3des']
+    choices: ['cisco_type_7','3des', 'default']
     default: null
   message_digest_password:
     description:
