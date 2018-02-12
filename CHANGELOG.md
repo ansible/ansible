@@ -58,6 +58,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/34130
 * Fix docker_service so a build is not triggered every time
   https://github.com/ansible/ansible/issues/36145
+* Be more tolerant about spaces when gathering virtual facts (https://github.com/ansible/ansible/pull/36042)
 
 
 <a id="2.4.3"></a>
