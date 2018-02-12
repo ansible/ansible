@@ -123,6 +123,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
+    domain_type: phys
     state: query
 '''
 
@@ -321,7 +322,7 @@ def main():
     elif domain_type == 'vmm':
         domain_class = 'vmmDomP'
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        domain_rn = 'dom-{0}'.format(domain)
+        domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
     aci = ACIModule(module)
     aci.construct_url(
