@@ -256,7 +256,9 @@ def main():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
-        if module.check_mode or not update:
+        if not update:
+            module.exit_json(changed=False)
+        if module.check_mode:
             if svn.has_local_mods() and not force:
                 module.fail_json(msg="ERROR: modified files exist in the repository.")
             check, before, after = svn.needs_update()
