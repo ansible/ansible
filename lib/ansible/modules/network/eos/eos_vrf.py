@@ -184,29 +184,44 @@ def map_obj_to_commands(updates, module):
 def map_config_to_obj(module):
     objs = []
     output = run_commands(module, ['show vrf'])
-    lines = output[0].strip().splitlines()[2:]
 
-    for l in lines:
-        if not l:
+    lines = output[0].strip().splitlines()[3:]
+
+    out_len = len(lines)
+    index = 0
+    while out_len > index:
+        line = lines[index]
+        if not line:
             continue
 
-        splitted_line = re.split(r'\s{2,}', l.strip())
+        splitted_line = re.split(r'\s{2,}', line.strip())
 
         if len(splitted_line) == 1:
+            index += 1
             continue
         else:
-            obj = {}
+            obj = dict()
             obj['name'] = splitted_line[0]
             obj['rd'] = splitted_line[1]
             obj['interfaces'] = []
 
             if len(splitted_line) > 4:
                 obj['interfaces'] = []
+                interfaces = splitted_line[4]
+                if interfaces.endswith(','):
+                    while interfaces.endswith(','):
+                        # gather all comma separated interfaces
+                        if out_len <= index:
+                            break
+                        index += 1
+                        line = lines[index]
+                        vrf_line = re.split(r'\s{2,}', line.strip())
+                        interfaces += vrf_line[-1]
 
-                for i in splitted_line[4].split(','):
+                for i in interfaces.split(','):
                     obj['interfaces'].append(i.strip().lower())
-
-            objs.append(obj)
+        index += 1
+        objs.append(obj)
 
     return objs
 
@@ -307,6 +322,7 @@ def main():
         check_declarative_intent_params(want, module)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
