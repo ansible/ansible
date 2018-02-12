@@ -54,43 +54,103 @@ EXAMPLES = '''
 
 RETURN = '''
 vpn_connections:
-    description: List of one or VPN Connections.
+    description: List of one or more VPN Connections.
     returned: always
-    type: list
-    sample: [
-            {
-                "category": "VPN",
-                "customer_gateway_configuration": "<customer_gateway_configuration-xml>",
-                "customer_gateway_id": "cgw-17a53c37",
-                "options": {
+    type: complex
+    contains:
+      category:
+        description: The category of the VPN connection.
+        returned: always
+        type: string
+        sample: VPN
+      customer_gatway_configuration:
+        description: The configuration information for the VPN connection's customer gateway (in the native XML format).
+        returned: always
+        type: string
+      customer_gateway_id:
+        description: The ID of the customer gateway at your end of the VPN connection.
+        returned: always
+        type: string
+        sample: cgw-17a53c37
+      options:
+        description: The VPN connection options.
+        returned: always
+        type: dict
+        sample: {
                     "static_routes_only": false
-                },
-                "routes": [],
-                "state": "available",
-                "tags": {
+                }
+      routes:
+        description: List of static routes associated with the VPN connection.
+        returned: always
+        type: complex
+        contains:
+          destination_cidr_block:
+            description: The CIDR block associated with the local subnet of the customer data center.
+            returned: always
+            type: string
+            sample: 10.0.0.0/16
+          state:
+            description: The current state of the static route.
+            returned: always
+            type: string
+            sample: available
+      state:
+        description: The current state of the VPN connection.
+        returned: always
+        type: string
+        sample: available
+      tags:
+        description: Any tags assigned to the VPN connection.
+        returned: always
+        type: dict
+        sample: {
                     "Name": "test-conn"
-                },
-                "type": "ipsec.1",
-                "vgw_telemetry": [
-                    {
-                        "accepted_route_count": 0,
-                        "last_status_change": "2018-02-09T14:35:27+00:00",
-                        "outside_ip_address": "13.127.79.191",
-                        "status": "DOWN",
-                        "status_message": "IPSEC IS DOWN"
-                    },
-                    {
-                        "accepted_route_count": 0,
-                        "last_status_change": "2018-02-09T14:35:43+00:00",
-                        "outside_ip_address": "35.154.107.155",
-                        "status": "DOWN",
-                        "status_message": "IPSEC IS DOWN"
-                    }
-                ],
-                "vpn_connection_id": "vpn-f700d5c0",
-                "vpn_gateway_id": "vgw-cbe56bfb"
-            }
-        ]
+                }
+      type:
+        description: The type of VPN connection.
+        returned: always
+        type: string
+        sample: ipsec.1
+      vgw_telemetry:
+         description: Information about the VPN tunnel.
+         returned: always
+         type: complex
+         contains:
+           accepted_route_count:
+             description: The number of accepted routes.
+             returned: always
+             type: int
+             sample: 0
+         last_status_change:
+             description: The date and time of the last change in status.
+             returned: always
+             type: datetime
+             sample: 2018-02-09T14:35:27+00:00
+         outside_ip_address:
+             description: The Internet-routable IP address of the virtual private gateway's outside interface.
+             returned: always
+             type: string
+             sample: 13.127.79.191
+         status:
+             description: The status of the VPN tunnel.
+             returned: always
+             type: string
+             sample: DOWN
+         status_message:
+             description: If an error occurs, a description of the error.
+             returned: always
+             type: string
+             sample: IPSEC IS DOWN
+      vpn_connection_id:
+        description: The ID of the VPN connection.
+        returned: always
+        type: string
+        sample: vpn-f700d5c0
+      vpn_gateway_id:
+        description: The ID of the virtual private gateway at the AWS side of the VPN connection.
+        returned: always
+        type: string
+        sample: vgw-cbe56bfb
 '''
 
 import json
