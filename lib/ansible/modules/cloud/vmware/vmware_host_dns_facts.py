@@ -41,7 +41,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Gather DNS facts about all ESXi Host in given Cluster
+- name: Gather DNS facts about all ESXi Hosts in given Cluster
   vmware_host_dns_facts:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
@@ -57,7 +57,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-drs_rule_facts:
+hosts_dns_facts:
     description: metadata about DNS config from given cluster / host system
     returned: always
     type: dict
