@@ -137,6 +137,20 @@ See :ref:`playbooks_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
+Ansible fact namespacing
+------------------------
+Ansible facts, which have historically been written to names like 'ansible_*'
+in the main facts namespace, have been placed in their own new namespace,
+'ansible_facts.*' For example, the fact 'ansible_distribution' is now best
+queried through the variable structure 'ansible_facts.distribution'. 
+
+A new configuration variable, 'inject_facts_as_vars', has been added to
+ansible.cfg. Its default setting, 'True', keeps the 2.4 behavior of facts
+variables being set in the old 'ansible_*' locations (while also writing them
+to the new namespace). This variable is expected to be set to 'False' in a
+future release. When 'inject_facts_as_vars' is set to False, you must
+refer to ansible_facts through the new ansible_facts.* namespace.
+
 Modules
 =======
 
