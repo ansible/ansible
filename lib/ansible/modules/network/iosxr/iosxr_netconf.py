@@ -39,6 +39,7 @@ options:
       - netconf vrf name
     required: false
     default: default
+    aliases: ['vrf']
   state:
     description:
       - Specifies the state of the C(iosxr_netconf) resource on
