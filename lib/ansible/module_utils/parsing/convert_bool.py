@@ -23,4 +23,4 @@ def boolean(value, strict=True):
     elif normalized_value in BOOLEANS_FALSE or not strict:
         return False
 
-    raise TypeError('%s is not a valid boolean.  Valid booleans include: %s' % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))
+    raise TypeError("The value '%s' is not a valid boolean.  Valid booleans include: %s" % (to_text(value), ', '.join(repr(i) for i in BOOLEANS)))
