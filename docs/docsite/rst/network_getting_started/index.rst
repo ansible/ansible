@@ -16,21 +16,14 @@ This guide is intended for network engineers using Ansible for the first time. I
 
 This guide is also useful for experienced Ansible users automating network tasks for the first time. You can use Ansible commands, playbooks and modules to configure hubs, switches, routers, bridges and other network devices. But network modules are different from Linux/Unix and Windows modules, and you must understand some network-specific concepts to succeed. If you understand Ansible but have never automated a network task, start with the second section.
 
-This guide:
-
-- Introduces basic Ansible concepts
-- Describes how network automation is different
-- Guides you through your first Ansible command and playbook for network tasks
-- Covers intermediate Ansible concepts to support scaling network automation
-- Provides resources for further learning
+This guide introduces basic Ansible concepts and guides you through your first Ansible commands, playbooks and inventory entries. 
 
 .. toctree::
    :maxdepth: 1
 
-   basic_concepts
-   network_differences
-   first_playbook
-   first_inventory
-   real_world
-   intermediate_concepts
-   resources
+   Basic Ansible Concepts <basic_concepts>
+   How Network Automation is Different <network_differences>
+   First Ansible Network Command and Playbook <first_playbook>
+   Working with Network Inventory <first_inventory>
+   Intermediate Ansible Concepts <intermediate_concepts>
+   Further Learning and Resources <resources>
