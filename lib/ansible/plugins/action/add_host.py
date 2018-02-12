@@ -47,6 +47,12 @@ class ActionModule(ActionBase):
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
+
+        if new_name is None:
+            result['failed'] = True
+            result['msg'] = 'name or hostname arg needs to be provided'
+            return result
+
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
         try:
