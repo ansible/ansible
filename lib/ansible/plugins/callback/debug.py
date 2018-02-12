@@ -31,7 +31,7 @@ class CallbackModule(CallbackModule_default):  # pylint: disable=too-few-public-
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'debug'
 
-    def _dump_results(self, result):
+    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         '''Return the text to output for a result.'''
 
         # Enable JSON identation
