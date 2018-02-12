@@ -97,6 +97,11 @@ options:
           - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
         required: false
         version_added: 2.4
+    healthcheck_grace_period:
+        description:
+          - The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started.
+        required: false
+        version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -130,6 +135,7 @@ EXAMPLES = '''
     cluster: test-cluster
     task_definition: test-task-definition
     desired_count: 3
+    healthcheck_grace_period: 120
     deployment_configuration:
       minimum_healthy_percent: 75
       maximum_percent: 150
@@ -248,6 +254,10 @@ service:
                                  such as attribute:ecs.availability-zone. For the binpack placement strategy, valid values are CPU and MEMORY.
                     returned: always
                     type: string
+        healthCheckGracePeriodSeconds:
+            description: The period of time, in seconds, that the Amazon ECS service scheduler ignores unhealthy Elastic Load Balancing target health checks after a task has first started.
+            returned: always
+            type: int
 ansible_facts:
     description: Facts about deleted service.
     returned: when deleting a service
@@ -318,11 +328,14 @@ class EcsServiceManager:
         if (expected['desired_count'] or 0) != existing['desiredCount']:
             return False
 
+        if (expected['healthcheck_grace_period'] or 0) != existing['healthCheckGracePeriodSeconds']:
+            return False
+
         return True
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy):
+                       placement_constraints, placement_strategy, healthcheck_grace_period):
         response = self.ecs.create_service(
             cluster=cluster_name,
             serviceName=service_name,
@@ -333,17 +346,19 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy,
+            healthCheckGracePeriodSeconds=healthcheck_grace_period)
         return response['service']
 
     def update_service(self, service_name, cluster_name, task_definition,
-                       desired_count, deployment_configuration):
+                       desired_count, deployment_configuration, healthcheck_grace_period):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
             taskDefinition=task_definition,
             desiredCount=desired_count,
-            deploymentConfiguration=deployment_configuration)
+            deploymentConfiguration=deployment_configuration,
+            healthCheckGracePeriodSeconds=healthcheck_grace_period)
         return response['service']
 
     def delete_service(self, service, cluster=None):
@@ -365,7 +380,8 @@ def main():
         repeat=dict(required=False, type='int', default=10),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
-        placement_strategy=dict(required=False, default=[], type='list')
+        placement_strategy=dict(required=False, default=[], type='list'),
+        healthcheck_grace_period=dict(required=False, type='int')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -418,7 +434,8 @@ def main():
                                                           module.params['cluster'],
                                                           module.params['task_definition'],
                                                           module.params['desired_count'],
-                                                          deploymentConfiguration)
+                                                          deploymentConfiguration,
+                                                          module.params['healthcheck_grace_period'])
                 else:
                     for loadBalancer in loadBalancers:
                         if 'containerPort' in loadBalancer:
@@ -433,7 +450,8 @@ def main():
                                                           role,
                                                           deploymentConfiguration,
                                                           module.params['placement_constraints'],
-                                                          module.params['placement_strategy'])
+                                                          module.params['placement_strategy'],
+                                                          module.params['healthcheck_grace_period'])
 
                 results['service'] = response
 
