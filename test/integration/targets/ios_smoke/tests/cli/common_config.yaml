@@ -3,6 +3,7 @@
 
 - debug: msg="START cli/common_config.yaml on connection={{ ansible_connection }}"
 
+# Hit NetworkConfig
 - name: set hostname
   ios_config:
     lines: ['hostname ios-smoke']
