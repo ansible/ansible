@@ -25,10 +25,10 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
 options:
-  allocation_mode:
+  pool_allocation_mode:
     description:
     - The method used for allocating VLANs to resources.
-    aliases: [ mode ]
+    aliases: [ allocation_mode, mode ]
     choices: [ dynamic, static]
   description:
     description:
@@ -54,6 +54,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     pool: production
+    pool_allocation_mode: dynamic
     description: Production VLANs
     state: present
 
@@ -63,6 +64,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     pool: production
+    pool_allocation_mode: dynamic
     state: absent
 
 - name: Query a VLAN pool
@@ -71,6 +73,7 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     pool: production
+    pool_allocation_mode: dynamic
     state: query
 
 - name: Query all VLAN pools
@@ -193,9 +196,9 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'static']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['name', 'pool_name']),
+        pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -208,19 +211,19 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
     description = module.params['description']
     pool = module.params['pool']
+    pool_allocation_mode = module.params['pool_allocation_mode']
     state = module.params['state']
 
     pool_name = pool
 
     # ACI Pool URL requires the allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
     if pool is not None:
-        if allocation_mode is not None:
-            pool_name = '[{0}]-{1}'.format(pool, allocation_mode)
+        if pool_allocation_mode is not None:
+            pool_name = '[{0}]-{1}'.format(pool, pool_allocation_mode)
         else:
-            module.fail_json(msg="ACI requires the 'allocation_mode' when 'pool' is provided")
+            module.fail_json(msg="ACI requires the 'pool_allocation_mode' when 'pool' is provided")
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -239,7 +242,7 @@ def main():
         aci.payload(
             aci_class='fvnsVlanInstP',
             class_config=dict(
-                allocMode=allocation_mode,
+                allocMode=pool_allocation_mode,
                 descr=description,
                 name=pool,
             )
