@@ -46,6 +46,10 @@ options:
       - State of the link aggregation group.
     default: present
     choices: ['present', 'absent']
+  purge:
+    description:
+      - Purge links not defined in the I(aggregate) parameter.
+    default: no
 extends_documentation_fragment: eos
 """
 
