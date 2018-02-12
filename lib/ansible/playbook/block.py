@@ -65,6 +65,10 @@ class Block(Base, Become, Conditional, Taggable):
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
+    def __eq__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid == other._uuid
+
     def get_vars(self):
         '''
         Blocks do not store variables directly, however they may be a member
