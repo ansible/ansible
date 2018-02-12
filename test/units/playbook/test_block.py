@@ -19,7 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from units.mock.loader import DictDataLoader
 from ansible.compat.tests import unittest
+
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 
@@ -51,6 +53,60 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(b.always, [])
         # not currently used
         # self.assertEqual(b.otherwise, [])
+
+    def test_copy(self):
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        block = Block()
+        fake_loader = DictDataLoader({})
+        loaded_block = block.load(block_ds, loader=fake_loader)
+
+        block_copy = loaded_block.copy()
+        self.assertEqual(loaded_block, block_copy)
+
+    def test_copy_exclude_parent(self):
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        block = Block()
+        fake_loader = DictDataLoader({})
+        loaded_block = block.load(block_ds, loader=fake_loader)
+
+        block_copy = loaded_block.copy(exclude_parent=True)
+        self.assertEqual(loaded_block, block_copy)
+
+    def test_copy_exclude_parent_exclude_tasks(self):
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        block = Block()
+        fake_loader = DictDataLoader({})
+        loaded_block = block.load(block_ds, loader=fake_loader)
+
+        block_copy = loaded_block.copy(exclude_parent=True, exclude_tasks=True)
+        self.assertEqual(loaded_block, block_copy)
+
+    def test_copy_parent(self):
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        block = Block()
+        fake_loader = DictDataLoader({})
+        loaded_block = block.load(block_ds, loader=fake_loader)
+
+        child_block_ds = {'block': [],
+                          'rescue': [],
+                          'always': []
+                          }
+        child_block = Block()
+        loaded_child_block = child_block.load(child_block_ds, loader=fake_loader)
+        block_copy = loaded_child_block.copy()
+        self.assertEqual(loaded_child_block, block_copy)
 
     def test_load_block_with_tasks(self):
         ds = dict(
