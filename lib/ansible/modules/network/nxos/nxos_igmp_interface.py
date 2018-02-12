@@ -342,9 +342,9 @@ def get_igmp_interface(module, interface):
             igmp['report_llg'] = False
 
         immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
-        if immediate_leave == 'en' or immediate_leave == 'true':
+        if re.search(r'^en|^true|^enabled', immediate_leave):
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis' or immediate_leave == 'false':
+        elif re.search(r'^dis|^false|^disabled', immediate_leave):
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
