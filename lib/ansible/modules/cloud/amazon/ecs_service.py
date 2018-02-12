@@ -99,7 +99,8 @@ options:
         version_added: 2.4
     healthcheck_grace_period:
         description:
-          - The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a task has first started.
+          - The period of time, in seconds, that the Amazon ECS service scheduler should ignore unhealthy Elastic Load Balancing target health checks after a
+            task has first started.
         required: false
         version_added: 2.6
 extends_documentation_fragment:
@@ -255,7 +256,8 @@ service:
                     returned: always
                     type: string
         healthCheckGracePeriodSeconds:
-            description: The period of time, in seconds, that the Amazon ECS service scheduler ignores unhealthy Elastic Load Balancing target health checks after a task has first started.
+            description: The period of time, in seconds, that the Amazon ECS service scheduler ignores unhealthy Elastic Load Balancing target health checks
+                         after a task has first started.
             returned: always
             type: int
 ansible_facts:
