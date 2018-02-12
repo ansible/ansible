@@ -44,7 +44,7 @@ options:
         Cisco IOS device. The list entries can either be the username
         or a hash of username and properties. This argument is mutually
         exclusive with the C(name) argument.
-    aliases: ['users']
+    aliases: ['users', 'collection']
   name:
     description:
       - The username to be configured on the Cisco IOS device.
