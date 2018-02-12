@@ -154,9 +154,9 @@ class LinuxVirtual(Virtual):
 
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
-                if re.match(r'^VxID: \d+', line):
+                if re.match(r'^VxID:\s+\d+', line):
                     virtual_facts['virtualization_type'] = 'linux_vserver'
-                    if re.match(r'^VxID: 0', line):
+                    if re.match(r'^VxID:\s+0', line):
                         virtual_facts['virtualization_role'] = 'host'
                     else:
                         virtual_facts['virtualization_role'] = 'guest'
@@ -212,7 +212,7 @@ class LinuxVirtual(Virtual):
                             if open(f).read().rstrip() == 'vdsm':
                                 virtual_facts['virtualization_type'] = 'RHEV'
                                 break
-                        except:
+                        except Exception:
                             pass
                     else:
                         virtual_facts['virtualization_type'] = 'kvm'
