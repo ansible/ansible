@@ -48,6 +48,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/35853
 * Fix memory ballooning caused as a result of task caching changes
   https://github.com/ansible/ansible/pull/35921
+* Fix nxos_igmp_interface for diff nxos versions
+  (https://github.com/ansible/ansible/pull/35959)
 
 
 <a id="2.4.3"></a>
