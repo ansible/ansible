@@ -40,7 +40,7 @@ Various resources exist to start learning ACI, here is a list of interesting art
 
 - `Adam Raffe: Learning ACI <https://adamraffe.com/learning-aci/>`_
 - `Luca Relandini: ACI for dummies <http://lucarelandini.blogspot.be/2015/03/aci-for-dummies.html>`_
-- `Jacob McGill: Automating Cisco ACI with Ansible <https://blogs.cisco.com/developer/automating-cisco-aci-with-ansible-eliminates-repetitive-day-to-day-tasks>`_
+- `Cisco DevNet Learning Labs about ACI <https://learninglabs.cisco.com/labs/tags/ACI>`_
 
 
 Using the ACI modules
@@ -88,6 +88,13 @@ By increasing the ``output_level`` to ``info``, the modules give access to the `
 For troubleshooting purposes setting ``output_level: debug`` or defining environment variable ``ANSIBLE_DEBUG=1`` enables more detailed information on the actual APIC REST communication, incl. ``filter_string``, ``method``, ``response``, ``status`` and ``url``.
 
 .. note:: The module return values are documented in detail as part of each module's documentation.
+
+More information
+................
+Various resources exist to start learn more about ACI programmability, we recommend the following links:
+
+- `Jacob McGill: Automating Cisco ACI with Ansible <https://blogs.cisco.com/developer/automating-cisco-aci-with-ansible-eliminates-repetitive-day-to-day-tasks>`_
+- `Cisco DevNet Learning Labs about ACI and Ansible <https://learninglabs.cisco.com/labs/tags/ACI,Ansible>`_
 
 
 .. _aci_auth:
@@ -254,7 +261,11 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
 
 More information
 ................
+Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
+
+- `The apic_rest Ansible module <http://docs.ansible.com/ansible/devel/module_docs/aci_rest_module.html>`_
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
+- `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
 
 
 .. _aci_ops:
@@ -262,7 +273,7 @@ More information
 Operational examples
 --------------------
 Here is a small overview of useful operational tasks to reuse in your playbooks.
-Feel free to contribute more snippets that are useful for others.
+Feel free to contribute more snippets that are useful to others.
 
 Waiting for all controllers to be ready
 .......................................
@@ -340,7 +351,7 @@ All below issues either have been reported to the vendor, or can simply be avoid
 
 - **Too many consecutive API calls may result in connection throttling**
 
-  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but it is advisable to use signature-based authentication as this also improves performance in general.
+  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
 
   **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
@@ -370,3 +381,12 @@ All below issues either have been reported to the vendor, or can simply be avoid
   More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
 
   **NOTE:** There is no workaround for this issue.
+
+
+.. _aci_community:
+
+ACI Ansible community
+---------------------
+If you have specific issues with the ACI modules, or a feature request, or you like to contribute to the ACI project by proposing changes or documentation updates, look at the Ansible Community wiki ACI page at: https://github.com/ansible/community/wiki/Network:-ACI
+
+You will find our roadmap, an overview of open ACI issues and pull-requests and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join ! We occasionally meet online to track progress and prepare for new Ansible releases.
