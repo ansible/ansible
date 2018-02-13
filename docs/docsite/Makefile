@@ -69,6 +69,8 @@ clean:
 	-rm rst/config.rst
 	-rm rst/ansible-*.rst
 	-rm rst/ansible.rst
+	-rm rst/reference_appendices/config.rst
+	-rm rst/reference_appendices/playbooks_keywords.rst
 
 .PHONEY: docs clean
 
