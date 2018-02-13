@@ -71,6 +71,8 @@ How To Develop A Module
 
 The following topics will discuss how to develop and work with modules:
 
+:doc:`developing_program_flow_modules`
+    A description of Ansible's module architecture.
 :doc:`developing_modules_general`
     A general overview of how to develop, debug, and test modules.
 :doc:`developing_modules_general_windows`
