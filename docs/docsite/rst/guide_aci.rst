@@ -309,6 +309,27 @@ The below example waits until the cluster is fully-fit. In this example you know
       delay: 30
 
 
+.. _aci_errors:
+
+APIC error messages
+-------------------
+The following error messages may occur and this section can help you understand what exactly is going on.
+
+- **APIC Error 122: unknown managed object class 'polUni'**
+
+  In case you receive this error while you are certain your :ref:`aci_rest <aci_rest>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload.
+
+
+- **APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag**
+
+  While JSON does not care about the order of dictionary keys, the APIC is very strict in accepting only ``attributes`` before ``children``. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine.
+
+
+- **APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'**
+
+  Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_ so it must not include quotes.
+
+
 .. _aci_issues:
 
 Known issues
@@ -319,7 +340,7 @@ All below issues either have been reported to the vendor, or can simply be avoid
 
 - **Too many consecutive API calls may result in connection throttling**
 
-  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using passwod-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but it is advisable to use signature-based authentication as this also improves performance in general.
+  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but it is advisable to use signature-based authentication as this also improves performance in general.
 
   **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
