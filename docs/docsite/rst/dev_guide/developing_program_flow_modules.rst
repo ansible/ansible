@@ -1,8 +1,8 @@
 .. _flow_modules:
 
-=======
-Modules
-=======
+===========================
+Ansible Module Architecture
+===========================
 
 This in-depth dive helps you understand Ansible's program flow to execute
 modules. It is written for people working on the portions of the Core Ansible
