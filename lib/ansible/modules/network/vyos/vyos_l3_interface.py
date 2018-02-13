@@ -135,19 +135,15 @@ def map_obj_to_commands(updates, module):
         elif (state == 'present' and obj_in_have):
             if ipv4 and ipv4 != obj_in_have['ipv4']:
                 if name == "lo":
-                    commands.append('set interfaces loopback lo address ' +
-                                ipv4)
+                    commands.append('set interfaces loopback lo address ' + ipv4)
                 else:
-                    commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv4)
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv4)
 
             if ipv6 and ipv6 != obj_in_have['ipv6']:
                 if name == "lo":
-                    commands.append('set interfaces loopback lo address ' +
-                                ipv6)
+                    commands.append('set interfaces loopback lo address ' + ipv6)
                 else:
-                    commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv6)
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv6)
 
     return commands
 
