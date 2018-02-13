@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.mock.loader import DictDataLoader
 from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare
 from units.mock.compare_helpers import DifferentType, UuidCompare, CopyCompare
-from units.mock.compare_helpers import CopyExcludeParentCompare
+from units.mock.compare_helpers import CopyExcludeParentCompare, CopyExcludeTasksCompare
 from ansible.compat.tests import unittest
 
 from ansible.playbook.block import Block
@@ -170,11 +170,15 @@ class TestIntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
 
 
 class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare, UuidCompare,
-                       CopyCompare, CopyExcludeParentCompare):
+                       CopyCompare, CopyExcludeParentCompare, CopyExcludeTasksCompare):
     def setUp(self):
-        block_ds = {'block': [],
-                    'rescue': [],
-                    'always': []
+        _block_tasks = [{'action': 'block'}]
+        _rescue_tasks = [{'action': 'rescue'}]
+        _always_tasks = [{'action': 'always'}]
+
+        block_ds = {'block': _block_tasks,
+                    'rescue': _rescue_tasks,
+                    'always': _always_tasks,
                     }
         raw_block_one = Block()
         fake_loader = DictDataLoader({})
@@ -195,6 +199,19 @@ class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare, UuidCom
         self.another_one = self.one.copy(exclude_parent=True, exclude_tasks=True)
         self.one_copy = self.one.copy()
         self.one_copy_exclude_parent = self.one.copy(exclude_parent=True)
+        self.one_copy_exclude_tasks = self.one.copy(exclude_tasks=True)
 
         # A non-None object of a different type than one,two, or another_one
         self.different = DifferentType()
+
+    # need to setup some tasks for blocks or exclude_tasks to mean much
+    def test_copy_exclude_tasks_tasks_lists_eq(self):
+        self.assertEqual(self.one, self.one_copy_exclude_tasks)
+
+    def test_copy_exclude_tasks_ne(self):
+        self.assertTrue(self.one != self.one_copy_exclude_tasks)
+
+    def test_copy_exclude_tasks_tasks_lists_ne(self):
+        self.assertNotEqual(self.one.block, self.one_copy_exclude_tasks.block)
+        self.assertNotEqual(self.one.rescue, self.one_copy_exclude_tasks.rescue)
+        self.assertNotEqual(self.one.always, self.one_copy_exclude_tasks.always)

@@ -127,8 +127,20 @@ class CopyExcludeParentCompare():
     def test_copy_eq(self):
         self.assertEqual(self.one, self.one_copy_exclude_parent)
 
-    def test_copy_parent_eq(self):
+    def test_copy_exclude_parent_eq(self):
         self.assertFalse(self.one._parent == self.one_copy_exclude_parent._parent)
 
-    def test_copy_parent_ne(self):
+    def test_copy_exclude_parent_ne(self):
         self.assertNotEqual(self.one._parent, self.one_copy_exclude_parent._parent)
+
+
+class CopyExcludeTasksCompare():
+    def test_copy_eq(self):
+        self.assertEqual(self.one, self.one_copy_exclude_tasks)
+
+    # FIXME: block compare is not currently based on taskslist. Should it be?
+    def test_copy_exclude_tasks_eq(self):
+        self.assertEqual(self.one, self.one_copy_exclude_tasks)
+
+    def test_copy_exclude_tasks_ne(self):
+        self.assertTrue(self.one != self.one_copy_exclude_tasks)
