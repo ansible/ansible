@@ -36,13 +36,6 @@ docs/docsite/*.html
 docs/docsite/htmlout
 docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
-docs/docsite/rst/modules/community_maintained.rst
-docs/docsite/rst/modules/core_maintained.rst
-docs/docsite/rst/modules/list_of_*.rst
-docs/docsite/rst/modules/*_module.rst
-docs/docsite/rst/modules/modules_by_category.rst
-docs/docsite/rst/modules/network_maintained.rst
-docs/docsite/rst/modules/partner_maintained.rst
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/playbooks_directives.rst
 docs/docsite/rst/plugins_by_category.rst
