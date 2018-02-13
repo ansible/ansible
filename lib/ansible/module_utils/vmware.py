@@ -1229,7 +1229,7 @@ class PyVmomi(object):
         """
         Function to get datastore cluster managed object by name
         Args:
-            datastore_cluster: Name of datastore cluster
+            datastore_cluster_name: Name of datastore cluster
 
         Returns: Datastore cluster managed object if found else None
 
