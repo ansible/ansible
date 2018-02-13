@@ -7,13 +7,13 @@ Below is a complete list of Ansible utilities. Each page contains a description 
 .. toctree:: 
    :maxdepth: 1
 
-   ansible.rst
-   ansible-config.rst
-   ansible-console.rst
-   ansible-doc.rst
-   ansible-galaxy.rst
-   ansible-inventory.rst
-   ansible-playbook.rst
-   ansible-pull.rst
-   ansible-vault.rst
+   ../cli/ansible.rst
+   ../cli/ansible-config.rst
+   ../cli/ansible-console.rst
+   ../cli/ansible-doc.rst
+   ../cli/ansible-galaxy.rst
+   ../cli/ansible-inventory.rst
+   ../cli/ansible-playbook.rst
+   ../cli/ansible-pull.rst
+   ../cli/ansible-vault.rst
    
