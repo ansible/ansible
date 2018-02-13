@@ -22,6 +22,9 @@ __metaclass__ = type
 from ansible.compat.tests import unittest
 from ansible.playbook.task import Task
 
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, IdentityCompare, HashCompare, DifferentType
+from units.mock.loader import DictDataLoader
+
 
 basic_command_task = dict(
     name='Test Task',
@@ -31,6 +34,26 @@ basic_command_task = dict(
 kv_command_task = dict(
     action='command echo hi'
 )
+
+
+class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+
+    def setUp(self):
+        fake_loader = DictDataLoader({})
+
+        one_ds = {'name': 'base_one',
+                  'command': 'echo base_one'}
+
+        self.one = Task.load(one_ds, loader=fake_loader)
+
+        two_ds = {'name': 'base_two',
+                  'command': 'echo base_two'}
+
+        self.two = Task.load(two_ds, loader=fake_loader)
+
+        self.another_one = self.one.copy()
+
+        self.different = DifferentType()
 
 
 class TestTask(unittest.TestCase):
