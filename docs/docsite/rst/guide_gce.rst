@@ -19,6 +19,8 @@ The GCE modules all require the apache-libcloud module which you can install fro
 
 .. note:: If you're using Ansible on Mac OS X, libcloud also needs to access a CA cert chain. You'll need to download one (you can get one for `here <http://curl.haxx.se/docs/caextract.html>`_.)
 
+.. gce_credentials:
+
 Credentials
 -----------
 
@@ -32,9 +34,11 @@ There are three different ways to provide credentials to Ansible so that it can 
 
 .. note:: If you would like to use JSON credentials you must have libcloud >= 0.17.0
 
-* by providing to the modules directly
-* by populating a ``secrets.py`` file
-* by setting environment variables
+* by providing to the modules directly (see :ref:`gce_credentials_passing`)
+* by setting environment variables (see :ref:`gce_credentials_environment`)
+* by populating a ``secrets.py`` file (see :ref:`gce_credentials_secrets`)
+
+.. gce_credentials_passing:
 
 Calling Modules By Passing Credentials
 ``````````````````````````````````````
@@ -75,8 +79,25 @@ For example, to create a new instance using the cloud module, you can use the fo
 When running Ansible inside a GCE VM you can use the service account credentials from the local metadata server by
 setting both ``service_account_email`` and ``credentials_file`` to a blank string.
 
+.. gce_credentials_environment:
+
+Configuring Modules with Environment Variables
+``````````````````````````````````````````````
+
+Set the following environment variables before running Ansible in order to configure your credentials:
+
+.. code-block:: bash
+
+    GCE_EMAIL
+    GCE_PROJECT
+    GCE_CREDENTIALS_FILE_PATH
+
+.. gce_credentials_secrets:
+
 Configuring Modules with secrets.py
 ```````````````````````````````````
+
+.. note:: This option will be deprecated in a future release.  For longer term support, please utilize either of the two previous options: :ref:`gce_credentials_passing` or :ref:`gce_credentials_environment`.
 
 Create a file ``secrets.py`` looking like following, and put it in some folder which is in your ``$PYTHONPATH``:
 
@@ -97,16 +118,7 @@ credentials path as follows so that get automatically picked up:
     GCE_PARAMS = ('', '')
     GCE_KEYWORD_PARAMS = {'project': 'project_id', 'datacenter': ''}
 
-Configuring Modules with Environment Variables
-``````````````````````````````````````````````
-
-Set the following environment variables before running Ansible in order to configure your credentials:
-
-.. code-block:: bash
-
-    GCE_EMAIL
-    GCE_PROJECT
-    GCE_CREDENTIALS_FILE_PATH
+.. gce_dynamic_inventory:
 
 GCE Dynamic Inventory
 ---------------------
@@ -153,6 +165,8 @@ Let's once again use our inventory script to see if it can talk to Google Cloud:
 
 The output should be similar to the previous command.  If you're wanting less output and just want to check for SSH connectivity, use "-m" ping instead.
 
+.. gce_use_cases:
+
 Use Cases
 ---------
 
@@ -177,6 +191,7 @@ For the following use case, let's use this small shell script as a wrapper.
 
   ansible-playbook -v -i inventory/ "$PLAYBOOK"
 
+.. gce_create_an_instance:
 
 Create an instance
 ``````````````````
@@ -229,6 +244,8 @@ A playbook would looks like this:
 
 Note that use of the "add_host" module above creates a temporary, in-memory group.  This means that a play in the same playbook can then manage machines
 in the 'new_instances' group, if so desired.  Any sort of arbitrary configuration is possible at this point.
+
+.. gce_configure_instances_in_group:
 
 Configuring instances in a group
 ````````````````````````````````
