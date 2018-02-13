@@ -66,6 +66,10 @@ class Block(Base, Become, Conditional, Taggable):
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
 
+    def __eq__(self, other):
+        '''object comparison based on _uuid'''
+        return self._uuid == other._uuid
+
     def get_vars(self):
         '''
         Blocks do not store variables directly, however they may be a member
@@ -175,8 +179,16 @@ class Block(Base, Become, Conditional, Taggable):
                     # block their parent
                     cur_obj = new_task
                     while cur_obj._parent:
+                        if cur_obj._parent:
+                            prev_obj = cur_obj
                         cur_obj = cur_obj._parent
-                    cur_obj._parent = new_block
+
+                    # Ensure that we don't make the new_block the parent of itself
+                    if cur_obj != new_block:
+                        cur_obj._parent = new_block
+                    else:
+                        # prev_obj._parent is cur_obj, to allow for mutability we need to use prev_obj
+                        prev_obj._parent = new_block
                 else:
                     new_task._parent = new_block
                 new_task_list.append(new_task)
