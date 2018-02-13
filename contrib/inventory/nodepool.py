@@ -125,15 +125,16 @@ class NodepoolInventory(object):
             state = node['state']
             provider = node['provider']
             image = node['image_id']
-            data['_meta']['hostvars'][n] = {'ansible_host': node['interface_ip'],
-                                            'ansible_port': node['connection_port'],
-                                            'ansible_connection': node['connection_type'],
-                                            'ansible_user': node['username'],
-                                            'nodepool_label': label,
-                                            'nodepool_state': state,
-                                            'nodepool_provider': provider,
-                                            'nodepool_image': image,
-                                           }
+            data['_meta']['hostvars'][n] = {
+                'ansible_host': node['interface_ip'],
+                'ansible_port': node['connection_port'],
+                'ansible_connection': node['connection_type'],
+                'ansible_user': node['username'],
+                'nodepool_label': label,
+                'nodepool_state': state,
+                'nodepool_provider': provider,
+                'nodepool_image': image,
+            }
             data['all']['hosts'].append(n)
 
             if 'nodepool_label_{0}'.format(label) not in data.keys():
@@ -154,7 +155,6 @@ class NodepoolInventory(object):
 
         return data
 
-
     def get_host_info(self):
         data = {}
 
@@ -170,6 +170,7 @@ class NodepoolInventory(object):
                 data['nodepool_image'] = node['image_id']
                 data['nodepool_provider'] = node['provider']
         return data
+
 
 def main():
     if not HAS_KAZOO:
