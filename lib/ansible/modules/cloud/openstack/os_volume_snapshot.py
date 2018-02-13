@@ -112,7 +112,7 @@ def _present_volume_snapshot(module, cloud):
                                                 wait=module.params['wait'],
                                                 timeout=module.params[
                                                     'timeout'],
-                                                name=module.params['name'],
+                                                name=module.params['display_name'],
                                                 description=module.params.get(
                                                     'display_description')
                                                 )
@@ -135,6 +135,18 @@ def _absent_volume_snapshot(module, cloud):
         module.exit_json(changed=True, snapshot_id=snapshot.id)
 
 
+def _system_state_change(module, cloud):
+    volume = cloud.get_volume(module.params['volume'])
+    snapshot = cloud.get_volume_snapshot(module.params['display_name'],
+                                         filters={'volume_id': volume.id})
+    state = module.params['state']
+
+    if state == 'present':
+        return snapshot is None
+    if state == 'absent':
+        return snapshot is not None
+
+
 def main():
     argument_spec = openstack_full_argument_spec(
         display_name=dict(required=True, aliases=['name']),
@@ -143,7 +155,11 @@ def main():
         force=dict(required=False, default=False, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+
+    module_kwargs = openstack_module_kwargs()
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -153,6 +169,8 @@ def main():
     try:
         cloud = shade.openstack_cloud(**module.params)
         if cloud.volume_exists(module.params['volume']):
+            if module.check_mode:
+                module.exit_json(changed=_system_state_change(module, cloud))
             if state == 'present':
                 _present_volume_snapshot(module, cloud)
             if state == 'absent':
@@ -165,7 +183,7 @@ def main():
         module.fail_json(msg=e.message)
 
 
-# this is magic, see lib/ansible/module_common.py
+# this is magic, see lib/ansible/module_utils/common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 
