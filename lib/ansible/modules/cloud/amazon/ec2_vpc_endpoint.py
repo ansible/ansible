@@ -203,8 +203,7 @@ def wait_for_status(client, module, resource_id, status):
             else:
                 time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     return status_achieved, resource
 
@@ -258,16 +257,14 @@ def create_vpc_endpoint(client, module):
         try:
             policy = json.loads(module.params.get('policy'))
         except ValueError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     elif module.params.get('policy_file'):
         try:
             with open(module.params.get('policy_file'), 'r') as json_data:
                 policy = json.load(json_data)
         except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if policy:
         params['PolicyDocument'] = json.dumps(policy)
@@ -290,11 +287,9 @@ def create_vpc_endpoint(client, module):
         elif "RouteAlreadyExists" in e.message:
             module.fail_json(msg="RouteAlreadyExists for one of the route tables - update is not allowed by the API")
         else:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     return changed, result
 
@@ -316,11 +311,9 @@ def setup_removal(client, module):
             changed = True
             result = 'Would have deleted VPC Endpoint if not in check mode'
         else:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
     return changed, result
 
 
@@ -366,16 +359,14 @@ def main():
                 module.fail_json(msg="Error - no region provided")
         else:
             module.fail_json(msg="Can't retrieve connection information - " + str(e),
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+                             exception=traceback.format_exc())
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg="Failed to connect to AWS due to wrong or missing credentials: %s" % str(e),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+                         exception=traceback.format_exc())
 
     # Ensure resource is present
     if state == 'present':
