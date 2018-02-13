@@ -767,7 +767,7 @@ def main():
     if module.params['dampening_state']:
         if module.params['dampening_routemap']:
             module.fail_json(msg='dampening_state cannot be used with'
-                                 ' the dampening_routemap param'.format(param))
+                                 ' the dampening_routemap param')
         for param in DAMPENING_PARAMS:
             if module.params[param]:
                 module.fail_json(msg='dampening_state cannot be used with'
