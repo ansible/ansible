@@ -151,7 +151,7 @@ class TestBlock(unittest.TestCase):
 
 
 # FIXME: here to verify compare_helpers atm
-class IntTupleTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare, HashCompare):
+class TestIntTupleTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare, HashCompare):
     def setUp(self):
         self.one = (1,)
         self.two = (2,)
@@ -159,7 +159,7 @@ class IntTupleTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare, H
         self.different = DifferentType()
 
 
-class IntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
+class TestIntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
     def setUp(self):
         self.one = 1
         self.two = 2
@@ -167,7 +167,7 @@ class IntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
         self.different = DifferentType()
 
 
-class BlockCompare(unittest.TestCase,  EqualityCompare, HashCompare):
+class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare):
     def setUp(self):
         block_ds = {'block': [],
                     'rescue': [],

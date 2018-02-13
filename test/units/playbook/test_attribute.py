@@ -21,7 +21,7 @@ from ansible.compat.tests import unittest
 from ansible.playbook.attribute import Attribute
 
 
-class TestAttribute(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestAttributeCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
 
     def setUp(self):
         self.one = Attribute(priority=100)

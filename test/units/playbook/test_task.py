@@ -36,7 +36,7 @@ kv_command_task = dict(
 )
 
 
-class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestTaskCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
 
     def setUp(self):
         fake_loader = DictDataLoader({})
