@@ -51,6 +51,7 @@ EXAMPLES = '''
 - os_server_facts:
     cloud: rax-dfw
     server: web*
+    register: openstack_servers
 - debug:
     var: openstack_servers
 '''
