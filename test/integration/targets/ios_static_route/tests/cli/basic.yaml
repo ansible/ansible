@@ -78,7 +78,7 @@
       - 'result.changed == false'
 
 - name: delete static route
-  net_static_route: &delete
+  ios_static_route: &delete
     prefix: 172.16.31.0
     mask: 255.255.255.0
     next_hop: 10.0.0.8
