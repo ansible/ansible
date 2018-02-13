@@ -1,0 +1,3 @@
+os_kubeconfig: konfig.json 
+os_host: localhost:8443
+os_verify_ssl: False
