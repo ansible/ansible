@@ -37,7 +37,7 @@ class TestBlock(unittest.TestCase):
 
     def test_construct_empty_block(self):
         b = Block()
-        self.assertIsInstance(Block, b)
+        self.assertIsInstance(b, Block)
 
     def test_construct_block_with_role(self):
         pass
