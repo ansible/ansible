@@ -54,6 +54,9 @@ class TestBlock(unittest.TestCase):
         # not currently used
         # self.assertEqual(b.otherwise, [])
 
+    # TODO: split copy tests to own test class
+    # TODO: split object compare/total ordering to own test class
+    # TODO: is there a pytest total ordering fixture?
     def test_copy(self):
         block_ds = {'block': [],
                     'rescue': [],
@@ -142,3 +145,125 @@ class TestBlock(unittest.TestCase):
         data = dict(parent=ds, parent_type='Block')
         b.deserialize(data)
         self.assertIsInstance(b._parent, Block)
+
+
+class DifferentType():
+    pass
+
+
+class _EqualityCompare():
+
+    def test_eq(self):
+        self.assertTrue(self.one == self.one)
+        self.assertFalse(self.one == self.two)
+
+    def test_ne(self):
+        self.assertFalse(self.one != self.one)
+        self.assertTrue(self.one != self.two)
+
+    def test_eq_different(self):
+        self.assertFalse(self.one == self.different)
+        self.assertTrue(self.one != self.different)
+
+
+class _TotalOrdering():
+    def test_lt(self):
+        self.assertFalse(self.one < self.one)
+        self.assertTrue(self.one < self.two)
+        self.assertFalse(self.two < self.one)
+
+    def test_gt(self):
+        self.assertFalse(self.one > self.one)
+        self.assertFalse(self.one > self.two)
+        self.assertTrue(self.two > self.one)
+
+    def test_le(self):
+        self.assertLessEqual(self.one, self.one)
+        self.assertTrue(self.one <= self.one)
+
+        self.assertLessEqual(self.one, self.two)
+        self.assertTrue(self.one <= self.two)
+
+        self.assertFalse(self.two <= self.one)
+
+    def test_ge(self):
+        self.assertGreaterEqual(self.one, self.one)
+        self.assertTrue(self.one >= self.one)
+
+        self.assertFalse(self.one >= self.two)
+
+        self.assertGreaterEqual(self.two, self.one)
+        self.assertTrue(self.two >= self.one)
+
+
+class _HashCompare():
+    def test_hash_different(self):
+        self.assertNotEqual(hash(self.one), hash(self.different))
+
+    def test_hash(self):
+        self.assertNotEqual(hash(self.one), hash(self.two))
+
+
+class _IdentityCompare():
+    def test_is(self):
+        self.assertFalse(self.one is self.two)
+        self.assertFalse(self.one is self.another_one)
+        self.assertFalse(self.one is self.different)
+
+    def test_not_is(self):
+        self.assertTrue(self.one is not self.two)
+        self.assertTrue(self.one is not self.another_one)
+        self.assertTrue(self.one is not self.different)
+
+
+    def test_id(self):
+        # the ids should never be the same
+        self.assertNotEqual(id(self.one), id(self.two))
+        self.assertNotEqual(id(self.two), id(self.different))
+        self.assertNotEqual(id(self.one), id(self.different))
+
+
+class IntTutpleTotalOrdering(unittest.TestCase, _TotalOrdering, _EqualityCompare, _HashCompare):
+    def setUp(self):
+        self.one = (1,)
+        self.two = (2,)
+        self.another_one = (1,)
+        self.different = DifferentType()
+
+
+class BlockTotalOrdering(unittest.TestCase,  _EqualityCompare, _HashCompare):
+    def setUp(self):
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        raw_block_one = Block()
+        fake_loader = DictDataLoader({})
+        block_one = raw_block_one.load(block_ds, loader=fake_loader)
+        # object with value A
+        self.one = block_one
+
+        block_two_ds = {'block': [],
+                        'rescue': [],
+                        'always': []
+                        }
+        raw_block_two = Block()
+        fake_loader = DictDataLoader({})
+        block_two = raw_block_two.load(block_two_ds, loader=fake_loader)
+        # same type, different values
+        self.two = block_two
+
+        # A different instance of SomeObject but should compare the same as self.one
+        block_ds = {'block': [],
+                    'rescue': [],
+                    'always': []
+                    }
+        raw_block_another_one = Block()
+        fake_loader = DictDataLoader({})
+        block_another_one = raw_block_another_one.load(block_ds, loader=fake_loader)
+        # object with value A
+        self.another_one = block_another_one
+        self.another_one = self.one.copy(exclude_parent=True, exclude_tasks=True)
+
+        # A non-None object of a different type than one,two, or another_one
+        self.different = DifferentType()
