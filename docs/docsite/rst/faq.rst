@@ -401,6 +401,17 @@ In other cases there are technical issues, for example, for python wheels, our d
 
 .. _i_dont_see_my_question:
 
+Why am I encountering bizarre locale issues?
+++++++++++++++++++++++++++++++++++++++++++++
+
+By default, `ansible.cfg` contains the parameter `module_lang = C`. If you encounter strange locale issues, try setting it to something like this instead:
+
+.. code-block:: ini
+
+	module_lang = en_US.UTF-8
+	module_lang = zh_CN.UTF-8
+	module_lang = ru_RU.UTF-8
+
 I don't see my question here
 ++++++++++++++++++++++++++++
 
