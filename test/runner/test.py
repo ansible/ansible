@@ -264,6 +264,10 @@ def parse_args():
                                      metavar='PATH',
                                      help='path to inventory used for tests')
 
+    network_integration.add_argument('--testcase',
+                                     metavar='TESTCASE',
+                                     help='limit a test to a specified testcase')
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
