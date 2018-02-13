@@ -58,19 +58,19 @@ clean:
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up generated rst"
-	-rm rst/list_of_*.rst
-	-rm rst/*_by_category.rst
-	-rm rst/*_module.rst
-	-rm rst/*_plugin.rst
-	-rm rst/*_maintained.rst
+	-rm rst/cli/ansible-*.rst
+	-rm rst/cli/ansible.rst
+	-rm rst/modules/*_by_category.rst
+	-rm rst/modules/list_of_*.rst
+	-rm rst/modules/*_maintained.rst
+	-rm rst/modules/*_module.rst
+	-rm rst/modules/*_plugin.rst
 	-rm rst/playbooks_directives.rst
-	-rm rst/playbooks_keywords.rst
 	-rm rst/plugins/*/*.rst
-	-rm rst/config.rst
-	-rm rst/ansible-*.rst
-	-rm rst/ansible.rst
+	-rm rst/reference_appendices/config.rst
+	-rm rst/reference_appendices/playbooks_keywords.rst
 
-.PHONEY: docs clean
+.PHONY: docs clean
 
 # TODO: make generate_man output dir cli option
 cli: $(GENERATE_CLI)

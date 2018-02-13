@@ -50,7 +50,6 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    :caption: Scenario Guides
 
    networking_guide/network
-   ..scenario_guides/guides
    scenario_guides/guide_aws
    scenario_guides/guide_azure
    scenario_guides/guide_rax
@@ -65,7 +64,7 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    :maxdepth: 2
    :caption: Reference & Appendices
 
-   reference_appendices/modules_by_category
+   ../modules/modules_by_category
    reference_appendices/playbooks_keywords
    reference_appendices/galaxy
    reference_appendices/common_return_values
