@@ -47,6 +47,36 @@ inventory system starting with Ansible version 2.4.
 
 Similar functionality can still be achieved by using vars_files, include_vars, or group_vars and host_vars placed relative to the inventory file.
 
+Playbook
+========
+
+`import_` and `include_` split
+------------------------------
+
+
+**OLD** In Ansible 2.3:
+
+.. code-block:: yaml
+
+    - name: old foo
+
+Will result in:
+
+.. code-block:: yaml
+
+   [WARNING]: deprecation message 1
+   [WARNING]: deprecation message 2
+   [WARNING]: deprecation message 3
+
+
+**NEW** In Ansible 2.4:
+
+
+.. code-block:: yaml
+
+   - name: foo
+
+
 Deprecated
 ==========
 
