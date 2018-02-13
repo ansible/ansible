@@ -15,40 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare, IdentityCompare, DifferentType
+
 from ansible.compat.tests import unittest
 from ansible.playbook.attribute import Attribute
 
 
-class TestAttribute(unittest.TestCase):
+class TestAttribute(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
 
     def setUp(self):
         self.one = Attribute(priority=100)
         self.two = Attribute(priority=0)
 
-    def test_eq(self):
-        self.assertTrue(self.one == self.one)
-        self.assertFalse(self.one == self.two)
+        self.another_one = Attribute(priority=100)
 
-    def test_ne(self):
-        self.assertFalse(self.one != self.one)
-        self.assertTrue(self.one != self.two)
-
-    def test_lt(self):
-        self.assertFalse(self.one < self.one)
-        self.assertTrue(self.one < self.two)
-        self.assertFalse(self.two < self.one)
-
-    def test_gt(self):
-        self.assertFalse(self.one > self.one)
-        self.assertFalse(self.one > self.two)
-        self.assertTrue(self.two > self.one)
-
-    def test_le(self):
-        self.assertTrue(self.one <= self.one)
-        self.assertTrue(self.one <= self.two)
-        self.assertFalse(self.two <= self.one)
-
-    def test_ge(self):
-        self.assertTrue(self.one >= self.one)
-        self.assertFalse(self.one >= self.two)
-        self.assertTrue(self.two >= self.one)
+        self.different = DifferentType()

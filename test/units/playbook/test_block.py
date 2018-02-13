@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.mock.loader import DictDataLoader
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare, DifferentType
 from ansible.compat.tests import unittest
 
 from ansible.playbook.block import Block
@@ -36,6 +37,7 @@ class TestBlock(unittest.TestCase):
 
     def test_construct_empty_block(self):
         b = Block()
+        self.assertIsInstance(Block, b)
 
     def test_construct_block_with_role(self):
         pass
@@ -100,7 +102,8 @@ class TestBlock(unittest.TestCase):
                     }
         block = Block()
         fake_loader = DictDataLoader({})
-        loaded_block = block.load(block_ds, loader=fake_loader)
+        # loaded_block = block.load(block_ds, loader=fake_loader)
+        block.load(block_ds, loader=fake_loader)
 
         child_block_ds = {'block': [],
                           'rescue': [],
@@ -147,83 +150,8 @@ class TestBlock(unittest.TestCase):
         self.assertIsInstance(b._parent, Block)
 
 
-class DifferentType():
-    pass
-
-
-class _EqualityCompare():
-
-    def test_eq(self):
-        self.assertTrue(self.one == self.one)
-        self.assertFalse(self.one == self.two)
-
-    def test_ne(self):
-        self.assertFalse(self.one != self.one)
-        self.assertTrue(self.one != self.two)
-
-    def test_eq_different(self):
-        self.assertFalse(self.one == self.different)
-        self.assertTrue(self.one != self.different)
-
-
-class _TotalOrdering():
-    def test_lt(self):
-        self.assertFalse(self.one < self.one)
-        self.assertTrue(self.one < self.two)
-        self.assertFalse(self.two < self.one)
-
-    def test_gt(self):
-        self.assertFalse(self.one > self.one)
-        self.assertFalse(self.one > self.two)
-        self.assertTrue(self.two > self.one)
-
-    def test_le(self):
-        self.assertLessEqual(self.one, self.one)
-        self.assertTrue(self.one <= self.one)
-
-        self.assertLessEqual(self.one, self.two)
-        self.assertTrue(self.one <= self.two)
-
-        self.assertFalse(self.two <= self.one)
-
-    def test_ge(self):
-        self.assertGreaterEqual(self.one, self.one)
-        self.assertTrue(self.one >= self.one)
-
-        self.assertFalse(self.one >= self.two)
-
-        self.assertGreaterEqual(self.two, self.one)
-        self.assertTrue(self.two >= self.one)
-
-
-class _HashCompare():
-    def test_hash_different(self):
-        self.assertNotEqual(hash(self.one), hash(self.different))
-
-    def test_hash(self):
-        self.assertNotEqual(hash(self.one), hash(self.two))
-
-
-class _IdentityCompare():
-    def test_is(self):
-        self.assertFalse(self.one is self.two)
-        self.assertFalse(self.one is self.another_one)
-        self.assertFalse(self.one is self.different)
-
-    def test_not_is(self):
-        self.assertTrue(self.one is not self.two)
-        self.assertTrue(self.one is not self.another_one)
-        self.assertTrue(self.one is not self.different)
-
-
-    def test_id(self):
-        # the ids should never be the same
-        self.assertNotEqual(id(self.one), id(self.two))
-        self.assertNotEqual(id(self.two), id(self.different))
-        self.assertNotEqual(id(self.one), id(self.different))
-
-
-class IntTutpleTotalOrdering(unittest.TestCase, _TotalOrdering, _EqualityCompare, _HashCompare):
+# FIXME: here to verify compare_helpers atm
+class IntTupleTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare, HashCompare):
     def setUp(self):
         self.one = (1,)
         self.two = (2,)
@@ -231,7 +159,15 @@ class IntTutpleTotalOrdering(unittest.TestCase, _TotalOrdering, _EqualityCompare
         self.different = DifferentType()
 
 
-class BlockTotalOrdering(unittest.TestCase,  _EqualityCompare, _HashCompare):
+class IntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
+    def setUp(self):
+        self.one = 1
+        self.two = 2
+        self.another_one = 1
+        self.different = DifferentType()
+
+
+class BlockTotalOrdering(unittest.TestCase,  EqualityCompare, HashCompare):
     def setUp(self):
         block_ds = {'block': [],
                     'rescue': [],
@@ -253,16 +189,6 @@ class BlockTotalOrdering(unittest.TestCase,  _EqualityCompare, _HashCompare):
         # same type, different values
         self.two = block_two
 
-        # A different instance of SomeObject but should compare the same as self.one
-        block_ds = {'block': [],
-                    'rescue': [],
-                    'always': []
-                    }
-        raw_block_another_one = Block()
-        fake_loader = DictDataLoader({})
-        block_another_one = raw_block_another_one.load(block_ds, loader=fake_loader)
-        # object with value A
-        self.another_one = block_another_one
         self.another_one = self.one.copy(exclude_parent=True, exclude_tasks=True)
 
         # A non-None object of a different type than one,two, or another_one
