@@ -24,6 +24,17 @@ class EqualityCompare():
         self.assertFalse(self.one == self.different)
         self.assertTrue(self.one != self.different)
 
+    def test_eq_none(self):
+        # noqa since this compare is a bad idea, but can happen anyway
+        self.assertFalse(self.one == None)  # noqa
+        self.assertFalse(self.two == None)  # noqa
+        self.assertFalse(self.another_one == None)  # noqa
+
+    def test_ne_none(self):
+        self.assertNotEqual(self.one, None)
+        self.assertNotEqual(self.two, None)
+        self.assertNotEqual(self.another_one, None)
+
 
 class TotalOrdering():
     def test_lt(self):
@@ -79,3 +90,13 @@ class IdentityCompare():
         self.assertNotEqual(id(self.one), id(self.two))
         self.assertNotEqual(id(self.two), id(self.different))
         self.assertNotEqual(id(self.one), id(self.different))
+
+    def test_is_not_none(self):
+        self.assertTrue(self.one is not None)
+        self.assertTrue(self.two is not None)
+        self.assertTrue(self.another_one is not None)
+
+    def test_is_none(self):
+        self.assertFalse(self.one is None)
+        self.assertFalse(self.two is None)
+        self.assertFalse(self.another_one is None)
