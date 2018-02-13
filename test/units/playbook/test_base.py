@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare
+from units.mock.compare_helpers import EqualityCompare, HashCompare
 from units.mock.compare_helpers import IdentityCompare, DifferentType, UuidCompare
 from units.mock.compare_helpers import CopyCompare
 
@@ -34,7 +34,12 @@ from ansible.playbook import base
 from units.mock.loader import DictDataLoader
 
 
-class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare, UuidCompare, CopyCompare):
+class TestBaseCompare(unittest.TestCase,
+                      EqualityCompare,
+                      IdentityCompare,
+                      HashCompare,
+                      UuidCompare,
+                      CopyCompare):
     ClassUnderTest = base.Base
 
     def setUp(self):
@@ -431,7 +436,12 @@ class BaseSubClass(base.Base):
         return value
 
 
-class TestBaseCompareSubBase(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare, UuidCompare, CopyCompare):
+class TestBaseCompareSubBase(unittest.TestCase,
+                             EqualityCompare,
+                             IdentityCompare,
+                             HashCompare,
+                             UuidCompare,
+                             CopyCompare):
     ClassUnderTest = BaseSubClass
 
     def setUp(self):

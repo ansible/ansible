@@ -24,7 +24,7 @@ import os
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock
 from units.mock.loader import DictDataLoader
-from units.mock.compare_helpers import TotalOrdering, EqualityCompare, IdentityCompare, HashCompare, DifferentType
+from units.mock.compare_helpers import EqualityCompare, IdentityCompare, HashCompare, DifferentType
 
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
@@ -33,7 +33,10 @@ from ansible.executor import task_result
 from ansible.playbook.included_file import IncludedFile
 
 
-class TestIncludedFileCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestIncludedFileCompare(unittest.TestCase,
+                              EqualityCompare,
+                              IdentityCompare,
+                              HashCompare):
     def setUp(self):
         fake_loader = DictDataLoader({})
 

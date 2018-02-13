@@ -38,7 +38,7 @@ kv_command_task = dict(
 )
 
 
-class TestTaskCompare(unittest.TestCase, EqualityCompare, TotalOrdering,
+class TestTaskCompare(unittest.TestCase, EqualityCompare,
                       IdentityCompare, HashCompare, UuidCompare,
                       CopyCompare, CopyExcludeParentCompare, CopyExcludeTasksCompare):
 
