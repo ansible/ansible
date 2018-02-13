@@ -20,7 +20,7 @@ DOCUMENTATION = """
         - name: AZURE_VAULT_URI
     secret_version:
       description: The version of Azure secret.
-      default: 'latest'         
+      default: 'latest'
     client_id:
       description: The Azure Client ID (also known as Application ID).
       required: True
