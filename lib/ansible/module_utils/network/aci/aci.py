@@ -380,7 +380,7 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(info['body'])
-                self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
@@ -416,7 +416,7 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(query['body'])
-                self.fail_json(msg='Query failed: %(code)s %(text)s' % self.error)
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % query)
@@ -687,7 +687,7 @@ class ACIModule(object):
                 try:
                     # APIC error
                     self.response_json(info['body'])
-                    self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
+                    self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
                 except KeyError:
                     # Connection error
                     self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
@@ -820,7 +820,7 @@ class ACIModule(object):
             try:
                 # APIC error
                 self.response_json(info['body'])
-                self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
@@ -920,7 +920,7 @@ class ACIModule(object):
                 try:
                     # APIC error
                     self.response_json(info['body'])
-                    self.fail_json(msg='Request failed: %(code)s %(text)s' % self.error)
+                    self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
                 except KeyError:
                     # Connection error
                     self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
