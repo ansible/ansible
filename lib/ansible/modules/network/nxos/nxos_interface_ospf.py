@@ -95,16 +95,16 @@ options:
   message_digest_algorithm_type:
     description:
       - Algorithm used for authentication among neighboring routers
-        within an area. Valid values is 'md5'.
+        within an area. Valid values are 'md5' and 'default'.
     required: false
-    choices: ['md5']
+    choices: ['md5', 'default']
     default: null
   message_digest_encryption_type:
     description:
       - Specifies the scheme used for encrypting message_digest_password.
-        Valid values are '3des' or 'cisco_type_7' encryption.
+        Valid values are '3des' or 'cisco_type_7' encryption or 'default'.
     required: false
-    choices: ['cisco_type_7','3des']
+    choices: ['cisco_type_7','3des', 'default']
     default: null
   message_digest_password:
     description:
@@ -137,6 +137,8 @@ commands:
 
 
 import re
+import struct
+import socket
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -175,6 +177,7 @@ def get_value(arg, config, module):
                 value = value_list[0]
             elif arg == 'area':
                 value = value_list[2]
+                value = normalize_area(value, module)
     elif command == 'ip ospf message-digest-key':
         value = ''
         if has_command_val:
@@ -359,7 +362,7 @@ def state_absent(module, existing, proposed, candidate):
 def normalize_area(area, module):
     try:
         area = int(area)
-        area = '0.0.0.{0}'.format(area)
+        area = socket.inet_ntoa(struct.pack('!L', area))
     except ValueError:
         splitted_area = area.split('.')
         if len(splitted_area) != 4:
@@ -378,8 +381,8 @@ def main():
         passive_interface=dict(required=False, type='bool'),
         message_digest=dict(required=False, type='bool'),
         message_digest_key_id=dict(required=False, type='str'),
-        message_digest_algorithm_type=dict(required=False, type='str', choices=['md5']),
-        message_digest_encryption_type=dict(required=False, type='str', choices=['cisco_type_7', '3des']),
+        message_digest_algorithm_type=dict(required=False, type='str', choices=['md5', 'default']),
+        message_digest_encryption_type=dict(required=False, type='str', choices=['cisco_type_7', '3des', 'default']),
         message_digest_password=dict(required=False, type='str', no_log=True),
         state=dict(choices=['present', 'absent'], default='present', required=False)
     )
@@ -411,7 +414,7 @@ def main():
     for param in ['message_digest_encryption_type',
                   'message_digest_algorithm_type',
                   'message_digest_password']:
-        if module.params[param] == 'default':
+        if module.params[param] == 'default' and module.params['message_digest_key_id'] != 'default':
             module.exit_json(msg='Use message_digest_key_id=default to remove an existing authentication configuration')
 
     state = module.params['state']
@@ -434,6 +437,8 @@ def main():
                 proposed[key] = value
 
     proposed['area'] = normalize_area(proposed['area'], module)
+    if 'hello_interval' in proposed and proposed['hello_interval'] == '10':
+        proposed['hello_interval'] = 'default'
 
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present':
