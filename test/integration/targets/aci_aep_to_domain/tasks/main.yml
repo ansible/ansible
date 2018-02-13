@@ -94,8 +94,6 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
-    domain_type: phys
     state: query
   check_mode: yes
   register: cm_query_all_bindings
@@ -108,8 +106,8 @@
   assert:
     that:
     - cm_query_all_bindings.changed == nm_query_all_bindings.changed == false
-    # NOTE: Order of bindings is not stable between calls
-    #- cm_query_all_bindings == nm_query_all_bindings
+    - cm_query_all_bindings == nm_query_all_bindings
+    - nm_query_all_bindings.current|length >= 1
 
 
 # QUERY A BINDING
@@ -118,13 +116,16 @@
     <<: *binding_query
     aep: test_aep
     domain: phys_dom
+    domain_type: phys
   check_mode: yes
   register: cm_query_binding
 
 - name: Query our AEP to domain binding (normal mode)
   aci_aep_to_domain:
     <<: *binding_query
+    aep: test_aep
     domain: phys_dom
+    domain_type: phys
   register: nm_query_binding
 
 - name: Verify query_binding
@@ -133,6 +134,7 @@
     - cm_query_binding.changed == nm_query_binding.changed == false
     - cm_query_binding == nm_query_binding
     - nm_query_binding.current.0.infraRsDomP.attributes.dn == 'uni/infra/attentp-test_aep/rsdomP-[uni/phys-phys_dom]'
+    - nm_query_binding.current.0.infraRsDomP.attributes.tCl == 'physDomP'
     - nm_query_binding.current.0.infraRsDomP.attributes.tDn == 'uni/phys-phys_dom'
 
 
@@ -166,12 +168,20 @@
 
 # QUERY NON-EXISTING BINDING
 - name: Query non-existing AEP to domain binding (check_mode)
-  aci_aep_to_domain: *binding_query
+  aci_aep_to_domain:
+    <<: *binding_query
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
   check_mode: yes
   register: cm_query_non_binding
 
 - name: Query non-existing AEP to domain binding (normal mode)
-  aci_aep_to_domain: *binding_query
+  aci_aep_to_domain:
+    <<: *binding_query
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
   register: nm_query_non_binding
 
 - name: Verify query_non_binding
