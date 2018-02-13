@@ -1,5 +1,9 @@
 Action Plugins
----------------
+==============
+
+.. contents::
+   :local:
+   :depth: 2
 
 Action plugins act in conjunction with :doc:`modules <../modules>` to execute the actions required by playbook tasks.
 They usually execute automatically in the background doing prerequisite work before modules execute.
@@ -9,16 +13,27 @@ The 'normal' action plugin is used for modules that do not already have an actio
 .. _enabling_action:
 
 Enabling Action Plugins
-+++++++++++++++++++++++
+-----------------------
 
 You can enable a custom action plugin by either dropping it into the ``action_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the action plugin directory sources configured in :doc:`ansible.cfg <../config>`.
 
 .. _using_action:
 
 Using Action Plugins
-+++++++++++++++++++++
+--------------------
 
 Action plugin are executed by default when an associated module is used; no action is required.
+
+Plugin List
+-----------
+
+You can use ``ansible-doc -t cache -l`` to see the list of available plugins.
+Use ``ansible-doc -t cache <plugin name>`` to see specific documentation and examples.
+
+.. toctree:: :maxdepth: 1
+    :glob:
+
+    action/*
 
 .. seealso::
 
