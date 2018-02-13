@@ -21,9 +21,10 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 from ansible.playbook.task import Task
+from ansible.playbook.task_include import TaskInclude
 
-from units.mock.compare_helpers import TotalOrdering, EqualityCompare, IdentityCompare, HashCompare, DifferentType
-from units.mock.compare_helpers import UuidCompare, CopyCompare, CopyExcludeParentCompare
+from units.mock.compare_helpers import EqualityCompare, IdentityCompare, HashCompare, DifferentType
+from units.mock.compare_helpers import UuidCompare, CopyCompare
 from units.mock.compare_helpers import CopyExcludeTasksCompare
 from units.mock.loader import DictDataLoader
 
@@ -38,17 +39,27 @@ kv_command_task = dict(
 )
 
 
-class TestTaskCompare(unittest.TestCase, EqualityCompare,
-                      IdentityCompare, HashCompare, UuidCompare,
-                      CopyCompare, CopyExcludeParentCompare, CopyExcludeTasksCompare):
+class TestTaskCompare(unittest.TestCase,
+                      EqualityCompare,
+                      IdentityCompare,
+                      HashCompare,
+                      UuidCompare,
+                      CopyCompare,
+                      CopyExcludeTasksCompare):
 
     def setUp(self):
         fake_loader = DictDataLoader({})
 
+        # self.one is a parent task
         one_ds = {'name': 'base_one',
                   'command': 'echo base_one'}
 
+        one_task_include_ds = {'name': 'one',
+                               'include': 'include_test_one.yml'}
+
         self.one = Task.load(one_ds, loader=fake_loader)
+        self.one_task_include = TaskInclude.load(one_task_include_ds, loader=fake_loader,
+                                                 task_include=self.one)
 
         two_ds = {'name': 'base_two',
                   'command': 'echo base_two'}
@@ -57,10 +68,23 @@ class TestTaskCompare(unittest.TestCase, EqualityCompare,
 
         self.another_one = self.one.copy()
         self.one_copy = self.one.copy()
-        self.one_copy_exclude_parent = self.one.copy(exclude_parent=True)
+        self.one_task_include_copy = self.one_task_include.copy()
+        self.one_task_include_copy_exclude_parent = self.one_task_include.copy(exclude_parent=True)
         self.one_copy_exclude_tasks = self.one.copy(exclude_tasks=True)
 
         self.different = DifferentType()
+
+    def test_copy_exclude_eq(self):
+        self.assertEqual(self.one_task_include, self.one_task_include_copy)
+
+    def test_copy_exclude_parent_eq(self):
+        self.assertFalse(self.one_task_include._parent == self.one_task_include_copy_exclude_parent._parent,
+                         'one_task_include._parent %s == self.one_task_include_copy_exclude_parent._parent %s and shouldnt' %
+                         (self.one_task_include._parent, self.one_task_include_copy_exclude_parent._parent))
+
+    def test_copy_exclude_parent_ne(self):
+        self.assertNotEqual(self.one_task_include._parent,
+                            self.one_task_include_copy_exclude_parent._parent)
 
 
 class TestTask(unittest.TestCase):

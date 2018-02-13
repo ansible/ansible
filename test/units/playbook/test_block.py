@@ -22,7 +22,7 @@ __metaclass__ = type
 from units.mock.loader import DictDataLoader
 from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare
 from units.mock.compare_helpers import DifferentType, UuidCompare, CopyCompare
-from units.mock.compare_helpers import CopyExcludeParentCompare, CopyExcludeTasksCompare
+from units.mock.compare_helpers import CopyExcludeTasksCompare
 from ansible.compat.tests import unittest
 
 from ansible.playbook.block import Block
@@ -169,8 +169,12 @@ class TestIntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
         self.different = DifferentType()
 
 
-class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare, UuidCompare,
-                       CopyCompare, CopyExcludeParentCompare, CopyExcludeTasksCompare):
+class TestBlockCompare(unittest.TestCase,
+                       EqualityCompare,
+                       HashCompare,
+                       UuidCompare,
+                       CopyCompare,
+                       CopyExcludeTasksCompare):
     def setUp(self):
         _block_tasks = [{'action': 'block'}]
         _rescue_tasks = [{'action': 'rescue'}]
@@ -215,3 +219,12 @@ class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare, UuidCom
         self.assertNotEqual(self.one.block, self.one_copy_exclude_tasks.block)
         self.assertNotEqual(self.one.rescue, self.one_copy_exclude_tasks.rescue)
         self.assertNotEqual(self.one.always, self.one_copy_exclude_tasks.always)
+
+    def test_copy_exclude_eq(self):
+        self.assertEqual(self.one, self.one_copy_exclude_parent)
+
+    def test_copy_exclude_parent_eq(self):
+        self.assertFalse(self.one._parent == self.one_copy_exclude_parent._parent)
+
+    def test_copy_exclude_parent_ne(self):
+        self.assertNotEqual(self.one._parent, self.one_copy_exclude_parent._parent)
