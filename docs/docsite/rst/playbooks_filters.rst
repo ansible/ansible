@@ -695,6 +695,18 @@ That will create the following output:
        ###
         #
 
+If you want to use your own custom character to comment, it is also possible::
+
+    {{ "Comment in a dns zone file" | comment(decoration='; ') }}
+    
+That will create the following output:
+
+.. code-block:: sh
+
+    ;
+    ; Comment in a dns zone file
+    ;
+
 The filter can also be applied to any Ansible variable. For example to
 make the output of the ``ansible_managed`` variable more readable, we can
 change the definition in the ``ansible.cfg`` file to this:
