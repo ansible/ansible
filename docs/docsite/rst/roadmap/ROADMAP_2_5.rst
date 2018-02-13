@@ -1,6 +1,6 @@
-============================
-Ansible Project, 2.5
-============================
+===========
+Ansible 2.5
+===========
 **Core Engine Freeze and Module Freeze: 22 January 2018**
 
 **Core and Curated Module Freeze: 22 January 2018**
