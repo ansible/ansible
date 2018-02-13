@@ -1,18 +1,7 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
-import botocore
+# Copyright (c) 2018 Loic BLOT <loic.blot@unix-experience.fr>
+# This module is sponsored by E.T.A.I. (www.etai.fr)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -39,9 +28,52 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+  tags:
+    description:
+      - A hash/dictionary of tags to add to the new instance or to add/remove from an existing one.
 extends_documentation_fragment:
     - aws
     - ec2
+'''
+
+RETURN = '''
+vault:
+    description: the vault object
+    returned: always
+    type: complex
+    contains:
+        creation_date:
+            description: The vault creation date.
+            returned: always
+            type: string
+            sample: "2018-02-13T22:10:28.590Z"
+        number_of_archives:
+            description: Number of archives currently in the vault.
+            returned: always
+            type: int
+            sample: 0
+        size_in_bytes:
+            description: Current vault size.
+            returned: always
+            type: int
+            sample: 0
+        vault_arn:
+            description: The vault AWS ARN.
+            returned: always
+            type: string
+            sample: "arn:aws:glacier:eu-west-3:123457788994:vaults/test-vault"
+        vault_name:
+            description: The vault name.
+            returned: always
+            type: string
+            sample: "test-vault"
+tags:
+    description: the vault tags
+    returned: always
+    type: dictionary
+    sample: {
+        "testtag": "testvalue"
+    }
 '''
 
 EXAMPLES = '''
@@ -62,12 +94,12 @@ EXAMPLES = '''
     state: absent
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
-                                      boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_filter_list,
-                                      camel_dict_to_snake_dict)
+                                      compare_aws_tags, camel_dict_to_snake_dict)
 
 try:
+    import botocore
     from botocore.exceptions import ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
@@ -77,9 +109,15 @@ class GlacierVaultManager(object):
     def __init__(self, connection, module):
         self.connection = connection
         self.module = module
+        self.name = self.module.params.get('name')
 
     def list(self):
-        vaults = self.connection.list_vaults()
+        vaults = {}
+        try:
+            vaults = self.connection.list_vaults()
+        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(exception=e, msg="Failed to list vaults")
+
         if "VaultList" not in vaults:
             self.module.fail_json(msg="Invalid response from Glacier: no VaultList found in response")
 
@@ -89,7 +127,7 @@ class GlacierVaultManager(object):
         for v in self.list():
             if "VaultName" not in v:
                 self.module.fail_json(
-                    msg="Invalid response from Glacier: no VaultName found in vault object {}".format(v))
+                    msg="Invalid response from Glacier: no VaultName found in vault object {0}".format(v))
 
             if v["VaultName"] == name:
                 return v
@@ -97,15 +135,53 @@ class GlacierVaultManager(object):
         return None
 
     def create_or_update(self):
-        name = self.module.params.get('name')
-        vault = self.exists(name)
-
+        changed = False
+        vault = self.exists(self.name)
         if vault is None:
-            vault = self.connection.create_vault(vaultName=name)
-            self.module.exit_json(vault=vault, changed=True)
+            try:
+                vault = self.connection.create_vault(vaultName=self.name)
+            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+                self.module.fail_json_aws(exception=e, msg="Failed to create vault")
+            changed = True
+
+        changed |= self.manage_tags()
 
         # Vault exists, no change to do
-        self.module.exit_json(vault=vault, changed=False)
+        self.module.exit_json(vault=camel_dict_to_snake_dict(vault), tags=self.list_tags(), changed=changed)
+
+    def list_tags(self):
+        tags = {}
+        try:
+            tags = self.connection.list_tags_for_vault(vaultName=self.name)
+        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(exception=e, msg="Failed to list vault tags")
+
+        if "Tags" not in tags:
+            self.module.fail_json(msg="Invalid response from Glacier: no Tags found in vault object {0}".format(tags))
+
+        return tags["Tags"]
+
+    def manage_tags(self):
+        changed = False
+        old_tags = self.list_tags()
+        tags_to_set, tags_to_delete = compare_aws_tags(
+            old_tags, self.module.params.get('tags') or {},
+        )
+        if tags_to_set:
+            try:
+                self.connection.add_tags_to_vault(vaultName=self.name, Tags=tags_to_set)
+            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError,
+                    botocore.exceptions.ParamValidationError) as e:
+                self.module.fail_json_aws(exception=e, msg="Failed to add vault tags")
+            changed |= True
+        if tags_to_delete:
+            try:
+                self.connection.remove_tags_from_vault(vaultName=self.name, TagKeys=tags_to_delete)
+            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError,
+                    botocore.exceptions.ParamValidationError) as e:
+                self.module.fail_json_aws(exception=e, msg="Failed to remove vault tags")
+            changed |= True
+        return changed
 
     def destroy(self):
         name = self.module.params.get('name')
@@ -113,52 +189,50 @@ class GlacierVaultManager(object):
         if vault is None:
             self.module.exit_json(changed=False)
 
-        self.connection.delete_vault(vaultName=name)
-        self.module.exit_json(vault=vault, changed=True)
+        tags = self.list_tags()
+        try:
+            self.connection.delete_vault(vaultName=name)
+        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+            self.module.fail_json_aws(exception=e, msg="Failed to delete vault")
+
+        self.module.exit_json(vault=camel_dict_to_snake_dict(vault), tags=tags, changed=True)
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(required=True, type='str'),
-            state=dict(default='present', type='str', choices=['present', 'absent']),
+            name=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            tags=dict(type='dict'),
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    if region:
-        connection = boto3_conn(
-            module,
-            conn_type='client',
-            resource='glacier',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_params
-        )
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(
+        module,
+        conn_type='client',
+        resource='glacier',
+        region=region,
+        endpoint=ec2_url,
+        **aws_connect_params
+    )
 
     if connection is None:  # this should never happen
         module.fail_json(msg='Unknown error, failed to create glacier connection, no information from boto.')
 
     state = module.params.get("state")
 
-    try:
-        if state == 'present':
-            GlacierVaultManager(connection, module).create_or_update()
-        elif state == 'absent':
-            GlacierVaultManager(connection, module).destroy()
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="AWS credential error: {}".format(e))
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="AWS client error: {}".format(e))
+    if state == 'present':
+        GlacierVaultManager(connection, module).create_or_update()
+    elif state == 'absent':
+        GlacierVaultManager(connection, module).destroy()
 
 
 if __name__ == '__main__':
