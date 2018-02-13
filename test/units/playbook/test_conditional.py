@@ -1,12 +1,34 @@
 
 from ansible.compat.tests import unittest
 from units.mock.loader import DictDataLoader
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, IdentityCompare, HashCompare, DifferentType
 
 from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 from ansible import errors
 
 from ansible.playbook import conditional
+
+
+class TestBaseCompare(unittest.TestCase, EqualityCompare, IdentityCompare, HashCompare):
+
+    def setUp(self):
+        fake_loader = DictDataLoader({})
+
+        one_ds = {'when': ["one"]}
+
+        self.one = conditional.Conditional(loader=fake_loader)
+        self.one.when = one_ds['when']
+
+        two_ds = {'when': ["two"]}
+
+        self.two = conditional.Conditional(loader=fake_loader)
+        self.two.when = two_ds['when']
+
+        self.another_one = conditional.Conditional(loader=fake_loader)
+        self.another_one.when = one_ds['when']
+
+        self.different = DifferentType()
 
 
 class TestConditional(unittest.TestCase):
