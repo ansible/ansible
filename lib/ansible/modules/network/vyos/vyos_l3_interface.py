@@ -137,8 +137,8 @@ def map_obj_to_commands(updates, module):
                 if name == "lo":
                     commands.append('set interfaces loopback lo address ' +
                                 ipv4)
-              else:
-                  commands.append('set interfaces ethernet ' + name + ' address ' +
+                else:
+                    commands.append('set interfaces ethernet ' + name + ' address ' +
                                 ipv4)
 
             if ipv6 and ipv6 != obj_in_have['ipv6']:
