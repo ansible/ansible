@@ -171,6 +171,8 @@ This differs from the data structure returned when using ``register`` without a 
         ]
     }
 
+.. note:: The data structure returned when running in ``--check`` mode may look somewhat different (as the module being called may behave differently in ``--check`` mode).
+
 Subsequent loops over the registered variable to inspect the results may look like::
 
     - name: Fail if return code is not 0
