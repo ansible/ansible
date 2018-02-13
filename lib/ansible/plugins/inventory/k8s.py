@@ -73,6 +73,11 @@ DOCUMENTATION = '''
               description:
               - List of namespaces. If not specified, will fetch all containers for all namespaces user is authorized
                 to access.
+
+    requirements:
+    - "python >= 2.7"
+    - "openshift == 0.4.1"
+    - "PyYAML >= 3.11"
 '''
 
 EXAMPLES = '''
