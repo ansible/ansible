@@ -20,7 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.mock.loader import DictDataLoader
-from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare, DifferentType
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare
+from units.mock.compare_helpers import DifferentType, UuidCompare, CopyCompare
+from units.mock.compare_helpers import CopyExcludeParentCompare
 from ansible.compat.tests import unittest
 
 from ansible.playbook.block import Block
@@ -167,7 +169,8 @@ class TestIntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
         self.different = DifferentType()
 
 
-class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare):
+class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare, UuidCompare,
+                       CopyCompare, CopyExcludeParentCompare):
     def setUp(self):
         block_ds = {'block': [],
                     'rescue': [],
@@ -190,6 +193,8 @@ class TestBlockCompare(unittest.TestCase,  EqualityCompare, HashCompare):
         self.two = block_two
 
         self.another_one = self.one.copy(exclude_parent=True, exclude_tasks=True)
+        self.one_copy = self.one.copy()
+        self.one_copy_exclude_parent = self.one.copy(exclude_parent=True)
 
         # A non-None object of a different type than one,two, or another_one
         self.different = DifferentType()

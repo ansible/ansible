@@ -23,6 +23,7 @@ from ansible.compat.tests import unittest
 from ansible.playbook.task import Task
 
 from units.mock.compare_helpers import TotalOrdering, EqualityCompare, IdentityCompare, HashCompare, DifferentType
+from units.mock.compare_helpers import UuidCompare, CopyCompare, CopyExcludeParentCompare
 from units.mock.loader import DictDataLoader
 
 
@@ -36,7 +37,9 @@ kv_command_task = dict(
 )
 
 
-class TestTaskCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestTaskCompare(unittest.TestCase, EqualityCompare, TotalOrdering,
+                      IdentityCompare, HashCompare, UuidCompare,
+                      CopyCompare, CopyExcludeParentCompare):
 
     def setUp(self):
         fake_loader = DictDataLoader({})
@@ -52,6 +55,8 @@ class TestTaskCompare(unittest.TestCase, EqualityCompare, TotalOrdering, Identit
         self.two = Task.load(two_ds, loader=fake_loader)
 
         self.another_one = self.one.copy()
+        self.one_copy = self.one.copy()
+        self.one_copy_exclude_parent = self.one.copy(exclude_parent=True)
 
         self.different = DifferentType()
 

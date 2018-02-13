@@ -19,7 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare, IdentityCompare, DifferentType
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare
+from units.mock.compare_helpers import IdentityCompare, DifferentType, UuidCompare
+from units.mock.compare_helpers import CopyCompare
 
 from ansible.compat.tests import unittest
 
@@ -32,7 +34,7 @@ from ansible.playbook import base
 from units.mock.loader import DictDataLoader
 
 
-class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare, UuidCompare, CopyCompare):
     ClassUnderTest = base.Base
 
     def setUp(self):
@@ -47,6 +49,8 @@ class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, Identit
         self.two = two.load_data(two_ds, loader=fake_loader)
 
         self.another_one = one.copy()
+
+        self.one_copy = one.copy()
 
         self.different = DifferentType()
 
@@ -427,7 +431,7 @@ class BaseSubClass(base.Base):
         return value
 
 
-class TestBaseCompareSubBase(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+class TestBaseCompareSubBase(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare, UuidCompare, CopyCompare):
     ClassUnderTest = BaseSubClass
 
     def setUp(self):
@@ -446,6 +450,7 @@ class TestBaseCompareSubBase(unittest.TestCase, EqualityCompare, TotalOrdering, 
         self.two = two.load_data(two_ds, loader=fake_loader)
 
         self.another_one = one.copy()
+        self.one_copy = one.copy()
 
         self.different = DifferentType()
 

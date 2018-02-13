@@ -92,6 +92,9 @@ class IdentityCompare():
         self.assertNotEqual(id(self.one), id(self.different))
 
     def test_is_not_none(self):
+        '''Override if you are actually testing None for some reason.
+
+        Or if your object has a legit reason to shared identity with None...'''
         self.assertTrue(self.one is not None)
         self.assertTrue(self.two is not None)
         self.assertTrue(self.another_one is not None)
@@ -100,3 +103,32 @@ class IdentityCompare():
         self.assertFalse(self.one is None)
         self.assertFalse(self.two is None)
         self.assertFalse(self.another_one is None)
+
+
+class UuidCompare():
+    def test_uuid_eq(self):
+        self.assertFalse(self.one._uuid == self.two._uuid)
+        # self.assertTrue(self.one._uuid == self.another_one._uuid)
+
+    def test_uuid_ne(self):
+        self.assertTrue(self.one._uuid != self.two._uuid)
+        # self.assertTrue(self.one._uuid != self.another_one._uuid)
+
+
+class CopyCompare():
+    def test_copy_eq(self):
+        self.assertEqual(self.one, self.one_copy)
+
+    def test_copy_parent_eq(self):
+        self.assertEqual(self.one._parent, self.one_copy._parent)
+
+
+class CopyExcludeParentCompare():
+    def test_copy_eq(self):
+        self.assertEqual(self.one, self.one_copy_exclude_parent)
+
+    def test_copy_parent_eq(self):
+        self.assertFalse(self.one._parent == self.one_copy_exclude_parent._parent)
+
+    def test_copy_parent_ne(self):
+        self.assertNotEqual(self.one._parent, self.one_copy_exclude_parent._parent)
