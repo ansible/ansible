@@ -179,6 +179,10 @@ Groups of Groups, and Group Variables
 It is also possible to make groups of groups using the ``:children`` suffix in INI or the ``children:`` entry in YAML.
 You can apply variables using ``:vars`` or ``vars:``:
 
+The order that the groups are in is important for the ini file format.
+You need to specify the child group then the parent group.
+The example below shows atlanta and raleigh then the southeast:children group they are in.
+If you specify the southeast:children then atlanta and raleigh it will fail parsing.
 
 .. code-block:: ini
 
