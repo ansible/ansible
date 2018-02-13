@@ -696,8 +696,8 @@
 # c:\return\new
 # c:
 # eturn
-# ew
+# ew #or c:eturnew  on windows
 - name: assert that one line is literal and the other has breaks
   assert:
     that:
-    - result.stat.checksum == '3738b9874eb00778c276426c2f7a3f7d661f5f76'
+    - result.stat.checksum == 'd2dfd11bc70526ff13a91153c76a7ae5595a845b'
