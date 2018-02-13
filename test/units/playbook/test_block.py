@@ -167,7 +167,7 @@ class IntTotalOrdering(unittest.TestCase, TotalOrdering, EqualityCompare):
         self.different = DifferentType()
 
 
-class BlockTotalOrdering(unittest.TestCase,  EqualityCompare, HashCompare):
+class BlockCompare(unittest.TestCase,  EqualityCompare, HashCompare):
     def setUp(self):
         block_ds = {'block': [],
                     'rescue': [],

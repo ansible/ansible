@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from units.mock.compare_helpers import TotalOrdering, EqualityCompare, HashCompare, IdentityCompare, DifferentType
+
 from ansible.compat.tests import unittest
 
 from ansible.errors import AnsibleParserError
@@ -28,6 +30,25 @@ from ansible.template import Templar
 from ansible.playbook import base
 
 from units.mock.loader import DictDataLoader
+
+
+class TestBaseCompare(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+    ClassUnderTest = base.Base
+
+    def setUp(self):
+        fake_loader = DictDataLoader({})
+
+        one_ds = {'name': 'base_one'}
+        one = self.ClassUnderTest()
+        self.one = one.load_data(one_ds, loader=fake_loader)
+
+        two_ds = {'name': 'base_two'}
+        two = self.ClassUnderTest()
+        self.two = two.load_data(two_ds, loader=fake_loader)
+
+        self.another_one = one.copy()
+
+        self.different = DifferentType()
 
 
 class TestBase(unittest.TestCase):
@@ -404,6 +425,29 @@ class BaseSubClass(base.Base):
             pass
 
         return value
+
+
+class TestBaseCompareSubBase(unittest.TestCase, EqualityCompare, TotalOrdering, IdentityCompare, HashCompare):
+    ClassUnderTest = BaseSubClass
+
+    def setUp(self):
+        fake_loader = DictDataLoader({})
+
+        one_ds = {'name': 'base_one',
+                  'test_attr_int': 1,
+                  'test_attr_float': 1.0}
+        one = self.ClassUnderTest()
+        self.one = one.load_data(one_ds, loader=fake_loader)
+
+        two_ds = {'name': 'base_two',
+                  'test_attr_int': 2,
+                  'test_attr_float': 2.0}
+        two = self.ClassUnderTest()
+        self.two = two.load_data(two_ds, loader=fake_loader)
+
+        self.another_one = one.copy()
+
+        self.different = DifferentType()
 
 
 # terrible name, but it is a TestBase subclass for testing subclasses of Base
