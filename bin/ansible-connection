@@ -70,6 +70,7 @@ class ConnectionProcess(object):
             self.connection._connect()
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
+            messages.extend(sys.stdout.getvalue().splitlines())
             messages.append('connection to remote device started successfully')
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -189,6 +190,7 @@ def main():
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
+        display.verbosity = play_context.verbosity
 
     except Exception as e:
         rc = 1
@@ -277,6 +279,7 @@ def main():
         sys.stdout.write(json.dumps(result))
 
     sys.exit(rc)
+
 
 if __name__ == '__main__':
     display = Display()
