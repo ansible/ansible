@@ -1,6 +1,6 @@
-================
-Ansible Core 2.2
-================
+===========
+Ansible 2.2
+===========
 **Target: September 2016**
 
 .. contents:: Topics
