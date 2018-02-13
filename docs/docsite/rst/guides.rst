@@ -13,6 +13,7 @@ This section is new and evolving.  The idea here is to explore particular use ca
    guide_gce
    guide_cloudstack
    guide_vagrant
+   guide_vultr
    guide_rolling_upgrade
    guide_docker
    guide_packet
