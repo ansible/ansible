@@ -1,6 +1,6 @@
-============================
-Ansible by Red Hat, Core 2.3
-============================
+===========
+Ansible 2.3
+===========
 **Target: Mid April 2017**
 
 .. contents:: Topics
