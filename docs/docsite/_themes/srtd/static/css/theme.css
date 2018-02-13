@@ -3329,6 +3329,11 @@ code.code-large, .rst-content tt.code-large {
     list-style: square;
 }
 
+li.toctree-l3 {
+    margin-left: 15px;
+    font-size: 90%;
+}
+
 .wy-plain-list-decimal, .rst-content .section ol, .rst-content ol.arabic {
     list-style: decimal;
     line-height: 24px;
