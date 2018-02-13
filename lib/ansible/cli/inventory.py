@@ -80,6 +80,9 @@ class InventoryCLI(CLI):
         action_group.add_option("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
         action_group.add_option("--graph", action="store_true", default=False, dest='graph',
                                 help='create inventory graph, if supplying pattern it must be a valid group name')
+        action_group.add_option("--export", action="store_true", default=False, dest='export',
+                                help='Create output optimized for exporting the inventory, '
+                                     'this will show a version closer to the source and not how Ansible itself consumes it.')
         self.parser.add_option_group(action_group)
 
         # Options
@@ -87,7 +90,8 @@ class InventoryCLI(CLI):
                                help='Use YAML format instead of default JSON, ignored for --graph')
         self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
                                help='Add vars to graph display, ignored unless used with --graph')
-
+        self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
+                               help="When doing an --export, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
         super(InventoryCLI, self).parse()
 
         display.verbosity = self.options.verbosity
@@ -96,7 +100,7 @@ class InventoryCLI(CLI):
 
         # there can be only one! and, at least, one!
         used = 0
-        for opt in (self.options.list, self.options.host, self.options.graph):
+        for opt in (self.options.list, self.options.host, self.options.graph, self.options.export):
             if opt:
                 used += 1
         if used == 0:
@@ -109,6 +113,9 @@ class InventoryCLI(CLI):
             self.options.pattern = self.args[0]
         else:
             self.options.pattern = 'all'
+
+    def export_inventory(ignore_vars_plugins=False):
+        pass
 
     def run(self):
 
@@ -163,6 +170,9 @@ class InventoryCLI(CLI):
             else:
                 results = self.json_inventory(top)
             results = self.dump(results)
+
+        elif self.options.export:
+            results = self.export_inventory(ignore_vars_plugins=self.options.ignore_vars_plugins)
 
         if results:
             # FIXME: pager?
