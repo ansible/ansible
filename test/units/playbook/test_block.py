@@ -176,17 +176,30 @@ class TestBlockCompare(unittest.TestCase,
                        CopyCompare,
                        CopyExcludeTasksCompare):
     def setUp(self):
+        fake_loader = DictDataLoader({})
+
         _block_tasks = [{'action': 'block'}]
         _rescue_tasks = [{'action': 'rescue'}]
         _always_tasks = [{'action': 'always'}]
+
+        parent_block_ds = {'block': [],
+                           'rescue': [],
+                           'always': []
+                           }
+
+        raw_parent_block = Block()
+        parent_block = raw_parent_block.load(parent_block_ds,
+                                             loader=fake_loader)
+        self.parent_block = parent_block
 
         block_ds = {'block': _block_tasks,
                     'rescue': _rescue_tasks,
                     'always': _always_tasks,
                     }
-        raw_block_one = Block()
-        fake_loader = DictDataLoader({})
-        block_one = raw_block_one.load(block_ds, loader=fake_loader)
+        raw_block_one = Block(parent_block=parent_block)
+        block_one = raw_block_one.load(block_ds,
+                                       parent_block=parent_block,
+                                       loader=fake_loader)
         # object with value A
         self.one = block_one
 
@@ -220,11 +233,21 @@ class TestBlockCompare(unittest.TestCase,
         self.assertNotEqual(self.one.rescue, self.one_copy_exclude_tasks.rescue)
         self.assertNotEqual(self.one.always, self.one_copy_exclude_tasks.always)
 
-    def test_copy_exclude_eq(self):
+    def test_copy_exclude_parent_eq(self):
+        # print(self.one)
+        # print(self.one_copy_exclude_parent)
         self.assertEqual(self.one, self.one_copy_exclude_parent)
 
-    def test_copy_exclude_parent_eq(self):
-        self.assertFalse(self.one._parent == self.one_copy_exclude_parent._parent)
+    def test_copy_exclude_parent_compare_parent_eq(self):
+        # print(self.one)
+        # print(self.one._parent)
+        # print(self.one_copy_exclude_parent)
+        # print(self.one_copy_exclude_parent._parent)
+        self.assertFalse(self.one._parent == self.one_copy_exclude_parent._parent,
+                         'The parent of "%s" (%s) compares equally to parent of "%s" (%s) but should not' %
+                         (self.one, self.one._parent,
+                          self.one_copy_exclude_parent,
+                          self.one_copy_exclude_parent._parent))
 
     def test_copy_exclude_parent_ne(self):
         self.assertNotEqual(self.one._parent, self.one_copy_exclude_parent._parent)
