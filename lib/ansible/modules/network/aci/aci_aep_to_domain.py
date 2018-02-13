@@ -193,6 +193,9 @@ def main():
             ['state', 'absent', ['aep', 'domain', 'domain_type']],
             ['state', 'present', ['aep', 'domain', 'domain_type']],
         ],
+        required_together=[
+            ['domain', 'domain_type']
+        ],
     )
 
     aep = module.params['aep']
@@ -217,7 +220,7 @@ def main():
     elif domain_type == 'vmm':
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
-        aci_domain = None
+        domain_mo = None
 
     aci = ACIModule(module)
     aci.construct_url(
