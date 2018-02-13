@@ -74,22 +74,22 @@ clean:
 
 # TODO: make generate_man output dir cli option
 cli: $(GENERATE_CLI)
-	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/ --output-format rst ../../lib/ansible/cli/*.py
+	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
 
 keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
-	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
+	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/reference_appendices/ -d ./keyword_desc.yml
 
 config:
-	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/ -d ../../lib/ansible/config/base.yml
+	PYTHONPATH=../../lib $(CONFIG_DUMPER) --template-file=../templates/config.rst.j2 --output-dir=rst/reference_appendices/ -d ../../lib/ansible/config/base.yml
 
 modules: $(FORMATTER) ../templates/plugin.rst.j2
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/module_docs/ $(MODULE_ARGS)
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/modules/ $(MODULE_ARGS)
 
 plugins: $(FORMATTER) ../templates/plugin.rst.j2
 	@echo "looping over doc plugins"
 	for plugin in $(DOC_PLUGINS); \
 	do \
-		PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst/ $(PLUGIN_ARGS); \
+		PYTHONPATH=../../lib $(FORMATTER) -t rst --plugin-type $$plugin --template-dir=../templates --module-dir=../../lib/ansible/plugins/$$plugin -o rst $(PLUGIN_ARGS); \
 	done
 
 testing:

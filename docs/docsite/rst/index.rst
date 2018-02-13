@@ -1,13 +1,12 @@
+:tocdepth: 3
+
 Ansible Documentation
 =====================
 
 About Ansible
 `````````````
 
-Welcome to the Ansible documentation!
-
-Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks
-such as continuous deployments or zero downtime rolling updates.
+Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks such as continuous deployments or zero downtime rolling updates.
 
 Ansible's main goals are simplicity and ease-of-use. It also has a strong focus on security and reliability, featuring a minimum of moving parts, usage of OpenSSH for transport (with other transports and pull modes as alternatives), and a language that is designed around auditability by humans--even those not familiar with the program.
 
@@ -20,32 +19,76 @@ This documentation covers the current released version of Ansible (2.3) and also
 
 Ansible, Inc. releases a new major release of Ansible approximately every two months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup. However, the community around new modules and plugins being developed and contributed moves very quickly, typically adding 20 or so new modules in each release.
 
-.. _an_introduction:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Installation, Upgrade & Configuration
 
-   intro
-   quickstart
-   playbooks
-   playbooks_special_topics
-   modules
-   module_docs/modules_by_category
-   vault
-   command_line_tools
-   plugins_by_category
-   guides
-   dev_guide/index
-   tower
+   installation_guide/index
+   porting_guides/porting_guides
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Using Ansible
+
+   user_guide/index
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contributing to Ansible
+
    community/index
-   network
-   galaxy
-   test_strategies
-   faq
-   config
-   glossary
-   YAMLSyntax
-   porting_guides
-   python_3_support
-   release_and_maintenance
-   windows
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Extending Ansible
+
+   dev_guide/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Scenario Guides
+
+   networking_guide/network
+   ..scenario_guides/guides
+   scenario_guides/guide_aws
+   scenario_guides/guide_azure
+   scenario_guides/guide_rax
+   scenario_guides/guide_gce
+   scenario_guides/guide_cloudstack
+   scenario_guides/guide_vagrant
+   scenario_guides/guide_docker
+   scenario_guides/guide_packet
+   scenario_guides/guide_rolling_upgrade
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference & Appendices
+
+   reference_appendices/modules_by_category
+   reference_appendices/playbooks_keywords
+   reference_appendices/galaxy
+   reference_appendices/common_return_values
+   reference_appendices/config
+   reference_appendices/YAMLSyntax
+   reference_appendices/python_3_support
+   reference_appendices/release_and_maintenance
+   reference_appendices/test_strategies
+   reference_appendices/faq
+   reference_appendices/glossary
+   reference_appendices/tower
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Release Notes
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Roadmaps
+
+   roadmap/ROADMAP_2_1.rst
+   roadmap/ROADMAP_2_2.rst
+   roadmap/ROADMAP_2_3.rst
+   roadmap/ROADMAP_2_4.rst
+   roadmap/ROADMAP_2_5.rst
