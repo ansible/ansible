@@ -252,6 +252,9 @@ module = AnsibleModule(
     argument_spec=fields,
     supports_check_mode=True)
 
+if not HAS_MOIRA_CLIENT:
+    module.fail_json(msg=MISSING_MOIRA_CLIENT)
+
 moira_api = Moira(
     api_url=module.params['api_url'],
     auth_custom=module.params['auth_custom'],
@@ -469,9 +472,6 @@ def main():
     '''
 
     warnings = []
-
-    if not HAS_MOIRA_CLIENT:
-        module.fail_json(msg=MISSING_MOIRA_CLIENT)
 
     manager = MoiraTriggerManager(dry_run=module.check_mode)
     trigger = MoiraTrigger(trigger_preimage=preimage)
