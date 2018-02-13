@@ -103,7 +103,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import remove_default_spec
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 try:
@@ -178,7 +178,7 @@ def map_config_to_obj(module):
                 })
 
     except ConnectionError:
-        out = run_commands(module, 'show running-config | include ip route')[0]
+        out = get_config(module, flags='| include ip route')
 
         for line in out.splitlines():
             splitted_line = line.split()
