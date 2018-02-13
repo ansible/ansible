@@ -1,9 +1,6 @@
-*********************
-Developer Information
-*********************
-
-Ansible Developer Guide
-=======================
+***************
+Developer Guide
+***************
 
 Welcome to the Ansible Developer Guide!
 
@@ -13,16 +10,10 @@ To get started, select one of the following topics.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    overview_architecture
    developing_modules
-   developing_modules_general
-   developing_modules_general_windows
-   developing_modules_documenting
-   developing_modules_best_practices
-   developing_modules_checklist
-   developing_modules_in_groups
    developing_program_flow_modules
    developing_module_utilities
    developing_plugins
