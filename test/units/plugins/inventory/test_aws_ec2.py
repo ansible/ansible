@@ -24,6 +24,10 @@ __metaclass__ = type
 import pytest
 import datetime
 
+# Just to test that we have the prerequisite for InventoryModule and instance_data_filter_to_boto_attr
+boto3 = pytest.importorskip('boto3')
+botocore = pytest.importorskip('botocore')
+
 from ansible.errors import AnsibleError
 from ansible.plugins.inventory.aws_ec2 import InventoryModule
 from ansible.plugins.inventory.aws_ec2 import instance_data_filter_to_boto_attr
