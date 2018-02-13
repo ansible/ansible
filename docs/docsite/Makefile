@@ -74,6 +74,7 @@ clean:
 
 # TODO: make generate_man output dir cli option
 cli: $(GENERATE_CLI)
+	mkdir -p rst/cli
 	PYTHONPATH=../../lib $(GENERATE_CLI) --template-file=../templates/cli_rst.j2 --output-dir=rst/cli/ --output-format rst ../../lib/ansible/cli/*.py
 
 keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
