@@ -63,6 +63,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * `osx_say` module was renamed into `say`.
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
+* Reorganized the documentation into distinct guides for different target audiences.
 
 #### Removed Modules (previously deprecated):
 * accelerate.
