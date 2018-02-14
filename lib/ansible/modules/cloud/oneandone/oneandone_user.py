@@ -27,7 +27,7 @@ short_description: Configure 1&1 users.
 description:
      - Create, remove, update a user
        This module has a dependency on 1and1 >= 1.0
-version_added: "2.1"
+version_added: "2.5"
 options:
   state:
     description:
