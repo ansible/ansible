@@ -178,8 +178,10 @@ class CobblerInventory(object):
 
         # Cache related
         cache_path = os.getenv('COBBLER_cache_path', None)
-        self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
-        self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
+        if(cache_path != None) :
+            self.cache_path_cache = cache_path + "/ansible-cobbler.cache"
+            self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
+
         self.cache_max_age = int(os.getenv('COBBLER_cache_max_age', "30"))
         
         # ignore_settings is used to ignore the settings file, for use in Ansible
