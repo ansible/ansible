@@ -100,6 +100,30 @@
     that:
     - not get_request_with_dest_again.changed
 
+- name: test request with creates option should skip
+  win_uri:
+    url: http://{{httpbin_host}}/get
+    creates: '{{test_uri_path}}\get.json'
+  register: request_with_creates_skipped
+
+- name: assert test request with creates option should skip
+  assert:
+    that:
+    - not request_with_creates_skipped.changed
+    - request_with_creates_skipped.skipped
+
+- name: test request with creates option should not skip
+  win_uri:
+    url: http://{{httpbin_host}}/get
+    creates: '{{test_uri_path}}\fake.json'
+  register: request_with_creates_not_skipped
+
+- name: assert test request with creates option should not skip
+  assert:
+    that:
+    - not request_with_creates_not_skipped.changed
+    - request_with_creates_not_skipped.skipped is not defined
+
 - name: post request with return_content, dest and different content
   win_uri:
     url: http://{{httpbin_host}}/post

@@ -37,6 +37,11 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 $client_cert_password = Get-AnsibleParam -obj $params -name "client_cert_password" -type "str"
 
+$result = @{
+    changed = $false
+    url = $url
+}
+
 if ($creates -and (Test-AnsiblePath -Path $creates)) {
     $result.skipped = $true
     Exit-Json -obj $result -message "The 'creates' file or directory ($creates) already exists."
@@ -45,11 +50,6 @@ if ($creates -and (Test-AnsiblePath -Path $creates)) {
 if ($removes -and -not (Test-AnsiblePath -Path $removes)) {
     $result.skipped = $true
     Exit-Json -obj $result -message "The 'removes' file or directory ($removes) does not exist."
-}
-
-$result = @{
-    changed = $false
-    url = $url
 }
 
 if ($use_basic_parsing) {
