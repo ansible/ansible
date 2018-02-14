@@ -224,7 +224,7 @@ options:
     - ' - C(id) (string): Property id - required'
     - ' - C(value) (string): Property value'
     - ' - C(type) (string): Value type, string type by default.'
-    - ' - C(operation) (string): add, edit, remove. Required only when removing properties. If property present the parameter will be defaulted to "edit".'
+    - ' - C(operation): C(remove): This attribute is required only when removing properties'
     version_added: '2.6'
 extends_documentation_fragment: vmware.documentation
 '''
@@ -1009,8 +1009,6 @@ class PyVmomiHelper(PyVmomi):
             if not x.get('id'):
                 self.module.fail_json(msg="id is required to set vApp property")
 
-        is_vapp_changed = False
-
         new_vmconfig_spec = vim.vApp.VmConfigSpec()
 
         # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
@@ -1025,18 +1023,17 @@ class PyVmomiHelper(PyVmomi):
         new_property_index = max(all_keys) + 1 if all_keys else 0
 
         for property_id, property_spec in vapp_properties_to_change.items():
-
+            is_property_changed = False
             new_vapp_property_spec = vim.vApp.PropertySpec()
 
-            if property_id in vapp_properties_current.keys():
-                new_vapp_property_spec.operation = property_spec.get('operation', 'edit')
-
-                if new_vapp_property_spec.operation == 'remove':
+            if property_id in vapp_properties_current:
+                if property_spec.get('operation') == 'remove':
+                    new_vapp_property_spec.operation = 'remove'
                     new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
-                    is_vapp_changed = True
+                    is_property_changed = True
                 else:
                     # this is 'edit' branch
-                    # updating only required properties
+                    new_vapp_property_spec.operation = 'edit'
                     new_vapp_property_spec.info = vapp_properties_current[property_id]
                     try:
                         for property_name, property_value in property_spec.items():
@@ -1049,7 +1046,7 @@ class PyVmomiHelper(PyVmomi):
                             # Updating attributes only if needed
                             if getattr(new_vapp_property_spec.info, property_name) != property_value:
                                 setattr(new_vapp_property_spec.info, property_name, property_value)
-                                is_vapp_changed = True
+                                is_property_changed = True
 
                     except Exception as e:
                         self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error: %s"
@@ -1077,12 +1074,10 @@ class PyVmomiHelper(PyVmomi):
                 new_vapp_property_spec.info = property_info
                 new_vapp_property_spec.info.key = new_property_index
                 new_property_index += 1
-
-                is_vapp_changed = True
-
-            new_vmconfig_spec.property.append(new_vapp_property_spec)
-
-        if is_vapp_changed:
+                is_property_changed = True
+            if is_property_changed:
+                new_vmconfig_spec.property.append(new_vapp_property_spec)
+        if new_vmconfig_spec.property:
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
