@@ -117,27 +117,40 @@ def map_obj_to_commands(updates, module):
         obj_in_have = search_obj_in_list(name, have)
         if state == 'absent' and obj_in_have:
             if not ipv4 and not ipv6 and (obj_in_have['ipv4'] or obj_in_have['ipv6']):
-                commands.append('delete interfaces ethernet ' + name + ' address')
+                if name == "lo":
+                    commands.append('delete interfaces loopback lo address')
+                else:
+                    commands.append('delete interfaces ethernet ' + name + ' address')
             else:
                 if ipv4 and obj_in_have['ipv4']:
-                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv4)
+                    if name == "lo":
+                        commands.append('delete interfaces loopback lo address ' + ipv4)
+                    else:
+                        commands.append('delete interfaces ethernet ' + name + ' address ' + ipv4)
                 if ipv6 and obj_in_have['ipv6']:
-                    commands.append('delete interfaces ethernet ' + name + ' address ' + ipv6)
+                    if name == "lo":
+                        commands.append('delete interfaces loopback lo address ' + ipv6)
+                    else:
+                        commands.append('delete interfaces ethernet ' + name + ' address ' + ipv6)
         elif (state == 'present' and obj_in_have):
             if ipv4 and ipv4 != obj_in_have['ipv4']:
-                commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv4)
+                if name == "lo":
+                    commands.append('set interfaces loopback lo address ' + ipv4)
+                else:
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv4)
 
             if ipv6 and ipv6 != obj_in_have['ipv6']:
-                commands.append('set interfaces ethernet ' + name + ' address ' +
-                                ipv6)
+                if name == "lo":
+                    commands.append('set interfaces loopback lo address ' + ipv6)
+                else:
+                    commands.append('set interfaces ethernet ' + name + ' address ' + ipv6)
 
     return commands
 
 
 def map_config_to_obj(module):
     obj = []
-    output = run_commands(module, ['show interfaces ethernet'])
+    output = run_commands(module, ['show interfaces'])
     lines = output[0].splitlines()
 
     if len(lines) > 3:
