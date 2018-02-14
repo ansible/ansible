@@ -193,6 +193,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
         self.platform = args.platform  # type: list [str]
         self.inventory = args.inventory  # type: str
+        self.testcase = args.testcase  # type: str
 
 
 class UnitsConfig(TestConfig):
