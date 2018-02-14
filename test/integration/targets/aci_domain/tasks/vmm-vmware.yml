@@ -41,6 +41,16 @@
   aci_domain: *domain_present
   register: nm_add_domain
 
+- name: Verify add_domain
+  assert:
+    that:
+    - cm_add_domain.changed == nm_add_domain.changed == true
+    - 'cm_add_domain.sent == nm_add_domain.sent == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
+    - 'cm_add_domain.proposed == nm_add_domain.proposed == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
+    - cm_add_domain.current == cm_add_domain.previous == nm_add_domain.previous == []
+    - nm_add_domain.current.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
+    - nm_add_domain.current.0.vmmDomP.attributes.name == 'vmm_dom'
+
 - name: Add VMM domain again (check_mode)
   aci_domain: *domain_present
   check_mode: yes
@@ -50,16 +60,10 @@
   aci_domain: *domain_present
   register: nm_add_domain_again
 
-- name: Verify add_domain
+- name: Verify add_domain_again
   assert:
     that:
-    - cm_add_domain.changed == nm_add_domain.changed == true
     - cm_add_domain_again.changed == nm_add_domain_again.changed == false
-    - 'cm_add_domain.sent == nm_add_domain.sent == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
-    - 'cm_add_domain.proposed == nm_add_domain.proposed == {"vmmDomP": {"attributes": {"name": "vmm_dom"}}}'
-    - cm_add_domain.current == cm_add_domain.previous == nm_add_domain.previous == []
-    - nm_add_domain.current.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
-    - nm_add_domain.current.0.vmmDomP.attributes.name == 'vmm_dom'
 
 
 # QUERY ALL DOMAINS
@@ -86,8 +90,8 @@
   assert:
     that:
     - cm_query_all_domains.changed == nm_query_all_domains.changed == false
-    # NOTE: Order of domains is not stable between calls
-    #- cm_query_all_domains == nm_query_all_domains
+    - cm_query_all_domains == nm_query_all_domains
+    - nm_query_all_domains.current|length >= 1
 
 
 # QUERY A DOMAIN
@@ -125,6 +129,15 @@
   aci_domain: *domain_absent
   register: nm_remove_domain
 
+- name: Verify remove_domain
+  assert:
+    that:
+    - cm_remove_domain.changed == nm_remove_domain.changed == true
+    - cm_remove_domain.current == cm_remove_domain.previous == nm_remove_domain.previous
+    - nm_remove_domain.previous.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
+    - nm_remove_domain.previous.0.vmmDomP.attributes.name == 'vmm_dom'
+    - nm_remove_domain.current == []
+
 - name: Remove VMM domain again (check_mode)
   aci_domain: *domain_absent
   check_mode: yes
@@ -134,25 +147,26 @@
   aci_domain: *domain_absent
   register: nm_remove_domain_again
 
-- name: Verify remove_domain
+- name: Verify remove_domain_again
   assert:
     that:
-    - cm_remove_domain.changed == nm_remove_domain.changed == true
     - cm_remove_domain_again.changed == nm_remove_domain_again.changed == false
-    - cm_remove_domain.current == cm_remove_domain.previous == nm_remove_domain.previous
-    - nm_remove_domain.previous.0.vmmDomP.attributes.dn == 'uni/vmmp-VMware/dom-vmm_dom'
-    - nm_remove_domain.previous.0.vmmDomP.attributes.name == 'vmm_dom'
-    - nm_remove_domain.current == []
 
 
 # QUERY NON-EXISTING DOMAIN
 - name: Query non-existing VMM domain (check_mode)
-  aci_domain: *domain_query
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
   check_mode: yes
   register: cm_query_non_domain
 
 - name: Query non-existing VMM domain (normal mode)
-  aci_domain: *domain_query
+  aci_domain:
+    <<: *domain_query
+    domain: vmm_dom
+    vm_provider: vmware
   register: nm_query_non_domain
 
 - name: Verify query_non_domain
