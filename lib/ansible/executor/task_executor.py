@@ -16,7 +16,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -272,12 +272,15 @@ class TaskExecutor:
         index_var = None
         label = None
         loop_pause = 0
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         if self._task.loop_control:
-            loop_var = self._task.loop_control.loop_var
-            index_var = self._task.loop_control.index_var
-            loop_pause = self._task.loop_control.pause
+            # FIXME: move this to the object itself to allow post_validate to take care of templating
+            loop_var = templar.template(self._task.loop_control.loop_var)
+            index_var = templar.template(self._task.loop_control.index_var)
+            loop_pause = templar.template(self._task.loop_control.pause)
             # the these may be 'None', so we still need to default to something useful
-            label = self._task.loop_control.label or ('{{' + loop_var + '}}')
+            # this is tempalted below after an item is assigned
+            label = (self._task.loop_control.label or ('{{' + loop_var + '}}'))
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -296,7 +299,10 @@ class TaskExecutor:
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                time.sleep(loop_pause)
+                try:
+                    time.sleep(float(loop_pause))
+                except ValueError as e:
+                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
             else:
                 ran_once = True
 
@@ -326,7 +332,6 @@ class TaskExecutor:
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             if label is not None:
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
                 res['_ansible_item_label'] = templar.template(label)
 
             self._rslt_q.put(
@@ -402,7 +407,7 @@ class TaskExecutor:
                     # * lists can be squashed together
                     # * dicts could squash entries that match in all cases except the
                     #   name or pkg field.
-        except:
+        except Exception:
             # Squashing is an optimization.  If it fails for any reason,
             # simply use the unoptimized list of items.
 
