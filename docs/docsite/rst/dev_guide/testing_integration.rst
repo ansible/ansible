@@ -219,6 +219,11 @@ To run integration tests for a specific module::
 
     ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan
 
+To run a single test case on a specific module::
+
+    # Only run vyos_vlan/tests/cli/basic.yaml
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan --testcase basic
+
 To run integration tests for a specific transport::
 
     # Only run nxapi test
