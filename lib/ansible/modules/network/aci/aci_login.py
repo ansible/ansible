@@ -19,7 +19,6 @@ description:
 author:
 - Patrick Ogenstad (@ogenstad)
 version_added: '2.6'
-options:
 extends_documentation_fragment: aci
 '''
 
