@@ -145,8 +145,8 @@ def main():
 
     stats = ""
     for line in ping_results_list:
-      if line.startswith('Success'):
-        stats = line
+        if line.startswith('Success'):
+            stats = line
 
     success, rx, tx, rtt = parse_ping(stats)
     loss = abs(100 - int(success))
