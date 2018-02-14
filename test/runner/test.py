@@ -264,6 +264,10 @@ def parse_args():
                                      metavar='PATH',
                                      help='path to inventory used for tests')
 
+    network_integration.add_argument('--testcase',
+                                     metavar='TESTCASE',
+                                     help='limit a test to a specified testcase').completer = complete_network_testcase
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -646,6 +650,31 @@ def complete_network_platform(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_network_testcase(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    testcases = []
+
+    # since testcases are module specific, don't autocomplete if more than one
+    # module is specidied
+    if len(parsed_args.include) != 1:
+        return []
+
+    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    connections = os.listdir(test_dir)
+
+    for conn in connections:
+        if os.path.isdir(os.path.join(test_dir, conn)):
+            for testcase in os.listdir(os.path.join(test_dir, conn)):
+                if testcase.startswith(prefix):
+                    testcases.append(testcase.split('.')[0])
+
+    return testcases
 
 
 def complete_sanity_test(prefix, parsed_args, **_):
