@@ -97,7 +97,7 @@
   assert:
     that:
       - query_vxlan.changed == false
-      - query_vxlan.previous | length == 1
+      - query_vxlan.current | length == 1
       - '"infra/vxlanns-anstest.json" in query_vxlan.url'
 
 - name: get created static vlan pool - get class works
@@ -110,7 +110,7 @@
   assert:
     that:
       - query_vxlan_all.changed == false
-      - query_vxlan_all.previous | length > 1
+      - query_vxlan_all.current | length > 1
       - '"class/fvnsVxlanInstP.json" in query_vxlan_all.url'
 
 - name: delete vxlan pool - check mode works

@@ -49,15 +49,15 @@
     <<: *create_snapshot
     state: preview
     compare_export_policy: anstest
-    compare_snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
-    snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
+    compare_snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-2].configSnapshot.attributes.name }}"
   register: rollback_preview
 
 - name: rollback to snapshot
   aci_config_rollback: &aci_rollback
     <<: *create_snapshot
     state: rollback
-    snapshot: "{{ snapshots.previous.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
+    snapshot: "{{ snapshots.current.0.configSnapshotCont.children[-1].configSnapshot.attributes.name }}"
   ignore_errors: yes
   register: rollback_missing_param
 
@@ -69,7 +69,7 @@
     import_mode: atomic
   register: rollback_rollback
 
-- name: pause execution to let rollback take affect
+- name: pause execution to let rollback take effect
   pause:
     seconds: 15
 
