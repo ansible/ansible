@@ -218,6 +218,7 @@ def update_role(module, oneandone_conn):
     _role_clone_name = module.params.get('role_clone_name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     changed = False
 
@@ -283,7 +284,8 @@ def update_role(module, oneandone_conn):
                 oneandone_conn,
                 OneAndOneResources.role,
                 role['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
 
         return (changed, role)
     except Exception as ex:
@@ -313,6 +315,7 @@ def create_role(module, oneandone_conn):
     name = module.params.get('name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     try:
         role = oneandone_conn.create_role(name=name)
@@ -322,7 +325,8 @@ def create_role(module, oneandone_conn):
                 oneandone_conn,
                 OneAndOneResources.role,
                 role['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
 
         changed = True if role else False
 
@@ -359,8 +363,10 @@ def main():
         argument_spec=dict(
             auth_token=dict(
                 type='str',
-                default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
-                no_log=True),
+                default=os.environ.get('ONEANDONE_AUTH_TOKEN')),
+            api_url=dict(
+                type='str',
+                default=os.environ.get('ONEANDONE_API_URL')),
             name=dict(type='str'),
             description=dict(type='str'),
             role_state=dict(
@@ -387,7 +393,8 @@ def main():
             role_clone_name=dict(type='str'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
-            state=dict(type='str', default='present'),
+            wait_interval=dict(type='int', default=5),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'update']),
         )
     )
 
@@ -398,10 +405,12 @@ def main():
         module.fail_json(
             msg='auth_token parameter is required.')
 
-    auth_token = module.params.get('auth_token')
-
-    oneandone_conn = oneandone.client.OneAndOneService(
-        api_token=auth_token)
+    if not module.params.get('api_url'):
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'))
+    else:
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'), api_url=module.params.get('api_url'))
 
     state = module.params.get('state')
 
