@@ -84,7 +84,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length >= 1
+      - binding_query.current | length >= 1
       - '"api/mo/uni/infra/nprof-sw_name_test/leaves-leaf_selector_name-typ-range.json" in binding_query.url'
 
 - name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode

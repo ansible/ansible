@@ -101,21 +101,21 @@
   assert:
     that:
       - query_ap.changed == false
-      - query_ap.previous | length == 1
-      - 'query_ap.previous.0.fvAp.attributes.name == "anstest"'
+      - query_ap.current | length == 1
+      - 'query_ap.current.0.fvAp.attributes.name == "anstest"'
       - '"tn-anstest/ap-anstest.json" in query_ap.url'
       - query_ap_tenant.changed == false
-      - query_ap_tenant.previous | length == 1
-      - query_ap_tenant.previous.0.fvTenant.children | length == 2
+      - query_ap_tenant.current | length == 1
+      - query_ap_tenant.current.0.fvTenant.children | length == 2
       - '"rsp-subtree-class=fvAp" in query_ap_tenant.filter_string'
       - '"tn-anstest.json" in query_ap_tenant.url'
       - query_ap_ap.changed == false
-      - query_ap_ap.previous != []
-      - query_ap_ap.previous.0.fvAp is defined
+      - query_ap_ap.current != []
+      - query_ap_ap.current.0.fvAp is defined
       - '"query-target-filter=eq(fvAp.name, \"anstest\")" in query_ap_ap.filter_string'
       - '"class/fvAp.json" in query_ap_ap.url'
       - query_all.changed == false
-      - query_all.previous | length > 1
+      - query_all.current | length > 1
       - '"class/fvAp.json" in query_all.url'
 
 - name: delete ap - check_mode works
