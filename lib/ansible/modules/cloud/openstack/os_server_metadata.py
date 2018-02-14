@@ -33,7 +33,7 @@ DOCUMENTATION = '''
 module: os_server_metadata
 short_description: Add/Update/Delete Metadata in Compute Instances from
 OpenStack extends_documentation_fragment: openstack
-version_added: "2.2"
+version_added: "2.6"
 author: "Mario Santos (@ruizink)"
 description:
    - Add, Update or Remove metadata in compute instances from OpenStack.
