@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +28,7 @@ short_description: Configure 1&1 VPN.
 description:
      - Create, remove, update vpn
        This module has a dependency on 1and1 >= 1.0
-version_added: "2.5"
+version_added: "2.6"
 options:
   auth_token:
     description:
@@ -41,7 +42,7 @@ options:
   name:
     description:
       - VPN name used with present state. Used as identifier (id or name) when used with absent state.
-    maxLength: 128
+        maxLength=128
     required: true
   vpn:
     description:
@@ -49,8 +50,7 @@ options:
     required: true
   description:
     description:
-      - VPN description.
-    maxLength: 256
+      - VPN description. maxLength=256
     required: false
   datacenter_id:
     description:
@@ -107,6 +107,14 @@ EXAMPLES = '''
     name: ansible VPN updated
     state: absent
 
+'''
+
+RETURN = '''
+vpn:
+    description: Information about the vpn that was processed
+    type: dict
+    sample: '{"id": "F77CC589EBC120905B4F4719217BFF6D", "name": "My VPN"}'
+    returned: always
 '''
 
 import os
