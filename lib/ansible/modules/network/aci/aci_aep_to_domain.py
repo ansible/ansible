@@ -194,7 +194,7 @@ def main():
             ['state', 'present', ['aep', 'domain', 'domain_type']],
         ],
         required_together=[
-            ['domain', 'domain_type']
+            ['domain', 'domain_type'],
         ],
     )
 

@@ -186,13 +186,13 @@ VM_PROVIDER_MAPPING = dict(
 
 POOL_MAPPING = dict(
     vlan=dict(
-        aci_mo='uni/infra/vlanns-',
+        aci_mo='uni/infra/vlanns-{0}',
     ),
     vxlan=dict(
-        aci_mo='uni/infra/vxlanns-',
+        aci_mo='uni/infra/vxlanns-{0}',
     ),
     vsan=dict(
-        aci_mo='uni/infra/vsanns-',
+        aci_mo='uni/infra/vsanns-{0}',
     ),
 )
 
@@ -265,7 +265,11 @@ def main():
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
-    pool_mo = POOL_MAPPING[pool_type]["aci_mo"] + pool_name
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
+
+    pool_mo = POOL_MAPPING[pool_type]["aci_mo"].format(pool_name)
 
     aci = ACIModule(module)
     aci.construct_url(

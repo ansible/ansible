@@ -260,7 +260,7 @@ def main():
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
         domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
         encap_mode=dict(type='str', choices=['unknown', 'vlan', 'vxlan']),
         multicast_address=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -291,13 +291,13 @@ def main():
 
     if domain_type != 'vmm':
         if vm_provider is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'vm_provider'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'vm_provider'".format(domain_type))
         if encap_mode is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have an 'encap_mode'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'encap_mode'".format(domain_type))
         if multicast_address is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'multicast_address'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'multicast_address'".format(domain_type))
         if vswitch is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'vswitch'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'vswitch'".format(domain_type))
 
     if dscp is not None and domain_type not in ['l2dom', 'l3dom']:
         module.fail_json(msg="DSCP values can only be assigned to 'l2ext and 'l3ext' domains")
@@ -323,6 +323,10 @@ def main():
         domain_class = 'vmmDomP'
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
 
     aci = ACIModule(module)
     aci.construct_url(
