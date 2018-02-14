@@ -54,6 +54,14 @@ $use_basic_parsing = Get-AnsibleParam -obj $params -name "use_basic_parsing" -ty
 $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
 $client_cert = Get-AnsibleParam -obj $params -name "client_cert" -type "path"
 
+$result = @{
+    changed = $false
+    content_type = $content_type
+    method = $method
+    url = $url
+    use_basic_parsing = $use_basic_parsing
+}
+
 if ($creates -and (Test-Path -Path $creates)) {
     $result.skipped = $true
     Exit-Json $result "The 'creates' file or directory ($creates) already exists."
@@ -62,14 +70,6 @@ if ($creates -and (Test-Path -Path $creates)) {
 if ($removes -and -not (Test-Path -Path $removes)) {
     $result.skipped = $true
     Exit-Json $result "The 'removes' file or directory ($removes) does not exist."
-}
-
-$result = @{
-    changed = $false
-    content_type = $content_type
-    method = $method
-    url = $url
-    use_basic_parsing = $use_basic_parsing
 }
 
 # Disable redirection if requested
