@@ -20,9 +20,13 @@ __metaclass__ = type
 import optparse
 from operator import attrgetter
 
+from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.inventory.host import Host
+from ansible.plugins.loader import vars_loader
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -80,18 +84,23 @@ class InventoryCLI(CLI):
         action_group.add_option("--host", action="store", default=None, dest='host', help='Output specific host info, works as inventory script')
         action_group.add_option("--graph", action="store_true", default=False, dest='graph',
                                 help='create inventory graph, if supplying pattern it must be a valid group name')
-        action_group.add_option("--export", action="store_true", default=False, dest='export',
-                                help='Create output optimized for exporting the inventory, '
-                                     'this will show a version closer to the source and not how Ansible itself consumes it.')
         self.parser.add_option_group(action_group)
 
         # Options
+
+        # graph
         self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
                                help='Use YAML format instead of default JSON, ignored for --graph')
         self.parser.add_option("--vars", action="store_true", default=False, dest='show_vars',
                                help='Add vars to graph display, ignored unless used with --graph')
-        self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
-                               help="When doing an --export, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+
+        # list
+        self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
+                               help="When doing an --list, represent in a way that is optimized for export,"
+                                    "not as an accurate representation of how Ansible has processed it")
+        # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
+        #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
+
         super(InventoryCLI, self).parse()
 
         display.verbosity = self.options.verbosity
@@ -100,7 +109,7 @@ class InventoryCLI(CLI):
 
         # there can be only one! and, at least, one!
         used = 0
-        for opt in (self.options.list, self.options.host, self.options.graph, self.options.export):
+        for opt in (self.options.list, self.options.host, self.options.graph):
             if opt:
                 used += 1
         if used == 0:
@@ -113,9 +122,6 @@ class InventoryCLI(CLI):
             self.options.pattern = self.args[0]
         else:
             self.options.pattern = 'all'
-
-    def export_inventory(ignore_vars_plugins=False):
-        pass
 
     def run(self):
 
@@ -171,9 +177,6 @@ class InventoryCLI(CLI):
                 results = self.json_inventory(top)
             results = self.dump(results)
 
-        elif self.options.export:
-            results = self.export_inventory(ignore_vars_plugins=self.options.ignore_vars_plugins)
-
         if results:
             # FIXME: pager?
             display.display(results)
@@ -193,11 +196,60 @@ class InventoryCLI(CLI):
 
         return results
 
+    # FIXME: refactor to use same for VM
+    def get_plugin_vars(self, path, entity):
+
+        data = {}
+
+        def _get_plugin_vars(plugin, path, entities):
+            data = {}
+            try:
+                data = plugin.get_vars(self.loader, path, entity)
+            except AttributeError:
+                try:
+                    if isinstance(entity, Host):
+                        data.update(plugin.get_host_vars(entity.name))
+                    else:
+                        data.update(plugin.get_group_vars(entity.name))
+                except AttributeError:
+                    if hasattr(plugin, 'run'):
+                        raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                    else:
+                        raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+            return data
+
+        for plugin in vars_loader.all():
+            data = combine_vars(data, _get_plugin_vars(plugin, path, entity))
+
+        return data
+
+    def _get_group_variables(self, group):
+
+        # get info from inventory source
+        res = group.get_vars()
+
+        # FIXME: add switch to skip vars plugins
+        # add vars plugin info
+        for inventory_dir in self.inventory._sources:
+            res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
+
+        return res
+
     def _get_host_variables(self, host):
-        if self._new_api:
-            hostvars = self.vm.get_vars(host=host)
+
+        if self.options.export:
+            hostvars = host.get_vars()
+
+            # FIXME: add switch to skip vars plugins
+            # add vars plugin info
+            for inventory_dir in self.inventory._sources:
+                hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
         else:
-            hostvars = self.vm.get_vars(self.loader, host=host)
+            if self._new_api:
+                hostvars = self.vm.get_vars(host=host, include_hostvars=False)
+            else:
+                hostvars = self.vm.get_vars(self.loader, host=host, include_hostvars=False)
+
         return hostvars
 
     def _get_group(self, gname):
@@ -267,8 +319,11 @@ class InventoryCLI(CLI):
             for subgroup in sorted(group.child_groups, key=attrgetter('name')):
                 results[group.name]['children'].append(subgroup.name)
                 results.update(format_group(subgroup))
+            if self.options.export:
+                results[group.name]['vars'] = self._get_group_variables(group)
 
             self._remove_empty(results[group.name])
+
             return results
 
         results = format_group(top)
@@ -277,8 +332,10 @@ class InventoryCLI(CLI):
         results['_meta'] = {'hostvars': {}}
         hosts = self.inventory.get_hosts()
         for host in hosts:
-            results['_meta']['hostvars'][host.name] = self._get_host_variables(host=host)
-            self._remove_internal(results['_meta']['hostvars'][host.name])
+            hvars =  self._get_host_variables(host)
+            if hvars:
+                self._remove_internal(hvars)
+                results['_meta']['hostvars'][host.name] = hvars
 
         return results
 
@@ -309,7 +366,14 @@ class InventoryCLI(CLI):
                         self._remove_internal(myvars)
                     results[group.name]['hosts'][h.name] = myvars
 
+            if self.options.export:
+
+                gvars = self._get_group_variables(group)
+                if gvars:
+                    results[group.name]['vars'] = gvars
+
             self._remove_empty(results[group.name])
+
             return results
 
         return format_group(top)

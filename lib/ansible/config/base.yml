@@ -1309,6 +1309,14 @@ INVENTORY_ENABLED:
   ini:
   - {key: enable_plugins, section: inventory}
   type: list
+INVENTORY_EXPORT:
+  name: Set ansible-inventory into export mode
+  default: False
+  description: Controls if ansible-inventory will accurately reflect Ansible's view into inventory or its optimized for exporting.
+  env: [{name: ANSIBLE_INVENTORY_EXPORT}]
+  ini:
+  - {key: export, section: inventory}
+  type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
   default: "{{(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))}}"
