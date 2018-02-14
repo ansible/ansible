@@ -134,7 +134,7 @@ class IAMConnection(object):
 
         try:
             results = policy.update(
-                MinimumPasswordLength=min_length,
+                MinimumPasswordLength=min_pw_length,
                 RequireSymbols=require_symbols,
                 RequireNumbers=require_numbers,
                 RequireUppercaseCharacters=require_uppercase,
@@ -152,9 +152,11 @@ class IAMConnection(object):
     def delete_password_policy(self, policy):
         try:
             results = policy.delete()
-            policy.reload()
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Couldn't delete IAM Password Policy")
+            if e.response['Error']['Code'] == 'NoSuchEntity':
+                self.module.exit_json(changed=False, task_status={'IAM': "Couldn't find IAM Password Policy"})
+            else:
+                self.module.fail_json_aws(e, msg="Couldn't delete IAM Password Policy")
         return camel_dict_to_snake_dict(results)
 
 
@@ -178,12 +180,12 @@ def main():
 
     region, conn, aws_connect_params = get_aws_connection_info(module, boto3=True)
     resource = IAMConnection(module, region, **aws_connect_params)
-    policy = resource.AccountPasswordPolicy()
+    policy = resource.connection.AccountPasswordPolicy()
 
     state = module.params.get('state')
 
     if state == 'present':
-        update_result = resource.update_password_policy(policy)
+        update_result = resource.update_password_policy(module, policy)
         module.exit_json(changed=True, task_status={'IAM': update_result})
 
     if state == 'absent':
