@@ -94,19 +94,23 @@ def docker_get(args, container_id, src, dst):
                     options=['-i'], stdout=dst_fd, capture=True)
 
 
-def docker_run(args, image, options):
+def docker_run(args, image, options, cmd=None):
     """
     :type args: EnvironmentConfig
     :type image: str
     :type options: list[str] | None
+    :type cmd: list[str] | None
     :rtype: str | None, str | None
     """
     if not options:
         options = []
 
+    if not cmd:
+        cmd = []
+
     for _ in range(1, 3):
         try:
-            return docker_command(args, ['run'] + options + [image], capture=True)
+            return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
             display.error(ex)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)

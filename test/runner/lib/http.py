@@ -32,13 +32,15 @@ from lib.util import (
 
 class HttpClient(object):
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False):
+    def __init__(self, args, always=False, insecure=False):
         """
         :type args: CommonConfig
         :type always: bool
+        :type insecure: bool
         """
         self.args = args
         self.always = always
+        self.insecure = insecure
 
     def get(self, url):
         """
@@ -72,6 +74,9 @@ class HttpClient(object):
         :rtype: HttpResponse
         """
         cmd = ['curl', '-s', '-S', '-i', '-X', method]
+
+        if self.insecure:
+            cmd += ['--insecure']
 
         if headers is None:
             headers = {}
