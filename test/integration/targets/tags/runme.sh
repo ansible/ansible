@@ -35,3 +35,7 @@ export LC_ALL=en_US.UTF-8
 # Run a tag from a list of tags and always
 [ "$("${COMMAND[@]}" --tags café | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press]" ]
+
+# Run tag with never
+[ "$("${COMMAND[@]}" --tags donever | grep -F Task_with | xargs)" = \
+"Task_with_always_tag TAGS: [always] Task_with_never_tag TAGS: [donever, never]" ]

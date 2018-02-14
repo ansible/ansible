@@ -129,11 +129,23 @@ Example::
           tags:
             - tag1
 
-There are another 3 special keywords for tags, ``tagged``, ``untagged`` and ``all``, which run only tagged, only untagged
+.. versionadded:: 2.5
+
+Another special tag is ``never``, which will prevent a task from running unless a tag is specifically requested.
+
+Example::
+
+    tasks:
+      - debug: msg='{{ showmevar}}'
+        tags: [ 'never', 'debug' ]
+
+In this example, the task will only run when the ``debug`` or ``never`` tag is explicitly requested.
+
+
+There are another 3 special keywords for tags: ``tagged``, ``untagged`` and ``all``, which run only tagged, only untagged
 and all tasks respectively.
 
-By default ansible runs as if ``--tags all`` had been specified.
-
+By default, Ansible runs as if ``--tags all`` had been specified.
 
 .. seealso::
 
