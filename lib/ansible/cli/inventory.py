@@ -335,7 +335,7 @@ class InventoryCLI(CLI):
         results['_meta'] = {'hostvars': {}}
         hosts = self.inventory.get_hosts()
         for host in hosts:
-            hvars =  self._get_host_variables(host)
+            hvars = self._get_host_variables(host)
             if hvars:
                 self._remove_internal(hvars)
                 results['_meta']['hostvars'][host.name] = hvars
