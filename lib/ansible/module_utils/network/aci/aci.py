@@ -67,6 +67,7 @@ def aci_argument_spec():
         host=dict(type='str', required=True, aliases=['hostname']),
         port=dict(type='int', required=False),
         username=dict(type='str', default='admin', aliases=['user']),
+        token=dict(type='str'),
         password=dict(type='str', no_log=True),
         private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
@@ -155,7 +156,9 @@ class ACIModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
             self.params['output_level'] = 'debug'
 
-        if self.params['private_key']:
+        if self.params['token']:
+            self.headers['Cookie'] = self.params['token']
+        elif self.params['private_key']:
             # Perform signature-based authentication, no need to log on separately
             if not HAS_OPENSSL:
                 self.module.fail_json(msg='Cannot use signature-based authentication because pyopenssl is not available')

@@ -36,13 +36,17 @@ options:
   username:
     description:
     - The username to use for authentication.
-    required: yes
+    required: no
     default: admin
     aliases: [ user ]
   password:
     description:
     - The password to use for authentication.
-    required: yes
+    required: no
+  token:
+    description:
+    - Authentication token returned by aci_login module, can be used to authenticate instead of username and password.
+    required: no
   private_key:
     description:
     - PEM formatted file that contains your private key to be used for signature-based authentication.
