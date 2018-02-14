@@ -29,7 +29,7 @@ module: iam_password_policy
 short_description: Update an IAM Password Policy
 description:
     - Module updates an IAM Password Policy on a given AWS account
-version_added: "2.5"
+version_added: "2.6"
 requirements: [ 'botocore', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
@@ -122,15 +122,15 @@ class IAMConnection(object):
         self.region = region
 
     def update_password_policy(self, module, policy):
-        min_pw_length       = module.params.get('min_pw_length')
-        require_symbols     = module.params.get('require_symbols')
-        require_numbers     = module.params.get('require_numbers')
-        require_uppercase   = module.params.get('require_uppercase')
-        require_lowercase   = module.params.get('require_lowercase')
-        allow_pw_change     = module.params.get('allow_pw_change')
-        pw_max_age          = module.params.get('pw_max_age')
-        pw_reuse_prevent    = module.params.get('pw_reuse_prevent')
-        pw_expire           = module.params.get('pw_expire')
+        min_pw_length = module.params.get('min_pw_length')
+        require_symbols = module.params.get('require_symbols')
+        require_numbers = module.params.get('require_numbers')
+        require_uppercase = module.params.get('require_uppercase')
+        require_lowercase = module.params.get('require_lowercase')
+        allow_pw_change = module.params.get('allow_pw_change')
+        pw_max_age = module.params.get('pw_max_age')
+        pw_reuse_prevent = module.params.get('pw_reuse_prevent')
+        pw_expire = module.params.get('pw_expire')
 
         try:
             results = policy.update(
