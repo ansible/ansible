@@ -139,7 +139,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length > 1
+      - binding_query.current | length > 1
       - '"class/fvRsDomAtt.json" in binding_query.url'
 
 - name: delete domain epg binding - check mode

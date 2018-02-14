@@ -930,8 +930,9 @@ class ACIModule(object):
 
     def exit_json(self, **kwargs):
 
-        if self.params['output_level'] in ('debug', 'info'):
-            self.result['previous'] = self.existing
+        if self.params['state'] in ('absent', 'present'):
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['previous'] = self.existing
 
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
@@ -945,13 +946,13 @@ class ACIModule(object):
         self.original = self.existing
         if self.params['state'] in ('absent', 'present'):
             self.get_existing()
-        self.result['current'] = self.existing
 
-        # if self.module._diff and self.original != self.existing:
-        #     self.result['diff'] = dict(
-        #         before=json.dumps(self.original, sort_keys=True, indent=4),
-        #         after=json.dumps(self.existing, sort_keys=True, indent=4),
-        #     )
+            # if self.module._diff and self.original != self.existing:
+            #     self.result['diff'] = dict(
+            #         before=json.dumps(self.original, sort_keys=True, indent=4),
+            #         after=json.dumps(self.existing, sort_keys=True, indent=4),
+            #     )
+        self.result['current'] = self.existing
 
         if self.params['output_level'] in ('debug', 'info'):
             self.result['sent'] = self.config
@@ -966,8 +967,9 @@ class ACIModule(object):
         if self.error['code'] is not None and self.error['text'] is not None:
             self.result['error'] = self.error
 
-        if self.params['output_level'] in ('debug', 'info'):
-            self.result['previous'] = self.existing
+        if self.params['state'] in ('absent', 'present'):
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['previous'] = self.existing
 
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
