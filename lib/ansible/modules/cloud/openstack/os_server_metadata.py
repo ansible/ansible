@@ -73,9 +73,7 @@ EXAMPLES = '''
             password: admin
             project_name: admin
         name: vm1
-        meta:
-            hostname: test1
-            group: uge_master
+        meta: "hostname=test1,group=group1"
 
 # Removes the keys under meta from the instance named vm1
 - name: delete metadata from compute instance
@@ -90,9 +88,7 @@ EXAMPLES = '''
             password: admin
             project_name: admin
         name: vm1
-        meta:
-            hostname:
-            group:
+        meta: "hostname=,group="
 '''
 
 RETURN = '''
@@ -135,10 +131,18 @@ def _get_keys_to_delete(server_metadata_keys=None, metadata_keys=None):
     return set(server_metadata_keys) & set(metadata_keys)
 
 
+def _csv_to_dict(meta_param):
+    metas = {}
+    for kv_str in meta_param.split(","):
+        k, v = kv_str.split("=")
+        metas[k.strip()] = v
+    return metas
+
+
 def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True, aliases=['name']),
-        meta=dict(required=True),
+        meta=dict(required=True, type='str'),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
@@ -151,25 +155,17 @@ def main():
 
     state = module.params['state']
     server_param = module.params['server']
-    meta_param = module.params['meta']
+    # convert the metadata to dict
+    meta_param = _csv_to_dict(module.params['meta'])
     changed = False
 
     try:
-        cloud_params = dict(module.params)
-        cloud = shade.openstack_cloud(**cloud_params)
+        cloud = shade.openstack_cloud(**module.params)
 
         server = cloud.get_server(server_param)
         if not server:
             module.fail_json(
                 msg='Could not find server {0}'.format(server_param))
-
-        # convert the metadata to dict, in case it was provided as CSV
-        if isinstance(meta_param, str):
-            metas = {}
-            for kv_str in meta_param.split(","):
-                k, v = kv_str.split("=")
-                metas[k] = v
-            meta_param = metas
 
         if state == 'present':
             # check if it needs update
