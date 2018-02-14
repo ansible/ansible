@@ -945,7 +945,7 @@ def command_integration_role(args, target, start_at_task):
 
         if isinstance(args, NetworkIntegrationConfig):
             if args.testcase:
-                cmd += ['-e testcase=%s' % args.testcase]
+                cmd += ['-e', 'testcase=%s' % args.testcase]
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
