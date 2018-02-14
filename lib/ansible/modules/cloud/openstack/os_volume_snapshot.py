@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -34,11 +38,13 @@ options:
      description:
         - Name of the snapshot
      required: true
+     aliases: ['name']
    display_description:
      description:
        - String describing the snapshot
      required: false
      default: None
+     aliases: ['description']
    volume:
      description:
        - The volume name or id to create/delete the snapshot
@@ -54,8 +60,12 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Availability zone in which to create the snapshot.
+     required: false
 requirements:
-     - "python >= 2.6"
+     - "python >= 2.7"
      - "shade"
 '''
 
@@ -96,10 +106,13 @@ snapshot:
 
 try:
     import shade
-
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import (openstack_full_argument_spec,
+                                            openstack_module_kwargs)
 
 
 def _present_volume_snapshot(module, cloud):
@@ -177,15 +190,11 @@ def main():
                 _absent_volume_snapshot(module, cloud)
         else:
             module.fail_json(
-                msg="No volume with name or id '{}' was found.".format(
+                msg="No volume with name or id '{0}' was found.".format(
                     module.params['volume']))
     except (shade.OpenStackCloudException, shade.OpenStackCloudTimeout) as e:
         module.fail_json(msg=e.message)
 
-
-# this is magic, see lib/ansible/module_utils/common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()
