@@ -1,0 +1,51 @@
+- name: Upgrade pip and setuptools
+  pip:
+    state: latest
+    name: '{{ item }}' 
+  with_items:
+  - setuptools
+  - pip
+
+- name: Install Python requirements
+  pip:
+    state: present
+    name: "{{ item }}"
+  with_items:
+    - docker>=2.1.0
+    - openshift==0.4.1
+
+- name: Set host name
+  set_fact:
+    localhost: 127.0.0.1 
+  when: ansible_distribution == 'Fedora'
+
+- name: Set host name
+  set_fact:
+    localhost: 0.0.0.0 
+  when: ansible_distribution != 'Fedora'
+
+- name: Start OpenShift
+  docker_container:
+    name: openshift
+    state: started
+    image: openshift/origin:v3.7.1
+    published_ports:
+    - '8443:8443'
+    command: ['start', 'master', '--listen', 'https://0.0.0.0:8443']
+
+- name: Wait for OpenShift to start
+  wait_for:
+    port: 8443
+    host: '{{ localhost }}' 
+    delay: 20
+
+- name: Show containers
+  command: docker ps -a
+  register: output
+
+- name: Show containers
+  debug:
+    var: output.stdout_lines 
+
+- name: Fetch the .kube/config file
+  command: docker exec -it openshift cat /var/lib/origin/openshift.local.config/master/admin.kubeconfig >konfig.json
