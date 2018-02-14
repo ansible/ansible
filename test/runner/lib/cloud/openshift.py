@@ -181,7 +181,7 @@ class OpenShiftCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True, insecure=True)
         endpoint = endpoint
 
-        for _ in range(1, 30):
+        for dummy in range(1, 30):
             display.info('Waiting for OpenShift service: %s' % endpoint, verbosity=1)
 
             try:
