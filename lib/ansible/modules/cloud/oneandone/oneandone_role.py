@@ -39,6 +39,11 @@ options:
     description:
       - Authenticating API token provided by 1&1.
     required: true
+  api_url:
+    description:
+      - Custom API URL. Overrides the
+        ONEANDONE_API_URL environement variable.
+    required: false
   name:
     description:
       - Role name used with present state. Used as identifier (id or name) when used with absent state.
@@ -57,6 +62,96 @@ options:
       - Allows to enable or disable the role
     required: false
     choices: [ "ACTIVE", "DISABLE" ]
+  add_users:
+    description:
+      - List of user IDs to be added to the role.
+    required: false
+  remove_users:
+    description:
+      - List of user IDs to be removed from the role.
+    required: false
+  backups:
+    description:
+      - Backup operations related permissions.
+    required: false
+  firewalls:
+    description:
+      - Firewall operations related permissions.
+    required: false
+  images:
+    description:
+      - Image operations related permissions.
+    required: false
+  interactive_invoices:
+    description:
+      - Interactive invoices operations related permissions.
+    required: false
+  ips:
+    description:
+      - IPs operations related permissions.
+    required: false
+  load_balancers:
+    description:
+      - Load balancer operations related permissions.
+    required: false
+  logs:
+    description:
+      - Logs operations related permissions.
+    required: false
+  monitoring_centers:
+    description:
+      - Monitoring centers operations related permissions.
+    required: false
+  monitoring_policies:
+    description:
+      - Monitoring policies operations related permissions.
+    required: false
+  private_networks:
+    description:
+      - Private networks operations related permissions.
+    required: false
+  roles:
+    description:
+      - Roles operations related permissions.
+    required: false
+  servers:
+    description:
+      - Servers operations related permissions.
+    required: false
+  shared_storages:
+    description:
+      - Shared storages operations related permissions.
+    required: false
+  usages:
+    description:
+      - Usages operations related permissions.
+    required: false
+  users:
+    description:
+      - Users operations related permissions.
+    required: false
+  vpns:
+    description:
+      - VPN operations related permissions.
+    required: false
+  role_clone_name:
+    description:
+      - Used when cloning a role - name of the newly created/cloned role.
+    required: false
+  wait:
+    description:
+      - wait for the instance to be in state 'running' before returning
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 600
+  wait_interval:
+    description:
+      - Defines the number of seconds to wait when using the _wait_for methods
+    default: 5
 notes:
   - Permissions are added to the role separately for each resource by setting a boolean value for each action
     (cloudpanel-api.1and1.com/documentation/v1/en/api/documentation.html#roles_post)
@@ -103,6 +198,23 @@ requirements:
 author:
   - Amel Ajdinovic (@aajdinov)
   - Ethan Devenport (@edevenport)
+'''
+
+EXAMPLES = '''
+
+# Provisioning example. Create and destroy a role.
+
+- oneandone_role:
+    auth_token: oneandone_private_api_key
+    name: ansible_test_role
+    wait: true
+    wait_timeout: 500
+
+- oneandone_role:
+    auth_token: oneandone_private_api_key
+    name: ansible_test_role
+    state: absent
+
 '''
 
 RETURN = '''
