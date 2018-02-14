@@ -1,0 +1,106 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on ec2_key.yml + lambda.py
+
+- block:
+
+    # ============================================================
+    - name: test with no parameters
+      aws_glacier_vault:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: name")'
+
+    # ============================================================
+    - name: test state=present without tags (expect changed=True)
+      aws_glacier_vault:
+        name='{{glacier_vault_name}}'
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=present
+      register: result
+
+    - name: assert state=present
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+
+    # ============================================================
+    - name: test state=present with tags (expect changed=True)
+      aws_glacier_vault:
+        name='{{glacier_vault_name}}'
+        tags='{{glacier_vault_tags}}'
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=present
+      register: result
+
+    - name: assert state=present add tags
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+
+    # ============================================================
+    - name: test state=present drop tags (expect changed=True)
+      aws_glacier_vault:
+        name='{{glacier_vault_name}}'
+        tags={}
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=present
+      register: result
+
+    - name: assert state=present remove tags
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      aws_glacier_vault:
+        name="{{glacier_vault_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == True'
+  always:
+
+    # ============================================================
+    - name: test state=absent (expect changed=False)
+      aws_glacier_vault:
+        name="{{glacier_vault_name}}"
+        ec2_region='{{ec2_region}}'
+        ec2_access_key='{{ec2_access_key}}'
+        ec2_secret_key='{{ec2_secret_key}}'
+        security_token='{{security_token}}'
+        state=absent
+      register: result
+
+    - name: assert state=absent
+      assert:
+        that:
+           - 'result is not failed'
+           - 'result.changed == False'
