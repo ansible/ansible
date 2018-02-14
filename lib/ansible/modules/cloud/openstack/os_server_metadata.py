@@ -54,7 +54,7 @@ options:
      choices: [present, absent]
      default: present
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - "shade"
 '''
 
@@ -108,22 +108,32 @@ metadata:
 '''
 
 
-def _needs_update(server_metadata={}, metadata={}):
+def _needs_update(server_metadata=None, metadata=None):
+    if server_metadata is None:
+        server_metadata = {}
+    if metadata is None:
+        metadata = {}
     return len(set(metadata.items()) - set(server_metadata.items())) != 0
 
 
-def _get_keys_to_delete(server_metadata_keys=[], metadata_keys=[]):
+def _get_keys_to_delete(server_metadata_keys=None, metadata_keys=None):
+    if server_metadata_keys is None:
+        server_metadata_keys = []
+    if metadata_keys is None:
+        metadata_keys = []
     return set(server_metadata_keys) & set(metadata_keys)
 
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        server=dict(required=True),
+        server=dict(required=True, aliases=['name']),
         meta=dict(required=True),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
@@ -140,7 +150,7 @@ def main():
         server = cloud.get_server(server_param)
         if not server:
             module.fail_json(
-                msg='Could not find server %s' % server_param)
+                msg='Could not find server {0}'.format(server_param))
 
         # convert the metadata to dict, in case it was provided as CSV
         if isinstance(meta_param, str):
@@ -154,14 +164,16 @@ def main():
             # check if it needs update
             if _needs_update(server_metadata=server.metadata,
                              metadata=meta_param):
-                cloud.set_server_metadata(server_param, meta_param)
+                if not module.check_mode:
+                    cloud.set_server_metadata(server_param, meta_param)
                 changed = True
         elif state == 'absent':
             # remove from params the keys that do not exist in the server
             keys_to_delete = _get_keys_to_delete(server.metadata.keys(),
                                                  meta_param.keys())
             if len(keys_to_delete) > 0:
-                cloud.delete_server_metadata(server_param, keys_to_delete)
+                if not module.check_mode:
+                    cloud.delete_server_metadata(server_param, keys_to_delete)
                 changed = True
 
         if changed:
