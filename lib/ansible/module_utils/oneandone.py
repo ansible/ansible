@@ -36,6 +36,8 @@ class OneAndOneResources:
     server = 'server'
     user = 'user'
     vpn = 'vpn'
+    block_storage = 'block_storage'
+    shared_storage = 'shared_storage'
 
 
 def get_resource(oneandone_conn, resource_type, resource_id):
@@ -49,6 +51,8 @@ def get_resource(oneandone_conn, resource_type, resource_id):
         'server': oneandone_conn.get_server,
         'user': oneandone_conn.get_user,
         'vpn': oneandone_conn.get_vpn,
+        'block_storage': oneandone_conn.get_block_storage,
+        'shared_storage': oneandone_conn.get_shared_storage,
     }
 
     return switcher.get(resource_type, None)(resource_id)
@@ -202,6 +206,44 @@ def get_public_ip(oneandone_conn, public_ip, full_object=False):
             if full_object:
                 return _public_ip
             return _public_ip['id']
+
+
+def get_block_storage(oneandone_conn, block_storage, full_object=False):
+    """
+    Validates that the block storage exists by ID or a name.
+    Returns the block storage if one was found.
+    """
+    for _block_storage in oneandone_conn.list_block_storages(per_page=1000):
+        if block_storage in (_block_storage['id'], _block_storage['name']):
+            if full_object:
+                return _block_storage
+            return _block_storage['id']
+
+
+def get_shared_storage(oneandone_conn, shared_storage, full_object=False):
+    """
+    Validates that the shared storage exists by ID or a name.
+    Returns the shared storage if one was found.
+    """
+    for _shared_storage in oneandone_conn.list_shared_storages(per_page=1000):
+        if shared_storage in (_shared_storage['id'], _shared_storage['name']):
+            if full_object:
+                return _shared_storage
+            return _shared_storage['id']
+
+
+def get_shared_storage_server(oneandone_conn, shared_storage, server_id, full_object=False):
+    """
+    Validates that the server is attached to the shared storage.
+    Returns the shared storage server if one was found.
+    """
+    shared_store = get_shared_storage(oneandone_conn, shared_storage, True)
+    _server = get_shared_storage_server(shared_storage_id=shared_store['id'],
+                                        server_id=server_id)
+    if _server:
+        if full_object:
+            return _server
+        return _server['id']
 
 
 def wait_for_resource_creation_completion(oneandone_conn,
