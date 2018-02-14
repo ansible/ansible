@@ -345,6 +345,7 @@ def main():
                 default=os.environ.get('ONEANDONE_API_URL')),
             name=dict(type='str'),
             user_id=dict(type='str'),
+            user=dict(type='str'),
             description=dict(type='str'),
             password=dict(type='str'),
             email=dict(type='str'),
