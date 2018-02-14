@@ -122,6 +122,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
+    domain_type: phys
     state: query
 '''
 
@@ -234,7 +235,10 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 VM_PROVIDER_MAPPING = dict(
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
     microsoft='Microsoft',
+    openshift='OpenShift',
     openstack='OpenStack',
     redhat='Redhat',
     vmware='VMware',
@@ -245,7 +249,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
         pool=dict(type='str', aliases=['pool_name', 'vlan_pool']),
         pool_allocation_mode=dict(type='str', required=True, aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -300,7 +304,11 @@ def main():
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'dom-{0}'.format(domain)
 
-    aci_mo = 'uni/infra/vlanns-' + pool_name
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
+
+    aci_mo = 'uni/infra/vlanns-{0}'.format(pool_name)
 
     aci = ACIModule(module)
     aci.construct_url(
