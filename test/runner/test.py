@@ -660,15 +660,19 @@ def complete_network_testcase(prefix, parsed_args, **_):
     """
     testcases = []
 
-    for platform in parsed_args.include:
-        test_dir = 'test/integration/targets/%s/tests' % platform
-        connections = os.listdir(test_dir)
+    # since testcases are module specific, don't autocomplete if more than one
+    # module is specidied
+    if len(parsed_args.include) != 1:
+        return []
 
-        for conn in connections:
-            if os.path.isdir(os.path.join(test_dir, conn)):
-                for testcase in os.listdir(os.path.join(test_dir, conn)):
-                    if testcase.startswith(prefix):
-                        testcases.append(testcase.split('.')[0])
+    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    connections = os.listdir(test_dir)
+
+    for conn in connections:
+        if os.path.isdir(os.path.join(test_dir, conn)):
+            for testcase in os.listdir(os.path.join(test_dir, conn)):
+                if testcase.startswith(prefix):
+                    testcases.append(testcase.split('.')[0])
 
     return testcases
 
