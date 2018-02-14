@@ -55,14 +55,16 @@ Instead of manually connecting and running a command on the network device, you 
 
    ansible all -i vyos.example.net, -c network_cli -u my_vyos_user -k -m vyos_facts -e ansible_network_os=vyos
 
-The flags in this command set:
+The flags in this command set seven values:
   - the host group(s) to which the command should apply (in this case, all)
   - the inventory (-i, the device or devices to target - without the trailing comma -i points to an inventory file)
   - the connection method (-c, the method for connecting and executing ansible)
   - the user (-u, the username for the SSH connection)
-  - the SSH password method (-k, please prompt for the password)
+  - the SSH connection method (-k, please prompt for the password)
   - the module (-m, the ansible module to run)
   - an extra variable ( -e, in this case, setting the network OS value)
+
+NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.
 
 
 Create and Run Your First Network Ansible Playbook
@@ -75,7 +77,7 @@ If you want to run this command every day, you can save it in a playbook and run
 .. literalinclude:: sample_files/first_playbook.yml
    :language: yaml
 
-Here you set the group (hosts: all), the connection method (connection: network_cli) and the module (in each task) in the playbook so you can omit them on the command line. The playbook also adds a second task to show the config output. When a module runs in a playbook, the output is held in memory for use by future tasks instead of written to the console. The debug task here lets you see the results in your shell.
+The playbook sets three of the seven values from the command line above: the group (``hosts: all``), the connection method (``connection: network_cli``) and the module (in each task). With those values set in the playbook, you can omit them on the command line. The playbook also adds a second task to show the config output. When a module runs in a playbook, the output is held in memory for use by future tasks instead of written to the console. The debug task here lets you see the results in your shell.
 
 2. Run the playbook with the command:
 
@@ -156,4 +158,4 @@ The extended first playbook has four tasks in a single play. Run it with the sam
    vyos.example.net           : ok=6    changed=1    unreachable=0    failed=0   
 
 
-This playbook is useful. However, running it still requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ansible_network_os and the SSH user. 
+This playbook is useful. However, running it still requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ``ansible_network_os`` and the SSH user. 

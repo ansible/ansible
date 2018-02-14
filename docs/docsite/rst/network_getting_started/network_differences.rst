@@ -17,26 +17,19 @@ Execution on the control node shapes two other differences in how network module
 Multiple Communication Protocols
 ```````````````````````````````````````````````````````````````
 
-Because they execute on the control node instead of on the managed nodes, network modules can support multiple communication protocols. The communication protocol (SSH, HTTPS) selected for each network module depends on the platform and the purpose of the module. Some network modules support only one protocol; some offer a choice. The most common protocol is SSH. The :doc:`module_docs/list_of_network_modules` detail which modules support which protocols. The communication protocol is determined by the value of the `ansible_connection` variable:
+Because they execute on the control node instead of on the managed nodes, network modules can support multiple communication protocols. The communication protocol (XML over SSH, CLI over SSH, API over HTTPS) selected for each network module depends on the platform and the purpose of the module. Some network modules support only one protocol; some offer a choice. The most common protocol is CLI over SSH. You set the communication protocol with the ``ansible_connection`` variable:
 
-ansible_connection setting		communication protocol
-local							SSH
+.. csv-table::
+   :header: "Value of ansible_connection", "Protocol", "Requires"
+   :widths: 30, 10, 10
+
+   "network_cli", "CLI over SSH", "network_os setting"
+   "netconf", "XML over SSH", "network_os setting"
+   "local", "depends on provider", "provider setting"
 
 
-Network Platforms
+Modules Organized by Network Platform
 ```````````````````````````````````````````````````````````````
 
-Network modules are organized by platforms. A network platform is a set of network devices with a common operating system that can be managed by a collection of modules. The modules for each network platform share a prefix, for example: eos_ (Arista), ios_, iosxr_, nxos_ (Cisco), junos_ (Junpier), vyos_ (VyOS). Some network platforms have specific differences - see the platform-specific documentation for details.
+A network platform is a set of network devices with a common operating system that can be managed by a collection of modules.  The modules for each network platform share a prefix, for example: eos_ (Arista), ios_, iosxr_, nxos_ (Cisco), junos_ (Juniper), vyos_ (VyOS). All modules within a network platform share certain requirements. Some network platforms have specific differences - see the platform-specific documentation for details.
 
-Conditional Comparison in Network Modules
-```````````````````````````````````````````````````````````````
-
-Conditional statements in Ansible evaluate the output from a managed node to determine what happens next in a playbook. Linux/Unix and Windows modules use mathematical symbols (for example, `==`, `<`, and `>`) for comparison. However, network modules use different conditional comparisons. The conditional tests for network modules are:
-
-- eq - Equal
-- neq - Not equal
-- gt - Greater than
-- ge - Greater than or equal
-- lt - Less than
-- le - Less than or equal
-- contains - Object contains specified item
