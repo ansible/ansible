@@ -141,6 +141,19 @@ Example::
 
 The task will only be run when the debug or never tag is explicitly requested.
 
+
+.. versionadded:: 2.5
+
+Another special tag is ``never`` that will prevent a task from being run unless a tag is specifically requested.
+
+Example::
+
+    tasks:
+      - debug: msg='{{ showmevar}}'
+        tags: [ 'never', 'debug' ]
+
+The task will only be run when the debug or never tag is explicitly requested.
+
 There are another 3 special keywords for tags, ``tagged``, ``untagged`` and ``all``, which run only tagged, only untagged
 and all tasks respectively.
 
