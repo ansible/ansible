@@ -213,8 +213,8 @@
     that:
       - range_query.changed == false
       - range_query.url.endswith("infra/vlanns-[anstest]-static/from-[vlan-20]-to-[vlan-40].json")
-      - range_query.previous | length == 1
-      - 'range_query.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - range_query.current | length == 1
+      - 'range_query.current.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: query vlan pool range - from, to, and name are filtered
   aci_encap_pool_range: &aci_range_query_filter
@@ -228,9 +228,9 @@
       - range_query_from_to_name.changed == false
       - 'range_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_to_name.filter_string'
-      - 'range_query_from_to_name.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_from_to_name.previous.0.fvnsEncapBlk.attributes.from == "vlan-20"'
-      - 'range_query_from_to_name.previous.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_from_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_to_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query vlan pool range - from and name are filtered
   aci_encap_pool_range:
@@ -244,8 +244,8 @@
       - range_query_from_name.changed == false
       - 'range_query_from_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_from_name.filter_string'
-      - 'range_query_from_name.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_from_name.previous.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_name.current.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_from_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"'
 
 - name: query vlan pool range - to and name are filtered
   aci_encap_pool_range:
@@ -259,8 +259,8 @@
       - range_query_to_name.changed == false
       - 'range_query_to_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in range_query_to_name.filter_string'
-      - 'range_query_to_name.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
-      - 'range_query_to_name.previous.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query vlan pool range - name is filtered
   aci_encap_pool_range:
@@ -275,7 +275,7 @@
       - range_query_name.changed == false
       - 'range_query_name.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=eq(fvnsEncapBlk.name, \"anstest\")" in range_query_name.filter_string'
-      - 'range_query_name.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'range_query_name.current.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: query vlan pool range - from and to are filtered
   aci_encap_pool_range:
@@ -289,8 +289,8 @@
       - range_query_from_to.changed == false
       - 'range_query_from_to.url.endswith("class/fvnsEncapBlk.json")'
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"))" in range_query_from_to.filter_string'
-      - 'range_query_from_to.previous.0.fvnsEncapBlk.attributes.from == "vlan-20"'
-      - 'range_query_from_to.previous.0.fvnsEncapBlk.attributes.to == "vlan-40"'
+      - 'range_query_from_to.current.0.fvnsEncapBlk.attributes.from == "vlan-20"'
+      - 'range_query_from_to.current.0.fvnsEncapBlk.attributes.to == "vlan-40"'
 
 - name: query all ranges in a vlan pool
   aci_encap_pool_range:
@@ -302,9 +302,9 @@
 - name: query assertions
   assert:
     that:
-      - range_query_pool.previous | length == 1
-      - 'range_query_pool.previous.0.fvnsVlanInstP.attributes.name == "anstest"'
-      - range_query_pool.previous.0.fvnsVlanInstP.children | length > 1
+      - range_query_pool.current | length == 1
+      - 'range_query_pool.current.0.fvnsVlanInstP.attributes.name == "anstest"'
+      - range_query_pool.current.0.fvnsVlanInstP.children | length > 1
       - 'range_query_pool.url.endswith("infra/vlanns-[anstest]-static.json")'
 
 - name: query all ranges
@@ -318,8 +318,8 @@
   assert:
     that:
       - range_query_all.changed == false
-      - range_query_all.previous | length > 1
-      - range_query_all.previous.0.fvnsEncapBlk is defined
+      - range_query_all.current | length > 1
+      - range_query_all.current.0.fvnsEncapBlk is defined
       - 'range_query_all.url.endswith("class/fvnsEncapBlk.json")'
 
 - name: delete vlan pool range - deletion works

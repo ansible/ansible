@@ -107,22 +107,22 @@
   assert:
     that:
       - query_all.changed == false
-      - query_all.previous | length > 1
-      - query_all.previous.0.fvCtx is defined
+      - query_all.current | length > 1
+      - query_all.current.0.fvCtx is defined
       - '"class/fvCtx.json" in query_all.url'
       - query_tenant.changed == false
-      - query_tenant.previous | length == 1
-      - query_tenant.previous.0.fvTenant.children | length == 2
-      - 'query_tenant.previous.0.fvTenant.attributes.name == "anstest"'
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.children | length == 2
+      - 'query_tenant.current.0.fvTenant.attributes.name == "anstest"'
       - '"rsp-subtree-class=fvCtx" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
       - query_vrf_vrf.changed == false
-      - query_vrf_vrf.previous != []
-      - 'query_vrf_vrf.previous.0.fvCtx.attributes.name == "anstest"'
+      - query_vrf_vrf.current != []
+      - 'query_vrf_vrf.current.0.fvCtx.attributes.name == "anstest"'
       - '"query-target-filter=eq(fvCtx.name, \"anstest\")" in query_vrf_vrf.filter_string'
       - '"class/fvCtx.json" in query_vrf_vrf.url'
       - query_vrf.changed == false
-      - query_vrf.previous | length == 1
+      - query_vrf.current | length == 1
       - '"tn-anstest/ctx-anstest.json" in query_vrf.url'
 
 - name: delete vrf - check mode works

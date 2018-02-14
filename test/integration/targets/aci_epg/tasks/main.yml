@@ -103,11 +103,11 @@
   assert:
     that:
       - epg_query.changed == false
-      - epg_query.previous | length == 1
-      - 'epg_query.previous.0.fvAEPg.attributes.name == "anstest"'
+      - epg_query.current | length == 1
+      - 'epg_query.current.0.fvAEPg.attributes.name == "anstest"'
       - '"tn-anstest/ap-anstest/epg-anstest.json" in epg_query.url'
       - epg_query_all.changed == false
-      - epg_query_all.previous | length > 1
+      - epg_query_all.current | length > 1
       - '"rsp-subtree-class=fvRsBd" in epg_query_all.filter_string'
       - '"class/fvAEPg.json" in epg_query_all.url'
 

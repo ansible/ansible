@@ -114,7 +114,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length >= 1
+      - binding_query.current | length >= 1
       - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (PC) - check mode
@@ -233,7 +233,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length >= 1
+      - binding_query.current | length >= 1
       - '"/api/mo/uni/infra/funcprof/accbundle-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (VPC) - check mode
@@ -360,7 +360,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length >= 1
+      - binding_query.current | length >= 1
       - '"/api/mo/uni/infra/funcprof/accportgrp-policygroupname.json" in binding_query.url'
 
 - name: Remove interface policy leaf policy group (Leaf Access Port) - check mode

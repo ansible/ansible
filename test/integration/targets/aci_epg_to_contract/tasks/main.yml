@@ -142,10 +142,10 @@
   assert:
     that:
       - query_provide_contract.changed == false
-      - query_provide_contract.previous != []
+      - query_provide_contract.current != []
       - '"class/fvRsProv.json" in query_provide_contract.url'
       - query_consume_contract.changed == false
-      - query_consume_contract.previous != []
+      - query_consume_contract.current != []
       - '"class/fvRsCons.json" in query_consume_contract.url'
       - query_all.changed == false
       - '"class/fvRsProv.json" in query_all.url'

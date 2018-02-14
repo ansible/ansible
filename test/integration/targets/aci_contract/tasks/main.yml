@@ -100,19 +100,19 @@
   assert:
     that:
       - query_contract.changed == false
-      - query_contract.previous | length == 1
+      - query_contract.current | length == 1
       - '"tn-anstest/brc-anstest.json" in query_contract.url'
       - query_tenant.changed == false
-      - query_tenant.previous | length == 1
-      - query_tenant.previous.0.fvTenant.children | length > 1
+      - query_tenant.current | length == 1
+      - query_tenant.current.0.fvTenant.children | length > 1
       - '"rsp-subtree-class=vzBrCP" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
       - query_name.changed == false
-      - query_name.previous != []
+      - query_name.current != []
       - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_name.filter_string'
       - '"class/vzBrCP.json" in query_name.url'
       - query_all.changed == false
-      - query_all.previous | length > 1
+      - query_all.current | length > 1
       - '"class/vzBrCP.json" in query_all.url'
 
 - name: delete contract - check mode works
