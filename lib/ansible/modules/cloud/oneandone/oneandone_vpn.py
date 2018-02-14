@@ -30,6 +30,12 @@ description:
        This module has a dependency on 1and1 >= 1.0
 version_added: "2.6"
 options:
+  state:
+    description:
+      - Define a VPN state to create, remove, or update.
+    required: false
+    default: 'present'
+    choices: [ "present", "absent", "update" ]
   auth_token:
     description:
       - Authenticating API token provided by 1&1.
@@ -52,7 +58,7 @@ options:
     description:
       - VPN description. maxLength=256
     required: false
-  datacenter_id:
+  datacenter:
     description:
       - ID (or name) of the datacenter where the vpn will be created.
     required: false
