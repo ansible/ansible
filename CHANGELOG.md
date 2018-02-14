@@ -86,7 +86,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/36721)
 * Protect from inventory plugins using verify incorrectly
   https://github.com/ansible/ansible/pull/36591
-
+* loop control templating
+  https://github.com/ansible/ansible/pull/36124
 
 <a id="2.4.3"></a>
 
