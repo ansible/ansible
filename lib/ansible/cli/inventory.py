@@ -233,6 +233,9 @@ class InventoryCLI(CLI):
         for inventory_dir in self.inventory._sources:
             res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
 
+        if group.priority != 1:
+            res['ansible_group_priority'] = group.priority
+
         return res
 
     def _get_host_variables(self, host):
