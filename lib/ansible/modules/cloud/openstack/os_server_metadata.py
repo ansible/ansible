@@ -16,14 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-try:
-    import shade
-    from shade import meta
 
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -31,17 +27,18 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: os_server_metadata
-short_description: Add/Update/Delete Metadata in Compute Instances from
-OpenStack extends_documentation_fragment: openstack
+short_description: Add/Update/Delete Metadata in Compute Instances from OpenStack
+extends_documentation_fragment: openstack
 version_added: "2.6"
 author: "Mario Santos (@ruizink)"
 description:
    - Add, Update or Remove metadata in compute instances from OpenStack.
 options:
-   name:
+   server:
      description:
         - Name of the instance to update the metadata
      required: true
+     aliases: ['name']
    meta:
      description:
         - 'A list of key value pairs that should be provided as a metadata to
@@ -53,6 +50,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Availability zone in which to create the snapshot.
+     required: false
 requirements:
     - "python >= 2.7"
     - "shade"
@@ -106,6 +107,16 @@ metadata:
     type: dict
     sample: {'key1': 'value1', 'key2': 'value2'}
 '''
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import (openstack_full_argument_spec,
+                                            openstack_module_kwargs)
 
 
 def _needs_update(server_metadata=None, metadata=None):
@@ -185,10 +196,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
-
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()
