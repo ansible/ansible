@@ -47,6 +47,8 @@ LSBLK_OUTPUT_2 = b"""
 
 LSBLK_UUIDS = {'/dev/sda1': '66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK'}
 
+UDEVADM_UUID = 'N/A'
+
 MTAB = """
 sysfs /sys sysfs rw,seclabel,nosuid,nodev,noexec,relatime 0 0
 proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0

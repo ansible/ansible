@@ -25,7 +25,7 @@ from ansible.module_utils.facts import timeout
 
 from ansible.module_utils.facts.hardware import linux
 
-from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO
+from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
@@ -50,11 +50,13 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._find_bind_mounts', return_value=BIND_MOUNTS)
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._lsblk_uuid', return_value=LSBLK_UUIDS)
     @patch('ansible.module_utils.facts.hardware.linux.get_mount_size', side_effect=mock_get_mount_size)
+    @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._udevadm_uuid', return_value=UDEVADM_UUID)
     def test_get_mount_facts(self,
                              mock_get_mount_size,
                              mock_lsblk_uuid,
                              mock_find_bind_mounts,
-                             mock_mtab_entries):
+                             mock_mtab_entries,
+                             mock_udevadm_uuid):
         module = Mock()
         # Returns a LinuxHardware-ish
         lh = linux.LinuxHardware(module=module, load_on_init=False)
