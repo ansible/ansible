@@ -96,6 +96,13 @@ options:
         choices: [ 'no', 'yes' ]
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+    depth:
+        required: false
+        default: -1
+        description:
+            - Set the maximum number of levels to decend into. Setting recurse
+              to false will override this value, which is effectively depth 1.
+              -1 means unlimited.
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -328,6 +335,7 @@ def main():
             follow=dict(type='bool', default='no'),
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
+            depth=dict(type='int', default=-1),
         ),
         supports_check_mode=True,
     )
@@ -366,6 +374,13 @@ def main():
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+                if params['depth'] != -1:
+                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
+                    if files or dirs:
+                        depth += 1
+                    if depth > params['depth']:
+                        del(dirs[:])
+                        continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
