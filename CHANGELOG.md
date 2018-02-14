@@ -52,6 +52,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/35959)
 * Fix recursion error with many flat includes
   (https://github.com/ansible/ansible/pull/36075)
+* Fix win_uri to work with `creates` and `removed` option
+  (https://github.com/ansible/ansible/pull/36016)
 
 <a id="2.4.3"></a>
 
