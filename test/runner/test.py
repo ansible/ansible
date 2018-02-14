@@ -67,7 +67,6 @@ from lib.cloud import (
 )
 
 import lib.cover
-import os
 
 
 def main():
@@ -652,6 +651,7 @@ def complete_network_platform(prefix, parsed_args, **_):
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
+
 def complete_network_testcase(prefix, parsed_args, **_):
     """
     :type prefix: unicode
@@ -671,6 +671,7 @@ def complete_network_testcase(prefix, parsed_args, **_):
                         testcases.append(testcase.split('.')[0])
 
     return testcases
+
 
 def complete_sanity_test(prefix, parsed_args, **_):
     """
