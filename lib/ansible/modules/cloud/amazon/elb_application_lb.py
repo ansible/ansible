@@ -69,6 +69,12 @@ options:
         not set then listeners will not be modified
     default: yes
     choices: [ 'yes', 'no' ]
+  purge_rules:
+    description:
+      - If yes, existing rules will be purged from the ELB to match exactly the I(Rules) defined in each I(listeners) parameter.
+    default: no
+    choices: [ 'yes', 'no' ]
+    version_added: '2.6'
   purge_tags:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
@@ -656,7 +662,7 @@ def compare_listeners(connection, module, current_listeners, new_listeners, purg
     return listeners_to_add, listeners_to_modify, listeners_to_delete
 
 
-def compare_rules(connection, module, current_listeners, listener):
+def compare_rules(connection, module, current_listeners, listener, purge_rules):
     """
     Compare rules and return rules to add, rules to modify and rules to remove
     Rules are compared based on priority
@@ -665,6 +671,7 @@ def compare_rules(connection, module, current_listeners, listener):
     :param module: Ansible module object
     :param current_listeners: list of listeners currently associated with the ELB
     :param listener: dict object of a listener passed by the user
+    :param purge_rules: boolean to indicate if the existing rules for the listener must be purged
     :return:
     """
 
@@ -700,7 +707,7 @@ def compare_rules(connection, module, current_listeners, listener):
                 break
 
         # If the current rule was not matched against passed rules, mark for removal
-        if not current_rule_passed_to_module and not current_rule['IsDefault']:
+        if not current_rule_passed_to_module and purge_rules and not current_rule['IsDefault']:
             rules_to_delete.append(current_rule['RuleArn'])
 
     rules_to_add = listener['Rules']
@@ -715,6 +722,7 @@ def create_or_update_elb_listeners(connection, module, elb):
     # Ensure listeners are using Target Group ARN not name
     listeners = ensure_listeners_default_action_has_arn(connection, module, module.params.get("listeners"))
     purge_listeners = module.params.get("purge_listeners")
+    purge_rules = module.params.get("purge_rules")
 
     # Does the ELB have any listeners exist?
     current_listeners = get_elb_listeners(connection, module, elb['LoadBalancerArn'])
@@ -759,7 +767,7 @@ def create_or_update_elb_listeners(connection, module, elb):
         if 'Rules' in listener:
             # Ensure rules are using Target Group ARN not name
             listener['Rules'] = ensure_rules_action_has_arn(connection, module, listener['Rules'])
-            rules_to_add, rules_to_modify, rules_to_delete = compare_rules(connection, module, current_listeners, listener)
+            rules_to_add, rules_to_modify, rules_to_delete = compare_rules(connection, module, current_listeners, listener, purge_rules)
 
             # Get listener based on port so we can use ARN
             looked_up_listener = get_listener(connection, module, elb['LoadBalancerArn'], listener['Port'])
@@ -974,6 +982,7 @@ def main():
             listeners=dict(type='list'),
             name=dict(required=True, type='str'),
             purge_listeners=dict(default=True, type='bool'),
+            purge_rules=dict(default=False, type='bool'),
             purge_tags=dict(default=True, type='bool'),
             subnets=dict(type='list'),
             security_groups=dict(type='list'),

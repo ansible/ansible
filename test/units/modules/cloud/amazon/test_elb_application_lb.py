@@ -149,6 +149,6 @@ def test_compare_rules_called_with_new_listener(
 
     elb.create_or_update_elb_listeners(connection, mocker.Mock(), existing_elb)
 
-    (_conn, _module, current_listeners, _listener), _kwargs = compare_rules.call_args
+    (_conn, _module, current_listeners, _rules, _listener), _kwargs = compare_rules.call_args
 
     assert created_listener in current_listeners

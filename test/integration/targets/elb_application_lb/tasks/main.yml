@@ -1,0 +1,209 @@
+---
+# __Test Outline__
+#
+# __elb_classic_lb__
+# create test elb with listeners and certificate
+# change AZ's
+# change listeners
+# remove listeners
+# add listeners
+# remove elb
+
+- block:
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: true
+    # ============================================================
+    # create test elb with listeners, certificate, and health check
+
+    - name: Create TargetGroup
+      elb_target_group:
+        name: "{{ tag_prefix }}_elb_tg"
+        <<: *aws_connection_info
+        protocol: http
+        port: 80
+        state: present
+      register: elb
+
+    - name: Create ALB
+      elb_application_lb:
+        name: "{{ tag_prefix }}"
+        <<: *aws_connection_info
+        purge_listeners: yes
+        purge_tags: yes
+        purge_rules: yes
+        tags:
+          foo: bar
+        state: present
+        zones:
+          - "{{ ec2_region }}a"
+          - "{{ ec2_region }}b"
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ tag_prefix }}_elb_tg"
+            Rules:
+              - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - '/path/1/*'
+                Priority: '1'
+                Actions:
+                  - TargetGroupName: "{{ tag_prefix }}_elb_tg"
+                    Type: forward
+      register: alb_new
+
+    - assert:
+        that:
+          - 'alb_new.changed'
+          - 'alb_new.elb.state == {"code": "active"}'
+          - '"{{ ec2_region }}a" in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - '"{{ ec2_region }}b" in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - '"{{ ec2_region }}c" not in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - 'alb_new.tags == {"foo": "bar"}'
+          - 'alb_new.idle_timeout_timeout_seconds == 60'
+          - 'alb_new.security_groups == []'
+          - 'alb_new.scheme == "internet-facing"'
+          - 'len(alb_new.listeners) == 1'
+          - 'info.listeners.0.default_actions.type == "forward"'
+          - 'alb_new.listeners.0.default_actions.0.target_group_arn == elb.target_group_arn'
+          - 'alb_new.listeners.0.default_actions.0.type == "forward"'
+          - 'alb_new.listeners.0.port == 80'
+          - 'alb_new.listeners.0.protocol == "HTTP"'
+          - 'len(alb_new.listeners.0.rules) == 2'
+
+    - name: Update ALB with no changes
+      elb_application_lb:
+        name: "{{ tag_prefix }}"
+        <<: *aws_connection_info
+        purge_listeners: no
+        purge_tags: no
+        purge_rules: no
+        state: present
+      register: alb_no_changes
+
+    - assert:
+        that:
+          - 'not alb_new.changed'
+          - 'alb_new.elb.state == {"code": "active"}'
+          - '"{{ ec2_region }}a" in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - '"{{ ec2_region }}b" in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - '"{{ ec2_region }}c" not in [az["zone_name"] for az in alb_new["availability_zones"]]'
+          - 'alb_new.tags == {"foo": "bar"}'
+          - 'alb_new.idle_timeout_timeout_seconds == 60'
+          - 'alb_new.security_groups == []'
+          - 'alb_new.scheme == "internet-facing"'
+          - 'len(alb_new.listeners) == 1'
+          - 'info.listeners.0.default_actions.type == "forward"'
+          - 'alb_new.listeners.0.default_actions.0.target_group_arn == elb.target_group_arn'
+          - 'alb_new.listeners.0.default_actions.0.type == "forward"'
+          - 'alb_new.listeners.0.port == 80'
+          - 'alb_new.listeners.0.protocol == "HTTP"'
+          - 'len(alb_new.listeners.0.rules) == 2'
+
+    - name: Create ALB with changes
+      elb_application_lb:
+        name: "{{ tag_prefix }}"
+        <<: *aws_connection_info
+        purge_listeners: no
+        purge_tags: no
+        purge_rules: no
+        tags:
+          foo2: bar2
+        state: present
+        idle_timeout_timeout_seconds: 50
+        listeners:
+          - Protocol: HTTP
+            Port: 80
+            Rules:
+              - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - '/path/1/*'
+                Priority: '2'
+                Actions:
+                  - TargetGroupName: "{{ tag_prefix }}_elb_tg"
+                    Type: forward
+              - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - '/path/*'
+                Priority: '1'
+                Actions:
+                  - TargetGroupName: "{{ tag_prefix }}_elb_tg"
+                    Type: forward
+          - Protocol: HTTP
+            Port: 443
+            DefaultActions:
+              - Type: forward
+                TargetGroupName: "{{ tag_prefix }}_elb_tg"
+            Rules:
+              - Conditions:
+                - Field: path-pattern
+                  Values:
+                    - '/path1/*'
+                Priority: '1'
+                Actions:
+                  - TargetGroupName: "{{ tag_prefix }}_elb_tg"
+                    Type: forward
+      register: alb_with_changes
+
+    - assert:
+        that:
+          - 'alb_with_changes.elb.state == {"code": "active"}'
+          - '"{{ ec2_region }}a" in [az["zone_name"] for az in alb_with_changes["availability_zones"]]'
+          - '"{{ ec2_region }}b" in [az["zone_name"] for az in alb_with_changes["availability_zones"]]'
+          - 'alb_with_changes.tags == {"foo": "bar", "foo2": "bar2"}'
+          - 'alb_with_changes.idle_timeout_timeout_seconds == 50'
+          - 'alb_with_changes.security_groups == []'
+          - 'alb_with_changes.scheme == "internet-facing"'
+          - 'len(alb_new.listeners) == 2'
+
+    - name: Create ALB purging
+      elb_application_lb:
+        name: "{{ tag_prefix }}"
+        <<: *aws_connection_info
+        purge_listeners: yes
+        purge_tags: yes
+        purge_rules: yes
+        state: present
+      register: purging
+
+    - assert:
+        that:
+          - 'purging.elb.state == {"code": "active"}'
+          - '"{{ ec2_region }}a" in [az["zone_name"] for az in purging["availability_zones"]]'
+          - '"{{ ec2_region }}b" in [az["zone_name"] for az in purging["availability_zones"]]'
+          - 'purging.tags == {}'
+          - 'purging.idle_timeout_timeout_seconds == 50'
+          - 'purging.security_groups == []'
+          - 'purging.scheme == "internet-facing"'
+          - 'len(alb_new.listeners) == 0'
+
+  always:
+
+    # TEAR DOWN:
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: Delete ALB
+      elb_application_lb:
+        name: "{{ tag_prefix }}"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: yes
+
+    - name: Delete TargetGroup
+      elb_target_group:
+        name: "{{ tag_prefix }}_elb_tg"
+        <<: *aws_connection_info
+        state: absent
+      ignore_errors: yes
