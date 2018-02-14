@@ -26,7 +26,7 @@ module: oneandone_user
 short_description: Configure 1&1 users.
 description:
      - Create, remove, update a user
-       This module has a dependency on 1and1 >= 1.0
+       This module has a dependency on 1and1 >= 1.3.0
 version_added: "2.5"
 options:
   state:
@@ -344,7 +344,6 @@ def main():
                 type='str',
                 default=os.environ.get('ONEANDONE_API_URL')),
             name=dict(type='str'),
-            user_id=dict(type='str'),
             user=dict(type='str'),
             description=dict(type='str'),
             password=dict(type='str'),
