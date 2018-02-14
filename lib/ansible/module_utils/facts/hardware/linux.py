@@ -380,11 +380,17 @@ class LinuxHardware(Hardware):
         if not udevadm_path:
             return uuid
 
-        cmd = [udevadm_path, 'info', '--query', 'property', '--name=%s' % device]
+        cmd = [udevadm_path, 'info', '--query', 'property', '--name', device]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             return uuid
 
+        # a snippet of the output of the udevadm command below will be:
+        # ...
+        # ID_FS_TYPE=ext4
+        # ID_FS_USAGE=filesystem
+        # ID_FS_UUID=57b1a3e7-9019-4747-9809-7ec52bba9179
+        # ...
         m = re.search('ID_FS_UUID=(.*)\n', out)
         if m:
             uuid = m.group(1)
