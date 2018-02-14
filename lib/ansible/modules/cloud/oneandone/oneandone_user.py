@@ -39,6 +39,11 @@ options:
     description:
       - Authenticating API token provided by 1&1.
     required: true
+  api_url:
+    description:
+      - Custom API URL. Overrides the
+        ONEANDONE_API_URL environement variable.
+    required: false
   name:
     description:
       - User's name used with present state. Used as identifier (id or name) when used with absent state.
@@ -74,6 +79,20 @@ options:
   change_api_key:
     description:
       - Changes the API key.
+  wait:
+    description:
+      - wait for the instance to be in state 'running' before returning
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 600
+  wait_interval:
+    description:
+      - Defines the number of seconds to wait when using the _wait_for methods
+    default: 5
 
 requirements:
      - "1and1"
@@ -199,6 +218,7 @@ def update_user(module, oneandone_conn):
     _key = module.params.get('change_api_key')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     changed = False
 
@@ -246,7 +266,8 @@ def update_user(module, oneandone_conn):
                 oneandone_conn,
                 OneAndOneResources.user,
                 user['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
 
         return (changed, user)
     except Exception as ex:
@@ -266,6 +287,7 @@ def create_user(module, oneandone_conn):
     email = module.params.get('email')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
+    wait_interval = module.params.get('wait_interval')
 
     try:
         user = oneandone_conn.create_user(
@@ -279,7 +301,8 @@ def create_user(module, oneandone_conn):
                 oneandone_conn,
                 OneAndOneResources.user,
                 user['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
 
         changed = True if user else False
 
@@ -316,8 +339,10 @@ def main():
         argument_spec=dict(
             auth_token=dict(
                 type='str',
-                default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
-                no_log=True),
+                default=os.environ.get('ONEANDONE_AUTH_TOKEN')),
+            api_url=dict(
+                type='str',
+                default=os.environ.get('ONEANDONE_API_URL')),
             name=dict(type='str'),
             user_id=dict(type='str'),
             description=dict(type='str'),
@@ -331,7 +356,8 @@ def main():
                 choices=USER_STATES),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
-            state=dict(type='str', default='present'),
+            wait_interval=dict(type='int', default=5),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'update']),
         )
     )
 
@@ -342,10 +368,12 @@ def main():
         module.fail_json(
             msg='auth_token parameter is required.')
 
-    auth_token = module.params.get('auth_token')
-
-    oneandone_conn = oneandone.client.OneAndOneService(
-        api_token=auth_token)
+    if not module.params.get('api_url'):
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'))
+    else:
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'), api_url=module.params.get('api_url'))
 
     state = module.params.get('state')
 
