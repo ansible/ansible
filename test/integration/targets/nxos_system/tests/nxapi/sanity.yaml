@@ -1,0 +1,34 @@
+---
+- debug: msg="START TRANSPORT:NXAPI nxos_system sanity test"
+
+- block:
+  - name: configure hostname and domain-name
+    nxos_system: &hostname
+      hostname: "{{ inventory_hostname_short }}"
+      domain_name: test.example.com
+      provider: "{{ nxapi }}"
+
+  - name: remove configuration
+    nxos_system:
+      state: absent
+      provider: "{{ nxapi }}"
+
+  - name: configure name servers
+    nxos_system:
+      name_servers:
+        - 8.8.8.8
+        - 8.8.4.4
+      provider: "{{ nxapi }}"
+
+  - name: configure name servers with VRF support
+    nxos_system:
+      name_servers:
+        - { server: 8.8.8.8, vrf: management }
+        - { server: 8.8.4.4, vrf: management }
+      provider: "{{ nxapi }}"
+
+  always:
+  - name: Re-configure hostname
+    nxos_system: *hostname
+
+  - debug: msg="END TRANSPORT:NXAPI nxos_system sanity test"
