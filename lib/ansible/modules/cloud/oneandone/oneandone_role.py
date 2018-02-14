@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -26,7 +27,7 @@ module: oneandone_role
 short_description: Configure 1&1 roles.
 description:
      - Create, remove, and update a role.
-version_added: "2.1"
+version_added: "2.6"
 options:
   state:
     description:
@@ -41,7 +42,7 @@ options:
   name:
     description:
       - Role name used with present state. Used as identifier (id or name) when used with absent state.
-    maxLength: 128
+        maxLength=128
     required: true
   role:
     description:
@@ -58,6 +59,7 @@ options:
     choices: [ "ACTIVE", "DISABLE" ]
 notes:
   - Permissions are added to the role separately for each resource by setting a boolean value for each action
+    (cloudpanel-api.1and1.com/documentation/v1/en/api/documentation.html#roles_post)
   - servers
       (show, create, delete, set_name, set_description, start, restart, shutdown,
       resize, reinstall, clone, manage_snapshot, assign_ip, manage_dvd, access_kvm_console)
@@ -98,7 +100,17 @@ requirements:
      - "1and1"
      - "python >= 2.6"
 
-author: "Amel Ajdinovic (@aajdinov), Ethan Devenport (@edevenport)"
+author:
+  - Amel Ajdinovic (@aajdinov)
+  - Ethan Devenport (@edevenport)
+'''
+
+RETURN = '''
+role:
+    description: Information about the role that was processed
+    type: dict
+    sample: '{"id": "F77CC589EBC120905B4F4719217BFF6D", "name": "My custom role"}'
+    returned: always
 '''
 
 import os
