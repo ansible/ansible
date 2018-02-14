@@ -33,6 +33,11 @@ options:
     description:
       - Authenticating API token provided by 1&1.
     required: true
+  api_url:
+    description:
+      - Custom API URL. Overrides the
+        ONEANDONE_API_URL environement variable.
+    required: false
   name:
     description:
       - VPN name used with present state. Used as identifier (id or name) when used with absent state.
@@ -51,12 +56,28 @@ options:
     description:
       - ID (or name) of the datacenter where the vpn will be created.
     required: false
+  wait:
+    description:
+      - wait for the instance to be in the appropriate state before returning
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 600
+  wait_interval:
+    description:
+      - Defines the number of seconds to wait when using the _wait_for methods
+    default: 5
 
 requirements:
      - "1and1"
      - "python >= 2.6"
 
-author: "Amel Ajdinovic (@aajdinov), Ethan Devenport (@edevenport)"
+author:
+  -  "Amel Ajdinovic (@aajdinov)"
+  -  "Ethan Devenport (@edevenport)"
 '''
 
 EXAMPLES = '''
@@ -143,6 +164,7 @@ def create_vpn(module, oneandone_conn):
         datacenter = module.params.get('datacenter')
         wait = module.params.get('wait')
         wait_timeout = module.params.get('wait_timeout')
+        wait_interval = module.params.get('wait_interval')
 
         if datacenter is not None:
             datacenter_id = get_datacenter(oneandone_conn, datacenter)
@@ -161,7 +183,8 @@ def create_vpn(module, oneandone_conn):
                 oneandone_conn,
                 OneAndOneResources.vpn,
                 vpn['id'],
-                wait_timeout)
+                wait_timeout,
+                wait_interval)
 
         changed = True if vpn else False
 
@@ -198,15 +221,18 @@ def main():
         argument_spec=dict(
             auth_token=dict(
                 type='str',
-                default=os.environ.get('ONEANDONE_AUTH_TOKEN'),
-                no_log=True),
+                default=os.environ.get('ONEANDONE_AUTH_TOKEN')),
+            api_url=dict(
+                type='str',
+                default=os.environ.get('ONEANDONE_API_URL')),
             vpn=dict(type='str'),
             name=dict(type='str'),
             description=dict(type='str'),
             datacenter=dict(type='str'),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
-            state=dict(type='str', default='present'),
+            wait_interval=dict(type='int', default=5),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'update']),
         )
     )
 
@@ -217,10 +243,12 @@ def main():
         module.fail_json(
             msg='auth_token parameter is required.')
 
-    auth_token = module.params.get('auth_token')
-
-    oneandone_conn = oneandone.client.OneAndOneService(
-        api_token=auth_token)
+    if not module.params.get('api_url'):
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'))
+    else:
+        oneandone_conn = oneandone.client.OneAndOneService(
+            api_token=module.params.get('auth_token'), api_url=module.params.get('api_url'))
 
     state = module.params.get('state')
 
