@@ -1,8 +1,13 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# Copyright (C) 2017 Lenovo.
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Module to configure Lenovo Switches.
+# Lenovo Networking
+#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type

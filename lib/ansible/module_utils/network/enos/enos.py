@@ -4,7 +4,7 @@
 # Ansible still belong to the author of the module, and may assign their own
 # license to the complete work.
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# Copyright (C) 2017 Lenovo.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# Copyright (C) 2017 Lenovo.
 # All rights reserved.
 #
 # This file is part of Ansible
