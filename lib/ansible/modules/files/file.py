@@ -85,6 +85,11 @@ EXAMPLES = '''
     group: foo
     mode: 0644
 - file:
+    path: /work
+    owner: root
+    group: root
+    mode: 01777
+- file:
     src: /file/to/link/to
     dest: /path/to/symlink
     owner: foo
