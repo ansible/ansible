@@ -1235,7 +1235,7 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if 'deprecated' in docs and docs['deprecated'] is not None:
+            if docs and 'deprecated' in docs and docs['deprecated'] is not None:
                 removed_in = docs.get('deprecated')['removed_in']
                 strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
                 end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in
