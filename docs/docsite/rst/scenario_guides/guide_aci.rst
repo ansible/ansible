@@ -1,10 +1,6 @@
 Getting started with Cisco ACI
 ==============================
 
-.. contents:: Topics
-   :depth: 2
-   :local:
-
 .. _aci_intro:
 
 What is Cisco ACI ?
