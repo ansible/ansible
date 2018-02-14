@@ -143,7 +143,7 @@ def main():
     ping_results = run_commands(module, commands=results["commands"])
     ping_results_list = ping_results[0].split("\n")
 
-    success, rx, tx, rtt = parse_ping(ping_results_list[3])
+    success, rx, tx, rtt = parse_ping(ping_results_list[-1])
     loss = abs(100 - int(success))
     results["packet_loss"] = str(loss) + "%"
     results["packets_rx"] = int(rx)
