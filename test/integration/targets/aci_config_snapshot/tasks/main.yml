@@ -67,7 +67,7 @@
 
 - name: generate snapshot name
   set_fact:
-    test_snapshot: "{{ query_export.previous.0.configSnapshotCont.children.0.configSnapshot.attributes.rn.strip('snapshot-') }}"
+    test_snapshot: "{{ query_export.current.0.configSnapshotCont.children.0.configSnapshot.attributes.rn.strip('snapshot-') }}"
 
 - name: query with export_policy and snapshot
   aci_config_snapshot: &query_both
@@ -94,12 +94,12 @@
       - query_export.failed == false
       - query_export.changed == false
       - '"snapshots-[uni/fabric/configexp-anstest].json" in query_export.url'
-      - query_export.previous.0.configSnapshotCont.attributes.name == "anstest"
-      - query_export.previous.0.configSnapshotCont.children | length > 1
+      - query_export.current.0.configSnapshotCont.attributes.name == "anstest"
+      - query_export.current.0.configSnapshotCont.children | length > 1
       - query_export_snapshot.failed == false
       - query_export_snapshot.changed == false
       - '"snapshots-[uni/fabric/configexp-anstest]/snapshot-{{ test_snapshot }}.json" in query_export_snapshot.url'
-      - query_export_snapshot.previous | length == 1
+      - query_export_snapshot.current | length == 1
       - query_snapshot.failed == false
       - query_snapshot.changed == false
       - '"class/configSnapshot.json" in query_snapshot.url'
@@ -107,7 +107,7 @@
       - query_all.failed == false
       - query_all.changed == false
       - '"class/configSnapshot.json" in query_all.url'
-      - query_all.previous | length > 1
+      - query_all.current | length > 1
 
 - name: delete works
   aci_config_snapshot: &delete

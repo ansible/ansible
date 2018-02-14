@@ -170,7 +170,7 @@
   assert:
     that:
       - get_all.changed == false
-      - get_all.previous | length > 1
+      - get_all.current | length > 1
       - get_all_tenant.changed == false
       - '"tn-anstest.json" in get_all_tenant.url'
       - get_all_bd.changed == false
@@ -178,7 +178,7 @@
       - '"class/fvBD.json" in get_all_bd.url'
       - get_all_tenant_bd.changed == false
       - '"tn-anstest/BD-anstest.json" in get_all_tenant_bd.url'
-      - get_all_tenant_bd.previous.0.fvBD.children | length > 1
+      - get_all_tenant_bd.current.0.fvBD.children | length > 1
       - get_subnet_tenant.changed == false
       - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string'
       - '"tn-anstest.json" in get_subnet_tenant.url'
@@ -186,7 +186,7 @@
       - '"query-target-filter=eq(fvBD.name, \"anstest\")" and "rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string'
       - '"class/fvBD.json" in get_subnet_bd.url'
       - get_subnet.changed == false
-      - get_subnet.previous | length == 1
+      - get_subnet.current | length == 1
       - '"tn-anstest/BD-anstest/subnet-[10.100.100.1/24].json" in get_subnet.url'
       - get_subnets_gateway.changed == false
       - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string'

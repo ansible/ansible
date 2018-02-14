@@ -142,48 +142,48 @@
   assert:
     that:
       - query_tenant_contract_subject.changed == false
-      - query_tenant_contract_subject.previous | length == 1
-      - 'query_tenant_contract_subject.previous.0.vzSubj.attributes.name == "anstest"'
+      - query_tenant_contract_subject.current | length == 1
+      - 'query_tenant_contract_subject.current.0.vzSubj.attributes.name == "anstest"'
       - '"tn-anstest/brc-anstest/subj-anstest.json" in query_tenant_contract_subject.url'
       - query_tenant_contract.changed == false
-      - query_tenant_contract.previous | length == 1
-      - 'query_tenant_contract.previous.0.vzBrCP.attributes.name == "anstest"'
-      - query_tenant_contract.previous.0.vzBrCP.children | length == 2
+      - query_tenant_contract.current | length == 1
+      - 'query_tenant_contract.current.0.vzBrCP.attributes.name == "anstest"'
+      - query_tenant_contract.current.0.vzBrCP.children | length == 2
       - '"rsp-subtree-class=vzSubj" in query_tenant_contract.filter_string'
       - '"tn-anstest/brc-anstest.json" in query_tenant_contract.url'
       - query_tenant_subject.changed == false
-      - query_tenant_subject.previous | length == 1
-      - 'query_tenant_subject.previous.0.fvTenant.attributes.name == "anstest"'
-      - query_tenant_subject.previous.0.fvTenant.children.0.vzBrCP.children | length == 1
-      - 'query_tenant_subject.previous.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
+      - query_tenant_subject.current | length == 1
+      - 'query_tenant_subject.current.0.fvTenant.attributes.name == "anstest"'
+      - query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children | length == 1
+      - 'query_tenant_subject.current.0.fvTenant.children.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
       - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_tenant_subject.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_tenant_subject.filter_string'
       - '"tn-anstest.json" in query_tenant_subject.url'
       - query_contract_subject.changed == false
-      - 'query_contract_subject.previous.0.vzBrCP.attributes.name == "anstest"'
-      - query_contract_subject.previous.0.vzBrCP.children | length == 1
-      - 'query_contract_subject.previous.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
+      - 'query_contract_subject.current.0.vzBrCP.attributes.name == "anstest"'
+      - query_contract_subject.current.0.vzBrCP.children | length == 1
+      - 'query_contract_subject.current.0.vzBrCP.children.0.vzSubj.attributes.name == "anstest"'
       - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract_subject.filter_string'
       - '"rsp-subtree-filter=eq(vzSubj.name, \"anstest\")" in query_contract_subject.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_contract_subject.filter_string'
       - '"class/vzBrCP.json" in query_contract_subject.url'
       - query_tenant.changed == false
-      - query_tenant.previous | length == 1
-      - 'query_tenant.previous.0.fvTenant.attributes.name == "anstest"'
+      - query_tenant.current | length == 1
+      - 'query_tenant.current.0.fvTenant.attributes.name == "anstest"'
       - '"rsp-subtree-class=vzBrCP,vzSubj" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
       - query_contract.changed == false
-      - 'query_contract.previous.0.vzBrCP.attributes.name == "anstest"'
+      - 'query_contract.current.0.vzBrCP.attributes.name == "anstest"'
       - '"query-target-filter=eq(vzBrCP.name, \"anstest\")" in query_contract.filter_string'
       - '"rsp-subtree-class=vzSubj" in query_contract.filter_string'
       - '"class/vzBrCP.json" in query_contract.url'
       - query_subject.changed == false
-      - 'query_subject.previous.0.vzSubj.attributes.name == "anstest"'
+      - 'query_subject.current.0.vzSubj.attributes.name == "anstest"'
       - '"query-target-filter=eq(vzSubj.name, \"anstest\")" in query_subject.filter_string'
       - '"class/vzSubj.json" in query_subject.url'
       - query_all.changed == false
-      - query_all.previous > 1
-      - query_all.previous.0.vzSubj is defined
+      - query_all.current > 1
+      - query_all.current.0.vzSubj is defined
       - '"class/vzSubj.json" in query_all.url'
 
 - name: delete subject - check mode works

@@ -115,10 +115,10 @@
   assert:
     that:
       - query_all.changed == false
-      - query_all.previous | length > 1
-      - query_all.previous.0.vzRsSubjFiltAtt is defined
+      - query_all.current | length > 1
+      - query_all.current.0.vzRsSubjFiltAtt is defined
       - query_binding.changed == false
-      - query_binding.previous != []
+      - query_binding.current != []
 
 - name: delete subject filter binding - check mode works
   aci_contract_subject_to_filter: &aci_subject_filter_absent

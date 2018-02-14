@@ -73,7 +73,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.previous | length >= 1
+      - binding_query.current | length >= 1
       - '"api/mo/uni/infra/accportprof-leafintprftest/hports-anstest_accessportselector-typ-range.json" in binding_query.url'
 
 - name: Remove binding of interface access port selector and Interface Policy Leaf Profile - check mode
