@@ -24,6 +24,9 @@ try:
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
