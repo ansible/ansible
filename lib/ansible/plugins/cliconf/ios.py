@@ -77,8 +77,8 @@ class Cliconf(CliconfBase):
                 newline = cmd.get('newline', True)
             else:
                 command = cmd
-                prompt = None
-                answer = None
+                prompt = ''
+                answer = ''
                 newline = True
 
             self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer),
