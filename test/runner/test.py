@@ -67,6 +67,7 @@ from lib.cloud import (
 )
 
 import lib.cover
+import os
 
 
 def main():
@@ -266,7 +267,7 @@ def parse_args():
 
     network_integration.add_argument('--testcase',
                                      metavar='TESTCASE',
-                                     help='limit a test to a specified testcase')
+                                     help='limit a test to a specified testcase').completer = complete_network_testcase
 
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
@@ -651,6 +652,25 @@ def complete_network_platform(prefix, parsed_args, **_):
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
+def complete_network_testcase(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    testcases = []
+
+    for platform in parsed_args.include:
+        test_dir = 'test/integration/targets/%s/tests' % platform
+        connections = os.listdir(test_dir)
+
+        for conn in connections:
+            if os.path.isdir(os.path.join(test_dir, conn)):
+                for testcase in os.listdir(os.path.join(test_dir, conn)):
+                    if testcase.startswith(prefix):
+                        testcases.append(testcase.split('.')[0])
+
+    return testcases
 
 def complete_sanity_test(prefix, parsed_args, **_):
     """
