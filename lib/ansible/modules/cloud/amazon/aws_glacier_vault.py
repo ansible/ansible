@@ -118,17 +118,10 @@ class GlacierVaultManager(object):
         except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
             self.module.fail_json_aws(exception=e, msg="Failed to list vaults")
 
-        if "VaultList" not in vaults:
-            self.module.fail_json(msg="Invalid response from Glacier: no VaultList found in response")
-
         return vaults["VaultList"]
 
-    def exists(self, name):
+    def get_vault(self, name):
         for v in self.list():
-            if "VaultName" not in v:
-                self.module.fail_json(
-                    msg="Invalid response from Glacier: no VaultName found in vault object {0}".format(v))
-
             if v["VaultName"] == name:
                 return v
 
@@ -136,7 +129,7 @@ class GlacierVaultManager(object):
 
     def create_or_update(self):
         changed = False
-        vault = self.exists(self.name)
+        vault = self.get_vault(self.name)
         if vault is None:
             try:
                 vault = self.connection.create_vault(vaultName=self.name)
@@ -145,6 +138,8 @@ class GlacierVaultManager(object):
             changed = True
 
         changed |= self.manage_tags()
+
+        vault = self.get_vault(self.name)
 
         # Vault exists, no change to do
         self.module.exit_json(vault=camel_dict_to_snake_dict(vault), tags=self.list_tags(), changed=changed)
@@ -185,7 +180,7 @@ class GlacierVaultManager(object):
 
     def destroy(self):
         name = self.module.params.get('name')
-        vault = self.exists(name)
+        vault = self.get_vault(name)
         if vault is None:
             self.module.exit_json(changed=False)
 
@@ -209,9 +204,6 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
