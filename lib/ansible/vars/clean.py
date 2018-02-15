@@ -24,7 +24,7 @@ except ImportError:
 
 def strip_internal_keys(dirty, exceptions=None):
     '''
-    All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
+    All keys starting with _ansible_ are internal, so create a copy of the 'dirty' dict
     and remove them from the clean one before returning it
     '''
 
@@ -56,7 +56,7 @@ def remove_internal_keys(data):
 
 
 def clean_facts(facts):
-    ''' remove facts that can override internal keys or othewise deemed unsafe '''
+    ''' remove facts that can override internal keys or otherwise deemed unsafe '''
     data = deepcopy(facts)
 
     remove_keys = set()
@@ -71,7 +71,7 @@ def clean_facts(facts):
             conn_name = os.path.splitext(os.path.basename(conn_path))[0]
             re_key = re.compile('^ansible_%s_' % conn_name)
             for fact_key in fact_keys:
-                # exception for lvm tech, whic normally returns asnible_x_bridge facts that get filterd out (docker,lxc, etc)
+                # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
                 if re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge')):
                     remove_keys.add(fact_key)
         except AttributeError:
@@ -100,19 +100,6 @@ def clean_facts(facts):
             del data[r_key]
 
     return strip_internal_keys(data)
-
-
-def inject_facts(facts):
-    ''' return clean facts inside with an ansible_ prefix '''
-    injected = {}
-    for k in facts:
-        if k.startswith('ansible_') or k == 'module_setup':
-            new = k
-        else:
-            new = 'ansilbe_%s' % k
-        injected[new] = deepcopy(facts[k])
-
-    return clean_facts(injected)
 
 
 def namespace_facts(facts):
