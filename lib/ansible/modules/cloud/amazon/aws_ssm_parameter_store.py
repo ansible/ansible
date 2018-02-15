@@ -138,7 +138,7 @@ def create_update_parameter(client, module):
         args.update(KeyId=module.params.get('key_id'))
 
     try:
-        existing_parameter = client.get_parameter(Name=args['Name'],WithDecryption=True)
+        existing_parameter = client.get_parameter(Name=args['Name'], WithDecryption=True)
     except:
         pass
 
@@ -162,7 +162,7 @@ def create_update_parameter(client, module):
                 # Description field not available from get_parameter function so get it from describe_parameters
                 describe_existing_parameter = None
                 try:
-                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key":"Name","Values":[args['Name']]}])
+                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key": "Name", "Values": [args['Name']]}])
                 except:
                     module.fail_json_aws(e, msg="getting description value")
 
