@@ -89,14 +89,8 @@ openstack_domains:
             type: bool
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -112,14 +106,10 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    shade, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         filters = module.params['filters']
-
-        opcloud = shade.operator_cloud(**module.params)
 
         if name:
             # Let's suppose user is passing domain ID
