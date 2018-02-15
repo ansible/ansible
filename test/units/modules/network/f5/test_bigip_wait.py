@@ -93,6 +93,11 @@ class TestParameters(unittest.TestCase):
 class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_wait_already_available(self, *args):
         set_module_args(dict(
@@ -115,4 +120,4 @@ class TestManager(unittest.TestCase):
         results = mm.exec_module()
 
         assert results['changed'] is False
-        assert results['elapsed'] == 1
+        assert results['elapsed'] == 0
