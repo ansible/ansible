@@ -147,11 +147,11 @@ class ActionModule(ActionBase):
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(self._connection._shell.tempdir, 'src')
+                remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
                 new_module_args.update(dict(src=xfered,))
 
@@ -165,6 +165,6 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
