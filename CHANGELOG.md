@@ -11,7 +11,7 @@ Ansible Changes By Release
 
 ### Deprecations (to be removed in 2.10)
 
-See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.htmlthat's ) for more information
+See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
 
 ### Minor Changes
 
