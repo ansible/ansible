@@ -360,7 +360,7 @@ DEFAULT_ASK_SUDO_PASS:
   name: Ask for the sudo password
   default: False
   deprecated:
-    why: In favor of Ansible Become which is a generic framework, see become_ask_pass
+    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
     version: "2.8"
     alternatives: become
   description:
@@ -373,7 +373,7 @@ DEFAULT_ASK_SU_PASS:
   name: Ask for the su password
   default: False
   deprecated:
-    why: In favor of Ansible Become which is a generic framework, see become_ask_pass
+    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
     version: "2.8"
     alternatives: become
   description:
