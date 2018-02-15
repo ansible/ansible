@@ -684,7 +684,7 @@ def create(client, subnet_id, allocation_id, client_token=None,
         else:
             result = DRY_RUN_GATEWAYS[0]
             result['create_time'] = datetime.datetime.utcnow()
-            result['nat_gateway_addresses'][0]['Allocation_id'] = allocation_id
+            result['nat_gateway_addresses'][0]['allocation_id'] = allocation_id
             result['subnet_id'] = subnet_id
 
         success = True
