@@ -110,6 +110,9 @@ Errors
   321       ``Exception`` attempting to import module for ``argument_spec`` introspection
   322       argument is listed in the argument_spec, but not documented in the module
   323       argument is listed in DOCUMENTATION.options, but not accepted by the module
+  324       Value for "default" from the argument_spec does not match the documentation
+  325       argument_spec defines type="bool" but documentation does not
+  326       Value for "choices" from the argument_spec does not match the documentation
   ..
 ---------   -------------------
   **4xx**   **Syntax**

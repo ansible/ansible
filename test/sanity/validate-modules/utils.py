@@ -25,6 +25,7 @@ import yaml
 import yaml.reader
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 
 
 class AnsibleTextIOWrapper(TextIOWrapper):
@@ -114,3 +115,24 @@ def parse_yaml(value, lineno, module, name, load_all=False):
         })
 
     return data, errors, traces
+
+
+def maybe_convert_bool(value):
+    """Safe conversion to boolean, catching TypeError and returning the original result
+
+    Only used in doc<->arg_spec comparisons
+    """
+    try:
+        return boolean(value)
+    except TypeError:
+        return value
+
+
+def compare_unordered_lists(a, b):
+    """Safe list comparisons
+
+    Supports:
+      - unordered lists
+      - unhashable elements
+    """
+    return len(a) == len(b) and all(x in b for x in a)
