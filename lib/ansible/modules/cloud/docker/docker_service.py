@@ -686,7 +686,7 @@ class ContainerManager(DockerBaseClass):
 
         up_options = {
             u'--no-recreate': False,
-            u'--build': True,
+            u'--build': False,
             u'--no-build': False,
             u'--no-deps': False,
             u'--force-recreate': False,
