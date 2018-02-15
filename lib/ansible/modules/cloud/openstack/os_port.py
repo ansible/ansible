@@ -30,6 +30,12 @@ options:
    name:
      description:
         - Name that has to be given to the port.
+     required: false
+   id:
+     description:
+        - Port ID when changing properties of existing port
+     required: false
+     version_added: "2.7"
    fixed_ips:
      description:
         - Desired IP and/or subnet for this port.  Subnet is referenced by
@@ -140,6 +146,17 @@ EXAMPLES = '''
     security_groups:
       - 1496e8c7-4918-482a-9172-f4f00fc4a3a5
       - 057d4bdf-6d4d-472...
+
+# Shut off the existing port
+- os_port:
+    state: present
+    auth:
+      auth_url: https://identity.example.com
+      username: admin
+      password: admin
+      project_name: admin
+    id: 0871bd3f-2b84-43cb-b17f-8869411a249b
+    admin_state_up: False
 '''
 
 RETURN = '''
@@ -281,6 +298,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         network=dict(required=False),
         name=dict(required=False),
+        id=dict(required=False),
         fixed_ips=dict(type='list', default=None),
         admin_state_up=dict(type='bool', default=None),
         mac_address=dict(default=None),
@@ -304,6 +322,7 @@ def main():
                            **module_kwargs)
 
     name = module.params['name']
+    id = module.params['id']
     state = module.params['state']
 
     sdk, cloud = openstack_cloud_from_module(module)
@@ -317,8 +336,8 @@ def main():
 
         port = None
         network_id = None
-        if name:
-            port = cloud.get_port(name)
+        if id or name:
+            port = cloud.get_port(id or name)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, port, cloud))
