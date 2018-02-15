@@ -374,7 +374,7 @@ class ActionModule(ActionBase):
                 source = content_tempfile
             except Exception as err:
                 result['failed'] = True
-                result['msg'] = "could not write content temp file: %s" % to_native(err)
+                result['msg'] = "could not write content tmp file: %s" % to_native(err)
                 return result
         # all actions should occur on the remote server, run win_copy module
         elif remote_src:
@@ -487,15 +487,15 @@ class ActionModule(ActionBase):
             result.update(query_return)
             return result
 
-        if len(query_return['files']) > 0 or len(query_return['directories']) > 0 and self._connection._shell.tempdir is None:
-            self._connection._shell.tempdir = self._make_tmp_path()
+        if len(query_return['files']) > 0 or len(query_return['directories']) > 0 and self._connection._shell.tmpdir is None:
+            self._connection._shell.tmpdir = self._make_tmp_path()
 
         if len(query_return['files']) == 1 and len(query_return['directories']) == 0:
             # we only need to copy 1 file, don't mess around with zips
             file_src = query_return['files'][0]['src']
             file_dest = query_return['files'][0]['dest']
             copy_result = self._copy_single_file(file_src, dest, file_dest,
-                                                 task_vars, self._connection._shell.tempdir)
+                                                 task_vars, self._connection._shell.tmpdir)
 
             result['changed'] = True
             if copy_result.get('failed') is True:
@@ -507,14 +507,14 @@ class ActionModule(ActionBase):
             # TODO: handle symlinks
             result.update(self._copy_zip_file(dest, source_files['files'],
                                               source_files['directories'],
-                                              task_vars, self._connection._shell.tempdir))
+                                              task_vars, self._connection._shell.tmpdir))
             result['changed'] = True
         else:
             # no operations need to occur
             result['failed'] = False
             result['changed'] = False
 
-        # remove the content temp file and remote tmp file if it was created
+        # remove the content tmp file and remote tmp file if it was created
         self._remove_tempfile_if_content_defined(content, content_tempfile)
-        self._remove_tmp_path(self._connection._shell.tempdir)
+        self._remove_tmp_path(self._connection._shell.tmpdir)
         return result

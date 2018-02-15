@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, os.path.basename(src))
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, os.path.basename(src))
             self._transfer_file(src, tmp_src)
             self._fixup_perms2((tmp_src,))
 
@@ -68,5 +68,5 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
         return result
