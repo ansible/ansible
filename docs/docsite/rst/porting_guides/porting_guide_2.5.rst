@@ -158,7 +158,36 @@ desired.
 Plugins
 =======
 
-No notable changes.
+As a developer you can now use 'doc fragments' for common configuration options on plugin types that support the new plugin configuration system.
+
+Inventory
+---------
+
+Inventory plugins have been fine tuned, and we have started to add some common features:
+
+* The ability to use a cache plugin to avoid costly API/DB queries, this is disabled by default.
+  If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
+  Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
+
+* A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
+  The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
+  If you had customized the enabled plugins you might want to revise the setting to include the new auto plugin.
+
+Shell
+-----
+
+Shell plugins have been migrated to the new plugin configuration framework, as such it is now possible to customize more settings and previouslly 'global' settings can now also be overriden using host specific variables.
+
+For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir', previouslly it was hardcoded to '/tmp', now it defaults to ``[ '/var/tmp', '/tmp']``.
+This is used when using privilege escalation to a non administrative user, some systems cannot use `/tmp` for this purpose, this allows you to customize it globaly or for those systems.
+
+Another setting of interest is ``admin_users`` which allows you to specify a list of users to be considerd 'administrators', previouslly this was hardcoded to ``root``, now it defaults to ``[root, toor, admin]``.  This information is used when choosing between your ``remote_temp`` and a ``system_temps`` directory as mentioned above.
+
+For a full list, check the shell plugin you are using, the default shell plugin is ``sh``.
+
+Those that had to work around the global configuration limitations can now migrate to a per host/group settings,
+but also note that the new defaults might conflict with existing usage if the assumptions don't correlate to your environment.
+
 
 Porting custom scripts
 ======================
