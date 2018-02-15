@@ -23,12 +23,6 @@ author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
 options:
-  allocation_mode:
-    description:
-    - The method used for allocating encaps to resources.
-    - Only vlan and vsan support allocation modes.
-    aliases: [ mode ]
-    choices: [ dynamic, static]
   description:
     description:
     - Description for the C(pool).
@@ -37,6 +31,12 @@ options:
     description:
     - The name of the pool.
     aliases: [ name, pool_name ]
+  pool_allocation_mode:
+    description:
+    - The method used for allocating encaps to resources.
+    - Only vlan and vsan support allocation modes.
+    choices: [ dynamic, static ]
+    aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
@@ -217,9 +217,9 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'static']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['name', 'pool_name']),
+        pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -233,26 +233,26 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
     description = module.params['description']
     pool = module.params['pool']
     pool_type = module.params['pool_type']
+    pool_allocation_mode = module.params['pool_allocation_mode']
     state = module.params['state']
 
     aci_class = ACI_MAPPING[pool_type]["aci_class"]
     aci_mo = ACI_MAPPING[pool_type]["aci_mo"]
     pool_name = pool
 
-    # ACI Pool URL requires the allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
+    # ACI Pool URL requires the pool_allocation mode for vlan and vsan pools (ex: uni/infra/vlanns-[poolname]-static)
     if pool_type != 'vxlan' and pool is not None:
-        if allocation_mode is not None:
-            pool_name = '[{0}]-{1}'.format(pool, allocation_mode)
+        if pool_allocation_mode is not None:
+            pool_name = '[{0}]-{1}'.format(pool, pool_allocation_mode)
         else:
-            module.fail_json(msg='ACI requires the "allocation_mode" for "pool_type" of "vlan" and "vsan" when the "pool" is provided')
+            module.fail_json(msg="ACI requires parameter 'pool_allocation_mode' for 'pool_type' of 'vlan' and 'vsan' when parameter 'pool' is provided")
 
-    # Vxlan pools do not support allocation modes
-    if pool_type == 'vxlan' and allocation_mode is not None:
-        module.fail_json(msg='vxlan pools do not support setting the allocation_mode; please remove this parameter from the task')
+    # Vxlan pools do not support pool allocation modes
+    if pool_type == 'vxlan' and pool_allocation_mode is not None:
+        module.fail_json(msg="vxlan pools do not support setting the 'pool_allocation_mode'; please remove this parameter from the task")
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -271,7 +271,7 @@ def main():
         aci.payload(
             aci_class=aci_class,
             class_config=dict(
-                allocMode=allocation_mode,
+                allocMode=pool_allocation_mode,
                 descr=description,
                 name=pool,
             )
