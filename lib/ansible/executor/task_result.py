@@ -13,6 +13,7 @@ from ansible.vars.clean import strip_internal_keys
 _IGNORE = ('failed', 'skipped')
 _PRESERVE = ('attempts', 'changed', 'retries')
 
+
 class TaskResult:
     '''
     This class is responsible for interpreting the resulting data
