@@ -213,6 +213,6 @@ class ActionModule(ActionBase):
                 result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
 
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
