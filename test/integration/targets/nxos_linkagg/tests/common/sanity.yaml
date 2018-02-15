@@ -26,6 +26,7 @@
       - no channel-group 20
     provider: "{{ connection }}"
     parents: "{{ item }}"
+  ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
     - "interface {{ testint2 }}"
@@ -181,6 +182,7 @@
       - no channel-group 20
     provider: "{{ connection }}"
     parents: "{{ item }}"
+  ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
     - "interface {{ testint2 }}"
