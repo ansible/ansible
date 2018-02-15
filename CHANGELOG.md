@@ -24,7 +24,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 
 ## 2.5 "Kashmir" - March 2018 (estimated)
 
-[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html)
+[Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html)
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
@@ -61,7 +61,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 * panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 * vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
 
-See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
+See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html) for more information
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
