@@ -36,7 +36,7 @@ options:
         description:
             - The type of entity you want to work on (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
         required: true
         default: null
     id:
@@ -59,7 +59,7 @@ options:
         description:
             - The type of parent the ID is specified for (example Enterprise).
             - This should match the objects CamelCase class name in VSPK-Python.
-            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/html/index.html).
+            - This Class name can be found on U(https://nuagenetworks.github.io/vspkdoc/index.html).
             - If specified, I(parent_id) also needs to be specified.
         required: false
         default: null
