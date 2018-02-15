@@ -180,7 +180,7 @@ class HostNetworksModule(BaseModule):
                 if not equal(network.get('gateway'), ip.ip.gateway):
                     ip.ip.gateway = network.get('gateway')
                     changed = True
-                if not equal(network.get('prefix'), int(ip.ip.netmask) if ip.ip.netmask else None):
+                if not equal(network.get('prefix'), sum([bin(int(x)).count('1') for x in ip.ip.netmask.split('.')]) if ip.ip.netmask else None):
                     ip.ip.netmask = str(network.get('prefix'))
                     changed = True
 
