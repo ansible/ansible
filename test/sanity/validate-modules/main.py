@@ -1019,6 +1019,15 @@ class ModuleValidator(Validator):
         if not self.analyze_arg_spec:
             return
 
+        if docs is None:
+            docs = {}
+
+        try:
+            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+        except Exception:
+            # Cannot merge fragments
+            return
+
         try:
             spec, args, kwargs = get_argument_spec(self.path)
         except AnsibleModuleImportError as e:
@@ -1087,12 +1096,6 @@ class ModuleValidator(Validator):
                 )
 
         if docs:
-            try:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
-            except Exception:
-                # Cannot merge fragments
-                return
-
             file_common_arguments = set()
             for arg, data in FILE_COMMON_ARGUMENTS.items():
                 file_common_arguments.add(arg)
