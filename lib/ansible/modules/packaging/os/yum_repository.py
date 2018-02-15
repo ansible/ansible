@@ -626,7 +626,7 @@ def main():
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),
         gpgcakey=dict(),
-        gpgcheck=dict(type='bool'),
+        gpgcheck=dict(default=False, type='bool'),
         gpgkey=dict(type='list'),
         http_caching=dict(choices=['all', 'packages', 'none']),
         include=dict(),
