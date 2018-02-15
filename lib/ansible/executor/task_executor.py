@@ -141,6 +141,10 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
+            # make sure skipped is set in the result, if it's not present
+            if 'skipped' not in res:
+                res['skipped'] = False
+
             def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, UnsafeProxy):
                     return res._obj
