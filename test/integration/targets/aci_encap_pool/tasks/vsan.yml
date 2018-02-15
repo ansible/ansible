@@ -10,4 +10,4 @@
     state: absent
     pool: anstest
     pool_type: vsan
-    allocation_mode: static
+    pool_allocation_mode: static
