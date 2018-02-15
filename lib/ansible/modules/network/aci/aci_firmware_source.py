@@ -31,12 +31,12 @@ options:
   polling_interval:
     description:
     - Polling interval in minutes.
-  protocol:
+  url_protocol:
     description:
     - The Firmware download protocol.
     choices: [ http, local, scp, usbkey ]
     default: scp
-    aliases: [ proto ]
+    aliases: [ url_proto ]
   url:
     description:
       The firmware URL for the image(s) on the source.
@@ -56,7 +56,38 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-#
+- name: Add firmware source
+  aci_firmware_source:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    source: aci-msft-pkg-3.1.1i.zip
+    url: foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
+    url_protocol: http
+    state: present
+
+- name: Remove firmware source
+  aci_firmware_source:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    source: aci-msft-pkg-3.1.1i.zip
+    state: absent
+
+- name: Query all firmware sources
+  aci_firmware_source:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    state: query
+
+- name: Query a specific firmware source
+  aci_firmware_source:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    source: aci-msft-pkg-3.1.1i.zip
+    state: query
 '''
 
 RETURN = r'''
@@ -174,10 +205,10 @@ def main():
     argument_spec.update(
         source=dict(type='str', aliases=['name', 'source_name']),  # Not required for querying all objects
         polling_interval=dict(type='int'),
-        protocol=dict(type='str', default='scp', choices=['http', 'local', 'scp', 'usbkey'], aliases=['proto']),
         url=dict(type='str'),
         url_username=dict(type='str'),
         url_password=dict(type='str', no_log=True),
+        url_protocol=dict(type='str', default='scp', choices=['http', 'local', 'scp', 'usbkey'], aliases=['url_proto']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -186,12 +217,12 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['source']],
-            ['state', 'present', ['protocol', 'source', 'url']],
+            ['state', 'present', ['url_protocol', 'source', 'url']],
         ],
     )
 
     polling_interval = module.params['polling_interval']
-    protocol = module.params['protocol']
+    url_protocol = module.params['url_protocol']
     state = module.params['state']
     source = module.params['source']
     url = module.params['url']
@@ -218,7 +249,7 @@ def main():
                 url=url,
                 password=url_password,
                 pollingInterval=polling_interval,
-                proto=protocol,
+                proto=url_protocol,
                 user=url_username,
             ),
         )
