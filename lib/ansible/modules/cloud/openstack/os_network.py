@@ -151,16 +151,8 @@ network:
             sample: 101
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -179,14 +171,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['project'] and
-            StrictVersion(shade.__version__) < StrictVersion('1.6.0')):
-        module.fail_json(msg="To utilize project, the installed version of"
-                             "the shade library MUST be >=1.6.0")
-
     state = module.params['state']
     name = module.params['name']
     shared = module.params['shared']
@@ -195,10 +179,10 @@ def main():
     provider_physical_network = module.params['provider_physical_network']
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
-    project = module.params.pop('project')
+    project = module.params.get('project')
 
+    shade, cloud = openstack_cloud_from_module(module, min_version='1.6.0')
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
@@ -219,9 +203,6 @@ def main():
                     provider['network_type'] = provider_network_type
                 if provider_segmentation_id:
                     provider['segmentation_id'] = provider_segmentation_id
-
-                if provider and StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
-                    module.fail_json(msg="Shade >= 1.5.0 required to use provider options")
 
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,

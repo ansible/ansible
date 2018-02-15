@@ -199,7 +199,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         auth_url: https://identity.example.com
          username: admin
          password: admin
          project_name: admin
@@ -224,7 +224,7 @@ EXAMPLES = '''
       os_server:
         state: present
         auth:
-          auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+          auth_url: https://identity.example.com
           username: username
           password: Equality7-2521
           project_name: username-project1
@@ -291,7 +291,7 @@ EXAMPLES = '''
     - name: launch an instance with a string
       os_server:
         auth:
-           auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+           auth_url: https://identity.example.com
            username: admin
            password: admin
            project_name: admin
@@ -306,7 +306,7 @@ EXAMPLES = '''
   os_server:
        state: present
        auth:
-         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         auth_url: https://identity.example.com
          username: admin
          password: admin
          project_name: admin
@@ -324,7 +324,7 @@ EXAMPLES = '''
   os_server:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -407,20 +407,14 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import (openstack_find_nova_addresses,
-                                            openstack_full_argument_spec, openstack_module_kwargs)
+from ansible.module_utils.openstack import (
+    openstack_find_nova_addresses, openstack_cloud_from_module,
+    openstack_full_argument_spec, openstack_module_kwargs)
 
 
 def _exit_hostvars(module, cloud, server, changed=True):
-    hostvars = meta.get_hostvars_from_server(cloud, server)
+    hostvars = cloud.get_openstack_vars(server)
     module.exit_json(
         changed=changed, server=server, id=server.id, openstack=hostvars)
 
@@ -727,9 +721,6 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     image = module.params['image']
     boot_volume = module.params['boot_volume']
@@ -748,11 +739,8 @@ def main():
                     "if state == 'present'"
             )
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud_params = dict(module.params)
-        cloud_params.pop('userdata', None)
-        cloud = shade.openstack_cloud(**cloud_params)
-
         if state == 'present':
             _get_server_state(module, cloud)
             _create_server(module, cloud)

@@ -148,14 +148,8 @@ try:
 except ImportError:
     HAS_JSONPATCH = False
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _parse_properties(module):
@@ -169,7 +163,7 @@ def _parse_properties(module):
     return props
 
 
-def _parse_driver_info(module):
+def _parse_driver_info(shade, module):
     p = module.params['driver_info']
     info = p.get('power')
     if not info:
@@ -226,8 +220,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
     if not HAS_JSONPATCH:
         module.fail_json(msg='jsonpatch is required for this module')
     if (module.params['auth_type'] in [None, 'None'] and
@@ -243,8 +235,8 @@ def main():
 
     node_id = _choose_id_value(module)
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         server = cloud.get_machine(node_id)
         if module.params['state'] == 'present':
             if module.params['driver'] is None:
@@ -252,7 +244,7 @@ def main():
                                      "to set a node to present.")
 
             properties = _parse_properties(module)
-            driver_info = _parse_driver_info(module)
+            driver_info = _parse_driver_info(shade, module)
             kwargs = dict(
                 driver=module.params['driver'],
                 properties=properties,

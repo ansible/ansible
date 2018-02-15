@@ -189,14 +189,8 @@ openstack_ports:
             sample: "51fce036d7984ba6af4f6c849f65ef00"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -207,14 +201,11 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    port = module.params.get('port')
+    filters = module.params.get('filters')
 
-    port = module.params.pop('port')
-    filters = module.params.pop('filters')
-
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         ports = cloud.search_ports(port, filters)
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_ports=ports))

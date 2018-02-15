@@ -98,14 +98,8 @@ id:
     sample: "474acfe5-be34-494c-b339-50f06aa143e4"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, domain):
@@ -143,16 +137,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     description = module.params['description']
     enabled = module.params['enabled']
     state = module.params['state']
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         domains = cloud.search_domains(filters=dict(name=name))
 

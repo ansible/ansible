@@ -89,16 +89,8 @@ EXAMPLES = '''
     name: "testnode1"
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _choose_id_value(module):
@@ -121,12 +113,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.0.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.0.0")
-
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears to be disabled, "
@@ -138,8 +124,9 @@ def main():
             endpoint=module.params['ironic_url']
         )
 
+    shade, cloud = openstack_cloud_from_module(
+        module, min_version='1.0.0')
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         if module.params['name'] or module.params['uuid']:
             server = cloud.get_machine(_choose_id_value(module))

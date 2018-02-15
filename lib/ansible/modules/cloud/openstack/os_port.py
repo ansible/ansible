@@ -105,7 +105,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -116,7 +116,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -129,7 +129,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -141,7 +141,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -152,7 +152,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -201,14 +201,8 @@ admin_state_up:
     type: bool
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, port, cloud):
@@ -329,13 +323,11 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
     name = module.params['name']
     state = module.params['state']
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if module.params['security_groups']:
             # translate security_groups to UUID's if names where provided
             module.params['security_groups'] = [

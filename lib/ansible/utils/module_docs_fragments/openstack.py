@@ -23,9 +23,13 @@ class ModuleDocFragment(object):
 options:
   cloud:
     description:
-      - Named cloud to operate against. Provides default values for I(auth) and
-        I(auth_type). This parameter is not needed if I(auth) is provided or if
-        OpenStack OS_* environment variables are present.
+      - Named cloud or cloud config to operate against.
+        If I(cloud) is a string, it references a named cloud config as defined
+        in an OpenStack clouds.yaml file. Provides default values for I(auth)
+        and I(auth_type). This parameter is not needed if I(auth) is provided
+        or if OpenStack OS_* environment variables are present.
+        If I(cloud) is a dict, it contains a complete cloud configuration like
+        would be in a section of clouds.yaml.
     required: false
   auth:
     description:
@@ -87,18 +91,14 @@ options:
       - A path to a client key to use as part of the SSL transaction.
     required: false
     default: None
-  endpoint_type:
+  interface:
     description:
         - Endpoint URL type to fetch from the service catalog.
     choices: [public, internal, admin]
     required: false
     default: public
-  identity_api_version:
-    description:
-        - The identity API version
-    choices: [2.0, 3]
-    required: false
-    default: None
+    aliases: ['endpoint_type']
+    version_added: "2.3"
 requirements:
   - python >= 2.7
   - shade

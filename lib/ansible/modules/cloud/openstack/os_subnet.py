@@ -157,16 +157,8 @@ EXAMPLES = '''
     ipv6_address_mode: dhcpv6-stateless
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _can_update(subnet, module, cloud):
@@ -270,9 +262,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     network_name = module.params['network_name']
     cidr = module.params['cidr']
@@ -290,10 +279,9 @@ def main():
     use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
 
-    if (use_default_subnetpool and
-            StrictVersion(shade.__version__) < StrictVersion('1.16.0')):
-        module.fail_json(msg="To utilize use_default_subnetpool, the installed"
-                             " version of the shade library MUST be >=1.16.0")
+    min_version = None
+    if use_default_subnetpool:
+        min_version = '1.16.0'
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -313,8 +301,8 @@ def main():
     if no_gateway_ip and gateway_ip:
         module.fail_json(msg='no_gateway_ip is not allowed with gateway_ip')
 
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:
