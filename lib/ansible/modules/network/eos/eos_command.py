@@ -20,6 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
+
 DOCUMENTATION = """
 ---
 module: eos_command
@@ -128,7 +129,7 @@ EXAMPLES = """
     wait_for: result[0].units.System.state eq 'underMaintenance'
 
 - name: "using eapi transport check whether the switch is in maintenance,
-         with 8 retries 2 second interval between retries"
+         with 8 retries and 2 second interval between retries"
   eos_command:
     commands: show maintenance
     wait_for: result[0]['units']['System']['state'] eq 'underMaintenance'
