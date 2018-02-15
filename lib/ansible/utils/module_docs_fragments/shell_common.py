@@ -19,7 +19,9 @@ options:
       - name: ansible_remote_tmp
   system_temps:
     description:
-       - List of valid system temporary directories for Ansible to choose when it cannot use ``remote_temp``, normally due to permission issues.  These must be world readable, writable, and executable.
+       - "List of valid system temporary directories for Ansible to choose when it cannot use
+         ``remote_temp``, normally due to permission issues.  These must be world readable, writable,
+         and executable."
     default: [ /var/tmp, /tmp ]
     type: list
     env: [{name: ANSIBLE_SYSTEM_TMPS}]
