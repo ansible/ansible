@@ -30,7 +30,7 @@ from ansible.module_utils._text import to_bytes, to_text
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
-        re.compile(br"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
+        re.compile(br"[\r\n][\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(br"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
@@ -61,7 +61,7 @@ class TerminalModule(TerminalBase):
 
         cmd = {u'command': u'enable'}
         if passwd:
-            cmd[u'prompt'] = to_text(r"[\r\n]?password: $", errors='surrogate_or_strict')
+            cmd[u'prompt'] = to_text(r"[\r\n]password: $", errors='surrogate_or_strict')
             cmd[u'answer'] = passwd
             cmd[u'prompt_retry_check'] = True
 
