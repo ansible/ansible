@@ -215,16 +215,8 @@ router:
             type: list
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 ROUTER_INTERFACE_OWNERS = set([
@@ -401,13 +393,10 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
-    if (module.params['project'] and
-            StrictVersion(shade.__version__) <= StrictVersion('1.9.0')):
-        module.fail_json(msg="To utilize project, the installed version of"
-                             "the shade library MUST be > 1.9.0")
+    if module.params['project']:
+        min_version = '1.10.0'
+    else:
+        min_version = None
 
     state = module.params['state']
     name = module.params['name']
@@ -417,8 +406,8 @@ def main():
     if module.params['external_fixed_ips'] and not network:
         module.fail_json(msg='network is required when supplying external_fixed_ips')
 
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if project is not None:
             proj = cloud.get_project(project)
             if proj is None:

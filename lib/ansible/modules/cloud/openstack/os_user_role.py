@@ -86,16 +86,8 @@ RETURN = '''
 #
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(state, assignment):
@@ -137,20 +129,17 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
+    role = module.params.get('role')
+    user = module.params.get('user')
+    group = module.params.get('group')
+    project = module.params.get('project')
+    domain = module.params.get('domain')
+    state = module.params.get('state')
+
     # role grant/revoke API introduced in 1.5.0
-    if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.5.0')):
-        module.fail_json(msg='shade 1.5.0 or higher is required for this module')
-
-    role = module.params.pop('role')
-    user = module.params.pop('user')
-    group = module.params.pop('group')
-    project = module.params.pop('project')
-    domain = module.params.pop('domain')
-    state = module.params.pop('state')
-
+    shade, cloud = openstack_cloud_from_module(
+        module, min_version='1.5.0')
     try:
-        cloud = shade.operator_cloud(**module.params)
-
         filters = {}
 
         r = cloud.get_role(role)

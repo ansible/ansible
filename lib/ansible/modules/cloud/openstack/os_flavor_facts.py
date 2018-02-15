@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: os_flavor_facts
@@ -171,16 +170,9 @@ openstack_flavors:
             sample: true
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -200,33 +192,34 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     vcpus = module.params['vcpus']
     ram = module.params['ram']
     ephemeral = module.params['ephemeral']
     limit = module.params['limit']
 
+    filters = {}
+    if vcpus:
+        filters['vcpus'] = vcpus
+    if ram:
+        filters['ram'] = ram
+    if ephemeral:
+        filters['ephemeral'] = ephemeral
+
+    if filters:
+        # Range search added in 1.5.0
+        min_version = '1.5.0'
+    else:
+        min_version = None
+
+    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if name:
             flavors = cloud.search_flavors(filters={'name': name})
 
         else:
             flavors = cloud.list_flavors()
-            filters = {}
-            if vcpus:
-                filters['vcpus'] = vcpus
-            if ram:
-                filters['ram'] = ram
-            if ephemeral:
-                filters['ephemeral'] = ephemeral
             if filters:
-                # Range search added in 1.5.0
-                if StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
-                    module.fail_json(msg="Shade >= 1.5.0 needed for this functionality")
                 flavors = cloud.range_search(flavors, filters)
 
         if limit is not None:

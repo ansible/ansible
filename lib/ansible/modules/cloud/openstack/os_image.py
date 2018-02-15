@@ -108,7 +108,7 @@ EXAMPLES = '''
 # Upload an image from a local file named cirros-0.3.0-x86_64-disk.img
 - os_image:
     auth:
-      auth_url: http://localhost/auth/v2.0
+      auth_url: https://identity.example.com
       username: admin
       password: passme
       project_name: admin
@@ -124,14 +124,8 @@ EXAMPLES = '''
       distro: ubuntu
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -155,11 +149,8 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
 
         changed = False
         if module.params['checksum']:
