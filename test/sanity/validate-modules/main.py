@@ -1070,12 +1070,15 @@ class ModuleValidator(Validator):
             doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
             if data.get('type') == 'bool':
                 doc_default = maybe_convert_bool(doc_default)
-            if 'default' in data and data['default'] != doc_default:
+            arg_default = data.get('default')
+            if 'default' in data and data.get('type') == 'bool':
+                arg_default = maybe_convert_bool(data['default'])
+            if 'default' in data and arg_default != doc_default:
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
                     msg=('Value for "default" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (data['default'], arg, doc_default))
+                         'documentation (%r)' % (arg_default, arg, doc_default))
                 )
 
             doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
