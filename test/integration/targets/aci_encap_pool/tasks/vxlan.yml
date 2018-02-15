@@ -73,11 +73,11 @@
     that:
       - create_vxlan_2.changed == true
 
-- name: create vxlan pool with allocation mode - failure message works
+- name: create vxlan pool with pool allocation mode - failure message works
   aci_encap_pool:
     <<: *aci_vxlan_present
     name: anstest_3
-    allocation_mode: dynamic
+    pool_allocation_mode: dynamic
   ignore_errors: yes
   register: create_vxlan_alloc_mode
 
@@ -85,7 +85,7 @@
   assert:
     that:
       - create_vxlan_alloc_mode.failed == true
-      - 'create_vxlan_alloc_mode.msg == "vxlan pools do not support setting the allocation_mode; please remove this parameter from the task"'
+      - 'create_vxlan_alloc_mode.msg == "vxlan pools do not support setting the pool_allocation_mode; please remove this parameter from the task"'
 
 - name: get vxlan pool - get object works
   aci_encap_pool: &aci_vxlan_query
