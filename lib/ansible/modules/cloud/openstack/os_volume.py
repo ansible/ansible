@@ -95,14 +95,9 @@ EXAMPLES = '''
 '''
 from distutils.version import StrictVersion
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _present_volume(module, cloud):
@@ -137,7 +132,7 @@ def _present_volume(module, cloud):
     module.exit_json(changed=True, id=volume['id'], volume=volume)
 
 
-def _absent_volume(module, cloud):
+def _absent_volume(module, cloud, shade):
     changed = False
     if cloud.volume_exists(module.params['display_name']):
         try:
@@ -169,9 +164,6 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     if (module.params['scheduler_hints'] and
             StrictVersion(shade.__version__) < StrictVersion('1.22')):
         module.fail_json(msg="To utilize scheduler_hints, the installed version of"
@@ -182,12 +174,12 @@ def main():
     if state == 'present' and not module.params['size']:
         module.fail_json(msg="Size is required when state is 'present'")
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if state == 'present':
             _present_volume(module, cloud)
         if state == 'absent':
-            _absent_volume(module, cloud)
+            _absent_volume(module, cloud, shade)
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
