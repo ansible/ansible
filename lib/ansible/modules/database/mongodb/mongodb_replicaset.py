@@ -6,7 +6,7 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
+from collections import OrderedDict
 
 ANSIBLE_METADATA = {'metadata_version': '0.1',
                     'status': ['preview'],
@@ -84,8 +84,6 @@ options:
         default: 1
         required: false
 
-
-
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
@@ -104,8 +102,10 @@ EXAMPLES = '''
 - mongodb_replicaset:
     login_user: admin
     login_password: admin
-    replicaset: mongo_replset
+    replica_set: mongo_replset
+'''
 
+LOCAL_MODULE_TESTING = '''
 ###############################
 # LOCAL MODULE TESTING        #
 ###############################
@@ -232,6 +232,35 @@ cat << EOF > /tmp/args.json
 EOF
 
 python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
+
+# Fire up a mongodb replset
+pkill mongod && rm -Rf mongotest/
+mkdir -p ./mongotest/db1/ ./mongotest/db2 ./mongotest/db3
+mongod --replSet rhys --port 27017 --bind_ip localhost --dbpath ./mongotest/db1/ --logpath ./mongotest/db1/db1.log --smallfiles --oplogSize 128 --fork
+mongod --replSet rhys --port 27018 --bind_ip localhost --dbpath ./mongotest/db2/ --logpath ./mongotest/db2/db2.log --smallfiles --oplogSize 128 --fork
+mongod --replSet rhys --port 27019 --bind_ip localhost --dbpath ./mongotest/db3/ --logpath ./mongotest/db3/db3.log --smallfiles --oplogSize 128 --fork
+
+python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
+
+5. Test with no port for one host to test default port default port
+cat << EOF > /tmp/args.json
+{
+    "ANSIBLE_MODULE_ARGS": {
+	    "replica_set": "rs0",
+	    "members": "localhost,localhost:27018,localhost:27019"
+    }
+}
+EOF
+
+# Fire up a mongodb replset
+pkill mongod
+rm -Rf mongotest/
+mkdir -p ./mongotest/db1/ ./mongotest/db2 ./mongotest/db3
+mongod --replSet rs0 --port 27017 --bind_ip localhost --dbpath ./mongotest/db1/ --logpath ./mongotest/db1/db1.log --smallfiles --oplogSize 128 --fork
+mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath ./mongotest/db2/ --logpath ./mongotest/db2/db2.log --smallfiles --oplogSize 128 --fork
+mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath ./mongotest/db3/ --logpath ./mongotest/db3/db3.log --smallfiles --oplogSize 128 --fork
+
+python ./lib/ansible/modules/database/mongodb/mongodb_replicaset.py /tmp/args.json
 '''
 
 RETURN = '''
@@ -324,20 +353,20 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
         settings['electionTimeoutMillis'] = electionTimeoutMillis
     for member in members:
         if ':' not in member: # No port supplied. Assume 27017
-            member += ":27107"
-        members_dict_list.append({ "_id": index,
-                                   "host": member })
+            member += ":27017"
+        members_dict_list.append(OrderedDict([ ("_id", index),
+                                               ("host", str(member)) ]))
         if index == arbiter_at_index:
             members_dict_list[index]['arbiterOnly'] = True
         index += 1
 
-    conf = {
-        "_id": replica_set,
-        "protocolVersion": protocolVersion,
-        "members": members_dict_list,
-        "settings": settings
-    }
-
+    conf = OrderedDict([
+                            ("_id", replica_set),
+                            ("protocolVersion", protocolVersion),
+                            ("members", members_dict_list),
+                            ("settings", settings)
+    ])
+    print(conf)
     client["admin"].command('replSetInitiate', conf)
 
 def replicaset_remove(module, client, replica_set):
@@ -377,7 +406,7 @@ def main():
             login_password=dict(default=None, no_log=True),
             login_database=dict(default="admin"),
             replica_set=dict(default=None),
-            members=dict(required=False, default="{{ play_hosts }}"),
+            members=dict(required=False, default="{{ ansible_play_hosts }}"),
             arbiter_at_index=dict(required=False, default=None, type='int'),
             validate=dict(required=False, default=True, type='bool'),
             ssl=dict(default=False, type='bool'),
@@ -407,11 +436,12 @@ def main():
     heartbeatTimeoutSecs = int(module.params['heartbeatTimeoutSecs'])
     electionTimeoutMillis = int(module.params['electionTimeoutMillis'])
 
-    # convert members to python list
-    temp = []
-    for m in members.split(","):
-        temp.append(m)
-    members = temp
+    # convert members to python list if it's a commas seperated string
+    if isinstance(members, str) and "," in members:
+        temp = []
+        for m in members.split(","):
+            temp.append(m)
+        members = temp
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
@@ -425,9 +455,10 @@ def main():
         login_host = members[0]
         login_port = 27017
     try:
+
         connection_params = {
             "host": login_host,
-            "port": int(login_port),
+            "port": int(login_port)
         }
 
         if ssl:
