@@ -30,7 +30,8 @@ name, use asterisk. For example --limit="Linux*servers".
 Metadata:
 - ansible_host: IP found in host info, or macro {$ANSIBLE_HOST} if set.
 - ansible_port: macro {$ANSIBLE_PORT} if set, otherwise 22
-- user defined vars: macro {$ANSIBLE_VARS} takes json like { "foo":"bar", "num":2 }
+- user defined vars: macro {$ANSIBLE_VARS} takes json like:
+  { "foo":"bar", "num":2 }
 - templates: list of templates used by host
 
 Notes:
@@ -55,7 +56,7 @@ except ImportError:
 try:
     from zabbix_api import ZabbixAPI
 except:
-    print("Error: Zabbix API library must be installed: pip install zabbix-api.",
+    print("Error: Zabbix API library must be installed.",
           file=sys.stderr)
     sys.exit(1)
 
@@ -96,12 +97,16 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {}
+        #data = {}
+        data = api.host.get({"filter": {'name': name}})
         return data
 
     def get_list(self, api):
-        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend', 'selectInterfaces': 'extend',
-                                 'selectMacros': 'extend', 'selectParentTemplates': 'extend'})
+        hostsData = api.host.get({'output': 'extend',
+                                  'selectGroups': 'extend',
+                                  'selectInterfaces': 'extend',
+                                  'selectMacros': 'extend',
+                                  'selectParentTemplates': 'extend'})
 
         data = {}
         data[self.defaultgroup] = self.hoststub()
@@ -126,11 +131,14 @@ class ZabbixInventory(object):
                     try:
                         zabbixvars = json.loads(zv)
                     except:
-                        print("Invalid JSON in " + hostname + ":" + "{$ANSIBLE_VARS}: " + zv)
+                        print("Invalid JSON in "
+                              + hostname + ":"
+                              + "{$ANSIBLE_VARS}: " + zv)
                         sys.exit(1)
 
             # TODO maybe only add when actually (re)defined?
-            data['_meta']['hostvars'][hostname] = {'ansible_host': ip, 'ansible_port': port}
+            data['_meta']['hostvars'][hostname] = {'ansible_host': ip,
+                                                   'ansible_port': port}
             if zabbixvars:
                 data['_meta']['hostvars'][hostname].update(zabbixvars)
 
@@ -162,9 +170,11 @@ class ZabbixInventory(object):
         if self.zabbix_server and self.zabbix_username:
             try:
                 api = ZabbixAPI(server=self.zabbix_server)
-                api.login(user=self.zabbix_username, password=self.zabbix_password)
+                api.login(user=self.zabbix_username,
+                          password=self.zabbix_password)
             except BaseException as e:
-                print("Error: Could not login to Zabbix server. Check your zabbix.ini.", file=sys.stderr)
+                print("Error: Could not login to Zabbix server. Check your zabbix.ini.",
+                      file=sys.stderr)
                 print("Error message was: " + str(e))
                 sys.exit(1)
 
@@ -177,11 +187,13 @@ class ZabbixInventory(object):
                 print(json.dumps(data, indent=2))
 
             else:
-                print("usage: --list  ..OR.. --host <hostname>", file=sys.stderr)
+                print("usage: --list  ..OR.. --host <hostname>",
+                      file=sys.stderr)
                 sys.exit(1)
 
         else:
-            print("Error: Configuration of server and credentials are required. See zabbix.ini.", file=sys.stderr)
+            print("Error: Configuration of server and credentials are required. See zabbix.ini.",
+                  file=sys.stderr)
             sys.exit(1)
 
 ZabbixInventory()
