@@ -1823,13 +1823,6 @@ class ShellModule(ShellBase):
 
     # TODO: add binary module support
 
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-
-        super(ShellModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-
-        # set env
-        self.env.update(self.get_option('environment'))
-
     def assert_safe_env_key(self, key):
         if not self.safe_envkey.match(key):
             raise AnsibleError("Invalid PowerShell environment key: %s" % key)
