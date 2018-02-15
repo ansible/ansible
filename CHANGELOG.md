@@ -54,6 +54,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/36075)
 * Fix win_uri to work with `creates` and `removed` option
   (https://github.com/ansible/ansible/pull/36016)
+* Fix the oom_killer parameter to docker_container not being honored
+  https://github.com/ansible/ansible/pull/34130
+
 
 <a id="2.4.3"></a>
 
