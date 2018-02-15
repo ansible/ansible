@@ -13,3 +13,4 @@ This section lists porting guides that can help you playbooks, plugins and other
    porting_guide_2.3
    porting_guide_2.4
    porting_guide_2.5
+   porting_guide_2.6
