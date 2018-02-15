@@ -7,10 +7,12 @@ Basic Inventory
 ```````````````````````````````````````````````````````````````
 
 First, group your inventory logically. Best practice is to group servers and network devices by their What (application, stack or microservice), Where (datacenter or region), and When (development stage):
-- What: db, web, leaf, spine
-- Where: east, west, floor_19, building_A
-- When: dev, test, staging, prod
-Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not :strike:`19th_floor`) in your group names. Group names are case sensitive.
+
+- **What**: db, web, leaf, spine
+- **Where**: east, west, floor_19, building_A
+- **When**: dev, test, staging, prod
+
+Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor``) in your group names. Group names are case sensitive.
 
 This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``metagroupname:children`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
 
@@ -118,7 +120,7 @@ As your inventory grows, you may want to group devices by platform and move shar
    ├── group_vars
        └── vyos.yml
 
-The group name must match the file name in your ``group_vars`` directory. In this example, Ansible will load the file ``group_vars/vyos.yml`` when it finds the group ``[vyos]`` in the inventory:
+The group name must match the file name in your ``group_vars`` directory. In this example, Ansible will load the file ``group_vars/vyos.yml`` when it finds the group ``[vyos]`` in the inventory. So this inventory:
 
 .. code-block:: yaml
 
@@ -145,7 +147,7 @@ The group name must match the file name in your ``group_vars`` directory. In thi
    vyos
    servers
 
-and group_vars/vyos.yml:
+works with this ``group_vars/vyos.yml`` content:
 
 .. code-block:: yaml
 
@@ -159,7 +161,7 @@ With this setup, you can run first_playbook.yml with only two flags:
 
    ansible-playbook -i inventory -k first_playbook.yml
 
-You can use the ``-k`` flag and provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``. 
+With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``. 
 
 
 Protecting Sensitive Variables with ``ansible-vault`` 
@@ -230,34 +232,10 @@ Or with a prompt instead of the vault password file:
    ansible-playbook -i inventory --vault-id my_user@prompt first_playbook.yml
 
 
-.. warning:
+.. warning::
    
-   WARNING: Every time you change an ansible-vault password, you must update all files and strings encrypted using that password. If you do not update the encryption, and you cannot access the password used to encrypt a particular file or string, you will not be able to access that file or string. 
+   Every time you change an ansible-vault password, you must update all files and strings encrypted using that password. If you do not update the encryption, and you cannot access the password used to encrypt a particular file or string, you will not be able to access that file or string. 
 
-For more details on building inventory files, see :doc:`the introduction to inventory<../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:'the full Ansible Vault documentation<../user_guide/vault>.
+For more details on building inventory files, see :doc:`the introduction to inventory<../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:`the full Ansible Vault documentation<../user_guide/vault>`.
 
-
-Organizing and Your Inventory and Other Ansible Files
-```````````````````````````````````````````````````````````````
-
-Ansible expects to find certain files in certain places. As you expand your inventory and create more playbooks, your working Ansible project directory looks like this:
-
-.. code-block:: console
-
-   .
-   ├── backup
-   │   ├── vyos.example.net_config.2018-02-08@11:10:15
-   │   ├── vyos.example.net_config.2018-02-12@08:22:41
-   ├── first_playbook.yml
-   ├── inventory
-   ├── group_vars
-   │   ├── vyos.yml
-   │   └── eos.yml
-   ├── second_playbook.yml
-   └── third_playbook.yml
-
-
-Tracking Changes to Inventory and Playbooks with Git
-```````````````````````````````````````````````````````````````
-
-start here in the morning . . .
+Now that you understand the basics of commands, playbooks, and inventory, it's time to explore some more complex Ansible Network examples. 

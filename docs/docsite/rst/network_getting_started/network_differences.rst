@@ -6,7 +6,7 @@ Network automation leverages the basic Ansible concepts, but there are important
 Execution on the Control Node 
 ```````````````````````````````````````````````````````````````
 
-Unlike most Ansible modules, network modules do not run on the managed nodes. On the front end, network modules work with ad-hoc commands, playbooks, and roles. Behind the scenes, however, network modules use a different methodology than the other (Linux/Unix and Windows) modules use. Ansible is written and executed in Python. Because the majority of network devices can not run Python, the Ansible network modules are executed on the Ansible control node. 
+Unlike most Ansible modules, network modules do not run on the managed nodes. From a user's point of view, network modules work like any other modules. They work with ad-hoc commands, playbooks, and roles. Behind the scenes, however, network modules use a different methodology than the other (Linux/Unix and Windows) modules use. Ansible is written and executed in Python. Because the majority of network devices can not run Python, the Ansible network modules are executed on the Ansible control node, where ``ansible`` or ``ansible-playbook`` runs. 
 
 Execution on the control node shapes two other differences in how network modules function:
 
@@ -17,7 +17,7 @@ Execution on the control node shapes two other differences in how network module
 Multiple Communication Protocols
 ```````````````````````````````````````````````````````````````
 
-Because they execute on the control node instead of on the managed nodes, network modules can support multiple communication protocols. The communication protocol (XML over SSH, CLI over SSH, API over HTTPS) selected for each network module depends on the platform and the purpose of the module. Some network modules support only one protocol; some offer a choice. The most common protocol is CLI over SSH. You set the communication protocol with the ``ansible_connection`` variable:
+Because network modules execute on the control node instead of on the managed nodes, they can support multiple communication protocols. The communication protocol (XML over SSH, CLI over SSH, API over HTTPS) selected for each network module depends on the platform and the purpose of the module. Some network modules support only one protocol; some offer a choice. The most common protocol is CLI over SSH. You set the communication protocol with the ``ansible_connection`` variable:
 
 .. csv-table::
    :header: "Value of ansible_connection", "Protocol", "Requires"
@@ -27,9 +27,18 @@ Because they execute on the control node instead of on the managed nodes, networ
    "netconf", "XML over SSH", "network_os setting"
    "local", "depends on provider", "provider setting"
 
+Beginning with Ansible 2.5, we recommend using ``network_cli`` or ``netconf`` for ``ansible_connection`` whenever possible. For details on using API over HTTPS connections, see the platform-specific pages.
 
 Modules Organized by Network Platform
 ```````````````````````````````````````````````````````````````
 
-A network platform is a set of network devices with a common operating system that can be managed by a collection of modules.  The modules for each network platform share a prefix, for example: eos_ (Arista), ios_, iosxr_, nxos_ (Cisco), junos_ (Juniper), vyos_ (VyOS). All modules within a network platform share certain requirements. Some network platforms have specific differences - see the platform-specific documentation for details.
+A network platform is a set of network devices with a common operating system that can be managed by a collection of modules.  The modules for each network platform share a prefix, for example: 
 
+- eos_ (Arista)
+- ios_
+- iosxr_
+- nxos_ (Cisco)
+- junos_ (Juniper)
+- vyos_ (VyOS)
+
+All modules within a network platform share certain requirements. Some network platforms have specific differences - see the platform-specific documentation for details.
