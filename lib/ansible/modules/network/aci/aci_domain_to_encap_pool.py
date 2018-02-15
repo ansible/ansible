@@ -187,12 +187,15 @@ VM_PROVIDER_MAPPING = dict(
 POOL_MAPPING = dict(
     vlan=dict(
         aci_mo='uni/infra/vlanns-{0}',
+        child_class='infraRsVlanNs',
     ),
     vxlan=dict(
         aci_mo='uni/infra/vxlanns-{0}',
+        child_class='vmmRsVxlanNs',
     ),
     vsan=dict(
         aci_mo='uni/infra/vsanns-{0}',
+        child_class='fcRsVsanNs',
     ),
 )
 
@@ -269,7 +272,8 @@ def main():
     if domain is None:
         domain_mo = None
 
-    pool_mo = POOL_MAPPING[pool_type]["aci_mo"].format(pool_name)
+    pool_mo = POOL_MAPPING[pool_type]['aci_mo'].format(pool_name)
+    child_class = POOL_MAPPING[pool_type]['child_class']
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -279,7 +283,7 @@ def main():
             filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
         ),
-        child_classes=['infraRsVlanNs'],
+        child_classes=[child_class],
     )
 
     aci.get_existing()
@@ -290,7 +294,7 @@ def main():
             aci_class=domain_class,
             class_config=dict(name=domain),
             child_configs=[
-                {'infraRsVlanNs': {'attributes': {'tDn': pool_mo}}},
+                {child_class: {'attributes': {'tDn': pool_mo}}},
             ]
         )
 
