@@ -105,3 +105,7 @@
 - debug: msg="IMAGE VERSION {{ image_version }}"
 - debug: msg="IMAGE TAG {{ imagetag }}"
 - debug: msg="IMAGE MR {{ imagemr }}"
+
+- set_fact: ipv6_supported="true"
+- set_fact: ipv6_supported="false"
+  when: platform is match("N35")
