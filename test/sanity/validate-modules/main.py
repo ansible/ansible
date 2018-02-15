@@ -45,7 +45,7 @@ from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, parse_yaml
+from utils import CaptureStd, compare_unordered_lists, maybe_convert_bool, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1056,6 +1056,34 @@ class ModuleValidator(Validator):
                     msg=('"%s" is marked as required but specifies '
                          'a default. Arguments with a default '
                          'should not be marked as required' % arg)
+                )
+
+            doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
+            if data.get('type') == 'bool':
+                doc_default = maybe_convert_bool(doc_default)
+            if 'default' in data and data['default'] != doc_default:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=324,
+                    msg=('Value for "default" from the argument_spec (%r) for "%s" does not match the '
+                         'documentation (%r)' % (data['default'], arg, doc_default))
+                )
+
+            doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
+            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
+                self.reporter.error(
+                    path=self.object_path,
+                    code=325,
+                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
+                )
+
+            doc_choices = docs.get('options', {}).get(arg, {}).get('choices', [])
+            if not compare_unordered_lists(data.get('choices', []), doc_choices):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=326,
+                    msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
+                         'documentation (%r)' % (data.get('choices', []), arg, doc_choices))
                 )
 
         if docs:
