@@ -28,6 +28,11 @@ try:
 except ImportError:
     raise SkipTest("Could not load required modules for testing")
 
+try:
+    from pyFMG.fortimgr import FortiManager
+except ImportError:
+    raise SkipTest("FortiManager tests require pyFMG package")
+
 
 class TestFmgrScriptModule(TestFortimanagerModule):
 
