@@ -746,8 +746,19 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('dampening_state', 'dampening_routemap'),
+                          ('dampening_state', 'dampening_half_time'),
+                          ('dampening_state', 'dampening_suppress_time'),
+                          ('dampening_state', 'dampening_reuse_time'),
+                          ('dampening_state', 'dampening_max_suppress_time'),
+                          ('dampening_routemap', 'dampening_half_time'),
+                          ('dampening_routemap', 'dampening_suppress_time'),
+                          ('dampening_routemap', 'dampening_reuse_time'),
+                          ('dampening_routemap', 'dampening_max_suppress_time')]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
         required_together=[DAMPENING_PARAMS, ['distance_ibgp', 'distance_ebgp', 'distance_local']],
         supports_check_mode=True,
     )
@@ -757,21 +768,6 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-
-    if module.params['dampening_routemap']:
-        for param in DAMPENING_PARAMS:
-            if module.params[param]:
-                module.fail_json(msg='dampening_routemap cannot be used with'
-                                     ' the {0} param'.format(param))
-
-    if module.params['dampening_state']:
-        if module.params['dampening_routemap']:
-            module.fail_json(msg='dampening_state cannot be used with'
-                                 ' the dampening_routemap param')
-        for param in DAMPENING_PARAMS:
-            if module.params[param]:
-                module.fail_json(msg='dampening_state cannot be used with'
-                                     ' the {0} param'.format(param))
 
     if module.params['advertise_l2vpn_evpn']:
         if module.params['vrf'] == 'default':

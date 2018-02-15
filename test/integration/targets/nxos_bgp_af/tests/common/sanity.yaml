@@ -325,7 +325,7 @@
 
   # Some platforms will timeout if the
   # 'no nv overlay evpn' command is sent
-  # too quickly followin bgp disablement.
+  # too quickly following bgp disablement.
   - pause:
       seconds: 5
 
