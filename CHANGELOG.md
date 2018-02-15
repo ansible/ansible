@@ -56,6 +56,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/36016)
 * Fix the oom_killer parameter to docker_container not being honored
   https://github.com/ansible/ansible/pull/34130
+* Fix docker_service so a build is not triggered every time
+  https://github.com/ansible/ansible/issues/36145
 
 
 <a id="2.4.3"></a>
