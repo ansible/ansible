@@ -171,4 +171,4 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         lh = linux.LinuxHardware(module=module, load_on_init=False)
         udevadm_uuid = lh._udevadm_uuid('mock_device')
 
-        self.assertEqual(udevadm_uuid, b'57b1a3e7-9019-4747-9809-7ec52bba9179')
+        self.assertEqual(udevadm_uuid, '57b1a3e7-9019-4747-9809-7ec52bba9179')

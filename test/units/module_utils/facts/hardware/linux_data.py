@@ -49,7 +49,7 @@ LSBLK_UUIDS = {'/dev/sda1': '66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK'}
 
 UDEVADM_UUID = 'N/A'
 
-UDEVADM_OUTPUT = b"""
+UDEVADM_OUTPUT = """
 UDEV_LOG=3
 DEVPATH=/devices/pci0000:00/0000:00:07.0/virtio2/block/vda/vda1
 MAJOR=252
