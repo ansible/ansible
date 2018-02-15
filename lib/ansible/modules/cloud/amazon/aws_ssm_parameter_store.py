@@ -52,7 +52,7 @@ options:
     default: aws/ssm (this key is automatically generated at the first parameter created).
   overwrite:
     description:
-      - Overwrite the value when create or update parameter
+      - Overwrite the value when create or update if changed (idempotent)
       - Boolean
     required: false
     default: True
@@ -61,6 +61,7 @@ options:
       - region.
     required: false
 author:
+  - Nathan Webster (@nathanwebsterdotme)
   - Bill Wang (ozbillwang@gmail.com)
   - Michael De La Rue (@mikedlr)
 extends_documentation_fragment: aws
@@ -120,6 +121,7 @@ except ImportError:
 
 def create_update_parameter(client, module):
     changed = False
+    existing_parameter = None
     response = {}
 
     args = dict(
@@ -136,10 +138,46 @@ def create_update_parameter(client, module):
         args.update(KeyId=module.params.get('key_id'))
 
     try:
-        response = client.put_parameter(**args)
-        changed = True
-    except ClientError as e:
-        module.fail_json_aws(e, msg="setting parameter")
+        existing_parameter = client.get_parameter(Name=args['Name'],WithDecryption=True)
+    except:
+        pass
+
+    if existing_parameter:
+        if module.params.get('overwrite'):
+            if existing_parameter['Parameter']['Type'] != args['Type']:
+                try:
+                    response = client.put_parameter(**args)
+                    changed = True
+                except ClientError as e:
+                    module.fail_json_aws(e, msg="setting parameter")
+
+            if existing_parameter['Parameter']['Value'] != args['Value']:
+                try:
+                    response = client.put_parameter(**args)
+                    changed = True
+                except ClientError as e:
+                    module.fail_json_aws(e, msg="setting parameter")
+
+            if module.params.get('description'):
+                # Description field not available from get_parameter function so get it from describe_parameters
+                describe_existing_parameter = None
+                try:
+                    describe_existing_parameter = client.describe_parameters(Filters=[{"Key":"Name","Values":[args['Name']]}])
+                except:
+                    module.fail_json_aws(e, msg="getting description value")
+
+                if describe_existing_parameter['Parameters'][0]['Description'] != args['Description']:
+                    try:
+                        response = client.put_parameter(**args)
+                        changed = True
+                    except ClientError as e:
+                        module.fail_json_aws(e, msg="setting parameter")
+    else:
+        try:
+            response = client.put_parameter(**args)
+            changed = True
+        except ClientError as e:
+            module.fail_json_aws(e, msg="setting parameter")
 
     return changed, response
 
