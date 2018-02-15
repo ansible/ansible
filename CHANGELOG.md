@@ -5,9 +5,13 @@ Ansible Changes By Release
 
 ## 2.6 "Heartbreaker" - ACTIVE DEVELOPMENT
 
+[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html)
+
 ### Major Changes
 
 ### Deprecations (to be removed in 2.10)
+
+See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
 
 ### Minor Changes
 
