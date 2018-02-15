@@ -103,6 +103,7 @@ options:
             - Set the maximum number of levels to decend into. Setting recurse
               to false will override this value, which is effectively depth 1.
               -1 means unlimited.
+        version_added: "2.6"
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
