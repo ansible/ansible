@@ -24,8 +24,10 @@ import re
 import time
 
 import ansible.constants as C
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_native
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
@@ -51,6 +53,19 @@ class ShellBase(AnsiblePlugin):
 
         # set env
         self.env.update(self.get_option('environment'))
+
+        # Normalize the temp directory strings. We don't use expanduser/expandvars because those
+        # can vary between remote user and become user.  Therefore the safest practice will be for
+        # this to always be specified as full paths)
+        normalized_system_temps = [d.rstrip('/') for d in self.get_option('system_temps')]
+
+        # Make sure all system_temps are absolute otherwise they'd be relative to the login dir
+        # which is almost certainly going to fail in a cornercase.
+        if not all(os.path.isabs(d) for d in normalized_system_temps):
+            raise AnsibleError('The configured system_temps contains a relative path: {0}. All'
+                               ' system_temps must be absolute'.format(to_native(normalized_system_temps)))
+
+        self.set_option('system_temps', normalized_system_temps)
 
     def env_prefix(self, **kwargs):
         return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
@@ -113,7 +128,9 @@ class ShellBase(AnsiblePlugin):
         # passed in tmpdir if it is valid or the first one from the setting if not.
 
         if system:
-            if tmpdir.startswith(tuple(self.get_option('system_temps'))):
+            tmpdir = tmpdir.rstrip('/')
+
+            if tmpdir in self.get_option('system_temps'):
                 basetmpdir = tmpdir
             else:
                 basetmpdir = self.get_option('system_temps')[0]
