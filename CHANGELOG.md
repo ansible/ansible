@@ -63,6 +63,12 @@ Ansible Changes By Release
 * spelling fixes (https://github.com/ansible/ansible/pull/36007)
 * avoid needles vault prompt on ansible-console (https://github.com/ansible/ansible/pull/36244)
 * fix callback function signatures (https://github.com/ansible/ansible/pull/35664)
+* Clarify error message from convert_bool()
+  https://github.com/ansible/ansible/pull/36041
+* Fix EC2 C5 instance_type fact to be kvm:
+  https://github.com/ansible/ansible/pull/35063
+* Fix templating of loop_control properties:
+  https://github.com/ansible/ansible/pull/36124
 
 <a id="2.4.3"></a
 
