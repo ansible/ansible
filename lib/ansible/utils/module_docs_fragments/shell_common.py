@@ -7,7 +7,7 @@ class ModuleDocFragment(object):
     # common shelldocumentation fragment
     DOCUMENTATION = """
 options:
-  remote_temp:
+  remote_tmp:
     description:
       - Temporary directory to use on targets when executing tasks.
     default: '~/.ansible/tmp'
@@ -17,10 +17,10 @@ options:
         key: remote_tmp
     vars:
       - name: ansible_remote_tmp
-  system_temps:
+  system_tmps:
     description:
        - "List of valid system temporary directories for Ansible to choose when it cannot use
-         ``remote_temp``, normally due to permission issues.  These must be world readable, writable,
+         ``remote_tmp``, normally due to permission issues.  These must be world readable, writable,
          and executable."
     default: [ /var/tmp, /tmp ]
     type: list
