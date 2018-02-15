@@ -11,12 +11,12 @@
     state: absent
     pool: anstest
     pool_type: vlan
-    allocation_mode: static
+    pool_allocation_mode: static
 
 - name: ensure vlan pool does not exist for tests to kick off
   aci_encap_pool: &aci_pool_absent_dynamic
     <<: *aci_pool_absent_static
-    allocation_mode: dynamic
+    pool_allocation_mode: dynamic
 
 - name: create static vlan pool - check mode works
   aci_encap_pool: &aci_pool_present_static
@@ -109,7 +109,7 @@
 - name: missing param - failure message works
   aci_encap_pool:
     <<: *aci_pool_present_dynamic
-    allocation_mode: "{{ fake_var | default(omit) }}"
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
   ignore_errors: yes
   register: vlan_alloc_fail
 
@@ -117,7 +117,7 @@
   assert:
     that:
       - vlan_alloc_fail.failed == true
-      - 'vlan_alloc_fail.msg == "ACI requires the \"allocation_mode\" for \"pool_type\" of \"vlan\" and \"vsan\" when the \"pool\" is provided"'
+      - "vlan_alloc_fail.msg == 'ACI requires parameter \\'pool_allocation_mode\\' for \\'pool_type\\' of \\'vlan\\' and \\'vsan\\' when parameter \\'pool\\' is provided'"
 
 - name: missing param - failure message works
   aci_encap_pool:
@@ -150,7 +150,7 @@
     <<: *aci_pool_absent_static
     state: query
     pool: "{{ fake_var | default(omit) }}"
-    allocation_mode: "{{ fake_var | default(omit) }}"
+    pool_allocation_mode: "{{ fake_var | default(omit) }}"
   register: get_all_pools
 
 - name: assertion test - query
