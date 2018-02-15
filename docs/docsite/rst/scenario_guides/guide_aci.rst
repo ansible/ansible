@@ -1,5 +1,5 @@
-Getting started with Cisco ACI
-==============================
+Cisco ACI Guide
+===============
 
 .. _aci_intro:
 
