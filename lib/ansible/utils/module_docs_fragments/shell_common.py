@@ -11,7 +11,7 @@ options:
     description:
       - Temporary directory to use on targets when executing tasks.
     default: '~/.ansible/tmp'
-    env: [{name: ANSIBLE_REMOTE_TEMP}]
+    env: [{name: ANSIBLE_REMOTE_TMP}, {name: ANSIBLE_REMOTE_TEMP}]
     ini:
       - section: defaults
         key: remote_tmp
