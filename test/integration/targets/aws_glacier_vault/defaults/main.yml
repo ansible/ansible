@@ -1,6 +1,6 @@
 ---
 # defaults file for aws_lambda test
-glacier_vault_name: 'glacier_vault-{{ ansible_date_time.date }}'
+glacier_vault_name: '{{ resource_prefix }}-{{ ansible_date_time.date }}'
 glacier_vault_tags:
   Name: "{{ glacier_vault_name }}"
   Date: "{{ ansible_date_time.date }}"

@@ -190,7 +190,7 @@ class GlacierVaultManager(object):
         except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
             self.module.fail_json_aws(exception=e, msg="Failed to delete vault")
 
-        self.module.exit_json(vault=camel_dict_to_snake_dict(vault), tags=tags, changed=True)
+        self.module.exit_json(changed=True)
 
 
 def main():
