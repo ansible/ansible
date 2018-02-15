@@ -210,7 +210,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_mount_targets')
         return paginator.paginate(FileSystemId=file_system_id).build_full_result()['MountTargets']
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.jittered_backoff()
     def get_security_groups(self, mount_target_id):
         """
          Returns security groups for selected instance of EFS
