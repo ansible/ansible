@@ -47,19 +47,19 @@ class ShellBase(AnsiblePlugin):
 
         self.tmpdir = None
 
-    def _normalize_system_tmps(self):
+    def _normalize_system_tmpdirs(self):
         # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
         # can vary between remote user and become user.  Therefore the safest practice will be for
         # this to always be specified as full paths)
-        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmps')]
+        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmpdirs')]
 
-        # Make sure all system_tmps are absolute otherwise they'd be relative to the login dir
+        # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
         # which is almost certainly going to fail in a cornercase.
         if not all(os.path.isabs(d) for d in normalized_paths):
-            raise AnsibleError('The configured system_tmps contains a relative path: {0}. All'
-                               ' system_tmps must be absolute'.format(to_native(normalized_paths)))
+            raise AnsibleError('The configured system_tmpdirs contains a relative path: {0}. All'
+                               ' system_tmpdirs must be absolute'.format(to_native(normalized_paths)))
 
-        self.set_option('system_tmps', normalized_paths)
+        self.set_option('system_tmpdirs', normalized_paths)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
@@ -70,9 +70,9 @@ class ShellBase(AnsiblePlugin):
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the
-        # shell_common documentation fragment (and so do not have system_tmps) will fail
+        # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
         try:
-            self._normalize_system_tmps()
+            self._normalize_system_tmpdirs()
         except AnsibleError:
             pass
 
@@ -131,7 +131,7 @@ class ShellBase(AnsiblePlugin):
         # other users can read and access the tmp directory.
         # This is because we use system to create tmp dirs for unprivileged users who are
         # sudo'ing to a second unprivileged user.
-        # The 'system_tmps' setting defines dirctories we can use for this purpose
+        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
         # the default are, /tmp and /var/tmp.
         # So we only allow one of those locations if system=True, using the
         # passed in tmpdir if it is valid or the first one from the setting if not.
@@ -139,10 +139,10 @@ class ShellBase(AnsiblePlugin):
         if system:
             tmpdir = tmpdir.rstrip('/')
 
-            if tmpdir in self.get_option('system_tmps'):
+            if tmpdir in self.get_option('system_tmpdirs'):
                 basetmpdir = tmpdir
             else:
-                basetmpdir = self.get_option('system_tmps')[0]
+                basetmpdir = self.get_option('system_tmpdirs')[0]
         else:
             if tmpdir is None:
                 basetmpdir = self.get_option('remote_tmp')

@@ -17,19 +17,19 @@ options:
         key: remote_tmp
     vars:
       - name: ansible_remote_tmp
-  system_tmps:
+  system_tmpdirs:
     description:
        - "List of valid system temporary directories for Ansible to choose when it cannot use
          ``remote_tmp``, normally due to permission issues.  These must be world readable, writable,
          and executable."
     default: [ /var/tmp, /tmp ]
     type: list
-    env: [{name: ANSIBLE_SYSTEM_TMPS}]
+    env: [{name: ANSIBLE_SYSTEM_TMPDIRS}]
     ini:
       - section: defaults
-        key: system_tmps
+        key: system_tmpdirs
     vars:
-      - name: ansible_system_tmps
+      - name: ansible_system_tmpdirs
   async_dir:
     description:
        - Directory in which ansible will keep async job inforamtion
