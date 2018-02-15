@@ -23,7 +23,7 @@ class ModuleDocFragment(object):
 options:
     server_url:
         description:
-            - Url of Zabbix server, with protocol (http or https).
+            - URL of Zabbix server, with protocol (http or https).
               C(url) is an alias for C(server_url).
         required: true
         aliases: [ "url" ]
@@ -49,7 +49,7 @@ options:
         version_added: "2.1"
     timeout:
         description:
-            - The timeout of API request(seconds).
+            - The timeout of API request (seconds).
         default: 10
     validate_certs:
       required: false
