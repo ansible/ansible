@@ -22,6 +22,7 @@ __metaclass__ = type
 import multiprocessing
 import os
 import tempfile
+import itertools
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -243,9 +244,7 @@ class TaskQueueManager:
         )
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
-        for callback_plugin in self._callback_plugins:
-            if hasattr(callback_plugin, 'set_play_context'):
-                callback_plugin.set_play_context(play_context)
+        self.send_callback('set_play_context', play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
 
@@ -344,7 +343,7 @@ class TaskQueueManager:
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
+        for callback_plugin in itertools.chain([self._stdout_callback], self._callback_plugins):
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
