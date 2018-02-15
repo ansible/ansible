@@ -64,6 +64,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
 * Reorganized the documentation into distinct guides for different target audiences.
+* The ANSIBLE_REMOTE_TMP environment variable has been added to supplement (and
+  override) ANSIBLE_REMOTE_TEMP.  This matches with the spelling of the config
+  value. ANSIBLE_REMOTE_TEMP will be deprecated in the future.
 
 #### Removed Modules (previously deprecated):
 * accelerate.
