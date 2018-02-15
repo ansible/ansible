@@ -988,7 +988,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         module.fail_json(msg='urlparse is not installed')
 
     # ensure we use proper tempdir
-    tempfile.tempdir = module.tempdir
+    old_tempdir = tempfile.tempdir
+    tempfile.tempdir = module.tmpdir
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
@@ -1052,5 +1053,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
                     exception=traceback.format_exc())
+    finally:
+        tempfile.tempdir = old_tempdir
 
     return r, info

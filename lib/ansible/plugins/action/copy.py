@@ -258,7 +258,7 @@ class ActionModule(ActionBase):
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(self._connection._shell.tempdir, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
 
             remote_path = None
 
@@ -273,7 +273,7 @@ class ActionModule(ActionBase):
 
             # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
             if raw:
                 # Continue to next iteration if raw is defined.
@@ -417,7 +417,7 @@ class ActionModule(ActionBase):
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
 
-        # If content is defined make a temp file and write the content into it.
+        # If content is defined make a tmp file and write the content into it.
         if content is not None:
             try:
                 # If content comes to us as a dict it should be decoded json.
@@ -549,6 +549,6 @@ class ActionModule(ActionBase):
             result.update(dict(dest=dest, src=source, changed=changed))
 
         # Delete tmp path
-        self._remove_tmp_path(self._connection._shell.tempdir)
+        self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result
