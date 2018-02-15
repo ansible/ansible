@@ -224,16 +224,15 @@ As a reminder, the various YAML files contain just keys and values::
     apache: httpd
     somethingelse: 42
 
-How does this work?  If the operating system was any RedHat derivate for example 'CentOS', the first file Ansible would try to import
-would be 'vars/RedHat.yml', followed by 'vars/os_defaults.yml' if that file
-did not exist.   If no files in the list were found, an error would be raised.
-On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/RedHat.yml', before
-falling back on 'vars/os_defaults.yml'. Pretty simple.
+How does this work?  For Red Hat operating systems ('CentOS', for example), the first file Ansible tries to import
+is 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. If no files in 
+the list were found, an error is raised.
 
-Ansible's approach to configuration -- separating variables from tasks, keeps your playbooks
-from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
-in more streamlined & auditable configuration rules -- especially because there are a
-minimum of decision points to track.
+On Debian, Ansible first looks for 'vars/Debian.yml' instead of 'vars/RedHat.yml', before
+falling back on 'vars/os_defaults.yml'.
+
+Ansible's approach to configuration -- separating variables from tasks, keeping your playbooks
+from turning into arbitrary code with nested conditionals - results in more streamlined and auditable configuration rules because there are fewer decision points to track.
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
