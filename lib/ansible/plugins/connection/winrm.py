@@ -117,7 +117,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import binary_type
+from ansible.module_utils.six import binary_type, PY2
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -297,7 +297,10 @@ class Connection(ConnectionBase):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE,
                                  env=krb5env)
-            stdout, stderr = p.communicate(password + b'\n')
+            if six.PY2:
+               stdout, stderr = p.communicate(password + b'\n')
+            else: 
+               stdout, stderr = p.communicate(bytes(password + '\n', 'utf-8'))               
             rc = p.returncode != 0
 
         if rc != 0:
