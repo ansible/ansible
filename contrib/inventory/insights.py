@@ -59,6 +59,7 @@ import time
 
 from six import iteritems
 
+
 class error_colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -66,6 +67,7 @@ class error_colors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
 
 class InsightsInventory(object):
 
@@ -113,7 +115,7 @@ class InsightsInventory(object):
           url = "https://" + insights_url + insights_uri
           request = urllib2.Request(url)
           if VERBOSE:
-             print "=" * 80
+             print "%s" % ('=') * 80
              print "[%sVERBOSE%s] Connecting to -> %s " % (error_colors.OKGREEN, error_colors.ENDC, url)
           base64string = base64.encodestring('%s:%s' % (self.login, self.password)).strip()
           request.add_header("Authorization", "Basic %s" % base64string)
@@ -136,8 +138,7 @@ class InsightsInventory(object):
         # Useful for subsets of hosts and not purely everything.
 
         for system in systemdata:
-          #m = re.match("(^rjhins.*)" ,system["hostname"])
-          m = re.match("(^.*)" ,system["hostname"])
+          m = re.match("(^.*)",system["hostname"])
           if inv_exclude.search(system["hostname"]):
             continue
           if m and system['isCheckingIn'] == True:
