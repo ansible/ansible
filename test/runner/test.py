@@ -79,6 +79,7 @@ def main():
         args = parse_args()
         config = args.config(args)
         display.verbosity = config.verbosity
+        display.truncate = config.truncate
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
@@ -148,6 +149,13 @@ def parse_args():
     common.add_argument('--debug',
                         action='store_true',
                         help='run ansible commands in debug mode')
+
+    common.add_argument('--truncate',
+                        dest='truncate',
+                        metavar='COLUMNS',
+                        type=int,
+                        default=display.columns,
+                        help='truncate some long output (0=disabled) (default: auto)')
 
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
