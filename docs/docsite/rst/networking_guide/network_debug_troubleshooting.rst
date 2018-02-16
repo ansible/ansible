@@ -153,27 +153,27 @@ For example:
 
 .. code-block:: none
 
-fatal: [spine02]: FAILED! => {
-    "changed": false,
-    "failed": true,
-    "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket_path does not exist or cannot be found\n",
-    "module_stdout": "",
-    "msg": "MODULE FAILURE",
-    "rc": 1
-}
+   fatal: [spine02]: FAILED! => {
+       "changed": false,
+       "failed": true,
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket_path does not exist or cannot be found\n",
+       "module_stdout": "",
+       "msg": "MODULE FAILURE",
+       "rc": 1
+   }
 
 or
 
 .. code-block:: none
 
-fatal: [spine02]: FAILED! => {
-    "changed": false,
-    "failed": true,
-    "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket\n",
-    "module_stdout": "",
-    "msg": "MODULE FAILURE",
-    "rc": 1
-}
+   fatal: [spine02]: FAILED! => {
+       "changed": false,
+       "failed": true,
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket\n",
+       "module_stdout": "",
+       "msg": "MODULE FAILURE",
+       "rc": 1
+   }
 
 Suggestions to resolve:
 
