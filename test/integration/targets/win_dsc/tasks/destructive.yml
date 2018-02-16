@@ -13,7 +13,7 @@
     name: xWebAdministration
     state: present
 
-- name: ensure IIS website does not exists
+- name: ensure IIS website does not exist
   win_iis_website:
     name: Ansible DSC Test
     state: absent
