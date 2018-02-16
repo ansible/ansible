@@ -69,13 +69,13 @@ Deprecated
 Jinja tests used as filters
 ---------------------------
 
-Using Ansible provided jinja tests as filters will be removed in Ansible 2.9.
+Using Ansible-provided jinja tests as filters will be removed in Ansible 2.9.
 
 Prior to Ansible 2.5, jinja tests included within Ansible were most often used as filters. The large difference in use is that filters are referenced as ``variable | filter_name`` where as jinja tests are refereced as ``variable is test_name``.
 
-Jinja tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in jinja. This change is to help differentiate the concepts for a better understanding of jinja, and where each can be appropriately used.
+Jinja tests are used for comparisons, while filters are used for data manipulation and have different applications in jinja. This change is to help differentiate the concepts for a better understanding of jinja, and where each can be appropriately used.
 
-As of Ansible 2.5 using an Ansible provided jinja test with filter syntax, will display a deprecation error.
+As of Ansible 2.5, using an Ansible provided jinja test with filter syntax, will display a deprecation error.
 
 **OLD** In Ansible 2.4 (and earlier) the use of an Ansible included jinja test would likely look like this:
 
@@ -93,7 +93,7 @@ As of Ansible 2.5 using an Ansible provided jinja test with filter syntax, will 
         - result is failed
         - results is not successful
 
-In addition to the deprecation warnings, many new tests have been introduced that are aliases of the old tests, that make more sense grammatically with the jinja test syntax such as the new ``successful`` test which aliases ``success``
+In addition to the deprecation warnings, many new tests have been introduced that are aliases of the old tests. These new tests make more sense grammatically with the jinja test syntax, such as the new ``successful`` test which aliases ``success``.
 
 .. code-block:: yaml
 
@@ -106,7 +106,7 @@ Additionally, a script was created to assist in the conversion for tests using f
 Modules
 =======
 
-Major changes in popular modules are detailed here
+Major changes in popular modules are detailed here.
 
 github_release
 --------------
@@ -158,7 +158,35 @@ desired.
 Plugins
 =======
 
-No notable changes.
+As a developer, you can now use 'doc fragments' for common configuration options on plugin types that support the new plugin configuration system.
+
+Inventory
+---------
+
+Inventory plugins have been fine tuned, and we have started to add some common features:
+
+* The ability to use a cache plugin to avoid costly API/DB queries is disabled by default.
+  If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
+  Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
+
+* A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
+  The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
+  If you had customized the enabled plugins you should revise the setting to include the new auto plugin.
+
+Shell
+-----
+
+Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overriden using host specific variables.
+
+For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir'. This is used when escalating privileges for a non-administrative user. Previously this was hardcoded to '/tmp', which some systems cannot use for privilege escalation. This setting now defaults to ``[ '/var/tmp', '/tmp']``.
+
+Another new setting is ``admin_users`` which allows you to specify a list of users to be considered 'administrators'. Previouslu this was hardcoded to ``root``. It now it defaults to ``[root, toor, admin]``.  This information is used when choosing between your ``remote_temp`` and ``system_temps`` directory.
+
+For a full list, check the shell plugin you are using, the default shell plugin is ``sh``.
+
+Those that had to work around the global configuration limitations can now migrate to a per host/group settings,
+but also note that the new defaults might conflict with existing usage if the assumptions don't correlate to your environment.
+
 
 Porting custom scripts
 ======================
