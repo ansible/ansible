@@ -165,7 +165,7 @@
   check_mode: yes
   register: cm_query_static_vlan_pool
 
-- name: Query ourstatic vlan pool
+- name: Query our static vlan pool
   aci_vlan_pool:
     <<: *static_vlan_pool_query
     pool: anstest
