@@ -165,13 +165,13 @@ Inventory
 
 Inventory plugins have been fine tuned, and we have started to add some common features:
 
-* The ability to use a cache plugin to avoid costly API/DB queries, this is disabled by default.
+* The ability to use a cache plugin to avoid costly API/DB queries is disabled by default.
   If using inventory scripts, some may already support a cache, but it is outside of Ansible's knowledge and control.
   Moving to the interal cache will allow you to use Ansible's existing cache refresh/invalidation mechanisms.
 
 * A new 'auto' plugin, enabled by default, that can automatically detect the correct plugin to use IF that plugin is using our 'common YAML configuration format'.
   The previous host_list, script, yaml and ini plugins still work as they did, the auto plugin is now the last one we attempt to use.
-  If you had customized the enabled plugins you might want to revise the setting to include the new auto plugin.
+  If you had customized the enabled plugins you should revise the setting to include the new auto plugin.
 
 Shell
 -----
