@@ -247,6 +247,6 @@ Or with a prompt instead of the vault password file:
    
    Every time you change an ansible-vault password, you must update all files and strings encrypted using that password. If you do not update the encryption, and you cannot access the password used to encrypt a particular file or string, you will not be able to access that file or string. 
 
-For more details on building inventory files, see :doc:`the introduction to inventory<../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:`the full Ansible Vault documentation<../user_guide/vault>`.
+For more details on building inventory files, see :doc:`the introduction to inventory<../../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:`the full Ansible Vault documentation<../../user_guide/vault>`.
 
 Now that you understand the basics of commands, playbooks, and inventory, it's time to explore some more complex Ansible Network examples. 

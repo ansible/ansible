@@ -47,10 +47,10 @@ All modules within a network platform share certain requirements. Some network p
 Privilege Escalation: `authorize` and `become`
 ================================================================================
 
-Some network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in *nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
+Some network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
 
 Some network modules use the Ansible parameter ``become: yes`` for privilege escalation, with ``become_method: enable`` - using ``become`` for network tasks requires ``connection: network_cli``.
 
 Other network modules support privilege escalation but do not yet support ``network_cli`` connections. For those modules, you must use ``authorize: yes`` and ``auth_pass: my_enable_password``.
 
-For more information, see :doc:`Become and Networks<../user_guide/become.html#become-and-networks>`
+For more information, see :doc:`Become and Networks<../../user_guide/become.html#become-and-networks>`_

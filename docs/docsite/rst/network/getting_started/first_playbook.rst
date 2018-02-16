@@ -33,7 +33,7 @@ Confirm the version of Ansible (must be >= 2.5):
    ansible --version
 
 
-For other ways to install Ansible, see :doc:`../intro_installation`.
+For other ways to install Ansible, see :doc:`../../intro_installation`.
 
 Establish a Manual Connection to a Managed Node
 ==================================================
