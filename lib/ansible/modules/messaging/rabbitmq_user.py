@@ -187,6 +187,9 @@ class RabbitMqUser(object):
                                        write_priv=write_priv, read_priv=read_priv))
         return perms_list
 
+    def check_password(self):
+        return self._exec(['authenticate_user', self.username, self.password], True)
+
     def add(self):
         if self.password is not None:
             self._exec(['add_user', self.username, self.password])
@@ -290,8 +293,9 @@ def main():
                 rabbitmq_user.get()
                 result['changed'] = True
             elif update_password == 'always':
-                rabbitmq_user.change_password()
-                result['changed'] = True
+                if not rabbitmq_user.check_password():
+                    rabbitmq_user.change_password()
+                    result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
