@@ -1,7 +1,7 @@
 Cisco ACI Guide
 ===============
 
-.. _aci_intro:
+.. _aci_guide_intro:
 
 What is Cisco ACI ?
 -------------------
@@ -39,6 +39,8 @@ Various resources exist to start learning ACI, here is a list of interesting art
 - `Cisco DevNet Learning Labs about ACI <https://learninglabs.cisco.com/labs/tags/ACI>`_
 
 
+.. _aci_guide_modules:
+
 Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
@@ -57,7 +59,7 @@ For instance ensuring that a specific tenant exists, is done using the following
         description: Customer XYZ
         state: present
 
-A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/module_docs/list_of_network_modules.html#aci>`_.
+A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
 
 Standard module parameters
 ..........................
@@ -75,9 +77,19 @@ Every Ansible ACI module accepts the following parameters that influence the mod
 - ``validate_certs`` -- Validate certificate when using HTTPS communication (defaults to ``yes``)
 - ``output_level`` -- Influence the level of detail ACI modules return to the user (one of ``normal``, ``info`` or ``debug``)
 
+Proxy support
+.............
+By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see setting the environment), or by using the ``use_proxy`` module parameter.
+
+HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
+
+If you don't need proxy support, but the system may have it configured nevertheless, you can add this parameter setting: ``use_proxy: no`` to avoid accidental proxy usage.
+
+.. note:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
+
 Module return values
 ....................
-By default the ACI modules (excluding :ref:`aci_rest <aci_rest>`) return the resulting state of the managed object in a key ``current``.
+By default the ACI modules (excluding :ref:`the aci_rest module <aci_rest>`) return the resulting state of the managed object in a key ``current``.
 
 By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
 
@@ -93,7 +105,7 @@ Various resources exist to start learn more about ACI programmability, we recomm
 - `Cisco DevNet Learning Labs about ACI and Ansible <https://learninglabs.cisco.com/labs/tags/ACI,Ansible>`_
 
 
-.. _aci_auth:
+.. _aci_guide_auth:
 
 ACI authentication
 ------------------
@@ -178,17 +190,17 @@ More information
 More information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
 
 
-.. _aci_rest:
+.. _aci_guide_rest:
 
 Using ACI REST with Ansible
 ---------------------------
 While already a lot of ACI modules exists in the Ansible distribution, and the most common actions can be performed with these existing modules, there's always something that may not be possible with off-the-shelf modules.
 
-The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
+:ref:`The aci_rest module <aci_rest>` provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
 
 Using the aci-rest module
 .........................
-The :ref:`aci_rest <aci_rest>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
+:ref:`The aci_rest module <aci_rest>` accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
 
 When you're making modifications, you can use the POST or DELETE methods, whereas doing just queries require the GET method.
 
@@ -259,12 +271,12 @@ More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
 
-- `The apic_rest Ansible module <http://docs.ansible.com/ansible/devel/module_docs/aci_rest_module.html>`_
+- :ref:`The apic_rest Ansible module <aci_rest>`
 - `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
 - `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
 
 
-.. _aci_ops:
+.. _aci_guide_ops:
 
 Operational examples
 --------------------
@@ -316,7 +328,7 @@ The below example waits until the cluster is fully-fit. In this example you know
       delay: 30
 
 
-.. _aci_errors:
+.. _aci_guide_errors:
 
 APIC error messages
 -------------------
@@ -329,19 +341,19 @@ The following error messages may occur and this section can help you understand 
 
 - **APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag**
 
-  While JSON does not care about the order of dictionary keys, the APIC is very strict in accepting only ``attributes`` before ``children``. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine.
+  Although the JSON specification allows unordered elements, the APIC REST API requires that the JSON ``attributes`` element precede the ``children`` array or other elements. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine. If you don't have any attributes, it may be necessary to add: ``attributes: {}`` as the APIC does expect the entry to proceed any ``children``.
 
 
 - **APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'**
 
-  Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_ so it must not include quotes.
+  Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
 
 
-.. _aci_issues:
+.. _aci_guide_issues:
 
 Known issues
 ------------
-The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of the :ref:`aci_rest <aci_rest>` module.
+:ref:`The aci_rest module <aci_rest>` is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of :ref:`the aci_rest module <aci_rest>`.
 
 All below issues either have been reported to the vendor, or can simply be avoided.
 
@@ -358,7 +370,7 @@ All below issues either have been reported to the vendor, or can simply be avoid
 
   More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
 
-  **NOTE:** Fortunately the behaviour is consistent, so if you have a working example you can trust that it will keep on working.
+  **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
 
 
 - **Specific requests are known to not be idempotent**
@@ -379,7 +391,7 @@ All below issues either have been reported to the vendor, or can simply be avoid
   **NOTE:** There is no workaround for this issue.
 
 
-.. _aci_community:
+.. _aci_guide_community:
 
 ACI Ansible community
 ---------------------
