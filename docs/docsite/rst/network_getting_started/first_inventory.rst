@@ -44,10 +44,6 @@ Add Variables to Inventory
 
 Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary. 
 
-The syntax for variable values is different in inventory and in YAML files (``group_vars`` and playbook files). In an inventory file you **must** use the syntax ``key=value`` for variable values and include the prefix ``ansible_`` in the ``key``. For example: ``ansible_network_os=vyos``. 
-
-(In any file with the ``.yml`` extension, including ``group_vars`` files and playbooks, you **must** use the YAML syntax ``key: value``. In playbooks, you must also drop the prefix ``ansible`` from the ``key``. So in a ``group_vars`` file you would use ``ansible_network_os: vyos`` and in a playbook you would use ``network_os: vyos``.)
-
 .. code-block:: yaml
 
    [leafs]
@@ -70,6 +66,17 @@ The syntax for variable values is different in inventory and in YAML files (``gr
    leafs
    spines
    servers
+
+Variable Syntax
+```````````````````````````````````````````````````````````````
+
+The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
+
+- In an inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
+- In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
+- In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``. 
+- In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
+
 
 Group Variables within Inventory
 ```````````````````````````````````````````````````````````````

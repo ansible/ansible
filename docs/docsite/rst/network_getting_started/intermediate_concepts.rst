@@ -1,19 +1,12 @@
 Network Getting Started: Beyond the Basics
 ======================================================
 
-This page introduces some best practices for managing your Ansible files, along with intermediate concepts like roles, global configuration, privilege escalation, filters and conditional comparisons. Most of these concepts are common to all uses of Ansible, but there are differences in privilege escalation and conditional comparisons for network modules.
+This page introduces some concepts that help you manage your Ansible workflow: roles, directory structure, and source control. Like the Basic Concepts at the beginning of this guide, these intermediate concepts are common to all uses of Ansible. This page also offers resources for learning more.
 
 Beyond Playbooks: Moving Tasks and Variables into Roles
 ```````````````````````````````````````````````````````````````
 
-Roles are sets of Ansible defaults, files, tasks, templates, variables, and other Ansible components that work together. Moving from a command to a playbook makes it easy to run multiple tasks and repeat the same tasks in the same order. Moving from a playbook to a role makes it even easier to reuse and share your ordered tasks. You call a role from a playbook with two lines:
-
-.. code_block:: YAML
-
-   Roles:
-     - my_role_name
-
-Ansible Galaxy lets you share your roles and use others' roles, either directly or as inspiration.
+Roles are sets of Ansible defaults, files, tasks, templates, variables, and other Ansible components that work together. As you saw on the Working with Playbooks page, moving from a command to a playbook makes it easy to run multiple tasks and repeat the same tasks in the same order. Moving from a playbook to a role makes it even easier to reuse and share your ordered tasks. For more details, see the :doc:`documentation on roles<../user_guide/playbooks_reuse_roles>`. You can also look at :doc:`Ansible Galaxy<../reference_appendices/galaxy>`, which lets you share your roles and use others' roles, either directly or as inspiration.
 
 A Typical Ansible Filetree
 ```````````````````````````````````````````````````````````````
@@ -40,30 +33,34 @@ Ansible expects to find certain files in certain places. As you expand your inve
 The ``backup`` directory and the files in it get created when you run modules like ``vyos_config`` with the ``backup: yes`` parameter.
 
 
-Tracking Changes to Inventory and Playbooks with Git
+Tracking Changes to Inventory and Playbooks: Source Control with Git
+````````````````````````````````````````````````````````````````````
+
+As you expand your inventory, roles and playbooks, you should place your Ansible projects under source control. We recommend ``git`` for source control. ``git`` provides an audit trail, letting you you track changes, roll back mistakes, view history and share the workload of managing, maintaining and expanding your Ansible ecosystem. There are plenty of tutorials and guides to using ``git`` available.
+
+Resources and Next Steps
 ```````````````````````````````````````````````````````````````
 
-To keep track of your inventory and playbooks, view history, track changes, and roll back mistakes, you must put your Ansible project under source control. We recommend Git as a source control solution. There are lots of good tutorials and guides to using Git out on the web.
+Text:
+Network Automation on the `Link Ansible website <http://ansible.com/overview/networking>`
+Ansible Network `Link Blog posts <http://ansible.com/blog/topic/networks>`
 
+Video:
+All the `Link AnsibleFests <https://www.ansible.com/resources/videos> and `Link AnsibleAutomates <https://www.ansible.com/resources/webinars-training>` are recorded and include many Network related topics.
+You can filter to only show Network topics using the Filter by Category option on the right hand side
+For the schedule the events please see the Ansible Events page. 
 
-Ansible Configuration: Setting global defaults
-```````````````````````````````````````````````````````````````
+GitHub Repos:
+The Network-Automation GitHub project is a open community for all things network automation. Here there will be various examples, demonstrations and GitHub repos dedicated exclusively for automation networking platforms. 
+Lightbulb
+Example playbooks
+Which other repos?
+Join our collaborative GitHub project on github.com/network-automation! Anyone with a GitHub account is able to create Pull Requests (PRs) or issues. If you'd like to be more involved email ansible-network at redhat.com.
 
-Privilege Escalation: `authorize` and `become`
-```````````````````````````````````````````````````````````````
+Email:
+Ansible Network Community
+To join simply email ansible-network at redhat.com and we will get you added right away!
 
-Jinja2: Using Data with Filters and Tests
-```````````````````````````````````````````````````````````````
+IRC:
+Join us in #ansible-network on Freenode IRC
 
-Conditional Comparison in Network Modules
-```````````````````````````````````````````````````````````````
-
-Conditional statements in Ansible evaluate the output from a managed node to determine what happens next in a playbook. Linux/Unix and Windows modules use mathematical symbols (for example, `==`, `<`, and `>`) for comparison. However, network modules use different conditional comparisons. The conditional tests for network modules are:
-
-- eq - Equal
-- neq - Not equal
-- gt - Greater than
-- ge - Greater than or equal
-- lt - Less than
-- le - Less than or equal
-- contains - Object contains specified item
