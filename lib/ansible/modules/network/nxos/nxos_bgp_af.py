@@ -337,42 +337,15 @@ def get_value(arg, config, module):
     command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
     has_command_val = command_val_re.search(config)
 
-    if arg == 'inject_map':
-        inject_re = r'.*inject-map\s(?P<inject_map>\S+)\sexist-map\s(?P<exist_map>\S+)-*'
-
+    if arg in ['networks', 'redistribute', 'inject_map']:
         value = []
-        match_inject = re.match(inject_re, config, re.DOTALL)
-        if match_inject:
-            inject_group = match_inject.groupdict()
-            inject_map = inject_group['inject_map']
-            exist_map = inject_group['exist_map']
-            value.append(inject_map)
-            value.append(exist_map)
-
-            inject_map_command = ('inject-map {0} exist-map {1} '
-                                  'copy-attributes'.format(
-                                      inject_group['inject_map'],
-                                      inject_group['exist_map']))
-
-            inject_re = re.compile(r'\s+{0}\s*$'.format(inject_map_command), re.M)
-            if inject_re.search(config):
-                value.append('copy_attributes')
-
-    elif arg == 'networks':
-        value = []
-        for network in command_val_re.findall(config):
-            value.append(network.split())
-
-    elif arg == 'redistribute':
-        value = []
-        if has_command_val:
-            value = has_command_val.group('value').split()
-
-            if value:
-                if len(value) == 3:
-                    value.pop(1)
-                elif len(value) == 4:
-                    value = ['{0} {1}'.format(value[0], value[1]), value[3]]
+        for ele in command_val_re.findall(config):
+            tl = ele.split()
+            if 'exist-map' in tl:
+                tl.remove('exist-map')
+            elif 'route-map' in tl:
+                tl.remove('route-map')
+            value.append(tl)
 
     elif command == 'distance':
         distance_re = r'.*distance\s(?P<d_ebgp>\w+)\s(?P<d_ibgp>\w+)\s(?P<d_local>\w+)'
@@ -408,7 +381,9 @@ def get_value(arg, config, module):
                     value = dampening_group['suppress']
                 elif arg == 'dampening_max_suppress_time':
                     value = dampening_group['max_suppress']
-
+            else:
+                if arg == 'dampening_state':
+                    value = True if 'dampening' in config else False
     elif arg == 'table_map_filter':
         tmf_regex = re.compile(r'\s+table-map.*filter$', re.M)
         value = False
@@ -464,7 +439,14 @@ def get_existing(module, args, warnings):
         if config:
             for arg in args:
                 if arg not in ['asn', 'afi', 'safi', 'vrf']:
-                    existing[arg] = get_value(arg, config, module)
+                    gv = get_value(arg, config, module)
+                    if gv:
+                        existing[arg] = gv
+                    else:
+                        if arg != 'client_to_client' and arg in PARAM_TO_DEFAULT_KEYMAP.keys():
+                            existing[arg] = PARAM_TO_DEFAULT_KEYMAP.get(arg)
+                        else:
+                            existing[arg] = gv
 
             existing['asn'] = existing_asn
             existing['afi'] = module.params['afi']
@@ -540,6 +522,11 @@ def default_existing(existing_value, key, value):
             elif len(maps) == 3:
                 commands.append('no inject-map {0} exist-map {1} '
                                 'copy-attributes'.format(maps[0], maps[1]))
+
+    elif key == 'redistribute':
+        for maps in existing_value:
+            commands.append('no redistribute {0} route-map {1}'.format(maps[0], maps[1]))
+
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -556,6 +543,13 @@ def get_network_command(existing, key, value):
                 command = '{0} {1}'.format(key, inet[0])
             elif len(inet) == 2:
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
+            commands.append(command)
+    for enet in existing_networks:
+        if enet not in value:
+            if len(enet) == 1:
+                command = 'no {0} {1}'.format(key, enet[0])
+            elif len(enet) == 2:
+                command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
             commands.append(command)
     return commands
 
@@ -575,21 +569,33 @@ def get_inject_map_command(existing, key, value):
                            'copy-attributes'.format(maps[0],
                                                     maps[1]))
             commands.append(command)
+    for emaps in existing_maps:
+        if emaps not in value:
+            if len(emaps) == 2:
+                command = ('no inject-map {0} exist-map {1}'.format(
+                    emaps[0], emaps[1]))
+            elif len(emaps) == 3:
+                command = ('no inject-map {0} exist-map {1} '
+                           'copy-attributes'.format(emaps[0],
+                                                    emaps[1]))
+            commands.append(command)
     return commands
 
 
 def get_redistribute_command(existing, key, value):
     commands = []
+    existing_rules = existing.get('redistribute', [])
     for rule in value:
-        if rule[1] == 'default':
-            existing_rule = existing.get('redistribute', [])
-            for each_rule in existing_rule:
-                if rule[0] in each_rule:
-                    command = 'no {0} {1} route-map {2}'.format(
-                        key, each_rule[0], each_rule[1])
-                    commands.append(command)
-        else:
-            command = '{0} {1} route-map {2}'.format(key, rule[0], rule[1])
+        if not isinstance(rule, list):
+            rule = [rule]
+        if rule not in existing_rules:
+            command = ('redistribute {0} route-map {1}'.format(
+                rule[0], rule[1]))
+            commands.append(command)
+    for erule in existing_rules:
+        if erule not in value:
+            command = ('no redistribute {0} route-map {1}'.format(
+                erule[0], erule[1]))
             commands.append(command)
     return commands
 
@@ -740,8 +746,19 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    mutually_exclusive = [('dampening_state', 'dampening_routemap'),
+                          ('dampening_state', 'dampening_half_time'),
+                          ('dampening_state', 'dampening_suppress_time'),
+                          ('dampening_state', 'dampening_reuse_time'),
+                          ('dampening_state', 'dampening_max_suppress_time'),
+                          ('dampening_routemap', 'dampening_half_time'),
+                          ('dampening_routemap', 'dampening_suppress_time'),
+                          ('dampening_routemap', 'dampening_reuse_time'),
+                          ('dampening_routemap', 'dampening_max_suppress_time')]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=mutually_exclusive,
         required_together=[DAMPENING_PARAMS, ['distance_ibgp', 'distance_ebgp', 'distance_local']],
         supports_check_mode=True,
     )
@@ -751,12 +768,6 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
-
-    if module.params['dampening_routemap']:
-        for param in DAMPENING_PARAMS:
-            if module.params[param]:
-                module.fail_json(msg='dampening_routemap cannot be used with'
-                                     ' the {0} param'.format(param))
 
     if module.params['advertise_l2vpn_evpn']:
         if module.params['vrf'] == 'default':
@@ -780,7 +791,7 @@ def main():
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
 
-    for arg in ['networks', 'inject_map']:
+    for arg in ['networks', 'inject_map', 'redistribute']:
         if proposed_args.get(arg):
             if proposed_args[arg][0] == 'default':
                 proposed_args[arg] = 'default'
