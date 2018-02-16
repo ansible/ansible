@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: aos_logical_device_map
 author: Damien Garros (@dgarros)
 version_added: "2.3"
 short_description: Manage AOS Logical Device Map
+deprecated:
+    removed_in: "2.9"
+    why: This module does not support AOS 2.1 or later
+    alternative: See new modules at U(https://www.ansible.com/ansible-apstra).
 description:
   - Apstra AOS Logical Device Map module let you manage your Logical Device Map easily. You can create
     create and delete Logical Device Map by Name, ID or by using a JSON File. This module
