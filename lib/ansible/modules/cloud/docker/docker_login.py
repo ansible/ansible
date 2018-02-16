@@ -124,7 +124,6 @@ login_results:
     type: dict
     sample: {
         "email": "testuer@yahoo.com",
-        "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
@@ -190,6 +189,11 @@ class LoginManager(DockerBaseClass):
             )
         except Exception as exc:
             self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
+
+        # If user is already logged in, then response contains password for user
+        # This returns correct password if user is logged in and wrong password is given.
+        if 'password' in response:
+            del response['password']
         self.results['login_result'] = response
 
         if not self.check_mode:
