@@ -90,7 +90,7 @@ options:
     required: false
     default: on_create
     choices: [ on_create, always ]
-    version_added: "2.5"
+    version_added: "2.6"
 '''
 
 EXAMPLES = '''
