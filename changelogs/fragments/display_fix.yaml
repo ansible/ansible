@@ -1,0 +1,3 @@
+bugfixes:
+- |
+  ensure displayed messages under peristent connections are returned to the controller (https://github.com/ansible/ansible/pull/36064)

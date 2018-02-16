@@ -1,0 +1,3 @@
+bugfixes:
+- |
+  win_updates - fix regresion with string category names(https://github.com/ansible/ansible/pull/36015)

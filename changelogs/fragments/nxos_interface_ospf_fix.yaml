@@ -1,0 +1,3 @@
+bugfixes:
+- |
+  nxos_interface_ospf - various bugfixes (https://github.com/ansible/ansible/pull/35988)

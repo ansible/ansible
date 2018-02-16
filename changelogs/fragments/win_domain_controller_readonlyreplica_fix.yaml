@@ -1,0 +1,3 @@
+bugfixes:
+- |
+  win_domain_controller - only specify ReadOnlyReplica when necessary (https://github.com/ansible/ansible/pull/36017)
