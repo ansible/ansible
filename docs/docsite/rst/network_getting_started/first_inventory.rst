@@ -70,17 +70,6 @@ Next, you can set values for many of the variables you needed in your first Ansi
    spines
    servers
 
-Variable Syntax
-================================================================================
-
-The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
-
-- In an inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
-- In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
-- In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``. 
-- In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
-
-
 Group Variables within Inventory
 ================================================================================
 
@@ -116,6 +105,17 @@ When devices in a group share the same variable values, such as OS or SSH user, 
    leafs
    spines
    servers
+
+Variable Syntax
+================================================================================
+
+The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
+
+- In an inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
+- In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
+  - In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``. 
+  - In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
+
 
 Move Group Variables to ``group_vars`` Files
 ================================================================================
@@ -164,6 +164,7 @@ works with this ``group_vars/vyos.yml`` content:
    ansible_connection: network_cli
    ansible_network_os: vyos
    ansible_user: my_vyos_user
+
 
 With this setup, you can run first_playbook.yml with only two flags:
 
