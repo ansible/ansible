@@ -50,7 +50,9 @@ options:
         and what conditionals to apply.  This argument will cause
         the task to wait for a particular conditional to be true
         before moving forward.   If the conditional is not true
-        by the configured retries, the task fails.  See examples.
+        by the configured retries, the task fails.
+        Note - With I(wait_for) the value in C(result['stdout']) can be accessed
+        using C(result), that is to access C(result['stdout'][0]) use C(result[0]) See examples.
     required: false
     default: null
     aliases: ['waitfor']
@@ -115,6 +117,26 @@ EXAMPLES = """
     commands:
       - command: show version
         output: json
+
+- name: using cli transport, check whether the switch is in maintenance mode
+  eos_command:
+    commands: show maintenance
+    wait_for: result[0] contains 'Under Maintenance'
+
+- name: using cli transport, check whether the switch is in maintenance mode using json output
+  eos_command:
+    commands: show maintenance | json
+    wait_for: result[0].units.System.state eq 'underMaintenance'
+
+- name: "using eapi transport check whether the switch is in maintenance,
+         with 8 retries and 2 second interval between retries"
+  eos_command:
+    commands: show maintenance
+    wait_for: result[0]['units']['System']['state'] eq 'underMaintenance'
+    interval: 2
+    retries: 8
+    provider:
+      transport: eapi
 """
 
 RETURN = """
