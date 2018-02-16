@@ -8,3 +8,5 @@ PyYAML
 paramiko
 cryptography
 setuptools
+requests
+urllib3
