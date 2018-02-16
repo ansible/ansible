@@ -31,7 +31,7 @@ options:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
-        C(force=yes).
+        C(force=yes) or C(update_password=always).
   tags:
     description:
       - User tags specified as comma delimited
