@@ -19,19 +19,23 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
 ---
-module: aos_logical_device
+module: aos_rack_type
 author: Damien Garros (@dgarros)
 version_added: "2.3"
-short_description: Manage AOS Logical Device
+short_description: Manage AOS Rack Type
+deprecated:
+    removed_in: "2.9"
+    why: This module does not support AOS 2.1 or later
+    alternative: See new modules at U(https://www.ansible.com/ansible-apstra).
 description:
-  - Apstra AOS Logical Device module let you manage your Logical Devices easily.
-    You can create create and delete Logical Device by Name, ID or by using a JSON File.
+  - Apstra AOS Rack Type module let you manage your Rack Type easily.
+    You can create create and delete Rack Type by Name, ID or by using a JSON File.
     This module is idempotent and support the I(check) mode.
     It's using the AOS REST API.
 requirements:
@@ -43,77 +47,77 @@ options:
     required: true
   name:
     description:
-      - Name of the Logical Device to manage.
+      - Name of the Rack Type to manage.
         Only one of I(name), I(id) or I(content) can be set.
   id:
     description:
-      - AOS Id of the Logical Device to manage (can't be used to create a new Logical Device),
+      - AOS Id of the Rack Type to manage (can't be used to create a new Rack Type),
         Only one of I(name), I(id) or I(content) can be set.
   content:
     description:
-      - Datastructure of the Logical Device to create. The data can be in YAML / JSON or
+      - Datastructure of the Rack Type to create. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
   state:
     description:
-      - Indicate what is the expected state of the Logical Device (present or not).
+      - Indicate what is the expected state of the Rack Type (present or not).
     default: present
     choices: ['present', 'absent']
 '''
 
 EXAMPLES = '''
 
-- name: "Delete a Logical Device by name"
-  aos_logical_device:
+- name: "Delete a Rack Type by name"
+  aos_rack_type:
     session: "{{ aos_session }}"
-    name: "my-logical-device"
+    name: "my-rack-type"
     state: absent
 
-- name: "Delete a Logical Device by id"
-  aos_logical_device:
+- name: "Delete a Rack Type by id"
+  aos_rack_type:
     session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
-# Save a Logical Device to a file
+# Save a Rack Type to a file
 
-- name: "Access Logical Device 1/3"
-  aos_logical_device:
+- name: "Access Rack Type 1/3"
+  aos_rack_type:
     session: "{{ aos_session }}"
-    name: "my-logical-device"
+    name: "my-rack-type"
     state: present
-  register: logical_device
-- name: "Save Logical Device into a JSON file 2/3"
+  register: rack_type
+- name: "Save Rack Type into a JSON file 2/3"
   copy:
-    content: "{{ logical_device.value | to_nice_json }}"
-    dest: logical_device_saved.json
-- name: "Save Logical Device into a YAML file 3/3"
+    content: "{{ rack_type.value | to_nice_json }}"
+    dest: rack_type_saved.json
+- name: "Save Rack Type into a YAML file 3/3"
   copy:
-    content: "{{ logical_device.value | to_nice_yaml }}"
-    dest: logical_device_saved.yaml
+    content: "{{ rack_type.value | to_nice_yaml }}"
+    dest: rack_type_saved.yaml
 
-- name: "Load Logical Device from a JSON file"
-  aos_logical_device:
+- name: "Load Rack Type from a JSON file"
+  aos_rack_type:
     session: "{{ aos_session }}"
-    content: "{{ lookup('file', 'resources/logical_device_saved.json') }}"
+    content: "{{ lookup('file', 'resources/rack_type_saved.json') }}"
     state: present
 
-- name: "Load Logical Device from a YAML file"
-  aos_logical_device:
+- name: "Load Rack Type from a YAML file"
+  aos_rack_type:
     session: "{{ aos_session }}"
-    content: "{{ lookup('file', 'resources/logical_device_saved.yaml') }}"
+    content: "{{ lookup('file', 'resources/rack_type_saved.yaml') }}"
     state: present
 '''
 
 RETURNS = '''
 name:
-  description: Name of the Logical Device
+  description: Name of the Rack Type
   returned: always
   type: str
   sample: AOS-1x25-1
 
 id:
-  description: AOS unique ID assigned to the Logical Device
+  description: AOS unique ID assigned to the Rack Type
   returned: always
   type: str
   sample: fcc4ac1c-e249-4fe7-b458-2138bfb44c06
@@ -126,7 +130,6 @@ value:
 '''
 
 import json
-import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aos.aos import get_aos_session, find_collection_item, do_load_resource, check_aos_version, content_to_dict
@@ -136,58 +139,56 @@ from ansible.module_utils.network.aos.aos import get_aos_session, find_collectio
 #########################################################
 
 
-def logical_device_absent(module, aos, my_logical_dev):
+def rack_type_absent(module, aos, my_rack_type):
 
     margs = module.params
 
     # If the module do not exist, return directly
-    if my_logical_dev.exists is False:
+    if my_rack_type.exists is False:
         module.exit_json(changed=False,
                          name=margs['name'],
                          id=margs['id'],
                          value={})
 
-    # If not in check mode, delete Logical Device
+    # If not in check mode, delete Rack Type
     if not module.check_mode:
         try:
-            # Need to way 1sec before a delete to workaround a current limitation in AOS
-            time.sleep(1)
-            my_logical_dev.delete()
+            my_rack_type.delete()
         except:
-            module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
+            module.fail_json(msg="An error occurred, while trying to delete the Rack Type")
 
     module.exit_json(changed=True,
-                     name=my_logical_dev.name,
-                     id=my_logical_dev.id,
+                     name=my_rack_type.name,
+                     id=my_rack_type.id,
                      value={})
 
 
-def logical_device_present(module, aos, my_logical_dev):
+def rack_type_present(module, aos, my_rack_type):
 
     margs = module.params
 
     if margs['content'] is not None:
 
         if 'display_name' in module.params['content'].keys():
-            do_load_resource(module, aos.LogicalDevices, module.params['content']['display_name'])
+            do_load_resource(module, aos.RackTypes, module.params['content']['display_name'])
         else:
             module.fail_json(msg="Unable to find display_name in 'content', Mandatory")
 
-    # if logical_device doesn't exist already, create a new one
-    if my_logical_dev.exists is False and 'content' not in margs.keys():
+    # if rack_type doesn't exist already, create a new one
+    if my_rack_type.exists is False and 'content' not in margs.keys():
         module.fail_json(msg="'content' is mandatory for module that don't exist currently")
 
     module.exit_json(changed=False,
-                     name=my_logical_dev.name,
-                     id=my_logical_dev.id,
-                     value=my_logical_dev.value)
+                     name=my_rack_type.name,
+                     id=my_rack_type.id,
+                     value=my_rack_type.value)
 
 #########################################################
 # Main Function
 #########################################################
 
 
-def logical_device(module):
+def rack_type(module):
 
     margs = module.params
 
@@ -217,20 +218,20 @@ def logical_device(module):
     # ----------------------------------------------------
     # Find Object if available based on ID or Name
     # ----------------------------------------------------
-    my_logical_dev = find_collection_item(aos.LogicalDevices,
-                                          item_name=item_name,
-                                          item_id=item_id)
+    my_rack_type = find_collection_item(aos.RackTypes,
+                                        item_name=item_name,
+                                        item_id=item_id)
 
     # ----------------------------------------------------
     # Proceed based on State value
     # ----------------------------------------------------
     if margs['state'] == 'absent':
 
-        logical_device_absent(module, aos, my_logical_dev)
+        rack_type_absent(module, aos, my_rack_type)
 
     elif margs['state'] == 'present':
 
-        logical_device_present(module, aos, my_logical_dev)
+        rack_type_present(module, aos, my_rack_type)
 
 
 def main():
@@ -252,7 +253,7 @@ def main():
     # Check if aos-pyez is present and match the minimum version
     check_aos_version(module, '0.6.0')
 
-    logical_device(module)
+    rack_type(module)
 
 if __name__ == "__main__":
     main()

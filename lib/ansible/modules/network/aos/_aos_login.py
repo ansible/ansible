@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: aos_login
 author: jeremy@apstra.com (@jeremyschulman)
 version_added: "2.3"
 short_description: Login to AOS server for session token
+deprecated:
+    removed_in: "2.9"
+    why: This module does not support AOS 2.1 or later
+    alternative: See new modules at U(https://www.ansible.com/ansible-apstra).
 description:
   - Obtain the AOS server session token by providing the required
     username and password credentials.  Upon successful authentication,
