@@ -141,7 +141,7 @@ Then review the log file and find the relevant error message in the rest of this
 .. _socket_path_issue:
 
 Category "socket_path issue"
-========================================================
+============================
 
 **Platforms:** Any
 
@@ -191,7 +191,7 @@ or
 
    2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
 
-Follow the steps detailed in :ref:`timeout issues <timeout_issues>`.
+Follow the steps detailed in :ref:`timeout issues <timeout_issues>`
 
 
 .. _unable_to_open_shell:
