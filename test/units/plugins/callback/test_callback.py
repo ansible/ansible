@@ -81,7 +81,7 @@ class TestCallbackResults(unittest.TestCase):
         self.assertTrue('a' in result)
         self.assertTrue('b' in result)
         self.assertFalse('invocation' in result)
-        self.assertTrue('changed' in result)
+        self.assertFalse('changed' in result)
 
     def test_clean_results_debug_task_no_invocation(self):
         cb = CallbackBase()
@@ -93,7 +93,7 @@ class TestCallbackResults(unittest.TestCase):
         cb._clean_results(result, 'debug')
         self.assertTrue('a' in result)
         self.assertTrue('b' in result)
-        self.assertTrue('changed' in result)
+        self.assertFalse('changed' in result)
         self.assertFalse('invocation' in result)
 
     def test_clean_results_debug_task_empty_results(self):

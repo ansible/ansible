@@ -55,7 +55,6 @@ class CallbackBase(AnsiblePlugin):
     '''
 
     def __init__(self, display=None, options=None):
-
         if display:
             self._display = display
         else:
@@ -77,6 +76,8 @@ class CallbackBase(AnsiblePlugin):
         self._plugin_options = {}
         if options is not None:
             self.set_options(options)
+
+        self._hide_in_debug = ('changed', 'failed', 'item', 'skipped', 'invocation')
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
@@ -236,7 +237,8 @@ class CallbackBase(AnsiblePlugin):
     def _clean_results(self, result, task_name):
         ''' removes data from results for display '''
         if task_name in ['debug']:
-            result.pop('invocation', None)
+            for hideme in self._hide_in_debug:
+                result.pop(hideme, None)
 
     def set_play_context(self, play_context):
         pass
