@@ -145,7 +145,7 @@ Category "socket_path issue"
 
 **Platforms:** Any
 
-The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` message is new in Ansible 2.5. This message means that
+The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These message means that
 socket used the talk to the remote network device does not exist or unable to connect to.
 
 
@@ -177,11 +177,9 @@ or
 
 Suggestions to resolve:
 
-Follow the steps detailed in enable_network_logging_.
+Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`
 
-If the identified the error message from the log file is
-
-For example:
+If the identified error message from the log file is:
 
 .. code-block:: yaml
 
@@ -193,7 +191,7 @@ or
 
    2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
 
-Follow the steps detailed in timeout_issues_.
+Follow the steps detailed in :ref:`timeout issues <timeout_issues>`.
 
 
 .. _unable_to_open_shell:
