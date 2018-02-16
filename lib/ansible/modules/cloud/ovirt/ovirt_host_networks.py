@@ -166,7 +166,7 @@ class HostNetworksModule(BaseModule):
         return otypes.Host()
 
     def update_address(self, attachments_service, attachment, network):
-        # Check if there is any change in address assignenmts and
+        # Check if there is any change in address assignments and
         # update it if needed:
         for ip in attachment.ip_address_assignments:
             if str(ip.ip.version) == network.get('version', 'v4'):
@@ -231,7 +231,7 @@ class HostNetworksModule(BaseModule):
 
         for network in networks:
             attachment = attachments.get(network.get('name'))
-            # If attachment don't exsits, we need to create it:
+            # If attachment don't exists, we need to create it:
             if attachment is None:
                 return True
 
