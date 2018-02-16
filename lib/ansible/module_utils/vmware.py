@@ -295,6 +295,7 @@ def gather_vm_facts(content, vm):
         'customvalues': {},
         'snapshots': [],
         'current_snapshot': None,
+        'vnc': {},
     }
 
     # facts that may or may not exist
@@ -398,6 +399,8 @@ def gather_vm_facts(content, vm):
     if 'snapshots' in snapshot_facts:
         facts['snapshots'] = snapshot_facts['snapshots']
         facts['current_snapshot'] = snapshot_facts['current_snapshot']
+
+    facts['vnc'] = get_vnc_extraconfig(vm)
     return facts
 
 
@@ -441,6 +444,50 @@ def list_snapshots(vm):
         result['current_snapshot'] = deserialize_snapshot_obj(current_snap_obj[0])
     else:
         result['current_snapshot'] = dict()
+    return result
+
+
+def get_vnc_extraconfig(vm):
+    result = {}
+    extraconfig = vm.config.extraConfig
+    for opts in extraconfig:
+        for optkeyname in ['enabled', 'ip', 'port', 'password']:
+            if opts.key.lower() == "remotedisplay.vnc." + optkeyname:
+                result[optkeyname] = opts.value
+    return result
+
+
+def set_vnc_extraconfig(content, vm, enabled, ip, port, password):
+    result = dict(
+        changed=False,
+        failed=False,
+    )
+    spec = vim.vm.ConfigSpec()
+    spec.extraConfig = []
+    options_values = {
+        "remotedisplay.vnc.enabled": "",
+        "remotedisplay.vnc.ip": "",
+        "remotedisplay.vnc.port": "",
+        "remotedisplay.vnc.password": ""}
+    if enabled:
+        options_values["remotedisplay.vnc.enabled"] = "true"
+        options_values["remotedisplay.vnc.password"] = str(password).strip()
+        options_values["remotedisplay.vnc.ip"] = str(ip).strip()
+        options_values["remotedisplay.vnc.port"] = str(port).strip()
+        
+    for k, v in options_values.iteritems():
+        opt = vim.option.OptionValue()
+        opt.key = k
+        opt.value = v
+        spec.extraConfig.append(opt)
+    task = vm.ReconfigVM_Task(spec)
+    wait_for_task(task)
+    if task.info.state == 'error':
+        result['failed'] = True
+        result['msg'] = task.info.error.msg
+    else:
+        result['changed'] = True
+        result['instance'] = gather_vm_facts(content, vm)
     return result
 
 
