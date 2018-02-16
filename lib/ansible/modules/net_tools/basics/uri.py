@@ -56,7 +56,7 @@ options:
         As of C(2.3) it is possible to override the `Content-Type` header, when
         set to C(json) or C(form-urlencoded) via the I(headers) option.
     type: str
-    choices: [ form-urlencoded, json, raw ]
+    choices: [ form-urlencoded, json, raw, yaml ]
     default: raw
     version_added: "2.0"
   method:
@@ -356,6 +356,12 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
 
@@ -556,7 +562,7 @@ def main():
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
         body=dict(type='raw'),
-        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw']),
+        body_format=dict(type='str', default='raw', choices=['form-urlencoded', 'json', 'raw', 'yaml']),
         src=dict(type='path'),
         method=dict(type='str', default='GET'),
         return_content=dict(type='bool', default=False),
@@ -608,6 +614,18 @@ def main():
                 module.fail_json(msg='failed to parse body as form_urlencoded: %s' % to_native(e), elapsed=0)
         if 'content-type' not in [header.lower() for header in dict_headers]:
             dict_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    elif body_format == 'yaml':
+        # Fail if PyYAML not present
+        if not HAS_YAML:
+            module.fail_json(msg='PyYAML is required for this module.')
+
+        # Encode the body unless it is a string, then assume it is
+        # pre-formatted YAML
+        if not isinstance(body, string_types):
+            body = yaml.dump(body)
+        lower_header_keys = [key.lower() for key in dict_headers]
+        if 'content-type' not in lower_header_keys:
+            dict_headers['Content-Type'] = 'text/vnd.yaml'
 
     if creates is not None:
         # do not run the command if the line contains creates=filename
