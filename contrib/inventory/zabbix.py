@@ -97,7 +97,6 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        #data = {}
         data = api.host.get({"filter": {'name': name}})
         return data
 
