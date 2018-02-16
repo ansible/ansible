@@ -179,7 +179,7 @@ Output::
 
     Reading plaintext input from stdin. (ctrl-d to end input)
 
-User enters 'hunter42' and hits ctrl-d.
+User enters 'hunter2' and hits ctrl-d.
 
 Result::
 
