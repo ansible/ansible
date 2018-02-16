@@ -38,7 +38,7 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-      - If C(directory), all immediate subdirectories will be created if they
+      - If C(directory), all intermediate subdirectories will be created if they
         do not exist, since 1.7 they will be created with the supplied permissions.
         If C(file), the file will NOT be created if it does not exist; see the C(touch)
         value or M(copy),  M(template) module if you want that behavior.  If C(link), the
