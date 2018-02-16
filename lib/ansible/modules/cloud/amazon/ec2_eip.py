@@ -42,7 +42,7 @@ options:
     default: present
   in_vpc:
     description:
-      - allocate an EIP inside a VPC or not
+      - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
     required: false
     default: false
     version_added: "1.4"
