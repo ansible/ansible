@@ -64,7 +64,28 @@ options:
     description:
       - How long before wait gives up, in seconds.
     default: 300
-
+  open_ports:
+    description:
+      - Adds public ports to an Amazon Lightsail instance.
+    default: null
+    version_added: "2.6"
+    suboptions:
+        from_port:
+            description: Begin of the range
+            required: true
+            default: null
+        to_port:
+            description: End of the range
+            required: true
+            default: null
+        protocol:
+            description: Accepted traffic protocol.
+            required: true
+            choices:
+              - udp
+              - tcp
+              - all
+            default: null
 requirements:
   - "python >= 2.6"
   - boto3
@@ -87,6 +108,13 @@ EXAMPLES = '''
     key_pair_name: id_rsa
     user_data: " echo 'hello world' > /home/ubuntu/test.txt"
     wait_timeout: 500
+    open_ports:
+      - from_port: 4500
+        to_port: 4500
+        protocol: udp
+      - from_port: 500
+        to_port: 500
+        protocol: udp
   register: my_instance
 
 - debug:
@@ -203,9 +231,22 @@ def create_instance(module, client, instance_name):
     zone = module.params.get('zone')
     blueprint_id = module.params.get('blueprint_id')
     bundle_id = module.params.get('bundle_id')
-    key_pair_name = module.params.get('key_pair_name')
     user_data = module.params.get('user_data')
     user_data = '' if user_data is None else user_data
+
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_max = time.time() + wait_timeout
+
+    if module.params.get('key_pair_name'):
+        key_pair_name = module.params.get('key_pair_name')
+    else:
+        key_pair_name = ''
+
+    if module.params.get('open_ports'):
+        open_ports = module.params.get('open_ports')
+    else:
+        open_ports = '[]'
 
     resp = None
     if inst is None:
@@ -223,9 +264,44 @@ def create_instance(module, client, instance_name):
             resp = resp['operations'][0]
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg='Unable to create instance {0}, error: {1}'.format(instance_name, e))
-        changed = True
 
-    inst = _find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
+
+        # Wait for instance to become running
+        if wait:
+            while (wait_max > time.time()) and (inst is not None and inst['state']['name'] != "running"):
+                try:
+                    time.sleep(2)
+                    inst = _find_instance_info(client, instance_name)
+                except botocore.exceptions.ClientError as e:
+                    if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
+                        module.fail_json(msg="Failed to start instance {0}. Check that you have permissions to perform the operation".format(instance_name),
+                                         exception=traceback.format_exc())
+                    elif e.response['Error']['Code'] == "RequestExpired":
+                        module.fail_json(msg="RequestExpired: Failed to start instance {0}.".format(instance_name), exception=traceback.format_exc())
+                    time.sleep(1)
+
+        # Timed out
+        if wait and not changed and wait_max <= time.time():
+            module.fail_json(msg="Wait for instance start timeout at %s" % time.asctime())
+
+        # Attempt to open ports
+        if open_ports:
+            if inst is not None:
+                try:
+                    for o in open_ports:
+                        resp = client.open_instance_public_ports(
+                            instanceName=instance_name,
+                            portInfo={
+                                'fromPort': o['from_port'],
+                                'toPort': o['to_port'],
+                                'protocol': o['protocol']
+                            }
+                        )
+                except botocore.exceptions.ClientError as e:
+                    module.fail_json(msg='Error opening ports for instance {0}, error: {1}'.format(instance_name, e))
+
+        changed = True
 
     return (changed, inst)
 
@@ -455,6 +531,7 @@ def main():
         user_data=dict(type='str'),
         wait=dict(type='bool', default=True),
         wait_timeout=dict(default=300),
+        open_ports=dict(type='list')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec)
