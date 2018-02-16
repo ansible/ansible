@@ -88,6 +88,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/36591
 * loop control templating
   https://github.com/ansible/ansible/pull/36124
+* fix debug output
+  https://github.com/ansible/ansible/pull/36307
 
 <a id="2.4.3"></a>
 

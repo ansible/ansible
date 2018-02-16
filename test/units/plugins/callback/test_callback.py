@@ -73,9 +73,45 @@ class TestCallbackResults(unittest.TestCase):
                   'invocation': 'foo --bar whatever [some_json]',
                   'changed': True}
 
-        self.assertTrue('changed' in result)
-        self.assertTrue('invocation' in result)
         cb._clean_results(result, 'debug')
+
+        # See https://github.com/ansible/ansible/issues/33723
+        self.assertTrue('a' in result)
+        self.assertTrue('b' in result)
+        self.assertFalse('invocation' in result)
+        self.assertFalse('changed' in result)
+
+    def test_clean_results_debug_task_no_invocation(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  'a': 'a single a in result note letter a is in invocation',
+                  'b': 'a single b in result note letter b is not in invocation',
+                  'changed': True}
+
+        cb._clean_results(result, 'debug')
+        self.assertTrue('a' in result)
+        self.assertTrue('b' in result)
+        self.assertFalse('changed' in result)
+        self.assertFalse('invocation' in result)
+
+    def test_clean_results_debug_task_empty_results(self):
+        cb = CallbackBase()
+        result = {}
+        cb._clean_results(result, 'debug')
+        self.assertFalse('invocation' in result)
+        self.assertEqual(len(result), 0)
+
+    def test_clean_results(self):
+        cb = CallbackBase()
+        result = {'item': 'some_item',
+                  'invocation': 'foo --bar whatever [some_json]',
+                  'a': 'a single a in result note letter a is in invocation',
+                  'b': 'a single b in result note letter b is not in invocation',
+                  'changed': True}
+
+        expected_result = result.copy()
+        cb._clean_results(result, 'ebug')
+        self.assertEqual(result, expected_result)
 
 
 class TestCallbackDumpResults(unittest.TestCase):
