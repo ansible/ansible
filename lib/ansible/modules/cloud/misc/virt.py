@@ -48,6 +48,7 @@ options:
   xml:
     description:
       - XML document used with the define command.
+      - Must be raw XML content using C(lookup). XML cannot be reference to a file.
 requirements:
     - python >= 2.6
     - libvirt-python
