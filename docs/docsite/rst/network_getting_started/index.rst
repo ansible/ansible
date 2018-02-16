@@ -1,5 +1,6 @@
+***************************************************************************
 Network Getting Started: An Introduction to Network Automation with Ansible
-=====================================================================================
+***************************************************************************
 
 Ansible modules support a wide range of vendors, device types, and actions, so you can manage your entire network with a single automation tool. With Ansible, you can:
 
@@ -10,7 +11,7 @@ Ansible modules support a wide range of vendors, device types, and actions, so y
 - Communicate securely with network hardware over SSH or HTTPS
 
 Who should use this guide?
-```````````````````````````````````````````````````````````````
+================================================================================
 
 This guide is intended for network engineers using Ansible for the first time. If you understand networks but have never used Ansible, work through the guide from start to finish.
 
@@ -25,5 +26,4 @@ This guide introduces basic Ansible concepts and guides you through your first A
    How Network Automation is Different <network_differences>
    First Ansible Network Command and Playbook <first_playbook>
    Working with Network Inventory <first_inventory>
-   Intermediate Ansible Concepts <intermediate_concepts>
-   Further Learning and Resources <resources>
+   Beyond the Basics <intermediate_concepts>

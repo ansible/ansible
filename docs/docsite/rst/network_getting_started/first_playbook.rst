@@ -1,10 +1,13 @@
+***************************************************
 Network Getting Started: First Command and Playbook
-======================================================
+***************************************************
 
 Put the concepts you learned to work with this quick tutorial. Install Ansible, execute a network configuration command manually, execute the same command with Ansible, then create a playbook so you can execute the command any time on multiple network devices. 
 
+.. contents:: Topics
+
 Prerequisites
-```````````````````````````````````````````````````````````````
+==================================================
 
 Before you work through this tutorial you need:
 
@@ -14,7 +17,7 @@ Before you work through this tutorial you need:
 - Basic knowledge of network switch & router configuration
 
 Install Ansible
-```````````````````````````````````````````````````````````````
+==================================================
 
 Install Ansible:
 
@@ -33,7 +36,7 @@ Confirm the version of Ansible (must be >= 2.5):
 For other ways to install Ansible, see :doc:`../intro_installation`.
 
 Establish a Manual Connection to a Managed Node
-```````````````````````````````````````````````````````````````
+==================================================
 
 To confirm your credentials, connect to a network device manually and retrieve its configuration. Replace the sample user and device name with your real credentials. For example, for a VyOS router:
 
@@ -47,7 +50,7 @@ This manual connection also establishes the authenticity of the network device, 
 
 
 Run Your First Network Ansible Command
-```````````````````````````````````````````````````````````````
+==================================================
 
 Instead of manually connecting and running a command on the network device, you can retrieve its configuration with a single, stripped-down Ansible command:
 
@@ -68,7 +71,7 @@ NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. 
 
 
 Create and Run Your First Network Ansible Playbook
-```````````````````````````````````````````````````````````````
+==================================================
 
 If you want to run this command every day, you can save it in a playbook and run it with ansible-playbook instead of ansible. The playbook can store a lot of the parameters you provided with flags at the command line, leaving less to type at the command line. You need two files for this - a playbook and an inventory file.
 

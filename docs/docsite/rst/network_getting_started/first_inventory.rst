@@ -1,10 +1,13 @@
+***********************************************
 Network Getting Started: Working with Inventory
-===============================================
+***********************************************
 
 A fully-featured inventory file can serve as the source of truth for your network. Using an inventory file, a single playbook can maintain hundreds of network devices with a single command. This page shows you how to build an inventory file, step by step.
 
+.. contents:: Topics
+
 Basic Inventory
-```````````````````````````````````````````````````````````````
+==================================================
 
 First, group your inventory logically. Best practice is to group servers and network devices by their What (application, stack or microservice), Where (datacenter or region), and When (development stage):
 
@@ -40,7 +43,7 @@ This tiny example data center illustrates a basic group structure. You can group
 
 
 Add Variables to Inventory
-```````````````````````````````````````````````````````````````
+================================================================================
 
 Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary. 
 
@@ -68,7 +71,7 @@ Next, you can set values for many of the variables you needed in your first Ansi
    servers
 
 Variable Syntax
-```````````````````````````````````````````````````````````````
+================================================================================
 
 The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
 
@@ -79,7 +82,7 @@ The syntax for variable values is different in inventory, in playbooks and in ``
 
 
 Group Variables within Inventory
-```````````````````````````````````````````````````````````````
+================================================================================
 
 When devices in a group share the same variable values, such as OS or SSH user, you can reduce duplication and simplify maintenance by consolidating these into group variables:
 
@@ -115,7 +118,7 @@ When devices in a group share the same variable values, such as OS or SSH user, 
    servers
 
 Move Group Variables to ``group_vars`` Files
-```````````````````````````````````````````````````````````````
+================================================================================
 
 As your inventory grows, you may want to group devices by platform and move shared variables out of the main inventory file into a set of group variable files. This reduces duplication further and sets the stage for managing devices on multiple platforms in a single inventory file. The directory tree for this setup looks like this:
 
@@ -172,7 +175,7 @@ With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternative
 
 
 Protecting Sensitive Variables with ``ansible-vault`` 
-```````````````````````````````````````````````````````````````
+================================================================================
 
 The ``ansible-vault`` command provides encryption for files and/or individual variables like passwords. This tutorial uses SSH passwords for an example. You can use the commands below to encrypt other sensitive information, such as database passwords, privilege-escalation passwords and more.
 
