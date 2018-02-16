@@ -17,6 +17,6 @@ recursive-include test *
 include Makefile
 include VERSION
 include MANIFEST.in
-include CHANGELOG.md
+include changelogs/*.rst
 include contrib/README.md
 recursive-include contrib/inventory *

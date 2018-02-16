@@ -570,6 +570,10 @@ class PathMapper(object):
         if path.startswith('ticket_stubs/'):
             return minimal
 
+        # FUTURE: add reno lint sanity test and run that along with yamllint
+        if path.startswith('changelogs/'):
+            return minimal
+
         if '/' not in path:
             if path in (
                     '.gitattributes',

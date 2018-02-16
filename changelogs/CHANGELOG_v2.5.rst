@@ -588,6 +588,8 @@ Bugfixes
 
 - interface_file - accept interfaces without address family or method (https://github.com/ansible/ansible/pull/34200)
 
+- lineinfile - fix insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
+
 - nxos_evpn_vni - fixed a number of issues (https://github.com/ansible/ansible/pull/35930)
 
 - nxos_igmp_interface - fix response handling for different nxos versions (https://github.com/ansible/ansible/pull/35959)
