@@ -429,6 +429,9 @@ Examples can be found by searching for ``extends_documentation_fragment`` under 
 Testing documentation
 ---------------------
 
+The simplest way to check if your documentation works is to use ``ansible-doc`` to view it. Any parsing errors will be apparent, and details can be obtained by adding ``-vvv``.
+
+If you are going to submit the module for inclusion in the main Ansible repo you should make sure that it renders correctly as HTML.
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
