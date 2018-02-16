@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import atexit
 import errno
 import filecmp
+import fcntl
 import inspect
 import json
 import os
@@ -19,6 +20,9 @@ import subprocess
 import sys
 import tempfile
 import time
+
+from struct import unpack, pack
+from termios import TIOCGWINSZ
 
 try:
     from abc import ABC
@@ -300,7 +304,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity)
+    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -484,6 +488,12 @@ class Display(object):
         self.warnings = []
         self.warnings_unique = set()
         self.info_stderr = False
+        self.rows = 0
+        self.columns = 0
+        self.truncate = 0
+
+        if os.isatty(0):
+            self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
 
     def __warning(self, message):
         """
@@ -527,21 +537,27 @@ class Display(object):
         """
         self.print_message('ERROR: %s' % message, color=self.red, fd=sys.stderr)
 
-    def info(self, message, verbosity=0):
+    def info(self, message, verbosity=0, truncate=False):
         """
         :type message: str
         :type verbosity: int
+        :type truncate: bool
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
 
-    def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
+    def print_message(self, message, color=None, fd=sys.stdout, truncate=False):  # pylint: disable=locally-disabled, invalid-name
         """
         :type message: str
         :type color: str | None
         :type fd: file
+        :type truncate: bool
         """
+        if truncate:
+            if len(message) > self.truncate > 5:
+                message = message[:self.truncate - 5] + ' ...'
+
         if color and self.color:
             # convert color resets in message to desired color
             message = message.replace(self.clear, color)
@@ -616,6 +632,7 @@ class CommonConfig(object):
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
         self.debug = args.debug  # type: bool
+        self.truncate = args.truncate  # type: int
 
 
 def docker_qualify_image(name):
