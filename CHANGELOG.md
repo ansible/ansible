@@ -212,6 +212,7 @@ While neither is technically a new plugin, these connections may now be used dir
   * vmware_drs_rule_facts
   * vmware_guest_file_operation
   * vmware_guest_powerstate
+  * vmware_guest_snapshot_facts
   * vmware_host_acceptance
   * vmware_host_config_facts
   * vmware_host_config_manager
