@@ -53,10 +53,15 @@ def _construct_scalar(loader, node):
             map_as_key_val.tag == 'tag:yaml.org,2002:null':
 
             # Get the string intended jinja string value:
-            jinja_value = map_as_key_key.value[0][0].value
+            scalar_node = map_as_key_key.value[0][0]
 
             # Put the braces back onto it:
-            return "{{%s}}" % jinja_value
+            if scalar_node.style in ['"', "'"]:
+                # With quotes if original was quoted:
+                return "{{'%s'}}" % scalar_node.value
+
+            # Else unquoted:
+            return "{{%s}}" % scalar_node.value
 
     # Else process mapping as usual:
     return loader.construct_mapping(node)
