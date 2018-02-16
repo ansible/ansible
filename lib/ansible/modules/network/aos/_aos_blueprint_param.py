@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: aos_blueprint_param
 author: jeremy@apstra.com (@jeremyschulman)
 version_added: "2.3"
 short_description: Manage AOS blueprint parameter values
+deprecated:
+    removed_in: "2.9"
+    why: This module does not support AOS 2.1 or later
+    alternative: See new modules at U(https://www.ansible.com/ansible-apstra).
 description:
  - Apstra AOS Blueprint Parameter module let you manage your Blueprint Parameter easily.
    You can create access, define and delete Blueprint Parameter. The list of

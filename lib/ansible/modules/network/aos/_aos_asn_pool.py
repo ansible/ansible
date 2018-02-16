@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: aos_asn_pool
 author: Damien Garros (@dgarros)
 version_added: "2.3"
 short_description: Manage AOS ASN Pool
+deprecated:
+    removed_in: "2.9"
+    why: This module does not support AOS 2.1 or later
+    alternative: See new modules at U(https://www.ansible.com/ansible-apstra).
 description:
   - Apstra AOS ASN Pool module let you manage your ASN Pool easily. You can create
     and delete ASN Pool by Name, ID or by using a JSON File. This module

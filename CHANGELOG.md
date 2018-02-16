@@ -60,6 +60,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
 * panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
 * vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
+* Apstra's ``aos_*`` modules are deprecated. See new modules at [ansible-apstra](https://www.ansible.com/ansible-apstra)
 
 See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html) for more information
 
