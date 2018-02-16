@@ -81,8 +81,7 @@ class Cliconf(CliconfBase):
                 answer = None
                 newline = True
 
-            self.send_command(to_bytes(command), to_bytes(prompt), to_bytes(answer),
-                              False, newline)
+            self.send_command(command, prompt, answer, False, newline)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
