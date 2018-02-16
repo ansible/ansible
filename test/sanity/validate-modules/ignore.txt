@@ -1222,6 +1222,8 @@ lib/ansible/modules/cloud/vmware/vmware_guest.py E322
 lib/ansible/modules/cloud/vmware/vmware_guest.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest.py E325
 lib/ansible/modules/cloud/vmware/vmware_guest.py E326
+lib/ansible/modules/cloud/vmware/vmware_guest_disk_facts.py E325
+lib/ansible/modules/cloud/vmware/vmware_guest_disk_facts.py E326
 lib/ansible/modules/cloud/vmware/vmware_guest_facts.py E325
 lib/ansible/modules/cloud/vmware/vmware_guest_facts.py E326
 lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py E322
@@ -1237,6 +1239,8 @@ lib/ansible/modules/cloud/vmware/vmware_guest_powerstate.py E326
 lib/ansible/modules/cloud/vmware/vmware_guest_snapshot.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest_snapshot.py E325
 lib/ansible/modules/cloud/vmware/vmware_guest_snapshot.py E326
+lib/ansible/modules/cloud/vmware/vmware_guest_snapshot_facts.py E325
+lib/ansible/modules/cloud/vmware/vmware_guest_snapshot_facts.py E326
 lib/ansible/modules/cloud/vmware/vmware_guest_tools_wait.py E325
 lib/ansible/modules/cloud/vmware/vmware_guest_tools_wait.py E326
 lib/ansible/modules/cloud/vmware/vmware_host.py E324
