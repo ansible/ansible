@@ -340,7 +340,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
             else:
                 module.fail_json(msg="%s directory does not exist." % tmp_dest)
     else:
-        tmp_dest = module.tmpdir
+        tmp_dest = getattr(module, 'tmpdir', None)
 
     fd, tempname = tempfile.mkstemp(dir=tmp_dest)
 
