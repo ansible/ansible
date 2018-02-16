@@ -1,5 +1,5 @@
 ******************************************
-Network Getting Started: Beyond the Basics
+Beyond the Basics
 ******************************************
 
 This page introduces some concepts that help you manage your Ansible workflow: roles, directory structure, and source control. Like the Basic Concepts at the beginning of this guide, these intermediate concepts are common to all uses of Ansible. This page also offers resources for learning more.

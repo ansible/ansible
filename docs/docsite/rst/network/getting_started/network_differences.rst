@@ -1,5 +1,5 @@
 ************************************************************
-Network Getting Started: How Network Automation is Different
+How Network Automation is Different
 ************************************************************
 
 Network automation leverages the basic Ansible concepts, but there are important differences in how the network modules work. This introduction prepares you to understand the exercises in this guide.
@@ -53,4 +53,4 @@ Some network modules use the Ansible parameter ``become: yes`` for privilege esc
 
 Other network modules support privilege escalation but do not yet support ``network_cli`` connections. For those modules, you must use ``authorize: yes`` and ``auth_pass: my_enable_password``.
 
-For more information, see :doc:`Become and Networks<../../user_guide/become.html#become-and-networks>`_
+For more information, see :ref:`Become and Networks<become-and-networks>`
