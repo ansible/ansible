@@ -1,4 +1,6 @@
-- debug: msg="START TRANSPORT:CLI nxos_system sanity test"
+- debug: msg="START connection={{ ansible_connection }}/sanity.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: configure hostname and domain-name
@@ -30,4 +32,5 @@
   - name: Re-configure hostname
     nxos_system: *hostname
 
-  - debug: msg="END TRANSPORT:CLI nxos_system sanity test"
+  - debug: msg="END connection={{ ansible_connection }}/sanity.yaml"
+
