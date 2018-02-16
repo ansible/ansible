@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -54,15 +55,40 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_taboo_contract:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    taboo_contract: '{{ taboo_contract }}'
-    description: '{{ descr }}'
-    tenant: '{{ tenant }}'
+- name: Add taboo contract
+  aci_taboo_contract:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+    state: present
+
+- name: Remove taboo contract
+  aci_taboo_contract:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+    state: absent
+
+- name: Query all taboo contracts
+  aci_taboo_contract:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    state: query
+
+- name: Query a specific taboo contract
+  aci_taboo_contract:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+    state: query
 '''
 
 RETURN = r'''
@@ -225,7 +251,8 @@ def main():
             aci_class='vzTaboo',
             class_config=dict(
                 name=taboo_contract,
-                descr=description, scope=scope,
+                descr=description,
+                scope=scope,
             ),
         )
 
