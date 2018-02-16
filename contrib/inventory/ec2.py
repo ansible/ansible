@@ -212,6 +212,7 @@ DEFAULTS = {
     'group_by_route53_names': 'True',
     'group_by_security_group': 'True',
     'group_by_tag_keys': 'True',
+    'group_by_tag_values': 'True',
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
     'hostname_variable': None,
@@ -1049,6 +1050,13 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                         if v:
                             self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+        # Inventory: Group by tag valyes
+        if self.group_by_tag_values:
+            for k, v in instance.tags.items():
+                if v and self.to_safe(v) != hostname:
+                    self.push(self.inventory, self.to_safe(v), hostname)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'tags', self.to_safe(v))
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
