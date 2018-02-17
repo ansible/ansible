@@ -63,11 +63,12 @@ options:
             - The key of the preference. Nested values can be accessed by giving all
               keys and indexes separated by colons (:). Indexes are zero-based
               (see Notes for special cases).
-        required: false
+        required: true
     type:
         description:
             - The type of the value to write. If unspecified, I(type) will
               be deduced mostly the same way YAML casts types (see Notes for special cases).
+        required: false
         default: null
         choices: ["array", "bool", "boolean", "data", "date", "dict", "float", "real", "int", "integer", "string"]
     value:
@@ -79,6 +80,7 @@ options:
         description:
             - The state of the preference.
               c(merge) performs a deep merge of dictionaries and arrays.
+        required: false
         default: replace
         choices: ["replace", "merge", "absent"]
 notes:
@@ -392,7 +394,8 @@ class Data(binary_type):
         data = data[:512]
         # If more than 30% are non-text characters, then this is considered
         # binary data.
-        return len(data.translate({ord(c): None for c in cls.TEXT_CHARS})) / float(len(data)) > .3
+        text_char_table = dict.fromkeys(map(ord, cls.TEXT_CHARS), None)
+        return len(data.translate(text_char_table)) / float(len(data)) > .3
 
     @property
     def binary(self):
@@ -617,7 +620,7 @@ class CFPreferences(object):
             for key, val in incoming.items():
                 is_list = (isinstance(val, list) and isinstance(base[key], list))
                 is_dict = (isinstance(val, collections.MutableMapping) and
-                    isinstance(base[key], collections.MutableMapping))
+                           isinstance(base[key], collections.MutableMapping))
 
                 if (key in base and (is_list or is_dict)):
                     self._deep_merge(base[key], val)
@@ -1051,6 +1054,7 @@ def main():
                     'integer',
                     'string',
                 ],
+                required=False
             ),
             value=dict(
                 type='raw',
