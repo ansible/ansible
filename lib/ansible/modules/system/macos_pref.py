@@ -79,7 +79,7 @@ options:
         description:
             - The state of the preference.
               c(merge) performs a deep merge of dictionaries and arrays.
-        default: repace
+        default: replace
         choices: ["replace", "merge", "absent"]
 notes:
     - macOS caches preferences aggressively. This module should take care of
@@ -205,19 +205,6 @@ EXAMPLES = '''
 
 # Set the nested key arrangeBy in abbreviated form (nested keys need to be quoted).
 - macos_pref: { domain: com.apple.finder, key: 'DesktopViewSettings:IconViewSettings:arrangeBy', value: dateModified }
-
-
-# Set ListViewSettings key to complex nested values.
-- macos_pref:
-    domain: com.apple.finder
-    key: ComputerViewSettings:ListViewSettings
-    value:
-      iconSize: 16
-      sortColumn: name
-        - textSize: 12
-        - columns:
-            - comments:
-                - ascending: true
 '''
 
 RETURN = '''
@@ -384,7 +371,8 @@ class Data(binary_type):
 
         # Check if data is a valid base64 string. Short strings are not
         # considered as binary.
-        if isinstance(data, binary_type) and len(data) > 51 and not data.decode().translate({ord(c): None for c in cls.BASE64_CHARS}):
+        b64_char_table = dict.fromkeys(map(ord, cls.BASE64_CHARS), None)
+        if isinstance(data, binary_type) and len(data) > 51 and not data.decode().translate(b64_char_table):
             try:
                 binary_data = b64decode(data)
             except TypeError:
@@ -627,13 +615,11 @@ class CFPreferences(object):
         # Merge dict.
         else:
             for key, val in incoming.items():
-                if (
-                    key in base
-                    and ((isinstance(val, collections.MutableMapping)
-                            and isinstance(base[key], collections.MutableMapping))
-                        or (isinstance(val, list)
-                            and isinstance(base[key], list)))
-                ):
+                is_list = (isinstance(val, list) and isinstance(base[key], list))
+                is_dict = (isinstance(val, collections.MutableMapping) and
+                    isinstance(base[key], collections.MutableMapping))
+
+                if (key in base and (is_list or is_dict)):
                     self._deep_merge(base[key], val)
                 else:
                     base[key] = val
