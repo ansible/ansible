@@ -670,11 +670,9 @@ lib/ansible/modules/cloud/digital_ocean/digital_ocean.py E326
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E322
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E324
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip.py E325
-lib/ansible/modules/cloud/digital_ocean/digital_ocean_floating_ip_facts.py E325
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_sshkey.py E322
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_sshkey.py E324
 lib/ansible/modules/cloud/digital_ocean/digital_ocean_sshkey.py E325
-lib/ansible/modules/cloud/digital_ocean/digital_ocean_sshkey_facts.py E325
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py E325
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_network.py E326
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py E324
