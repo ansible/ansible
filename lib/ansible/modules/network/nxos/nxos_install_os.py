@@ -60,6 +60,7 @@ options:
     kickstart_image_file:
         description:
             - Name of the kickstart image file on flash.
+              (Not required on all Nexus platforms)
         required: false
         default: null
     issu:
@@ -179,17 +180,6 @@ def get_platform(module):
         type = 'unknown'
 
     return type
-
-
-def kickstart_image_required(module):
-    '''Determine if platform requires a kickstart image'''
-    data = execute_show_command(module, 'show version')[0]
-    kickstart_required = False
-    for x in data.split('\n'):
-        if re.search(r'kickstart image file is:', x):
-            kickstart_required = True
-
-    return kickstart_required
 
 
 def parse_show_install(data):
@@ -563,10 +553,6 @@ def main():
 
     if kif == 'null' or kif == '':
         kif = None
-
-    if kickstart_image_required(module) and kif is None:
-        msg = 'This platform requires a kickstart_image_file'
-        module.fail_json(msg=msg)
 
     install_result = do_install_all(module, issu, sif, kick=kif)
     if install_result['error']:
