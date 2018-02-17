@@ -167,35 +167,21 @@ def has_config_changed(cgroup_name, raw_config, desired_config):
     deleted_params = {}
     modified_params = {}
 
-    config = {}
-    iterraw = iter(raw_config.split('\n'))
+    config = parse_config(raw_config)
 
-    line = next(iterraw)
-    # Skip comments
-    while line.startswith('#'):
-        line = next(iterraw).strip()
+    if cgroup_name not in config:
+        return ''
 
-    # Find cgroup configuration ("group <name> {")
-    while not line.startswith('group') or not line.split(' ')[1] == cgroup_name:
-        line = next(iterraw).strip()
+    config = config[cgroup_name]
 
-    line = next(iterraw)
-    while line != '}':
-        subsystem = line.strip().split(' ')[0]
+    for subsystem in config:
         subsystems.add(subsystem)
-        config[subsystem] = {}
-        line = next(iterraw)
-        while line != '\t}':
-            param = line.split('=')
-            param_name = param[0].strip()
-            config[subsystem][param_name] = param[1].strip().replace(';', '').replace('"', '')
-            if subsystem not in desired_config or param_name not in desired_config[subsystem]:
+        for param in config[subsystem]:
+            if subsystem not in desired_config or param not in desired_config[subsystem]:
                 # Some param disappeared
                 if subsystem not in deleted_params:
                     deleted_params[subsystem] = []
-                deleted_params[subsystem].append(param_name)
-            line = next(iterraw)
-        line = next(iterraw)
+                deleted_params[subsystem].append(param)
 
     for subsystem in desired_config:
         subsystems.add(subsystem)
@@ -231,6 +217,62 @@ def has_config_changed(cgroup_name, raw_config, desired_config):
             diff.append("}")
 
     return '\n'.join(diff)
+
+
+def parse_config(config):
+    NEW_BLOCK = '{'
+    END_BLOCK = '}'
+    NEW_PARAM = '='
+    END_PARAM = ';'
+    COMMENT = '#'
+    LINE_BREAK = '\n'
+    SPACES = [' ', '\t', '\n', '\r']
+
+    char_iterator = iter(config)
+
+    word = ''
+    config_object = {}
+    result_stack = [config_object]
+    word_stack = []
+
+    for char in char_iterator:
+        if char in SPACES:
+            if word != '':
+                word_stack.append(word)
+                word = ''
+            continue
+
+        if char == COMMENT:
+            while char != LINE_BREAK:
+                char = next(char_iterator)
+            continue
+
+        if char == NEW_BLOCK:
+            current_object = result_stack[len(result_stack) - 1]
+            object_name = word_stack.pop()
+            current_object[object_name] = {}
+            result_stack.append(current_object[object_name])
+            continue
+
+        if char == END_BLOCK:
+            result_stack.pop()
+            continue
+
+        if char == NEW_PARAM:
+            continue
+        if char == END_PARAM:
+            if word == '':
+                word = word_stack.pop()
+
+            current_object = result_stack[len(result_stack) - 1]
+            param_value = word
+            param_name = word_stack.pop()
+            current_object[param_name] = param_value
+            continue
+
+        word += char
+
+    return config_object
 
 
 def generate_config_file_content(name, config):
