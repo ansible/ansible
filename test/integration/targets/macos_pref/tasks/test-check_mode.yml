@@ -1,0 +1,58 @@
+# test code for the macos_pref module
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+
+# GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+
+- name: CM_01 - test checkmode delete (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_01
+    value: value
+
+- name: CM_01 - test checkmode delete (delete key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_01
+    state: absent
+  check_mode: yes
+  register: CM_01_1
+
+- name: CM_01 - test checkmode delete (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_01
+  register: CM_01_2
+
+- name: CM_01 - test checkmode delete (assert)
+  assert:
+    that:
+      - "CM_01_1.changed"
+      - "CM_01_2.value == 'value'"
+
+#-------------
+
+- name: CM_02 - test checkmode write (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_02
+    value: value
+
+- name: CM_02 - test checkmode write (replace key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_02
+    value: newValue
+  check_mode: yes
+  register: CM_02_1
+
+- name: CM_02 - test checkmode write (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: CM_02
+  register: CM_02_2
+
+- name: CM_02 - test checkmode write (assert)
+  assert:
+    that:
+      - "CM_02_1.changed"
+      - "CM_02_2.value == 'value'"

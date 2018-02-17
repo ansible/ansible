@@ -1,0 +1,69 @@
+# test code for the macos_pref module
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+
+# GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+
+- set_fact:
+    VT_01_VALS:
+      - true
+      - 'true'
+      - 42
+      - 3.1416
+      -
+        - Ümläüte
+        - '1973-05-22T02:59:43+00:00'
+        - Key 1: one
+          Key 2: two
+        - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+
+- name: VT_01 - var type retention (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VT_01
+    value: "{{ VT_01_VALS }}"
+
+- name: VT_01 - var type retention (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VT_01
+  register: VT_01
+
+- name: VT_01 - var type retention (assert)
+  assert:
+    that:
+      - "VT_01.value == VT_01_VALS"
+
+#-------------
+
+# first level types get converted if type option is not present
+- set_fact:
+    VT_02_VALS:
+      - { type: boolean, value: true }
+      - { type: boolean, value: 'true' }
+      - { type: string, value: 'Ümläüte' }
+      - { type: integer, value: 42 }
+      - { type: float, value: 3.1416 }
+      - { type: array, value: ['index0'] }
+      - { type: date, value: '1973-05-22T02:59:43+00:00' }
+      - { type: date, value: '1973-05-22 02:59:43+00:00' }
+      - { type: date, value: '1973-05-22 2:59:43' }
+      - { type: dictionary, value: {key1: val1, key2: val2} }
+      - { type: data, value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs= }
+
+- name: VT_02 - var type retention (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: "VT_02_{{ item.0 }}"
+    value: "{{ item.1.value }}"
+  with_indexed_items: "{{ VT_02_VALS }}"
+
+- name: VT_02 - var type retention (read key type)
+  command: "defaults read-type com.ansible.test VT_02_{{ item.0 }}"
+  with_indexed_items: "{{ VT_02_VALS }}"
+  register: VT_02
+
+- name: VT_02 - var type retention (assert)
+  assert:
+    that:
+      - "item.1.type in VT_02.results[item.0].stdout"
+  with_indexed_items: "{{ VT_02_VALS }}"

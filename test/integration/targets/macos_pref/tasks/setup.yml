@@ -1,0 +1,9 @@
+# test code for the macos_pref module
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+
+# GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+
+- name: Ensure PyObjc module is installed
+  pip:
+    name: pyobjc
+    extra_args: -U

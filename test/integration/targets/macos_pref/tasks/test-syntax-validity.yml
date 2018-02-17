@@ -1,0 +1,792 @@
+# test code for the macos_pref module
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+# Copyright (c) 2017 - Etienne Desautels <etienne.desautels@gmail.com>
+
+# GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+
+#
+# TESTS: Key-Value command
+#
+
+- name: KVC_01 - boolean
+  macos_pref: domain=com.ansible.test key=KVC_01 value=true
+
+- name: KVC_02 - integer
+  macos_pref: domain=com.ansible.test key=KVC_02 value=42
+
+- name: KVC_03 - float
+  macos_pref: domain=com.ansible.test key=KVC_03 value=3.1416
+
+# String with space need to be quoted
+- name: KVC_04 - string
+  macos_pref: domain=com.ansible.test key=KVC_04 value=A_string_with_Ümläüts
+
+- name: KVC_05 - data
+  macos_pref: domain=com.ansible.test key=KVC_05 value=R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+
+- name: KVC_06 - complex key
+  macos_pref: domain=com.ansible.test key=KVC_06:0:sub value=42
+
+# UNSUPPORTED:
+
+  # List unsupported as argument.
+  # - name: KVC - array
+  #   macos_pref: domain=com.ansible.test key=ArrayKeyValue value=["Item 1", "Item 2", "Item 3"]
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC - dict
+  #   macos_pref: domain=com.ansible.test key=DictKeyValue value={"Key 1": "one", "Key 2": "two"}
+
+  # Unquoted date doesn't work because of the space and the colons.
+  # - name: KVC - date
+  #   macos_pref: domain=com.ansible.test key=DateKeyValue value=1973-05-22 2:59:43
+
+  # List unsupported as argument.
+  # - name: KVC - complex array
+  #   macos_pref: domain=com.ansible.test key=ComplexArrayKeyValue value=["true", 42, 3.1416, ["A string with Ümläüts", "1973-05-22 2:59:43", "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="]]
+
+  # Dict does't work, the colons are messing the YAML parsing.
+  # - name: KVC - complex dict
+  #   macos_pref: domain=com.ansible.test key=ComplexDictKeyValue value={"Key 1": "false", "Key 2": 42, "Key 3": 3.1416, "Key 4": ["A string with Ümläüts", "1973-05-22 2:59:43", {"Key 1": "one", "Key 2": "two"}, "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="], "Key 5": "true"}
+
+
+
+#
+# TESTS: Key-Value command with type
+#
+
+- name: KVC_T_01 - boolean
+  macos_pref: domain=com.ansible.test key=KVC_T_01 value=true type=boolean
+
+- name: KVC_T_02 - integer
+  macos_pref: domain=com.ansible.test key=KVC_T_02 value=42 type=integer
+
+- name: KVC_T_03 - float
+  macos_pref: domain=com.ansible.test key=KVC_T_03 value=3.1416 type=float
+
+# String with space need to be quoted
+- name: KVC_T_04 - string
+  macos_pref: domain=com.ansible.test key=KVC_T_04 value=A_string_with_Ümläüts type=string
+
+- name: KVC_T_05 - data
+  macos_pref: domain=com.ansible.test key=KVC_T_05 value=R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs= type=data
+
+# UNSUPPORTED:
+
+  # List unsupported as argument.
+  # - name: KVC_T - array
+  #   macos_pref: domain=com.ansible.test key=ArrayKeyValueType value=["Item 1", "Item 2", "Item 3"] type=array
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_T - dict
+  #   macos_pref: domain=com.ansible.test key=DictKeyValueType value={"Key 1": "one", "Key 2": "two"} type=dict
+
+  # Unquoted date doesn't work because of the space and the colons.
+  # - name: KVC_T - date
+  #   macos_pref: domain=com.ansible.test key=DateKeyValueType value=1973-05-22 2:59:43 type=date
+
+  # List unsupported as argument.
+  # - name: KVC_T - complex array
+  #   macos_pref: domain=com.ansible.test key=ComplexArrayKeyValueType value=["true", 42, 3.1416, ["A string with Ümläüts", "1973-05-22 2:59:43", "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="]] type=array
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_T - complex dict
+  #   macos_pref: domain=com.ansible.test key=ComplexDictKeyValueType value={"Key 1": "false", "Key 2": 42, "Key 3": 3.1416, "Key 4": ["A string with Ümläüts", "1973-05-22 2:59:43", {"Key 1": "one", "Key 2": "two"}, "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="], "Key 5": "true"} type=dict
+
+
+
+#
+# TESTS: Key-Value command with quoted value
+#
+
+- name: KVC_Q_01 - boolean
+  macos_pref: domain=com.ansible.test key=KVC_Q_01 value='true'
+
+- name: KVC_Q_02 - integer
+  macos_pref: domain=com.ansible.test key=KVC_Q_02 value='42'
+
+- name: KVC_Q_03 - float
+  macos_pref: domain=com.ansible.test key=KVC_Q_03 value='3.1416'
+
+- name: KVC_Q_04 - string
+  macos_pref: domain=com.ansible.test key=KVC_Q_04 value='A string with Ümläüts'
+
+- name: KVC_Q_05 - date
+  macos_pref: domain=com.ansible.test key=KVC_Q_05 value='1973-05-22 2:59:43'
+
+- name: KVC_Q_06 - data
+  macos_pref: domain=com.ansible.test key=KVC_Q_06 value='R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+
+- name: KVC_Q_07 - complex key
+  macos_pref: domain='com.ansible.test' key='KVC_Q_07:0:sub' value='42'
+
+# UNSUPPORTED:
+
+  # List unsupported as argument.
+  # - name: KVC_Q - array
+  #   macos_pref: domain=com.ansible.test key=ArrayKeyValueQuote value='["Item 1", "Item 2", "Item 3"]'
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_Q - dict
+  #   macos_pref: domain=com.ansible.test key=DictKeyValueQuote value='{"Key 1": "one", "Key 2": "two"}'
+
+  # List unsupported as argument.
+  # - name: KVC_Q - complex array
+  #   macos_pref: domain=com.ansible.test key=ComplexArrayKeyValueQuote value='[true, 42, 3.1416, ["A string with Ümläüts", "1973-05-22 2:59:43", "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="]]'
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_Q - complex dict
+  #   macos_pref: domain=com.ansible.test key=ComplexDictKeyValueQuote value='{"Key 1": "false", "Key 2": 42, "Key 3": 3.1416, "Key 4": ["A string with Ümläüts", "1973-05-22 2:59:43", {"Key 1": "one", "Key 2": "two"}, "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="], "Key 5": "true"}'
+
+
+
+#
+# TESTS: Key-Value command with quoted value and type
+#
+
+- name: KVC_QT_01 - boolean
+  macos_pref: domain=com.ansible.test key=KVC_QT_01 value='true' type=boolean
+
+- name: KVC_QT_02 - integer
+  macos_pref: domain=com.ansible.test key=KVC_QT_02 value='42' type=integer
+
+- name: KVC_QT_03 - float
+  macos_pref: domain=com.ansible.test key=KVC_QT_03 value='3.1416' type=float
+
+- name: KVC_QT_04 - string
+  macos_pref: domain=com.ansible.test key=KVC_QT_04 value='A string with Ümläüts' type=string
+
+- name: KVC_QT_05 - date
+  macos_pref: domain=com.ansible.test key=KVC_QT_05 value='1973-05-22 2:59:43' type=date
+
+- name: KVC_QT_06 - data
+  macos_pref: domain=com.ansible.test key=KVC_QT_06 value='R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=' type=data
+
+- name: KVC_QT_07 - boolean -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_07 value='true' type=string
+
+- name: KVC_QT_08 - integer -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_08 value='42' type=string
+
+- name: KVC_QT_09 - float -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_09 value='3.1416' type=string
+
+- name: KVC_QT_10 - string -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_10 value='A string with Ümläüts' type=string
+
+- name: KVC_QT_11 - date -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_11 value='1973-05-22 2:59:43' type=string
+
+- name: KVC_QT_12 - data -> string
+  macos_pref: domain=com.ansible.test key=KVC_QT_12 value='R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=' type=string
+
+# UNSUPPORTED:
+
+  # List unsupported as argument.
+  # - name: KVC_QT - array
+  #   macos_pref: domain=com.ansible.test key=ArrayKeyValueTypeQuote value='["Item 1", "Item 2", "Item 3"]' type=array
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_QT - dict
+  #   macos_pref: domain=com.ansible.test key=DictKeyValueTypeQuote value='{"Key 1": "one", "Key 2": "two"}' type=dict
+
+  # List unsupported as argument.
+  # - name: KVC_QT - complex array
+  #   macos_pref: domain=com.ansible.test key=ComplexArrayKeyValueTypeQuote value='[true, 42, 3.1416, ["A string with Ümläüts", "1973-05-22 2:59:43", "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="]]' type=array
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_QT - complex dict
+  #   macos_pref: domain=com.ansible.test key=ComplexDictKeyValueTypeQuote value='{"Key 1": "false", "Key 2": 42, "Key 3": 3.1416, "Key 4": ["A string with Ümläüts", "1973-05-22 2:59:43", {"Key 1": "one", "Key 2": "two"}, "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="], "Key 5": "true"}' type=dict
+
+  # List unsupported as argument.
+  # - name: KVC_QT - type=string, array
+  #   macos_pref: domain=com.ansible.test key=ArrayKeyValueTypeStringQuote value='["Item 1", "Item 2", "Item 3"]' type=string
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_QT - type=string, dict
+  #   macos_pref: domain=com.ansible.test key=DictKeyValueTypeStringQuote value='{"Key 1": "one", "Key 2": "two"}' type=string
+
+  # List unsupported as argument.
+  # - name: KVC_QT - type=string, complex array
+  #   macos_pref: domain=com.ansible.test key=ComplexArrayKeyValueTypeStringQuote value='[true, 42, 3.1416, ["A string with Ümläüts", "1973-05-22 2:59:43", "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="]]' type=string
+
+  # Dict doesn't work, the colons are messing the YAML parsing.
+  # - name: KVC_QT - type=string, complex dict
+  #   macos_pref: domain=com.ansible.test key=ComplexDictKeyValueTypeStringQuote value='{"Key 1": "false", "Key 2": 42, "Key 3": 3.1416, "Key 4": ["A string with Ümläüts", "1973-05-22 2:59:43", {"Key 1": "one", "Key 2": "two"}, "R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs="], "Key 5": "true"}' type=string
+
+
+
+#
+# TESTS: YAML-Dict command
+#
+
+- name: YD_01 - boolean
+  macos_pref: { domain: com.ansible.test, key: YD_01, value: true }
+
+- name: YD_02 - integer
+  macos_pref: { domain: com.ansible.test, key: YD_02, value: 42 }
+
+- name: YD_03 - float
+  macos_pref: { domain: com.ansible.test, key: YD_03, value: 3.1416 }
+
+- name: YD_04 - string
+  macos_pref: { domain: com.ansible.test, key: YD_04, value: A string with Ümläüts}
+
+- name: YD_05 - array
+  macos_pref: { domain: com.ansible.test, key: YD_05, value: ['Item 1', 'Item 2', 'Item 3'] }
+
+- name: YD_06 - dict
+  macos_pref: { domain: com.ansible.test, key: YD_06, value: {'Key 1': 'one', 'Key 2': 'two'} }
+
+- name: YD_07 - data
+  macos_pref: { domain: com.ansible.test, key: YD_07, value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs= }
+
+- name: YD_08 - complex array
+  macos_pref: { domain: com.ansible.test, key: YD_08, value: ['true', 42, 3.1416, ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=']] }
+
+- name: YD_09 - complex dict
+  macos_pref: { domain: com.ansible.test, key: YD_09, value: {'Key 1': 'false', 'Key 2': 42, 'Key 3': 3.1416, 'Key 4': ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': true} }
+
+# UNSUPPORTED:
+
+  # - name: date
+  #   macos_pref: { domain: com.ansible.test, key: DateYAMLDict, value: 1973-05-22 2:59:43 }
+
+
+
+#
+# TESTS: YAML-Dict command with type
+#
+
+- name: YD_T_01 - boolean
+  macos_pref: { domain: com.ansible.test, key: YD_T_01, value: true, type: boolean }
+
+- name: YD_T_02 - integer
+  macos_pref: { domain: com.ansible.test, key: YD_T_02, value: 42, type: integer }
+
+- name: YD_T_03 - float
+  macos_pref: { domain: com.ansible.test, key: YD_T_03, value: 3.1416, type: float }
+
+- name: YD_T_04 - string
+  macos_pref: { domain: com.ansible.test, key: YD_T_04, value: A string with Ümläüts, type: string }
+
+- name: YD_T_05 - array
+  macos_pref: { domain: com.ansible.test, key: YD_T_05, value: ['Item 1', 'Item 2', 'Item 3'], type: array }
+
+- name: YD_T_06 - dict
+  macos_pref: { domain: com.ansible.test, key: YD_T_06, value: {'Key 1': 'one', 'Key 2': 'two'}, type: dict }
+
+- name: YD_T_07 - data
+  macos_pref: { domain: com.ansible.test, key: YD_T_07, value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=, type: data }
+
+- name: YD_T_08 - complex array
+  macos_pref: { domain: com.ansible.test, key: YD_T_08, value: ['true', 42, 3.1416, ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=']], type: array }
+
+- name: YD_T_09 - complex dict
+  macos_pref: { domain: com.ansible.test, key: YD_T_09, value: {'Key 1': 'false', 'Key 2': 42, 'Key 3': 3.1416, 'Key 4': ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': true}, type: dict }
+
+# UNSUPPORTED:
+
+  # - name: date
+  #   macos_pref: { domain: com.ansible.test, key: DateYAMLDictType, value: 1973-05-22 2:59:43, type: date }
+
+
+
+#
+# TESTS: YAML-Dict command with quoted value
+#
+
+- name: YD_Q_01 - boolean
+  macos_pref: { domain: com.ansible.test, key: YD_Q_01, value: 'true' }
+
+- name: YD_Q_02 - integer
+  macos_pref: { domain: com.ansible.test, key: YD_Q_02, value: '42' }
+
+- name: YD_Q_03 - float
+  macos_pref: { domain: com.ansible.test, key: YD_Q_03, value: '3.1416' }
+
+- name: YD_Q_04 - string
+  macos_pref: { domain: com.ansible.test, key: YD_Q_04, value: 'A string with Ümläüts' }
+
+- name: YD_Q_05 - date
+  macos_pref: { domain: com.ansible.test, key: YD_Q_05, value: '1973-05-22 2:59:43' }
+
+- name: YD_Q_06 - data
+  macos_pref: { domain: com.ansible.test, key: YD_Q_06, value: 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=' }
+
+- name: YD_Q_07 - complex key
+  macos_pref: { domain: com.ansible.test, key: 'YD_Q_07:0:sub', value: {'Key 1': 'false', 'Key 2': '42', 'Key 3': '3.1416', 'Key 4': ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': false }}
+
+# UNSUPPORTED:
+
+  # - name: YD_Q - array
+  #   macos_pref: { domain: com.ansible.test, key: ArrayYAMLDictQuote, value: '['Item 1', 'Item 2', 'Item 3']' }
+
+  # - name: YD_Q - dict
+  #   macos_pref: { domain: com.ansible.test, key: DictYAMLDictQuote, value: '{'Key 1': 'one', 'Key 2': 'two'}' }
+
+  # - name: YD_Q - complex array
+  #   macos_pref: { domain: com.ansible.test, key: ComplexArrayYAMLDictQuote, value: '['true', 42, 3.1416, [u'A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=']]' }
+
+  # - name: YD_Q - complex dict
+  #   macos_pref: { domain: com.ansible.test, key: ComplexDictYAMLDictQuote, value: '{'Key 1': 'false', 'Key 2': 42, 'Key 3': 3.1416, 'Key 4': [u'A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': 'true'}' }
+
+  # Complex key need to be quoted in dict form because of the colon.
+  # - name: YD_Q - complex key
+  #   macos_pref: { domain: com.ansible.test, key: ComplexKeyYAMLDict:2:sub, value: {'Key 1': 'false', 'Key 2': '42', 'Key 3': '3.1416', 'Key 4': ['A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': false }}
+
+
+
+#
+# TESTS: YAML-Dict command with quoted value and type
+#
+
+- name: YD_QT_01 - boolean
+  macos_pref: { domain: com.ansible.test, key: YD_QT_01, value: 'true', type: boolean }
+
+- name: YD_QT_02 - integer
+  macos_pref: { domain: com.ansible.test, key: YD_QT_02, value: '42', type: integer }
+
+- name: YD_QT_03 - float
+  macos_pref: { domain: com.ansible.test, key: YD_QT_03, value: '3.1416', type: float }
+
+- name: YD_QT_04 - string
+  macos_pref: { domain: com.ansible.test, key: YD_QT_04, value: 'A string with Ümläüts', type: string }
+
+- name: YD_QT_05 - date
+  macos_pref: { domain: com.ansible.test, key: YD_QT_05, value: '1973-05-22 2:59:43', type: date }
+
+- name: YD_QT_06 - data
+  macos_pref: { domain: com.ansible.test, key: YD_QT_06, value: 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=', type: data }
+
+# UNSUPPORTED:
+
+  # - name: YD_QT - array
+  #   macos_pref: { domain: com.ansible.test, key: ArrayYAMLDictTypeQuote, value: '['Item 1', 'Item 2', 'Item 3']', type: array }
+
+  # - name: YD_QT - dict
+  #   macos_pref: { domain: com.ansible.test, key: DictYAMLDictTypeQuote, value: '{'Key 1': 'one', 'Key 2': 'two'}', type: dict }
+
+  # - name: YD_QT - complex array
+  #   macos_pref: { domain: com.ansible.test, key: ComplexArrayYAMLDictTypeQuote, value: '['true', 42, 3.1416, [u'A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=']]', type: array }
+
+  # - name: YD_QT - complex dict
+  #   macos_pref: { domain: com.ansible.test, key: ComplexDictYAMLDictTypeQuote, value: '{'Key 1': 'false', 'Key 2': 42, 'Key 3': 3.1416, 'Key 4': [u'A string with Ümläüts', '1973-05-22 2:59:43', {'Key 1': 'one', 'Key 2': 'two'}, 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='], 'Key 5': 'true'}', type: dict }
+
+
+
+#
+# TESTS: YAML command
+#
+
+- name: Y_01 - boolean
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_01
+      value: true
+
+- name: Y_02 - integer
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_02
+      value: 42
+
+- name: Y_03 - float
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_03
+      value: 3.1416
+
+- name: Y_04 - string
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_04
+      value: A string with Ümläüts
+
+- name: Y_05 - array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_05
+      value:
+        - Item 1
+        - Item 2
+        - Item 3
+
+- name: Y_06 - dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_06
+      value:
+        Key 1: one
+        Key 2: two
+
+- name: Y_07 - data
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_07
+      value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+
+- name: Y_08 - complex array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_08
+      value:
+        - 'true'
+        - 42
+        - 3.1416
+        -
+          - A string with Ümläüts
+          - '1973-05-22 2:59:43'
+          - Key 1: one
+            Key 2: two
+          - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+
+- name: Y_09 - complex dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_09
+      value:
+        Key 1: 'false'
+        Key 2: 42
+        Key 3: 3.1416
+        Key 4:
+          - A string with Ümläüts
+          - '1973-05-22 2:59:43'
+          - Key 1: one
+            Key 2: two
+          - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+        Key 5: true
+
+# UNSUPPORTED:
+
+  # Date need to be quoted.
+  # - name: Y - date
+  #   macos_pref:
+  #       domain: com.ansible.test
+  #       key: DateYAML
+  #       value: 1973-05-22 2:59:43
+
+
+
+#
+# TESTS: YAML command with type
+#
+
+- name: Y_T_01 - boolean
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_01
+      value: true
+      type: boolean
+
+- name: Y_T_02 - integer
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_02
+      value: 42
+      type: integer
+
+- name: Y_T_03 - float
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_03
+      value: 3.1416
+      type: float
+
+- name: Y_T_04 - string
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_04
+      value: A string with Ümläüts
+      type: string
+
+- name: Y_T_05 - array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_05
+      value:
+        - Item 1
+        - Item 2
+        - Item 3
+      type: array
+
+- name: Y_T_06 - dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_06
+      value:
+        Key 1: one
+        Key 2: two
+      type: dict
+
+- name: Y_T_07 - data
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_07
+      value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+      type: data
+
+- name: Y_T_08 - complex array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_08
+      value:
+        - 'true'
+        - 42
+        - 3.1416
+        -
+          - A string with Ümläüts
+          - '1973-05-22 2:59:43'
+          - Key 1: one
+            Key 2: two
+          - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+      type: array
+
+- name: Y_T_09 - complex dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_T_09
+      value:
+        Key 1: 'false'
+        Key 2: 42
+        Key 3: 3.1416
+        Key 4:
+          - A string with Ümläüts
+          - '1973-05-22 2:59:43'
+          - Key 1: one
+            Key 2: two
+          - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
+        Key 5: true
+      type: dict
+
+# UNSUPPORTED:
+
+  # Date needs to be quoted.
+  # - name: Y_T - date
+  #   macos_pref:
+  #       domain: com.ansible.test
+  #       key: DateYAMLType
+  #       value: 1973-05-22 2:59:43
+  #       type: date
+
+
+
+#
+# TESTS: YAML command with quoted values
+#
+
+- name: Y_Q_01 - boolean
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_01
+      value: 'true'
+
+- name: Y_Q_02 - integer
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_02
+      value: '42'
+
+- name: Y_Q_03 - float
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_03
+      value: '3.1416'
+
+- name: Y_Q_04 - string
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_04
+      value: 'A string with Ümläüts'
+
+- name: Y_Q_05 - array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_05
+      value:
+      - 'Item 1'
+      - 'Item 2'
+      - 'Item 3'
+
+- name: Y_Q_06 - dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_06
+      value:
+        'Key 1': 'one'
+        'Key 2': 'two'
+
+- name: Y_Q_07 - date
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_07
+      value: '1973-05-22 2:59:43'
+
+- name: Y_Q_08 - data
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_08
+      value: 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+
+- name: Y_Q_09 - complexArray
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_09
+      value:
+        - 'true'
+        - '42'
+        - '3.1416'
+        -
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+
+- name: Y_Q_10 - complex dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_10
+      value:
+        'Key 1': 'false'
+        'Key 2': '42'
+        'Key 3': '3.1416'
+        'Key 4':
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+        'Key 5': 'true'
+
+- name: Y_Q_11 - complex key
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_Q_11:0:sub
+      value:
+        'Key 1': 'false'
+        'Key 2': '42'
+        'Key 3': '3.1416'
+        'Key 4':
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+        'Key 5': false
+
+- name: Y_Q_12 - quoted complex key
+  macos_pref:
+      domain: com.ansible.test
+      key: 'Y_Q_12:0:sub'
+      value:
+        'Key 1': 'false'
+        'Key 2': '42'
+        'Key 3': '3.1416'
+        'Key 4':
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+        'Key 5': false
+
+
+
+#
+# TESTS: YAML command with quoted values and type
+#
+
+- name: Y_QT_01 - boolean
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_01
+      value: 'true'
+      type: boolean
+
+- name: Y_QT_02 - integer
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_02
+      value: '42'
+      type: integer
+
+- name: Y_QT_03 - float
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_03
+      value: '3.1416'
+      type: float
+
+- name: Y_QT_04 - string
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_04
+      value: 'A string with Ümläüts'
+      type: string
+
+- name: Y_QT_05 - array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_05
+      value:
+        - 'Item 1'
+        - 'Item 2'
+        - 'Item 3'
+      type: array
+
+- name: Y_QT_06 - dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_06
+      value:
+        'Key 1': 'one'
+        'Key 2': 'two'
+      type: dict
+
+- name: Y_QT_07 - date
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_07
+      value: '1973-05-22 2:59:43'
+      type: date
+
+- name: Y_QT_08 - data
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_08
+      value: 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+      type: data
+
+- name: Y_QT_09 - complex array
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_09
+      value:
+        - 'true'
+        - '42'
+        - '3.1416'
+        -
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+      type: array
+
+- name: Y_QT_10 - complex dict
+  macos_pref:
+      domain: com.ansible.test
+      key: Y_QT_10
+      value:
+        'Key 1': 'false'
+        'Key 2': '42'
+        'Key 3': '3.1416'
+        'Key 4':
+          - 'A string with Ümläüts'
+          - '1973-05-22 2:59:43'
+          - 'Key 1': 'one'
+            'Key 2': 'two'
+          - 'R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs='
+        'Key 5': 'true'
+      type: dict

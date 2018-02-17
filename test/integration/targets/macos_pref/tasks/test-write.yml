@@ -1,0 +1,284 @@
+# test code for the macos_pref module
+# Copyright (c) 2018 - Matthias Hollerbach <mail@matthias-hollerbach.de>
+
+# GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
+
+#
+# TESTS: value not present
+#
+
+- name: VNP_01 - add new array index (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_01
+    value:
+      - index0
+
+- name: VNP_01 - add new array index (add index)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_01:1
+    value: index1
+
+- name: VNP_01 - add new array index (add index idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_01:1
+    value: index1
+  register: VNP_01_1
+
+- name: VNP_01 - add new array index (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_01
+  register: VNP_01_2
+
+- name: VNP_01 - add new array index (assert)
+  assert:
+    that:
+      - "not VNP_01_1.changed"
+      - "VNP_01_2.value == ['index0', 'index1']"
+
+#-------------
+
+- name: VNP_02 - add new array index, out of range (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_02
+    value:
+      - index0
+
+- name: VNP_02 - add new array index, out of range (add index)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_02:2
+    value: index1
+  register: VNP_02
+  ignore_errors: yes
+
+- name: VNP_02 - add new array index, out of range (assert)
+  assert:
+    that:
+      - "VNP_02.failed"
+      - "'out of range' in VNP_02.msg"
+
+#-------------
+
+- name: VNP_03 - create key path (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_03:array:0:array:0:var
+    value: value
+
+- name: VNP_03 - create key path (create key idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_03:array:0:array:0:var
+    value: value
+  register: VNP_03_1
+
+- name: VNP_03 - create key path (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_03
+  register: VNP_03_2
+
+- name: VNP_03 - create key path (assert)
+  assert:
+    that:
+      - "not VNP_03_1.changed"
+      - "VNP_03_2.value == {'array': [{'array': [{'var': 'value'}]}]}"
+
+#-------------
+
+- name: VNP_04 - create key path, out of range (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VNP_04:array:1:array:0:var
+    value: value
+  ignore_errors: yes
+  register: VNP_04
+
+- name: VNP_04 - create key path, out of range (assert)
+  assert:
+    that:
+      - "VNP_04.failed"
+      - "'out of range' in VNP_04.msg"
+
+#
+# TESTS: value present
+#
+
+- name: VP_01 - type mismatch (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VP_01
+    value: base
+
+- name: VP_01 - type mismatch (create base)
+  macos_pref:
+    domain: com.ansible.test
+    key: VP_01
+    value: True
+  register: VP_01
+  ignore_errors: yes
+
+- name: VP_01 - type mismatch (assert)
+  assert:
+    that:
+      - "VP_01.failed"
+      - "'New value type does not match current value type for key' in VP_01.msg"
+
+#
+# TESTS: value present, state=merge
+#
+
+- name: VPM_01 - merge array into array (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_01
+    value: ['val1', 'val2']
+
+- name: VPM_01 - merge array into array (merge key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_01
+    state: merge
+    value: ['val2', 'val3']
+
+- name: VPM_01 - merge array into array (merge key idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_01
+    state: merge
+    value: ['val2', 'val3']
+  register: VPM_01_1
+
+- name: VPM_01 - merge array into array (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_01
+  register: VPM_01_2
+
+- name: VPM_01 - merge array into array (assert)
+  assert:
+    that:
+      - "not VPM_01_1.changed"
+      - "VPM_01_2.value == ['val1', 'val2', 'val3']"
+
+#-------------
+
+- name: VPM_02 - merge dict into dict (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_02
+    value:
+      key1: val1
+      key2: val2
+      key3: ['index0']
+
+- name: VPM_02 - merge dict into dict (merge key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_02
+    state: merge
+    value:
+      key2: val2new
+      key3: ['index0', 'index1']
+      key4: val4
+
+- name: VPM_02 - merge dict into dict (merge key idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_02
+    state: merge
+    value:
+      key2: val2new
+      key3: ['index0', 'index1']
+      key4: val4
+  register: VPM_02_1
+
+- name: VPM_02 - merge dict into dict (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_02
+  register: VPM_02_2
+
+- name: VPM_02 - merge dict into dict (assert)
+  assert:
+    that:
+      - "not VPM_02_1.changed"
+      - "VPM_02_2.value == {'key1': 'val1', 'key2': 'val2new', 'key3': ['index0', 'index1'], 'key4': 'val4'}"
+
+#-------------
+
+- name: VPM_03 - merge item into array (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_03
+    value: ['val1']
+
+- name: VPM_03 - merge item into array (merge key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_03
+    state: merge
+    value: val2
+
+- name: VPM_03 - merge item into array (merge key idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_03
+    state: merge
+    value: val2
+  register: VPM_03_1
+
+- name: VPM_03 - merge item into array (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPM_03
+  register: VPM_03_2
+
+- name: VPM_03 - merge item into array (assert)
+  assert:
+    that:
+      - "not VPM_03_1.changed"
+      - "VPM_03_2.value == ['val1', 'val2']"
+
+#
+# TESTS: value present, state=replace
+#
+
+- name: VPR_01 - replace key (create key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPR_01
+    value:
+      key1: val1
+
+- name: VPR_01 - replace key (replace key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPR_01
+    value:
+      key1new: val1
+
+- name: VPR_01 - replace key (replace key idempotence)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPR_01
+    value:
+      key1new: val1
+  register: VPR_01_1
+
+- name: VPR_01 - replace key (read key)
+  macos_pref:
+    domain: com.ansible.test
+    key: VPR_01
+  register: VPR_01_2
+
+- name: VPR_01 - replace key (assert)
+  assert:
+    that:
+      - "not VPR_01_1.changed"
+      - "VPR_01_2.value == {'key1new': 'val1'}"
