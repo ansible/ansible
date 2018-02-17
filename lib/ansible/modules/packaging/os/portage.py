@@ -327,7 +327,7 @@ def emerge_packages(module, packages):
 
     emerge_flags = {
         'jobs': '--jobs=',
-        'loadavg': '--load-average ',
+        'loadavg': '--load-average=',
     }
 
     for flag, arg in emerge_flags.items():
