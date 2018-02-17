@@ -94,6 +94,13 @@ EXAMPLES = '''
     volume_name: nyc1-block-storage
     region: nyc1
     droplet_id: <ID>
+# Create snapshot from volume
+- digital_ocean_block_storage:
+    state: present
+    command: create
+    api_token: <TOKEN>
+    volume_name: nyc1-volume1-snapshot
+    snapshot_id: 857f6047-312b-21e8-bff6-0324ac117a02
 '''
 
 RETURN = '''
@@ -178,23 +185,25 @@ class DOBlockStorage(object):
     def create_block_storage(self):
         volume_name = self.get_key_or_fail('volume_name')
         snapshot_id = self.module.params['snapshot_id']
+        path = 'volumes'
+        data = {}
         if snapshot_id:
-            self.module.params['block_size'] = None
-            self.module.params['region'] = None
-            block_size = None
-            region = None
+            path = 'volumes/{0}/snapshots'.format(snapshot_id)
+            data = {
+                'name': volume_name
+            }
         else:
             block_size = self.get_key_or_fail('block_size')
             region = self.get_key_or_fail('region')
-        description = self.module.params['description']
-        data = {
-            'size_gigabytes': block_size,
-            'name': volume_name,
-            'description': description,
-            'region': region,
-            'snapshot_id': snapshot_id,
-        }
-        response = self.rest.post("volumes", data=data)
+            description = self.module.params['description']
+            data = {
+                'size_gigabytes': block_size,
+                'name': volume_name,
+                'description': description,
+                'region': region,
+                'snapshot_id': snapshot_id,
+            }
+        response = self.rest.post(path, data=data)
         status = response.status_code
         json = response.json
         if status == 201:
