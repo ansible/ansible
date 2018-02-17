@@ -236,6 +236,9 @@ def main():
         cmds = get_commands(proposed, existing, state, module)
 
         if cmds:
+            # On N35 A8 images, some features return a yes/no prompt
+            # on enablement or disablement. Bypass using terminal dont-ask
+            cmds.insert(0, 'terminal dont-ask')
             if not module.check_mode:
                 load_config(module, cmds)
             results['changed'] = True
