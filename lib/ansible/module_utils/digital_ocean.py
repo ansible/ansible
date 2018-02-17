@@ -75,7 +75,8 @@ class DigitalOceanHelper:
         url = self._url_builder(path)
         data = self.module.jsonify(data)
 
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
+        resp, info = fetch_url(self.module, url, data=data,
+                               headers=self.headers, method=method)
 
         return Response(resp, info)
 
@@ -99,3 +100,34 @@ class DigitalOceanHelper:
             os.environ.get('OAUTH_TOKEN')
         if self.oauth_token is None:
             self.module.fail_json(msg='Unable to load api key: oauth_token')
+
+    def create(self, name, size_id, image_id, region_id,
+               ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None, ipv6=False, monitoring=False):
+        params = {
+            'name': str(name),
+            'size': str(size_id),
+            'image': str(image_id),
+            'region': str(region_id),
+            'virtio': str(virtio).lower(),
+            'ipv6': str(ipv6).lower(),
+            'private_networking': str(private_networking).lower(),
+            'backups': str(backups_enabled).lower(),
+        }
+
+        if ssh_key_ids:
+            if isinstance(ssh_key_ids, str):
+                ssh_key_ids = [ssh_key_ids]
+
+            if type(ssh_key_ids) == list:
+                for index in range(len(ssh_key_ids)):
+                    ssh_key_ids[index] = str(ssh_key_ids[index])
+
+            params['ssh_keys'] = ssh_key_ids
+
+        if user_data:
+            params['user_data'] = user_data
+
+        return self.post('/droplets', data=params)
+
+    def list_all():
+        pass
