@@ -108,11 +108,7 @@ import os
 import re
 import sys
 import tempfile
-import json
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+
 try:
     import apt
     import apt_pkg
