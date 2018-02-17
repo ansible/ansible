@@ -268,8 +268,7 @@ def main():
         description=dict(type='str'),
         region=dict(type='str', required=False),
         snapshot_id=dict(type='str', required=False),
-        droplet_id=dict(type='int'),
-        timeout=dict(type='int', default=10)
+        droplet_id=dict(type='int')
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
