@@ -30,6 +30,7 @@ import json
 import os
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 
 
 class Response(object):
@@ -62,9 +63,15 @@ class DigitalOceanHelper:
         self.module = module
         self.baseurl = 'https://api.digitalocean.com/v2'
         self.oauth_token = None
-        self.get_do_oauth_token()
         self.headers = {'Authorization': 'Bearer {0}'.format(self.oauth_token),
                         'Content-type': 'application/json'}
+
+        # Check if api_token is valid or not
+        response = self.get('account')
+        if response.status_code == 401:
+            module.fail_json(msg='Failed to login using API token, please verify validity of API token.')
+
+        self.timeout = module.params.get('timeout', 30)
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -75,7 +82,7 @@ class DigitalOceanHelper:
         url = self._url_builder(path)
         data = self.module.jsonify(data)
 
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method)
+        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method, timeout=self.timeout)
 
         return Response(resp, info)
 
@@ -91,11 +98,15 @@ class DigitalOceanHelper:
     def delete(self, path, data=None):
         return self.send('DELETE', path, data)
 
-    def get_do_oauth_token(self):
-        self.oauth_token = self.module.params.get('oauth_token') or \
-            self.module.params.get('api_token') or \
-            os.environ.get('DO_API_TOKEN') or \
-            os.environ.get('DO_API_KEY') or \
-            os.environ.get('OAUTH_TOKEN')
-        if self.oauth_token is None:
-            self.module.fail_json(msg='Unable to load api key: oauth_token')
+    @staticmethod
+    def digital_ocean_argument_spec():
+        return dict(
+            validate_certs=dict(type='bool', required=False, default=True),
+            oauth_token=dict(
+                no_log=True,
+                # Support environment variable for DigitalOcean OAuth Token
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN', 'OAUTH_TOKEN']),
+                required=False,
+            ),
+            timeout=dict(type='int', default=30),
+        )
