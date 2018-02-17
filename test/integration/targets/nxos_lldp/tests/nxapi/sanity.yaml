@@ -4,8 +4,9 @@
   when: ansible_connection == "local"
 
 - name: Make sure LLDP is not running before tests
-  nxos_config:
-    lines: no feature lldp
+  nxos_feature:
+    feature: lldp
+    state: disabled
     provider: "{{ connection }}"
 
 - name: Enable LLDP service
