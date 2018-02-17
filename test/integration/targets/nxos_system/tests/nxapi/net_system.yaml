@@ -12,6 +12,7 @@
       - no ip domain-list redhat.com
     match: none
     provider: "{{ nxapi }}"
+  ignore_errors: yes
 
 - name: configure domain_list using platform agnostic module
   net_system:
