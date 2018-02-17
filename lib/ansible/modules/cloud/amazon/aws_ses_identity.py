@@ -238,7 +238,7 @@ from ansible.module_utils.ec2 import HAS_BOTO3
 import traceback
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -264,7 +264,24 @@ def get_verification_attributes(connection, module, identity):
 def get_identity_notifications(connection, module, identity):
     response = call_and_handle_errors(module, connection.get_identity_notification_attributes, Identities=[identity])
     notification_attributes = response['NotificationAttributes']
+
+    # No clear AWS docs on when this happens, but it appears sometimes identities are not included in
+    # in the notification attributes when the identity is first registered. Suspect that this is caused by
+    # eventual consistency within the AWS services. It's been observed in builds so we need to handle it.
+    #
+    # When this occurs, just return None and we'll assume no identity notification settings have been changed
+    # from the default which is reasonable if this is just eventual consistency on creation.
+    # See: https://github.com/ansible/ansible/issues/36065
     if identity not in notification_attributes:
+        # Paranoia check for coding errors, we only requested one identity, so if we get a different one
+        # something has gone very wrong.
+        if len(notification_attributes) != 0:
+            module.fail_json(
+                msg='Unexpected identity found in notification attributes, expected {0} but got {1!r}.'.format(
+                    identity,
+                    notification_attributes.keys(),
+                )
+            )
         return None
     return notification_attributes[identity]
 
@@ -272,9 +289,17 @@ def get_identity_notifications(connection, module, identity):
 def update_notification_topic(connection, module, identity, identity_notifications, notification_type):
     arg_dict = module.params.get(notification_type.lower() + '_notifications')
     topic_key = notification_type + 'Topic'
-    if topic_key in identity_notifications:
+    if identity_notifications is None:
+        # If there is no configuration for notifications cannot be being sent to topics
+        # hence assume None as the current state.
+        current = None
+    elif topic_key in identity_notifications:
         current = identity_notifications[topic_key]
     else:
+        # If there is information on the notifications setup but no information on the
+        # particular notification topic it's pretty safe to assume there's no topic for
+        # this notification. AWS API docs suggest this information will always be
+        # included but best to be defensive
         current = None
 
     if arg_dict is not None and 'topic' in arg_dict:
@@ -297,9 +322,16 @@ def update_notification_topic(connection, module, identity, identity_notificatio
 def update_notification_topic_headers(connection, module, identity, identity_notifications, notification_type):
     arg_dict = module.params.get(notification_type.lower() + '_notifications')
     header_key = 'HeadersIn' + notification_type + 'NotificationsEnabled'
-    if header_key in identity_notifications:
+    if identity_notifications is None:
+        # If there is no configuration for topic notifications, headers cannot be being
+        # forwarded, hence assume false.
+        current = False
+    elif header_key in identity_notifications:
         current = identity_notifications[header_key]
     else:
+        # AWS API doc indicates that the headers in fields are optional. Unfortunately
+        # it's not clear on what this means. But it's a pretty safe assumption that it means
+        # headers are not included since most API consumers would interpret absence as false.
         current = False
 
     if arg_dict is not None and 'include_headers' in arg_dict:
@@ -320,9 +352,17 @@ def update_notification_topic_headers(connection, module, identity, identity_not
 
 
 def update_feedback_forwarding(connection, module, identity, identity_notifications):
-    if 'ForwardingEnabled' in identity_notifications:
+    if identity_notifications is None:
+        # AWS requires feedback forwarding to be enabled unless bounces and complaints
+        # are being handled by SNS topics. So in the absence of identity_notifications
+        # information existing feedback forwarding must be on.
+        current = True
+    elif 'ForwardingEnabled' in identity_notifications:
         current = identity_notifications['ForwardingEnabled']
     else:
+        # If there is information on the notifications setup but no information on the
+        # forwarding state it's pretty safe to assume forwarding is off. AWS API docs
+        # suggest this information will always be included but best to be defensive
         current = False
 
     required = module.params.get('feedback_forwarding')
@@ -443,6 +483,7 @@ def main():
         create_or_update_identity(connection, module, region, account_id)
     else:
         destroy_identity(connection, module)
+
 
 if __name__ == '__main__':
     main()
