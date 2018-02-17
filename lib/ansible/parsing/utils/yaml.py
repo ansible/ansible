@@ -48,20 +48,18 @@ def _construct_scalar(loader, node):
         map_as_key_key = node.value[0][0]
         map_as_key_val = node.value[0][1]
 
-        # And have key that is a mapping and a null value:
+        # And have key that is a mapping, and a value that is null:
         if map_as_key_key.tag == 'tag:yaml.org,2002:map' and \
             map_as_key_val.tag == 'tag:yaml.org,2002:null':
 
-            # Get the string intended jinja string value:
-            scalar_node = map_as_key_key.value[0][0]
+            # Get the intended jinja string value:
+            jinja_string = map_as_key_key.value[0][0]
 
-            # Put the braces back onto it:
-            if scalar_node.style in ['"', "'"]:
-                # With quotes if original was quoted:
-                return "{{'%s'}}" % scalar_node.value
-
-            # Else unquoted:
-            return "{{%s}}" % scalar_node.value
+            # If jinja string was not quoted:
+            if jinja_string.tag == 'tag:yaml.org,2002:str' and \
+                jinja_string.style == '':
+                # Add jinja double braces back in:
+                return "{{%s}}" % jinja_string.value
 
     # Else process mapping as usual:
     return loader.construct_mapping(node)
