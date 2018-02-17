@@ -22,16 +22,7 @@ description:
      - Fetch DigitalOcean SSH keys facts.
 version_added: "2.5"
 author: "Patrick Marques (@pmarques)"
-options:
-  oauth_token:
-    description:
-     - DigitalOcean API token.
-    required: true
-  timeout:
-    description:
-    - The timeout in seconds used for polling DigitalOcean's API.
-    default: 30
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Version 2 of DigitalOcean API is used.
 requirements:
@@ -77,7 +68,6 @@ data:
     }
 '''
 
-from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
@@ -91,26 +81,18 @@ def core(module):
     if status_code == 200:
         module.exit_json(changed=False, ansible_facts=json)
     else:
-        module.fail_json(msg='Error fecthing facts [{0}: {1}]'.format(
+        module.fail_json(msg='Error fetching facts [{0}: {1}]'.format(
             status_code, response.json['message']))
 
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
-            oauth_token=dict(
-                no_log=True,
-                # Support environment variable for DigitalOcean OAuth Token
-                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN']),
-                required=True,
-            ),
-            validate_certs=dict(type='bool', default=True),
-            timeout=dict(type='int', default=30),
-        ),
-        supports_check_mode=True,
+        argument_spec=DigitalOceanHelper.digital_ocean_argument_spec(),
+        supports_check_mode=False,
     )
 
     core(module)
+
 
 if __name__ == '__main__':
     main()
