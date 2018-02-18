@@ -63,6 +63,11 @@ options:
         description: The maximum value to scale to in response to a scale out event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
+    override_task_capacity:
+        description: Whether or not to enable override of minimum and/or maximum tasks if it's already set.
+        required: no
+        default: no
+        choices: [ 'yes', 'no' ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -117,19 +122,27 @@ scalable_dimension:
     returned: when state present
     type: string
     sample: ecs:service:DesiredCount
+policy_name:
+    description: The name of the scaling policy.
+    returned: when state present
+    type: string
+policy_type:
+    description: The policy type.
+    returned: when state present
+    type: string    
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
-    returned: when state present
+    returned: when state present and min/max values have changed
     type: int
     sample: 1
 max_capacity:
     description: The maximum value to scale to in response to a scale out event. Required if I(state) is C(present).
-    returned: when state present
+    returned: when state present and min/max values have changed
     type: int
     sample: 2
 role_arn:
     description: The ARN of an IAM role that allows Application Auto Scaling to modify the scalable target on your behalf. Required if I(state) is C(present).
-    returned: when state present
+    returned: when state present and min/max values have changed
     type: string
     sample: arn:aws:iam::123456789123:role/roleName
 creation_time:
@@ -156,6 +169,20 @@ except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
 
+# Merge the results of the scalable target creation and policy deletion/creation
+# There's no risk in overriding values since mutual keys have the same values in our case
+def merge_results(scalable_target_result, policy_result):
+    if scalable_target_result['changed'] or policy_result['changed']:
+        changed = True
+    else:
+        changed = False
+
+    merged_response = scalable_target_result['response'].copy()
+    merged_response.update(policy_result['response'])
+
+    return {"changed": changed, "response": merged_response}
+
+
 def delete_scaling_policy(connection, module):
     changed = False
     scaling_policy = connection.describe_scaling_policies(
@@ -178,8 +205,7 @@ def delete_scaling_policy(connection, module):
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-    result = {"changed": changed}
-    return result
+    return {"changed": changed}
 
 
 def create_scalable_target(connection, module):
@@ -193,10 +219,14 @@ def create_scalable_target(connection, module):
         ScalableDimension=module.params.get('scalable_dimension')
     )
 
+    # Scalable target registration will occur if:
+    # 1. There is no scalable target registered for this service
+    # 2. There is a scalable target and we defined different min/max values and override flag is present
     if (
         not scalable_targets['ScalableTargets']
-        or scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
-        or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')
+        or (module.params.get('override_task_capacity') == True 
+        and (scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
+        or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')))
     ):
         changed = True
         try:
@@ -226,8 +256,7 @@ def create_scalable_target(connection, module):
     else:
         snaked_response = {}
 
-    result = {"changed": changed, "response": snaked_response}
-    return result
+    return {"changed": changed, "response": snaked_response}
 
 
 def create_scaling_policy(connection, module):
@@ -304,8 +333,8 @@ def create_scaling_policy(connection, module):
         snaked_response = camel_dict_to_snake_dict(response['ScalingPolicies'][0])
     else:
         snaked_response = {}
-    result = {"changed": changed, "response": snaked_response}
-    return result
+
+    return {"changed": changed, "response": snaked_response}
 
 
 def main():
@@ -328,7 +357,8 @@ def main():
         step_scaling_policy_configuration=dict(required=False, type='dict'),
         target_tracking_scaling_policy_configuration=dict(required=False, type='dict'),
         minimum_tasks=dict(required=False, type='int'),
-        maximum_tasks=dict(required=False, type='int')
+        maximum_tasks=dict(required=False, type='int'),
+        override_task_capacity=dict(required=False, type=bool)
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -353,10 +383,12 @@ def main():
         policy_result = delete_scaling_policy(connection, module)
 
     # return the scalable target result only if it has changed and there were no policy changes
-    if scalable_target_result['changed'] is True and policy_result['changed'] is False:
-        module.exit_json(**scalable_target_result)
-    else:
-        module.exit_json(**policy_result)
+    merged_result = merge_results(scalable_target_result, policy_result)
+    module.exit_json(**merged_result)
+    #if scalable_target_result['changed'] is True and policy_result['changed'] is False:
+    #    module.exit_json(**scalable_target_result)
+    #else:
+    #    module.exit_json(**policy_result)
 
 if __name__ == '__main__':
     main()
