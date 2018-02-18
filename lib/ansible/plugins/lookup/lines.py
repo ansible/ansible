@@ -6,25 +6,25 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: file
+    lookup: lines
     author: Daniel Hokka Zakrisson <daniel@hozac.com>
     version_added: "0.9"
     short_description: read lines from command
     description:
-      - Run a commandi or more and split the output into lines returning them as a list
+      - Run one or more commands and split the output into lines, returning them as a list
     options:
       _terms:
         description: command(s) to run
         required: True
     notes:
-      - Like all lookups this runs on the Ansible controller and is unaffected by other keywords, such as become,
-        so if you need to different permissions you must change the command or run Ansible as another user.
-      - Alternatively you can use a shell/command task that runs against localhost and registers the result.
+      - Like all lookups, this runs on the Ansible controller and is unaffected by other keywords such as 'become'.
+        If you need to use different permissions, you must change the command or run Ansible as another user.
+      - Alternatively, you can use a shell/command task that runs against localhost and registers the result.
 """
 
 EXAMPLES = """
-- name: we could use file direclty, but this shows output from command
-  debug: msg="{{ item }} is a line running cat on /etc/motd"
+- name: We could read the file directly, but this shows output from command
+  debug: msg="{{ item }} is an output line from running cat on /etc/motd"
   with_lines: cat /etc/motd
 
 - name: More useful example of looping over a command result
