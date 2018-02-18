@@ -16,19 +16,19 @@
           Key 2: two
         - R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs=
 
-- name: VT_01 - var type retention (create key)
+- name: Var Type - VT_01 - var type retention (create key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: VT_01
     value: "{{ VT_01_VALS }}"
 
-- name: VT_01 - var type retention (read key)
+- name: Var Type - VT_01 - var type retention (read key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: VT_01
   register: VT_01
 
-- name: VT_01 - var type retention (assert)
+- name: Var Type - VT_01 - var type retention (assert)
   assert:
     that:
       - "VT_01.value == VT_01_VALS"
@@ -50,19 +50,19 @@
       - { type: dictionary, value: {key1: val1, key2: val2} }
       - { type: data, value: R0lGODlhDAAMAIQAAP//9/X17unp5WZmZgAAAOfn515eXvPz7Y6OjuDg4J+fn5OTk6enp56enmlpaWNjY6Ojo4SEhP/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++f/++SH+Dk1hZGUgd2l0aCBHSU1QACwAAAAADAAMAAAFLCAgjoEwnuNAFOhpEMTRiggcz4BNJHrv/zCFcLiwMWYNG84BwwEeECcgggoBADs= }
 
-- name: VT_02 - var type retention (create key)
+- name: Var Type - VT_02 - var type retention (create key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: "VT_02_{{ item.0 }}"
     value: "{{ item.1.value }}"
   with_indexed_items: "{{ VT_02_VALS }}"
 
-- name: VT_02 - var type retention (read key type)
-  command: "defaults read-type com.ansible.test VT_02_{{ item.0 }}"
+- name: Var Type - VT_02 - var type retention (read key type)
+  command: "defaults read-type '{{ domain }}' VT_02_{{ item.0 }}"
   with_indexed_items: "{{ VT_02_VALS }}"
   register: VT_02
 
-- name: VT_02 - var type retention (assert)
+- name: Var Type - VT_02 - var type retention (assert)
   assert:
     that:
       - "item.1.type in VT_02.results[item.0].stdout"

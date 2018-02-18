@@ -4,11 +4,11 @@
 # GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
 
 - name: Only run the tests when OS == macOS
-  when: ansible_os_family == 'Darwin'
+  when: ansible_distribution == "MacOSX"
   block:
     - import_tasks: setup.yml
-    - import_tasks: test-delete.yml
     - import_tasks: test-write.yml
+    - import_tasks: test-delete.yml
     - import_tasks: test-check_mode.yml
     - import_tasks: test-var_type.yml
     - import_tasks: test-syntax-validity.yml

@@ -3,33 +3,33 @@
 
 # GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
 
-- name: D_01 - delete root level key (create key)
+- name: Delete - D_01 - delete root level key (create key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_01
     value: value
 
-- name: D_01 - delete root level key (delete key)
+- name: Delete - D_01 - delete root level key (delete key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_01
     state: absent
   register: D_01_1
 
-- name: D_01 - delete root level key (delete key idempotence)
+- name: Delete - D_01 - delete root level key (delete key idempotence)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_01
     state: absent
   register: D_01_2
 
-- name: D_01 - delete root level key (read key)
+- name: Delete - D_01 - delete root level key (read key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_01
   register: D_01_3
 
-- name: D_01 - delete root level key (assert)
+- name: Delete - D_01 - delete root level key (assert)
   assert:
     that:
       - "D_01_1.changed"
@@ -38,9 +38,9 @@
 
 #-------------
 
-- name: D_02 - delete nested key (create key)
+- name: Delete - D_02 - delete nested key (create key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_02
     value:
       dict:
@@ -48,33 +48,33 @@
           - index0
           - key: value
 
-- name: D_02 - delete nested key (delete key)
+- name: Delete - D_02 - delete nested key (delete key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_02:dict:key:1:key
     state: absent
   register: D_02_1
 
-- name: D_02 - delete nested key (delete key idempotence)
+- name: Delete - D_02 - delete nested key (delete key idempotence)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_02:dict:key:1:key
     state: absent
   register: D_02_2
 
-- name: D_02 - delete nested key (read key)
+- name: Delete - D_02 - delete nested key (read key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_02:dict:key:1:key
   register: D_02_3
 
-- name: D_02 - delete nested key (read parent key)
+- name: Delete - D_02 - delete nested key (read parent key)
   macos_pref:
-    domain: com.ansible.test
+    domain: '{{ domain }}'
     key: D_02:dict:key:1
   register: D_02_4
 
-- name: D_02 - delete nested key (assert)
+- name: Delete - D_02 - delete nested key (assert)
   assert:
     that:
       - "D_02_1.changed"
