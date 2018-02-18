@@ -239,6 +239,7 @@ import traceback
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
+    from botocore.config import Config
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -473,7 +474,15 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
-    connection = boto3_conn(module, conn_type='client', resource='ses', region=region, endpoint=ec2_url, **aws_connect_params)
+    # Allow up to 10 attempts to call the SES APIs before giving up (9 retries).
+    # SES APIs seem to have a much lower throttling threshold than most of the rest of the AWS APIs.
+    # Docs say 1 call per second. This shouldn't actually be a big problem for normal usage, but
+    # the ansible build runs multiple instances of the test in parallel.
+    # As a result there are build failures due to throttling that exceeds boto's default retries.
+    # The back-off is exponential, so upping the retry attempts allows multiple parallel runs
+    # to succeed.
+    boto_core_config = Config(retries={'max_attempts': 9})
+    connection = boto3_conn(module, conn_type='client', resource='ses', region=region, endpoint=ec2_url, config=boto_core_config, **aws_connect_params)
 
     state = module.params.get("state")
 
