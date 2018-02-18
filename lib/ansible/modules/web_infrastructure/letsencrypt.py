@@ -159,6 +159,17 @@ options:
     required: false
     default: true
     version_added: 2.5
+  deactivate_authzs:
+    description:
+      - "Deactivate authentication objects (authz) after issuing a certificate,
+         or when issuing the certificate failed."
+      - "Authentication objects are bound to an account key and remain valid
+         for a certain amount of time, and can be used to issue certificates
+         without having to re-authenticate the domain. This can be a security
+         concern. "
+    required: false
+    default: false
+    version_added: 2.6
 '''
 
 EXAMPLES = '''
@@ -1211,6 +1222,25 @@ class ACMEClient(object):
             if self.chain_dest and write_file(self.module, self.chain_dest, ("\n".join(chain)).encode('utf8')):
                 self.changed = True
 
+    def deactivate_authzs(self):
+        '''
+        Deactivates all valid authz's.
+        https://community.letsencrypt.org/t/authorization-deactivation/19860/2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
+        '''
+        authz_deactivate = {
+            'status': 'deactivated'
+        }
+        if self.version == 1:
+            authz_deactivate['resource'] = 'authz'
+        for domain in self.domains:
+            auth = self.authorizations.get(domain)
+            if auth is None or auth.get('status') != 'valid':
+                continue
+            result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
+            if info['status'] < 200 or info['status'] >= 300 or result.get('status') != 'deactivated':
+                self.module.warn(warning='Could not deactivate authz object {0}.'.format(auth['uri']))
+
 
 def main():
     module = AnsibleModule(
@@ -1230,6 +1260,7 @@ def main():
             chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
             validate_certs=dict(required=False, default=True, type='bool'),
+            deactivate_authzs=dict(required=False, default=False, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -1271,6 +1302,8 @@ def main():
                 # Second run: finish challenges, and get certificate
                 client.finish_challenges()
                 client.get_certificate()
+                if module.params['deactivate_authzs']:
+                    client.deactivate_authzs()
             data, data_dns = client.get_challenges_data()
             module.exit_json(
                 changed=client.changed,
