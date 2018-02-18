@@ -1237,7 +1237,7 @@ class ACMEClient(object):
 
     def deactivate_authzs(self):
         '''
-        Deactivates all valid authz's.
+        Deactivates all valid authz's. Does not raise exceptions.
         https://community.letsencrypt.org/t/authorization-deactivation/19860/2
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
         '''
@@ -1246,15 +1246,20 @@ class ACMEClient(object):
         }
         if self.version == 1:
             authz_deactivate['resource'] = 'authz'
-        for domain in self.domains:
-            auth = self.authorizations.get(domain)
-            if auth is None or auth.get('status') != 'valid':
-                continue
-            result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
-            if info['status'] < 200 or info['status'] >= 300 or result.get('status') != 'deactivated':
-                self.module.warn(warning='Could not deactivate authz object {0}.'.format(auth['uri']))
-            else:
-                auth['status'] = 'deactivated'
+        if self.authorizations:
+            for domain in self.domains:
+                auth = self.authorizations.get(domain)
+                if auth is None or auth.get('status') != 'valid':
+                    continue
+                try:
+                    result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
+                    if 200 <= info['status'] < 300 and result.get('status') == 'deactivated':
+                        auth['status'] = 'deactivated'
+                except Exception as e:
+                    # Ignore errors on deactivating authzs
+                    pass
+                if auth.get('status') != 'deactivated':
+                    self.module.warn(warning='Could not deactivate authz object {0}.'.format(auth['uri']))
 
 
 def main():
