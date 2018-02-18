@@ -235,6 +235,8 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import HAS_BOTO3
 
+import time
+
 import traceback
 
 try:
@@ -254,35 +256,54 @@ def call_and_handle_errors(module, method, **kwargs):
         module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 
-def get_verification_attributes(connection, module, identity):
-    response = call_and_handle_errors(module, connection.get_identity_verification_attributes, Identities=[identity])
-    identity_verification = response['VerificationAttributes']
+def get_verification_attributes(connection, module, identity, retries=0, retryDelay=10):
+    # Unpredictably get_identity_verification_attributes doesn't include the identity even when we've
+    # just registered it. Suspect this is an eventual consistency issue on AWS side.
+    # Don't want this complexity exposed users of the module as they'd have to retry to ensure
+    # a consistent return from the module.
+    # To avoid this we have an internal retry that we use only after registering the identity.
+    for attempt in range(0, retries + 1):
+        response = call_and_handle_errors(module, connection.get_identity_verification_attributes, Identities=[identity])
+        identity_verification = response['VerificationAttributes']
+        if identity in identity_verification:
+            break
+        time.sleep(retryDelay)
     if identity not in identity_verification:
         return None
     return identity_verification[identity]
 
 
-def get_identity_notifications(connection, module, identity):
-    response = call_and_handle_errors(module, connection.get_identity_notification_attributes, Identities=[identity])
-    notification_attributes = response['NotificationAttributes']
+def get_identity_notifications(connection, module, identity, retries=0, retryDelay=10):
+    # Unpredictably get_identity_notifications doesn't include the notifications when we've
+    # just registered the identity.
+    # Don't want this complexity exposed users of the module as they'd have to retry to ensure
+    # a consistent return from the module.
+    # To avoid this we have an internal retry that we use only when getting the current notification
+    # status for return.
+    for attempt in range(0, retries + 1):
+        response = call_and_handle_errors(module, connection.get_identity_notification_attributes, Identities=[identity])
+        notification_attributes = response['NotificationAttributes']
 
-    # No clear AWS docs on when this happens, but it appears sometimes identities are not included in
-    # in the notification attributes when the identity is first registered. Suspect that this is caused by
-    # eventual consistency within the AWS services. It's been observed in builds so we need to handle it.
-    #
-    # When this occurs, just return None and we'll assume no identity notification settings have been changed
-    # from the default which is reasonable if this is just eventual consistency on creation.
-    # See: https://github.com/ansible/ansible/issues/36065
-    if identity not in notification_attributes:
-        # Paranoia check for coding errors, we only requested one identity, so if we get a different one
-        # something has gone very wrong.
-        if len(notification_attributes) != 0:
-            module.fail_json(
-                msg='Unexpected identity found in notification attributes, expected {0} but got {1!r}.'.format(
-                    identity,
-                    notification_attributes.keys(),
+        # No clear AWS docs on when this happens, but it appears sometimes identities are not included in
+        # in the notification attributes when the identity is first registered. Suspect that this is caused by
+        # eventual consistency within the AWS services. It's been observed in builds so we need to handle it.
+        #
+        # When this occurs, just return None and we'll assume no identity notification settings have been changed
+        # from the default which is reasonable if this is just eventual consistency on creation.
+        # See: https://github.com/ansible/ansible/issues/36065
+        if identity in notification_attributes:
+            break
+        else:
+            # Paranoia check for coding errors, we only requested one identity, so if we get a different one
+            # something has gone very wrong.
+            if len(notification_attributes) != 0:
+                module.fail_json(
+                    msg='Unexpected identity found in notification attributes, expected {0} but got {1!r}.'.format(
+                        identity,
+                        notification_attributes.keys(),
+                    )
                 )
-            )
+    if identity not in notification_attributes:
         return None
     return notification_attributes[identity]
 
@@ -390,8 +411,8 @@ def update_identity_notifications(connection, module):
 
     changed |= update_feedback_forwarding(connection, module, identity, identity_notifications)
 
-    if changed:
-        identity_notifications = get_identity_notifications(connection, module, identity)
+    if changed or identity_notifications is None:
+        identity_notifications = get_identity_notifications(connection, module, identity, retries=4)
     return changed, identity_notifications
 
 
@@ -404,14 +425,20 @@ def create_or_update_identity(connection, module, region, account_id):
             call_and_handle_errors(module, connection.verify_email_identity, EmailAddress=identity)
         else:
             call_and_handle_errors(module, connection.verify_domain_identity, Domain=identity)
-        verification_attributes = get_verification_attributes(connection, module, identity)
+        verification_attributes = get_verification_attributes(connection, module, identity, retries=4)
         changed = True
     elif verification_attributes['VerificationStatus'] not in ('Pending', 'Success'):
         module.fail_json(msg="Identity " + identity + " in bad status " + verification_attributes['VerificationStatus'],
                          verification_attributes=camel_dict_to_snake_dict(verification_attributes))
 
+    if verification_attributes is None:
+        module.fail_json(msg='Unable to load identity verification attributes after registering identity.')
+
     notifications_changed, notification_attributes = update_identity_notifications(connection, module)
     changed |= notifications_changed
+
+    if notification_attributes is None:
+        module.fail_json(msg='Unable to load identity notification attributes.')
 
     identity_arn = 'arn:aws:ses:' + region + ':' + account_id + ':identity/' + identity
 
