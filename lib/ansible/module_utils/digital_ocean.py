@@ -62,16 +62,15 @@ class DigitalOceanHelper:
     def __init__(self, module):
         self.module = module
         self.baseurl = 'https://api.digitalocean.com/v2'
-        self.oauth_token = None
+        self.timeout = module.params.get('timeout', 30)
+        self.oauth_token = module.params.get('oauth_token')
         self.headers = {'Authorization': 'Bearer {0}'.format(self.oauth_token),
                         'Content-type': 'application/json'}
 
         # Check if api_token is valid or not
         response = self.get('account')
         if response.status_code == 401:
-            module.fail_json(msg='Failed to login using API token, please verify validity of API token.')
-
-        self.timeout = module.params.get('timeout', 30)
+            self.module.fail_json(msg='Failed to login using API token, please verify validity of API token.')
 
     def _url_builder(self, path):
         if path[0] == '/':
