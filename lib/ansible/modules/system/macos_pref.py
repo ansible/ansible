@@ -705,7 +705,7 @@ class CFPreferences(object):
 
         CoreFoundation.CFCalendarSetTimeZone(gregorian_date, timezone)
         absolute_time = CoreFoundation.CFCalendarComposeAbsoluteTime(
-            gregorian_date, None, "yMdHms",
+            gregorian_date, None, b"yMdHms",
             date_time.year, date_time.month, date_time.day,
             date_time.hour, date_time.minute, date_time.second
         )[1]
