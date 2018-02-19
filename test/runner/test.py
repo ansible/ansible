@@ -80,6 +80,7 @@ def main():
         config = args.config(args)
         display.verbosity = config.verbosity
         display.truncate = config.truncate
+        display.redact = config.redact
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
@@ -156,6 +157,11 @@ def parse_args():
                         type=int,
                         default=display.columns,
                         help='truncate some long output (0=disabled) (default: auto)')
+
+    common.add_argument('--redact',
+                        dest='redact',
+                        action='store_true',
+                        help='redact sensitive values in output')
 
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
