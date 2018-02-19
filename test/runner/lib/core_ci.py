@@ -166,6 +166,8 @@ class AnsibleCoreCI(object):
             self.instance_id = str(uuid.uuid4())
             self.endpoint = None
 
+            display.sensitive.add(self.instance_id)
+
     def _get_parallels_endpoints(self):
         """
         :rtype: tuple[str]
@@ -298,6 +300,9 @@ class AnsibleCoreCI(object):
                 username=con['username'],
                 password=con.get('password'),
             )
+
+            if self.connection.password:
+                display.sensitive.add(self.connection.password)
 
         status = 'running' if self.connection.running else 'starting'
 
@@ -452,6 +457,8 @@ class AnsibleCoreCI(object):
         self.instance_id = config['instance_id']
         self.endpoint = config['endpoint']
         self.started = True
+
+        display.sensitive.add(self.instance_id)
 
         return True
 
