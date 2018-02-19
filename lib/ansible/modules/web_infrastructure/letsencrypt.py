@@ -159,6 +159,17 @@ options:
     required: false
     default: true
     version_added: 2.5
+  deactivate_authzs:
+    description:
+      - "Deactivate authentication objects (authz) after issuing a certificate,
+         or when issuing the certificate failed."
+      - "Authentication objects are bound to an account key and remain valid
+         for a certain amount of time, and can be used to issue certificates
+         without having to re-authenticate the domain. This can be a security
+         concern. "
+    required: false
+    default: false
+    version_added: 2.6
 '''
 
 EXAMPLES = '''
@@ -335,6 +346,19 @@ from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url as _fetch_url
 
 
+class ModuleFailException(Exception):
+    '''
+    If raised, module.fail_json() will be called with the given parameters after cleanup.
+    '''
+    def __init__(self, msg, **args):
+        super(ModuleFailException, self).__init__(self, msg)
+        self.msg = msg
+        self.args = args
+
+    def do_fail(self, module):
+        module.fail_json(msg=self.msg, **self.args)
+
+
 def _lowercase_fetch_url(*args, **kwargs):
     '''
      Add lowercase representations of the header names as dict keys
@@ -367,12 +391,12 @@ def simple_get(module, url):
             try:
                 result = module.from_json(content.decode('utf8'))
             except ValueError:
-                module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url, content))
+                raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
         else:
             result = content
 
     if info['status'] >= 400:
-        module.fail_json(msg="ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
+        raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
     return result
 
 
@@ -392,9 +416,9 @@ def get_cert_days(module, cert_file):
         not_after_str = re.search(r"\s+Not After\s*:\s+(.*)", out.decode('utf8')).group(1)
         not_after = datetime.fromtimestamp(time.mktime(time.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')))
     except AttributeError:
-        module.fail_json(msg="No 'Not after' date found in {0}".format(cert_file))
+        raise ModuleFailException("No 'Not after' date found in {0}".format(cert_file))
     except ValueError:
-        module.fail_json(msg="Failed to parse 'Not after' date of {0}".format(cert_file))
+        raise ModuleFailException("Failed to parse 'Not after' date of {0}".format(cert_file))
     now = datetime.utcnow()
     return (not_after - now).days
 
@@ -414,10 +438,10 @@ def write_file(module, dest, content):
     except Exception as err:
         try:
             f.close()
-        except:
+        except Exception as e:
             pass
         os.remove(tmpsrc)
-        module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+        raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
     f.close()
     checksum_src = None
     checksum_dest = None
@@ -425,34 +449,34 @@ def write_file(module, dest, content):
     if not os.path.exists(tmpsrc):
         try:
             os.remove(tmpsrc)
-        except:
+        except Exception as e:
             pass
-        module.fail_json(msg="Source %s does not exist" % (tmpsrc))
+        raise ModuleFailException("Source %s does not exist" % (tmpsrc))
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source %s not readable" % (tmpsrc))
+        raise ModuleFailException("Source %s not readable" % (tmpsrc))
     checksum_src = module.sha1(tmpsrc)
     # check if there is no dest file
     if os.path.exists(dest):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not writable" % (dest))
+            raise ModuleFailException("Destination %s not writable" % (dest))
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s not readable" % (dest))
+            raise ModuleFailException("Destination %s not readable" % (dest))
         checksum_dest = module.sha1(dest)
     else:
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination dir %s not writable" % (os.path.dirname(dest)))
+            raise ModuleFailException("Destination dir %s not writable" % (os.path.dirname(dest)))
     if checksum_src != checksum_dest:
         try:
             shutil.copyfile(tmpsrc, dest)
             changed = True
         except Exception as err:
             os.remove(tmpsrc)
-            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(err)), exception=traceback.format_exc())
+            raise ModuleFailException("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(err)), exception=traceback.format_exc())
     os.remove(tmpsrc)
     return changed
 
@@ -477,11 +501,11 @@ class ACMEDirectory(object):
         if self.version == 1:
             for key in ('new-reg', 'new-authz', 'new-cert'):
                 if key not in self.directory:
-                    self.module.fail_json(msg="ACME directory does not seem to follow protocol ACME v1")
+                    raise ModuleFailException("ACME directory does not seem to follow protocol ACME v1")
         if self.version == 2:
             for key in ('newNonce', 'newAccount', 'newOrder'):
                 if key not in self.directory:
-                    self.module.fail_json(msg="ACME directory does not seem to follow protocol ACME v2")
+                    raise ModuleFailException("ACME directory does not seem to follow protocol ACME v2")
 
     def __getitem__(self, key):
         return self.directory[key]
@@ -492,7 +516,7 @@ class ACMEDirectory(object):
             url = resource
         dummy, info = fetch_url(self.module, url, method='HEAD')
         if info['status'] not in (200, 204):
-            self.module.fail_json(msg="Failed to get replay-nonce, got status {0}".format(info['status']))
+            raise ModuleFailException("Failed to get replay-nonce, got status {0}".format(info['status']))
         return info['replay-nonce']
 
 
@@ -530,14 +554,14 @@ class ACMEAccount(object):
             except Exception as err:
                 try:
                     f.close()
-                except:
+                except Exception as e:
                     pass
-                module.fail_json(msg="failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
+                raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
             f.close()
 
         error, self.key_data = self._parse_account_key(self.key)
         if error:
-            module.fail_json(msg="error while parsing account key: %s" % error)
+            raise ModuleFailException("error while parsing account key: %s" % error)
         self.jwk = self.key_data['jwk']
         self.jws_header = {
             "alg": self.key_data['alg'],
@@ -656,7 +680,7 @@ class ACMEAccount(object):
                 payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
                 protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
             except Exception as e:
-                self.module.fail_json(msg="Failed to encode payload / headers as JSON: {0}".format(e))
+                raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
 
             openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
             sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
@@ -671,8 +695,8 @@ class ACMEAccount(object):
                     r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
                     to_text(der_out, errors='surrogate_or_strict'))
                 if len(sig) != 2:
-                    self.module.fail_json(
-                        msg="failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
+                    raise ModuleFailException(
+                        "failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
                             to_text(der_out, errors='surrogate_or_strict')))
                 sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
                 sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
@@ -706,7 +730,7 @@ class ACMEAccount(object):
                             failed_tries += 1
                             continue
                     except ValueError:
-                        self.module.fail_json(msg="Failed to parse the ACME response: {0} {1}".format(url, content))
+                        raise ModuleFailException("Failed to parse the ACME response: {0} {1}".format(url, content))
                 else:
                     result = content
 
@@ -757,7 +781,7 @@ class ACMEAccount(object):
             # Account did exist
             return False
         else:
-            self.module.fail_json(msg="Error registering: {0} {1}".format(info['status'], result))
+            raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
     def init_account(self):
         '''
@@ -819,7 +843,7 @@ class ACMEClient(object):
         self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
         if not os.path.exists(self.csr):
-            module.fail_json(msg="CSR %s not found" % (self.csr))
+            raise ModuleFailException("CSR %s not found" % (self.csr))
 
         self._openssl_bin = module.get_bin_path('openssl', True)
         self.domains = self._get_csr_domains()
@@ -871,7 +895,7 @@ class ACMEClient(object):
 
         result, info = self.account.send_signed_request(self.directory['new-authz'], new_authz)
         if info['status'] not in [200, 201]:
-            self.module.fail_json(msg="Error requesting challenges: CODE: {0} RESULT: {1}".format(info['status'], result))
+            raise ModuleFailException("Error requesting challenges: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
             result['uri'] = info['location']
             return result
@@ -935,7 +959,7 @@ class ACMEClient(object):
                     error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
                 else:
                     error_details += ';'
-        self.module.fail_json(msg="{0}: {1}".format(error.format(domain), error_details))
+        raise ModuleFailException("{0}: {1}".format(error.format(domain), error_details))
 
     def _validate_challenges(self, domain, auth):
         '''
@@ -956,7 +980,7 @@ class ACMEClient(object):
             }
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
-                self.module.fail_json(msg="Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
+                raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
 
         status = ''
 
@@ -993,7 +1017,7 @@ class ACMEClient(object):
         }
         result, info = self.account.send_signed_request(self.finalize_uri, new_cert)
         if info['status'] not in [200]:
-            self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
+            raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
 
         order = info['location']
 
@@ -1004,7 +1028,7 @@ class ACMEClient(object):
             status = result['status']
 
         if status != 'valid':
-            self.module.fail_json(msg="Error new cert: CODE: {0} STATUS: {1} RESULT: {2}".format(info['status'], status, result))
+            raise ModuleFailException("Error new cert: CODE: {0} STATUS: {1} RESULT: {2}".format(info['status'], status, result))
 
         return result['certificate']
 
@@ -1028,7 +1052,7 @@ class ACMEClient(object):
             content = info.get('body')
 
         if not content or not info['content-type'].startswith('application/pem-certificate-chain'):
-            self.module.fail_json(msg="Cannot download certificate chain from {0}: {1} (headers: {2})".format(url, content, info))
+            raise ModuleFailException("Cannot download certificate chain from {0}: {1} (headers: {2})".format(url, content, info))
 
         cert = None
         chain = []
@@ -1057,7 +1081,7 @@ class ACMEClient(object):
                     chain.append(self._der_to_pem(chain_result.read()))
 
         if cert is None or current:
-            self.module.fail_json(msg="Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
+            raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
         return {'cert': cert, 'chain': chain}
 
     def _new_cert_v1(self):
@@ -1086,7 +1110,7 @@ class ACMEClient(object):
                     chain = [self._der_to_pem(chain_result.read())]
 
         if info['status'] not in [200, 201]:
-            self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
+            raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
             return {'cert': self._der_to_pem(result), 'uri': info['location'], 'chain': chain}
 
@@ -1107,7 +1131,7 @@ class ACMEClient(object):
         result, info = self.account.send_signed_request(self.directory['newOrder'], new_order)
 
         if info['status'] not in [201]:
-            self.module.fail_json(msg="Error new order: CODE: {0} RESULT: {1}".format(info['status'], result))
+            raise ModuleFailException("Error new order: CODE: {0} RESULT: {1}".format(info['status'], result))
 
         for identifier, auth_uri in zip(result['identifiers'], result['authorizations']):
             domain = identifier['value']
@@ -1183,7 +1207,7 @@ class ACMEClient(object):
         for domain in self.domains:
             auth = self.authorizations.get(domain)
             if auth is None:
-                self.module.fail_json(msg='Found no authorization information for "{0}"!'.format(domain))
+                raise ModuleFailException('Found no authorization information for "{0}"!'.format(domain))
             if 'status' not in auth:
                 self._fail_challenge(domain, auth, 'Authorization for {0} returned no status')
             if auth['status'] != 'valid':
@@ -1211,6 +1235,32 @@ class ACMEClient(object):
             if self.chain_dest and write_file(self.module, self.chain_dest, ("\n".join(chain)).encode('utf8')):
                 self.changed = True
 
+    def deactivate_authzs(self):
+        '''
+        Deactivates all valid authz's. Does not raise exceptions.
+        https://community.letsencrypt.org/t/authorization-deactivation/19860/2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.5.2
+        '''
+        authz_deactivate = {
+            'status': 'deactivated'
+        }
+        if self.version == 1:
+            authz_deactivate['resource'] = 'authz'
+        if self.authorizations:
+            for domain in self.domains:
+                auth = self.authorizations.get(domain)
+                if auth is None or auth.get('status') != 'valid':
+                    continue
+                try:
+                    result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
+                    if 200 <= info['status'] < 300 and result.get('status') == 'deactivated':
+                        auth['status'] = 'deactivated'
+                except Exception as e:
+                    # Ignore errors on deactivating authzs
+                    pass
+                if auth.get('status') != 'deactivated':
+                    self.module.warn(warning='Could not deactivate authz object {0}.'.format(auth['uri']))
+
 
 def main():
     module = AnsibleModule(
@@ -1230,6 +1280,7 @@ def main():
             chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
             validate_certs=dict(required=False, default=True, type='bool'),
+            deactivate_authzs=dict(required=False, default=False, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -1250,40 +1301,47 @@ def main():
                             'This should only be done for testing against a local ACME server for ' +
                             'development purposes, but *never* for production purposes.')
 
-    if module.params.get('dest'):
-        cert_days = get_cert_days(module, module.params['dest'])
-    else:
-        cert_days = get_cert_days(module, module.params['fullchain_dest'])
-    if cert_days < module.params['remaining_days']:
-        # If checkmode is active, base the changed state solely on the status
-        # of the certificate file as all other actions (accessing an account, checking
-        # the authorization status...) would lead to potential changes of the current
-        # state
-        if module.check_mode:
-            module.exit_json(changed=True, authorizations={}, challenge_data={}, cert_days=cert_days)
+    try:
+        if module.params.get('dest'):
+            cert_days = get_cert_days(module, module.params['dest'])
         else:
-            client = ACMEClient(module)
-            client.cert_days = cert_days
-            if client.is_first_step():
-                # First run: start challenges / start new order
-                client.start_challenges()
+            cert_days = get_cert_days(module, module.params['fullchain_dest'])
+        if cert_days < module.params['remaining_days']:
+            # If checkmode is active, base the changed state solely on the status
+            # of the certificate file as all other actions (accessing an account, checking
+            # the authorization status...) would lead to potential changes of the current
+            # state
+            if module.check_mode:
+                module.exit_json(changed=True, authorizations={}, challenge_data={}, cert_days=cert_days)
             else:
-                # Second run: finish challenges, and get certificate
-                client.finish_challenges()
-                client.get_certificate()
-            data, data_dns = client.get_challenges_data()
-            module.exit_json(
-                changed=client.changed,
-                authorizations=client.authorizations,
-                finalize_uri=client.finalize_uri,
-                order_uri=client.order_uri,
-                account_uri=client.account.uri,
-                challenge_data=data,
-                challenge_data_dns=data_dns,
-                cert_days=client.cert_days
-            )
-    else:
-        module.exit_json(changed=False, cert_days=cert_days)
+                client = ACMEClient(module)
+                client.cert_days = cert_days
+                if client.is_first_step():
+                    # First run: start challenges / start new order
+                    client.start_challenges()
+                else:
+                    # Second run: finish challenges, and get certificate
+                    try:
+                        client.finish_challenges()
+                        client.get_certificate()
+                    finally:
+                        if module.params['deactivate_authzs']:
+                            client.deactivate_authzs()
+                data, data_dns = client.get_challenges_data()
+                module.exit_json(
+                    changed=client.changed,
+                    authorizations=client.authorizations,
+                    finalize_uri=client.finalize_uri,
+                    order_uri=client.order_uri,
+                    account_uri=client.account.uri,
+                    challenge_data=data,
+                    challenge_data_dns=data_dns,
+                    cert_days=client.cert_days
+                )
+        else:
+            module.exit_json(changed=False, cert_days=cert_days)
+    except ModuleFailException as e:
+        e.do_fail(module)
 
 
 if __name__ == '__main__':
