@@ -49,8 +49,8 @@ options:
   tmp_dest:
     description:
       - Absolute path of where temporary file is downloaded to.
-      - Since 2.5 the path defaults to the module's temp dir or C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
-      - Before 2.5 the module's temp dir was not part of the default.
+      - When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+      - When run on Ansible prior to 2.5, it defaults to C(TMPDIR), C(TEMP) or C(TMP) env variables or a platform specific value.
       - U(https://docs.python.org/2/library/tempfile.html#tempfile.tempdir)
     version_added: '2.1'
   force:
