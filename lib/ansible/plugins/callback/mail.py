@@ -199,10 +199,10 @@ class CallbackModule(CallbackBase):
             body += self.body_blob(result._result['stderr'], 'error output')
         if result._result.get('warnings'):
             for i in range(len(result._result.get('warnings'))):
-                body += self.body_blob(result._result['warnings'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['warnings'][i], 'exception %d' % (i + 1))
         if result._result.get('deprecations'):
             for i in range(len(result._result.get('deprecations'))):
-                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % (i + 1))
 
         body += 'and a complete dump of the error:\n\n'
         body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))
