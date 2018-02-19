@@ -96,6 +96,17 @@ options:
         choices: [ 'no', 'yes' ]
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+    mindepth:
+        default: 'no'
+        description:
+            - 'Descend  at  most levels (a non-negative integer) levels of directories below the starting-points.'
+        version_added: "2.6"
+    maxdepth:
+        default: 'no'
+        description:
+           - 'Do not apply any tests or actions at levels less than the argument (a  non-negative integer)'
+        version_added: "2.6"
+
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -328,6 +339,8 @@ def main():
             follow=dict(type='bool', default='no'),
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
+            maxdepth=dict(type='int'),
+            mindepth=dict(type='int'),
         ),
         supports_check_mode=True,
     )
@@ -363,6 +376,7 @@ def main():
     looked = 0
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
+        npath_depth = npath.count(os.path.sep)
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
@@ -371,6 +385,10 @@ def main():
                     fsname = os.path.normpath(os.path.join(root, fsobj))
 
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
+                        continue
+
+                    depth = fsname.count(os.path.sep) - npath_depth
+                    if (params['maxdepth'] and depth > params['maxdepth']) or (params['mindepth'] and depth < params['mindepth']):
                         continue
 
                     try:

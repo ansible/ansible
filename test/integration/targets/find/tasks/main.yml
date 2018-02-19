@@ -95,3 +95,22 @@
           - 'find_test2.matched == 1'
           - 'find_test2.files[0].pw_name is defined'
           - 'find_test2.files[0].gr_name is defined'
+
+- name: find with max_depth and min_depth
+  find:
+      paths: "{{ output_dir_test }}"
+      recurse: yes
+      mindepth: 3
+      maxdepth: 4
+  register: find_test3
+- debug: var=find_test3
+- name: validate find with max_depth and min_depth
+  assert:
+      that:
+          - 'find_test3 is defined'
+          - 'find_test3.examined is defined'
+          - 'find_test3.files is defined'
+          - 'find_test3.matched is defined'
+          - 'find_test3.msg is defined'
+          - 'find_test3.matched == 4'
+          - 'find_test3.files | length == 4'
