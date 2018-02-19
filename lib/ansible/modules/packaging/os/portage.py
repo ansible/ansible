@@ -156,7 +156,7 @@ options:
   jobs:
     description:
       - Specifies the number of packages to build simultaneously.
-      - Since version 2.6: Value of 0 or False resets any previously added
+      - "Since version 2.6: Value of 0 or False resets any previously added"
       - --jobs setting values
     required: false
     default: None
@@ -166,7 +166,7 @@ options:
     description:
       - Specifies that no new builds should be started if there are
       - other builds running and the load average is at least LOAD
-      - Since version 2.6: Value of 0 or False resets any previously added
+      - "Since version 2.6: Value of 0 or False resets any previously added"
       - --load-average setting values
     required: false
     default: None
