@@ -62,7 +62,7 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
 
 .. toctree::
    :maxdepth: 2
-   :caption: Ansible Network
+   :caption: Ansible for Network Automation
 
    network/index
 
