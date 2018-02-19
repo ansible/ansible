@@ -337,11 +337,9 @@ def emerge_packages(module, packages):
 
     for flag, arg in emerge_flags.items():
         flag_val = p[flag]
-        if flag_val is None:
-            continue
-
         if not flag_val:
-            args.append(arg)
+            if flag_val is not None:
+                args.append(arg)
             continue
 
         args.extend((arg, to_native(flag_val)))
