@@ -17,16 +17,17 @@ DOCUMENTATION = '''
     description:
         - Retrieves data from a Secret Server.
     options:
-        terms:
+        _terms:
             description:
-                - The list of keys to lookup on the Secret Server.
+                - The list of keys to lookup on the Secret Server, if a key has
+                  a 'space' in a name, it needs to be replace with a '+' sign.
+                  i.e. 'test space name' => 'test+space+name'
             type: list
             elements: string
             required: True
         username:
             description:
                 - Username for the Secret Server user.
-            default: None
             type: string
             env:
                 - name: SS_USER_ANSIBLE
@@ -34,7 +35,6 @@ DOCUMENTATION = '''
         password:
             description:
                 - Password for the Secret Server user.
-            default: None
             type: string
             env:
                 - name: SS_PASSWORD_ANSIBLE
@@ -42,25 +42,28 @@ DOCUMENTATION = '''
         domain:
             description:
                 - Domain for the organisation in the Secret Server.
-            default: None
             type: string
             env:
                 - name: SS_DOMAIN_ANSIBLE
             required: false (required only with SAAS)
-        address:
+        url:
             description:
                 - FQDN / IP for the Secret Server.
-            default: None
             type: string
             env:
-                - name: SS_ADDRESS_ANSIBLE
+                - name: SS_URL_ANSIBLE
             required: true (either ENV or kwargs)
-        key:
+        key_type:
             description:
                 - Name of the key for which you want to obtain the value.
             default: password
             type: string
             required: false
+        validate_certs:
+            description:
+                - If False, SSL certificates will not be validated.
+            default: True
+            type: boolean
 '''
 
 EXAMPLES = '''
@@ -68,9 +71,15 @@ EXAMPLES = '''
       debug:
         msg: "{{ lookup('secret_server', 'customer_1') }}"
 
-    - name: "Get Key=Username for customer_1 with ENV variables"
+    - name: "Get key_type=username for customer_1 with ENV variables"
       debug:
-        msg: "{{ lookup('secret_server', 'customer_1', key='username') }}"
+        msg: "{{ lookup('secret_server', 'customer_1', key_type='username') }}"
+
+    - name: "Find passsword for key with spaces i.e. 'test+space+name'"
+      debug:
+        msg: "{{ lookup('secret_server', 'test+space+name') }}"
+
+        'test+space+name'
 
     - name: "Get passowrd for customer_1"
       debug:
@@ -81,21 +90,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-    raw:
+    _raw:
         description:
             - List of values associated with input keys.
         type: list
         elements: strings
 '''
 
-from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
-import os
 
 try:
-    import requests
-    import urllib3
     from __main__ import display
+    from ansible.errors import AnsibleError
+    from ansible.plugins.lookup import LookupBase
+    from ansible.module_utils.urls import open_url
+    import os
+    import json
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
@@ -116,32 +125,28 @@ if os.getenv('SS_DOMAIN_ANSIBLE') is not None:
 else:
     SS_DOMAIN_ANSIBLE = None
 
-if os.getenv('SS_ADDRESS_ANSIBLE') is not None:
-    SS_ADDRESS_ANSIBLE = os.getenv('SS_ADDRESS_ANSIBLE')
+if os.getenv('SS_URL_ANSIBLE') is not None:
+    SS_URL_ANSIBLE = os.getenv('SS_URL_ANSIBLE')
 else:
-    SS_ADDRESS_ANSIBLE = None
+    SS_URL_ANSIBLE = None
 
 
 class SecretServer(object):
-    def __init__(self, username=None, password=None, secret_key=None,
-                 domain=None, address=None, key='password'):
+    def __init__(self, validate_certs, url, key_type, username=None,
+                 password=None, secret_key=None, domain=None):
+        self.validate_certs = validate_certs
+        self.url = url
+        self.key_type = key_type
         self.username = username
         self.password = password
         self.secret_key = secret_key
         self.domain = domain
-        self.address = address
-        self.key = key
 
-    def connect_api(self, path, address, auth_key=None, method='GET',
-                    connection='secure', headers=None, body=None):
+    def connect_api(self, url, path, auth_key=None,
+                    method='GET', headers=None, data=None):
 
-        if connection.upper() == 'SECURE':
-            connection = 'https://'
-        else:
-            connection = 'http://'
-
-        api_url = "{0}{1}" . format(connection, address)
-        url = "{0}{1}" . format(api_url, path)
+        api_url = "{0}{1}" . format(url, path)
+        validate_certs = self.validate_certs
 
         if not headers:
             headers = {
@@ -149,28 +154,31 @@ class SecretServer(object):
                     'Authorization': 'Bearer' + ' ' + auth_key
                     }
         if method.upper() == 'GET':
-            r = requests.request(method, url, headers=headers, verify=False)
+            r = open_url(api_url, headers=headers,
+                         validate_certs=validate_certs)
         else:
-            r = requests.request(method, url, data=body, headers=headers)
-        return r.json()
+            r = open_url(api_url, method=method, data=data, headers=headers,
+                         validate_certs=validate_certs)
+        return json.loads(r.read())
 
     def get_token(self):
         user = self.username
         password = self.password
         domain = self.domain
+        url = self.url
 
         if domain:
-            body = 'username={0}&password={1}&domain={2}&grant_type=password'.format(
+            data = 'username={0}&password={1}&domain={2}&grant_type=password'.format(
                     user, password, domain)
         else:
-            body = 'username={0}&password={1}&grant_type=password'.format(
+            data = 'username={0}&password={1}&grant_type=password'.format(
                     user, password)
         method = 'POST'
         path = '/oauth2/token'
         headers = {
                 'Content-Type': 'application/x-www-form-urlencoded',
         }
-        api = self.connect_api(path, self.address, method=method, body=body,
+        api = self.connect_api(self.url, path, method=method, data=data,
                                headers=headers)
         if api.get('access_token'):
             global token
@@ -182,7 +190,7 @@ class SecretServer(object):
         secret = self.secret_key
 
         path = '/api/v1/secrets?filter.searchText={0}'.format(secret)
-        api = self.connect_api(path, self.address, auth_key=token)
+        api = self.connect_api(self.url, path, auth_key=token)
         if api.get('records'):
             return api['records'][0]['id']
         else:
@@ -190,24 +198,23 @@ class SecretServer(object):
 
     def get_the_secret_value(self):
         secret_id = self.find_secret_id()
-        key = self.key
+        key_type = self.key_type
 
-        path = '/api/v1/secrets/{0}/fields/{1}'.format(secret_id, key)
-        api = self.connect_api(path, self.address, auth_key=token)
+        path = '/api/v1/secrets/{0}/fields/{1}'.format(secret_id, key_type)
+        api = self.connect_api(self.url, path, auth_key=token)
         return api
 
 
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-        # We are going to disable SSl Certificate warnings
-        urllib3.disable_warnings()
 
+        validate_certs = kwargs.get('validate_certs', True)
+        url = kwargs.get('url', SS_URL_ANSIBLE)
         username = kwargs.get('username', SS_USER_ANSIBLE)
         password = kwargs.get('password', SS_PASSWORD_ANSIBLE)
         domain = kwargs.get('domain', SS_DOMAIN_ANSIBLE)
-        address = kwargs.get('address', SS_ADDRESS_ANSIBLE)
-        key = kwargs.get('key', 'password')
+        key_type = kwargs.get('key_type', 'password')
 
         ret = []
 
@@ -216,13 +223,14 @@ class LookupModule(LookupBase):
             display.vvvv("Searching for value for {0}".format(term))
             secret_key = term
             if domain:
-                ss = SecretServer(username=username, password=password,
+                ss = SecretServer(validate_certs=validate_certs, url=url,
+                                  username=username, password=password,
                                   secret_key=secret_key, domain=domain,
-                                  address=address, key=key)
+                                  key_type=key_type)
             else:
-                ss = SecretServer(username=username, password=password,
-                                  secret_key=secret_key, address=address,
-                                  key=key)
+                ss = SecretServer(validate_certs=validate_certs, url=url,
+                                  username=username, password=password,
+                                  secret_key=secret_key, key_type=key_type)
             ss.get_token()
             value = ss.get_the_secret_value()
             ret.append(value)
