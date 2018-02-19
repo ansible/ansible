@@ -111,7 +111,19 @@ def map_obj_to_commands(want, have, module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']], False)[0]
+    command = 'show banner %s' % module.params['banner']
+    output = 'json'
+    cmds = [{
+        'command': command,
+        'output': output,
+    }]
+    output = run_commands(module, cmds, False)
+    if len(output) == 0 or len(output[0]) == 0:
+        # If we get here the platform does not
+        # support structured output.  Resend as
+        # text.
+        cmds[0]['output'] = 'text'
+        output = run_commands(module, cmds, False)
 
     if "Invalid command" in output:
         module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
@@ -128,6 +140,8 @@ def map_config_to_obj(module):
                 output = output[0]
             else:
                 output = ''
+    else:
+        output = output[0].rstrip()
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
