@@ -285,7 +285,7 @@ class ACIRESTModule(ACIModule):
 
         return False
 
-    def response_any(self, rawoutput, rest_type='xml'):
+    def response_type(self, rawoutput, rest_type='xml'):
         ''' Handle APIC response output '''
 
         if rest_type == 'json':
@@ -388,31 +388,27 @@ def main():
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    if aci.params['output_level'] == 'debug':
-        aci.result['filter_string'] = aci.filter_string
-        aci.result['method'] = aci.params['method'].upper()
-        # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
-        aci.result['response'] = info['msg']
-        aci.result['status'] = info['status']
-        aci.result['url'] = aci.url
+    aci.method = aci.params['method'].upper()
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
             # APIC error
-            aci.response(info['body'], rest_type)
-            aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
+            aci.response_type(info['body'], rest_type)
+            aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error
-            aci.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
+            aci.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-    aci.response_any(resp.read(), rest_type)
+    aci.response_type(resp.read(), rest_type)
 
     aci.result['imdata'] = aci.imdata
     aci.result['totalCount'] = aci.totalCount
 
     # Report success
-    module.exit_json(**aci.result)
+    aci.exit_json(**aci.result)
 
 
 if __name__ == '__main__':

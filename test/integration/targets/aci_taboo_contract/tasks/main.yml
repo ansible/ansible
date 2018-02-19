@@ -268,7 +268,7 @@
   ignore_errors: yes
   register: error_on_missing_required_param
 
-- name: Assertion test - present
+- name: Verify error_on_missing_required_param
   assert:
     that:
     - error_on_missing_required_param.failed == true

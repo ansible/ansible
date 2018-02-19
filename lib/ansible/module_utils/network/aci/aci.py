@@ -930,33 +930,36 @@ class ACIModule(object):
 
     def exit_json(self, **kwargs):
 
-        if self.params['state'] in ('absent', 'present'):
-            if self.params['output_level'] in ('debug', 'info'):
-                self.result['previous'] = self.existing
+        if 'state' in self.params:
+            if self.params['state'] in ('absent', 'present'):
+                if self.params['output_level'] in ('debug', 'info'):
+                    self.result['previous'] = self.existing
 
         # Return the gory details when we need it
         if self.params['output_level'] == 'debug':
-            self.result['filter_string'] = self.filter_string
+            if 'state' in self.params:
+                self.result['filter_string'] = self.filter_string
             self.result['method'] = self.method
             # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
             self.result['response'] = self.response
             self.result['status'] = self.status
             self.result['url'] = self.url
 
-        self.original = self.existing
-        if self.params['state'] in ('absent', 'present'):
-            self.get_existing()
+        if 'state' in self.params:
+            self.original = self.existing
+            if self.params['state'] in ('absent', 'present'):
+                self.get_existing()
 
             # if self.module._diff and self.original != self.existing:
             #     self.result['diff'] = dict(
             #         before=json.dumps(self.original, sort_keys=True, indent=4),
             #         after=json.dumps(self.existing, sort_keys=True, indent=4),
             #     )
-        self.result['current'] = self.existing
+            self.result['current'] = self.existing
 
-        if self.params['output_level'] in ('debug', 'info'):
-            self.result['sent'] = self.config
-            self.result['proposed'] = self.proposed
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['sent'] = self.config
+                self.result['proposed'] = self.proposed
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
@@ -967,27 +970,31 @@ class ACIModule(object):
         if self.error['code'] is not None and self.error['text'] is not None:
             self.result['error'] = self.error
 
-        if self.params['state'] in ('absent', 'present'):
-            if self.params['output_level'] in ('debug', 'info'):
-                self.result['previous'] = self.existing
+        if 'state' in self.params:
+            if self.params['state'] in ('absent', 'present'):
+                if self.params['output_level'] in ('debug', 'info'):
+                    self.result['previous'] = self.existing
 
-        # Return the gory details when we need it
+            # Return the gory details when we need it
+            if self.params['output_level'] == 'debug':
+                if self.imdata is not None:
+                    self.result['imdata'] = self.imdata
+                    self.result['totalCount'] = self.totalCount
+
         if self.params['output_level'] == 'debug':
-            if self.imdata is not None:
-                self.result['imdata'] = self.imdata
-                self.result['totalCount'] = self.totalCount
-
             if self.url is not None:
-                self.result['filter_string'] = self.filter_string
+                if 'state' in self.params:
+                    self.result['filter_string'] = self.filter_string
                 self.result['method'] = self.method
                 # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
                 self.result['response'] = self.response
                 self.result['status'] = self.status
                 self.result['url'] = self.url
 
-        if self.params['output_level'] in ('debug', 'info'):
-            self.result['sent'] = self.config
-            self.result['proposed'] = self.proposed
+        if 'state' in self.params:
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['sent'] = self.config
+                self.result['proposed'] = self.proposed
 
         self.result.update(**kwargs)
         self.module.fail_json(msg=msg, **self.result)
