@@ -95,19 +95,7 @@ class VmwareConfigManager(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.options = self.params.get('options', dict())
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def set_host_configuration_facts(self):
         changed = False
