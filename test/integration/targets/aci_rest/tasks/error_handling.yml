@@ -87,7 +87,6 @@
     - "error_on_missing_attributes.msg == 'APIC Error 400: invalid data at line \\'1\\'. Attributes are missing, tag \\'attributes\\' must be specified first, before any other tag'"
     - 'error_on_missing_attributes.response == "HTTP Error 400: Bad Request"'
     - error_on_missing_attributes.status == 400
-    - error_on_missing_attributes.url == 'https://sandboxapicdc.cisco.com/api/mo/uni/tn-ansible_test.json?rsp-subtree=modified'
     - "'current' not in error_on_missing_attributes"
     - "'previous' not in error_on_missing_attributes"
     - "'sent' not in error_on_missing_attributes"
@@ -121,7 +120,6 @@
     - "error_on_input_validation.msg == 'APIC Error 801: property descr of uni/tn-ansible_test failed validation for value \\'This is an [invalid] description\\''"
     - 'error_on_input_validation.response == "HTTP Error 400: Bad Request"'
     - error_on_input_validation.status == 400
-    - error_on_input_validation.url == 'https://sandboxapicdc.cisco.com/api/mo/uni.json?rsp-subtree=modified'
     - "'current' not in error_on_input_validation"
     - "'previous' not in error_on_input_validation"
     - "'sent' not in error_on_input_validation"
@@ -155,7 +153,6 @@
     - "error_on_invalid_attributes.msg == 'APIC Error 400: unknown attribute \\'description\\' in element \\'fvTenant\\''"
     - 'error_on_invalid_attributes.response == "HTTP Error 400: Bad Request"'
     - error_on_invalid_attributes.status == 400
-    - error_on_invalid_attributes.url == 'https://sandboxapicdc.cisco.com/api/mo/uni.json?rsp-subtree=modified'
     - "'current' not in error_on_invalid_attributes"
     - "'previous' not in error_on_invalid_attributes"
     - "'sent' not in error_on_invalid_attributes"
@@ -188,7 +185,6 @@
     - "error_on_invalid_object.msg == 'APIC Error 122: unknown managed object class fvFoobar'"
     - 'error_on_invalid_object.response == "HTTP Error 400: Bad Request"'
     - error_on_invalid_object.status == 400
-    - error_on_invalid_object.url == 'https://sandboxapicdc.cisco.com/api/mo/uni.json?rsp-subtree=modified'
     - "'current' not in error_on_invalid_object"
     - "'previous' not in error_on_invalid_object"
     - "'sent' not in error_on_invalid_object"
