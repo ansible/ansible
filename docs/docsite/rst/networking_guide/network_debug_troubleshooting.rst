@@ -138,6 +138,61 @@ Then review the log file and find the relevant error message in the rest of this
 
 .. For details on other ways to authenticate, see LINKTOAUTHHOWTODOCS.
 
+.. _socket_path_issue:
+
+Category "socket_path issue"
+============================
+
+**Platforms:** Any
+
+The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
+
+
+For example:
+
+.. code-block:: none
+
+   fatal: [spine02]: FAILED! => {
+       "changed": false,
+       "failed": true,
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket_path does not exist or cannot be found\n",
+       "module_stdout": "",
+       "msg": "MODULE FAILURE",
+       "rc": 1
+   }
+
+or
+
+.. code-block:: none
+
+   fatal: [spine02]: FAILED! => {
+       "changed": false,
+       "failed": true,
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket\n",
+       "module_stdout": "",
+       "msg": "MODULE FAILURE",
+       "rc": 1
+   }
+
+Suggestions to resolve:
+
+Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
+
+If the identified error message from the log file is:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  command timeout triggered, timeout value is 10 secs
+
+or
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  persistent connection idle timeout triggered, timeout value is 30 secs
+
+Follow the steps detailed in :ref:`timeout issues <timeout_issues>`
+
+
 .. _unable_to_open_shell:
 
 Category "Unable to open shell"
@@ -324,6 +379,7 @@ To clear out a persistent connection before it times out (the default timeout is
 of inactivity), simple delete the socket file.
 
 
+.. _timeout_issues:
 
 Timeout issues
 ==============
