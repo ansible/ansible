@@ -4,6 +4,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
     author:
         - Michal Taratuta (@MichalTaratuta for Softcat.com)
@@ -135,8 +140,8 @@ class SecretServer(object):
         else:
             connection = 'http://'
 
-        api_url = "{}{}" . format(connection, address)
-        url = "{}{}" . format(api_url, path)
+        api_url = "{0}{1}" . format(connection, address)
+        url = "{0}{1}" . format(api_url, path)
 
         if not headers:
             headers = {
@@ -223,4 +228,3 @@ class LookupModule(LookupBase):
             ret.append(value)
 
         return ret
-
