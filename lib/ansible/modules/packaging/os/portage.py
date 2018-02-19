@@ -156,6 +156,8 @@ options:
   jobs:
     description:
       - Specifies the number of packages to build simultaneously.
+      - Since version 2.6: Value of 0 resets any previously added
+      - --jobs setting values
     required: false
     default: None
     version_added: 2.3
@@ -164,6 +166,8 @@ options:
     description:
       - Specifies that no new builds should be started if there are
       - other builds running and the load average is at least LOAD
+      - Since version 2.6: Value of 0 resets any previously added
+      - --load-average setting values
     required: false
     default: None
     version_added: 2.3
@@ -333,10 +337,10 @@ def emerge_packages(module, packages):
 
     for flag, arg in emerge_flags.items():
         flag_val = p[flag]
-        if flag_val is None or flag_val is False:
+        if flag_val is None:
             continue
 
-        if flag_val is True:
+        if flag_val:
             args.append(arg)
             continue
 
