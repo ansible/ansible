@@ -1,6 +1,6 @@
 ---
 
-- name: Network Getting Started: First Playbook Extended
+- name: Network Getting Started First Playbook Extended
   connection: network_cli
   hosts: all
   tasks:
@@ -14,10 +14,10 @@
         msg: "The hostname is {{ ansible_net_hostname }} and the OS is {{ ansible_net_version }}"
 
     - name: Update the hostname
- 	  vyos_config:
- 	    backup: yes
-  	    lines:
-  	      - set system host-name vyos-changed
+      vyos_config:
+        backup: yes
+        lines:
+          - set system host-name vyos-changed
 
     - name: Get changed config for VyOS devices
       vyos_facts:

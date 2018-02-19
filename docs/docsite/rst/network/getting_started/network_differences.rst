@@ -53,4 +53,4 @@ Some network modules use the Ansible parameter ``become: yes`` for privilege esc
 
 Other network modules support privilege escalation but do not yet support ``network_cli`` connections. For those modules, you must use ``authorize: yes`` and ``auth_pass: my_enable_password``.
 
-For more information, see :ref:`Become and Networks<become-and-networks>`
+For more information, see :ref:`Become and Networks<become-network>`

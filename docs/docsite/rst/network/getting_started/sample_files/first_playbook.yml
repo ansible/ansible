@@ -1,6 +1,6 @@
 ---
 
-- name: Network Getting Started: First Playbook
+- name: Network Getting Started First Playbook
   connection: network_cli
   hosts: all
   tasks:
