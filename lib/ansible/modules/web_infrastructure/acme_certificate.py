@@ -175,7 +175,7 @@ options:
       - "Authentication objects are bound to an account key and remain valid
          for a certain amount of time, and can be used to issue certificates
          without having to re-authenticate the domain. This can be a security
-         concern. "
+         concern."
     type: bool
     default: 'no'
     version_added: 2.6
