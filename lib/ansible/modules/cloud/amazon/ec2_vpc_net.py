@@ -197,7 +197,7 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
 def get_vpc(module, connection, vpc_id):
     try:
         vpc_obj = AWSRetry.backoff(
-            delay=1, retries=5,
+            delay=1, tries=5,
             catch_extra_error_codes=['InvalidVpcID.NotFound'],
         )(connection.describe_vpcs)(VpcIds=[vpc_id])['Vpcs'][0]
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
