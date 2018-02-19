@@ -224,6 +224,7 @@ import os
 import re
 
 from ansible.module_utils.basic import AnsibleModule
+from module_utils._text import to_native
 
 
 def query_package(module, package, action):
@@ -339,7 +340,7 @@ def emerge_packages(module, packages):
             args.append(arg)
             continue
 
-        args.extend((arg, str(flag_val)))
+        args.extend((arg, to_native(flag_val)))
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
     if rc != 0:
