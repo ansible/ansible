@@ -337,11 +337,17 @@ def emerge_packages(module, packages):
 
     for flag, arg in emerge_flags.items():
         flag_val = p[flag]
-        if not flag_val:
-            if flag_val is not None:
-                args.append(arg)
+
+        if flag_val is None:
+            """Fallback to default: don't use this argument at all."""
             continue
 
+        if not flag_val:
+            """If the value is 0 or 0.0: add the flag, but not the value."""
+            args.append(arg)
+            continue
+
+        """Add the --flag=value pair."""
         args.extend((arg, to_native(flag_val)))
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
