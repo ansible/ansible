@@ -203,7 +203,7 @@ If you prefer to type your vault password rather than store it in a file, you ca
 
 and type in the vault password for ``my_user``. 
 
-The ``--vault-id`` flag allows different vault passwords for different users or different levels of access. The output includes the user name ``my_user`` from your ``ansible-vault`` command and uses the YAML syntax ``key: value``:
+The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vault passwords for different users or different levels of access. The output includes the user name ``my_user`` from your ``ansible-vault`` command and uses the YAML syntax ``key: value``:
 
 .. code-block:: bash
 
