@@ -246,7 +246,7 @@ Or with a prompt instead of the vault password file:
 
 .. warning::
    
-   Every time you change an ansible-vault password, you must update all files and strings encrypted using that password. If you do not update the encryption, and you cannot access the password used to encrypt a particular file or string, you will not be able to access that file or string. 
+   Vault content can only be decrypted with the password that was used to encrypt it. If you want to stop using one password and move to a new one, you can update and re-encrypt existing vault content with ``ansible-vault rekey myfile``, then provide the old password and the new password. Copies of vault content still encrypted with the old password can still be decrypted with old password.
 
 For more details on building inventory files, see :doc:`the introduction to inventory<../../user_guide/intro_inventory>`; for more details on ansible-vault, see :doc:`the full Ansible Vault documentation<../../user_guide/vault>`.
 
