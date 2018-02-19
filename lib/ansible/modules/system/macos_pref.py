@@ -138,7 +138,7 @@ EXAMPLES = '''
   when: not show_all_files.value
 
 
-# Set (replace) a dictionary key
+# Set (replace) a nested dictionary key
 - name: Set desktop and finder icon view settings
   macos_pref:
     domain: com.apple.finder
@@ -410,7 +410,7 @@ class CFPreferences(object):
     supported by the .plist format: bool, int, float, unicode, datetime,
     binary data (as base64 string), list and dict.
 
-    This class uses CoreFoundation python binding to access .plist.
+    This class uses CoreFoundation python binding to access .plist files.
     """
     global pyobjc_found
 
@@ -448,7 +448,7 @@ class CFPreferences(object):
     def read(self, key_string):
         """
         Read a preference value for the specified key. Nested values can be
-        access by giving all keys and indexes, separated by colons (:).
+        accessed by providing keys and indexes separated by colons (:).
         Indexes are zero-based.
 
         Example: 'NSToolbar Configuration Browser:TB Item Identifiers:1'
@@ -470,7 +470,7 @@ class CFPreferences(object):
                 keys[0], self.domain, self.user, self.host
             )
         # If there's more then one key level, follow the structure until the
-        # last level is reach or return None if some substructures are missing.
+        # last level is reached or return None if some substructures are missing.
         for key in keys[1:]:
             try:
                 value = value[key]
@@ -483,7 +483,7 @@ class CFPreferences(object):
     def write(self, key_string, value, merge=False):
         """
         Write a preference value for the specified key. Nested values can be
-        written by giving all keys and indexes separated by colons (:).
+        written by providing keys and indexes separated by colons (:).
         Indexes are zero-based.
 
         Example: 'NSToolbar Configuration Browser:TB Item Identifiers:1'
@@ -493,9 +493,8 @@ class CFPreferences(object):
         float, unicode, datetime, binary data (as base64 string), list
         and dict.
 
-        With array_add argument as True value can be an item or a list.
-        Item will be appended to the current array and list will extend
-        current array.
+        With merge argument as True, the method will try to merge dictionaries
+        and lists if possible.
         """
         keys = self._split_keys(key_string)
         last_key = keys[-1]
@@ -560,7 +559,7 @@ class CFPreferences(object):
     def delete(self, key):
         """
         Delete a preference value for the specified key. Nested values can be
-        access by giving all keys and indexes, separated by colons (:).
+        accessed by providing keys and indexes separated by colons (:).
         Indexes are zero-based.
 
         Example: 'NSToolbar Configuration Browser:TB Item Identifiers:1'
@@ -601,13 +600,6 @@ class CFPreferences(object):
         Performs an *in-place* deep-merge of key-values from :attr:`incoming`
         into :attr:`base`. No attempt is made to preserve the original state of
         the objects passed in as arguments.
-        :param dict base:  The target container for the merged values. This will
-            be modified *in-place*.
-        :type base:  Any :class:`dict`-like object
-        :param dict incoming:  The container from which incoming values will be
-            copied. Nested dicts in this will be modified.
-        :type incoming:  Any :class:`dict`-like object
-        :rtype:  None
         """
         # Merge array.
         if isinstance(base, list):
