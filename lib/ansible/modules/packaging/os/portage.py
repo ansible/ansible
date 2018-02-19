@@ -340,7 +340,7 @@ def emerge_packages(module, packages):
         if flag_val is None:
             continue
 
-        if flag_val:
+        if not flag_val:
             args.append(arg)
             continue
 
