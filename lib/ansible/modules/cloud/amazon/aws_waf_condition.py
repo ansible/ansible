@@ -442,7 +442,7 @@ class Condition(object):
         pattern_set = self.get_regex_pattern_by_name(name)
         if not pattern_set:
             pattern_set = run_func_with_change_token_backoff(self.client, self.module, {'Name': name},
-                self.client.create_regex_pattern_set)['RegexPatternSet']
+                                                             self.client.create_regex_pattern_set)['RegexPatternSet']
         missing = set(regex_pattern['regex_strings']) - set(pattern_set['RegexPatternStrings'])
         extra = set(pattern_set['RegexPatternStrings']) - set(regex_pattern['regex_strings'])
         if not missing and not extra:
@@ -450,7 +450,8 @@ class Condition(object):
         updates = [{'Action': 'INSERT', 'RegexPatternString': pattern} for pattern in missing]
         updates.extend([{'Action': 'DELETE', 'RegexPatternString': pattern} for pattern in extra])
         run_func_with_change_token_backoff(self.client, self.module,
-            {'RegexPatternSetId': pattern_set['RegexPatternSetId'], 'Updates': updates}, self.client.update_regex_pattern_set)
+                                           {'RegexPatternSetId': pattern_set['RegexPatternSetId'], 'Updates': updates},
+                                           self.client.update_regex_pattern_set)
         return self.get_regex_pattern_set_with_backoff(pattern_set['RegexPatternSetId'])['RegexPatternSet']
 
     def delete_unused_regex_pattern(self, regex_pattern_set_id):
@@ -460,10 +461,12 @@ class Condition(object):
             for regex_pattern_string in regex_pattern_set['RegexPatternStrings']:
                 updates.append({'Action': 'DELETE', 'RegexPatternString': regex_pattern_string})
             run_func_with_change_token_backoff(self.client, self.module,
-                {'RegexPatternSetId': regex_pattern_set_id, 'Updates': updates}, self.client.update_regex_pattern_set)
+                                               {'RegexPatternSetId': regex_pattern_set_id, 'Updates': updates},
+                                               self.client.update_regex_pattern_set)
 
             run_func_with_change_token_backoff(self.client, self.module,
-                {'RegexPatternSetId': regex_pattern_set_id}, self.client.delete_regex_pattern_set)
+                                               {'RegexPatternSetId': regex_pattern_set_id},
+                                               self.client.delete_regex_pattern_set)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete regex pattern')
 
