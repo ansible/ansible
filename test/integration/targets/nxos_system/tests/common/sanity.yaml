@@ -6,7 +6,7 @@
 - block:
   - name: configure hostname and domain-name
     nxos_system: &hostname
-      hostname: "{{ inventory_hostname_short }}"
+      hostname: switch
       domain_name: test.example.com
       provider: "{{ connection }}"
 
