@@ -451,7 +451,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith('.aws_ec2.yml' or '.aws_ec2.yaml'):
+            if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
                 return self._read_config_data(path)
         raise AnsibleParserError("Not a ec2 inventory plugin configuration file")
 
