@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: eos_static_route
 version_added: "2.5"
 author: "Trishna Guha (@trishnaguha)"
-short_description: Manage static IP routes on Arist EOS network devices
+short_description: Manage static IP routes on Arista EOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Arista EOS network devices.

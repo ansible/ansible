@@ -20,7 +20,7 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 short_description: Manage L2 interfaces on Arista EOS network devices.
 description:
   - This module provides declarative management of L2 interfaces
-    on Arist EOS network devices.
+    on Arista EOS network devices.
 notes:
   - Tested against EOS 4.15
 options:
