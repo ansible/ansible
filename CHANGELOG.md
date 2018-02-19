@@ -69,6 +69,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/35063
 * Fix templating of loop_control properties:
   https://github.com/ansible/ansible/pull/36124
+* Fix dependency in the deb package on Ubuntu-12.04:
+  https://github.com/ansible/ansible/pull/36407
+
 
 <a id="2.4.3"></a
 
