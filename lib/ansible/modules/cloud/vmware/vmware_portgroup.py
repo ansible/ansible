@@ -171,17 +171,7 @@ class PyVmomiHelper(PyVmomi):
         self.mac_changes = self.params['network_policy'].get('mac_changes')
         self.network_policy = self.create_network_policy()
         self.state = self.params['state']
-
-        self.host_obj_list = []
-        if cluster and self.find_cluster_by_name(cluster_name=cluster):
-            self.host_obj_list = self.get_all_hosts_by_cluster(cluster_name=cluster)
-        elif hosts:
-            for host in hosts:
-                host_system = self.find_hostsystem_by_name(host_name=host)
-                if host_system:
-                    self.host_obj_list.append(host_system)
-                else:
-                    self.module.fail_json(msg="Failed to find ESXi %s" % host)
+        self.host_obj_list = self.get_all_host_objs(cluster_name=cluster, esxi_host_name=hosts)
 
     def process_state(self):
         """
