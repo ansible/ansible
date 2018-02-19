@@ -184,9 +184,7 @@ class PyVmomiHelper(PyVmomi):
         self.vlan_id = self.params['vlan_id']
 
         self.esxi_host_name = self.params['esxi_hostname']
-        self.esxi_host_obj = self.find_hostsystem_by_name(host_name=self.esxi_host_name)
-        if not self.esxi_host_obj:
-            module.fail_json(changed=False, msg="ESXi '%s' not found" % self.esxi_host_name)
+        self.esxi_host_obj = self.get_all_host_objs(esxi_host_name=self.esxi_host_name)[0]
 
         self.port_group_obj = self.get_port_group_by_name(host_system=self.esxi_host_obj, portgroup_name=self.port_group_name)
         if not self.port_group_obj:
