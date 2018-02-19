@@ -149,16 +149,16 @@ class SecretServer(object):
         validate_certs = self.validate_certs
 
         if not headers:
-            headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer' + ' ' + auth_key
-                    }
+            headers = {'Content-Type': 'application/json',
+                       'Authorization': 'Bearer' + ' ' + auth_key}
+
         if method.upper() == 'GET':
             r = open_url(api_url, headers=headers,
                          validate_certs=validate_certs)
         else:
             r = open_url(api_url, method=method, data=data, headers=headers,
                          validate_certs=validate_certs)
+
         return json.loads(r.read())
 
     def get_token(self):
@@ -168,18 +168,19 @@ class SecretServer(object):
         url = self.url
 
         if domain:
-            data = 'username={0}&password={1}&domain={2}&grant_type=password'.format(
-                    user, password, domain)
+            data = ('username={0}&password={1}&domain={2}'
+                    '&grant_type=password').format(user, password, domain)
         else:
-            data = 'username={0}&password={1}&grant_type=password'.format(
-                    user, password)
+            data = ('username={0}&password={1}'
+                    '&grant_type=password').format(user, password)
+
         method = 'POST'
         path = '/oauth2/token'
-        headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-        }
-        api = self.connect_api(self.url, path, method=method, data=data,
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+
+        api = self.connect_api(url, path, method=method, data=data,
                                headers=headers)
+
         if api.get('access_token'):
             global token
             token = api['access_token']
@@ -191,6 +192,7 @@ class SecretServer(object):
 
         path = '/api/v1/secrets?filter.searchText={0}'.format(secret)
         api = self.connect_api(self.url, path, auth_key=token)
+
         if api.get('records'):
             return api['records'][0]['id']
         else:
@@ -202,6 +204,7 @@ class SecretServer(object):
 
         path = '/api/v1/secrets/{0}/fields/{1}'.format(secret_id, key_type)
         api = self.connect_api(self.url, path, auth_key=token)
+
         return api
 
 
@@ -222,6 +225,7 @@ class LookupModule(LookupBase):
 
             display.vvvv("Searching for value for {0}".format(term))
             secret_key = term
+
             if domain:
                 ss = SecretServer(validate_certs=validate_certs, url=url,
                                   username=username, password=password,
@@ -231,6 +235,7 @@ class LookupModule(LookupBase):
                 ss = SecretServer(validate_certs=validate_certs, url=url,
                                   username=username, password=password,
                                   secret_key=secret_key, key_type=key_type)
+
             ss.get_token()
             value = ss.get_the_secret_value()
             ret.append(value)
