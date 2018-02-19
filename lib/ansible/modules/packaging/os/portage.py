@@ -326,13 +326,20 @@ def emerge_packages(module, packages):
         module.fail_json(msg='Use only one of usepkg, usepkgonly')
 
     emerge_flags = {
-        'jobs': '--jobs=',
-        'loadavg': '--load-average=',
+        'jobs': '--jobs',
+        'loadavg': '--load-average',
     }
 
     for flag, arg in emerge_flags.items():
-        if p[flag] is not None:
-            args.append(arg + str(p[flag]))
+        flag_val = p[flag]
+        if flag_val is None or flag_val is False:
+            continue
+
+        if flag_val is True:
+            args.append(arg)
+            continue
+
+        args.extend((arg, str(flag_val)))
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
     if rc != 0:
