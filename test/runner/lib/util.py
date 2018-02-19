@@ -491,6 +491,8 @@ class Display(object):
         self.rows = 0
         self.columns = 0
         self.truncate = 0
+        self.redact = False
+        self.sensitive = set()
 
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
@@ -554,6 +556,10 @@ class Display(object):
         :type fd: file
         :type truncate: bool
         """
+        if self.redact and self.sensitive:
+            for item in self.sensitive:
+                message = message.replace(item, '*' * len(item))
+
         if truncate:
             if len(message) > self.truncate > 5:
                 message = message[:self.truncate - 5] + ' ...'
@@ -633,6 +639,10 @@ class CommonConfig(object):
         self.verbosity = args.verbosity  # type: int
         self.debug = args.debug  # type: bool
         self.truncate = args.truncate  # type: int
+        self.redact = args.redact  # type: bool
+
+        if is_shippable():
+            self.redact = True
 
 
 def docker_qualify_image(name):
