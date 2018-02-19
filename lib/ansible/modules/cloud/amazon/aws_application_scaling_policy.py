@@ -59,15 +59,18 @@ options:
         description: The minimum value to scale to in response to a scale in event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
+        version_added: "2.6"
     maximum_tasks:
         description: The maximum value to scale to in response to a scale out event.
             This parameter is required if you are creating a first new policy for the specified service.
         required: no
+        version_added: "2.6"
     override_task_capacity:
-        description: Whether or not to enable override of minimum and/or maximum tasks if it's already set.
+        description: Whether or not to override values of minimum and/or maximum tasks if it's already set.
         required: no
         default: no
         choices: [ 'yes', 'no' ]
+        version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -85,6 +88,8 @@ EXAMPLES = '''
   resource_id: service/poc-pricing/test-as
   scalable_dimension: ecs:service:DesiredCount
   policy_type: StepScaling
+  minimum_tasks: 1
+  maximum_tasks: 6
   step_scaling_policy_configuration:
     AdjustmentType: ChangeInCapacity
     StepAdjustments:
@@ -107,6 +112,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+alarms:
+    description: The CloudWatch alarms associated with the scaling policy
+    returned: when state present
+    type: list of complex
+    sample: ecs
 service_namespace:
     description: The namespace of the AWS service.
     returned: when state present
@@ -122,6 +132,10 @@ scalable_dimension:
     returned: when state present
     type: string
     sample: ecs:service:DesiredCount
+policy_arn:
+    description: The Amazon Resource Name (ARN) of the scaling policy..
+    returned: when state present
+    type: string
 policy_name:
     description: The name of the scaling policy.
     returned: when state present
@@ -132,19 +146,27 @@ policy_type:
     type: string    
 min_capacity:
     description: The minimum value to scale to in response to a scale in event. Required if I(state) is C(present).
-    returned: when state present and min/max values have changed
+    returned: when state present
     type: int
     sample: 1
 max_capacity:
     description: The maximum value to scale to in response to a scale out event. Required if I(state) is C(present).
-    returned: when state present and min/max values have changed
+    returned: when state present
     type: int
     sample: 2
 role_arn:
     description: The ARN of an IAM role that allows Application Auto Scaling to modify the scalable target on your behalf. Required if I(state) is C(present).
-    returned: when state present and min/max values have changed
+    returned: when state present
     type: string
     sample: arn:aws:iam::123456789123:role/roleName
+step_scaling_policy_configuration:
+    description: The step scaling policy.
+    returned: when state present and the policy type is StepScaling
+    type: complex
+target_tracking_scaling_policy_configuration
+    description: The target tracking policy.
+    returned: when state present and the policy type is TargetTrackingScaling
+    type: complex
 creation_time:
     description: The Unix timestamp for when the scalable target was created.
     returned: when state present
@@ -221,10 +243,10 @@ def create_scalable_target(connection, module):
 
     # Scalable target registration will occur if:
     # 1. There is no scalable target registered for this service
-    # 2. There is a scalable target and we defined different min/max values and override flag is present
+    # 2. A scalable target exists, different min/max values are defined and override is set to "yes"
     if (
         not scalable_targets['ScalableTargets']
-        or (module.params.get('override_task_capacity') == True 
+        or (module.params.get('override_task_capacity')
         and (scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
         or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')))
     ):
@@ -385,10 +407,7 @@ def main():
     # return the scalable target result only if it has changed and there were no policy changes
     merged_result = merge_results(scalable_target_result, policy_result)
     module.exit_json(**merged_result)
-    #if scalable_target_result['changed'] is True and policy_result['changed'] is False:
-    #    module.exit_json(**scalable_target_result)
-    #else:
-    #    module.exit_json(**policy_result)
+
 
 if __name__ == '__main__':
     main()
