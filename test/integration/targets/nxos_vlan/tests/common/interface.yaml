@@ -74,7 +74,7 @@
     that:
       - "result.failed == false"
 
- - name: Check interfaces intent fail
+- name: Check interfaces intent fail
   nxos_vlan:
     vlan_id: 100
     associated_interfaces:

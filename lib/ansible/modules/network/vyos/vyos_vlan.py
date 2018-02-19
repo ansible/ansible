@@ -273,7 +273,7 @@ def main():
         name=dict(),
         address=dict(),
         interfaces=dict(type='list'),
-        associated_interfaces = dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent'])

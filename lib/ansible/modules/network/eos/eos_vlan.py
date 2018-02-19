@@ -262,7 +262,9 @@ def map_params_to_obj(module):
             'name': module.params['name'],
             'state': module.params['state'],
             'interfaces': [intf.replace(" ", "").lower() for intf in module.params['interfaces']] if module.params['interfaces'] else [],
-            'associated_interfaces': [intf.replace(" ", "").lower() for intf in module.params['associated_interfaces']] if module.params['associated_interfaces'] else []
+            'associated_interfaces': [intf.replace(" ", "").lower() for intf in
+                                      module.params['associated_interfaces']] if module.params['associated_interfaces'] else []
+
         })
 
     return obj

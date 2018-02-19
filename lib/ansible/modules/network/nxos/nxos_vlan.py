@@ -173,6 +173,7 @@ def search_obj_in_list(vlan_id, lst):
 
 def get_diff(w, have):
     del w['interfaces']
+    del w['associated_interfaces']
     del w['name']
     for o in have:
         del o['interfaces']
