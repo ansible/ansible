@@ -85,6 +85,7 @@ options:
     vm_shell_args:
         description:
             - The argument to the program.
+        default: " "
     vm_shell_env:
         description:
             - Comma separated list of environment variable, specified in the guest OS notation.

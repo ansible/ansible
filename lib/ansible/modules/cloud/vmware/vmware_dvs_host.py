@@ -48,8 +48,9 @@ options:
     state:
         description:
         - If the host should be present or absent attached to the vSwitch.
-        choices: [present, absent]
+        choices: [ present, absent ]
         required: True
+        default: 'present'
 extends_documentation_fragment: vmware.documentation
 '''
 

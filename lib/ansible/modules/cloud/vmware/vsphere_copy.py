@@ -26,10 +26,12 @@ options:
     description:
       - The vCenter server on which the datastore is available.
     required: true
+    aliases: ['hostname']
   login:
     description:
       - The login name to authenticate on the vCenter server.
     required: true
+    aliases: ['username']
   password:
     description:
       - The password to authenticate on the vCenter server.
@@ -55,7 +57,7 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.
     default: 'yes'
-    choices: ['yes', 'no']
+    type: bool
 
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.

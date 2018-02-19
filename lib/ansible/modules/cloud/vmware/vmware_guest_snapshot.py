@@ -34,6 +34,7 @@ options:
             - Manage snapshots attached to a specific virtual machine.
         required: True
         choices: ['present', 'absent', 'revert', 'remove_all']
+        default: 'present'
    name:
         description:
             - Name of the VM to work with
@@ -75,6 +76,7 @@ options:
    description:
         description:
         - Define an arbitrary description to attach to snapshot.
+        default: ''
    quiesce:
         description:
             - If set to C(true) and virtual machine is powered on, it will quiesce the
@@ -86,6 +88,8 @@ options:
               this flag is set to C(false).
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    memory_dump:
         description:
             - If set to C(true), memory dump of virtual machine is also included in snapshot.
@@ -94,12 +98,16 @@ options:
               this flag is set to C(false).
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    remove_children:
         description:
             - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
               for removal.
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    new_snapshot_name:
         description:
              - Value to rename the existing snapshot to

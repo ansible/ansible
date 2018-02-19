@@ -37,6 +37,7 @@ options:
         description:
             - The list of privileges that role needs to have.
             - Please see U(https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html)
+        default: []
     state:
         description:
             - Indicate desired state of the role.
@@ -47,6 +48,7 @@ options:
         description:
             - If set to C(False) then prevents the role from being removed if any permissions are using it.
         default: False
+        type: bool
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -272,6 +274,7 @@ def main():
 
     vmware_local_role_manager = VMwareLocalRoleManager(module)
     vmware_local_role_manager.process_state()
+
 
 if __name__ == '__main__':
     main()
