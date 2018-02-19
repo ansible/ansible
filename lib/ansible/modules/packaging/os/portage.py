@@ -292,6 +292,7 @@ def sync_repositories(module, webrsync=False):
 
 
 def emerge_packages(module, packages):
+    """Run emerge command against given list of atoms."""
     p = module.params
 
     if not (p['update'] or p['noreplace'] or p['state'] == 'latest'):
