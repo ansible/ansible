@@ -340,18 +340,22 @@ options:
       - (String) create or delete the elastigroup
 
   stateful_deallocation_should_delete_network_interfaces:
+    version_added: 2.6
     description:
       - (Boolean) Enable deletion of network interfaces on stateful group deletion
 
   stateful_deallocation_should_delete_snapshots:
+    version_added: 2.6
     description:
       - (Boolean) Enable deletion of snapshots on stateful group deletion
 
   stateful_deallocation_should_delete_images:
+    version_added: 2.6
     description:
       - (Boolean) Enable deletion of images on stateful group deletion
 
   stateful_deallocation_should_delete_volumes:
+    version_added: 2.6
     description:
       - (Boolean) Enable deletion of volumes on stateful group deletion
 
@@ -644,7 +648,6 @@ EXAMPLES = '''
             - sg-8f4b8fe9
           spot_instance_types:
             - c3.large
-          state: absent
           do_not_update:
             - image_id
             - target
@@ -991,10 +994,10 @@ def handle_elastigroup(client, module):
             try:
                 stateful_dealloc_request = expand_fields(stateful_deallocation_fields, module.params,
                                                          'StatefulDeallocation')
-                if stateful_dealloc_request.should_delete_network_interfaces is True or \
-                                stateful_dealloc_request.should_delete_images is True or \
-                                stateful_dealloc_request.should_delete_volumes is True or \
-                                stateful_dealloc_request.should_delete_snapshots is True:
+                if (stateful_dealloc_request.should_delete_network_interfaces is True or
+                                stateful_dealloc_request.should_delete_images is True or
+                                stateful_dealloc_request.should_delete_volumes is True or
+                                stateful_dealloc_request.should_delete_snapshots is True):
                     client.delete_elastigroup_with_deallocation(group_id=group_id,
                                                                 stateful_deallocation=stateful_dealloc_request)
                 else:
@@ -1535,7 +1538,7 @@ def main():
     if not account:
         account = creds_file_loaded_vars.get("account")
 
-    spotinst_user_agent = '{}/{}'.format('spotinst-ansible', version)
+    spotinst_user_agent = 'spotinst-ansible/' + version
 
     client = spotinst.SpotinstClient(auth_token=token,
                                      print_output=False,
