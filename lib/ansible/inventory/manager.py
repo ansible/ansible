@@ -211,7 +211,10 @@ class InventoryManager(object):
             # do post processing
             self._inventory.reconcile_inventory()
         else:
-            display.warning("No inventory was parsed, only implicit localhost is available")
+            if C.INVENTORY_UNPARSED_IS_FAILED:
+                raise AnsibleError("No inventory was parsed, please check your configuration and options.")
+            else:
+                display.warning("No inventory was parsed, only implicit localhost is available")
 
         self._inventory_plugins = []
 
@@ -273,18 +276,10 @@ class InventoryManager(object):
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
-                    if C.INVENTORY_UNPARSED_IS_FAILED:
-                        msg = "Could not parse inventory source %s with available plugins:\n" % source
-                        for fail in failures:
-                            msg += 'Plugin %s failed: %s\n' % (fail['plugin'], to_native(fail['exc']))
-                            if display.verbosity >= 3:
-                                msg += "%s\n" % fail['exc'].tb
-                        raise AnsibleParserError(msg)
-                    else:
-                        for fail in failures:
-                            display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                            if hasattr(fail['exc'], 'tb'):
-                                display.vvv(to_text(fail['exc'].tb))
+                    for fail in failures:
+                        display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                        if hasattr(fail['exc'], 'tb'):
+                            display.vvv(to_text(fail['exc'].tb))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_text(source))
 
