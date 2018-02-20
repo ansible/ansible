@@ -1,6 +1,6 @@
-***************************************************************************
+**************************************************
 An Introduction to Network Automation with Ansible
-***************************************************************************
+**************************************************
 
 Ansible modules support a wide range of vendors, device types, and actions, so you can manage your entire network with a single automation tool. With Ansible, you can:
 
@@ -20,10 +20,4 @@ This guide is also useful for experienced Ansible users automating network tasks
 This guide introduces basic Ansible concepts and guides you through your first Ansible commands, playbooks and inventory entries. 
 
 .. toctree::
-   :maxdepth: 1
-
-   Basic Ansible Concepts <basic_concepts>
-   How Network Automation is Different <network_differences>
-   First Ansible Network Command and Playbook <first_playbook>
-   Working with Network Inventory <first_inventory>
-   Beyond the Basics <intermediate_concepts>
+   :maxdepth: 2

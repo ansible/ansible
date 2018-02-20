@@ -78,7 +78,7 @@ If you want to run this command every day, you can save it in a playbook and run
 1. Download :download:`first_playbook.yml <sample_files/first_playbook.yml>`, which looks like this:
 
 .. literalinclude:: sample_files/first_playbook.yml
-   :language: yaml
+   :language: YAML
 
 The playbook sets three of the seven values from the command line above: the group (``hosts: all``), the connection method (``connection: network_cli``) and the module (in each task). With those values set in the playbook, you can omit them on the command line. The playbook also adds a second task to show the config output. When a module runs in a playbook, the output is held in memory for use by future tasks instead of written to the console. The debug task here lets you see the results in your shell.
 
@@ -115,7 +115,7 @@ The playbook contains one play with two tasks, and should generate output like t
 3. Now that you can retrieve the device config, try updating it with Ansible. Download :download:`first_playbook_ext.yml <sample_files/first_playbook_ext.yml>`, which is an extended version of the first playbook:
 
 .. literalinclude:: sample_files/first_playbook_ext.yml
-   :language: yaml
+   :language: YAML
 
 The extended first playbook has four tasks in a single play. Run it with the same command you used above. The output shows you the change Ansible made to the config:
 

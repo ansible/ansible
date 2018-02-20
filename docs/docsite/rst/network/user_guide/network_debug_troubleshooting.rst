@@ -501,7 +501,7 @@ Network modules require that the connection is set to ``local``.  Any other
 connection setting will cause the playbook to fail.  Ansible will now detect
 this condition and return an error message:
 
-.. code-block:: yaml
+.. code-block:: console
 
     fatal: [nxos01]: FAILED! => {
         "changed": false,
@@ -526,7 +526,7 @@ This occurs when you attempt to run a task that requires privileged mode in a us
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: console
 
   TASK [ios_system : configure name_servers] *****************************************************************************
   task path:

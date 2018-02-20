@@ -47,33 +47,31 @@ Resources and Next Steps
 Text:
 --------
 
-Network Automation on the `Link Ansible website <http://ansible.com/overview/networking>`
-Ansible Network `Link Blog posts <http://ansible.com/blog/topic/networks>`
+- Network Automation on the `Ansible website <http://ansible.com/overview/networking>`_
+- Ansible Network `Blog posts <http://ansible.com/blog/topic/networks>`_
 
 Video:
 --------
 
-All the `Link AnsibleFests <https://www.ansible.com/resources/videos> and `Link AnsibleAutomates <https://www.ansible.com/resources/webinars-training>` are recorded and include many Network related topics.
-You can filter to only show Network topics using the Filter by Category option on the right hand side
-For the schedule the events please see the Ansible Events page. 
+All sessions at Ansible events are recorded and include many Network-related topics. See:
+
+- `AnsibleFests <https://www.ansible.com/resources/videos>`_ 
+- `AnsibleAutomates <https://www.ansible.com/resources/webinars-training>`_ 
+
+You can filter to only show Network topics using the Filter by Category option on the right hand side.
+For a schedule of upcoming events please see the `Ansible Events <https://www.ansible.com/community/events>`_ page. 
 
 GitHub Repos:
 ----------------
 
-The Network-Automation GitHub project is a open community for all things network automation. Here there will be various examples, demonstrations and GitHub repos dedicated exclusively for automation networking platforms. 
-Lightbulb
-Example playbooks
-Which other repos?
-Join our collaborative GitHub project on github.com/network-automation! Anyone with a GitHub account is able to create Pull Requests (PRs) or issues. If you'd like to be more involved email ansible-network at redhat.com.
+The `Network-Automation GitHub project <https://github.com/network-automation>`_ is an open community for all things network automation. You can find examples, demonstrations and GitHub repos dedicated exclusively to automation for networking platforms there. Anyone with a GitHub account is able to create Pull Requests (PRs) or issues.
 
 Email:
 --------
 
-Ansible Network Community
-To join simply email ansible-network at redhat.com and we will get you added right away!
+To join the Ansible Network Community simply email ansible-network@redhat.com and we will get you added right away.
 
 IRC:
 --------
 
 Join us in #ansible-network on Freenode IRC
-

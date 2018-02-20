@@ -18,8 +18,8 @@ For documentation on using a particular network module, consult the :doc:`list o
    getting_started/index
    getting_started/basic_concepts
    getting_started/network_differences
-   getting_started/first_inventory
    getting_started/first_playbook
+   getting_started/first_inventory
    getting_started/intermediate_concepts
 
 
@@ -27,10 +27,10 @@ For documentation on using a particular network module, consult the :doc:`list o
 
 .. toctree::
    :maxdepth: 3
-   :caption: Advanced topics
+   :caption: User Guide
 
-   network_best_practices_2.5
-   network_debug_troubleshooting
-   network_working_with_command_output
    user_guide/index
+   user_guide/network_best_practices_2.5
+   user_guide/network_debug_troubleshooting
+   user_guide/network_working_with_command_output
 
