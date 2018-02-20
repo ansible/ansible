@@ -2414,7 +2414,6 @@ lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E325
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py E326
 lib/ansible/modules/network/nxos/nxos_command.py E325
 lib/ansible/modules/network/nxos/nxos_command.py E326
-lib/ansible/modules/network/nxos/nxos_config.py E324
 lib/ansible/modules/network/nxos/nxos_config.py E325
 lib/ansible/modules/network/nxos/nxos_config.py E326
 lib/ansible/modules/network/nxos/nxos_evpn_global.py E325
