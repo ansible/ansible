@@ -66,18 +66,42 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_contract:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    contract: '{{ contract }}'
-    description: '{{ descr }}'
-    tenant: '{{ tenant }}'
-    scope: '{{ scope }}'
-    priority: '{{ priority }}'
-    target: '{{ target }}'
+- name: Add a new contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    description: Communication between web-servers and database
+    scope: application-profile
+    state: present
+
+- name: Remove an existing contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    state: absent
+
+- name: Query a specific contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    state: query
+
+- name: Query all contracts
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
 RETURN = r'''

@@ -176,7 +176,7 @@
     state: absent
   register: provide_absent2
 
-- name: delte consume binding - idempotency works
+- name: delete consume binding - idempotency works
   aci_epg_to_contract:
     <<: *aci_epg_consume_absent
   register: consume_absent_idempotent
