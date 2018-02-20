@@ -172,6 +172,25 @@ options:
     default: None
     version_added: 2.3
 
+  quietbuild:
+    description:
+      - Redirect all build output to logs alone, and do not display it
+      - on stdout (--quiet-build)
+    required: false
+    default: False
+    choices: [ "yes", "no" ]
+    version_added: 2.6
+
+  quietfail:
+    description:
+      - Suppresses display of the build log on stdout (--quiet-fail)
+      - Only the die message and the path of the build log will be
+      - displayed on stdout.
+    required: false
+    default: False
+    choices: [ "yes", "no" ]
+    version_added: 2.6
+
 requirements: [ gentoolkit ]
 author:
     - "William L Thomson Jr (@wltjr)"
@@ -320,6 +339,8 @@ def emerge_packages(module, packages):
         'usepkgonly': '--usepkgonly',
         'usepkg': '--usepkg',
         'keepgoing': '--keep-going',
+        'quietbuild': '--quiet-build',
+        'quietfail': '--quiet-fail',
     }
     for flag, arg in emerge_flags.items():
         if p[flag]:
@@ -490,9 +511,16 @@ def main():
             keepgoing=dict(default=False, type='bool'),
             jobs=dict(default=None, type='int'),
             loadavg=dict(default=None, type='float'),
+            quietbuild=dict(default=False, type='bool'),
+            quietfail=dict(default=False, type='bool'),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
-        mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
+        mutually_exclusive=[
+            ['nodeps', 'onlydeps'],
+            ['quiet', 'verbose'],
+            ['quietbuild', 'verbose'],
+            ['quietfail', 'verbose'],
+        ],
         supports_check_mode=True,
     )
 
