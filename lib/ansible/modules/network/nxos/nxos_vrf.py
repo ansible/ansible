@@ -407,7 +407,7 @@ def map_config_to_obj(want, element_spec, module):
     return objs
 
 
-def check_declarative_intent_params(want, module, result):
+def check_declarative_intent_params(want, module, element_spec, result):
 
     have = None
     is_delay = False
@@ -421,7 +421,7 @@ def check_declarative_intent_params(want, module, result):
             is_delay = True
 
         if have is None:
-            have = map_config_to_obj(module)
+            have = map_config_to_obj(want, element_spec, module)
 
         for i in w['associated_interfaces']:
             obj_in_have = search_obj_in_list(w['name'], have)
@@ -482,7 +482,7 @@ def main():
         load_config(module, commands)
         result['changed'] = True
 
-    check_declarative_intent_params(want, module, result)
+    check_declarative_intent_params(want, module, element_spec, result)
 
     module.exit_json(**result)
 
