@@ -90,7 +90,7 @@
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "link","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "link","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
@@ -209,7 +209,7 @@
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"dn": "uni/infra/funcprof/accbundle-policygroupname","lagT": "node","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccBndlGrp": {"attributes": {"lagT": "node","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
@@ -336,7 +336,7 @@
     - intf_policy_leaf_polgrp_check_mode_present.changed == true
     - intf_policy_leaf_polgrp_present.changed == true
     - intf_policy_leaf_polgrp_present.previous == []
-    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"dn": "uni/infra/funcprof/accportgrp-policygroupname","name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
+    - 'intf_policy_leaf_polgrp_present.sent ==  {"infraAccPortGrp": {"attributes": {"name": "policygroupname"},"children": [{"infraRsFcIfPol": {"attributes": {"tnFcIfPolName": "fiberchannelpolicy"}}},{"infraRsHIfPol": {"attributes": {"tnFabricHIfPolName": "linklevelpolicy"}}},{"infraRsAttEntP": {"attributes": {"tDn": "uni/infra/attentp-None"}}}]}}'
     - intf_policy_leaf_polgrp_idempotent.changed == false
     - intf_policy_leaf_polgrp_idempotent.sent == {}
     - intf_policy_leaf_polgrp_update.changed == true
