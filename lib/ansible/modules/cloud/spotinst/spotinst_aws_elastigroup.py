@@ -312,6 +312,7 @@ options:
     required: true
 
   shut_down_script:
+    version_added: 2.6
     description:
       - (String) The Base64-encoded shutdown script that executes prior to instance termination.
         Encode before setting.
@@ -995,9 +996,9 @@ def handle_elastigroup(client, module):
                 stateful_dealloc_request = expand_fields(stateful_deallocation_fields, module.params,
                                                          'StatefulDeallocation')
                 if (stateful_dealloc_request.should_delete_network_interfaces is True or
-                                stateful_dealloc_request.should_delete_images is True or
-                                stateful_dealloc_request.should_delete_volumes is True or
-                                stateful_dealloc_request.should_delete_snapshots is True):
+                            stateful_dealloc_request.should_delete_images is True or
+                            stateful_dealloc_request.should_delete_volumes is True or
+                            stateful_dealloc_request.should_delete_snapshots is True):
                     client.delete_elastigroup_with_deallocation(group_id=group_id,
                                                                 stateful_deallocation=stateful_dealloc_request)
                 else:
