@@ -36,8 +36,8 @@ options:
       - "   sourceDiskId=> Id of source disk of image."
       - "   sourceType=> Type of source disk."
       - "   status=> Status of image."
+    default: null
     required: false
-    default: None
   project_id:
     description:
       - your GCE project ID
@@ -167,8 +167,8 @@ id:
 licenses:
     description: Image license details.
     returned: always
-    type: list of dict
-    sample: """[{"charges_use_fee": true, "id": "centos-7", "name": "centos-7"}]"""
+    type: list
+    sample: [{'charges_use_fee': true, 'id': 'centos-7', 'name': 'centos-7'}]
 name:
     description: Name of the image.
     returned: always
