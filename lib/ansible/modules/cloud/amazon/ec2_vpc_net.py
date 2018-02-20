@@ -166,7 +166,7 @@ except ImportError:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
-                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, AWSRetry)
 from ansible.module_utils.six import string_types
 
 
@@ -196,7 +196,10 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
 
 def get_vpc(module, connection, vpc_id):
     try:
-        vpc_obj = connection.describe_vpcs(VpcIds=[vpc_id])['Vpcs'][0]
+        vpc_obj = AWSRetry.backoff(
+            delay=1, tries=5,
+            catch_extra_error_codes=['InvalidVpcID.NotFound'],
+        )(connection.describe_vpcs)(VpcIds=[vpc_id])['Vpcs'][0]
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
     try:
@@ -224,7 +227,10 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         if tags != current_tags:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags)
-                connection.create_tags(Resources=[vpc_id], Tags=tags)
+                vpc_obj = AWSRetry.backoff(
+                    delay=1, tries=5,
+                    catch_extra_error_codes=['InvalidVpcID.NotFound'],
+                )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
             return True
         else:
             return False
