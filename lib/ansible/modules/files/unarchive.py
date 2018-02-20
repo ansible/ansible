@@ -180,8 +180,8 @@ class ZipArchive(object):
         self.module = module
         self.excludes = module.params['exclude']
         self.includes = []
-        self.cmd_path = self.module.get_bin_path('unzip')
-        self.zipinfocmd_path = self.module.get_bin_path('zipinfo')
+        self.cmd_path = self.module.get_bin_path('unzip', required=True)
+        self.zipinfocmd_path = self.module.get_bin_path('zipinfo', required=True)
         self._files_in_archive = []
         self._infodict = dict()
 
