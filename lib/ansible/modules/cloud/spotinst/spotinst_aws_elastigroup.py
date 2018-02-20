@@ -993,8 +993,7 @@ def handle_elastigroup(client, module):
 
         elif state == 'absent':
             try:
-                dealloc_req = expand_fields(stateful_deallocation_fields, module.params,
-                                                         'StatefulDeallocation')
+                dealloc_req = expand_fields(stateful_deallocation_fields, module.params, 'StatefulDeallocation')
                 if (dealloc_req.should_delete_network_interfaces is True or
                     dealloc_req.should_delete_images is True or
                     dealloc_req.should_delete_volumes is True or
