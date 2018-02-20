@@ -551,13 +551,9 @@ class ACMEAccount(object):
         # account_key path and content are mutually exclusive
         self.key = module.params['account_key_src']
         self.key_content = module.params['account_key_content']
-        self.email = module.params['account_email']
         self.directory = ACMEDirectory(module)
-        self.agreement = module.params.get('agreement')
-        self.terms_agreed = module.params.get('terms_agreed')
 
         self.uri = None
-        self.changed = False
 
         self._openssl_bin = module.get_bin_path('openssl', True)
 
@@ -585,7 +581,6 @@ class ACMEAccount(object):
             "alg": self.key_data['alg'],
             "jwk": self.jwk,
         }
-        self.init_account()
 
     def get_keyauthorization(self, token):
         '''
@@ -761,25 +756,32 @@ class ACMEAccount(object):
 
             return result, info
 
-    def _new_reg(self, contact=None):
+    def set_account_uri(self, uri):
+        '''
+        Set account URI. For ACME v2, it needs to be used to sending signed
+        requests.
+        '''
+        self.uri = uri
+        if self.version != 1:
+            self.jws_header.pop('jwk')
+            self.jws_header['kid'] = self.uri
+
+    def _new_reg(self, contact=None, agreement=None, terms_agreed=False):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
-        created)
+        created).
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
         '''
         contact = [] if contact is None else contact
-
-        if self.uri is not None:
-            return True
 
         if self.version == 1:
             new_reg = {
                 'resource': 'new-reg',
                 'contact': contact
             }
-            if self.agreement:
-                new_reg['agreement'] = self.agreement
+            if agreement:
+                new_reg['agreement'] = agreement
             else:
                 new_reg['agreement'] = self.directory['meta']['terms-of-service']
             url = self.directory['new-reg']
@@ -787,20 +789,16 @@ class ACMEAccount(object):
             new_reg = {
                 'contact': contact
             }
-            if self.terms_agreed:
+            if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
             url = self.directory['newAccount']
 
         result, info = self.send_signed_request(url, new_reg)
         if 'location' in info:
-            self.uri = info['location']
-            if self.version != 1:
-                self.jws_header.pop('jwk')
-                self.jws_header['kid'] = self.uri
+            self.set_account_uri(info['location'])
 
         if info['status'] in [200, 201]:
             # Account did not exist
-            self.changed = True
             return True
         elif info['status'] == 409:
             # Account did exist
@@ -808,25 +806,32 @@ class ACMEAccount(object):
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
-    def init_account(self):
+    def init_account(self, contact, agreement=None, terms_agreed=False):
         '''
         Create or update an account on the ACME server. As the only way
         (without knowing an account URI) to test if an account exists
         is to try and create one with the provided account key, this
         method will always result in an account being present (except
         on error situations). If the account already exists, it will
-        update the contact information.
+        update the contact information. Return True in case something
+        changed (account was created, contact info updated).
         https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
         '''
 
-        contact = []
-        if self.email:
-            contact.append('mailto:' + self.email)
-
-        # if this is not a new registration (e.g. existing account)
-        if not self._new_reg(contact):
+        new_account = True
+        changed = False
+        if self.uri is not None:
+            new_account = False
+        else:
+            new_account = self._new_reg(contact, agreement=agreement, terms_agreed=terms_agreed)
+        if not new_account:
             # pre-existing account, get account data...
-            result, dummy = self.send_signed_request(self.uri, {'resource': 'reg'})
+            data = {}
+            if self.version == 1:
+                data['resource'] = 'reg'
+            result, info = self.send_signed_request(self.uri, data)
+            if info['status'] < 200 or info['status'] >= 300:
+                raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
 
             # ...and check if update is necessary
             do_update = False
@@ -841,6 +846,8 @@ class ACMEAccount(object):
                 upd_reg['contact'] = contact
                 result, dummy = self.send_signed_request(self.uri, upd_reg)
                 self.changed = True
+                changed = True
+        return new_account or changed
 
 
 class ACMEClient(object):
@@ -863,10 +870,20 @@ class ACMEClient(object):
         self.data = module.params['data']
         self.authorizations = None
         self.cert_days = -1
-        self.changed = self.account.changed
         self.order_uri = self.data.get('order_uri') if self.data else None
         self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
+        # Make sure account exists
+        contact = []
+        if module.params['account_email']:
+            contact.append('mailto:' + module.params['account_email'])
+        self.changed = self.account.init_account(
+            contact,
+            agreement=module.params.get('agreement'),
+            terms_agreed=module.params.get('terms_agreed')
+        )
+
+        # Extract list of domains from CSR
         if not os.path.exists(self.csr):
             raise ModuleFailException("CSR %s not found" % (self.csr))
 
