@@ -64,7 +64,52 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: present
+
+- name: Remove domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: absent
+
+- name: Query our domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+
+- name: Query all domain to VLAN pool bindings
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain_type: phys
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+'''
 
 RETURN = r'''
 current:

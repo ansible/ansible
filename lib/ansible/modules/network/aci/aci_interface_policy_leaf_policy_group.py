@@ -111,12 +111,13 @@ options:
 extends_documentation_fragment: aci
 '''
 
+# TODO: Add query examples
 EXAMPLES = r'''
-- name: creating a Port Channel (PC) Interface Policy Group
+- name: Create a Port Channel (PC) Interface Policy Group
   aci_interface_policy_leaf_policy_group:
     host: apic
-    username: yourusername
-    password: yourpassword
+    username: admin
+    password: SomeSecretPassword
     policy_group: policygroupname
     description: policygroupname description
     lag_type: link
@@ -124,33 +125,33 @@ EXAMPLES = r'''
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
 
-- name: creating a Virtual Port Channel (VPC) Interface Policy Group (no description)
+- name: Create a Virtual Port Channel (VPC) Interface Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
     host: apic
-    username: yourusername
-    password: yourpassword
+    username: admin
+    password: SomeSecretPassword
     policy_group: policygroupname
     lag_type: node
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
 
-- name: creating a Leaf Access Port Policy Group (no description)
+- name: Create a Leaf Access Port Policy Group (no description)
   aci_interface_policy_leaf_policy_group:
     host: apic
-    username: yourusername
-    password: yourpassword
+    username: admin
+    password: SomeSecretPassword
     policy_group: policygroupname
     lag_type: leaf
     link_level_policy: whateverlinklevelpolicy
     fibre_channel_interface_policy: whateverfcpolicy
     state: present
 
-- name: deleting an Interface policy Leaf Policy Group
+- name: Delete an Interface policy Leaf Policy Group
   aci_interface_policy_leaf_policy_group:
     host: apic
-    username: yourusername
-    password: yourpassword
+    username: admin
+    password: SomeSecretPassword
     policy_group: policygroupname
     lag_type: type_name
     state: absent

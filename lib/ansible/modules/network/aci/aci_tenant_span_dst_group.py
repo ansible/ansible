@@ -51,9 +51,9 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_tenant_span_dst_group:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     dst_group: '{{ dst_group }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'

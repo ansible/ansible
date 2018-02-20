@@ -56,14 +56,14 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - aci_tenant_span_src_group:
-    host:"{{ inventory_hostname }}"
-    username:"{{ username }}"
-    password:"{{ password }}"
-    tenant:"{{ tenant }}"
-    src_group:"{{ src_group }}"
-    dst_group:"{{ dst_group }}"
-    admin_state:"{{ admin_state }}"
-    description:"{{ description }}"
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    src_group: "{{ src_group }}"
+    dst_group: "{{ dst_group }}"
+    admin_state: "{{ admin_state }}"
+    description: "{{ description }}"
 '''
 
 RETURN = r'''

@@ -58,35 +58,35 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
-    url: foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
+    url: foo.bar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
     url_protocol: http
     state: present
 
 - name: Remove firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
     state: absent
 
-- name: Query all firmware sources
-  aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    state: query
-
 - name: Query a specific firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
+    state: query
+
+- name: Query all firmware sources
+  aci_firmware_source:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 '''
 
