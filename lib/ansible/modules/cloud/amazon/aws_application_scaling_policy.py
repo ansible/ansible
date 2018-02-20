@@ -139,7 +139,7 @@ alarms:
             description: The Amazon Resource Name (ARN) of the alarm
             returned: when state present
             type: string
-        alarm_name
+        alarm_name:
             description: The name of the alarm
             returned: when state present
             type: string
