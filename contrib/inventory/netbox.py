@@ -161,25 +161,34 @@ class NetboxAsInventory(object):
         if not api_url:
             sys.exit("Please check API URL in script configuration file.")
 
+        api_url_headers = {}
+        api_url_params = {}
+
         if api_token:
-            api_url_headers = {'Authorization': "Token %s" % api_token}
-        else:
-            api_url_headers = {}
+            api_url_headers.update({"Authorization": "Token %s" % api_token})
 
         if specific_host:
-            api_url_params = {"name": specific_host}
-        else:
-            api_url_params = {}
+            api_url_params.update({"name": specific_host})
+
+        hosts_list = []
+
+        # Pagination.
+        while api_url:
+            # Get hosts list.
+            api_output = requests.get(api_url, params=api_url_params, headers=api_url_headers)
+
+            # Check that a request is 200 and not something else like 404, 401, 500 ... etc.
+            api_output.raise_for_status()
+
+            # Get api output data.
+            api_output_data = api_output.json()
+
+            if isinstance(api_output_data, dict) and "results" in api_output_data:
+                hosts_list += api_output_data["results"]
+                api_url = api_output_data["next"]
 
         # Get hosts list.
-        hosts_list = requests.get(api_url, params=api_url_params, headers=api_url_headers)
-
-        # Check that a request is 200 and not something else like 404, 401, 500 ... etc.
-        hosts_list.raise_for_status()
-
-        # Get hosts list.
-        hosts_list_json = hosts_list.json()
-        return hosts_list_json
+        return hosts_list
 
     @staticmethod
     def add_host_to_group(server_name, group_value, inventory_dict):
@@ -325,8 +334,6 @@ class NetboxAsInventory(object):
 
         inventory_dict = dict()
         netbox_hosts_list = self.get_hosts_list(self.api_url, self.api_token, self.host)
-        if isinstance(netbox_hosts_list, dict) and "results" in netbox_hosts_list:
-            netbox_hosts_list = netbox_hosts_list["results"]
 
         if netbox_hosts_list:
             inventory_dict.update({"_meta": {"hostvars": {}}})
