@@ -163,7 +163,7 @@ step_scaling_policy_configuration:
     description: The step scaling policy.
     returned: when state present and the policy type is StepScaling
     type: complex
-target_tracking_scaling_policy_configuration
+target_tracking_scaling_policy_configuration:
     description: The target tracking policy.
     returned: when state present and the policy type is TargetTrackingScaling
     type: complex
@@ -182,7 +182,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
@@ -207,13 +207,16 @@ def merge_results(scalable_target_result, policy_result):
 
 def delete_scaling_policy(connection, module):
     changed = False
-    scaling_policy = connection.describe_scaling_policies(
-        ServiceNamespace=module.params.get('service_namespace'),
-        ResourceId=module.params.get('resource_id'),
-        ScalableDimension=module.params.get('scalable_dimension'),
-        PolicyNames=[module.params.get('policy_name')],
-        MaxResults=1
-    )
+    try:
+        scaling_policy = connection.describe_scaling_policies(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceId=module.params.get('resource_id'),
+            ScalableDimension=module.params.get('scalable_dimension'),
+            PolicyNames=[module.params.get('policy_name')],
+            MaxResults=1
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     if scaling_policy['ScalingPolicies']:
         try:
@@ -224,8 +227,8 @@ def delete_scaling_policy(connection, module):
                 PolicyName=module.params.get('policy_name'),
             )
             changed = True
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to delete scaling policy")
 
     return {"changed": changed}
 
@@ -233,22 +236,29 @@ def delete_scaling_policy(connection, module):
 def create_scalable_target(connection, module):
     changed = False
 
-    scalable_targets = connection.describe_scalable_targets(
-        ServiceNamespace=module.params.get('service_namespace'),
-        ResourceIds=[
-            module.params.get('resource_id'),
-        ],
-        ScalableDimension=module.params.get('scalable_dimension')
-    )
+    try:
+        scalable_targets = connection.describe_scalable_targets(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceIds=[
+                module.params.get('resource_id'),
+            ],
+            ScalableDimension=module.params.get('scalable_dimension')
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to describe scalable targets")
 
     # Scalable target registration will occur if:
     # 1. There is no scalable target registered for this service
     # 2. A scalable target exists, different min/max values are defined and override is set to "yes"
     if (
         not scalable_targets['ScalableTargets']
-        or (module.params.get('override_task_capacity')
-        and (scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
-        or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')))
+        or (
+            module.params.get('override_task_capacity')
+            and (
+                scalable_targets['ScalableTargets'][0]['MinCapacity'] != module.params.get('minimum_tasks')
+                or scalable_targets['ScalableTargets'][0]['MaxCapacity'] != module.params.get('maximum_tasks')
+            )
+        )
     ):
         changed = True
         try:
@@ -259,8 +269,8 @@ def create_scalable_target(connection, module):
                 MinCapacity=module.params.get('minimum_tasks'),
                 MaxCapacity=module.params.get('maximum_tasks')
             )
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to register scalable target")
 
     try:
         response = connection.describe_scalable_targets(
@@ -270,8 +280,8 @@ def create_scalable_target(connection, module):
             ],
             ScalableDimension=module.params.get('scalable_dimension')
         )
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scalable targets")
 
     if (response['ScalableTargets']):
         snaked_response = camel_dict_to_snake_dict(response['ScalableTargets'][0])
@@ -282,13 +292,16 @@ def create_scalable_target(connection, module):
 
 
 def create_scaling_policy(connection, module):
-    scaling_policy = connection.describe_scaling_policies(
-        ServiceNamespace=module.params.get('service_namespace'),
-        ResourceId=module.params.get('resource_id'),
-        ScalableDimension=module.params.get('scalable_dimension'),
-        PolicyNames=[module.params.get('policy_name')],
-        MaxResults=1
-    )
+    try:
+        scaling_policy = connection.describe_scaling_policies(
+            ServiceNamespace=module.params.get('service_namespace'),
+            ResourceId=module.params.get('resource_id'),
+            ScalableDimension=module.params.get('scalable_dimension'),
+            PolicyNames=[module.params.get('policy_name')],
+            MaxResults=1
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     changed = False
 
@@ -337,8 +350,8 @@ def create_scaling_policy(connection, module):
                     PolicyType=scaling_policy['PolicyType'],
                     TargetTrackingScalingPolicyConfiguration=scaling_policy['TargetTrackingScalingPolicyConfiguration']
                 )
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Failed to create scaling policy")
 
     try:
         response = connection.describe_scaling_policies(
@@ -348,8 +361,8 @@ def create_scaling_policy(connection, module):
             PolicyNames=[module.params.get('policy_name')],
             MaxResults=1
         )
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe scaling policies")
 
     if (response['ScalingPolicies']):
         snaked_response = camel_dict_to_snake_dict(response['ScalingPolicies'][0])
@@ -383,18 +396,18 @@ def main():
         override_task_capacity=dict(required=False, type=bool)
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+        module.fail_json_aws(msg='boto3 is required.')
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         if not region:
-            module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
+            module.fail_json_aws(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
         connection = boto3_conn(module, conn_type='client', resource='application-autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json(msg=str(e))
+        module.fail_json_aws(e, msg="AWS profile not found")
 
     # A scalable target must be registered prior to creating a scaling policy
     scalable_target_result = create_scalable_target(connection, module)
@@ -404,7 +417,8 @@ def main():
     else:
         policy_result = delete_scaling_policy(connection, module)
 
-    # return the scalable target result only if it has changed and there were no policy changes
+    # Merge the results of the scalable target creation and policy deletion/creation
+    # There's no risk in overriding values since mutual keys have the same values in our case
     merged_result = merge_results(scalable_target_result, policy_result)
     module.exit_json(**merged_result)
 
