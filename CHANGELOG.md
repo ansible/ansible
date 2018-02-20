@@ -71,6 +71,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/36124
 * Fix dependency in the deb package on Ubuntu-12.04:
   https://github.com/ansible/ansible/pull/36407
+* Fix WinRM Python 3 encoding when getting Kerberos ticket
+  (https://github.com/ansible/ansible/issues/36255)
 
 
 <a id="2.4.3"></a
