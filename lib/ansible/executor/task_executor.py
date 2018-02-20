@@ -332,7 +332,7 @@ class TaskExecutor:
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             if label is not None:
-                res['_ansible_item_label'] = templar.template(label)
+                res['_ansible_item_label'] = templar.template(label, cache=False)
 
             self._rslt_q.put(
                 TaskResult(
