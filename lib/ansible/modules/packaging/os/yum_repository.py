@@ -124,7 +124,7 @@ options:
   gpgcheck:
     required: false
     choices: ['yes', 'no']
-    default: 'no'
+    default: null
     description:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
