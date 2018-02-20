@@ -128,6 +128,8 @@ options:
     description:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
+      - Doesn't add anything to config, by default, which implies fallback
+        to global default in /etc/yum.conf
   gpgkey:
     required: false
     default: null
