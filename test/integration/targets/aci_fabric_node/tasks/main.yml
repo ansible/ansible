@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Bruno Calogero <brunocalogero@hotmail.com>
+# Copyright: (c) 2017, Bruno Calogero <brunocalogero@hotmail.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -56,7 +56,8 @@
   assert:
     that:
     - cm_add_fabric_node.changed == nm_add_fabric_node.changed == true
-    - cm_add_fabric_node_again.changed == nm_add_fabric_node_again.changed == false # change error
+    # FIXME: Module is not idempotent
+    - cm_add_fabric_node_again.changed == nm_add_fabric_node_again.changed == false
 
 
 # CHANGE FABRIC NODE
@@ -90,7 +91,8 @@
   assert:
     that:
     - cm_add_fabric_node_descr.changed == nm_add_fabric_node_descr.changed == true
-    - cm_add_fabric_node_descr_again.changed == nm_add_fabric_node_descr_again.changed == false # change error
+    # FIXME: Module is not idempotent
+    - cm_add_fabric_node_descr_again.changed == nm_add_fabric_node_descr_again.changed == false
 
 
 # ADD FABRIC NODE AGAIN
@@ -106,7 +108,8 @@
 - name: Verify add_fabric_node_again_no_descr
   assert:
     that:
-    - cm_add_fabric_node_again_no_descr.changed == nm_add_fabric_node_again_no_descr.changed == false # change error
+    # FIXME: Module is not idempotent
+    - cm_add_fabric_node_again_no_descr.changed == nm_add_fabric_node_again_no_descr.changed == false
 
 
 # QUERY ALL FABRIC NODES
