@@ -993,14 +993,15 @@ def handle_elastigroup(client, module):
 
         elif state == 'absent':
             try:
-                stateful_dealloc_request = expand_fields(stateful_deallocation_fields, module.params,
+                dealloc_req = expand_fields(stateful_deallocation_fields, module.params,
                                                          'StatefulDeallocation')
-                if (stateful_dealloc_request.should_delete_network_interfaces is True or
-                            stateful_dealloc_request.should_delete_images is True or
-                            stateful_dealloc_request.should_delete_volumes is True or
-                            stateful_dealloc_request.should_delete_snapshots is True):
+                if (dealloc_req.should_delete_network_interfaces is True or
+                    dealloc_req.should_delete_images is True or
+                    dealloc_req.should_delete_volumes is True or
+                        dealloc_req.should_delete_snapshots is True):
+
                     client.delete_elastigroup_with_deallocation(group_id=group_id,
-                                                                stateful_deallocation=stateful_dealloc_request)
+                                                                stateful_deallocation=dealloc_req)
                 else:
                     client.delete_elastigroup(group_id=group_id)
             except SpotinstClientException as exc:
