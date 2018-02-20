@@ -131,9 +131,18 @@ EXAMPLES = '''
 
 RETURN = '''
 alarms:
-    description: The CloudWatch alarms associated with the scaling policy
+    description: List of the CloudWatch alarms associated with the scaling policy
     returned: when state present
-    type: list of complex
+    type: complex
+    contains:
+        alarm_arn:
+            description: The Amazon Resource Name (ARN) of the alarm
+            returned: when state present
+            type: string
+        alarm_name
+            description: The name of the alarm
+            returned: when state present
+            type: string
 service_namespace:
     description: The namespace of the AWS service.
     returned: when state present
