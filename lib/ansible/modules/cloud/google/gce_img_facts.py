@@ -19,11 +19,11 @@ short_description: Collect GCE image facts
 description:
      - Collect facts about Google Compute Engine (GCE) images.
 options:
-  filter:
+  filters:
     description:
       - Filter to apply on image selection.
-        Python patterns can be used with filter options.
-      - Below filter options are available.
+        Python patterns can be used with filters options.
+      - Below filters options are available.
       - "   archiveSizeBytes=> Archived image size in bytes."
       - "   creationTimestamp=> Image creation timestamp."
       - "   description=> Desciption."
@@ -37,7 +37,7 @@ options:
       - "   sourceType=> Type of source disk."
       - "   status=> Status of image."
     required: false
-    default: {}
+    default: None
   project_id:
     description:
       - your GCE project ID
@@ -70,23 +70,23 @@ EXAMPLES = '''
     credentials_file: "/path/to/your-key.json"
     project_id: "your-project-name"
 
-# Collect the facts for GCE images with filter as below
+# Collect the facts for GCE images with filters as below
 # Image created in Jan 2018 (creationTimestamp)
 # Image having description x86_64 (description)
 # Image with boot disk size between 10-19 (diskSizeGb)
 # Image with self link having projects/centos-cloud (selfLink)
 - name: Collect gce facts for multiple instances with base_name.
   gce_img_facts:
-    filter:
+    filters:
       "creationTimestamp": "^2018-01.*"
       "description": "x86_64"
-      "diskSizeGb": "1\\d"
+      "diskSizeGb": "1[0-9]"
       "selfLink": "projects/centos-cloud"
     service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
     credentials_file: "/path/to/your-key.json"
     project_id: "your-project-name"
 
-# Collect the facts for GCE images with filter as below
+# Collect the facts for GCE images with filters as below
 # Image with source type as RAW (sourceType)
 # Image with READY status (status)
 # Image with centos or rhel family (family)
@@ -94,7 +94,7 @@ EXAMPLES = '''
 #   29th Jan 2018. (name)
 - name: Collect gce facts for list of instances with instance_names.
   gce_img_facts:
-    filter:
+    filters:
       "sourceType": "^RAW$"
       "status": "^READY$"
       "family": "centos.*|rhel.*"
@@ -114,10 +114,10 @@ EXAMPLES = '''
   tasks:
     - name: Collect instance facts
       gce_img_facts:
-        filter:
+        filters:
           "creationTimestamp": "^2018-01.*"
           "description": "x86_64"
-          "diskSizeGb": "1\\d"
+          "diskSizeGb": "1[0-9]"
           "selfLink": "projects/centos-cloud"
           "sourceType": "^RAW$"
           "status": "^READY$"
@@ -143,7 +143,7 @@ creationTimestamp:
     description: Image creation timestamp.
     returned: always
     type: string
-    sample: 2017-11-23T22:00:48.225-08:00
+    sample: "2017-11-23T22:00:48.225-08:00"
 description:
     description: Description of the image.
     returned: always
@@ -168,7 +168,7 @@ licenses:
     description: Image license details.
     returned: always
     type: list of dict
-    sample: [{"charges_use_fee": true, "id": "centos-7", "name": "centos-7"}]
+    sample: """[{"charges_use_fee": true, "id": "centos-7", "name": "centos-7"}]"""
 name:
     description: Name of the image.
     returned: always
@@ -230,7 +230,7 @@ def _get_image_info(module, images, image_filter=None):
     images: Object containing list of image objects.
     image_filter: Dictionary of filters to select images
 
-    Returns a list of dictionary matched as pesr image_filter,
+    Returns a list of dictionary matched as per image_filter,
     Each dictionary contains facts about one image.
     """
 
@@ -277,13 +277,13 @@ def _get_image_info(module, images, image_filter=None):
                 pattern = re.compile(image_filter[filt])
                 image_list = list(filter(
                     lambda item: (
-                        (isinstance(item[filt], (str, unicode))) and
+                        (isinstance(str(item[filt]), str)) and
                         (pattern.search(item[filt]))
                     ), image_list))
         else:
             module.fail_json(
                 msg='Invalid image_filter option given.' +
-                ' Supported filter options are : ' +
+                ' Supported filters options are : ' +
                 ','.join(valid_filter_options))
     return image_list
 
@@ -311,7 +311,7 @@ def image_info(module, gce, image_filter=None):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            filters=dict(type='dict', default={}),
+            filters=dict(type='dict', default=None),
             service_account_email=dict(),
             credentials_file=dict(type='path'),
             project_id=dict(),
