@@ -54,7 +54,44 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add AEP to domain binding
+  aci_aep_to_domain: &binding_present
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: present
+
+- name: Remove AEP to domain binding
+  aci_aep_to_domain: &binding_absent
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: absent
+
+- name: Query our AEP to domain binding
+  aci_aep_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: query
+
+- name: Query all AEP to domain bindings
+  aci_aep_to_domain: &binding_query
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+'''
 
 RETURN = r'''
 current:

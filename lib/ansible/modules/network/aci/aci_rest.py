@@ -65,8 +65,8 @@ notes:
 EXAMPLES = r'''
 - name: Add a tenant using certifcate authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
@@ -75,8 +75,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using inline YAML
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -90,8 +90,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using a JSON string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -109,8 +109,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using an XML string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/{{ aci_username}}.key
     validate_certs: no
     path: /api/mo/uni.xml
@@ -120,17 +120,17 @@ EXAMPLES = r'''
 
 - name: Get tenants using password authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
 
 - name: Configure contracts
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
@@ -139,8 +139,8 @@ EXAMPLES = r'''
 
 - name: Register leaves and spines
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     method: post
@@ -155,8 +155,8 @@ EXAMPLES = r'''
 
 - name: Wait for all controllers to become ready
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
