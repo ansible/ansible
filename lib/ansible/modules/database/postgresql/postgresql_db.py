@@ -425,7 +425,7 @@ def main():
         target = "{0}/{1}.sql".format(os.getcwd(), db)
         target = os.path.expanduser(target)
 
-    if not state in ["dump", "restore"]:
+    if state not in ["dump", "restore"]:
         if not HAS_PSYCOPG2:
             module.fail_json(msg="the python psycopg2 module is required KAPOUE")
         try:
