@@ -205,11 +205,15 @@ def diff_config(commands, config):
 
 def sanitize_config(config, result):
     result['filtered'] = list()
+    index_to_filter = list()
     for regex in CONFIG_FILTERS:
         for index, line in enumerate(list(config)):
             if regex.search(line):
                 result['filtered'].append(line)
-                del config[index]
+                index_to_filter.append(index)
+    # Delete all filtered configs
+    for filter_index in sorted(index_to_filter, reverse=True):
+        del config[filter_index]
 
 
 def run(module, result):
