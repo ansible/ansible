@@ -49,9 +49,9 @@ extends_documentation_fragment: aci
 # FIXME: Add more, better examples
 EXAMPLES = r'''
 - aci_tenant_action_rule_profile:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     action_rule: '{{ action_rule }}'
     description: '{{ descr }}'
     tenant: '{{ tenant }}'

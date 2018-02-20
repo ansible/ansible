@@ -67,7 +67,51 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: present
+
+- name: Remove an existing contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: absent
+
+- name: Query a specific contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: query
+
+- name: Query all provider contract to EPG bindings
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    contract_type: provider
+    state: query
+'''
 
 RETURN = r'''
 current:
