@@ -486,7 +486,6 @@ def main():
     except botocore.exceptions.ProfileNotFound as e:
         module.fail_json_aws(e, msg="AWS profile not found")
 
-
     if module.params.get("state") == 'present':
         # A scalable target must be registered prior to creating a scaling policy
         scalable_target_result = create_scalable_target(connection, module)
