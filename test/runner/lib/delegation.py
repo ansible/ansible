@@ -367,6 +367,7 @@ def filter_options(args, argv, options, exclude, require):
 
     options['--requirements'] = 0
     options['--truncate'] = 1
+    options['--redact'] = 0
 
     if isinstance(args, TestConfig):
         options.update({
@@ -418,3 +419,6 @@ def filter_options(args, argv, options, exclude, require):
 
     yield '--truncate'
     yield '%d' % args.truncate
+
+    if args.redact:
+        yield '--redact'
