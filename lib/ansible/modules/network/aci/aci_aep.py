@@ -70,19 +70,19 @@ EXAMPLES = r'''
     aep: ACI-AEP
     state: absent
 
-- name: Query an AEP
-  aci_aep:
-    host: apic
-    username: admin
-    password: SomeSecretPassword
-    aep: ACI-AEP
-    state: query
-
 - name: Query all AEPs
   aci_aep:
     host: apic
     username: admin
     password: SomeSecretPassword
+    state: query
+
+- name: Query a specific AEP
+  aci_aep:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: ACI-AEP
     state: query
 '''
 
