@@ -172,14 +172,15 @@ def search_obj_in_list(vlan_id, lst):
 
 
 def get_diff(w, have):
-    del w['interfaces']
-    del w['associated_interfaces']
-    del w['name']
+    c = deepcopy(w)
+    del c['interfaces']
+    del c['name']
+    del c['associated_interfaces']
     for o in have:
         del o['interfaces']
         del o['name']
         if o['vlan_id'] == w['vlan_id']:
-            diff_dict = dict(set(w.items()) - set(o.items()))
+            diff_dict = dict(set(c.items()) - set(o.items()))
             return diff_dict
 
 
