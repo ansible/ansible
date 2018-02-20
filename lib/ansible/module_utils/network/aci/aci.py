@@ -748,7 +748,7 @@ class ACIModule(object):
         """
         update_config = {child_class: {'attributes': {}}}
         for key, value in proposed_child.items():
-            existing_field = existing_config.get(key)
+            existing_field = existing_child.get(key)
             if value != existing_field:
                 update_config[child_class]['attributes'][key] = value
 
