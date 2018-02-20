@@ -1,5 +1,5 @@
 ---
-- name: ensure vxlan pool does not exist for tests to kick off
+- name: ensure vxlan pool anstest does not exist for tests to kick off
   aci_encap_pool: &aci_vxlan_absent
     host: "{{ aci_hostname }}"
     username: "{{ aci_username }}"
@@ -11,6 +11,16 @@
     state: absent
     pool: anstest
     pool_type: vxlan
+
+- name: ensure vxlan pool anstest_2 does not exist for tests to kick off
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+    pool: anstest_2
+
+- name: ensure vxlan pool anstest_3 does not exist for tests to kick off
+  aci_encap_pool:
+    <<: *aci_vxlan_absent
+    pool: anstest_3
 
 - name: create vxlan pool - check mode works
   aci_encap_pool: &aci_vxlan_present
@@ -85,7 +95,7 @@
   assert:
     that:
       - create_vxlan_alloc_mode.failed == true
-      - 'create_vxlan_alloc_mode.msg == "vxlan pools do not support setting the pool_allocation_mode; please remove this parameter from the task"'
+      - "create_vxlan_alloc_mode.msg == 'vxlan pools do not support setting the \\'pool_allocation_mode\\'; please remove this parameter from the task'"
 
 - name: get vxlan pool - get object works
   aci_encap_pool: &aci_vxlan_query
