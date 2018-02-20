@@ -37,7 +37,6 @@ options:
     description:
     - The vPC domain policy to be associated with the Explicit vPC Protection Group.
     aliases: [ vpc_domain_policy_name ]
-    required: no
   switch_1_id:
     description:
     - The ID of the first Leaf Switch for the Explicit vPC Protection Group.
@@ -219,9 +218,9 @@ def main():
             aci_class='fabricExplicitGEp',
             aci_rn='fabric/protpol/expgep-{0}'.format(protection_group),
             filter_target='eq(fabricExplicitGEp.name, "{0}")'.format(protection_group),
-            module_object=protection_group
+            module_object=protection_group,
         ),
-        child_classes=['fabricNodePEp', 'fabricNodePEp', 'fabricRsVpcInstPol']
+        child_classes=['fabricNodePEp', 'fabricNodePEp', 'fabricRsVpcInstPol'],
     )
 
     aci.get_existing()
@@ -231,7 +230,6 @@ def main():
         aci.payload(
             aci_class='fabricExplicitGEp',
             class_config=dict(
-                dn='uni/fabric/protpol/expgep-{0}'.format(protection_group),
                 name=protection_group,
                 id=protection_group_id,
                 rn='expgep-{0}'.format(protection_group),
@@ -240,29 +238,27 @@ def main():
                 dict(
                     fabricNodePEp=dict(
                         attributes=dict(
-                            dn='uni/fabric/protpol/expgep-{0}/nodepep-{1}'.format(protection_group, switch_1_id),
                             id='{0}'.format(switch_1_id),
                             rn='nodepep-{0}'.format(switch_1_id),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 dict(
                     fabricNodePEp=dict(
                         attributes=dict(
-                            dn='uni/fabric/protpol/expgep-{0}/nodepep-{1}'.format(protection_group, switch_2_id),
                             id='{0}'.format(switch_2_id),
                             rn='nodepep-{0}'.format(switch_2_id),
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 dict(
                     fabricRsVpcInstPol=dict(
                         attributes=dict(
                             tnVpcInstPolName=vpc_domain_policy,
-                        )
-                    )
+                        ),
+                    ),
                 ),
-            ]
+            ],
         )
 
         # Generate config diff which will be used as POST request body
