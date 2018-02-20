@@ -196,8 +196,9 @@ class Connection(ConnectionBase):
         display.vvvvv("calling kinit for principal %s" % principal)
         p = subprocess.Popen(kinit_cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=krbenv)
 
-        # TODO: unicode/py3
-        stdout, stderr = p.communicate(password + b'\n')
+        b_password = to_bytes(password, encoding='utf-8',
+                              errors='surrogate_or_strict')
+        stdout, stderr = p.communicate(b_password + b'\n')
 
         if p.returncode != 0:
             raise AnsibleConnectionFailure("Kerberos auth failure: %s" % stderr.strip())
