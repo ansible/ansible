@@ -486,18 +486,18 @@ def main():
     except botocore.exceptions.ProfileNotFound as e:
         module.fail_json_aws(e, msg="AWS profile not found")
 
-    # A scalable target must be registered prior to creating a scaling policy
-    scalable_target_result = create_scalable_target(connection, module)
 
     if module.params.get("state") == 'present':
+        # A scalable target must be registered prior to creating a scaling policy
+        scalable_target_result = create_scalable_target(connection, module)
         policy_result = create_scaling_policy(connection, module)
+        # Merge the results of the scalable target creation and policy deletion/creation
+        # There's no risk in overriding values since mutual keys have the same values in our case
+        merged_result = merge_results(scalable_target_result, policy_result)
+        module.exit_json(**merged_result)
     else:
         policy_result = delete_scaling_policy(connection, module)
-
-    # Merge the results of the scalable target creation and policy deletion/creation
-    # There's no risk in overriding values since mutual keys have the same values in our case
-    merged_result = merge_results(scalable_target_result, policy_result)
-    module.exit_json(**merged_result)
+        module.exit_json(**policy_result)
 
 
 if __name__ == '__main__':
