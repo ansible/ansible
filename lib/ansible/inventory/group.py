@@ -148,7 +148,6 @@ class Group:
     def clear_ancestors_cache(self):
         self._ancestors_cache = None
 
-
     def clear_hosts_cache(self):
 
         self._hosts_cache = None
