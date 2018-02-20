@@ -44,8 +44,8 @@ EXAMPLES = r'''
 - name: creating a Leaf Profile with description
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     description: sw_description
     state: present
@@ -53,16 +53,16 @@ EXAMPLES = r'''
 - name: Deleting a Leaf Profile
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     state: absent
 
 - name: Query a Leaf Profile
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     state: query
 '''

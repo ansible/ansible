@@ -62,15 +62,50 @@ extends_documentation_fragment: aci
 
 # FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_subject_filter_binding:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    tenant: '{{ tenant }}'
-    contract: '{{ contract }}'
-    subject: '{{ subject }}'
+- name: Add a new contract subject to filer binding
+  aci_subject_filter_binding:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
     filter: '{{ filter }}'
     log: '{{ log }}'
+    state: present
+
+- name: Remove an existing contract subject to filter binding
+  aci_subject_filter_binding:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    filter: '{{ filter }}'
+    log: '{{ log }}'
+    state: present
+
+- name: Query a specific contract subject to filter binding
+  aci_subject_filter_binding:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    filter: '{{ filter }}'
+    state: query
+
+- name: Query all contract subject to filter bindings
+  aci_subject_filter_binding:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    state: query
 '''
 
 RETURN = r'''

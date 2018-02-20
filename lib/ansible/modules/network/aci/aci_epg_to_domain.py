@@ -103,7 +103,50 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: present
+
+- name: Remove an existing physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: absent
+
+- name: Query a specific physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: query
+
+- name: Query all domain to EPG bindings
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+'''
 
 RETURN = r'''
 current:

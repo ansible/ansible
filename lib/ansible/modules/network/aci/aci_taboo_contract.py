@@ -58,34 +58,34 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
 
 - name: Remove taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
 
 - name: Query all taboo contracts
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 
 - name: Query a specific taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: query

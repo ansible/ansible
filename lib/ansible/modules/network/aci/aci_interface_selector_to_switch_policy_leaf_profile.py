@@ -48,8 +48,8 @@ EXAMPLES = r'''
 - name: Associating an interface selector profile to a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: present
@@ -57,8 +57,8 @@ EXAMPLES = r'''
 - name: Remove an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: absent
@@ -66,8 +66,8 @@ EXAMPLES = r'''
 - name: Query an interface selector profile associated with a switch policy leaf profile
   aci_interface_selector_to_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     interface_selector: interface_profile_name
     state: query

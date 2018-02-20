@@ -97,9 +97,9 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     state: preview
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
     compare_export_policy: config_backup
-    compare_snapshot: 'run-2017-08-27T23-43-56'
+    compare_snapshot: run-2017-08-27T23-43-56
 
 - name: Rollback Configuration
   aci_config_rollback:
@@ -109,7 +109,7 @@ EXAMPLES = r'''
     state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
 
 - name: Rollback Configuration
   aci_config_rollback:
@@ -119,8 +119,8 @@ EXAMPLES = r'''
     state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
-    description: 'Rollback 8-27 changes'
+    snapshot: run-2017-08-28T06-24-01
+    description: Rollback 8-27 changes
     import_mode: atomic
     import_type: replace
     fail_on_decrypt: yes
