@@ -311,7 +311,7 @@ options:
         In case of update it will override the existing Security Group with the new given array
     required: true
 
-  shutdown_script:
+  shut_down_script:
     description:
       - (String) The Base64-encoded shutdown script that executes prior to instance termination.
         Encode before setting.
@@ -338,6 +338,22 @@ options:
       - absent
     description:
       - (String) create or delete the elastigroup
+
+  stateful_deallocation_should_delete_network_interfaces:
+    description:
+      - (Boolean) Enable deletion of network interfaces on stateful group deletion
+
+  stateful_deallocation_should_delete_snapshots:
+    description:
+      - (Boolean) Enable deletion of snapshots on stateful group deletion
+
+  stateful_deallocation_should_delete_images:
+    description:
+      - (Boolean) Enable deletion of images on stateful group deletion
+
+  stateful_deallocation_should_delete_volumes:
+    description:
+      - (Boolean) Enable deletion of volumes on stateful group deletion
 
   tags:
     description:
@@ -628,6 +644,7 @@ EXAMPLES = '''
             - sg-8f4b8fe9
           spot_instance_types:
             - c3.large
+          state: absent
           do_not_update:
             - image_id
             - target
@@ -743,6 +760,8 @@ group_id:
     sample: "sig-12345"
 
 '''
+
+version = '1.0.2'
 
 HAS_SPOTINST_SDK = False
 __metaclass__ = type
@@ -894,6 +913,15 @@ az_fields = ('name',
              'subnet_id',
              'placement_group_name')
 
+stateful_deallocation_fields = (dict(ansible_field_name='stateful_deallocation_should_delete_images',
+                                     spotinst_field_name='should_delete_images'),
+                                dict(ansible_field_name='stateful_deallocation_should_delete_snapshots',
+                                     spotinst_field_name='should_delete_snapshots'),
+                                dict(ansible_field_name='stateful_deallocation_should_delete_network_interfaces',
+                                     spotinst_field_name='should_delete_network_interfaces'),
+                                dict(ansible_field_name='stateful_deallocation_should_delete_volumes',
+                                     spotinst_field_name='should_delete_volumes'))
+
 opsworks_fields = ('layer_id',)
 
 scaling_strategy_fields = ('terminate_at_end_of_billing_hour',)
@@ -961,7 +989,16 @@ def handle_elastigroup(client, module):
 
         elif state == 'absent':
             try:
-                client.delete_elastigroup(group_id=group_id)
+                stateful_dealloc_request = expand_fields(stateful_deallocation_fields, module.params,
+                                                         'StatefulDeallocation')
+                if stateful_dealloc_request.should_delete_network_interfaces is True or \
+                                stateful_dealloc_request.should_delete_images is True or \
+                                stateful_dealloc_request.should_delete_volumes is True or \
+                                stateful_dealloc_request.should_delete_snapshots is True:
+                    client.delete_elastigroup_with_deallocation(group_id=group_id,
+                                                                stateful_deallocation=stateful_dealloc_request)
+                else:
+                    client.delete_elastigroup(group_id=group_id)
             except SpotinstClientException as exc:
                 if "GROUP_DOESNT_EXIST" in exc.message:
                     pass
@@ -1255,6 +1292,10 @@ def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
                 if target_arn is not None:
                     eg_elb.arn = target_arn
                     eg_elb.type = 'TARGET_GROUP'
+                    split_arn = target_arn.split("/")
+                    target_group_name = split_arn[-2]
+                    eg_elb.name = target_group_name
+
                     eg_total_lbs.append(eg_elb)
 
         if len(eg_total_lbs) > 0:
@@ -1441,6 +1482,10 @@ def main():
         spin_up_time=dict(type='int'),
         spot_instance_types=dict(type='list', required=True),
         state=dict(default='present', choices=['present', 'absent']),
+        stateful_deallocation_should_delete_images=dict(type='bool'),
+        stateful_deallocation_should_delete_network_interfaces=dict(type='bool'),
+        stateful_deallocation_should_delete_snapshots=dict(type='bool'),
+        stateful_deallocation_should_delete_volumes=dict(type='bool'),
         tags=dict(type='list'),
         target=dict(type='int', required=True),
         target_group_arns=dict(type='list'),
@@ -1490,10 +1535,18 @@ def main():
     if not account:
         account = creds_file_loaded_vars.get("account")
 
-    client = spotinst.SpotinstClient(auth_token=token, print_output=False)
+    spotinst_user_agent = '{}/{}'.format('spotinst-ansible', version)
+
+    client = spotinst.SpotinstClient(auth_token=token,
+                                     print_output=False,
+                                     account_id=None,
+                                     user_agent=spotinst_user_agent)
 
     if account is not None:
-        client = spotinst.SpotinstClient(auth_token=token, print_output=False, account_id=account)
+        client = spotinst.SpotinstClient(auth_token=token,
+                                         print_output=False,
+                                         account_id=account,
+                                         user_agent=spotinst_user_agent)
 
     group_id, message, has_changed = handle_elastigroup(client=client, module=module)
 
