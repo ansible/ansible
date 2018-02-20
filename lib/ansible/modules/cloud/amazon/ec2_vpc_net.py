@@ -227,7 +227,10 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         if tags != current_tags:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags)
-                connection.create_tags(Resources=[vpc_id], Tags=tags)
+                vpc_obj = AWSRetry.backoff(
+                    delay=1, tries=5,
+                    catch_extra_error_codes=['InvalidVpcID.NotFound'],
+                )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
             return True
         else:
             return False
