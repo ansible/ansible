@@ -117,7 +117,7 @@
     that:
     - error_on_input_validation.failed == true
     - error_on_input_validation.method == 'POST'
-    - "error_on_input_validation.msg == 'APIC Error 801: property descr of uni/tn-ansible_test failed validation for value \\'This is an [invalid] description\\''"
+    - "error_on_input_validation.msg == 'APIC Error 801: property descr of tn-ansible_test failed validation for value \\'This is an [invalid] description\\''"
     - 'error_on_input_validation.response == "HTTP Error 400: Bad Request"'
     - error_on_input_validation.status == 400
     - "'current' not in error_on_input_validation"
