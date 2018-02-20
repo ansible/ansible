@@ -79,26 +79,44 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create scaling policy for ECS Service
+# Create step scaling policy for ECS Service
 - name: scaling_policy
   aws_application_scaling_policy:
-  state: present
-  policy_name: test_policy
-  service_namespace: ecs
-  resource_id: service/poc-pricing/test-as
-  scalable_dimension: ecs:service:DesiredCount
-  policy_type: StepScaling
-  minimum_tasks: 1
-  maximum_tasks: 6
-  step_scaling_policy_configuration:
-    AdjustmentType: ChangeInCapacity
-    StepAdjustments:
-      - MetricIntervalUpperBound: 123
-        ScalingAdjustment: 2
-      - MetricIntervalLowerBound: 123
-        ScalingAdjustment: -2
-    Cooldown: 123
-    MetricAggregationType: Average
+    state: present
+    policy_name: test_policy
+    service_namespace: ecs
+    resource_id: service/poc-pricing/test-as
+    scalable_dimension: ecs:service:DesiredCount
+    policy_type: StepScaling
+    minimum_tasks: 1
+    maximum_tasks: 6
+    step_scaling_policy_configuration:
+      AdjustmentType: ChangeInCapacity
+      StepAdjustments:
+        - MetricIntervalUpperBound: 123
+          ScalingAdjustment: 2
+        - MetricIntervalLowerBound: 123
+          ScalingAdjustment: -2
+      Cooldown: 123
+      MetricAggregationType: Average
+
+# Create target tracking scaling policy for ECS Service
+- name: scaling_policy
+  aws_application_scaling_policy:
+    state: present
+    policy_name: test_policy
+    service_namespace: ecs
+    resource_id: service/poc-pricing/test-as
+    scalable_dimension: ecs:service:DesiredCount
+    policy_type: TargetTrackingScaling
+    minimum_tasks: 1
+    maximum_tasks: 6
+    target_tracking_scaling_policy_configuration:
+      TargetValue: 60
+      PredefinedMetricSpecification:
+        PredefinedMetricType: ECSServiceAverageCPUUtilization
+      ScaleOutCooldown: 60
+      ScaleInCooldown: 60
 
 # Remove scalable target for ECS Service
 - name: scaling_policy
@@ -116,7 +134,6 @@ alarms:
     description: The CloudWatch alarms associated with the scaling policy
     returned: when state present
     type: list of complex
-    sample: ecs
 service_namespace:
     description: The namespace of the AWS service.
     returned: when state present
@@ -163,10 +180,61 @@ step_scaling_policy_configuration:
     description: The step scaling policy.
     returned: when state present and the policy type is StepScaling
     type: complex
+    contains:
+        adjustment_type:
+            description: The adjustment type
+            returned: when state present and the policy type is StepScaling
+            type: string
+            sample: "ChangeInCapacity, PercentChangeInCapacity, ExactCapacity"
+        cooldown:
+            description: The amount of time, in seconds, after a scaling activity completes 
+                where previous trigger-related scaling activities can influence future scaling events
+            returned: when state present and the policy type is StepScaling
+            type: int
+            sample: 60
+        metric_aggregation_type:
+            description: The aggregation type for the CloudWatch metrics
+            returned: when state present and the policy type is StepScaling
+            type: string
+            sample: "Average, Minimum, Maximum"
+        step_adjustments:
+            description: A set of adjustments that enable you to scale based on the size of the alarm breach
+            returned: when state present and the policy type is StepScaling
+            type: list of complex
 target_tracking_scaling_policy_configuration:
     description: The target tracking policy.
     returned: when state present and the policy type is TargetTrackingScaling
     type: complex
+    contains:
+        predefined_metric_specification:
+            description: A predefined metric
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: complex
+            contains:
+                predefined_metric_type:
+                    description: The metric type
+                    returned: when state present and the policy type is TargetTrackingScaling
+                    type: string
+                    sample: "ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization"
+                resource_label:
+                    description: Identifies the resource associated with the metric type
+                    returned: when metric type is ALBRequestCountPerTarget
+                    type: string
+        scale_in_cooldown:
+            description: The amount of time, in seconds, after a scale in activity completes before another scale in activity can start
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 60
+        scale_out_cooldown:
+            description: The amount of time, in seconds, after a scale out activity completes before another scale out activity can start
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 60
+        target_value:
+            description: The target value for the metric
+            returned: when state present and the policy type is TargetTrackingScaling
+            type: int
+            sample: 70
 creation_time:
     description: The Unix timestamp for when the scalable target was created.
     returned: when state present
