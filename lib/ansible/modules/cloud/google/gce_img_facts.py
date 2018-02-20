@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2013 Google Inc.
+# Copyright 2018 Google Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -21,20 +21,21 @@ description:
 options:
   filter:
     description:
-      - Filter to apply on image selection. Below filter options are available.
-      -     archiveSizeBytes: Archived image size in bytes.
-      -     creationTimestamp: Image creation timestamp.
-      -     description: Desciption.
-      -     diskSizeGb: Boot disk size in Gb.
-      -     family: Image family.
-      -     id: Image id.
-      -     name: Image name.
-      -     selfLink: Image self link.
-      -     sourceDisk: Source disk of image.
-      -     sourceDiskId: Id of source disk of image.
-      -     sourceType: Type of source disk.
-      -     status: Status of image.
-      - Python patterns can be used with above filter options.
+      - Filter to apply on image selection.
+        Python patterns can be used with filter options.
+      - Below filter options are available.
+      - "   archiveSizeBytes=> Archived image size in bytes."
+      - "   creationTimestamp=> Image creation timestamp."
+      - "   description=> Desciption."
+      - "   diskSizeGb=> Boot disk size in Gb."
+      - "   family=> Image family."
+      - "   id=> Image id."
+      - "   name=> Image name."
+      - "   selfLink=> Image self link."
+      - "   sourceDisk=> Source disk of image."
+      - "   sourceDiskId=> Id of source disk of image."
+      - "   sourceType=> Type of source disk."
+      - "   status=> Status of image."
     required: false
     default: {}
   project_id:
@@ -207,18 +208,23 @@ status:
 
 try:
     import libcloud
-    import re
     from libcloud.compute.types import Provider
     gce_provider = Provider.GCE
     HAS_LIBCLOUD = True
 except ImportError:
     HAS_LIBCLOUD = False
 
+try:
+    import re
+    HAS_RE = True
+except ImportError:
+    HAS_RE = False
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect, unexpected_error_msg
 
 
-def _get_image_info(images, image_filter={}):
+def _get_image_info(module, images, image_filter=None):
     """Retrieves image facts of all image objects from the list of images
 
     images: Object containing list of image objects.
@@ -271,7 +277,7 @@ def _get_image_info(images, image_filter={}):
                 pattern = re.compile(image_filter[filt])
                 image_list = list(filter(
                     lambda item: (
-                        (isinstance(item[filt], basestring)) and
+                        (isinstance(item[filt], (str, unicode))) and
                         (pattern.search(item[filt]))
                     ), image_list))
         else:
@@ -282,7 +288,7 @@ def _get_image_info(images, image_filter={}):
     return image_list
 
 
-def image_info(module, gce, image_filter={}):
+def image_info(module, gce, image_filter=None):
     """Collects the information of a list of images.
 
     module: Ansible module object
@@ -299,7 +305,7 @@ def image_info(module, gce, image_filter={}):
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
-    return (changed, _get_image_info(images, image_filter))
+    return (changed, _get_image_info(module, images, image_filter))
 
 
 def main():
@@ -315,6 +321,9 @@ def main():
     if not HAS_LIBCLOUD:
         module.fail_json(msg='libcloud with GCE support \
             (0.17.0+) required for this module')
+    if not HAS_RE:
+        module.fail_json(msg='Python re package support \
+            required for this module')
 
     gce = gce_connect(module)
     changed = False
