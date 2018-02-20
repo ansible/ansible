@@ -86,6 +86,7 @@ See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/portin
 * The ANSIBLE_REMOTE_TMP environment variable has been added to supplement (and
   override) ANSIBLE_REMOTE_TEMP.  This matches with the spelling of the config
   value. ANSIBLE_REMOTE_TEMP will be deprecated in the future.
+* A few modules were updated to put temporary files in the existing temp dir already created for the module itself, including get_url, assemble, uri and yum.
 
 #### Removed Modules (previously deprecated):
 * accelerate.
