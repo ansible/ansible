@@ -204,7 +204,7 @@ EXAMPLES = """
 
 import collections
 import traceback
-
+from time import sleep, time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
@@ -376,6 +376,23 @@ def main():
                 new_options['ntp-servers'],
                 new_options['netbios-name-servers'],
                 new_options['netbios-node-type'])
+
+            # wait for dhcp option to be accessible
+            found_dhcp_opt = False
+            start_time = time()
+            while time() < start_time + 300:
+                try:
+                    found_dhcp_opt = connection.get_all_dhcp_options(dhcp_options_ids=[dhcp_option.id])
+                except EC2ResponseError as e:
+                    if e.error_code == 'InvalidDhcpOptionID.NotFound':
+                        sleep(3)
+                    else:
+                        module.fail_json(msg="Failed to describe DHCP options", exception=traceback.format_exc)
+                else:
+                    break
+            if not found_dhcp_opt:
+                module.fail_json(msg="Failed to wait for {0} to be available.".format(dhcp_option.id))
+
             changed = True
             if params['tags']:
                 ensure_tags(module, connection, dhcp_option.id, params['tags'], False, module.check_mode)

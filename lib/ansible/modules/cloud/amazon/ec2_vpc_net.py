@@ -164,9 +164,10 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
+from time import sleep, time
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
-                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, AWSRetry)
 from ansible.module_utils.six import string_types
 
 
@@ -194,20 +195,34 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
     return None
 
 
-def get_vpc(module, connection, vpc_id):
+@AWSRetry.backoff(delay=3, tries=8, catch_extra_error_codes=['InvalidVpcID.NotFound'])
+def get_classic_link_with_backoff(connection, vpc_id):
     try:
-        vpc_obj = connection.describe_vpcs(VpcIds=[vpc_id])['Vpcs'][0]
+        return connection.describe_vpc_classic_link(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
+            return False
+        else:
+            raise
+
+
+def get_vpc(module, connection, vpc_id):
+    # wait for vpc to be available
+    try:
+        connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id])
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be available.".format(vpc_id))
+
+    try:
+        vpc_obj = AWSRetry.backoff(
+            delay=3, tries=8,
+            catch_extra_error_codes=['InvalidVpcID.NotFound'],
+        )(connection.describe_vpcs)(VpcIds=[vpc_id])['Vpcs'][0]
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
     try:
-        classic_link = connection.describe_vpc_classic_link(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
-        vpc_obj['ClassicLinkEnabled'] = classic_link
-    except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
-            vpc_obj['ClassicLinkEnabled'] = False
-        else:
-            module.fail_json_aws(e, msg="Failed to describe VPCs")
-    except botocore.exceptions.BotoCoreError as e:
+        vpc_obj['ClassicLinkEnabled'] = get_classic_link_with_backoff(connection, vpc_id)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
 
     return vpc_obj
@@ -224,7 +239,16 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         if tags != current_tags:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags)
-                connection.create_tags(Resources=[vpc_id], Tags=tags)
+                vpc_obj = AWSRetry.backoff(
+                    delay=1, tries=5,
+                    catch_extra_error_codes=['InvalidVpcID.NotFound'],
+                )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
+
+                # Wait for tags to be updated
+                expected_tags = boto3_tag_list_to_ansible_dict(tags)
+                filters = [{'Name': 'tag:{0}'.format(key), 'Values': [value]} for key, value in expected_tags.items()]
+                connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id], Filters=filters)
+
             return True
         else:
             return False
@@ -239,6 +263,14 @@ def update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
                 connection.associate_dhcp_options(DhcpOptionsId=dhcp_id, VpcId=vpc_obj['VpcId'])
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Failed to associate DhcpOptionsId {0}".format(dhcp_id))
+
+            try:
+                # Wait for DhcpOptionsId to be updated
+                filters = [{'Name': 'dhcp-options-id', 'Values': [dhcp_id]}]
+                connection.get_waiter('vpc_available').wait(VpcIds=[vpc_obj['VpcId']], Filters=filters)
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json(msg="Failed to wait for DhcpOptionsId to be updated")
+
         return True
     else:
         return False
@@ -252,7 +284,31 @@ def create_vpc(connection, module, cidr_block, tenancy):
             module.exit_json(changed=True)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "Failed to create the VPC")
+
+    # wait for vpc to exist
+    try:
+        connection.get_waiter('vpc_exists').wait(VpcIds=[vpc_obj['Vpc']['VpcId']])
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be created.".format(vpc_obj['Vpc']['VpcId']))
+
     return vpc_obj['Vpc']['VpcId']
+
+
+def wait_for_vpc_attribute(connection, module, vpc_id, attribute, expected_value):
+    start_time = time()
+    updated = False
+    while time() < start_time + 300:
+        current_value = connection.describe_vpc_attribute(
+            Attribute=attribute,
+            VpcId=vpc_id
+        )['{0}{1}'.format(attribute[0].upper(), attribute[1:])]['Value']
+        if current_value != expected_value:
+            sleep(3)
+        else:
+            updated = True
+            break
+    if not updated:
+        module.fail_json(msg="Failed to wait for {0} to be updated".format(attribute))
 
 
 def main():
@@ -310,6 +366,7 @@ def main():
                                 if cidr['CidrBlockState']['State'] != 'disassociated')
         to_add = [cidr for cidr in cidr_block if cidr not in associated_cidrs]
         to_remove = [associated_cidrs[cidr] for cidr in associated_cidrs if cidr not in cidr_block]
+        expected_cidrs = [cidr for cidr in associated_cidrs if associated_cidrs[cidr] not in to_remove] + to_add
 
         if len(cidr_block) > 1:
             for cidr in to_add:
@@ -356,10 +413,19 @@ def main():
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, "Failed to update enabled dns hostnames attribute")
 
-        try:
-            connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id])
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be available.".format(vpc_id))
+        # wait for associated cidrs to match
+        if to_add or to_remove:
+            try:
+                connection.get_waiter('vpc_available').wait(
+                    VpcIds=[vpc_id],
+                    Filters=[{'Name': 'cidr-block-association.cidr-block', 'Values': expected_cidrs}]
+                )
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, "Failed to wait for CIDRs to update")
+
+        # try to wait for enableDnsSupport and enableDnsHostnames to match
+        wait_for_vpc_attribute(connection, module, vpc_id, 'enableDnsSupport', dns_support)
+        wait_for_vpc_attribute(connection, module, vpc_id, 'enableDnsHostnames', dns_hostnames)
 
         final_state = camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id))
         final_state['tags'] = boto3_tag_list_to_ansible_dict(final_state.get('tags', []))
