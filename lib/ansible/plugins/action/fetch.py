@@ -54,7 +54,7 @@ class ActionModule(ActionBase):
             source = self._task.args.get('src', None)
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
-            fail_on_missing = boolean(self._task.args.get('fail_on_missing'), strict=False)
+            fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
             validate_checksum = boolean(self._task.args.get('validate_checksum',
                                                             self._task.args.get('validate_md5', True)),
                                         strict=False)
