@@ -641,7 +641,6 @@ lib/ansible/modules/cloud/cloudstack/cs_template.py E324
 lib/ansible/modules/cloud/cloudstack/cs_template.py E325
 lib/ansible/modules/cloud/cloudstack/cs_template.py E326
 lib/ansible/modules/cloud/cloudstack/cs_user.py E324
-lib/ansible/modules/cloud/cloudstack/cs_user.py E325
 lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py E324
 lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py E325
 lib/ansible/modules/cloud/cloudstack/cs_volume.py E322

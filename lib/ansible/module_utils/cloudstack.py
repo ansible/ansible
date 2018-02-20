@@ -620,13 +620,11 @@ class AnsibleCloudStack:
             returns = self.common_returns.copy()
             returns.update(self.returns)
             for search_key, return_key in returns.items():
-                if search_key in resource:
-                    self.result[return_key] = resource[search_key]
+                self.result[return_key] = resource.get(search_key)
 
             # Bad bad API does not always return int when it should.
             for search_key, return_key in self.returns_to_int.items():
-                if search_key in resource:
-                    self.result[return_key] = int(resource[search_key])
+                self.result[return_key] = int(resource[search_key]) if resource.get(search_key) is not None else None
 
             if 'tags' in resource:
                 self.result['tags'] = resource['tags']
