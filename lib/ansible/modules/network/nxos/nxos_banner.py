@@ -93,6 +93,22 @@ from ansible.module_utils.network.nxos.nxos import load_config, run_commands
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
 import re
 
+def execute_show_command(module, command):
+    format = 'json'
+    cmds = [{
+        'command': command,
+        'output': format,
+    }]
+    output = run_commands(module, cmds, False)
+    if len(output) == 0 or len(output[0]) == 0:
+        # If we get here the platform does not
+        # support structured output.  Resend as
+        # text.
+        cmds[0]['output'] = 'text'
+        output = run_commands(module, cmds, False)
+
+    return output
+
 
 def map_obj_to_commands(want, have, module):
     commands = list()
@@ -112,18 +128,7 @@ def map_obj_to_commands(want, have, module):
 
 def map_config_to_obj(module):
     command = 'show banner %s' % module.params['banner']
-    output = 'json'
-    cmds = [{
-        'command': command,
-        'output': output,
-    }]
-    output = run_commands(module, cmds, False)
-    if len(output) == 0 or len(output[0]) == 0:
-        # If we get here the platform does not
-        # support structured output.  Resend as
-        # text.
-        cmds[0]['output'] = 'text'
-        output = run_commands(module, cmds, False)
+    output = execute_show_command(module, command)[0]
 
     if "Invalid command" in output:
         module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
@@ -141,7 +146,7 @@ def map_config_to_obj(module):
             else:
                 output = ''
     else:
-        output = output[0].rstrip()
+        output = output.rstrip()
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
