@@ -48,9 +48,6 @@ options:
     evacuate:
         description:
             - If set to C(True), evacuate all powered off VMs.
-        choices:
-            - True
-            - False
         default: False
         required: False
         type: bool

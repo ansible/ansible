@@ -512,6 +512,10 @@ lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E324
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E325
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E326
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E322
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E324
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E325
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E326
 lib/ansible/modules/cloud/azure/azure_rm_storageaccount_facts.py E326
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py E323
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py E325
@@ -1195,10 +1199,11 @@ lib/ansible/modules/cloud/vultr/vr_user.py E322
 lib/ansible/modules/cloud/vultr/vr_user.py E324
 lib/ansible/modules/cloud/vultr/vr_user.py E325
 lib/ansible/modules/cloud/vultr/vr_user.py E326
-lib/ansible/modules/cloud/webfaction/webfaction_app.py E324
-lib/ansible/modules/cloud/webfaction/webfaction_db.py E324
-lib/ansible/modules/cloud/webfaction/webfaction_domain.py E324
-lib/ansible/modules/cloud/webfaction/webfaction_site.py E324
+lib/ansible/modules/cloud/webfaction/webfaction_app.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_db.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_domain.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_site.py E321
 lib/ansible/modules/clustering/consul.py E322
 lib/ansible/modules/clustering/consul.py E324
 lib/ansible/modules/clustering/consul.py E325
@@ -1484,7 +1489,7 @@ lib/ansible/modules/net_tools/ldap/ldap_attr.py E326
 lib/ansible/modules/net_tools/ldap/ldap_entry.py E324
 lib/ansible/modules/net_tools/ldap/ldap_entry.py E325
 lib/ansible/modules/net_tools/ldap/ldap_entry.py E326
-lib/ansible/modules/net_tools/nmcli.py E321
+lib/ansible/modules/net_tools/nmcli.py E324
 lib/ansible/modules/net_tools/nsupdate.py E324
 lib/ansible/modules/net_tools/omapi_host.py E317
 lib/ansible/modules/net_tools/omapi_host.py E322
