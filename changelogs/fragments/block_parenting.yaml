@@ -1,2 +1,2 @@
 bugfixes:
-- fix memory bloat on nested includes by preventing blocks from self-parenting (https://github.com/ansible/ansible/pull/36075)
+- fixed memory bloat on nested includes by preventing blocks from self-parenting (https://github.com/ansible/ansible/pull/36075)

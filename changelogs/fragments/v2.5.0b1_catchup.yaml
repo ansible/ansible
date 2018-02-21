@@ -1,10 +1,10 @@
 major_changes:
 - New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will likely be deprecated in the near future and eventually removed.
 - |
-  Added fact namespacing, from now on facts will be available under ``ansible_facts`` namespace (i.e. ``ansible_facts.os_distribution``)
-  w/o the ``ansible_`` prefix. They will continue to be added into the main namespace directly, but now with a configuration toggle to
-  enable this, currently on by default, in the future it will be off.
-- Added a configuration file to filter modules that a site administrator wants to exclude from being used.
+  Added fact namespacing; from now on facts will be available under ``ansible_facts`` namespace (for example: ``ansible_facts.os_distribution``)
+  without the ``ansible_`` prefix. They will continue to be added into the main namespace directly, but now with a configuration toggle to
+  enable this. This is currently on by default, but in the future it will default to off.
+- Added a configuration file that a site administrator can use to specify modules to exclude from being used.
 minor_changes:
 - |
   Added a few new magic vars corresponding to configuration/command
@@ -21,29 +21,33 @@ minor_changes:
   Administrator users without disabling UAC on Windows hosts
 - |
   The jenkins\_plugin and yum\_repository plugins had their ``params``
-  option removed due to circumventing Ansible's option processing.
-- combine filter now accepts a list of dicts as well as dicts directly
+  option removed because they circumvented Ansible's option processing.
+- The combine filter now accepts a list of dicts as well as dicts directly
 - |
   New CLI options for ansible-inventory, ansible-console and ansible to
   allow specifying a playbook\_dir to be used for relative search
   paths.
 - |
-  ``stat`` and ``win_stat`` have changed the default value of
+  `The `stat`` and ``win_stat`` modules have changed the default value of
   ``get_md5`` to ``False`` which will result in the ``md5`` return
   value not being returned. This option will be removed altogether in
-  Ansible 2.9. use ``get_checksum: True`` with
+  Ansible 2.9. Use ``get_checksum: True`` with
   ``checksum_algorithm: md5`` to return an md5 hash of the file under
   the ``checksum`` return value.
 - |
-  ``osx_say`` module was renamed into ``say``.
+  The ``osx_say`` module was renamed into ``say``.
 - |
   Task debugger functionality was moved into ``StrategyBase``, and
   extended to allow explicit invocation from use of the ``debugger``
   keyword. The ``debug`` strategy is still functional, and is now just
-  a trigger to enable this functionality
+  a trigger to enable this functionality.
 - |
-  Reorganized the documentation into distinct guides for different
-  target audiences.
+  The documentation has undergone a major overhaul. Content has been moved into
+  targeted guides; the table of contents has been cleaned up and streamlined; 
+  the CSS theme has been updated to a custom version of the most recent 
+  ReadTheDocs theme, and the underlying directory structure for the RST files 
+  has been reorganized. 
+
 - |
   The ANSIBLE\_REMOTE\_TMP environment variable has been added to
   supplement (and override) ANSIBLE\_REMOTE\_TEMP. This matches with
@@ -52,35 +56,35 @@ minor_changes:
 deprecated_features:
 - |
   Previously deprecated 'hostfile' config settings have been
-  're-deprecated' as previously code did not warn about deprecated
+  're-deprecated' because previously code did not warn about deprecated
   configuration settings.
 - |
-  Using Ansible provided Jinja tests as filters is deprecated and will
-  be removed in Ansible 2.9
+  Using Ansible-provided Jinja tests as filters is deprecated and will
+  be removed in Ansible 2.9.
 - |
-  ``stat`` and ``win_stat`` have deprecated ``get_md5`` and the ``md5``
-  return value and these options will become undocumented in Ansible
+  The ``stat`` and ``win_stat`` modules have deprecated ``get_md5`` and the ``md5``
+  return values. These options will become undocumented in Ansible
   2.9 and removed in a later version.
-- The ``redis_kv`` lookup in favor of new ``redis`` lookup
+- The ``redis_kv`` lookup has been deprecated in favor of new ``redis`` lookup
 - |
   Passing arbitrary parameters that begin with ``HEADER_`` to the uri
   module, used for passing http headers, is deprecated. Use the
   ``headers`` parameter with a dictionary of header names to value
-  instead. This will be removed in Ansible-2.9
+  instead. This will be removed in Ansible 2.9
 - |
   Passing arbitrary parameters to the zfs module to set zfs properties
   is deprecated. Use the ``extra_zfs_properties`` parameter with a
   dictionary of property names to values instead. This will be removed
-  in Ansible-2.9.
+  in Ansible 2.9.
 - |
-  Use of the AnsibleModule parameter, check\_invalid\_arguments, in custom modules is deprecated. In the future, all parameters will be
+  Use of the AnsibleModule parameter ``check\_invalid\_arguments`` in custom modules is deprecated. In the future, all parameters will be
   checked to see whether they are listed in the arg spec and an error raised if they are not listed. This behaviour is the current and
-  future default so most custom modules can simply remove check\_invalid\_arguments if they set it to the default of True.
-  check\_invalid\_arguments will be removed in Ansible-2.9.
-- nxos\_ip\_interface module is deprecated in Ansible 2.5. Use nxos\_l3\_interface module instead.
-- nxos\_portchannel module is deprecated in Ansible 2.5. Use nxos\_linkagg module instead.
-- nxos\_switchport module is deprecated in Ansible 2.5. Use nxos\_l2\_interface module instead.
-- ec2\_ami\_find has been deprecated, use ec2\_ami\_facts.
+  future default so most custom modules can simply remove ``check\_invalid\_arguments`` if they set it to the default value of True.
+  The ``check\_invalid\_arguments`` parameter will be removed in Ansible 2.9.
+- The nxos\_ip\_interface module is deprecated in Ansible 2.5. Use nxos\_l3\_interface module instead.
+- The nxos\_portchannel module is deprecated in Ansible 2.5. Use nxos\_linkagg module instead.
+- The nxos\_switchport module is deprecated in Ansible 2.5. Use nxos\_l2\_interface module instead.
+- The ec2\_ami\_find has been deprecated; use ec2\_ami\_facts instead.
 - |
   panos\_security\_policy: Use panos\_security\_rule - the old module uses deprecated API calls
 - vsphere\_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware\_guest module instead.
@@ -129,7 +133,7 @@ new_connection_plugins:
 - netconf
 - |
   network\_cli
-   - While neither network\_cli nor netconf are technically new plugins, these connections may now be used directly with network modules. See
+   - The existing network\_cli nor netconf plugins connections can now be used directly with network modules. See
      `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`__ for more details.
 
 new_filter_plugins:
