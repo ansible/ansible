@@ -41,6 +41,16 @@ options:
     - List of ESXi hostname to manage lockdown.
     - Required parameter, if C(cluster_name) is not set.
     - See examples for specifications.
+  state:
+    description:
+    - State of hosts system
+    - If set to C(present), all host systems will be set in lockdown mode.
+    - If host system is already in lockdown mode and set to C(present), no action will be taken.
+    - If set to C(absent), all host systems will be removed from lockdown mode.
+    - If host system is already out of lockdown mode and set to C(absent), no action will be taken.
+    default: present
+    choices: [ present, absent ]
+    version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -146,8 +156,8 @@ class VmwareLockdownManager(PyVmomi):
         """
         results = dict(changed=False, host_lockdown_state=dict())
         change_list = []
+        desired_state = self.params.get('state')
         for host in self.hosts:
-            desired_state = self.params.get('state')
             results['host_lockdown_state'][host.name] = dict(current_state='',
                                                              desired_state=desired_state,
                                                              previous_state=''
@@ -193,6 +203,7 @@ def main():
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
         esxi_hostname=dict(type='str', required=False),
+        state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
     )
 
     module = AnsibleModule(
