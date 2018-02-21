@@ -73,6 +73,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/36407
 * Fix WinRM Python 3 encoding when getting Kerberos ticket
   (https://github.com/ansible/ansible/issues/36255)
+* Always show custom prompt in pause module
+  (https://github.com/ansible/ansible/issues/36057)
 
 
 <a id="2.4.3"></a
