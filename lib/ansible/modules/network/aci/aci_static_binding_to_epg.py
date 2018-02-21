@@ -237,7 +237,8 @@ def main():
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['untagged', '802.1p', 'trunk', 'regular', 'native', 'tagged', 'access'], aliases=['mode', 'interface_mode_name']),
+        interface_mode=dict(type='str', choices=['untagged', '802.1p', 'trunk', 'regular', 'native', 'tagged', 'access'],
+                            aliases=['mode', 'interface_mode_name']),
         interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
         # NOTE: C(pod) is usually an integer below 10.
         pod=dict(type='int', aliases=['pod_number']),
