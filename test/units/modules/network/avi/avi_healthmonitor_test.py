@@ -6,7 +6,6 @@ from ansible.compat.tests.mock import patch
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
 from ansible.modules.network.avi import avi_healthmonitor
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 my_vcr = vcr.VCR(
