@@ -201,7 +201,7 @@ class LookupModule(LookupBase):
                 elif i in response['InvalidParameters']:
                     ret.append(None)
                 else:
-                    raise AnsibleError("Ansible internal error: aws_ssm lookup failed to understand boto3 return value".format(str(response)))
+                    raise AnsibleError("Ansible internal error: aws_ssm lookup failed to understand boto3 return value: {0}".format(str(response)))
             return ret
 
         display.vvvv("AWS_ssm path lookup returning: %s " % str(ret))
