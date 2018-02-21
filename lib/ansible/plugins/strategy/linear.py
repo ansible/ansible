@@ -325,8 +325,7 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             if included_file._is_role:
-                                new_ir = included_file._task.copy()
-                                new_ir.vars.update(included_file._args)
+                                new_ir = self._copy_included_file(included_file)
 
                                 new_blocks, handler_blocks = new_ir.get_block_list(
                                     play=iterator._play,
