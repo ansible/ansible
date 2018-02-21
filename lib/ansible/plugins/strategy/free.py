@@ -193,10 +193,9 @@ class StrategyModule(StrategyBase):
                     display.debug("collecting new blocks for %s" % included_file)
                     try:
                         if included_file._is_role:
-                            new_ir = included_file._task.copy()
-                            new_ir.vars.update(included_file._args)
+                            new_ir = self._copy_included_file(included_file)
 
-                            new_blocks, handler_blocks = included_file._task.get_block_list(
+                            new_blocks, handler_blocks = new_ir.get_block_list(
                                 play=iterator._play,
                                 variable_manager=self._variable_manager,
                                 loader=self._loader,
