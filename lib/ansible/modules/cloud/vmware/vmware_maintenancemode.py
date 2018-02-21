@@ -181,7 +181,7 @@ def main():
                                         'noAction'],
                                aliases=['vsan_mode'],
                                ),
-                     evacuate=dict(type='bool', default=False, choices=[True, False]),
+                     evacuate=dict(type='bool', default=False),
                      timeout=dict(default=0, type='int'),
                      state=dict(required=False, default='present', choices=['present', 'absent'])
                      )
