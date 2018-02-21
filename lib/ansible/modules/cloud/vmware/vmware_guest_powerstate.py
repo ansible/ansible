@@ -28,7 +28,8 @@ options:
   state:
     description:
     - Set the state of the virtual machine.
-    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended ]
+    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
+    default: present
   name:
     description:
     - Name of the virtual machine to work with.
@@ -64,6 +65,13 @@ options:
     - Date and time in string format at which specificed task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+  force:
+    description:
+    - Ignore warnings and complete the actions.
+    - This parameter is useful while forcing virtual machine state.
+    default: False
+    type: bool
+    version_added: 2.5
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.
@@ -130,7 +138,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         state=dict(type='str', default='present',
-                   choices=['powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
+                   choices=['present', 'powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
@@ -202,7 +210,7 @@ def main():
                                      "given are invalid: %s" % (module.params.get('state'),
                                                                 to_native(e.msg)))
         else:
-            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
+            result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
     else:
         module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
 

@@ -56,6 +56,7 @@ options:
     - This option is ignored, if C(parent_folder) is set.
     default: vm
     required: False
+    choices: [ datastore, host, network, vm ]
   state:
     description:
     - State of folder.

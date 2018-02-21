@@ -76,7 +76,7 @@ options:
         required: True
     directory:
         description:
-            - Create or delete directory
+            - Create or delete directory.
             - 'Valid attributes are:'
             - '  path: directory path to create or remove'
             - '  operation: Valid values are create, delete'
@@ -84,20 +84,22 @@ options:
         required: False
     copy:
         description:
-            - Copy file to vm networkless
+            - Copy file to vm without requiring network.
             - 'Valid attributes are:'
             - '  src: file source absolute or relative'
             - '  dest: file destination, path must be exist'
             - '  overwrite: False or True (not required, default False)'
         required: False
-    file:
+    fetch:
         description:
-            - Get file from vm networkless
+            - Get file from virtual machine without requiring network.
             - 'Valid attributes are:'
             - '  src: The file on the remote system to fetch. This I(must) be a file, not a directory'
             - '  dest: file destination on localhost, path must be exist'
         required: False
+        version_added: 2.5
 
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

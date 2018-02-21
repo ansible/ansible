@@ -44,6 +44,7 @@ options:
     - Each member of list is rule set name and state to be set the rule.
     - Both rule name and rule state are required parameters.
     - Please see examples for more information.
+    default: []
 extends_documentation_fragment: vmware.documentation
 '''
 

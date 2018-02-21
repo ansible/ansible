@@ -38,9 +38,8 @@ options:
         description:
             - Allows connection when SSL certificates are not valid. Set to
               false when certificates are not trusted.
-        required: False
         default: 'True'
-        choices: ['True', 'False']
+        type: bool
     port:
         description:
             - The port number of the vSphere vCenter or ESXi server.

@@ -35,7 +35,7 @@ options:
     autoconnect:
         required: False
         default: "yes"
-        choices: [ "yes", "no" ]
+        type: bool
         description:
             - Whether the connection should start on boot.
             - Whether the connection profile can be automatically activated
@@ -151,7 +151,7 @@ options:
         description:
             - This is only used with bond - ARP IP target
     stp:
-        required: False
+        type: bool
         default: None
         description:
             - This is only used with bridge and controls whether Spanning Tree Protocol (STP) is enabled for this bridge

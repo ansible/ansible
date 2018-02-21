@@ -45,6 +45,7 @@ options:
     - If set to C(present), then will set given acceptance level.
     choices: [ list, present ]
     required: False
+    default: 'list'
   acceptance_level:
     description:
     - Name of acceptance level.

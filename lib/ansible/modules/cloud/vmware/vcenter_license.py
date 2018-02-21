@@ -34,24 +34,13 @@ author: Dag Wieers (@dagwieers)
 requirements:
 - pyVmomi
 options:
-  hostname:
-    description:
-    - The hostname or IP address of the vSphere vCenter.
-    required: yes
-  username:
-    description:
-    - The username to log into the vSphere vCenter.
-    required: yes
-    aliases: [admin, user]
-  password:
-    description:
-    - The password to log into to the vSphere vCenter.
-    required: yes
-    aliases: [pass, pwd]
   labels:
     description:
     - The optional labels of the license key to manage in vSphere vCenter.
     - This is dictionary with key/value pair.
+    default: {
+        'source': 'ansible'
+    }
   license:
     description:
     - The license key to manage in vSphere vCenter.
@@ -67,6 +56,7 @@ notes:
   an evaluation license only.
 - The evaluation license (00000-00000-00000-00000-00000) is not listed
   when unused.
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
@@ -203,6 +193,7 @@ def main():
             result['diff']['after'] = '\n'.join(result['licenses']) + '\n'
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
