@@ -23,6 +23,8 @@ description:
 - Tests the transport connection every C(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
+- This module does not support delegation (see the last example on how to
+  overcome this).
 version_added: "2.3"
 options:
   connect_timeout:
@@ -35,8 +37,8 @@ options:
     default: 0
   sleep:
     default: 1
-    description:
       - Number of seconds to sleep between checks.
+    description:
   timeout:
     description:
       - Maximum number of seconds to wait for.
@@ -71,7 +73,8 @@ EXAMPLES = r'''
   - name: Gather facts for first time
     setup:
 
-# Build a new VM, wait for it to become ready and continue playbook
+# Build a new VM, wait for it to become ready and continue playbook (playbook
+# runs against remote host from inventory)
 - hosts: all
   gather_facts: no
   tasks:
@@ -92,6 +95,30 @@ EXAMPLES = r'''
 
   - name: Gather facts for first time
     setup:
+
+# Build an online instance, wait for it to become ready and continue (playbook
+# runs against localhost).
+- hosts: localhost
+  tasks:
+    - name: Create instance on Google Cloud
+      gce:
+        name: instance-name
+        zone: europe-west1-b
+        network: default
+        subnet: subnet-name
+        machine-type: n1-highcpu-4
+        image-family: windows-2016
+      register: instance
+    - add_host: &windows
+        hostname: win_instance
+        ansible_host: "{{ instance.instance_data[0].public_ip }}"
+        ansible_connection: winrm
+        ansible_port: 5986
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_transport: ntl
+        ansible_password: password
+    - wait_for_connection:
+      vars: *windows
 '''
 
 RETURN = r'''
