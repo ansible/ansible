@@ -19,46 +19,83 @@ description:
     - More information about the DNA Center API can be found at U(https://developer.cisco.com/site/dna-center-rest-api/)
 
 options:
-    name:
+    url_username:
         description:
-            - This is the message to send to the sample module
+            - The username for use in HTTP basic authentication.
         required: true
-    new:
+    url_password:
         description:
-            - Control to demo if the result of this module is changed or not
+            - The password for use in HTTP basic authentication.
+        required: true
+    hostname:
+        description:
+            - FQDN or IP address of DNA Central server
+        required: true
+    method:
+        description:
+            - The HTTP method of the request.
+            - Using C(delete) is typically used for deleting objects.
+            - Using C(get) is typically used for querying objects.
+            - Using C(post) is typically used for modifying objects.
+        required: yes
+        default: get
+        choices: [ delete, get, post ]
+        aliases: [ action ]
+    path:
+        description:
+            - Directory path to the endpoint. Do not include FQDN specified in C(hostname)
+        required: true
+    timeout:
+        description:
+            - HTTP timeout value
+        required: false
+        default: 30
+    use_proxy:
+        description:
+            - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+        required: false
+        default: false
+    use_ssl:
+        description:
+            - If C(no), it will use HTTP. Otherwise it will use HTTPS.
+        required: false
+        default: true
+    validate_certs:
+        description:
+            - If C(no), HTTPS certificates will not be verified
+        required: false
+        default: true
+    content:
+        description:
+            - Raw content which should be fed in body
         required: false
 
-# extends_documentation_fragment:
-#     - azure
+
+extends_documentation_fragment:
+    - url
 
 author:
     - Kevin Breit (@kbreit)
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  my_new_test_module:
-    name: hello world
+# Query inventory
+- name: Query network device inventory
+  sda_rest:
+    username: devnetuser
+    password: Cisco123!
+    hostname: sandboxdnac.cisco.com
+    method: get
+    path: '/api/v1/network-device'
+    use_ssl: Yes
+  delegate_to: localhost
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_new_test_module:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  my_new_test_module:
-    name: fail me
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
 message:
-    description: The output message that the sample module generates
+    description: Data returned from controller
+    type: json
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -71,15 +108,15 @@ def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        username=dict(type='str', required=True),
-        password=dict(type='str', required=True, no_log=True),
+        url_username=dict(type='str', required=True),
+        url_password=dict(type='str', required=True, no_log=True),
         hostname=dict(type='str', required=True),
         method=dict(type='str', choices=['delete','get','post'], required=True),
         path=dict(type='path', required=True),
         timeout=dict(type='int', default=30, required=False),
         use_proxy=dict(type='bool', default=False, required=False),
         use_ssl=dict(type='bool', default=True, required=False),
-        validate_certs=dict(type='bool', default=False, required=False),
+        validate_certs=dict(type='bool', default=True, required=False),
         content=dict(type='raw', required=False)
     )
 
@@ -132,8 +169,8 @@ def run_module():
                             use_proxy=module.params['use_proxy'],
                             timeout=module.params['timeout'],
                             validate_certs=module.params['validate_certs'],
-                            url_username=module.params['username'],
-                            url_password=module.params['password'],
+                            url_username=module.params['url_username'],
+                            url_password=module.params['url_password'],
                             force_basic_auth=True)
 
     except HTTPError as e:
