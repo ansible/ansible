@@ -47,22 +47,27 @@ options:
     description:
       - Require symbols in password.
     default: false
+    type: bool
   require_numbers:
     description:
       - Require numbers in password.
     default: false
+    type: bool
   require_uppercase:
     description:
       - Require uppercase letters in password.
     default: false
+    type: bool
   require_lowercase:
     description:
       - Require lowercase letters in password.
     default: false
+    type: bool
   allow_pw_change:
     description:
       - Allow users to change their password.
     default: false
+    type: bool
   pw_max_age:
     description:
       - Maximum age for a password in days.
@@ -75,6 +80,7 @@ options:
     description:
       - Prevents users from change an expired password.
     default: false
+    type: bool
 extends_documentation_fragment:
   - aws
   - ec2
