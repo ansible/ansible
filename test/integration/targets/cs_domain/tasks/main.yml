@@ -126,7 +126,7 @@
   assert:
     that:
     - dom is changed
-    - dom.network_domain is undefined
+    - not dom.network_domain
     - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
     - dom.name == "{{ cs_resource_prefix }}_subdomain"
 

@@ -90,4 +90,4 @@
     that:
     - ag is successful
     - ag is not changed
-    - not ag.name
+    - ag.name is undefined
