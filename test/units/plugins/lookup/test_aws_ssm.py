@@ -61,9 +61,16 @@ path_success_response['Parameters'] = [
     {'Name': '/testpath/won', 'Type': 'String', 'Value': 'simple_value_won', 'Version': 1}
 ]
 
-missing_variable_fail_response = copy(simple_variable_success_response)
-missing_variable_fail_response['Parameters'] = []
-missing_variable_fail_response['InvalidParameters'] = ['missing_variable']
+missing_variable_response = copy(simple_variable_success_response)
+missing_variable_response['Parameters'] = []
+missing_variable_response['InvalidParameters'] = ['missing_variable']
+
+some_missing_variable_response = copy(simple_variable_success_response)
+some_missing_variable_response['Parameters'] = [
+    {'Name': 'simple', 'Type': 'String', 'Value': 'simple_value', 'Version': 1},
+    {'Name': '/testpath/won', 'Type': 'String', 'Value': 'simple_value_won', 'Version': 1}
+]
+some_missing_variable_response['InvalidParameters'] = ['missing_variable']
 
 
 dummy_credentials = {}
@@ -109,16 +116,37 @@ def test_path_lookup_variable(mocker):
     get_path_fn.assert_called_with(Path="/testpath", Recursive=False, WithDecryption=True)
 
 
-def test_warn_missing_variable(mocker):
+def test_return_none_for_missing_variable(mocker):
+    """
+    during jinja2 templates, we can't shouldn't normally raise exceptions since this blocks the ability to use defaults.
+
+    for this reason we return ```None``` for missing variables
+    """
     lookup = aws_ssm.LookupModule()
     lookup._load_name = "aws_ssm"
 
     boto3_double = mocker.MagicMock()
-    boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_fail_response
+    boto3_double.Session.return_value.client.return_value.get_parameters.return_value = missing_variable_response
 
-    with pytest.raises(AnsibleError):
-        with mocker.patch.object(boto3, 'session', boto3_double):
-            lookup.run(["missing_variable"], {}, **dummy_credentials)
+    with mocker.patch.object(boto3, 'session', boto3_double):
+        retval = lookup.run(["missing_variable"], {}, **dummy_credentials)
+    assert(retval[0] is None)
+
+
+def test_match_retvals_to_call_params_even_with_some_missing_variables(mocker):
+    """
+    If we get a complex list of variables with some missing and some not, we still have to return a
+    list which matches with the original variable list.
+    """
+    lookup = aws_ssm.LookupModule()
+    lookup._load_name = "aws_ssm"
+
+    boto3_double = mocker.MagicMock()
+    boto3_double.Session.return_value.client.return_value.get_parameters.return_value = some_missing_variable_response
+
+    with mocker.patch.object(boto3, 'session', boto3_double):
+        retval = lookup.run(["simple", "missing_variable", "/testpath/won", "simple"], {}, **dummy_credentials)
+    assert(retval == ["simple_value", None, "simple_value_won", "simple_value"])
 
 
 error_response = {'Error': {'Code': 'ResourceNotFoundException', 'Message': 'Fake Testing Error'}}
