@@ -76,7 +76,7 @@
     # ============================================================
     - name: Returns empty value in case we don't find a named parameter
       assert:
-       that: 
+       that:
         - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/Goodbye', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token )}}' == ''"
 
     # ============================================================
