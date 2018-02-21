@@ -67,14 +67,16 @@ options:
     required: false
     default: null
 notes:
-   -  If you want to execute a command securely and predictably, it may be
-      better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless the C(shell)
-      module is explicitly required. When running ad-hoc commands, use your best
-      judgement.
-   -  To sanitize any variables passed to the shell module, you should use
-      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-   - For Windows targets, use the M(win_shell) module instead.
+  -  If you want to execute a command securely and predictably, it may be
+     better to use the M(command) module instead. Best practices when writing
+     playbooks will follow the trend of using M(command) unless the C(shell)
+     module is explicitly required. When running ad-hoc commands, use your best
+     judgement.
+  -  To sanitize any variables passed to the shell module, you should use
+     "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
+  - For Windows targets, use the M(win_shell) module instead.
+  - Rather than using here documents to create multi-line scripts inside playbooks,
+    use the M(script) module instead.
 requirements: [ ]
 author:
     - Ansible Core Team
