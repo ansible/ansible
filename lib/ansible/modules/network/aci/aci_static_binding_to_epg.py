@@ -60,7 +60,7 @@ options:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
     - The APIC defaults the mode to C(trunk).
-    choices: [ untagged, 802.1p, trunk ]
+    choices: [ untagged, 802.1p, trunk, regular, native, tagged, access ]
     default: trunk
     aliases: [ mode, interface_mode_name ]
   interface_type:
@@ -237,7 +237,7 @@ def main():
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['untagged', '802.1p', 'trunk'], aliases=['mode', 'interface_mode_name']),
+        interface_mode=dict(type='str', choices=['untagged', '802.1p', 'trunk', 'regular', 'native', 'tagged', 'access'], aliases=['mode', 'interface_mode_name']),
         interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
         # NOTE: C(pod) is usually an integer below 10.
         pod=dict(type='int', aliases=['pod_number']),
@@ -290,11 +290,6 @@ def main():
     state = module.params['state']
     static_path = ''
 
-    if interface_mode == '802.1p':
-        interface_mode = 'native'
-    elif interface_mode == 'trunk':
-        interface_mode = 'regular'
-
     if encap_id is not None:
         if encap_id in range(1, 4097):
             encap_id = 'vlan-{0}'.format(encap_id)
@@ -307,6 +302,15 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
+    INTERFACE_MODE_MAPPING = {
+        'access': 'untagged',
+        'untagged': 'untagged',
+        'tagged': 'regular',
+        'trunk': 'regular',
+        'regular': 'regular',
+        '802.1p': 'native',
+        'native': 'native',
+    }
     INTERFACE_TYPE_MAPPING = dict(
         # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
         switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
@@ -319,6 +323,8 @@ def main():
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
+    if interface_mode is not None:
+        interface_mode = INTERFACE_MODE_MAPPING[interface_mode]
 
     aci = ACIModule(module)
     aci.construct_url(
