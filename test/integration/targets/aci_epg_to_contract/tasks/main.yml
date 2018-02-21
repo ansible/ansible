@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Jacob McGill <jmcgill298
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -176,7 +176,7 @@
     state: absent
   register: provide_absent2
 
-- name: delte consume binding - idempotency works
+- name: delete consume binding - idempotency works
   aci_epg_to_contract:
     <<: *aci_epg_consume_absent
   register: consume_absent_idempotent

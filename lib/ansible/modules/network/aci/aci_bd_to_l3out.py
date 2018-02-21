@@ -16,14 +16,14 @@ module: aci_bd_to_l3out
 short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
+notes:
+- The C(bd) and C(l3out) parameters should exist before using this module.
+  The M(aci_bd) and M(aci_l3out) can be used for these.
 - More information from the internal APIC class I(fv:RsBDToOut) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(bd) and C(l3out) parameters should exist before using this module.
-  The M(aci_bd) and M(aci_l3out) can be used for these.
 options:
   bd:
     description:
@@ -162,10 +162,10 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
-        l3out=dict(type='str'),
+        bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),  # Not required for querying all objects
+        l3out=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -210,16 +210,13 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvRsBDToOut',
             class_config=dict(tnL3extOutName=l3out),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsBDToOut')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
