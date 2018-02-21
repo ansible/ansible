@@ -392,6 +392,8 @@ files:
     ignored: magnus919
     labels: xml
     maintainers: tbielawa dagwieers sm4rk0 cmprescott
+  $modules/identity/cyberark/:
+    notified: cyberark-bizdev
   $modules/identity/ipa/:
     maintainers: $team_ipa
   $modules/identity/keycloak/: eikef
@@ -1168,6 +1170,9 @@ files:
     labels: community
   lib/ansible/plugins/lookup/conjur_variable.py:
     maintainers: $team_cyberark_conjur
+    notified: cyberark-bizdev
+  lib/ansible/plugins/lookup/cyberarkpassword.py:
+    notified: cyberark-bizdev
   lib/ansible/plugins/netconf/:
     maintainers: $team_networking
     labels: networking
