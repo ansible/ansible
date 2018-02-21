@@ -20,6 +20,7 @@ def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
+
 class AnsibleExitJson(Exception):
     """Exception class to be raised by module.exit_json and caught by the test case"""
     pass
@@ -69,11 +70,10 @@ class test_healthmonitor(unittest.TestCase):
             "username": "admin",
             "password": "avi123$%",
             "api_version": "17.2.1",
-            "https_monitor":
-                {
-                  "http_request": "HEAD / HTTP/1.0",
-                  "http_response_code":["HTTP_2XX", "HTTP_3XX"]
-                },
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
             "receive_timeout": 4,
             "failed_checks": 3,
             "send_interval": 10,
@@ -84,7 +84,6 @@ class test_healthmonitor(unittest.TestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             avi_healthmonitor.main()
-
 
     @my_vcr.use_cassette()
     def test_hm_fail_for_missing_name(self):
