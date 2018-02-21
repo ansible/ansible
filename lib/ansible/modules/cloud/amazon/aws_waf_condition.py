@@ -331,7 +331,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
-from ansible.module_utils.aws.waf import get_change_token, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff
 
 
@@ -397,12 +397,10 @@ class Condition(object):
             kwargs['Updates'].append({'Action': 'INSERT', self.conditiontuple: condition_insert})
 
         kwargs[self.conditionsetid] = condition_set_id
-        kwargs['ChangeToken'] = get_change_token(self.client, self.module)
         return kwargs
 
     def format_for_deletion(self, condition):
-        return {'ChangeToken': get_change_token(self.client, self.module),
-                'Updates': [{'Action': 'DELETE', self.conditiontuple: current_condition_tuple}
+        return {'Updates': [{'Action': 'DELETE', self.conditiontuple: current_condition_tuple}
                             for current_condition_tuple in condition[self.conditiontuples]],
                 self.conditionsetid: condition[self.conditionsetid]}
 
@@ -443,15 +441,17 @@ class Condition(object):
 
         pattern_set = self.get_regex_pattern_by_name(name)
         if not pattern_set:
-            pattern_set = self.client.create_regex_pattern_set(Name=name, ChangeToken=get_change_token(self.client, self.module))['RegexPatternSet']
+            pattern_set = run_func_with_change_token_backoff(self.client, self.module, {'Name': name},
+                                                             self.client.create_regex_pattern_set)['RegexPatternSet']
         missing = set(regex_pattern['regex_strings']) - set(pattern_set['RegexPatternStrings'])
         extra = set(pattern_set['RegexPatternStrings']) - set(regex_pattern['regex_strings'])
         if not missing and not extra:
             return pattern_set
         updates = [{'Action': 'INSERT', 'RegexPatternString': pattern} for pattern in missing]
         updates.extend([{'Action': 'DELETE', 'RegexPatternString': pattern} for pattern in extra])
-        self.client.update_regex_pattern_set(RegexPatternSetId=pattern_set['RegexPatternSetId'],
-                                             Updates=updates, ChangeToken=get_change_token(self.client, self.module))
+        run_func_with_change_token_backoff(self.client, self.module,
+                                           {'RegexPatternSetId': pattern_set['RegexPatternSetId'], 'Updates': updates},
+                                           self.client.update_regex_pattern_set)
         return self.get_regex_pattern_set_with_backoff(pattern_set['RegexPatternSetId'])['RegexPatternSet']
 
     def delete_unused_regex_pattern(self, regex_pattern_set_id):
@@ -460,11 +460,13 @@ class Condition(object):
             updates = list()
             for regex_pattern_string in regex_pattern_set['RegexPatternStrings']:
                 updates.append({'Action': 'DELETE', 'RegexPatternString': regex_pattern_string})
-            self.client.update_regex_pattern_set(RegexPatternSetId=regex_pattern_set_id, Updates=updates,
-                                                 ChangeToken=get_change_token(self.client, self.module))
+            run_func_with_change_token_backoff(self.client, self.module,
+                                               {'RegexPatternSetId': regex_pattern_set_id, 'Updates': updates},
+                                               self.client.update_regex_pattern_set)
 
-            self.client.delete_regex_pattern_set(RegexPatternSetId=regex_pattern_set_id,
-                                                 ChangeToken=get_change_token(self.client, self.module))
+            run_func_with_change_token_backoff(self.client, self.module,
+                                               {'RegexPatternSetId': regex_pattern_set_id},
+                                               self.client.delete_regex_pattern_set)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete regex pattern')
 
@@ -535,15 +537,14 @@ class Condition(object):
             func = getattr(self.client, 'update_' + self.method_suffix)
             params = self.format_for_deletion(current_condition)
             try:
-                func(**params)
+                run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not delete filters from condition')
         func = getattr(self.client, 'delete_' + self.method_suffix)
         params = dict()
         params[self.conditionsetid] = condition_set_id
-        params['ChangeToken'] = get_change_token(self.client, self.module)
         try:
-            func(**params)
+            run_func_with_change_token_backoff(self.client, self.module, params, func)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete condition')
         # tidy up regex patterns
@@ -579,7 +580,7 @@ class Condition(object):
             update['Updates'] = missing + extra
             func = getattr(self.client, 'update_' + self.method_suffix)
             try:
-                func(**update)
+                run_func_with_change_token_backoff(self.client, self.module, update, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not update condition')
         return changed, self.get_condition_by_id(condition_set_id)
@@ -592,10 +593,9 @@ class Condition(object):
         else:
             params = dict()
             params['Name'] = name
-            params['ChangeToken'] = get_change_token(self.client, self.module)
             func = getattr(self.client, 'create_' + self.method_suffix)
             try:
-                condition = func(**params)
+                condition = run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not create condition')
             return self.find_and_update_condition(condition[self.conditionset][self.conditionsetid])

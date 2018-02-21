@@ -481,10 +481,19 @@
   - debug:
       msg: "****** TEARDOWN STARTS HERE ******"
 
+  - name: delete the web acl
+    aws_waf_web_acl:
+      name: "{{ resource_prefix }}_web_acl"
+      state: absent
+      purge_rules: yes
+      <<: *aws_connection_info
+    ignore_errors: yes
+
   - name: remove second WAF rule
     aws_waf_rule:
       name: "{{ resource_prefix }}_rule_2"
       state: absent
+      purge_conditions: yes
       <<: *aws_connection_info
     ignore_errors: yes
 
@@ -492,6 +501,7 @@
     aws_waf_rule:
       name: "{{ resource_prefix }}_rule"
       state: absent
+      purge_conditions: yes
       <<: *aws_connection_info
     ignore_errors: yes
 
