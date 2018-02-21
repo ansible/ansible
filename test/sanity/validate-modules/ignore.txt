@@ -568,7 +568,6 @@ lib/ansible/modules/cloud/cloudstack/_cs_nic.py E324
 lib/ansible/modules/cloud/cloudstack/cs_account.py E324
 lib/ansible/modules/cloud/cloudstack/cs_account.py E325
 lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py E324
-lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E324
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_configuration.py E324
