@@ -47,6 +47,7 @@ options:
   mtu:
     description:
     - MTU to configure on vSwitch.
+    default: 1500
   state:
     description:
     - Add or remove the switch.

@@ -28,7 +28,8 @@ options:
   state:
     description:
     - Set the state of the virtual machine.
-    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended ]
+    choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
+    default: present
   name:
     description:
     - Name of the virtual machine to work with.
@@ -64,6 +65,13 @@ options:
     - Date and time in string format at which specificed task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+  force:
+    description:
+    - Ignore warnings and complete the actions.
+    - This parameter is useful while forcing virtual machine state.
+    default: False
+    type: bool
+    version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -111,7 +119,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         state=dict(type='str', default='present',
-                   choices=['powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
+                   choices=['present', 'powered-off', 'powered-on', 'reboot-guest', 'restarted', 'shutdown-guest', 'suspended']),
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),

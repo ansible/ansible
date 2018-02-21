@@ -63,12 +63,13 @@ options:
             - The Subnet Mask for the VMKernel interface.
             - Use C(network) parameter with C(subnet_mask) instead.
             - Deprecated option, will be removed in version 2.9.
-    vland_id:
+    vlan_id:
         description:
             - The VLAN ID for the VMKernel interface.
             - Required parameter only if C(state) is set to C(present).
             - Optional parameter from version 2.5 and onwards.
         required: False
+        version_added: 2.0
     mtu:
         description:
             - The MTU for the VMKernel interface.
@@ -79,18 +80,22 @@ options:
         description:
             - Enable the VMKernel interface for VSAN traffic.
         required: False
+        type: bool
     enable_vmotion:
         description:
             - Enable the VMKernel interface for vMotion traffic.
         required: False
+        type: bool
     enable_mgmt:
         description:
             - Enable the VMKernel interface for Management traffic.
         required: False
+        type: bool
     enable_ft:
         description:
             - Enable the VMKernel interface for Fault Tolerance traffic.
         required: False
+        type: bool
     state:
         description:
             - If set to C(present), VMKernel is created with the given specifications.
