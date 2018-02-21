@@ -43,7 +43,8 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"syntax error"),
         re.compile(br"unknown command"),
-        re.compile(br"user not present")
+        re.compile(br"user not present"),
+        re.compile(br"invalid (.+?)at '\^' marker", re.I)
     ]
 
     def on_open_shell(self):
