@@ -19,12 +19,7 @@ Before you work through this tutorial you need:
 Install Ansible
 ==================================================
 
-Install Ansible:
-
-.. code-block:: bash
-
-   pip install ansible
-
+Install Ansible using your preferred method. See :doc:`../../installation_guide/intro_installation`. Then return to this tutorial.
 
 Confirm the version of Ansible (must be >= 2.5):
 
@@ -32,8 +27,6 @@ Confirm the version of Ansible (must be >= 2.5):
 
    ansible --version
 
-
-For other ways to install Ansible, see :doc:`../../installation_guide/intro_installation`.
 
 Establish a Manual Connection to a Managed Node
 ==================================================
