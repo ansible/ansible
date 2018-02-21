@@ -716,7 +716,7 @@ def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_na
     return None, cluster
 
 
-def set_vm_power_state(content, vm, state, force):
+def set_vm_power_state(content, vm, state, force, timeout=0):
     """
     Set the power status for a VM determined by the current and
     requested states. force is forceful
@@ -764,6 +764,8 @@ def set_vm_power_state(content, vm, state, force):
                     if vm.guest.toolsRunningStatus == 'guestToolsRunning':
                         if expected_state == 'shutdownguest':
                             task = vm.ShutdownGuest()
+                            if timeout > 0:
+                                result.update(wait_for_poweroff(vm, timeout))
                         else:
                             task = vm.RebootGuest()
                         # Set result['changed'] immediately because
@@ -796,6 +798,20 @@ def set_vm_power_state(content, vm, state, force):
     if result['changed']:
         result['instance'] = gather_vm_facts(content, vm)
 
+    return result
+
+
+def wait_for_poweroff(vm, timeout=300):
+    result = dict()
+    interval = 15
+    while timeout > 0:
+        if vm.runtime.powerState.lower() == 'poweredoff':
+            break
+        time.sleep(interval)
+        timeout -= interval
+    else:
+        result['failed'] = True
+        result['msg'] = 'Timeout while waiting for VM power off.'
     return result
 
 
