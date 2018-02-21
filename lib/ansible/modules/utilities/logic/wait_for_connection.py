@@ -36,8 +36,8 @@ options:
     default: 0
   sleep:
     default: 1
-      - Number of seconds to sleep between checks.
     description:
+      - Number of seconds to sleep between checks.
   timeout:
     description:
       - Maximum number of seconds to wait for.
