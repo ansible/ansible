@@ -303,7 +303,7 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
 
-    region, conn, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, dummy, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EMRConnection(module, region, **aws_connect_params)
 
     cluster_id = module.params.get('id')
