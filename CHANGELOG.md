@@ -75,6 +75,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/36255)
 * Always show custom prompt in pause module
   (https://github.com/ansible/ansible/issues/36057)
+* Improve performance and recursion depth in include_role
+  (https://github.com/ansible/ansible/pull/36470)
 
 
 <a id="2.4.3"></a
