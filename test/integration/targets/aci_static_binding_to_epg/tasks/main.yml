@@ -1,0 +1,178 @@
+# Test code for the ACI modules
+# Copyright: (c) 2017, Bruno Calogero <bcalogero@cisco.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host, ACI username and ACI password
+  fail:
+    msg: 'Please define the following variables: aci_hostname, aci_username and aci_password.'
+  when: aci_hostname is not defined or aci_username is not defined or aci_password is not defined
+
+- name: ensure static path to epg is deleted for test kick off
+  aci_static_binding_to_epg: &aci_static_binding_to_epg_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: absent
+
+- name: ensure tenant exists for tests to kick off
+  aci_tenant: &aci_tenant_present
+    host: "{{ aci_hostname }}"
+    username: "{{ aci_username }}"
+    password: "{{ aci_password }}"
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    state: present
+    tenant: anstest
+  register: tenant_present
+
+- name: ensure ap exists
+  aci_ap: &aci_ap_present
+    <<: *aci_tenant_present
+    ap: anstest
+  register: ap_present
+
+- name: ensure epg exists
+  aci_epg: &aci_epg_present
+    <<: *aci_ap_present
+    epg: anstest
+  register: epg_present
+
+- name: bind static-binding to epg - check mode works
+  aci_static_binding_to_epg: &aci_static_binding_to_epg_present
+    <<: *aci_epg_present
+    encap_id: 222
+    deploy_immediacy: lazy
+    interface_mode: trunk
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+  check_mode: yes
+  register: provide_present_check_mode
+
+- name: bind static-binding to epg - provide works (creation w/o check-mode)
+  aci_static_binding_to_epg:
+    <<: *aci_static_binding_to_epg_present
+  ignore_errors: yes
+  register: provide_present
+
+- name: bind static-binding to epg - primary_encap_id works
+  aci_static_binding_to_epg: &primary_encap_id_present
+    <<: *aci_static_binding_to_epg_present
+    primary_encap_id: 50
+  register: primary_ecap_id_present
+
+- name: bind contract to epg - idempotency works again
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+  register: idempotent_present
+
+- name: missing required param - failure message works
+  aci_static_binding_to_epg:
+    <<: *aci_tenant_present
+  ignore_errors: yes
+  register: missing_required_present
+
+- name: present assertions
+  assert:
+    that:
+      - provide_present_check_mode.changed == true
+      - 'provide_present_check_mode.sent == {"fvRsPathAtt": {"attributes": { "encap": "vlan-222", "instrImedcy": "lazy", "mode": "regular", "tDn": "topology/pod-1/paths-101/pathep-[eth1/7]"}}}'
+      - provide_present.changed == true
+      - provide_present.sent == provide_present_check_mode.sent
+      - provide_present.previous == []
+      - primary_ecap_id_present.changed == true
+      - 'primary_ecap_id_present.sent == {"fvRsPathAtt": {"attributes": {"primaryEncap": "vlan-50"}}}'
+      - missing_required_present.failed == true
+      - 'missing_required_present.msg == "missing required arguments: interface_type"'
+      - missing_required_present.failed == true
+
+
+- name: get binding
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    state: query
+  register: query_static_binding
+
+- name: missing required param - failure message works
+  aci_static_binding_to_epg:
+    <<: *aci_tenant_present
+    state: query
+  ignore_errors: yes
+  register: missing_required_query
+
+- name: query assertions
+  assert:
+    that:
+      - query_static_binding.changed == false
+      - query_static_binding.current != []
+      - '"class/fvRsPathAtt.json" in query_static_binding.url'
+      # FIXME: possibility to query all the static bindings
+#       - query_all.changed == false
+#       - '"class/fvRsPathAtt.json" in query_all.url'
+      - missing_required_query.failed == true
+      - 'missing_required_query.msg == "missing required arguments: interface_type"'
+
+
+- name: delete provide binding - deletion works
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    state: absent
+  register: provide_absent
+
+- name: delete provide binding - idempotency works
+  aci_static_binding_to_epg:
+    <<: *primary_encap_id_present
+    state: absent
+  register: provide_absent_idempotent
+
+- name: missing param - failure message works
+  aci_static_binding_to_epg:
+    <<: *aci_tenant_present
+    state: absent
+  ignore_errors: yes
+  register: missing_param_absent
+
+- name: absent assertions
+  assert:
+    that:
+      - provide_absent.changed == true
+      - provide_absent.previous.0.fvRsPathAtt is defined
+      - provide_absent_idempotent.changed == false
+      - provide_absent_idempotent.previous == []
+      - missing_param_absent.failed == true
+      - missing_param_absent.failed == true
+      - 'missing_param_absent.msg == "missing required arguments: interface_type"'
+
+- name: cleanup binding
+  aci_static_binding_to_epg:
+    <<: *aci_static_binding_to_epg_absent
+
+- name: cleanup epg
+  aci_epg:
+    <<: *aci_epg_present
+    state: absent
+
+- name: cleanup ap
+  aci_ap:
+    <<: *aci_ap_present
+    state: absent
+
+- name: cleanup tenant
+  aci_tenant:
+    <<: *aci_tenant_present
+    state: absent
