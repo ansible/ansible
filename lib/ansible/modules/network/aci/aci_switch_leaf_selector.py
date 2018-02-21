@@ -17,14 +17,14 @@ module: aci_switch_leaf_selector
 short_description: Add a leaf Selector with Node Block Range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics
 description:
 - Add a leaf Selector with Node Block range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+notes:
+- This module is to be used with M(aci_switch_policy_leaf_profile)
+  One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
 - More information from the internal APIC class I(infra:LeafS), I(infra:NodeBlk), I(infra:RsAccNodePGrp) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
-notes:
-- This module is to be used with M(aci_switch_policy_leaf_profile)
-  One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
 options:
   description:
     description:
@@ -223,8 +223,8 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update({
         'description': dict(type='str'),
-        'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),
-        'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),
+        'leaf_profile': dict(type='str', aliases=['leaf_profile_name']),  # Not required for querying all objects
+        'leaf': dict(type='str', aliases=['name', 'leaf_name', 'leaf_profile_leaf_name', 'leaf_selector_name']),  # Not required for querying all objects
         'leaf_node_blk': dict(type='str', aliases=['leaf_node_blk_name', 'node_blk_name']),
         'leaf_node_blk_description': dict(type='str'),
         'from': dict(type='int', aliases=['node_blk_range_from', 'from_range', 'range_from']),
@@ -268,14 +268,13 @@ def main():
             module_object=leaf,
         ),
         # NOTE: infraNodeBlk is not made into a subclass because there is a 1-1 mapping between node block and leaf selector name
-        child_classes=['infraNodeBlk', 'infraRsAccNodePGrp']
+        child_classes=['infraNodeBlk', 'infraRsAccNodePGrp'],
 
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraLeafS',
             class_config=dict(
@@ -290,23 +289,21 @@ def main():
                             name=leaf_node_blk,
                             from_=from_,
                             to_=to_,
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 dict(
                     infraRsAccNodePGrp=dict(
                         attributes=dict(
                             tDn='uni/infra/funcprof/accnodepgrp-{0}'.format(policy_group),
-                        )
-                    )
+                        ),
+                    ),
                 ),
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraLeafS')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

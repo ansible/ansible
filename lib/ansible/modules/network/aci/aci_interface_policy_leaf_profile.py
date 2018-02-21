@@ -17,6 +17,7 @@ module: aci_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profiles on Cisco ACI fabrics (infra:AccPortP)
 description:
 - Manage Fabric interface policy leaf profiles on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(infra:AccPortP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -217,7 +218,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraAccPortP',
             class_config=dict(
@@ -226,10 +226,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraAccPortP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

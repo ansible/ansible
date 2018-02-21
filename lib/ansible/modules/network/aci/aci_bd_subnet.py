@@ -16,16 +16,16 @@ module: aci_bd_subnet
 short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:Subnet) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
+- More information from the internal APIC class I(fv:Subnet) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   bd:
     description:
@@ -316,11 +316,11 @@ from ansible.module_utils.basic import AnsibleModule, SEQUENCETYPE
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        bd=dict(type='str', aliases=['bd_name']),
+        bd=dict(type='str', aliases=['bd_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         enable_vip=dict(type='bool'),
-        gateway=dict(type='str', aliases=['gateway_ip']),
-        mask=dict(type='int', aliases=['subnet_mask']),
+        gateway=dict(type='str', aliases=['gateway_ip']),  # Not required for querying all objects
+        mask=dict(type='int', aliases=['subnet_mask']),  # Not required for querying all objects
         subnet_name=dict(type='str', aliases=['name']),
         nd_prefix_policy=dict(type='str'),
         preferred=dict(type='bool'),
@@ -329,7 +329,7 @@ def main():
         scope=dict(type='list', choices=['private', 'public', 'shared']),
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -398,7 +398,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvSubnet',
             class_config=dict(
@@ -416,10 +415,8 @@ def main():
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvSubnet')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

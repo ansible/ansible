@@ -16,6 +16,7 @@ module: aci_interface_policy_port_security
 short_description: Manage port security on Cisco ACI fabrics (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(l2:PortSecurityPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -204,7 +205,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='l2PortSecurityPol',
             class_config=dict(
@@ -214,10 +214,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='l2PortSecurityPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

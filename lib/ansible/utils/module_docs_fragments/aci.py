@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2017 Dag Wieers <dag@wieers.com>
-# Copyright 2017 Swetha Chunduri (@schunduri)
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
+# Copyright: (c) 2017, Swetha Chunduri (@schunduri)
 
 # This file is part of Ansible by Red Hat
 #
@@ -83,12 +83,6 @@ options:
     type: bool
     default: 'yes'
 notes:
-- By default, if an environment variable C(<protocol>_proxy) is set on
-  the target host, requests will be sent through that proxy. This
-  behaviour can be overridden by setting a variable for this task
-  (see `setting the environment
-  <http://docs.ansible.com/playbooks_environment.html>`_),
-  or by using the C(use_proxy) option.
-- HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
-  your proxy environment for both protocols is correct.
+- Please read :ref:`the ACI guide <aci_guide>` for more detailed information
+  on how to manage your ACI infrastructure using Ansible.
 '''

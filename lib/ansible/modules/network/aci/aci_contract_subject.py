@@ -16,14 +16,14 @@ module: aci_contract_subject
 short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
+notes:
+- The C(tenant) and C(contract) used must exist before using this module in your playbook.
+- The M(aci_tenant) and M(aci_contract) modules can be used for this.
 - More information from the internal APIC class I(vz:Subj) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
-notes:
-- The C(tenant) and C(contract) used must exist before using this module in your playbook.
-- The M(aci_tenant) and M(aci_contract) modules can be used for this.
 options:
   tenant:
     description:
@@ -240,9 +240,9 @@ MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOn
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        contract=dict(type='str', aliases=['contract_name']),
-        subject=dict(type='str', aliases=['contract_subject', 'name', 'subject_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
+        subject=dict(type='str', aliases=['contract_subject', 'name', 'subject_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         priority=dict(type='str', choices=['unspecified', 'level1', 'level2', 'level3']),
         reverse_filter=dict(type='bool'),
         dscp=dict(type='str', aliases=['target']),
@@ -311,7 +311,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='vzSubj',
             class_config=dict(
@@ -325,10 +324,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzSubj')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

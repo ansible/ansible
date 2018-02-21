@@ -16,14 +16,14 @@ module: aci_epg
 short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
+notes:
+- The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_ap) modules can be used for this.
 - More information from the internal APIC class I(fv:AEPg) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
-notes:
-- The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_ap) modules can be used for this.
 options:
   tenant:
     description:
@@ -270,10 +270,10 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        epg=dict(type='str', aliases=['name', 'epg_name']),
+        epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         intra_epg_isolation=dict(choices=['enforced', 'unenforced']),
@@ -331,7 +331,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvAEPg',
             class_config=dict(
@@ -347,10 +346,8 @@ def main():
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAEPg')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -61,39 +61,90 @@ For instance ensuring that a specific tenant exists, is done using the following
 
 A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
 
-Standard module parameters
-..........................
+Common parameters
+.................
 Every Ansible ACI module accepts the following parameters that influence the module's communication with the APIC REST API:
 
-- ``host`` -- Hostname or IP address of the APIC
-- ``port`` -- Port to use for communication (defaults to ``443`` for HTTPS, and ``80`` for HTTP)
-- ``username`` -- User name used to log on to the APIC (defaults to ``admin``)
-- ``password`` -- Password for ``username`` to log on to the APIC (using password-based authentication)
-- ``private_key`` -- Private key for ``username`` to log on to APIC (using signature-based authentication)
-- ``certificate_name`` -- Name of the certificate in the ACI Web GUI (defaults to ``private_key`` file base name)
-- ``timeout`` -- Timeout value for socket-level communication
-- ``use_proxy`` -- Use system proxy settings (defaults to ``yes``)
-- ``use_ssl`` -- Use HTTPS or HTTP for APIC REST communication (defaults to ``yes``)
-- ``validate_certs`` -- Validate certificate when using HTTPS communication (defaults to ``yes``)
-- ``output_level`` -- Influence the level of detail ACI modules return to the user (one of ``normal``, ``info`` or ``debug``)
+    host
+        Hostname or IP address of the APIC.
+
+    port
+        Port to use for communication. (Defaults to ``443`` for HTTPS, and ``80`` for HTTP)
+
+    username
+        User name used to log on to the APIC. (Defaults to ``admin``)
+
+    password
+        Password for ``username`` to log on to the APIC, using password-based authentication.
+
+    private_key
+        Private key for ``username`` to log on to APIC, using signature-based authentication. *New in version 2.5*
+
+    certificate_name
+        Name of the certificate in the ACI Web GUI. (Defaults to ``private_key`` file base name) *New in version 2.5*
+
+    timeout
+        Timeout value for socket-level communication.
+
+    use_proxy
+        Use system proxy settings. (Defaults to ``yes``)
+
+    use_ssl
+        Use HTTPS or HTTP for APIC REST communication. (Defaults to ``yes``)
+
+    validate_certs
+        Validate certificate when using HTTPS communication. (Defaults to ``yes``)
+
+    output_level
+        Influence the level of detail ACI modules return to the user. (One of ``normal``, ``info`` or ``debug``) *New in version 2.5*
 
 Proxy support
 .............
-By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see setting the environment), or by using the ``use_proxy`` module parameter.
+By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`setting the environment <playbooks_environment>`), or by using the ``use_proxy`` module parameter.
 
 HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
 
 If you don't need proxy support, but the system may have it configured nevertheless, you can add this parameter setting: ``use_proxy: no`` to avoid accidental proxy usage.
 
-.. note:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
+.. hint:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
 
-Module return values
-....................
-By default the ACI modules (excluding :ref:`the aci_rest module <aci_rest>`) return the resulting state of the managed object in a key ``current``.
+Return values
+.............
 
-By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
+.. versionadded:: 2.5
 
-For troubleshooting purposes setting ``output_level: debug`` or defining environment variable ``ANSIBLE_DEBUG=1`` enables more detailed information on the actual APIC REST communication, incl. ``filter_string``, ``method``, ``response``, ``status`` and ``url``.
+The following values are always returned:
+
+    current
+        The resulting state of the managed object.
+
+The following values are returned when ``output_level: info``:
+
+    previous
+        The original state of the managed object (before any change was made).
+
+    proposed
+        The proposed config payload, based on user-supplied values.
+
+    sent
+        The sent config payload, based on user-supplied values and the existing configuration.
+
+The following values are returned when ``output_level: debug`` or ``ANSIBLE_DEBUG=1``:
+
+    filter_string
+        The filter used for specific APIC queries.
+
+    method
+        The HTTP method used for the sent payload. (Either ``GET`` for queries, ``DELETE`` or ``POST`` for changes)
+
+    response
+        The HTTP response from the APIC.
+
+    status
+        The HTTP status code for the request.
+
+    url
+        The url used for the request.
 
 .. note:: The module return values are documented in detail as part of each module's documentation.
 
@@ -128,9 +179,11 @@ Password-based authentication is very simple to work with, but it is not the mos
 The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
 
 
-
 Signature-based authentication using certificates
 .................................................
+
+.. versionadded:: 2.5
+
 Using signature-based authentication is more efficient and more reliable than password-based authentication.
 
 Generate certificate and private key
@@ -183,7 +236,7 @@ You need the following parameters with your ACI module(s) for it to work:
     private_key: pki/admin.key
     certificate_name: admin  # This could be left out !
 
-.. note:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
+.. hint:: If you use a certificate name in ACI that matches the private key's basename, you can leave out the ``certificate_name`` parameter like the example above.
 
 More information
 ,,,,,,,,,,,,,,,,
@@ -271,8 +324,9 @@ More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
 
-- :ref:`The apic_rest Ansible module <aci_rest>`
-- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
+- :ref:`The apic_rest Ansible module documentation <aci_rest>`
+- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_-- Detailed guide on how the APIC REST API is designed and used, incl. many examples
+- `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_-- Complete reference of the APIC object model
 - `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
 
 
@@ -334,22 +388,18 @@ APIC error messages
 -------------------
 The following error messages may occur and this section can help you understand what exactly is going on.
 
-- **APIC Error 122: unknown managed object class 'polUni'**
-
-  In case you receive this error while you are certain your :ref:`aci_rest <aci_rest>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload.
-
-
-- **APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag**
-
-  Although the JSON specification allows unordered elements, the APIC REST API requires that the JSON ``attributes`` element precede the ``children`` array or other elements. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine. If you don't have any attributes, it may be necessary to add: ``attributes: {}`` as the APIC does expect the entry to proceed any ``children``.
+    APIC Error 122: unknown managed object class 'polUni'
+        In case you receive this error while you are certain your :ref:`aci_rest <aci_rest>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload.
 
 
-- **APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'**
+    APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag
+        Although the JSON specification allows unordered elements, the APIC REST API requires that the JSON ``attributes`` element precede the ``children`` array or other elements. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine. If you don't have any attributes, it may be necessary to add: ``attributes: {}`` as the APIC does expect the entry to proceed any ``children``.
 
-  Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
+    APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'
+        Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
 
 
-.. _aci_guide_issues:
+.. _aci_guide_known_issues:
 
 Known issues
 ------------
@@ -357,38 +407,28 @@ Known issues
 
 All below issues either have been reported to the vendor, or can simply be avoided.
 
-- **Too many consecutive API calls may result in connection throttling**
+    Too many consecutive API calls may result in connection throttling
+        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
 
-  Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
-
-  **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
-
-
-- **Specific requests may not reflect changes correctly**
-
-  There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
-
-  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
-
-  **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
+        **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
 
-- **Specific requests are known to not be idempotent**
+    Specific requests may not reflect changes correctly (`#35401 <https://github.com/ansible/ansible/issues/35041>`_)
+        There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
 
-  The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
-
-  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
-
-  **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
+        **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
 
 
-- **Setting user password is not idempotent**
+    Specific requests are known to not be idempotent (`#35050 <https://github.com/ansible/ansible/issues/35050>`_)
+        The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
 
-  Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
+        **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
 
-  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
 
-  **NOTE:** There is no workaround for this issue.
+    Setting user password is not idempotent (`#35544 <https://github.com/ansible/ansible/issues/35544>`_)
+        Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
+
+        **NOTE:** There is no workaround for this issue.
 
 
 .. _aci_guide_community:
