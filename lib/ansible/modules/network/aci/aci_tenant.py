@@ -16,6 +16,7 @@ module: aci_tenant
 short_description: Manage tenants on Cisco ACI fabrics (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(fv:Tenant) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -202,9 +203,9 @@ def main():
         ],
     )
 
-    tenant = module.params['tenant']
     description = module.params['description']
     state = module.params['state']
+    tenant = module.params['tenant']
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -218,7 +219,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvTenant',
             class_config=dict(
@@ -227,10 +227,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvTenant')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

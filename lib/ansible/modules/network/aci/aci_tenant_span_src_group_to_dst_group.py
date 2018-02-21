@@ -16,14 +16,14 @@ module: aci_tenant_span_src_group_to_dst_group
 short_description: Manage SPAN source group to destination group bindings on Cisco ACI fabrics (span:SpanLbl)
 description:
 - Manage SPAN source groups' associated destinaton group on Cisco ACI fabrics.
+notes:
+- The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.
 - More information from the internal APIC class I(span:SrcGrp) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.
 options:
   description:
     description:
@@ -172,10 +172,10 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        dst_group=dict(type='str'),
-        src_group=dict(type='str'),
+        dst_group=dict(type='str'),  # Not required for querying all objects
+        src_group=dict(type='str'),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -220,7 +220,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='spanSpanLbl',
             class_config=dict(
@@ -229,10 +228,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='spanSpanLbl')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -16,13 +16,13 @@ module: aci_encap_pool_range
 short_description: Manage encap ranges assigned to pools on Cisco ACI fabrics (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
+notes:
+- The C(pool) must exist in order to add or delete a range.
 - More information from the internal APIC class I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
-requirements:
-- The C(pool) must exist in order to add or delete a range.
 options:
   allocation_mode:
     description:
@@ -252,12 +252,12 @@ def main():
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),
-        pool=dict(type='str', aliases=['pool_name']),
+        pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
         pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
-        range_end=dict(type='int', aliases=['end']),
-        range_name=dict(type='str', aliases=["name", "range"]),
-        range_start=dict(type='int', aliases=["start"]),
+        range_end=dict(type='int', aliases=['end']),  # Not required for querying all objects
+        range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
+        range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -383,7 +383,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=aci_range_class,
             class_config={
@@ -392,13 +391,11 @@ def main():
                 "from": encap_start,
                 "name": range_name,
                 "to": encap_end,
-            }
+            },
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=aci_range_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

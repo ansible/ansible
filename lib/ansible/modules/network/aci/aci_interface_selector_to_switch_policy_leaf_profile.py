@@ -17,15 +17,13 @@ module: aci_interface_selector_to_switch_policy_leaf_profile
 short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
 description:
 - Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+notes:
+- This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
 - More information from the internal APIC class I(infra:RsAccPortP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
-notes:
-- This module can be used with M(aci_switch_policy_leaf_profile).
-  One first creates a leaf profile (infra:NodeP),
-  Finally, associates an interface profile using the provided interface selector profile (infra:RsAccPortP)
 options:
   leaf_profile:
     description:
@@ -185,8 +183,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),
-        interface_selector=dict(type='str', aliases=['name', 'interface_selector_name', 'interface_profile_name']),
+        leaf_profile=dict(type='str', aliases=['leaf_profile_name']),  # Not required for querying all objects
+        interface_selector=dict(type='str', aliases=['interface_profile_name', 'interface_selector_name', 'name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query'])
     )
 
@@ -226,16 +224,13 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraRsAccPortP',
-            class_config=dict(tDn=interface_selector_tDn)
+            class_config=dict(tDn=interface_selector_tDn),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraRsAccPortP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

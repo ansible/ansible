@@ -17,11 +17,12 @@ module: aci_firmware_source
 short_description: Manage firmware image sources on Cisco ACI fabrics (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
-- More information from the internal APIC class I(firmware:OSource) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
+notes:
+- More information from the internal APIC class I(firmware:OSource) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   source:
     description:
@@ -241,7 +242,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='firmwareOSource',
             class_config=dict(
@@ -254,10 +254,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='firmwareOSource')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

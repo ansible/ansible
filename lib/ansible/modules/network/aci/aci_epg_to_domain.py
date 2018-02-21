@@ -16,17 +16,17 @@ module: aci_epg_to_domain
 short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:RsDomAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
 - OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
   by the Cisco APIC Neutron plugin as part of the installation and configuration.
   This module can be used to query status of an OpenStack VMM domain.
+- More information from the internal APIC class I(fv:RsDomAtt) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   allow_useg:
     description:
@@ -271,18 +271,18 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
-        epg=dict(type='str', aliases=['name', 'epg_name']),
+        epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
         netflow=dict(type='raw'),  # Turn into a boolean in v2.9
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -366,7 +366,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvRsDomAtt',
             class_config=dict(
@@ -380,10 +379,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsDomAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

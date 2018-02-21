@@ -17,14 +17,14 @@ module: aci_domain_to_encap_pool
 short_description: Bind Domain to Encap Pools on Cisco ACI fabrics (infra:RsVlanNs)
 description:
 - Bind Domain to Encap Pools on Cisco ACI fabrics.
+notes:
+- The C(domain) and C(encap_pool) parameters should exist before using this module.
+  The M(aci_domain) and M(aci_encap_pool) can be used for these.
 - More information from the internal APIC class I(infra:RsVlanNs) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- The C(domain) and C(encap_pool) parameters should exist before using this module.
-  The M(aci_domain) and M(aci_encap_pool) can be used for these.
 options:
   domain:
     description:

@@ -16,14 +16,14 @@ module: aci_filter_entry
 short_description: Manage filter entries on Cisco ACI fabrics (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
+notes:
+- The C(tenant) and C(filter) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_filter) modules can be used for this.
 - More information from the internal APIC class I(vz:Entry) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(tenant) and C(filter) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_filter) modules can be used for this.
 options:
   arp_flag:
     description:
@@ -247,15 +247,15 @@ def main():
         dst_port=dict(type='str'),
         dst_port_end=dict(type='str'),
         dst_port_start=dict(type='str'),
-        entry=dict(type='str', aliases=['entry_name', 'filter_entry', 'name']),
+        entry=dict(type='str', aliases=['entry_name', 'filter_entry', 'name']),  # Not required for querying all objects
         ether_type=dict(choices=VALID_ETHER_TYPES, type='str'),
-        filter=dict(type='str', aliases=['filter_name']),
+        filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
         icmp_msg_type=dict(type='str', choices=VALID_ICMP_TYPES),
         icmp6_msg_type=dict(type='str', choices=VALID_ICMP6_TYPES),
         ip_protocol=dict(choices=VALID_IP_PROTOCOLS, type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         stateful=dict(type='bool'),
-        tenant=dict(type="str", aliases=['tenant_name']),
+        tenant=dict(type="str", aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -327,7 +327,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='vzEntry',
             class_config=dict(
@@ -344,10 +343,8 @@ def main():
             ),
         )
 
-        # generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzEntry')
 
-        # submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -16,14 +16,14 @@ module: aci_tenant_span_src_group
 short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 - More information from the internal APIC class I(span:SrcGrp) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
 options:
   admin_state:
     description:
@@ -225,7 +225,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='spanSrcGrp',
             class_config=dict(
@@ -236,10 +235,8 @@ def main():
             child_configs=[{'spanSpanLbl': {'attributes': {'name': dst_group}}}],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='spanSrcGrp')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

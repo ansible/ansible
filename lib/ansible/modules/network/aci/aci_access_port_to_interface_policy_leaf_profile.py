@@ -17,6 +17,7 @@ module: aci_access_port_to_interface_policy_leaf_profile
 short_description: Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk) at
   U(https://developer.cisco.com/media/mim-ref).
 author:
@@ -36,7 +37,6 @@ options:
   description:
     description:
     - The description to assign to the C(access_port_selector)
-    required: no
   leaf_port_blk:
     description:
     - The name of the Fabric access policy leaf interface profile access port block.
@@ -59,7 +59,6 @@ options:
   policy_group:
     description:
     - The name of the fabric access policy group to be associated with the leaf interface profile interface selector.
-    required: no
     aliases: [ policy_group_name ]
   state:
     description:
@@ -227,8 +226,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update({
-        'leaf_interface_profile': dict(type='str', aliases=['leaf_interface_profile_name']),
-        'access_port_selector': dict(type='str', aliases=['name', 'access_port_selector_name']),
+        'leaf_interface_profile': dict(type='str', aliases=['leaf_interface_profile_name']),  # Not required for querying all objects
+        'access_port_selector': dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
         'description': dict(typ='str'),
         'leaf_port_blk': dict(type='str', aliases=['leaf_port_blk_name']),
         'leaf_port_blk_description': dict(type='str'),
@@ -277,7 +276,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraHPortS',
             class_config=dict(
@@ -292,23 +290,21 @@ def main():
                             name=leaf_port_blk,
                             fromPort=from_,
                             toPort=to_,
-                        )
-                    )
+                        ),
+                    ),
                 ),
                 dict(
                     infraRsAccBaseGrp=dict(
                         attributes=dict(
                             tDn='uni/infra/funcprof/accportgrp-{0}'.format(policy_group),
-                        )
-                    )
+                        ),
+                    ),
                 ),
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraHPortS')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -16,6 +16,7 @@ module: aci_interface_policy_lldp
 short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(lldp:IfPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -33,13 +34,13 @@ options:
     aliases: [ descr ]
   receive_state:
     description:
-    - Enable or disable Receive state (FIXME!)
+    - Enable or disable Receive state.
     required: yes
     choices: [ disabled, enabled ]
     default: enabled
   transmit_state:
     description:
-    - Enable or Disable Transmit state (FIXME!)
+    - Enable or Disable Transmit state.
     required: false
     choices: [ disabled, enabled ]
     default: enabled
@@ -176,7 +177,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        lldp_policy=dict(type='str', require=False, aliases=['name']),
+        lldp_policy=dict(type='str', require=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         receive_state=dict(type='raw'),  # Turn into a boolean in v2.9
         transmit_state=dict(type='raw'),  # Turn into a boolean in v2.9
@@ -214,7 +215,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='lldpIfPol',
             class_config=dict(
@@ -225,10 +225,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='lldpIfPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -16,6 +16,7 @@ module: aci_interface_policy_mcp
 short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol)
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(mcp:IfPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -204,7 +205,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='mcpIfPol',
             class_config=dict(
@@ -214,10 +214,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='mcpIfPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
