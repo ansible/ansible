@@ -77,9 +77,11 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/36057)
 * Improve performance and recursion depth in include_role
   (https://github.com/ansible/ansible/pull/36470)
+* VMware: set extra configs for virtual machine
+  (https://github.com/ansible/ansible/issues/32004)
 
 
-<a id="2.4.3"></a
+<a id="2.4.3"></a>
 
 ## 2.4.3 "Dancing Days" - 2018-01-31
 
