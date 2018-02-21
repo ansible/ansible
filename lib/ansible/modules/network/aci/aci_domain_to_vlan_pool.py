@@ -17,14 +17,14 @@ module: aci_domain_to_vlan_pool
 short_description: Bind Domain to VLAN Pools on Cisco ACI fabrics (infra:RsVlanNs)
 description:
 - Bind Domain to VLAN Pools on Cisco ACI fabrics.
+notes:
+- The C(domain) and C(vlan_pool) parameters should exist before using this module.
+  The M(aci_domain) and M(aci_vlan_pool) can be used for these.
 - More information from the internal APIC class I(infra:RsVlanNs) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- The C(domain) and C(vlan_pool) parameters should exist before using this module.
-  The M(aci_domain) and M(aci_vlan_pool) can be used for these.
 options:
   domain:
     description:
@@ -122,6 +122,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
+    domain_type: phys
     state: query
 '''
 
@@ -234,7 +235,10 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 VM_PROVIDER_MAPPING = dict(
+    cloudfoundry='CloudFoundry',
+    kubernetes='Kubernetes',
     microsoft='Microsoft',
+    openshift='OpenShift',
     openstack='OpenStack',
     redhat='Redhat',
     vmware='VMware',
@@ -244,9 +248,9 @@ VM_PROVIDER_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),
-        pool=dict(type='str', aliases=['pool_name', 'vlan_pool']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm']),  # Not required for querying all objects
+        pool=dict(type='str', aliases=['pool_name', 'vlan_pool']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', required=True, aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
@@ -300,7 +304,11 @@ def main():
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'dom-{0}'.format(domain)
 
-    aci_mo = 'uni/infra/vlanns-' + pool_name
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
+
+    aci_mo = 'uni/infra/vlanns-{0}'.format(pool_name)
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -316,7 +324,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class=domain_class,
             class_config=dict(name=domain),
@@ -325,10 +332,8 @@ def main():
             ]
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=domain_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

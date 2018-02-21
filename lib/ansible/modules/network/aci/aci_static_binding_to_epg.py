@@ -17,14 +17,14 @@ module: aci_static_binding_to_epg
 short_description: Bind static paths to EPGs on Cisco ACI fabrics (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
+notes:
+- The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
 - More information from the internal APIC classes I(fv:RsPathAtt) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
-notes:
-- The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
 options:
   tenant:
     description:
@@ -59,27 +59,31 @@ options:
   interface_mode:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
+    - Values C(802.1p) and C(native) are identical.
+    - Values C(access) and C(untagged) are identical.
+    - Values C(regular), C(tagged) and C(trunk) are identical.
     - The APIC defaults the mode to C(trunk).
-    choices: [ access, trunk, 802.1p ]
+    choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
     default: trunk
-    aliases: [ mode, interface_mode_name ]
+    aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
     - The APIC defaults the C(interface_type) to C(switch_port).
-    choices: [ switch_port, vpc, port_channel, fex ]
+    choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
-  pod:
+  pod_id:
     description:
     - The pod number part of the tDn.
-    - C(pod) is usually an integer below 10.
-    aliases: [ pod_number ]
+    - C(pod_id) is usually an integer below 10.
+    aliases: [ pod, pod_number ]
   leafs:
     description:
     - The switch ID(s) that the C(interface) belongs to.
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
-    aliases: [ paths, leaves, nodes, switches ]
+    - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
+    aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
     - The C(interface) string value part of the tDn.
@@ -109,16 +113,117 @@ EXAMPLES = r'''
     epg: accessport_epg1
     encap_id: 222
     deploy_immediacy: lazy
-    interface_mode: access
+    interface_mode: untagged
     interface_type: switch_port
-    pod: 1
+    pod_id: 1
     leafs: 101
     interface: '1/7'
     state: present
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -130,21 +235,18 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        epg=dict(type='str', aliases=['epg_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['mode', 'interface_mode_name']),
-        interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
-        # NOTE: C(pod) is usually an integer below 10.
-        pod=dict(type='int', aliases=['pod_number']),
-        # NOTE: C(leafs) is usually something like '101' or '101-102' depending on C(connection_type).
-        leafs=dict(type='list', aliases=['paths', 'leaves', 'nodes', 'switches']),
-        # NOTE: C(interface) is usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(interface_type).
+        interface_mode=dict(type='str', choices=['802.1p', 'access', 'native', 'regular', 'tagged', 'trunk', 'untagged'],
+                            aliases=['interface_mode_name', 'mode']),
+        interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
+        pod_id=dict(type='int', aliases=['pod', 'pod_number']),  # Not required for querying all objects
+        leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),
         interface=dict(type='str'),
-        # NOTE: C(extpaths) is only used if C(interface_type) is C(fex), it is usually something like '1011'(int)
         extpaths=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -153,9 +255,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap_id', 'interface_type', 'pod', 'leafs', 'interface']],
             ['interface_type', 'fex', ['extpaths']],
+            ['state', 'absent', ['ap', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
+            ['state', 'present', ['ap', 'encap_id', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
         ],
     )
 
@@ -167,7 +269,7 @@ def main():
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
-    pod = module.params['pod']
+    pod_id = module.params['pod_id']
     # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
     leafs = [str(leaf) for leaf in module.params['leafs']]
     if leafs is not None:
@@ -201,18 +303,26 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
+    INTERFACE_MODE_MAPPING = {
+        '802.1p': 'native',
+        'access': 'untagged',
+        'native': 'native',
+        'regular': 'regular',
+        'tagged': 'regular',
+        'trunk': 'regular',
+        'untagged': 'untagged',
+    }
+
     INTERFACE_TYPE_MAPPING = dict(
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp', C(leafs) can be something like '101-102'
-        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be of the following format: '1/7', C(leafs) can only be like '101', C(extpaths) can only be like '1011'
-        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, leafs, extpaths, interface),
+        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod_id, leafs, extpaths, interface),
+        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
+    if interface_mode is not None:
+        interface_mode = INTERFACE_MODE_MAPPING[interface_mode]
 
     aci = ACIModule(module)
     aci.construct_url(
@@ -245,7 +355,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
@@ -257,16 +366,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsPathAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

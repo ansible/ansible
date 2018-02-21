@@ -17,14 +17,14 @@ module: aci_taboo_contract
 short_description: Manage taboo contracts on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage taboo contracts on Cisco ACI fabrics.
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 - More information from the internal APIC class I(vz:BrCP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
 options:
   taboo_contract:
     description:
@@ -58,34 +58,34 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: present
 
 - name: Remove taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: absent
 
 - name: Query all taboo contracts
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 
 - name: Query a specific taboo contract
   aci_taboo_contract:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: ansible_test
     taboo_contract: taboo_contract_test
     state: query
@@ -246,7 +246,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='vzTaboo',
             class_config=dict(
@@ -256,10 +255,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzTaboo')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

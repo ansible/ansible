@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,6 +17,15 @@ module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
+- Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
 - More information regarding the Cisco APIC REST API is available from
   U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
 author:
@@ -25,7 +35,6 @@ requirements:
 - lxml (when using XML payload)
 - xmljson >= 0.1.8 (when using XML payload)
 - python 2.7+ (when using xmljson)
-extends_documentation_fragment: aci
 options:
   method:
     description:
@@ -52,21 +61,14 @@ options:
     - Name of the absolute path of the filname that includes the body
       of the http request being sent to the ACI fabric.
     aliases: [ config_file ]
-notes:
-- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
-  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- Certain payloads (or used paths) are known to report no changes happened when changes did happen.
-  This is a known APIC problem and has been reported to the vendor.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
 - name: Add a tenant using certifcate authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
@@ -75,8 +77,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using inline YAML
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -90,8 +92,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using a JSON string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/mo/uni.json
@@ -109,8 +111,8 @@ EXAMPLES = r'''
 
 - name: Add a tenant using an XML string
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/{{ aci_username}}.key
     validate_certs: no
     path: /api/mo/uni.xml
@@ -120,17 +122,17 @@ EXAMPLES = r'''
 
 - name: Get tenants using password authentication
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     method: get
     path: /api/node/class/fvTenant.json
   delegate_to: localhost
 
 - name: Configure contracts
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     method: post
     path: /api/mo/uni.xml
@@ -139,8 +141,8 @@ EXAMPLES = r'''
 
 - name: Register leaves and spines
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     method: post
@@ -155,8 +157,8 @@ EXAMPLES = r'''
 
 - name: Wait for all controllers to become ready
   aci_rest:
-    host: '{{ inventory_hostname }}'
-    username: '{{ aci_username }}'
+    host: apic
+    username: admin
     private_key: pki/admin.key
     validate_certs: no
     path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
@@ -285,7 +287,7 @@ class ACIRESTModule(ACIModule):
 
         return False
 
-    def response_any(self, rawoutput, rest_type='xml'):
+    def response_type(self, rawoutput, rest_type='xml'):
         ''' Handle APIC response output '''
 
         if rest_type == 'json':
@@ -313,8 +315,8 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    path = module.params['path']
     content = module.params['content']
+    path = module.params['path']
     src = module.params['src']
 
     # Report missing file
@@ -380,39 +382,36 @@ def main():
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
+    aci.method = aci.params['method'].upper()
+
     # Perform request
     resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
-                           method=aci.params['method'].upper(),
+                           method=aci.method,
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    if aci.params['output_level'] == 'debug':
-        aci.result['filter_string'] = aci.filter_string
-        aci.result['method'] = aci.params['method'].upper()
-        # aci.result['path'] = aci.path  # Adding 'path' in result causes state: absent in output
-        aci.result['response'] = info['msg']
-        aci.result['status'] = info['status']
-        aci.result['url'] = aci.url
+    aci.response = info['msg']
+    aci.status = info['status']
 
     # Report failure
     if info['status'] != 200:
         try:
             # APIC error
-            aci.response(info['body'], rest_type)
-            aci.fail_json(msg='Request failed: %(code)s %(text)s' % aci.error)
+            aci.response_type(info['body'], rest_type)
+            aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error
-            aci.fail_json(msg='Request connection failed for %(url)s. %(msg)s' % info)
+            aci.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-    aci.response_any(resp.read(), rest_type)
+    aci.response_type(resp.read(), rest_type)
 
     aci.result['imdata'] = aci.imdata
     aci.result['totalCount'] = aci.totalCount
 
     # Report success
-    module.exit_json(**aci.result)
+    aci.exit_json(**aci.result)
 
 
 if __name__ == '__main__':

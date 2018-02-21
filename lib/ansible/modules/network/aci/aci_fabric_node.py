@@ -17,6 +17,7 @@ module: aci_fabric_node
 short_description: Add a new Fabric Node Member on Cisco ACI fabrics (fabric:NodeIdentP)
 description:
 - Add a new Fabric Node Member on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class
   I(fabric:NodeIdentP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
@@ -36,7 +37,7 @@ options:
   switch:
     description:
     - Switch Name for the new Fabric Node Member.
-    aliases: [ switch_name ]
+    aliases: [ name, switch_name ]
   description:
     description:
     - Description for the new Fabric Node Member.
@@ -71,7 +72,108 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: '?rsp-prop-include=config-only'
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -84,12 +186,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        pod_id=dict(type='int'),
-        serial=dict(type='str', aliases=['serial_number']),
-        node_id=dict(type='int'),
-        switch=dict(type='str', aliases=['switch_name']),
         description=dict(type='str', aliases=['descr']),
+        node_id=dict(type='int'),  # Not required for querying all objects
+        pod_id=dict(type='int'),
         role=dict(type='str', choices=['leaf', 'spine', 'unspecified'], aliases=['role_name']),
+        serial=dict(type='str', aliases=['serial_number']),  # Not required for querying all objects
+        switch=dict(type='str', aliases=['name', 'switch_name']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -97,8 +199,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['serial', 'node_id']],
-            ['state', 'present', ['serial', 'node_id']],
+            ['state', 'absent', ['node_id', 'serial']],
+            ['state', 'present', ['node_id', 'serial']],
         ],
     )
 
@@ -123,31 +225,27 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fabricNodeIdentP',
             class_config=dict(
-                dn='uni/controller/nodeidentpol/nodep-{0}'.format(serial),
-                podId=pod_id,
-                serial=serial,
-                nodeId=node_id,
-                name=switch,
-                role=role,
-                rn='nodep-{0}'.format(serial),
                 descr=description,
+                name=switch,
+                nodeId=node_id,
+                podId=pod_id,
+                rn='nodep-{0}'.format(serial),
+                role=role,
+                serial=serial,
             )
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fabricNodeIdentP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json(**aci.result)
 
 
 if __name__ == "__main__":

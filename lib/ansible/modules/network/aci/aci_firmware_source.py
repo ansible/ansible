@@ -17,11 +17,12 @@ module: aci_firmware_source
 short_description: Manage firmware image sources on Cisco ACI fabrics (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
-- More information from the internal APIC class I(firmware:OSource) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
+notes:
+- More information from the internal APIC class I(firmware:OSource) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   source:
     description:
@@ -58,35 +59,35 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
-    url: foobar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
+    url: foo.bar.cisco.com/download/cisco/aci/aci-msft-pkg-3.1.1i.zip
     url_protocol: http
     state: present
 
 - name: Remove firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
     state: absent
 
-- name: Query all firmware sources
-  aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    state: query
-
 - name: Query a specific firmware source
   aci_firmware_source:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     source: aci-msft-pkg-3.1.1i.zip
+    state: query
+
+- name: Query all firmware sources
+  aci_firmware_source:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 '''
 
@@ -241,7 +242,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='firmwareOSource',
             class_config=dict(
@@ -254,10 +254,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='firmwareOSource')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -17,6 +17,7 @@ short_description: Provides rollback and rollback preview functionality for Cisc
 description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabric.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
+notes:
 - More information from the internal APIC class I(config:ImportP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -97,9 +98,9 @@ EXAMPLES = r'''
     password: SomeSecretPassword
     state: preview
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
     compare_export_policy: config_backup
-    compare_snapshot: 'run-2017-08-27T23-43-56'
+    compare_snapshot: run-2017-08-27T23-43-56
 
 - name: Rollback Configuration
   aci_config_rollback:
@@ -109,7 +110,7 @@ EXAMPLES = r'''
     state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
+    snapshot: run-2017-08-28T06-24-01
 
 - name: Rollback Configuration
   aci_config_rollback:
@@ -119,8 +120,8 @@ EXAMPLES = r'''
     state: rollback
     import_policy: rollback_config
     export_policy: config_backup
-    snapshot: 'run-2017-08-28T06-24-01'
-    description: 'Rollback 8-27 changes'
+    snapshot: run-2017-08-28T06-24-01
+    description: Rollback 8-27 changes
     import_mode: atomic
     import_type: replace
     fail_on_decrypt: yes
@@ -241,7 +242,6 @@ def main():
 
         aci.get_existing()
 
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='configImportP',
             class_config=dict(
@@ -256,10 +256,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='configImportP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'preview':
