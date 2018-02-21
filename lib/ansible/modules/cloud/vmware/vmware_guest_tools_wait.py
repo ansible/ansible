@@ -137,7 +137,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         name=dict(type='str'),
-        name_match=dict(type='str', default='first'),
+        name_match=dict(type='str', default='first', choices=['first', 'last']),
         folder=dict(type='str'),
         uuid=dict(type='str'),
     )

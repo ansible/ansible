@@ -120,6 +120,7 @@ options:
       - The name of the virtual data center (VDC) where the vm should be created or contains the vAPP.
     required: false
     default: None
+extends_documentation_fragment: vca
 '''
 
 EXAMPLES = '''

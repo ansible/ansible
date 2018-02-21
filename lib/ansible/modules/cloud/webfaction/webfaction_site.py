@@ -53,10 +53,7 @@ options:
     https:
         description:
             - Whether or not to use HTTPS
-        required: false
-        choices:
-            - true
-            - false
+        type: bool
         default: 'false'
 
     site_apps:

@@ -42,6 +42,7 @@ options:
     description:
     - A dictionary of advance configuration parameter.
     - Invalid configuration parameters are ignored.
+    default: {}
 extends_documentation_fragment: vmware.documentation
 '''
 

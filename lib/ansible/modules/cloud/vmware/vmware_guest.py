@@ -61,6 +61,7 @@ options:
     - If this value is not set, VM is created without using a template.
     - If the VM exists already this setting will be ignored.
     - This parameter is case sensitive.
+    aliases: [ 'template_src' ]
   is_template:
     description:
     - Flag the instance as a template.
