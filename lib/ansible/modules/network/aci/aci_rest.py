@@ -382,15 +382,16 @@ def main():
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
+    aci.method = aci.params['method'].upper()
+
     # Perform request
     resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
-                           method=aci.params['method'].upper(),
+                           method=aci.method,
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    aci.method = aci.params['method'].upper()
     aci.response = info['msg']
     aci.status = info['status']
 

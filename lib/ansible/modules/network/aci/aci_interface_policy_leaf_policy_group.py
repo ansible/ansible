@@ -115,7 +115,7 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# TODO: Add query examples
+# FIXME: Add query examples
 EXAMPLES = r'''
 - name: Create a Port Channel (PC) Interface Policy Group
   aci_interface_policy_leaf_policy_group:

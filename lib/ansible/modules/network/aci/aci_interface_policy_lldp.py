@@ -34,13 +34,13 @@ options:
     aliases: [ descr ]
   receive_state:
     description:
-    - Enable or disable Receive state (FIXME!)
+    - Enable or disable Receive state.
     required: yes
     choices: [ disabled, enabled ]
     default: enabled
   transmit_state:
     description:
-    - Enable or Disable Transmit state (FIXME!)
+    - Enable or Disable Transmit state.
     required: false
     choices: [ disabled, enabled ]
     default: enabled

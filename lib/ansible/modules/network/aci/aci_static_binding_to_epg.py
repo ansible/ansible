@@ -59,15 +59,18 @@ options:
   interface_mode:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
+    - Values C(802.1p) and C(native) are identical.
+    - Values C(access) and C(untagged) are identical.
+    - Values C(regular), C(tagged) and C(trunk) are identical.
     - The APIC defaults the mode to C(trunk).
-    choices: [ untagged, 802.1p, trunk, regular, native, tagged, access ]
+    choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
     default: trunk
-    aliases: [ mode, interface_mode_name ]
+    aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
     - The APIC defaults the C(interface_type) to C(switch_port).
-    choices: [ switch_port, vpc, port_channel, fex ]
+    choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
   pod_id:
     description:
@@ -79,7 +82,8 @@ options:
     - The switch ID(s) that the C(interface) belongs to.
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
-    aliases: [ paths, leaves, nodes, switches ]
+    - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
+    aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
     - The C(interface) string value part of the tDn.
@@ -109,7 +113,7 @@ EXAMPLES = r'''
     epg: accessport_epg1
     encap_id: 222
     deploy_immediacy: lazy
-    interface_mode: access
+    interface_mode: untagged
     interface_type: switch_port
     pod_id: 1
     leafs: 101
@@ -238,14 +242,10 @@ def main():
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         interface_mode=dict(type='str', choices=['802.1p', 'access', 'native', 'regular', 'tagged', 'trunk', 'untagged'], aliases=['interface_mode_name', 'mode']),
-        interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),  # Not required for querying all objects
-        # NOTE: C(pod) is usually an integer below 10.
+        interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
         pod_id=dict(type='int', aliases=['pod', 'pod_number']),  # Not required for querying all objects
-        # NOTE: C(leafs) is usually something like '101' or '101-102' depending on C(connection_type).
-        leafs=dict(type='list', aliases=['paths', 'leaves', 'nodes', 'switches']),
-        # NOTE: C(interface) is usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(interface_type).
+        leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),
         interface=dict(type='str'),
-        # NOTE: C(extpaths) is only used if C(interface_type) is C(fex), it is usually something like '1011'(int)
         extpaths=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -254,9 +254,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod_id', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap_id', 'interface_type', 'pod_id', 'leafs', 'interface']],
             ['interface_type', 'fex', ['extpaths']],
+            ['state', 'absent', ['ap', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
+            ['state', 'present', ['ap', 'encap_id', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
         ],
     )
 
@@ -303,23 +303,20 @@ def main():
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
     INTERFACE_MODE_MAPPING = {
+        '802.1p': 'native',
         'access': 'untagged',
-        'untagged': 'untagged',
+        'native': 'native',
+        'regular': 'regular',
         'tagged': 'regular',
         'trunk': 'regular',
-        'regular': 'regular',
-        '802.1p': 'native',
-        'native': 'native',
+        'untagged': 'untagged',
     }
+
     INTERFACE_TYPE_MAPPING = dict(
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp', C(leafs) can be something like '101-102'
-        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
-        # NOTE: C(interface) can be of the following format: '1/7', C(leafs) can only be like '101', C(extpaths) can only be like '1011'
         fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod_id, leafs, extpaths, interface),
+        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
