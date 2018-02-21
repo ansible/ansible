@@ -17,10 +17,10 @@ short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(span:SrcGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information from the internal APIC class I(span:SrcGrp) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

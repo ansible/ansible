@@ -18,10 +18,10 @@ short_description: Add a leaf Selector with Node Block Range and Policy Group to
 description:
 - Add a leaf Selector with Node Block range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(infra:LeafS), I(infra:NodeBlk), I(infra:RsAccNodePGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 - This module is to be used with M(aci_switch_policy_leaf_profile)
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
+- More information from the internal APIC class I(infra:LeafS), I(infra:NodeBlk), I(infra:RsAccNodePGrp) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

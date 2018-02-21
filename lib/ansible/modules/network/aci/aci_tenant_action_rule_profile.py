@@ -17,10 +17,10 @@ short_description: Manage action rule profiles on Cisco ACI fabrics (rtctrl:Attr
 description:
 - Manage action rule profiles on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(rtctrl:AttrP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information from the internal APIC class I(rtctrl:AttrP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'

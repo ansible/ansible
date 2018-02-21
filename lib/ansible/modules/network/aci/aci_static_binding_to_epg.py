@@ -18,10 +18,10 @@ short_description: Bind static paths to EPGs on Cisco ACI fabrics (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC classes I(fv:RsPathAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
 - The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
+- More information from the internal APIC classes I(fv:RsPathAtt) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -241,7 +241,8 @@ def main():
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['802.1p', 'access', 'native', 'regular', 'tagged', 'trunk', 'untagged'], aliases=['interface_mode_name', 'mode']),
+        interface_mode=dict(type='str', choices=['802.1p', 'access', 'native', 'regular', 'tagged', 'trunk', 'untagged'],
+                            aliases=['interface_mode_name', 'mode']),
         interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
         pod_id=dict(type='int', aliases=['pod', 'pod_number']),  # Not required for querying all objects
         leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),
