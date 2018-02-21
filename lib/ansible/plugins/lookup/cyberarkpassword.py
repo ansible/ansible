@@ -167,7 +167,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        display.vvvv(terms)
+        display.vvvv("Terms: %s" % terms)
         if isinstance(terms, list):
             return_values = []
             for term in terms:
