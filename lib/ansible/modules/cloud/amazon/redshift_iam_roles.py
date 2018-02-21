@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 module: redshift_iam_roles
 short_description: This module adds/removes IAM roles to/from Redshift clusters.
-version_added: 2.5
+version_added: 2.6
 author: Aaron Smith (@slapula)
 description:
     - "This module adds or removes a list of IAM roles to a give Redshift Cluster"
@@ -36,6 +36,7 @@ options:
         description:
             - "Desired state of the list of IAM roles on the give Redshift cluster"
         required: true
+        choices: ['present', 'absent']
     roles:
         description:
             - "This is a list of IAM roles (Full ARN) to add to the Redshift cluster. Roles attached to the cluster that are not on the list will be removed."
