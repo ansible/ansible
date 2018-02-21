@@ -33,6 +33,11 @@ options:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
         type: bool
+    force:
+        description:
+            - Whether to override existing symlinks.
+        type: bool
+        version_added: 2.6
     masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
@@ -65,10 +70,14 @@ requirements:
 
 EXAMPLES = '''
 - name: Make sure a service is running
-  systemd: state=started name=httpd
+  systemd:
+    state: started
+    name: httpd
 
 - name: stop service cron on debian, if running
-  systemd: name=cron state=stopped
+  systemd:
+    name: cron
+    state: stopped
 
 - name: restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   systemd:
@@ -94,7 +103,8 @@ EXAMPLES = '''
     enabled: True
 
 - name: just force systemd to reread configs (2.4 and above)
-  systemd: daemon_reload=yes
+  systemd:
+    daemon_reload: yes
 '''
 
 RETURN = '''
@@ -285,6 +295,7 @@ def main():
             name=dict(type='str', aliases=['service', 'unit']),
             state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
+            force=dict(type='bool'),
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             user=dict(type='bool', default=False),
@@ -299,6 +310,8 @@ def main():
         systemctl = systemctl + " --user"
     if module.params['no_block']:
         systemctl = systemctl + " --no-block"
+    if module.params['force']:
+        systemctl = systemctl + " --force"
     unit = module.params['name']
     rc = 0
     out = err = ''
