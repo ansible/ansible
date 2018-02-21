@@ -91,6 +91,8 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
+                                   default=False, help='Use tar instead of the scm archive option when packaging the role')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
