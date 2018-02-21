@@ -47,10 +47,26 @@ All modules within a network platform share certain requirements. Some network p
 Privilege Escalation: `authorize` and `become`
 ================================================================================
 
-Some network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
+Several network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
 
-Some network modules use the Ansible parameter ``become: yes`` for privilege escalation, with ``become_method: enable`` - using ``become`` for network tasks requires ``connection: network_cli``.
+Network platforms that support ``connection: network_cli`` and privilege escalation use the Ansible parameter ``become: yes`` with ``become_method: enable``. For modules in these platforms, a ``group_vars`` file would look like:
 
-Other network modules support privilege escalation but do not yet support ``network_cli`` connections. For those modules, you must use ``authorize: yes`` and ``auth_pass: my_enable_password``.
+.. code-block:: yaml
+
+   ansible_connection: network_cli
+   ansible_network_os: ios
+   ansible_become: yes
+   ansible_become_method: enable
+
+We recommend using ``network_cli`` connections whenever possible. However, in Ansible < 2.5, some network platforms support privilege escalation but not ``network_cli`` connections. In that case, you must use ``authorize: yes`` and ``auth_pass: my_enable_password`` in the ``provider`` settings. For that use case, a ``group_vars`` file would look like:
+
+.. code-block:: yaml
+
+   ansible_connection: local
+   ansible_network_os: eos
+   provider:
+     authorize: yes
+     auth_pass: " {{ secret_auth_pass }}"
+     transport: eapi
 
 For more information, see :ref:`Become and Networks<become-network>`
