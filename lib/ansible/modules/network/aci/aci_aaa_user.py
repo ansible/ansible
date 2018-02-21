@@ -17,15 +17,16 @@ module: aci_aaa_user
 short_description: Manage AAA users (aaa:User)
 description:
 - Manage AAA users.
-- More information from the internal APIC class I(aaa:User) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
 notes:
 - This module is not idempotent when C(aaa_password) is being used
   (even if that password was already set identically). This
   appears to be an inconsistency wrt. the idempotent nature
-  of the APIC REST API.
+  of the APIC REST API. The vendor has been informed.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- More information from the internal APIC class I(aaa:User) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
 requirements:
   - python-dateutil
 version_added: '2.5'
@@ -246,7 +247,7 @@ def main():
         aaa_password=dict(type='str', no_log=True),
         aaa_password_lifetime=dict(type='int'),
         aaa_password_update_required=dict(type='bool'),
-        aaa_user=dict(type='str', required=True, aliases=['name']),
+        aaa_user=dict(type='str', required=True, aliases=['name']),  # Not required for querying all objects
         clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         email=dict(type='str'),
@@ -306,7 +307,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='aaaUser',
             class_config=dict(
@@ -325,10 +325,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='aaaUser')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -17,13 +17,12 @@ short_description: Manage attachable Access Entity Profile (AEP) on Cisco ACI fa
 description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
 options:
   aep:
     description:
@@ -198,7 +197,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aep=dict(type='str', aliases=['name', 'aep_name']),  # not required for querying all AEPs
+        aep=dict(type='str', aliases=['name', 'aep_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         infra_vlan=dict(type='bool', aliases=['infrastructure_vlan']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -237,7 +236,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraAttEntityP',
             class_config=dict(
@@ -247,10 +245,8 @@ def main():
             child_configs=child_configs,
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraAttEntityP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -16,16 +16,16 @@ module: aci_contract
 short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
-- More information from the internal APIC class I(vz:BrCP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.4'
 notes:
 - This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
   Contract Subjects can still be removed using this module.
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information from the internal APIC class I(vz:BrCP) at
+  U(https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.4'
 options:
   contract:
     description:
@@ -234,8 +234,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['tenant', 'contract']],
-            ['state', 'present', ['tenant', 'contract']],
+            ['state', 'absent', ['contract', 'tenant']],
+            ['state', 'present', ['contract', 'tenant']],
         ],
     )
 
@@ -266,7 +266,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='vzBrCP',
             class_config=dict(
@@ -278,10 +277,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzBrCP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

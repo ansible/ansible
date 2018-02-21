@@ -16,15 +16,15 @@ DOCUMENTATION = r'''
 module: aci_aaa_user_certificate
 short_description: Manage AAA user certificates (aaa:UserCert)
 description:
-- Manage AAA user and appuser certificates.
+- Manage AAA user certificates.
+notes:
+- The C(aaa_user) must exist before using this module in your playbook.
+  The M(aci_aaa_user) module can be used for this.
 - More information from the internal APIC class I(aaa:UserCert) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- The C(aaa_user) must exist before using this module in your playbook.
-  The M(aci_aaa_user) module can be used for this.
 options:
   aaa_user:
     description:
@@ -212,10 +212,10 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aaa_user=dict(type='str', required=True),
+        aaa_user=dict(type='str', required=True),  # Not required for querying all objects
         aaa_user_type=dict(type='str', default='user', choices=['appuser', 'user']),
-        certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
-        certificate_name=dict(type='str', aliases=['cert_name']),
+        certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),  # Not required for querying all objects
+        certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -252,7 +252,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='aaaUserCert',
             class_config=dict(
@@ -261,10 +260,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='aaaUserCert')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

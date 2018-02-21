@@ -16,6 +16,7 @@ module: aci_domain
 short_description: Manage physical, virtual, bridged, routed or FC domain profiles (*:DomP)
 description:
 - Manage physical, virtual, bridged, routed or FC domain profiles.
+notes:
 - More information from the internal APIC classes I(phys:DomP),
   I(vmm:DomP), I(l2ext:DomP), I(l3ext:DomP), I(fc:DomP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
@@ -259,8 +260,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
-        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),  # Not required for querying all objects
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap_mode=dict(type='str', choices=['unknown', 'vlan', 'vxlan']),
         multicast_address=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -341,7 +342,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=domain_class,
             class_config=dict(
@@ -353,10 +353,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=domain_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

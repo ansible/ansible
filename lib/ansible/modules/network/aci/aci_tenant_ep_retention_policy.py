@@ -16,14 +16,14 @@ module: aci_tenant_ep_retention_policy
 short_description: Manage End Point (EP) retention protocol policies on Cisco ACI fabrics (fv:EpRetPol)
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 - More information from the internal APIC class I(fv:EpRetPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
 options:
   tenant:
     description:
@@ -231,7 +231,7 @@ BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),  # not required for querying all EPRs
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         epr_policy=dict(type='str', aliases=['epr_name', 'name']),
         bounce_age=dict(type='int'),
         bounce_trigger=dict(type='str', choices=['coop', 'flood']),
@@ -304,7 +304,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # filter out module parameters with null values
         aci.payload(
             aci_class='fvEpRetPol',
             class_config=dict(
@@ -319,10 +318,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvEpRetPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

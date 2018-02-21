@@ -18,14 +18,14 @@ module: aci_vlan_pool_encap_block
 short_description: Manage encap blocks assigned to VLAN pools on Cisco ACI fabrics (fvns:EncapBlk)
 description:
 - Manage VLAN encap blocks that are assigned to VLAN pools on Cisco ACI fabrics.
+notes:
+- The C(pool) must exist in order to add or delete a encap block.
 - More information from the internal APIC class I(fvns:EncapBlk) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-requirements:
-- The C(pool) must exist in order to add or delete a encap block.
 options:
   allocation_mode:
     description:
@@ -227,11 +227,11 @@ def main():
     argument_spec.update(
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),
-        pool=dict(type='str', aliases=['pool_name']),
+        pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
-        block_name=dict(type='str', aliases=['name']),
-        block_end=dict(type='int', aliases=['end']),
-        block_start=dict(type='int', aliases=["start"]),
+        block_name=dict(type='str', aliases=['name']),  # Not required for querying all objects
+        block_end=dict(type='int', aliases=['end']),  # Not required for querying all objects
+        block_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -327,7 +327,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvnsEncapBlk',
             class_config={
@@ -336,13 +335,11 @@ def main():
                 "from": encap_start,
                 "name": block_name,
                 "to": encap_end,
-            }
+            },
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvnsEncapBlk')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -17,6 +17,7 @@ short_description: Provides rollback and rollback preview functionality for Cisc
 description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabric.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
+notes:
 - More information from the internal APIC class I(config:ImportP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -241,7 +242,6 @@ def main():
 
         aci.get_existing()
 
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='configImportP',
             class_config=dict(
@@ -256,10 +256,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='configImportP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'preview':

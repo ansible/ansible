@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,6 +17,15 @@ module: aci_rest
 short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
+- Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
 - More information regarding the Cisco APIC REST API is available from
   U(http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html).
 author:
@@ -25,7 +35,6 @@ requirements:
 - lxml (when using XML payload)
 - xmljson >= 0.1.8 (when using XML payload)
 - python 2.7+ (when using xmljson)
-extends_documentation_fragment: aci
 options:
   method:
     description:
@@ -52,14 +61,7 @@ options:
     - Name of the absolute path of the filname that includes the body
       of the http request being sent to the ACI fabric.
     aliases: [ config_file ]
-notes:
-- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
-  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- Certain payloads (or used paths) are known to report no changes happened when changes did happen.
-  This is a known APIC problem and has been reported to the vendor.
-  More information at U(https://github.com/ansible/community/wiki/Network:-ACI-Documentation#known-issues)
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
@@ -313,8 +315,8 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    path = module.params['path']
     content = module.params['content']
+    path = module.params['path']
     src = module.params['src']
 
     # Report missing file
@@ -380,15 +382,16 @@ def main():
     if aci.params['private_key'] is not None:
         aci.cert_auth(path=path, payload=payload)
 
+    aci.method = aci.params['method'].upper()
+
     # Perform request
     resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
-                           method=aci.params['method'].upper(),
+                           method=aci.method,
                            timeout=aci.params['timeout'],
                            use_proxy=aci.params['use_proxy'])
 
-    aci.method = aci.params['method'].upper()
     aci.response = info['msg']
     aci.status = info['status']
 
