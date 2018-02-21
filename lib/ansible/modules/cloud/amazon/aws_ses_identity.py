@@ -303,6 +303,7 @@ def get_identity_notifications(connection, module, identity, retries=0, retryDel
                         notification_attributes.keys(),
                     )
                 )
+        time.sleep(retryDelay)
     if identity not in notification_attributes:
         return None
     return notification_attributes[identity]
