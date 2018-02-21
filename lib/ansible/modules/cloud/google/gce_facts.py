@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Copyright 2013 Google Inc.
+# Copyright 2018 Google Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gce_facts
-version_added: "2.5"
+version_added: "2.6"
 short_description: Collect GCE instances facts
 description:
      - Collect facts about Google Compute Engine (GCE) instances.  See
@@ -232,6 +232,9 @@ def get_instance_info(inst):
 
     """
     metadata = {}
+    tags = disk_names = []
+    image = status = zone = public_ip = None
+
     if 'metadata' in inst.extra and 'items' in inst.extra['metadata']:
         for md in inst.extra['metadata']['items']:
             metadata[md['key']] = md['value']
@@ -244,21 +247,25 @@ def get_instance_info(inst):
         subnetname = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
     except:
         subnetname = None
+
     if 'disks' in inst.extra:
         disk_names = [disk_info['source'].split('/')[-1]
                       for disk_info
                       in sorted(inst.extra['disks'],
                                 key=lambda disk_info: disk_info['index'])]
-    else:
-        disk_names = []
-
-    if len(inst.public_ips) == 0:
-        public_ip = None
-    else:
+    if len(inst.public_ips) != 0:
         public_ip = inst.public_ips[0]
+    if inst.image is not None:
+        image = inst.image.split('/')[-1]
+    if ('status' in inst.extra) and inst.extra['status']:
+        status = inst.extra['status']
+    if ('tags' in inst.extra) and inst.extra['tags']:
+        tags = inst.extra['tags']
+    if ('zone' in inst.extra) and inst.extra['zone']:
+        zone = inst.extra['zone'].name
 
     return({
-        'image': inst.image is not None and inst.image.split('/')[-1] or None,
+        'image': image,
         'disks': disk_names,
         'machine_type': inst.size,
         'metadata': metadata,
@@ -267,9 +274,9 @@ def get_instance_info(inst):
         'subnetwork': subnetname,
         'private_ip': inst.private_ips[0],
         'public_ip': public_ip,
-        'status': ('status' in inst.extra) and inst.extra['status'] or None,
-        'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
-        'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
+        'status': status,
+        'tags': tags,
+        'zone': zone
     })
 
 
