@@ -1,0 +1,2 @@
+bugfixes:
+- lineinfile - fixed regexp used with insert(before|after) inserting duplicate lines (https://github.com/ansible/ansible/pull/36156)
