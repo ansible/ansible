@@ -41,9 +41,9 @@ options:
     version_added: "1.1"
     description:
       - When set to 'yes', the task will fail if the remote file cannot be
-        read for any reason.  Prior to Ansible-2.4, setting this would only fail
+        read for any reason.  Prior to Ansible-2.5, setting this would only fail
         if the source file was missing.
-      - The default was changed to "yes" in Ansible-2.4.
+      - The default was changed to "yes" in Ansible-2.5.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
@@ -73,8 +73,8 @@ notes:
       depending on the file size can consume all available memory on the
       remote or local hosts causing a C(MemoryError). Due to this it is
       advisable to run this module without C(become) whenever possible.
-    - Prior to Ansible-2.4 this module would not fail if reading the remote
-      file was impossible unless fail_on_missing was set.  In Ansible-2.4+,
+    - Prior to Ansible-2.5 this module would not fail if reading the remote
+      file was impossible unless fail_on_missing was set.  In Ansible-2.5+,
       playbook authors are encouraged to use fail_when or ignore_errors to
       get this ability.  They may also explicitly set fail_on_missing to False
       to get the non-failing behaviour.
