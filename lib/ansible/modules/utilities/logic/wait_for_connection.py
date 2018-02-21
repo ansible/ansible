@@ -23,8 +23,7 @@ description:
 - Tests the transport connection every C(sleep) seconds.
 - This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
 - This module is also supported for Windows targets.
-- This module does not support delegation (see the last example on how to
-  overcome this).
+- This module does not support delegation (see the last example on how to overcome this).
 version_added: "2.3"
 options:
   connect_timeout:
