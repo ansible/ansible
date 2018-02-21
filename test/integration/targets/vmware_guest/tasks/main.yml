@@ -31,3 +31,4 @@
 # Currently, VCSIM doesn't support DVPG (as portkeys are not available) so commenting this test
 #- include: network_with_dvpg.yml
 #- include: template_d1_c1_f0.yml
+- include: vapp_d1_c1_f0.yml
