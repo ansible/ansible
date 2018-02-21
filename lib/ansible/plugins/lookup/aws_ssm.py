@@ -193,10 +193,16 @@ class LookupModule(LookupBase):
                 response = client.get_parameters(**ssm_dict)
             except ClientError as e:
                 raise AnsibleError("SSM lookup exception: {0}".format(to_native(e)))
-            if len(response['Parameters']) == len(terms):
-                ret = [p['Value'] for p in response['Parameters']]
-            else:
-                raise AnsibleError('Undefined AWS SSM parameter: %s ' % str(response['InvalidParameters']))
+            params = boto3_tag_list_to_ansible_dict(response['Parameters'], tag_name_key_name="Name",
+                                                    tag_value_key_name="Value")
+            for i in terms:
+                if i in params:
+                    ret.append(params[i])
+                elif i in response['InvalidParameters']:
+                    ret.append(None)
+                else:
+                    raise AnsibleError("Ansible internal error: aws_ssm lookup failed to understand boto3 return value: {0}".format(str(response)))
+            return ret
 
         display.vvvv("AWS_ssm path lookup returning: %s " % str(ret))
         return ret
