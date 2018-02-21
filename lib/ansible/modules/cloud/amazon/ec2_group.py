@@ -789,22 +789,24 @@ def main():
 
             changed = True
 
-        if tags is not None:
+        if tags is not None and group is not None:
             current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
             tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
             if tags_to_delete:
-                try:
-                    client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
-                except botocore.exceptions.ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                if not module.check_mode:
+                    try:
+                        client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
             # Add/update tags
             if tags_need_modify:
-                try:
-                    client.create_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
-                except botocore.exceptions.ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                if not module.check_mode:
+                    try:
+                        client.create_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
     else:
