@@ -70,12 +70,20 @@ class ActionModule(ActionBase):
             delta=None,
         ))
 
-        # Is 'args' empty, then this is the default prompted pause
-        if self._task.args is None or len(self._task.args.keys()) == 0:
-            prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
+        if not set(self._task.args.keys()) <= set(self.PAUSE_TYPES):
+            result['failed'] = True
+            result['msg'] = "Invalid argument given. Must be one of: %s" % ", ".join(x for x in self.PAUSE_TYPES if x != '')
+            return result
+
+        # Is 'prompt' a key in 'args'?
+        if 'prompt' in self._task.args:
+            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
+        else:
+            # If no custom prompt is specified, set a default prompt
+            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), 'Press enter to continue')
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
-        elif 'minutes' in self._task.args or 'seconds' in self._task.args:
+        if 'minutes' in self._task.args or 'seconds' in self._task.args:
             try:
                 if 'minutes' in self._task.args:
                     # The time() command operates in seconds so we need to
@@ -89,16 +97,6 @@ class ActionModule(ActionBase):
                 result['failed'] = True
                 result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
                 return result
-
-        # Is 'prompt' a key in 'args'?
-        elif 'prompt' in self._task.args:
-            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
-
-        else:
-            # I have no idea what you're trying to do. But it's so wrong.
-            result['failed'] = True
-            result['msg'] = "invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES)
-            return result
 
         ########################################################################
         # Begin the hard work!
@@ -119,6 +117,11 @@ class ActionModule(ActionBase):
                 # show the prompt
                 display.display("Pausing for %d seconds" % seconds)
                 display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+
+                # show the prompt specified in the task
+                if 'prompt' in self._task.args:
+                    display.display(prompt)
+
             else:
                 display.display(prompt)
 
