@@ -1175,11 +1175,9 @@ lib/ansible/modules/cloud/univention/udm_user.py E324
 lib/ansible/modules/cloud/univention/udm_user.py E325
 lib/ansible/modules/cloud/univention/udm_user.py E326
 lib/ansible/modules/cloud/vmware/_vsphere_guest.py E324
-lib/ansible/modules/cloud/vmware/_vsphere_guest.py E325
 lib/ansible/modules/cloud/vmware/vca_fw.py E322
 lib/ansible/modules/cloud/vmware/vca_nat.py E322
 lib/ansible/modules/cloud/vmware/vca_nat.py E324
-lib/ansible/modules/cloud/vmware/vca_nat.py E325
 lib/ansible/modules/cloud/vmware/vca_vapp.py E322
 lib/ansible/modules/cloud/vmware/vca_vapp.py E324
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322

@@ -130,7 +130,7 @@ options:
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
-    required: false
+    type: bool
     default: null
   force:
     description:
