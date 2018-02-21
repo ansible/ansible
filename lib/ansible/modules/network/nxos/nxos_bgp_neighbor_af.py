@@ -111,9 +111,9 @@ options:
     default: null
   allowas_in_max:
     description:
-      - Optional max-occurrences value for allowas_in. Valid values are
-        an integer value or 'default'. Can be used independently or in
-        conjunction with allowas_in.
+      - Max-occurrences value for allowas_in. Valid values are
+        an integer value or 'default'. This is mutually exclusive with
+        allowas_in.
     required: false
     default: null
   as_override:
@@ -130,10 +130,10 @@ options:
     default: null
   default_originate_route_map:
     description:
-      - Optional route-map for the default_originate property. Can be
-        used independently or in conjunction with C(default_originate).
+      - Route-map for the default_originate property.
         Valid values are a string defining a route-map name,
-        or 'default'.
+        or 'default'. This is mutually exclusive with
+        default_originate.
     required: false
     default: null
   disable_peer_as_check:
@@ -352,6 +352,7 @@ def get_value(arg, config, module):
         'max_prefix_interval',
         'max_prefix_threshold',
         'max_prefix_warning',
+        'send_community',
         'soft_reconfiguration_in'
     ]
     command = PARAM_TO_COMMAND_KEYMAP[arg]
@@ -383,12 +384,6 @@ def get_value(arg, config, module):
         has_cmd_direction_val = re.search(r'{0}\s(?P<value>.*)\s{1}$'.format(*command.split()), config, re.M)
         if has_cmd_direction_val:
             value = has_cmd_direction_val.group('value')
-
-    elif arg == 'send_community':
-        if has_command:
-            value = 'none'
-            if has_command_val:
-                value = has_command_val.group('value')
 
     elif has_command_val:
         value = has_command_val.group('value')
@@ -439,6 +434,20 @@ def get_custom_value(arg, config, module):
                 else:
                     value = 'enable'
 
+    elif arg == 'send_community':
+        value = 'none'
+        for line in splitted_config:
+            if command in line:
+                if 'extended' in line:
+                    if value == 'standard':
+                        value = 'both'
+                    else:
+                        value = 'extended'
+                elif 'both' in line:
+                    value = 'both'
+                else:
+                    value = 'standard'
+
     return value
 
 
@@ -488,19 +497,16 @@ def apply_key_map(key_map, table):
 
 def get_default_command(key, value, existing_commands):
     command = ''
-    if key == 'send-community' and existing_commands.get(key) == 'none':
-        command = 'no {0}'.format(key)
-
-    elif existing_commands.get(key):
+    if existing_commands.get(key):
         existing_value = existing_commands.get(key)
         if value == 'inherit':
             if existing_value != 'inherit':
                 command = 'no {0}'.format(key)
         else:
-            if key == 'advertise-map exist':
+            if key == 'advertise-map exist-map':
                 command = 'no advertise-map {0} exist-map {1}'.format(
                     existing_value[0], existing_value[1])
-            elif key == 'advertise-map non-exist':
+            elif key == 'advertise-map non-exist-map':
                 command = 'no advertise-map {0} non-exist-map {1}'.format(
                     existing_value[0], existing_value[1])
             elif key == 'filter-list in':
@@ -528,7 +534,7 @@ def get_default_command(key, value, existing_commands):
     return command
 
 
-def fix_proposed(module, proposed):
+def fix_proposed(module, existing, proposed):
     allowas_in = proposed.get('allowas_in')
     allowas_in_max = proposed.get('allowas_in_max')
 
@@ -537,12 +543,14 @@ def fix_proposed(module, proposed):
     elif allowas_in and allowas_in_max:
         proposed.pop('allowas_in')
 
+    if existing.get('send_community') == 'none' and proposed.get('send_community') == 'default':
+        proposed.pop('send_community')
     return proposed
 
 
 def state_present(module, existing, proposed, candidate):
     commands = list()
-    proposed = fix_proposed(module, proposed)
+    proposed = fix_proposed(module, existing, proposed)
 
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
@@ -559,14 +567,15 @@ def state_present(module, existing, proposed, candidate):
                         commands.append(cmd)
 
         elif key.startswith('maximum-prefix'):
-            command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
-            if module.params['max_prefix_threshold']:
-                command += ' {0}'.format(module.params['max_prefix_threshold'])
-            if module.params['max_prefix_interval']:
-                command += ' restart {0}'.format(module.params['max_prefix_interval'])
-            elif module.params['max_prefix_warning']:
-                command += ' warning-only'
-            commands.append(command)
+            if module.params['max_prefix_limit'] != 'default':
+                command = 'maximum-prefix {0}'.format(module.params['max_prefix_limit'])
+                if module.params['max_prefix_threshold']:
+                    command += ' {0}'.format(module.params['max_prefix_threshold'])
+                if module.params['max_prefix_interval']:
+                    command += ' restart {0}'.format(module.params['max_prefix_interval'])
+                elif module.params['max_prefix_warning']:
+                    command += ' warning-only'
+                commands.append(command)
 
         elif value is True:
             commands.append(key)
@@ -594,14 +603,14 @@ def state_present(module, existing, proposed, candidate):
             commands.append(command)
         elif key == 'send-community':
             command = key
-            if value != 'none':
-                command += ' {0}'.format(value)
+            if value in ['standard', 'extended']:
+                commands.append('no ' + key + ' both')
+            command += ' {0}'.format(value)
             commands.append(command)
         else:
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
-    commands = set(commands)
     if commands:
         parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
@@ -672,7 +681,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['advertise_map_exist', 'advertise_map_non_exist'],
-                            ['max_prefix_interval', 'max_prefix_warning']],
+                            ['max_prefix_interval', 'max_prefix_warning'],
+                            ['default_originate', 'default_originate_route_map'],
+                            ['allowas_in', 'allowas_in_max']],
         supports_check_mode=True,
     )
 
@@ -717,6 +728,8 @@ def main():
                         value = False
                     else:
                         value = 'default'
+                elif key == 'send_community' and str(value).lower() == 'none':
+                    value = 'default'
             if existing.get(key) != value:
                 proposed[key] = value
 
