@@ -1,3 +1,2 @@
 bugfixes:
-- |
-  vyos - fixes to check mode support (https://github.com/ansible/ansible/pull/35977)
+- vyos - fixes to check mode support (https://github.com/ansible/ansible/pull/35977)
