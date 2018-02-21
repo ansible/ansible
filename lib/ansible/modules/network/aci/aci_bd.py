@@ -16,14 +16,14 @@ module: aci_bd
 short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 - More information from the internal APIC class I(fv:BD) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
 options:
   arp_flooding:
     description:
@@ -319,7 +319,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         arp_flooding=dict(type='bool'),
-        bd=dict(type='str', aliases=['bd_name', 'name']),
+        bd=dict(type='str', aliases=['bd_name', 'name']),  # Not required for querying all objects
         bd_type=dict(type='str', choices=['ethernet', 'fc']),
         description=dict(type='str'),
         enable_multicast=dict(type='bool'),
@@ -337,7 +337,7 @@ def main():
         mac_address=dict(type='str', aliases=['mac']),
         multi_dest=dict(choices=['bd-flood', 'drop', 'encap-flood']),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
         gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
@@ -409,7 +409,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvBD',
             class_config=dict(
@@ -436,10 +435,8 @@ def main():
             ],
         )
 
-        # generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvBD')
 
-        # submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

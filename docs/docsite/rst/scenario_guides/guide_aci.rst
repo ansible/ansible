@@ -79,7 +79,7 @@ Every Ansible ACI module accepts the following parameters that influence the mod
 
 Proxy support
 .............
-By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see setting the environment), or by using the ``use_proxy`` module parameter.
+By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`setting the environment <playbooks_environment>`), or by using the ``use_proxy`` module parameter.
 
 HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
 
@@ -89,6 +89,9 @@ If you don't need proxy support, but the system may have it configured neverthel
 
 Module return values
 ....................
+
+.. versionadded:: 2.5
+
 By default the ACI modules (excluding :ref:`the aci_rest module <aci_rest>`) return the resulting state of the managed object in a key ``current``.
 
 By increasing the ``output_level`` to ``info``, the modules give access to the ``previous`` state of the object, but also the ``proposed`` and ``sent`` configuration payload.
@@ -128,9 +131,11 @@ Password-based authentication is very simple to work with, but it is not the mos
 The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
 
 
-
 Signature-based authentication using certificates
 .................................................
+
+.. versionadded:: 2.5
+
 Using signature-based authentication is more efficient and more reliable than password-based authentication.
 
 Generate certificate and private key
@@ -271,8 +276,9 @@ More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
 
-- :ref:`The apic_rest Ansible module <aci_rest>`
-- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_
+- :ref:`The apic_rest Ansible module documentation <aci_rest>`
+- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_-- Detailed guide on how the APIC REST API is designed and used, incl. many examples
+- `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_-- Complete reference of the APIC object model
 - `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
 
 
@@ -349,7 +355,7 @@ The following error messages may occur and this section can help you understand 
   Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
 
 
-.. _aci_guide_issues:
+.. _aci_guide_known_issues:
 
 Known issues
 ------------
@@ -364,29 +370,23 @@ All below issues either have been reported to the vendor, or can simply be avoid
   **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 
 
-- **Specific requests may not reflect changes correctly**
+- **Specific requests may not reflect changes correctly** (`#35401 <https://github.com/ansible/ansible/issues/35041>`_)
 
   There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
-
-  More information from: `#35401 aci_rest: change not detected <https://github.com/ansible/ansible/issues/35041>`_
 
   **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
 
 
-- **Specific requests are known to not be idempotent**
+- **Specific requests are known to not be idempotent** (`#35050 <https://github.com/ansible/ansible/issues/35050>`_)
 
   The behaviour of the APIC is inconsistent to the use of ``status="created"`` and ``status="deleted"``. The result is that when you use ``status="created"`` in your payload the resulting tasks are not idempotent and creation will fail when the object was already created. However this is not the case with ``status="deleted"`` where such call to an non-existing object does not cause any failure whatsoever.
-
-  More information from: `#35050 aci_rest: Using status="created" behaves differently than status="deleted" <https://github.com/ansible/ansible/issues/35050>`_
 
   **NOTE:** A workaround is to avoid using ``status="created"`` and instead use ``status="modified"`` when idempotency is essential to your workflow..
 
 
-- **Setting user password is not idempotent**
+- **Setting user password is not idempotent** (`#35544 <https://github.com/ansible/ansible/issues/35544>`_)
 
   Due to an inconsistency in the APIC REST API, a task that sets the password of a locally-authenticated user is not idempotent. The APIC will complain with message ``Password history check: user dag should not use previous 5 passwords``.
-
-  More information from: `#35544 aci_aaa_user: Setting user password is not idempotent <https://github.com/ansible/ansible/issues/35544>`_
 
   **NOTE:** There is no workaround for this issue.
 

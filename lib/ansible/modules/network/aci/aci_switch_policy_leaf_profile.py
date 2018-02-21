@@ -17,6 +17,7 @@ module: aci_switch_policy_leaf_profile
 short_description: Create switch policy leaf profiles on Cisco ACI fabrics (infra:NodeP)
 description:
 - Create switch policy leaf profiles on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class I(infra:NodeP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
@@ -26,7 +27,7 @@ options:
   leaf_profile:
     description:
     - The name of the Leaf Profile.
-    aliases: [ name, leaf_profile_name ]
+    aliases: [ leaf_profile_name, name ]
   description:
     description:
     - Description for the Leaf Profile.
@@ -179,7 +180,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['name', 'leaf_profile_name']),
+        leaf_profile=dict(type='str', aliases=['name', 'leaf_profile_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -203,26 +204,23 @@ def main():
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
             filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
-            module_object=leaf_profile
-        )
+            module_object=leaf_profile,
+        ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraNodeP',
             class_config=dict(
                 name=leaf_profile,
                 descr=description,
-            )
+            ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraNodeP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

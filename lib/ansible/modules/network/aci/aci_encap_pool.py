@@ -16,6 +16,7 @@ module: aci_encap_pool
 short_description: Manage encap pools on Cisco ACI fabrics (fvns:VlanInstP, fvns:VxlanInstP, fvns:VsanInstP)
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class
   I(fvns:VlanInstP), I(fvns:VxlanInstP), and I(fvns:VsanInstP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
@@ -218,7 +219,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        pool=dict(type='str', aliases=['name', 'pool_name']),
+        pool=dict(type='str', aliases=['name', 'pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['allocation_mode', 'mode'], choices=['dynamic', 'static']),
         pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
