@@ -46,12 +46,14 @@ options:
     - "State value 'start' and 'present' has same effect."
     - "State value 'stop' and 'absent' has same effect."
     choices: [ absent, present, restart, start, stop ]
+    default: 'start'
   service_policy:
     description:
     - Set of valid service policy strings.
     - If set C(on), then service should be started when the host starts up.
     - If set C(automatic), then service should run if and only if it has open firewall ports.
     - If set C(off), then Service should not be started when the host starts up.
+    choices: [ 'automatic', 'off', 'on' ]
   service_name:
     description:
     - Name of Service to be managed. This is brief identifier for the service, for example, ntpd, vxsyslogd etc.

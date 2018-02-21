@@ -29,7 +29,6 @@ options:
       - The hostname of the vcenter server the module will connect to, to create the guest.
     required: true
     default: null
-    aliases: []
   validate_certs:
     description:
       - Validate SSL certs.  Note, if running on python without SSLContext
@@ -39,7 +38,7 @@ options:
         never validate on python <= 2.7.8.
     required: false
     default: yes
-    choices: ['yes', 'no']
+    type: bool
     version_added: 2.1
   guest:
     description:
@@ -83,7 +82,7 @@ options:
       - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware
         such as CPU, RAM, NICs or Disks can be applied when launching from template.
     default: no
-    choices: ['yes', 'no']
+    type: bool
   template_src:
     version_added: "1.9"
     description:
@@ -100,7 +99,7 @@ options:
       - Specifies if the VM should be powered on after the clone.
     required: false
     default: yes
-    choices: ['yes', 'no']
+    type: bool
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -131,13 +130,13 @@ options:
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
-    required: false
+    type: bool
     default: null
   force:
     description:
       - Boolean. Allows you to run commands which may alter the running state of a guest. Also used to reconfigure and destroy.
     default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
 
 notes:
   - This module should run from a system that can access vSphere directly.

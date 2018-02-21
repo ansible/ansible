@@ -58,6 +58,11 @@ options:
             - '- C(mac_changes) (bool): indicates whether mac changes are allowed. (default: false)'
         required: False
         version_added: "2.2"
+        default: {
+            mac_changes: false,
+            promiscuous_mode: false,
+            forged_transmits: false,
+        }
     cluster_name:
         description:
             - Name of cluster name for host membership.
@@ -77,6 +82,7 @@ options:
             - 'present'
             - 'absent'
         version_added: '2.5'
+        default: present
 extends_documentation_fragment: vmware.documentation
 '''
 

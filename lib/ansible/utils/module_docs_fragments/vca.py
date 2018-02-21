@@ -67,7 +67,7 @@ options:
     verify_certs:
       description:
         - If the certificates of the authentication is to be verified.
-      required: false
+      type: bool
       default: True
     vdc_name:
       description:

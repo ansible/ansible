@@ -41,6 +41,7 @@ options:
     description:
     - Type of the datastore to configure (nfs/vmfs).
     required: true
+    choices: [ 'nfs', 'vmfs' ]
   nfs_server:
     description:
     - NFS host serving nfs datastore.
@@ -54,6 +55,7 @@ options:
     - ReadOnly or ReadWrite mount.
     - Unused if datastore type is not set to C(nfs) and state is not set to C(present).
     default: False
+    type: bool
   vmfs_device_name:
     description:
     - Name of the device to be used as VMFS datastore.

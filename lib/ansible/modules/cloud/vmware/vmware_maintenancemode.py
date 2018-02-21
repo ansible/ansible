@@ -36,7 +36,7 @@ options:
         description:
             - Name of the host as defined in vCenter.
         required: True
-    vsan_mode:
+    vsan:
         description:
             - Specify which VSAN compliant mode to enter.
         choices:
@@ -44,14 +44,13 @@ options:
             - 'evacuateAllData'
             - 'noAction'
         required: False
+        aliases: [ 'vsan_mode' ]
     evacuate:
         description:
-            - If True, evacuate all powered off VMs.
-        choices:
-            - True
-            - False
+            - If set to C(True), evacuate all powered off VMs.
         default: False
         required: False
+        type: bool
     timeout:
         description:
             - Specify a timeout for the operation.
@@ -173,9 +172,11 @@ class VmwareMaintenanceMgr(PyVmomi):
 def main():
     spec = vmware_argument_spec()
     spec.update(dict(esxi_hostname=dict(type='str', required=True),
-                     vsan=dict(type='str', choices=['ensureObjectAccessibility',
-                                                    'evacuateAllData',
-                                                    'noAction']
+                     vsan=dict(type='str',
+                               choices=['ensureObjectAccessibility',
+                                        'evacuateAllData',
+                                        'noAction'],
+                               aliases=['vsan_mode'],
                                ),
                      evacuate=dict(type='bool', default=False),
                      timeout=dict(default=0, type='int'),

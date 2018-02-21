@@ -38,22 +38,11 @@ options:
         description:
             - Resource pool name to manage.
         required: True
-    hostname:
-        description:
-            - ESXi hostname to manage.
-        required: True
-    username:
-        description:
-            - ESXi username.
-        required: True
-    password:
-        description:
-            - ESXi password.
-        required: True
     cpu_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
         default: True
+        type: bool
     cpu_reservation:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
@@ -61,7 +50,8 @@ options:
     cpu_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
-        default: -1 (No limit)
+            - The default value -1 indicates no limit.
+        default: -1
     cpu_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -70,11 +60,12 @@ options:
             - custom
             - low
             - normal
-        default: Normal
+        default: normal
     mem_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
         default: True
+        type: bool
     mem_reservation:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
@@ -82,7 +73,8 @@ options:
     mem_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
-        default: -1 (No limit)
+            - The default value -1 indicates no limit.
+        default: -1
     mem_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -91,7 +83,7 @@ options:
             - custom
             - low
             - normal
-        default: Normal
+        default: normal
     state:
         description:
             - Add or remove the resource pool
@@ -294,14 +286,14 @@ def main():
                               resource_pool=dict(required=True, type='str'),
                               mem_shares=dict(type='str', default="normal", choices=[
                                               'high', 'custom', 'normal', 'low']),
-                              mem_limit=dict(type='int', default="-1"),
-                              mem_reservation=dict(type='int', default="0"),
+                              mem_limit=dict(type='int', default=-1),
+                              mem_reservation=dict(type='int', default=0),
                               mem_expandable_reservations=dict(
                                   type='bool', default="True"),
                               cpu_shares=dict(type='str', default="normal", choices=[
                                               'high', 'custom', 'normal', 'low']),
-                              cpu_limit=dict(type='int', default="-1"),
-                              cpu_reservation=dict(type='int', default="0"),
+                              cpu_limit=dict(type='int', default=-1),
+                              cpu_reservation=dict(type='int', default=0),
                               cpu_expandable_reservations=dict(
                                   type='bool', default="True"),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
