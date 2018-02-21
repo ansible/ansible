@@ -34,13 +34,25 @@ options:
   ssm_range:
     description:
       - Configure group ranges for Source Specific Multicast (SSM).
-        Valid values are multicast addresses or the keyword 'none'
-        or keyword 'default'
+        Valid values are multicast addresses or the keyword C(none)
+        or keyword C(default). C(none) removes all SSM group ranges.
+        C(default) will set ssm_range to the default multicast address.
+        If you set multicast address, please ensure that it is not the
+        same as the C(default), otherwise use the C(default) option.
     required: true
 '''
 EXAMPLES = '''
-- nxos_pim:
-    ssm_range: "232.0.0.0/8"
+- name: Configure ssm_range
+  nxos_pim:
+    ssm_range: "224.0.0.0/8"
+
+- name: Set to default
+  nxos_pim:
+    ssm_range: default
+
+- name: Remove all ssm group ranges
+  nxos_pim:
+    ssm_range: none
 '''
 
 RETURN = '''
@@ -48,7 +60,7 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["ip pim ssm range 232.0.0.0/8"]
+    sample: ["ip pim ssm range 224.0.0.0/8"]
 '''
 
 
