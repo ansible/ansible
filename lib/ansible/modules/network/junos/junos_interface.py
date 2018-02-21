@@ -371,7 +371,7 @@ def main():
                 if port and port not in have_port:
                     failed_conditions.append('port ' + port)
     if failed_conditions:
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     module.exit_json(**result)
