@@ -35,7 +35,7 @@ from io import BytesIO
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
@@ -914,15 +914,14 @@ def modify_module(module_name, module_path, module_args, task_vars=None, templar
         lines = b_module_data.split(b"\n", 1)
         if lines[0].startswith(b"#!"):
             shebang = lines[0].strip()
-            args = shlex.split(str(shebang[2:]))
+            args = shlex.split(to_native(shebang[2:], errors='surrogate_or_strict'))
             interpreter = args[0]
-            interpreter = to_bytes(interpreter)
 
             new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0], errors='surrogate_or_strict', nonstring='passthru')
             if new_shebang:
                 lines[0] = shebang = new_shebang
 
-            if os.path.basename(interpreter).startswith(b'python'):
+            if os.path.basename(interpreter).startswith('python'):
                 lines.insert(1, to_bytes(ENCODING_STRING))
         else:
             # No shebang, assume a binary module?
