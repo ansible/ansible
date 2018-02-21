@@ -224,12 +224,12 @@ def map_obj_to_commands(updates, module):
     state = module.params['state']
     purge = module.params['purge']
 
+    args = ('rd', 'description', 'vni')
+
     for w in want:
         name = w['name']
-        description = w['description']
-        vni = w['vni']
-        rd = w['rd']
         admin_state = w['admin_state']
+        vni = w['vni']
         interfaces = w.get('interfaces') or []
         state = w['state']
         del w['state']
@@ -242,12 +242,11 @@ def map_obj_to_commands(updates, module):
         elif state == 'present':
             if not obj_in_have:
                 commands.append('vrf context {0}'.format(name))
-                if rd and rd != '':
-                    commands.append('rd {0}'.format(rd))
-                if description:
-                    commands.append('description {0}'.format(description))
-                if vni and vni != '':
-                    commands.append('vni {0}'.format(vni))
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate:
+                        cmd = item + ' ' + str(candidate)
+                        commands.append(cmd)
                 if admin_state == 'up':
                     commands.append('no shutdown')
                 elif admin_state == 'down':
@@ -255,8 +254,9 @@ def map_obj_to_commands(updates, module):
 
                 if commands:
                     if vni:
-                        if have.get('vni') and have.get('vni') != '':
-                            commands.insert(1, 'no vni {0}'.format(have['vni']))
+                        for h in have:
+                            if h.get('vni'):
+                                commands.insert(1, 'no vni {0}'.format(h['vni']))
                 commands.append('exit')
                 if interfaces:
                     for i in interfaces:
@@ -265,6 +265,21 @@ def map_obj_to_commands(updates, module):
                         commands.append('vrf member {0}'.format(name))
 
             else:
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate and candidate != obj_in_have.get(item):
+                        cmd = item + ' ' + str(candidate)
+                        commands.append(cmd)
+                if admin_state and admin_state != obj_in_have.get('admin_state'):
+                    if admin_state == 'up':
+                        commands.append('no shutdown')
+                    elif admin_state == 'down':
+                        commands.append('shutdown')
+
+                if commands:
+                    commands.insert(0, 'vrf context {0}'.format(name))
+                    commands.append('exit')
+
                 if interfaces:
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
