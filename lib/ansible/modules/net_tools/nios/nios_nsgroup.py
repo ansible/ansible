@@ -14,13 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nios_nsgroup
-short_description: manage InfoBlox DNS nameserver groups
+short_description: Configure InfoBlox DNS nameserver groups
 extends_documentation_fragment: nios
 author:
     - Erich Birngruber (@ebirn)
 version_added: "2.6"
 description:
-    - add or remove nameserver groups form Infoblox NIOS servers.
+    - Adds and/or removes nameserver groups form Infoblox NIOS servers.
       This module manages NIOS C(nsgroup) objects using the Infoblox
       WAPI interface over REST.
 requirements:
@@ -28,31 +28,35 @@ requirements:
 options:
   name:
     description:
-      - name of the nameserver group
+      - Specifies the name of the NIOS nameserver group to be managed.
     required: true
+  grid_primary:
+    description:
+      - This list of hosts is to be used as primary servers in this nameserver group. They must be grid members.
+        This option is required when setting I(use_external_primaries) to C(false).
+  grid_secondaries:
+    description:
+     - Configures the list of grid member hosts that act as secondary nameservers.
+       This option is required when setting I(use_external_primaries) to C(true). 
+  is_grid_default:
+    description:
+      - If set to C(True) this nsgroup will become the default nameserver group for new zones.
+    required: false
+    default: false
+  use_external_primary:
+    description:
+      - This flag controls whether the group is using an external primary nameserver.
+        Note that modification of this field requires passing values for I(grid_secondaries) and I(external_primaries).
+    required: false
+    default: false
   external_primaries:
     description:
-      - list of external primary nameservers
+      - Configures a list of external nameservers (non-members of the grid).
+        This option is required when setting I(use_external_primaries) to C(true).
     required: false
   external_secondaries:
     description:
-      - list of external secondary nameservers
-  grid_primary:
-    description:
-      - list of grid member primary nameservers
-  grid_secondaries:
-    description:
-     - list of grid member secondary nameservers
-  is_grid_default:
-    description:
-      - make this nameserver group the grid default
-    required: false
-  use_external_primary:
-    description:
-      - This flag controls whether the group is using an external primary.
-        Note that modification of this field requires passing values for C(grid_secondaries) and C(external_primaries).
-    required: false
-    default: false
+      - Allows to provide a list of external secondary nameservers, that are not members of the grid.
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -67,7 +71,10 @@ options:
     required: false
   state:
     description:
-      - Should the resource be C(present) or C(absent).
+      - Configures the intended state of the instance of the object on
+        the NIOS server.  When this value is set to C(present), the object
+        is configured on the device and when this value is set to C(absent)
+        the value is removed (if necessary) from the device.
     choices: [present, absent]
     default: present
 '''
