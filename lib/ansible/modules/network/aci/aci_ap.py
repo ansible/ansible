@@ -16,15 +16,15 @@ module: aci_ap
 short_description: Manage top level Application Profile (AP) objects on Cisco ACI fabrics (fv:Ap)
 description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
+notes:
+- This module does not manage EPGs, see M(aci_epg) to do this.
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
 - More information from the internal APIC class I(fv:Ap) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
-notes:
-- This module does not manage EPGs, see M(aci_epg) to do this.
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
 options:
    tenant:
      description:
@@ -198,8 +198,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all APs
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -215,7 +215,6 @@ def main():
         ],
     )
 
-    # tenant = module.params['tenant']
     ap = module.params['ap']
     description = module.params['description']
     state = module.params['state']
@@ -240,7 +239,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvAp',
             class_config=dict(
@@ -249,10 +247,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAp')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
