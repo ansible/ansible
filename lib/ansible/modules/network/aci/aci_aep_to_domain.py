@@ -17,14 +17,14 @@ module: aci_aep_to_domain
 short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
+notes:
+- The C(aep) and C(domain) parameters should exist before using this module.
+  The M(aci_aep) and M(aci_domain) can be used for these.
 - More information from the internal APIC class I(infra:RsDomP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
-notes:
-- The C(aep) and C(domain) parameters should exist before using this module.
-  The M(aci_aep) and M(aci_domain) can be used for these.
 options:
   aep:
     description:
@@ -215,9 +215,9 @@ VM_PROVIDER_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aep=dict(type='str', aliases=['aep_name']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        aep=dict(type='str', aliases=['aep_name']),  # Not required for querying all objects
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
     )
@@ -278,16 +278,13 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraRsDomP',
             class_config=dict(tDn=domain_mo),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraRsDomP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

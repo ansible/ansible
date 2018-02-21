@@ -17,6 +17,7 @@ module: aci_switch_policy_vpc_protection_group
 short_description: Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics (fabric:ExplicitGEp, fabric:NodePEp).
 description:
 - Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics.
+notes:
 - More information from the internal APIC class
   I(fabric:ExplicitGEp) and I(fabric:NodePEp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
@@ -188,7 +189,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        protection_group=dict(type='str', aliases=['name', 'protection_group_name']),
+        protection_group=dict(type='str', aliases=['name', 'protection_group_name']),  # Not required for querying all objects
         protection_group_id=dict(type='int', aliases=['id']),
         vpc_domain_policy=dict(type='str', aliases=['vpc_domain_policy_name']),
         switch_1_id=dict(type='int'),
@@ -226,7 +227,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fabricExplicitGEp',
             class_config=dict(
@@ -261,10 +261,8 @@ def main():
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fabricExplicitGEp')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

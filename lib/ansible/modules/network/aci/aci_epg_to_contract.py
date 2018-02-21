@@ -16,14 +16,14 @@ module: aci_epg_to_contract
 short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
+notes:
+- The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
 - More information from the internal APIC classes I(fv:RsCons) and I(fv:RsProv) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-notes:
-- The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
 options:
   ap:
     description:
@@ -228,14 +228,14 @@ PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_o
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        epg=dict(type='str', aliases=['epg_name']),
-        contract=dict(type='str', aliases=['contract_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
         contract_type=dict(type='str', required=True, choices=['consumer', 'provider']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -297,7 +297,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=aci_class,
             class_config=dict(
@@ -307,10 +306,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=aci_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
