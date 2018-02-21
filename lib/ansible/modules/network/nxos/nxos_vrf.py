@@ -251,13 +251,8 @@ def map_obj_to_commands(updates, module):
                     commands.append('no shutdown')
                 elif admin_state == 'down':
                     commands.append('shutdown')
-
-                if commands:
-                    if vni:
-                        for h in have:
-                            if h.get('vni'):
-                                commands.insert(1, 'no vni {0}'.format(h['vni']))
                 commands.append('exit')
+
                 if interfaces:
                     for i in interfaces:
                         commands.append('interface {0}'.format(i))
@@ -265,6 +260,11 @@ def map_obj_to_commands(updates, module):
                         commands.append('vrf member {0}'.format(name))
 
             else:
+                # If vni is already configured on vrf, unconfigure it first.
+                if vni:
+                    if obj_in_have.get('vni') and vni != obj_in_have.get('vni'):
+                        commands.append('no vni {0}'.format(obj_in_have.get('vni')))
+
                 for item in args:
                     candidate = w.get(item)
                     if candidate and candidate != obj_in_have.get(item):
