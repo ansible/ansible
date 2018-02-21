@@ -63,7 +63,7 @@ options:
         description:
             - Any extra parameters required by the app
         required: false
-        default: null
+        default: ''
 
     port_open:
         description:
@@ -84,7 +84,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
+        default: false
 
 '''
 

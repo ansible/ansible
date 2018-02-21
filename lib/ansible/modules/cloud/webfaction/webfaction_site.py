@@ -60,12 +60,13 @@ options:
         description:
             - A mapping of URLs to apps
         required: false
+        default: []
 
     subdomains:
         description:
             - A list of subdomains associated with this site.
         required: false
-        default: null
+        default: []
 
     login_name:
         description:

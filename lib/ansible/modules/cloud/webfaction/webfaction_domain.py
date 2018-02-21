@@ -49,7 +49,7 @@ options:
         description:
             - Any subdomains to create.
         required: false
-        default: null
+        default: []
 
     login_name:
         description:

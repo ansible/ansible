@@ -55,7 +55,7 @@ options:
         description:
             - The password for the new database user.
         required: false
-        default: None
+        default: null
 
     login_name:
         description:
@@ -70,7 +70,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
+        default: false
 '''
 
 EXAMPLES = '''
