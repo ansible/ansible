@@ -61,7 +61,9 @@ EXAMPLES = '''
             password: admin
             project_name: admin
         name: vm1
-        meta: "hostname=test1,group=group1"
+        meta:
+            hostname: test1
+            group: group1
 
 # Removes the keys under meta from the instance named vm1
 - name: delete metadata from compute instance
@@ -76,7 +78,9 @@ EXAMPLES = '''
             password: admin
             project_name: admin
         name: vm1
-        meta: "hostname=,group="
+        meta:
+            hostname:
+            group:
 '''
 
 RETURN = '''
@@ -119,18 +123,10 @@ def _get_keys_to_delete(server_metadata_keys=None, metadata_keys=None):
     return set(server_metadata_keys) & set(metadata_keys)
 
 
-def _csv_to_dict(meta_param):
-    metas = {}
-    for kv_str in meta_param.split(","):
-        k, v = kv_str.split("=")
-        metas[k.strip()] = v
-    return metas
-
-
 def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True, aliases=['name']),
-        meta=dict(required=True, type='str'),
+        meta=dict(required=True, type='dict'),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
@@ -143,8 +139,7 @@ def main():
 
     state = module.params['state']
     server_param = module.params['server']
-    # convert the metadata to dict
-    meta_param = _csv_to_dict(module.params['meta'])
+    meta_param = module.params['meta']
     changed = False
 
     try:
