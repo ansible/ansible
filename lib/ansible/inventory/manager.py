@@ -254,8 +254,13 @@ class InventoryManager(object):
                 plugin_name = to_native(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
                 display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
-                # initialize
-                if plugin.verify_file(source):
+                # initialize and figure out if plugin wants to attempt parsing this file
+                try:
+                    plugin_wants = bool(plugin.verify_file(source))
+                except Exception:
+                    plugin_wants = False
+
+                if plugin_wants:
                     try:
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
                         parsed = True
