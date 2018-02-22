@@ -1,2 +1,2 @@
 bugfixes:
-- lineinfile - fix insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
+- lineinfile - fixed insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
