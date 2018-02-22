@@ -22,10 +22,10 @@ Prerequisites
 
 This example requires the following:
 
-* **Ansible 2.5** (or higher) installed. See :doc:`intro_installation` for more information.
+* **Ansible 2.5** (or higher) installed. See :doc:`../installation_guide/intro_installation` for more information.
 * One or more network devices that are compatible with Ansible.
-* Basic understanding of YAML :doc:`YAMLSyntax`.
-* Basic understanding of Jinja2 Templates. See :doc:`playbooks_templating` for more information.
+* Basic understanding of YAML :doc:`../reference_appendices/YAMLSyntax`.
+* Basic understanding of Jinja2 Templates. See :doc:`../user_guide/playbooks_templating` for more information.
 * Basic Linux command line use.
 * Basic knowledge of network switch & router configurations.
 
@@ -118,7 +118,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
 
 .. warning:: Never store passwords in plain text.
 
-The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`../user_guide/playbooks_vault` for more information.
 
 :ansible_connection:
 
@@ -148,7 +148,7 @@ Certain network platforms, such as eos and ios, have the concept of different pr
    ansible_become: yes
    ansible_become_method: enable
 
-For more information, see the :ref:`using become with network modules<become-and-networks>` guide.
+For more information, see the :ref:`using become with network modules<become-network>` guide.
 
 
 Jump hosts
@@ -361,9 +361,9 @@ If you receive an connection error please double check the inventory and Playboo
 
 .. seealso::
 
-  * :doc:`intro_network`
-  * :doc:`intro_inventory`
-  * :ref:`Vault best practices <best-practices-for-variables-and-vaults>`
+  * :doc:`../network/index`
+  * :doc:`../user_guide/intro_inventory`
+  * :ref:`Vault best practices <best_practices_for_variables_and_vaults>`
 
 
 
