@@ -39,7 +39,7 @@ options:
     type: bool
     default: 'no'
 extends_documentation_fragment:
-- purestorage
+- purestorage.fa
 '''
 
 EXAMPLES = r'''
