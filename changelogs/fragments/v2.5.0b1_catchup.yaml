@@ -98,10 +98,10 @@ removed_features:
   cl\_ : cl\_interface, cl\_interface\_policy, cl\_bridge,
   cl\_img\_install, cl\_ports, cl\_license, cl\_bond. Use ``nclu``
   instead
-- docker, use docker\_container and docker\_image instead.
+- docker. Use docker\_container and docker\_image instead.
 - ec2\_vpc.
 - ec2\_ami\_search, use ec2\_ami\_facts instead.
-- nxos\_mtu, use nxos\_system's ``system_mtu`` option. To specify an interface's MTU use nxos\_interface.
+- nxos\_mtu. Use nxos\_system's ``system_mtu`` option instead. To specify an interface's MTU use nxos\_interface.
 - |
   panos\_nat\_policy: Use panos\_nat\_rule the old module uses deprecated API calls
 new_lookup_plugins:
@@ -133,8 +133,8 @@ new_connection_plugins:
 - netconf
 - |
   network\_cli
-   - The existing network\_cli and netconf plugins connections can now be used directly with network modules. See
-     `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`__ for more details.
+   - The existing network\_cli and netconf connection plugins can now be used directly with network modules. See
+     `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`_ for more details.
 
 new_filter_plugins:
 - parse\_xml
