@@ -4,6 +4,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
 # Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
