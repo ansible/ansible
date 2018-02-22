@@ -44,13 +44,8 @@ pull request to backport the change to a previous stable branch.
 #. Prepare your devel, stable, and feature branches:
 
    ::
-
-       git checkout devel
        git --fetch upstream
-       git merge upstream/devel
-       git checkout stable-2.5
-       git pull
-       git checkout -b cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]
+       git checkout upstream/stable-2.5 -b cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature
    branch, handling merge conflicts as necessary:
