@@ -16,6 +16,7 @@ def test_warn_if_cluster_id_not_specified():
     with pytest.raises(SystemExit):
         print(emr_add_steps.main())
 
+
 def test_warn_if_steps_not_specified():
     set_module_args({
         "cluster_id": "j-AZ1R45HYKET3"

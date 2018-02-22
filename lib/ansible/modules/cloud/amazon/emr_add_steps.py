@@ -29,7 +29,7 @@ module: emr_add_steps
 short_description: Add a step or a series of steps to an existing EMR Cluster
 description:
     - Module adds a step or a series of steps to an existing Amazon EMR cluster
-version_added: "2.5"
+version_added: "2.6"
 requirements: [ 'botocore', 'boto3' ]
 author:
     - "Aaron Smith (@slapula)"
@@ -98,7 +98,6 @@ class EMRConnection(object):
             module.fail_json(msg="Failed to connect to AWS: %s" % str(e))
 
         self.region = region
-
 
     def add_emr_steps(self):
         cluster_id = self.module.params.get('cluster_id')
