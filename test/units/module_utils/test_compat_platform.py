@@ -11,7 +11,19 @@ import platform
 
 import pytest
 
+from ansible.module_utils.six import string_types
 from ansible.module_utils import compat_platform
+
+
+def assert_dist_tuple(dist_tuple, method_name=None):
+    method_name = method_name or "method"
+    assert isinstance(dist_tuple, tuple), \
+        "return of %s is expected to be a tuple but was a %s" % (method_name, type(dist_tuple))
+    assert len(dist_tuple) == 3, \
+        "return of %s is expected to have len() of 3 but was %s" % (method_name, len(dist_tuple))
+    assert isinstance(dist_tuple[0], string_types)
+    assert isinstance(dist_tuple[1], string_types)
+    assert isinstance(dist_tuple[2], string_types)
 
 
 # to test fully need to mock:
@@ -22,13 +34,15 @@ from ansible.module_utils import compat_platform
 class TestDist:
     def test_dist(self):
         dist = compat_platform.dist()
-        assert isinstance(dist, tuple), \
-            "return of dist() is expected to be a tuple but was a %s" % type(dist)
+        assert_dist_tuple(dist, "dist()")
 
-    def test_dist_empty_supported_dists(self):
-        dist = compat_platform.dist(supported_dists=tuple())
-        assert dist == ('', '', ''), \
-            "no supported dists were provided so dist() should have returned ('', '', '')"
+
+# TODO: test that we dont show deprecation warnings
+class TestLinuxDistribution:
+    def test_linux_distribution(self):
+        linux_dist = compat_platform.linux_distribution()
+        # This will be empty unknown for non linux
+        assert_dist_tuple(linux_dist, "linux_distribution()")
 
 
 @pytest.mark.skipif(not hasattr(platform, 'dist'),
@@ -48,20 +62,3 @@ class TestLinuxDistributionCompare:
         py_linux_dist = platform.linux_distribution()
         assert linux_dist == py_linux_dist, \
             'compat_platform.linux_distribution() did not match platform.linux_distribution() %s != %s' % (linux_dist, py_linux_dist)
-
-
-# TODO: test that we dont show deprecation warnings
-class TestLinuxDistribution:
-    def test_linux_distribution(self):
-        linux_dist = compat_platform.linux_distribution()
-        # This will be empty unknown for non linux
-        assert isinstance(linux_dist, tuple), \
-            "return of linux_distribution() is expected to be a tuple but was a %s" % type(linux_dist)
-
-    def test_linux_distribution_empty_supported_dists(self):
-        linux_dist = compat_platform.linux_distribution(supported_dists=tuple())
-        assert linux_dist[0] == ''
-        assert linux_dist[1] == ''
-        assert linux_dist[2] == ''
-        assert linux_dist[0] == linux_dist[1] == linux_dist[2] == '', \
-            "linux_distribtion was expected to return ('', '', '') with no supported_dists"
