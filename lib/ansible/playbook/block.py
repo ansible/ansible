@@ -56,7 +56,11 @@ class Block(Base, Become, Conditional, Taggable):
         self._eor = False
 
         if task_include:
-            self._parent = task_include
+            if not getattr(task_include, 'statically_loaded', True):
+                # Flatten the blocks, placing the new block in place of the task_include
+                self._parent = task_include._parent
+            else:
+                self._parent = task_include
         elif parent_block:
             self._parent = parent_block
 
