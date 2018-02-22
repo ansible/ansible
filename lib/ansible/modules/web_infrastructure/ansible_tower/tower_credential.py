@@ -203,44 +203,75 @@ except ImportError:
     pass
 
 
-def _add_input_(module, param, results):
-    if module.params.get(param):
-        results[param] = module.params.get(param)
+KIND_CHOICES = {
+    'ssh': 'Machine',
+    'vault': 'Ansible Vault',
+    'net': 'Network',
+    'scm': 'Source Control',
+    'aws': 'Amazon Web Services',
+    'vmware': 'VMware vCenter',
+    'satellite6': 'Red Hat Satellite 6',
+    'cloudforms': 'Red Hat CloudForms',
+    'gce': 'Google Compute Engine',
+    'azure_rm': 'Microsoft Azure Resource Manager',
+    'openstack': 'OpenStack',
+    'rhv': 'Red Hat Virtualization',
+    'insights': 'Insights',
+    'tower': 'Ansible Tower',
+}
+
+
+def credential_type_for_v1_kind(params, module):
+    credential_type_res = tower_cli.get_resource('credential_type')
+    kind = params.pop('kind')
+    arguments = {'managed_by_tower': True}
+    if kind == 'ssh':
+        if params.get('vault_password'):
+            arguments['kind'] = 'vault'
+        else:
+            arguments['kind'] = 'ssh'
+    elif kind in ('net', 'scm', 'insights', 'vault'):
+        arguments['kind'] = kind
+    elif kind in KIND_CHOICES:
+        arguments.update(dict(
+            kind='cloud',
+            name=KIND_CHOICES[kind]
+        ))
+    return credential_type_res.get(**arguments)
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(required=True),
-            user=dict(),
-            team=dict(),
-            kind=dict(required=True,
-                      choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
-                               "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
-            host=dict(),
-            username=dict(),
-            password=dict(no_log=True),
-            ssh_key_data=dict(no_log=True),
-            ssh_key_unlock=dict(no_log=True),
-            authorize=dict(type='bool', default=False),
-            authorize_password=dict(no_log=True),
-            client=dict(),
-            secret=dict(),
-            tenant=dict(),
-            subscription=dict(),
-            domain=dict(),
-            become_method=dict(),
-            become_username=dict(),
-            become_password=dict(no_log=True),
-            vault_password=dict(no_log=True),
-            description=dict(),
-            organization=dict(required=True),
-            project=dict(),
-            state=dict(choices=['present', 'absent'], default='present'),
-        ),
+
+    argument_spec = tower_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        user=dict(),
+        team=dict(),
+        kind=dict(required=True,
+                  choices=KIND_CHOICES.keys()),
+        host=dict(),
+        username=dict(),
+        password=dict(no_log=True),
+        ssh_key_data=dict(no_log=True, type='path'),
+        ssh_key_unlock=dict(no_log=True),
+        authorize=dict(type='bool', default=False),
+        authorize_password=dict(no_log=True),
+        client=dict(),
+        secret=dict(),
+        tenant=dict(),
+        subscription=dict(),
+        domain=dict(),
+        become_method=dict(),
+        become_username=dict(),
+        become_password=dict(no_log=True),
+        vault_password=dict(no_log=True),
+        description=dict(),
+        organization=dict(required=True),
+        project=dict(),
+        state=dict(choices=['present', 'absent'], default='present'),
+    ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    )
 
     if not HAS_TOWER_CLI:
         module.fail_json(msg='ansible-tower-cli required for this module')
@@ -265,8 +296,7 @@ def main():
                 org = org_res.get(name=organization)
                 params['organization'] = org['id']
 
-            credential_type_res = tower_cli.get_resource('credential_type')
-            credential_type = credential_type_res.get(kind=module.params.get('kind'))
+            credential_type = credential_type_for_v1_kind(module.params, module)
             params['credential_type'] = credential_type['id']
 
             if module.params.get('description'):
@@ -292,21 +322,13 @@ def main():
                 with open(filename, 'rb') as f:
                     params['inputs']['ssh_key_data'] = f.read()
 
-            _add_input_(module, 'authorize', params['inputs'])
-            _add_input_(module, 'authorize_password', params['inputs'])
-            _add_input_(module, 'client', params['inputs'])
-            _add_input_(module, 'secret', params['inputs'])
-            _add_input_(module, 'tenant', params['inputs'])
-            _add_input_(module, 'subscription', params['inputs'])
-            _add_input_(module, 'domain', params['inputs'])
-            _add_input_(module, 'become_method', params['inputs'])
-            _add_input_(module, 'become_username', params['inputs'])
-            _add_input_(module, 'become_password', params['inputs'])
-            _add_input_(module, 'vault_password', params['inputs'])
-            _add_input_(module, 'project', params['inputs'])
-            _add_input_(module, 'host', params['inputs'])
-            _add_input_(module, 'username', params['inputs'])
-            _add_input_(module, 'password', params['inputs'])
+            for key in ('authorize', 'authorize_password', 'client', 'secret',
+                        'tenant', 'subscription', 'domain', 'become_method',
+                        'become_username', 'become_password', 'vault_password',
+                        'project', 'host', 'username', 'password',
+                        'ssh_key_unlock'):
+                if module.params.get(key):
+                    params['inputs'][key] = module.params.get(key)
 
             if state == 'present':
                 result = credential.modify(**params)
