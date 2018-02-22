@@ -63,6 +63,7 @@ class ForemanInventory(object):
         self.cache = dict()   # Details about hosts in the inventory
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
+        self.enc = dict()   # Enc of each host
         self.hostgroups = dict()  # host groups
         self.hostcollections = dict()  # host collections
         self.session = None   # Requests session
@@ -109,6 +110,11 @@ class ForemanInventory(object):
             self.want_facts = True
 
         try:
+            self.want_enc = config.getboolean('ansible', 'want_enc')
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self.want_enc = True
+
+        try:
             self.want_hostcollections = config.getboolean('ansible', 'want_hostcollections')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             self.want_hostcollections = False
@@ -134,6 +140,7 @@ class ForemanInventory(object):
         self.cache_path_inventory = cache_path + "/%s.index" % script
         self.cache_path_params = cache_path + "/%s.params" % script
         self.cache_path_facts = cache_path + "/%s.facts" % script
+        self.cache_path_enc = cache_path + "/%s.enc" % script
         self.cache_path_hostcollections = cache_path + "/%s.hostcollections" % script
         try:
             self.cache_max_age = config.getint('cache', 'max_age')
@@ -213,6 +220,10 @@ class ForemanInventory(object):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
         return self._get_json(url)
 
+    def _get_enc_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s/enc" % (self.foreman_url, hid)
+        return self._get_json(url)
+
     def _resolve_params(self, host_params):
         """Convert host params to dict"""
         params = {}
@@ -247,6 +258,20 @@ class ForemanInventory(object):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
+    def _get_enc(self, host):
+        """Fetch all host enc of the host"""
+        if not self.want_enc:
+            return {}
+
+        ret = self._get_enc_by_id(host['id'])
+        if len(ret.values()) == 0:
+            enc = {}
+        elif len(ret.values()) == 1:
+            enc = list(ret.values())[0]
+        else:
+            raise ValueError("More than one set of enc returned for '%s'" % host)
+        return enc
+
     def write_to_cache(self, data, filename):
         """Write data in JSON format to a file"""
         json_data = json_format_dict(data, True)
@@ -259,6 +284,7 @@ class ForemanInventory(object):
         self.write_to_cache(self.inventory, self.cache_path_inventory)
         self.write_to_cache(self.params, self.cache_path_params)
         self.write_to_cache(self.facts, self.cache_path_facts)
+        self.write_to_cache(self.enc, self.cache_path_enc)
         self.write_to_cache(self.hostcollections, self.cache_path_hostcollections)
 
     def to_safe(self, word):
@@ -335,6 +361,7 @@ class ForemanInventory(object):
             self.cache[dns_name] = host
             self.params[dns_name] = params
             self.facts[dns_name] = self._get_facts(host)
+            self.enc[dns_name] = self._get_enc(host)
             self.inventory['all'].append(dns_name)
         self._write_cache()
 
@@ -346,8 +373,9 @@ class ForemanInventory(object):
             if (mod_time + self.cache_max_age) > current_time:
                 if (os.path.isfile(self.cache_path_inventory) and
                     os.path.isfile(self.cache_path_params) and
-                        os.path.isfile(self.cache_path_facts)):
-                    return True
+                    os.path.isfile(self.cache_path_facts) and
+                        os.path.isfile(self.cache_path_enc)):
+                        return True
         return False
 
     def load_inventory_from_cache(self):
@@ -370,6 +398,14 @@ class ForemanInventory(object):
         with open(self.cache_path_facts, 'r') as fp:
             self.facts = json.load(fp)
 
+    def load_enc_from_cache(self):
+        """Read the index from the cache file sets self.enc"""
+
+        if not self.want_enc:
+            return
+        with open(self.cache_path_enc, 'r') as fp:
+            self.enc = json.load(fp)
+
     def load_hostcollections_from_cache(self):
         """Read the index from the cache file sets self.hostcollections"""
 
@@ -391,6 +427,7 @@ class ForemanInventory(object):
             self.load_inventory_from_cache()
             self.load_params_from_cache()
             self.load_facts_from_cache()
+            self.load_enc_from_cache()
             self.load_hostcollections_from_cache()
             self.load_cache_from_cache()
             if self.scan_new_hosts:
@@ -411,7 +448,11 @@ class ForemanInventory(object):
                 # host might not exist anymore
                 return json_format_dict({}, True)
 
-        return json_format_dict(self.cache[self.args.host], True)
+        host_info = self.cache[self.args.host]
+        if self.want_enc:
+            host_info['enc'] = self.enc[self.args.host]
+
+        return json_format_dict(host_info, True)
 
     def _print_data(self):
         data_to_print = ""
