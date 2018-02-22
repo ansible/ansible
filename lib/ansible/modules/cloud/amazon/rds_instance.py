@@ -308,7 +308,7 @@ import time
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict, AWSRetry
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 from ansible.module_utils.aws.rds import get_db_instance, instance_to_facts, instance_facts_diff
 from ansible.module_utils.aws.rds import DEFAULT_PORTS, DB_ENGINES, LICENSE_MODELS
@@ -562,36 +562,12 @@ def abort_on_impossible_changes(module, before_facts):
                                  (immutable_key, before_facts['db_instance_identifier']))
 
 
-def camel(words):
-    def capitalize_with_abbrevs(word):
-        if word in ["db", "aws", "az", "kms"]:
-            return word.upper()
-        return word.capitalize()
-
-    return ''.join(capitalize_with_abbrevs(x) or '_' for x in words.split('_'))
-
-# Ideally this should be merged with the function in the ec2 utilities but that
-# doesn't handle e.g. DBInstanceIdentifer correctly so can't be used here.
-
-
-def snake_dict_to_cap_camel_dict(snake_dict):
-    """ like snake_dict_to_camel_dict but capitalize the first word too """
-
-    def camelize(complex_type):
-        if complex_type is None:
-            return
-        new_type = type(complex_type)()
-        if isinstance(complex_type, dict):
-            for key in complex_type:
-                new_type[camel(key)] = camelize(complex_type[key])
-        elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i]))
-        else:
-            return complex_type
-        return new_type
-
-    return camelize(snake_dict)
+def fix_abbrevs_case(parameter):
+    result = parameter
+    for word in ["Db", "Aws", "Az", "Kms"]:
+        if word in parameter:
+            result = result.replace(word, word.upper())
+    return result
 
 
 def prepare_params_for_modify(module, connection, instance):
@@ -628,7 +604,8 @@ def prepare_changes_for_modify(module, connection, before_facts):
         pass
 
     # convert from fact format to the AWS call CamelCase format.
-    params = snake_dict_to_cap_camel_dict(facts_to_change)
+    params = snake_dict_to_camel_dict(facts_to_change, capitalize_first=True)
+    params = dict((fix_abbrevs_case(key), value) for (key, value) in params.items())
 
     if facts_to_change.get('db_security_groups'):
         params['DBSecurityGroups'] = facts_to_change.get('db_security_groups').split(',')
