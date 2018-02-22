@@ -444,7 +444,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
 
-    def _validate_config(self, loader, path):
+    def verify_file(self, path):
         '''
             :param loader: an ansible.parsing.dataloader.DataLoader object
             :param path: the path to the inventory config file
@@ -452,8 +452,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         if super(InventoryModule, self).verify_file(path):
             if path.endswith('.aws_ec2.yml') or path.endswith('.aws_ec2.yaml'):
-                return self._read_config_data(path)
-        raise AnsibleParserError("Not a ec2 inventory plugin configuration file")
+                return True
+        return False
 
     def _get_query_options(self, config_data):
         '''
@@ -501,7 +501,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 
-        config_data = self._validate_config(loader, path)
+        config_data = self._read_config_data(path)
         self._set_credentials()
 
         # get user specifications
