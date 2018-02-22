@@ -233,9 +233,6 @@ class Base(with_metaclass(BaseMeta, object)):
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
 
-        if variables:
-            self.vars.update(variables)
-
         # the data loader class is used to parse data from strings and files
         if loader is not None:
             self._loader = loader
@@ -264,6 +261,9 @@ class Base(with_metaclass(BaseMeta, object)):
 
         # run early, non-critical validation
         self.validate()
+
+        if variables:
+            self.vars.update(variables)
 
         # return the constructed object
         return self
