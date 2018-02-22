@@ -266,7 +266,7 @@ def main():
 
             if module.params.get('user'):
                 user_res = tower_cli.get_resource('user')
-                user = user_res.get(name=module.params.get('user'))
+                user = user_res.get(username=module.params.get('user'))
                 params['user'] = user['id']
 
             if module.params.get('team'):
