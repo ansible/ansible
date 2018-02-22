@@ -19,6 +19,18 @@
     name: vNIC-A-B
     state: absent
 
+- name: vNIC primary template absent
+  ucs_vnic_template: &vnic_primary_templates_absent
+    <<: *login_info
+    name: vNIC-A
+    state: absent
+
+- name: vNIC secondary template absent
+  ucs_vnic_template: &vnic_secondary_templates_absent
+    <<: *login_info
+    name: vNIC-B
+    state: absent
+
 
 # Test present (check_mode)
 - name: vNIC template present (check_mode)
@@ -33,11 +45,48 @@
   check_mode: yes
   register: cm_vnic_templates_present
 
+- name: vNIC primary template present (check_mode)
+  ucs_vnic_template: &vnic_primary_templates_present
+    <<: *login_info
+    name: vNIC-A
+    fabric: A
+    redundancy_type: primary
+    peer_redundancy_templ: vNIC-B
+    template_type: updating-template
+    mtu: '9000'
+    mac_pool: MAC-Pool-A
+    network_control_policy: Enable-CDP-LLDP
+    vlans_list:
+    - name: default
+      native: 'yes'
+    - name: finance
+  check_mode: yes
+  register: cm_vnic_primary_templates_present
+
+- name: vNIC secondary template present (check_mode)
+  ucs_vnic_template: &vnic_secondary_templates_present
+    <<: *login_info
+    name: vNIC-B
+    fabric: B
+    redundancy_type: secondary
+    peer_redundancy_templ: vNIC-A
+    mac_pool: MAC-Pool-B
+  check_mode: yes
+  register: cm_vnic_secondary_templates_present
+
 
 # Present (normal mode)
 - name: vNIC template present (normal mode)
   ucs_vnic_template: *vnic_templates_present
   register: nm_vnic_templates_present
+
+- name: vNIC primary template present (normal mode)
+  ucs_vnic_template: *vnic_primary_templates_present
+  register: nm_vnic_primary_templates_present
+
+- name: vNIC secondary template present (normal mode)
+  ucs_vnic_template: *vnic_secondary_templates_present
+  register: nm_vnic_secondary_templates_present
 
 
 # Test present again (idempotent)
@@ -46,11 +95,29 @@
   check_mode: yes
   register: cm_vnic_templates_present_again
 
+- name: vNIC primary template present again (check_mode)
+  ucs_vnic_template: *vnic_primary_templates_present
+  check_mode: yes
+  register: cm_vnic_primary_templates_present_again
+
+- name: vNIC secondary template present again (check_mode)
+  ucs_vnic_template: *vnic_secondary_templates_present
+  check_mode: yes
+  register: cm_vnic_secondary_templates_present_again
+
 
 # Present again (normal mode)
 - name: vNIC template present again (normal mode)
   ucs_vnic_template: *vnic_templates_present
   register: nm_vnic_templates_present_again
+
+- name: vNIC primary template present again (normal mode)
+  ucs_vnic_template: *vnic_primary_templates_present
+  register: nm_vnic_primary_templates_present_again
+
+- name: vNIC secondary template present again (normal mode)
+  ucs_vnic_template: *vnic_secondary_templates_present
+  register: nm_vnic_secondary_templates_present_again
 
 
 # Verfiy present
@@ -59,6 +126,10 @@
     that:
     - cm_vnic_templates_present.changed == nm_vnic_templates_present.changed == true
     - cm_vnic_templates_present_again.changed == nm_vnic_templates_present_again.changed == false
+    - cm_vnic_primary_templates_present.changed == nm_vnic_primary_templates_present.changed == true
+    - cm_vnic_primary_templates_present_again.changed == nm_vnic_primary_templates_present_again.changed == false
+    - cm_vnic_secondary_templates_present.changed == nm_vnic_secondary_templates_present.changed == true
+    - cm_vnic_secondary_templates_present_again.changed == nm_vnic_secondary_templates_present_again.changed == false
 
 
 # Test change (check_mode)
@@ -103,11 +174,29 @@
   check_mode: yes
   register: cm_vnic_templates_absent
 
+- name: vNIC primary template absent (check_mode)
+  ucs_vnic_template: *vnic_primary_templates_absent
+  check_mode: yes
+  register: cm_vnic_primary_templates_absent
+
+- name: vNIC secondary template absent (check_mode)
+  ucs_vnic_template: *vnic_secondary_templates_absent
+  check_mode: yes
+  register: cm_vnic_secondary_templates_absent
+
 
 # Absent (normal mode)
 - name: vNIC template absent (normal mode)
   ucs_vnic_template: *vnic_templates_absent
   register: nm_vnic_templates_absent
+
+- name: vNIC primary template absent (normal mode)
+  ucs_vnic_template: *vnic_primary_templates_absent
+  register: nm_vnic_primary_templates_absent
+
+- name: vNIC secondary template absent (normal mode)
+  ucs_vnic_template: *vnic_secondary_templates_absent
+  register: nm_vnic_secondary_templates_absent
 
 
 # Test absent again (idempotent)
@@ -116,11 +205,29 @@
   check_mode: yes
   register: cm_vnic_templates_absent_again
 
+- name: vNIC primary template absent again (check_mode)
+  ucs_vnic_template: *vnic_primary_templates_absent
+  check_mode: yes
+  register: cm_vnic_primary_templates_absent_again
+
+- name: vNIC secondary template absent again (check_mode)
+  ucs_vnic_template: *vnic_secondary_templates_absent
+  check_mode: yes
+  register: cm_vnic_secondary_templates_absent_again
+
 
 # Absent again (normal mode)
 - name: vNIC template absent again (normal mode)
   ucs_vnic_template: *vnic_templates_absent
   register: nm_vnic_templates_absent_again
+
+- name: vNIC primary template absent again (normal mode)
+  ucs_vnic_template: *vnic_primary_templates_absent
+  register: nm_vnic_primary_templates_absent_again
+
+- name: vNIC secondary template absent again (normal mode)
+  ucs_vnic_template: *vnic_secondary_templates_absent
+  register: nm_vnic_secondary_templates_absent_again
 
 
 # Verfiy absent
@@ -129,3 +236,7 @@
     that:
     - cm_vnic_templates_absent.changed == nm_vnic_templates_absent.changed == true
     - cm_vnic_templates_absent_again.changed == nm_vnic_templates_absent_again.changed == false
+    - cm_vnic_primary_templates_absent.changed == nm_vnic_primary_templates_absent.changed == true
+    - cm_vnic_primary_templates_absent_again.changed == nm_vnic_primary_templates_absent_again.changed == false
+    - cm_vnic_secondary_templates_absent.changed == nm_vnic_secondary_templates_absent.changed == true
+    - cm_vnic_secondary_templates_absent_again.changed == nm_vnic_secondary_templates_absent_again.changed == false

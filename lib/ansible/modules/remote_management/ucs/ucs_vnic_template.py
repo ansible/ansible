@@ -306,7 +306,7 @@ def main():
                             descr=module.params['description'],
                             switch_id=module.params['fabric'],
                             redundancy_pair_type=module.params['redundancy_type'],
-                            peer_redundancy_templ_name=module.params['peer_redundancy_templ'],
+                            peer_redundancy_templ_name=module.params['peer_redundancy_template'],
                             target=module.params['target'],
                             templ_type=module.params['template_type'],
                             cdn_source=module.params['cdn_source'],
