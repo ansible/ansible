@@ -88,6 +88,7 @@ import os
 import sys
 import time
 import shutil
+
 from StringIO import StringIO
 
 from Crypto import Random
@@ -263,7 +264,7 @@ def get_hostvars(instance):
 
     for md in instance['metadata'].get('items', []):
         # escaping '{' and '}' because ansible/jinja2 doesnt seem to like it
-        hostvars['gce_metadata'][md['key']] = md['value'].replace('{', '\{').replace('}', '\}')
+        hostvars['gce_metadata'][md['key']] = md['value'].replace('{', '\\{').replace('}', '\\}')
 
     if 'items' in instance['tags']:
         hostvars['gce_tags'] = instance['tags']['items']
@@ -332,19 +333,19 @@ def get_inventory(instances):
 
             # create a group for every tag prefixed by 'tag_' and populate accordingly
             for tag in instance['tags'].get('items', []):
-                inventory['tag_{}'.format(tag)].append(instance['name'])
+                inventory['tag_{tag}'.format(tag=tag)].append(instance['name'])
 
             project = instance['selfLink'].split('/')[6]
-            inventory['project_{}'.format(project)].append(instance['name'])
+            inventory['project_{project}'.format(project=project)].append(instance['name'])
 
             # zone groups are not prefixed to be compatible with the previous gce.py
             zone = instance['zone'].split('/')[-1]
             inventory[zone].append(instance['name'])
 
             network = instance['networkInterfaces'][0]['network'].split('/')[-1]
-            inventory['network_{}'.format(network)].append(instance['name'])
+            inventory['network_{network}'.format(network=network)].append(instance['name'])
 
-            inventory['status_{}'.format(instance['status'].lower())].append(instance['name'])
+            inventory['status_{status}'.format(status=instance['status'].lower())].append(instance['name'])
 
             # instance type groups are not prefixed to be compatible with the previous gce.py
             instance_type = instance['machineType'].split('/')[-1]
