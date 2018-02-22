@@ -252,13 +252,15 @@ class LdapAttr(object):
         current = results[0][1].get(self.name, [])
         modlist = []
 
-        if frozenset(self.values) != frozenset(current):
-            if len(current) == 0:
-                modlist = [(ldap.MOD_ADD, self.name, self.values)]
-            elif len(self.values) == 0:
-                modlist = [(ldap.MOD_DELETE, self.name, None)]
-            else:
-                modlist = [(ldap.MOD_REPLACE, self.name, self.values)]
+        if self.name == 'unicodePwd':
+            pwd = unicode('\"' + self.values[0] + '\"', 'iso-8859-1')
+            modlist = [(ldap.MOD_REPLACE, self.name, [pwd.encode('utf-16-le')])]
+        elif len(current) == 0:
+            modlist = [(ldap.MOD_ADD, self.name, self.values)]
+        elif len(self.values) == 0:
+            modlist = [(ldap.MOD_DELETE, self.name, None)]
+        else:
+            modlist = [(ldap.MOD_REPLACE, self.name, self.values)]
 
         return modlist
 
