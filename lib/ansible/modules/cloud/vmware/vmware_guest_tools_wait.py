@@ -156,8 +156,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         name=dict(type='str'),
-        name_match=dict(type='str', default='first'),
         folder=dict(type='str', default='/vm'),
+        name_match=dict(type='str', default='first', choices=['first', 'last']),
         uuid=dict(type='str'),
     )
     module = AnsibleModule(

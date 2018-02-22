@@ -161,15 +161,7 @@ lib/ansible/modules/cloud/univention/udm_share.py E323
 lib/ansible/modules/cloud/vmware/vca_fw.py E322
 lib/ansible/modules/cloud/vmware/vca_nat.py E322
 lib/ansible/modules/cloud/vmware/vca_vapp.py E322
-lib/ansible/modules/cloud/vmware/vcenter_license.py E322
 lib/ansible/modules/cloud/vmware/vmware_guest.py E322
-lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py E322
-lib/ansible/modules/cloud/vmware/vmware_guest_file_operation.py E323
-lib/ansible/modules/cloud/vmware/vmware_guest_powerstate.py E322
-lib/ansible/modules/cloud/vmware/vmware_maintenancemode.py E322
-lib/ansible/modules/cloud/vmware/vmware_maintenancemode.py E323
-lib/ansible/modules/cloud/vmware/vmware_vmkernel.py E322
-lib/ansible/modules/cloud/vmware/vmware_vmkernel.py E323
 lib/ansible/modules/cloud/vmware/vsphere_copy.py E322
 lib/ansible/modules/cloud/vultr/vr_dns_domain.py E323
 lib/ansible/modules/cloud/vultr/vr_firewall_rule.py E323

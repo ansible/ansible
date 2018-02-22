@@ -106,7 +106,7 @@ def main():
             name=dict(required=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
-            type=dict(required=True),
+            type=dict(required=True, choices=['mysql', 'postgresql']),
             password=dict(required=False, default=None, no_log=True),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),

@@ -24,7 +24,7 @@ options:
     purge_rules:
       description:
         - If set to true, it will delete all rules in the gateway that are not given as parameter to this module.
-      required: false
+      type: bool
       default: false
     nat_rules:
       description:
