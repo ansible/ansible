@@ -133,7 +133,7 @@ new_connection_plugins:
 - netconf
 - |
   network\_cli
-   - The existing network\_cli nor netconf plugins connections can now be used directly with network modules. See
+   - The existing network\_cli and netconf plugins connections can now be used directly with network modules. See
      `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`__ for more details.
 
 new_filter_plugins:
