@@ -44,6 +44,7 @@ webdocs: docs
 
 #TODO: leaving htmlout removal for those having older versions, should eventually be removed also
 clean:
+	-rm -rf $(BUILDDIR)
 	-rm -rf htmlout
 	-rm -rf module_docs
 	-rm -rf _build
@@ -103,5 +104,5 @@ epub:
 	(CPUS=$(CPUS) make -f Makefile.sphinx epub)
 
 htmlsingle: assertrst
-	sphinx-build -j $(CPUS) -b html -d _build/doctrees ./rst _build/html rst/$(rst)
-	@echo "Output is in _build/html/$(rst:.rst=.html)"
+	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
+	@echo "Output is in $(BUILDDIR)/$(rst:.rst=.html)"
