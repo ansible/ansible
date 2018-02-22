@@ -54,7 +54,7 @@ options:
         choices: ['present', 'absent']
     name:
         description:
-            - Creation Token of Amazon EFS file system. Required for create. Either name or ID required for delete.
+            - Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
         required: false
         default: None
     id:
