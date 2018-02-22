@@ -167,6 +167,13 @@ EXAMPLES = '''
       - proto: all
         # the containing group name may be specified here
         group_name: example
+      - proto: all
+        # in the 'proto' attribute, if you specify -1, all, or a protocol number other than tcp, udp, icmp, or 58 (ICMPv6),
+        # traffic on all ports is allowed, regardless of any ports you specify
+        from_port: 10050 # this value is ignored
+        to_port: 10050 # this value is ignored
+        cidr_ip: 10.0.0.0/8
+
     rules_egress:
       - proto: tcp
         from_port: 80
