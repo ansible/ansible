@@ -50,6 +50,7 @@ pull request to backport the change to a previous stable branch.
 #. Prepare your devel, stable, and feature branches:
 
    ::
+
        git --fetch upstream
        git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
 
