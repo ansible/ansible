@@ -80,6 +80,8 @@ Ansible Changes By Release
 * Fix using ansible_*_interpreter on Python3 with non-new-style modules
   (old-style ansible python modules, modules written in another language, etc)
   https://github.com/ansible/ansible/pull/36541
+* Fix vyos_config IndexError in sanitize_config
+  (https://github.com/ansible/ansible/issues/36351)
 
 
 <a id="2.4.3"></a
