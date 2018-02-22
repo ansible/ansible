@@ -46,6 +46,15 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     if not isinstance(ds, (list, type(None))):
         raise AnsibleAssertionError('%s should be a list or None but is %s' % (ds, type(ds)))
 
+    ti_vars = {}
+    if task_include:
+        if not getattr(task_include, 'statically_loaded', True):
+            # Flatten the blocks, placing the new block in place of the task_include
+            ti_vars = task_include.vars
+            task_include = task_include._parent
+        else:
+            task_include = task_include
+
     block_list = []
     if ds:
         count = iter(range(len(ds)))
@@ -78,6 +87,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
                             use_handlers=use_handlers,
                             variable_manager=variable_manager,
                             loader=loader,
+                            variables=ti_vars,
                         )
                     )
 

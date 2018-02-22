@@ -220,7 +220,7 @@ class Base(with_metaclass(BaseMeta, object)):
                 return method(ds)
         return ds
 
-    def load_data(self, ds, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, variables=None):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
@@ -232,6 +232,9 @@ class Base(with_metaclass(BaseMeta, object)):
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
+
+        if variables:
+            self.vars.update(variables)
 
         # the data loader class is used to parse data from strings and files
         if loader is not None:

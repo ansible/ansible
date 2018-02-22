@@ -56,11 +56,7 @@ class Block(Base, Become, Conditional, Taggable):
         self._eor = False
 
         if task_include:
-            if not getattr(task_include, 'statically_loaded', True):
-                # Flatten the blocks, placing the new block in place of the task_include
-                self._parent = task_include._parent
-            else:
-                self._parent = task_include
+            self._parent = task_include
         elif parent_block:
             self._parent = parent_block
 
@@ -87,10 +83,10 @@ class Block(Base, Become, Conditional, Taggable):
         return all_vars
 
     @staticmethod
-    def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
+    def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None, variables=None):
         implicit = not Block.is_block(data)
         b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
-        return b.load_data(data, variable_manager=variable_manager, loader=loader)
+        return b.load_data(data, variable_manager=variable_manager, loader=loader, variables=variables)
 
     @staticmethod
     def is_block(ds):
