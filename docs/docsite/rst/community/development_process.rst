@@ -51,7 +51,7 @@ pull request to backport the change to a previous stable branch.
 
    ::
 
-       git --fetch upstream
+       git fetch upstream
        git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature
