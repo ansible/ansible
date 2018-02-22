@@ -32,6 +32,7 @@ Because network modules execute on the control node instead of on the managed no
 
 Beginning with Ansible 2.5, we recommend using ``network_cli`` or ``netconf`` for ``ansible_connection`` whenever possible. For details on using API over HTTPS connections, see the platform-specific pages.
 
+
 Modules Organized by Network Platform
 ================================================================================
 
@@ -44,12 +45,13 @@ A network platform is a set of network devices with a common operating system th
 
 All modules within a network platform share certain requirements. Some network platforms have specific differences - see the platform-specific documentation for details.
 
+
 Privilege Escalation: `authorize` and `become`
 ================================================================================
 
 Several network platforms support privilege escalation, where certain tasks must be done by a privileged user. This is generally known as ``enable`` mode (the equivalent of ``sudo`` in \*nix administration). Ansible network modules offer privilege escalation for those network devices that support it. However, different platforms use privilege escalation in different ways. 
 
-Network platforms that support ``connection: network_cli`` and privilege escalation use the Ansible parameter ``become: yes`` with ``become_method: enable``. For modules in these platforms, a ``group_vars`` file would look like:
+Network platforms that support ``connection: network_cli`` and privilege escalation use the top-level Ansible parameter ``become: yes`` with ``become_method: enable``. For modules in these platforms, a ``group_vars`` file would look like:
 
 .. code-block:: yaml
 
@@ -58,15 +60,35 @@ Network platforms that support ``connection: network_cli`` and privilege escalat
    ansible_become: yes
    ansible_become_method: enable
 
-We recommend using ``network_cli`` connections whenever possible. However, in Ansible < 2.5, some network platforms support privilege escalation but not ``network_cli`` connections. In that case, you must use ``authorize: yes`` and ``auth_pass: my_enable_password`` in the ``provider`` settings. For that use case, a ``group_vars`` file would look like:
+We recommend using ``network_cli`` connections whenever possible. 
+
+Some network platforms support privilege escalation but cannot use ``network_cli`` connections yet. This includes all platforms in older versions of Ansible (< 2.5) and HTTPS connections using ``eapi`` in version 2.5. With these connections, you must use a ``provider`` dictionary and include ``authorize: yes`` and ``auth_pass: my_enable_password``. For that use case, a ``group_vars`` file looks like:
 
 .. code-block:: yaml
 
    ansible_connection: local
    ansible_network_os: eos
-   provider:
+   # provider settings
+   eapi:
      authorize: yes
      auth_pass: " {{ secret_auth_pass }}"
+     port: 80
      transport: eapi
+     use_ssl: no
+
+And you use the ``setting`` variable in your play(s) or task(s):
+
+.. code-block:: yaml
+
+   tasks:
+   - name: provider demo with eos
+     eos_banner:
+       banner: motd
+       text: |
+         this is test
+         of multiline
+         string
+       state: present
+       provider: "{{ eapi }}"
 
 For more information, see :ref:`Become and Networks<become-network>`
