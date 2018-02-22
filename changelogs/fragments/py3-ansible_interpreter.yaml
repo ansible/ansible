@@ -1,0 +1,4 @@
+bugfixes:
+- Fix for ansible_*_interpreter on Python3 when using non-newstyle modules.
+  Those include old-style ansible modules and Ansible modules written in
+  non-python scripting languages (https://github.com/ansible/ansible/pull/36541)
