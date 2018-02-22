@@ -23,7 +23,7 @@ precedence, least to higher):
 
 2. Environment variables (prefixed by 'GCE_'):
     The variables needs to be set with the same names as the parameters, but
-    with in UPPERCASE and underscore (_) instead of dashes (-)
+    with in UPPERCASE and underscore instead of dashes.
     Ex: to set --billing-account using environment variables you'd need to
         create one called GCE_BILLING_ACCOUNT
 
