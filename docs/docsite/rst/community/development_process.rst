@@ -41,6 +41,12 @@ pull request to backport the change to a previous stable branch.
     is configured as a ``git remote`` named ``upstream``. If you do not use
     a ``git remote`` named ``upstream`` adjust the instructions accordingly.
 
+.. note::
+   
+   These instructions assume that ``https:;//github.com/<yourgithubaccount>/ansible.git``
+   is configured as `git remote`` named ``origin``.
+    If you do not use a ``origin`` this way, adjust the instructions accordingly.
+
 #. Prepare your devel, stable, and feature branches:
 
    ::
