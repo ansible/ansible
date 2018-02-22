@@ -1,0 +1,2 @@
+bugfixes:
+ - protect against bad plugin verify method https://github.com/ansible/ansible/pull/36591
