@@ -66,7 +66,7 @@ options:
   engine:
     description:
       - The type of database. Used only when state=present.
-    choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee',
+    choices: [ 'mariadb', 'mysql', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee',
                 sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   allocated_storage:
     description:
@@ -214,7 +214,7 @@ EXAMPLES = '''
 # Basic mysql provisioning example
 - rds_instance:
     id: new-database
-    engine: MySQL
+    engine: mysql
     allocated_storage: 10
     db_instance_class: db.m1.small
     master_username: mysql_admin
