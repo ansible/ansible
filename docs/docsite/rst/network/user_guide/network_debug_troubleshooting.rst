@@ -201,7 +201,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:`log_path` to find the underlying issues.
+The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:logging`a_note_about_logging` to find the underlying issues.
 
 
 
@@ -280,7 +280,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable :envvar:`ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
@@ -501,7 +501,7 @@ Network modules require that the connection is set to ``local``.  Any other
 connection setting will cause the playbook to fail.  Ansible will now detect
 this condition and return an error message:
 
-.. code-block:: yaml
+.. code-block:: console
 
     fatal: [nxos01]: FAILED! => {
         "changed": false,
@@ -526,7 +526,7 @@ This occurs when you attempt to run a task that requires privileged mode in a us
 
 For example:
 
-.. code-block:: yaml
+.. code-block:: console
 
   TASK [ios_system : configure name_servers] *****************************************************************************
   task path:
@@ -549,7 +549,7 @@ Add ``authorize: yes`` to the task. For example:
         authorize: yes
     register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable :envvar:`ANSIBLE_NET_AUTHORIZE` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable `ANSIBLE_NET_AUTHORIZE` will be used instead.
 
 
 Add ``authorize: yes`` to the task. For example:
