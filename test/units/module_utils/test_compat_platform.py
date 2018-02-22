@@ -7,6 +7,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import platform
+
 import pytest
 
 from ansible.module_utils import compat_platform
@@ -23,14 +25,29 @@ class TestDist:
         assert isinstance(dist, tuple), \
             "return of dist() is expected to be a tuple but was a %s" % type(dist)
 
-    def test_dist_all_none(self):
-        with pytest.raises(TypeError):
-            compat_platform.dist(distname=None, version=None, id=None, supported_dists=None)
-
     def test_dist_empty_supported_dists(self):
         dist = compat_platform.dist(supported_dists=tuple())
         assert dist == ('', '', ''), \
             "no supported dists were provided so dist() should have returned ('', '', '')"
+
+
+@pytest.mark.skipif(not hasattr(platform, 'dist'),
+                    reason="Skipping platform.dist compat test because there is no platform.dist")
+class TestDistCompare:
+    def test_dist(self):
+        dist = compat_platform.dist()
+        py_dist = platform.dist()
+        assert dist == py_dist, 'compat_platform.dist() did not match platform.dist() %s != %s' % (dist, py_dist)
+
+
+@pytest.mark.skipif(not hasattr(platform, 'linux_distribution'),
+                    reason="Skipping platform.linux_distribution compat test because there is no platform.linux_distribution")
+class TestLinuxDistributionCompare:
+    def test_linux_distribution(self):
+        linux_dist = compat_platform.linux_distribution()
+        py_linux_dist = platform.linux_distribution()
+        assert linux_dist == py_linux_dist, \
+            'compat_platform.linux_distribution() did not match platform.linux_distribution() %s != %s' % (linux_dist, py_linux_dist)
 
 
 # TODO: test that we dont show deprecation warnings
@@ -40,12 +57,6 @@ class TestLinuxDistribution:
         # This will be empty unknown for non linux
         assert isinstance(linux_dist, tuple), \
             "return of linux_distribution() is expected to be a tuple but was a %s" % type(linux_dist)
-
-    def test_linux_distribution_all_none(self):
-        with pytest.raises(TypeError):
-            compat_platform.linux_distribution(distname=None, version=None,
-                                               id=None, supported_dists=None,
-                                               full_distribution_name=None)
 
     def test_linux_distribution_empty_supported_dists(self):
         linux_dist = compat_platform.linux_distribution(supported_dists=tuple())
