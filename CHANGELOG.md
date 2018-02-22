@@ -77,6 +77,9 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/36057)
 * Improve performance and recursion depth in include_role
   (https://github.com/ansible/ansible/pull/36470)
+* Fix using ansible_*_interpreter on Python3 with non-new-style modules
+  (old-style ansible python modules, modules written in another language, etc)
+  https://github.com/ansible/ansible/pull/36541
 
 
 <a id="2.4.3"></a
