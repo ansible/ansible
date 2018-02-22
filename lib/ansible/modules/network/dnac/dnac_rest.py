@@ -45,7 +45,6 @@ options:
             - Using C(get) is typically used for querying objects.
             - Using C(post) is typically used for modifying objects.
         required: true
-        default: get
         choices: [ delete, get, post ]
         aliases: [ action ]
     path:
@@ -75,10 +74,6 @@ options:
         description:
             - Raw content which should be fed in body.
 
-
-extends_documentation_fragment:
-    - url
-
 author:
     - Kevin Breit (@kbreit)
 '''
@@ -107,17 +102,17 @@ message:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, open_url
 from ansible.module_utils.basic import json
-from ansible.module_utils._text import to_bytes, to_native, to_text
-# import json
+from ansible.module_utils._text import to_native
 
 def run_module():
+
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
         username=dict(type='str', required=True),
         password=dict(type='str', required=True, no_log=True),
         host=dict(type='str', required=True),
-        method=dict(type='str', choices=['delete','get','post'], required=True),
+        method=dict(type='str', choices=['delete', 'get', 'post'], required=True),
         path=dict(type='path', required=True),
         timeout=dict(type='int', default=30, required=False),
         use_proxy=dict(type='bool', default=False, required=False),
@@ -169,15 +164,15 @@ def run_module():
 
     try:
         authurl = '{0}://{1}/api/system/v1/auth/login'.format(protocol, module.params['host'])
-        authresp = open_url(  authurl,
-                            headers=authheaders,
-                            method='GET',
-                            use_proxy=module.params['use_proxy'],
-                            timeout=module.params['timeout'],
-                            validate_certs=module.params['validate_certs'],
-                            username=module.params['username'],
-                            password=module.params['password'],
-                            force_basic_auth=True)
+        authresp = open_url(authurl,
+            headers=authheaders,
+            method='GET',
+            use_proxy=module.params['use_proxy'],
+            timeout=module.params['timeout'],
+            validate_certs=module.params['validate_certs'],
+            username=module.params['username'],
+            password=module.params['password'],
+            force_basic_auth=True)
 
     except Exception as e:
         module.fail_json(msg=e.fp)
@@ -192,8 +187,6 @@ def run_module():
             cookie_split = i[1].split(';')
             cookie = cookie_split[0]
 
-    # module.fail_json(msg=cookie)
-
     if cookie is None:
         module.fail_json(msg="Cookie not assigned from DNA Central")
 
@@ -201,12 +194,12 @@ def run_module():
 
     try:
         resp, info = fetch_url(module, url,
-                                data=payload,
-                                headers=headers,
-                                method=module.params['method'].upper(),
-                                use_proxy=module.params['use_proxy'],
-                                force=True,
-                                timeout=module.params['timeout'])
+            data=payload,
+            headers=headers,
+            method=module.params['method'].upper(),
+            use_proxy=module.params['use_proxy'],
+            force=True,
+            timeout=module.params['timeout'])
 
     except Exception as e:
         module.fail_json(msg=e.fp)
@@ -242,3 +235,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
