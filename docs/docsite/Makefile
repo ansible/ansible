@@ -44,7 +44,8 @@ webdocs: docs
 
 #TODO: leaving htmlout removal for those having older versions, should eventually be removed also
 clean:
-	-rm -rf $(BUILDDIR)
+	-rm -rf $(BUILDDIR)/doctrees
+	-rm -rf $(BUILDDIR)/html
 	-rm -rf htmlout
 	-rm -rf module_docs
 	-rm -rf _build
