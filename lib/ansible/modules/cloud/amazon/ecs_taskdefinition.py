@@ -243,6 +243,10 @@ def main():
     for container in module.params.get('containers', []):
         for environment in container.get('environment', []):
             environment['value'] = to_text(environment['value'])
+        # Allow parameterization hostname with a way to not set it
+        for parameter in ['hostname', 'workingDirectory']:
+            if container.get(parameter) == "":
+                del(container[parameter])
 
     if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:

@@ -264,6 +264,16 @@
         task_definition: "{{ ecs_task_name }}-vpc:{{ ecs_task_definition.taskdefinition.revision + 1}}"
         <<: *aws_connection_info
 
+    - name: create task definition with hostname
+      ecs_taskdefinition:
+        containers: "{{ ecs_task_containers }}"
+        family: "{{ ecs_task_name }}"
+        state: present
+        <<: *aws_connection_info
+      vars:
+        ecs_task_hostname: something.that.works
+      register: ecs_task_definition_with_hostname
+
   always:
 
     # TEAR DOWN: snapshot, ec2 instance, ec2 key pair, security group, vpc
@@ -304,9 +314,13 @@
       ecs_taskdefinition:
         containers: "{{ ecs_task_containers }}"
         family: "{{ ecs_task_name }}"
-        revision: "{{ ecs_task_definition.taskdefinition.revision }}"
+        revision: "{{ item.taskdefinition.revision }}"
         state: absent
         <<: *aws_connection_info
+      with_items:
+        - "{{ ecs_task_definition }}"
+        - "{{ ecs_task_definition_again }}"
+        - "{{ ecs_task_definition_with_hostname }}"
       ignore_errors: yes
 
     - name: remove load balancer

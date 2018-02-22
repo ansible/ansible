@@ -22,6 +22,7 @@ ecs_task_containers:
   - containerPort: "{{ ecs_task_container_port }}"
     hostPort: "{{ ecs_task_host_port|default(0) }}"
   mountPoints: "{{ ecs_task_mount_points|default([]) }}"
+  hostname: "{{ ecs_task_hostname|default() }}"
 ecs_service_deployment_configuration:
   minimum_healthy_percent: 0
   maximum_percent: 100
