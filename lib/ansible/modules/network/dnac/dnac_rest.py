@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: sda_rest
+module: dnac_rest
 
-short_description: Direct access to the Cisco Software-Defined Access (SDA) controller
+short_description: Direct access to the Cisco Software-Defined Access (SDA) controller, DNA Central
 
 version_added: "2.6"
 
@@ -46,7 +46,6 @@ options:
             - Using C(post) is typically used for modifying objects.
         required: true
         choices: [ delete, get, post ]
-        aliases: [ action ]
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
@@ -95,7 +94,8 @@ EXAMPLES = '''
 RETURN = '''
 message:
     description: Data returned from controller.
-    type: json
+    type: dict
+    returned: info
 '''
 
 
@@ -103,6 +103,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, open_url
 from ansible.module_utils.basic import json
 from ansible.module_utils._text import to_native
+
 
 def run_module():
 
@@ -177,7 +178,7 @@ def run_module():
     except Exception as e:
         module.fail_json(msg=e.fp)
 
-    if to_native(authresp.read()) != "success": # DNA Center returns success in body
+    if to_native(authresp.read()) != "success":  # DNA Center returns success in body
         module.fail_json(msg="Authentication failed: {0}".format(authresp.read()))
 
     respheaders = authresp.getheaders()
@@ -213,7 +214,7 @@ def run_module():
         result['changed'] = True
         # result['message']=json.loads(resp.read())
         try:
-            result['message']=json.loads(resp.read())
+            result['message'] = json.loads(resp.read())
         except:
             module.fail_json(msg="DNA Center didn't return JSON compatible data")
 
@@ -230,9 +231,9 @@ def run_module():
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
+
 def main():
     run_module()
 
 if __name__ == '__main__':
     main()
-
