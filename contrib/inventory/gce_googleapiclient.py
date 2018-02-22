@@ -77,7 +77,9 @@ Setting multiple values parameters:
 
 from __future__ import print_function
 
+import ConfigParser
 import collections
+import hashlib
 import json
 import logging as log
 import multiprocessing as mp
@@ -86,6 +88,7 @@ import os
 import sys
 import time
 import shutil
+from StringIO import StringIO
 
 from Crypto import Random
 
@@ -96,6 +99,7 @@ from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
 from oauth2client.client import GoogleCredentials
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 ENV_PREFIX = 'GCE_'
@@ -108,9 +112,10 @@ class GCloudAPI(object):
     """
     Class for handling the access to Google Cloud API.
     """
+
     def __init__(self, api_version=API_VERSION):
 
-        self.credentials = GoogleCredentials.get_application_default()
+        self.credentials = GCloudAPI._get_credentials()
         self.api_version = api_version
         self.services = {}
 
@@ -126,6 +131,78 @@ class GCloudAPI(object):
 
         return self.services[service_name]
 
+    @staticmethod
+    def _get_credentials():
+        """
+        Method to retrieve credentials with a lot of possible ways.
+
+        First, it tries to get credentials with the three ansible/libcloud ways:
+          * With the secrets.py file which should be in $PYTHONPATH
+          * With the GCE_INI_PATH
+          * With the environment variables
+
+        If none present, it tries the default OAuth client one
+        :return: credentials
+        """
+        gce_ini_default_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "gce.ini")
+        gce_ini_path = os.environ.get('GCE_INI_PATH', gce_ini_default_path)
+
+        # We don't get the libcloud_secret parameter since it has been deprecated
+        config = ConfigParser.SafeConfigParser(defaults={
+            'gce_service_account_email_address': '',
+            'gce_service_account_pem_file_path': '',
+        })
+        if 'gce' not in config.sections():
+            config.add_section('gce')
+
+        # It's safe even if the gce.ini file does not exist
+        config.read(gce_ini_path)
+
+        try:
+            import secrets
+            args = list(getattr(secrets, 'GCE_PARAMS', []))
+            gce_service_account_email_address = args[0]
+            gce_service_account_pem_file_path = args[1]
+        except ImportError:
+            gce_service_account_email_address = config.get('gce', 'gce_service_account_email_address')
+            gce_service_account_pem_file_path = config.get('gce', 'gce_service_account_pem_file_path')
+
+        # If the environment variables are set, they override
+        gce_service_account_email_address = os.environ.get('GCE_EMAIL', gce_service_account_email_address)
+        gce_service_account_pem_file_path = os.environ.get('GCE_PEM_FILE_PATH', gce_service_account_pem_file_path)
+
+        # If the email and the pem_file are empty, let use the Google OAuth default behavior
+        if gce_service_account_email_address == '' or gce_service_account_pem_file_path == '':
+            log.info('Using default behavior of the oauth client lib to get credentials')
+            return GoogleCredentials.get_application_default()
+
+        # check if the GCE_PEM_FILE_PATH is directly the key
+        # see: https://github.com/apache/libcloud/blob/trunk/libcloud/common/google.py#L471
+        log.info('Using the libcloud way to get credentials')
+
+        stream = StringIO()
+        if gce_service_account_pem_file_path.find('PRIVATE KEY---') != -1:
+            stream.write(gce_service_account_pem_file_path)
+        else:
+            key_path = os.path.expanduser(gce_service_account_pem_file_path)
+            is_file_path = os.path.exists(key_path) and os.path.isfile(key_path)
+            if not is_file_path:
+                raise ValueError("Missing (or not readable) key "
+                                 "file: '%s'" % gce_service_account_pem_file_path)
+            with open(key_path, 'r') as f:
+                contents = f.read()
+            try:
+                key = json.loads(contents)
+                key = key['private_key']
+            except ValueError:
+                key = contents
+            stream.write(key)
+
+            # Reset the buffer position
+        stream.seek(0)
+        return ServiceAccountCredentials.from_p12_keyfile_buffer(gce_service_account_email_address, stream)
+
 
 GCAPI = GCloudAPI()
 
@@ -140,7 +217,6 @@ def signal_handler():  # pragma: no cover
 
 
 def get_all_billing_projects(billing_account_name, cache_dir, refresh_cache=True):
-
     project_ids = []
 
     # pylint: disable=no-member
@@ -168,20 +244,23 @@ def get_all_billing_projects(billing_account_name, cache_dir, refresh_cache=True
 
 
 def get_hostvars(instance):
-
     hostvars = {
         'gce_name': instance['name'],
         'gce_id': instance['id'],
-        'gce_status': instance['status']
+        'gce_uuid': get_uuid(instance),
+        'gce_description': instance.get('description', None),
+        'gce_image': get_boot_image(instance['disks']),
+        'gce_status': instance['status'],
+        'gce_machine_type': instance['machineType'].split('/')[-1],
+        'gce_project': instance['selfLink'].split('/')[6], 'gce_zone': instance['zone'].split('/')[-1],
+        'gce_network': instance['networkInterfaces'][0]['network'].split('/')[-1],
+        'gce_metadata': {},
+        'ansible_ssh_host': get_ssh_host(instance['networkInterfaces'])
     }
-
-    if instance['networkInterfaces'][0]['networkIP']:
-        hostvars['ansible_ssh_host'] = instance['networkInterfaces'][0]['networkIP']
 
     if 'labels' in instance:
         hostvars['gce_labels'] = instance['labels']
 
-    hostvars['gce_metadata'] = {}
     for md in instance['metadata'].get('items', []):
         # escaping '{' and '}' because ansible/jinja2 doesnt seem to like it
         hostvars['gce_metadata'][md['key']] = md['value'].replace('{', '\{').replace('}', '\}')
@@ -189,17 +268,11 @@ def get_hostvars(instance):
     if 'items' in instance['tags']:
         hostvars['gce_tags'] = instance['tags']['items']
 
-    hostvars['gce_machine_type'] = instance['machineType'].split('/')[-1]
-
-    hostvars['gce_project'] = instance['selfLink'].split('/')[6]
-
-    hostvars['gce_zone'] = instance['zone'].split('/')[-1]
-
-    hostvars['gce_network'] = instance['networkInterfaces'][0]['network'].split('/')[-1]
-
     for interface in instance['networkInterfaces']:
 
-        hostvars['gce_subnetwork'] = interface['subnetwork'].split('/')[-1]
+        # In a legacy VPC the subnework is not present
+        if 'subnetwork' in interface:
+            hostvars['gce_subnetwork'] = interface['subnetwork'].split('/')[-1]
 
         access_configs = interface.get('accessConfigs', [])
 
@@ -214,8 +287,38 @@ def get_hostvars(instance):
     return hostvars
 
 
-def get_inventory(instances):
+def get_ssh_host(network_interfaces, looking_public=True):
+    for interface in network_interfaces:
+        if not looking_public:
+            return interface['networkIP']
 
+        access_configs = interface.get('accessConfigs', [])
+        for access_config in access_configs:
+            if 'natIP' in access_config:
+                # Return the first public IP found
+                return access_config['natIP']
+
+    # If no public IP is found return the first private
+    get_ssh_host(network_interfaces, False)
+
+
+def get_boot_image(disks):
+    for disk in disks:
+        if disk['boot']:
+            return disk['additionalData']['sourceImage'].split('/')[-1]
+
+
+def get_uuid(instance):
+    """
+    Use only for libcloud retro compatibility
+
+    The uuid is based on the libcloud way here:
+    https://github.com/apache/libcloud/blob/trunk/libcloud/compute/base.py#L114
+    """
+    return hashlib.sha1('%s:%s' % (instance['id'], 'gce')).hexdigest()
+
+
+def get_inventory(instances):
     inventory = collections.defaultdict(list)
     inventory['_meta'] = collections.defaultdict(
         lambda: collections.defaultdict(dict))
@@ -246,6 +349,18 @@ def get_inventory(instances):
             # instance type groups are not prefixed to be compatible with the previous gce.py
             instance_type = instance['machineType'].split('/')[-1]
             inventory[instance_type].append(instance['name'])
+
+            # group by private and public ip
+            for interface in instance['networkInterfaces']:
+                inventory[interface['networkIP']].append(instance['name'])
+                access_configs = interface.get('accessConfigs', [])
+
+                for access_config in access_configs:
+                    if 'natIP' in access_config:
+                        inventory[access_config['natIP']].append(instance['name'])
+
+            # group by images
+            inventory[get_boot_image(instance['disks'])].append(instance['name'])
 
     return inventory
 
@@ -303,6 +418,22 @@ def get_project_zone_instances(params):
                 # pylint: disable=no-member
                 request = service.instances().list_next(previous_request=request,
                                                         previous_response=response)
+            request = service.disks().list(project=project, zone=zone)
+
+            disks = []
+
+            while request is not None:
+                response = request.execute()
+                disks.extend(response.get('items', []))
+
+                request = service.disks().list_next(previous_request=request,
+                                                    previous_response=response)
+
+            # Map additional data between instances an their disks
+            for instance in instance_list:
+                for instance_disk in instance['disks']:
+                    instance_disk['additionalData'] = \
+                        [disk for disk in disks if instance_disk['source'] == disk['selfLink']][0]
 
         except HttpError as exception:
             log.warn('Could not retrieve list of instances of project/zone: %s/%s',
@@ -320,7 +451,6 @@ def get_project_zone_instances(params):
 
 
 def is_cache_expired(cache_dir, project=None, zone=None):
-
     expired = True
     data_dir = cache_dir
     data_file = os.path.join(data_dir, 'projects.json')
@@ -342,7 +472,6 @@ def is_cache_expired(cache_dir, project=None, zone=None):
 
 
 def purge_cache(cache_dir, project=None, zone=None):
-
     data_dir = cache_dir
     data_file = os.path.join(data_dir, 'projects.json')
 
@@ -363,7 +492,6 @@ def purge_cache(cache_dir, project=None, zone=None):
 
 
 def get_cached_data(cache_dir, project=None, zone=None):
-
     data_dir = cache_dir
     data_file = os.path.join(data_dir, 'projects.json')
 
@@ -381,7 +509,8 @@ def get_cached_data(cache_dir, project=None, zone=None):
 
 
 def store_cache(data, cache_dir, project=None, zone=None):
-
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
     data_dir = cache_dir
     data_file = os.path.join(data_dir, 'projects.json')
 
@@ -403,7 +532,6 @@ def store_cache(data, cache_dir, project=None, zone=None):
 
 
 def main(args):
-
     if args['--debug']:
         log.getLogger().setLevel(log.DEBUG)
 
@@ -453,7 +581,6 @@ def main(args):
 
     for project_zone_instances in pool_workers.map_async(get_project_zone_instances,
                                                          project_zone_list).get(timeout):
-
         instance_list.extend(project_zone_instances)
 
     inventory_json = get_inventory(instance_list)
