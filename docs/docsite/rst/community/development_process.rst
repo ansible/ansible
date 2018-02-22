@@ -39,19 +39,19 @@ pull request to backport the change to a previous stable branch.
 
     These instructions assume that ``https://github.com/ansible/ansible.git``
     is configured as a ``git remote`` named ``upstream``. If you do not use
-    a ``git remote`` named ``upstream`` adjust the instructions accordingly.
+    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
 
 .. note::
-   
-   These instructions assume that ``https:;//github.com/<yourgithubaccount>/ansible.git``
-   is configured as `git remote`` named ``origin``.
-    If you do not use a ``origin`` this way, adjust the instructions accordingly.
+
+   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+   is configured as a `git remote`` named ``origin``. If you do not use
+   a ``git remote`` named ``origin``, adjust the instructions accordingly.
 
 #. Prepare your devel, stable, and feature branches:
 
    ::
        git --fetch upstream
-       git checkout upstream/stable-2.5 -b cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]
+       git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature
    branch, handling merge conflicts as necessary:
@@ -66,14 +66,14 @@ pull request to backport the change to a previous stable branch.
 
    ::
 
-       git push origin cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]
+       git push origin backport/2.5/[PR_NUMBER_FROM_DEVEL]
 
-#. Submit the pull request for ``cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]``
+#. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
    against the ``stable-2.5`` branch
 
 .. note::
 
-    The choice to use ``cherry-pick/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
+    The choice to use ``backport/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
     name for the feature branch is somewhat arbitrary, but conveys meaning
     about the purpose of that branch. It is not required to use this format,
     but it can be helpful, especially when making multiple backport PRs for
