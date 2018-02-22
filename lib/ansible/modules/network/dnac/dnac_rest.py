@@ -166,14 +166,14 @@ def run_module():
     try:
         authurl = '{0}://{1}/api/system/v1/auth/login'.format(protocol, module.params['host'])
         authresp = open_url(authurl,
-            headers=authheaders,
-            method='GET',
-            use_proxy=module.params['use_proxy'],
-            timeout=module.params['timeout'],
-            validate_certs=module.params['validate_certs'],
-            username=module.params['username'],
-            password=module.params['password'],
-            force_basic_auth=True)
+                            headers=authheaders,
+                            method='GET',
+                            use_proxy=module.params['use_proxy'],
+                            timeout=module.params['timeout'],
+                            validate_certs=module.params['validate_certs'],
+                            username=module.params['username'],
+                            password=module.params['password'],
+                            force_basic_auth=True)
 
     except Exception as e:
         module.fail_json(msg=e.fp)
@@ -195,12 +195,12 @@ def run_module():
 
     try:
         resp, info = fetch_url(module, url,
-            data=payload,
-            headers=headers,
-            method=module.params['method'].upper(),
-            use_proxy=module.params['use_proxy'],
-            force=True,
-            timeout=module.params['timeout'])
+                               data=payload,
+                               headers=headers,
+                               method=module.params['method'].upper(),
+                               use_proxy=module.params['use_proxy'],
+                               force=True,
+                               timeout=module.params['timeout'])
 
     except Exception as e:
         module.fail_json(msg=e.fp)
