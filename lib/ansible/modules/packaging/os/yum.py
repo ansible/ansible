@@ -242,7 +242,6 @@ EXAMPLES = '''
     disablerepo: "epel,ol7_latest"
 '''
 
-from distutils.version import LooseVersion
 import os
 import re
 import tempfile
@@ -348,7 +347,7 @@ def is_group_env_installed(name, conf_file, installroot='/'):
     name_lower = name.lower()
 
     my = yum_base(conf_file, installroot)
-    if LooseVersion(yum.__version__) >= LooseVersion('3.4'):
+    if yum.__version_info__ >= (3, 4):
         groups_list = my.doGroupLists(return_evgrps=True)
     else:
         groups_list = my.doGroupLists()
@@ -359,7 +358,7 @@ def is_group_env_installed(name, conf_file, installroot='/'):
         if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
             return True
 
-    if LooseVersion(yum.__version__) >= LooseVersion('3.4'):
+    if yum.__version_info__ >= (3, 4):
         # list of the installed env_groups on the third index
         envs = groups_list[2]
         for env in envs:
