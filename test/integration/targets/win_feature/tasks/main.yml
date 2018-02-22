@@ -127,8 +127,7 @@
     that:
       - "win_feature_install_invalid_result is failed"
       - "win_feature_install_invalid_result is not changed"
-      - "win_feature_install_invalid_result.msg"
-      - "win_feature_install_invalid_result.exitcode == 'InvalidArgs'"
+      - "'The name was not found' in win_feature_install_invalid_result.msg"
   when: win_feature_has_servermanager is successful
 
 - name: try to remove an invalid feature name
@@ -144,6 +143,5 @@
     that:
       - "win_feature_remove_invalid_result is failed"
       - "win_feature_remove_invalid_result is not changed"
-      - "win_feature_remove_invalid_result.msg"
-      - "win_feature_remove_invalid_result.exitcode == 'InvalidArgs'"
+      - "'The name was not found' in win_feature_remove_invalid_result.msg"
   when: win_feature_has_servermanager is successful
