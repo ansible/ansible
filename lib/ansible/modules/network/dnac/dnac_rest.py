@@ -1,4 +1,11 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -15,21 +22,21 @@ short_description: Direct access to the Cisco Software-Defined Access (SDA) cont
 version_added: "2.6"
 
 description:
-    - Enables management of the Cisco Software-Defined Access controller, more commonly called DNA Center
-    - More information about the DNA Center API can be found at U(https://developer.cisco.com/site/dna-center-rest-api/)
+    - Enables management of the Cisco Software-Defined Access controller, more commonly called DNA Center.
+    - More information about the DNA Center API can be found at U(https://developer.cisco.com/site/dna-center-rest-api/).
 
 options:
-    url_username:
+    username:
         description:
             - The username for use in HTTP basic authentication.
         required: true
-    url_password:
+    password:
         description:
             - The password for use in HTTP basic authentication.
         required: true
-    hostname:
+    host:
         description:
-            - FQDN or IP address of DNA Central server
+            - FQDN or IP address of DNA Central server.
         required: true
     method:
         description:
@@ -37,38 +44,36 @@ options:
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
             - Using C(post) is typically used for modifying objects.
-        required: yes
+        required: true
         default: get
         choices: [ delete, get, post ]
         aliases: [ action ]
     path:
         description:
-            - Directory path to the endpoint. Do not include FQDN specified in C(hostname)
+            - Directory path to the endpoint. Do not include FQDN specified in C(host).
         required: true
     timeout:
         description:
-            - HTTP timeout value
-        required: false
+            - HTTP timeout value.
         default: 30
     use_proxy:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
-        required: false
-        default: false
+        type: bool
+        default: 'false'
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
-        required: false
-        default: true
+        type: bool
+        default: 'true'
     validate_certs:
         description:
-            - If C(no), HTTPS certificates will not be verified
-        required: false
-        default: true
+            - If C(no), HTTPS certificates will not be verified.
+        type: bool
+        default: 'true'
     content:
         description:
-            - Raw content which should be fed in body
-        required: false
+            - Raw content which should be fed in body.
 
 
 extends_documentation_fragment:
@@ -82,9 +87,9 @@ EXAMPLES = '''
 # Query inventory
 - name: Query network device inventory
   sda_rest:
-    username: devnetuser
-    password: Cisco123!
-    hostname: sandboxdnac.cisco.com
+    username: dnacuser
+    password: dnaccpass
+    host: dnac.yourorg.com
     method: get
     path: '/api/v1/network-device'
     use_ssl: Yes
@@ -94,9 +99,10 @@ EXAMPLES = '''
 
 RETURN = '''
 message:
-    description: Data returned from controller
+    description: Data returned from controller.
     type: json
 '''
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, open_url
@@ -108,9 +114,9 @@ def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        url_username=dict(type='str', required=True),
-        url_password=dict(type='str', required=True, no_log=True),
-        hostname=dict(type='str', required=True),
+        username=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
+        host=dict(type='str', required=True),
         method=dict(type='str', choices=['delete','get','post'], required=True),
         path=dict(type='path', required=True),
         timeout=dict(type='int', default=30, required=False),
@@ -138,7 +144,7 @@ def run_module():
         argument_spec=module_args,
         supports_check_mode=False
     )
-    
+
     path = module.params['path']
     content = module.params['content']
     payload = content
@@ -156,24 +162,24 @@ def run_module():
         protocol = 'http'
     else:
         protocol = 'https'
-        
-    url = '{0}://{1}{2}'.format(protocol, module.params['hostname'], module.params['path'])
-    headers = { 'Content-Type': 'application/json' }
-    authheaders = { 'Content-Type': 'application/json' }
+
+    url = '{0}://{1}{2}'.format(protocol, module.params['host'], module.params['path'])
+    headers = {'Content-Type': 'application/json'}
+    authheaders = {'Content-Type': 'application/json'}
 
     try:
-        authurl = '{0}://{1}/api/system/v1/auth/login'.format(protocol, module.params['hostname'])
+        authurl = '{0}://{1}/api/system/v1/auth/login'.format(protocol, module.params['host'])
         authresp = open_url(  authurl,
                             headers=authheaders,
                             method='GET',
                             use_proxy=module.params['use_proxy'],
                             timeout=module.params['timeout'],
                             validate_certs=module.params['validate_certs'],
-                            url_username=module.params['url_username'],
-                            url_password=module.params['url_password'],
+                            username=module.params['username'],
+                            password=module.params['password'],
                             force_basic_auth=True)
 
-    except HTTPError as e:
+    except Exception as e:
         module.fail_json(msg=e.fp)
 
     if to_native(authresp.read()) != "success": # DNA Center returns success in body
@@ -187,7 +193,7 @@ def run_module():
             cookie = cookie_split[0]
 
     # module.fail_json(msg=cookie)
-    
+
     if cookie is None:
         module.fail_json(msg="Cookie not assigned from DNA Central")
 
@@ -202,12 +208,12 @@ def run_module():
                                 force=True,
                                 timeout=module.params['timeout'])
 
-    except HTTPError as e:
+    except Exception as e:
         module.fail_json(msg=e.fp)
 
     if info['status'] != 200:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
-                      
+
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
     if info['status'] == 200:
