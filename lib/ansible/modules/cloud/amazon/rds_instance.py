@@ -622,7 +622,7 @@ def prepare_changes_for_modify(module, connection, before_facts):
     # a prefix of the current version
     engine_version = will_change['before'].get('engine_version')
     after_engine_version = will_change['after'].get('engine_version')
-    if engine_version is not None and engine_version.startwith(after_engine_version):
+    if engine_version is not None and engine_version.startswith(after_engine_version):
         del(facts_to_change['engine_version'])
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
