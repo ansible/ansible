@@ -58,12 +58,9 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add vPC Protection Group
   aci_switch_policy_vpc_protection_group:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     protection_group: ansible_test
     protection_group_id: 6
     switch_1_id: 3811
@@ -72,33 +69,24 @@ EXAMPLES = r'''
 
 - name: Remove Explicit vPC Protection Group
   aci_switch_policy_vpc_protection_group:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     protection_group: ansible_test
     state: absent
 
 - name: Query vPC Protection Groups
   aci_switch_policy_vpc_protection_group:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 
 - name: Query our vPC Protection Group
   aci_switch_policy_vpc_protection_group:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     protection_group: ansible_test
     state: query
 '''

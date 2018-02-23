@@ -59,13 +59,9 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Add fabric node
   aci_fabric_node:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: debug
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     serial: ansible_test
     node_id: 105
     switch: test
@@ -73,25 +69,18 @@ EXAMPLES = r'''
 
 - name: Remove fabric node
   aci_fabric_node:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     serial: ansible_test
     node_id: 105
     state: absent
 
 - name: Query fabric nodes
   aci_fabric_node:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     state: query
 '''
 

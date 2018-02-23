@@ -105,13 +105,9 @@ extends_documentation_fragment: aci
 EXAMPLES = r'''
 - name: Deploy Static Path binding for given EPG
   aci_static_binding_to_epg:
-    host: "{{ aci_hostname }}"
-    username: "{{ aci_username }}"
-    password: "{{ aci_password }}"
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: debug
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: accessport-code-cert
     ap: accessport_code_app
     epg: accessport_epg1
@@ -126,13 +122,9 @@ EXAMPLES = r'''
 
 - name: Remove Static Path binding for given EPG
   aci_static_binding_to_epg:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: debug
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: anstest
     ap: anstest
     epg: anstest
@@ -144,13 +136,9 @@ EXAMPLES = r'''
 
 - name: Get specific Static Path binding for given EPG
   aci_static_binding_to_epg:
-    host: '{{ aci_hostname }}'
-    username: '{{ aci_username }}'
-    password: '{{ aci_password }}'
-    validate_certs: '{{ aci_validate_certs | default(false) }}'
-    use_ssl: '{{ aci_use_ssl | default(true) }}'
-    use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: debug
+    host: apic
+    username: admin
+    password: SomeSecretPassword
     tenant: anstest
     ap: anstest
     epg: anstest
