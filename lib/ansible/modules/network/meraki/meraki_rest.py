@@ -39,9 +39,10 @@ options:
             - The HTTP method of the request.
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
+            - Using C(put) is typically used for modifying objects.
             - Using C(post) is typically used for modifying objects.
         required: true
-        choices: [ delete, get, post ]
+        choices: [ delete, get, post, put ]
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
@@ -107,7 +108,7 @@ def run_module():
     module_args = dict(
         authkey=dict(type='str', required=True, no_log=True),
         host=dict(type='str', required=True),
-        method=dict(type='str', choices=['delete', 'get', 'post'], required=True),
+        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
         path=dict(type='path', required=True),
         timeout=dict(type='int', default=30, required=False),
         use_proxy=dict(type='bool', default=False, required=False),
@@ -134,14 +135,17 @@ def run_module():
         argument_spec=module_args,
         supports_check_mode=False
     )
+    module.params['follow_redirects'] = 'all'
 
     path = module.params['path']
-    content = module.params['content']
-    payload = content
+    payload = module.params['content']
+
+    if payload:
+        payload = json.dumps(payload)
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
-    # state with no modifiupcations
+    # state with no modifications
     if module.check_mode:
         return result
 
@@ -157,6 +161,11 @@ def run_module():
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': module.params['authkey']}
 
+    module.warn(url)
+    module.warn(to_native(headers))
+    module.warn(module.params['method'].upper())
+    module.warn(to_native(payload))
+
     try:
         resp, info = fetch_url(module, url,
                                data=payload,
@@ -165,26 +174,22 @@ def run_module():
                                use_proxy=module.params['use_proxy'],
                                force=True,
                                timeout=module.params['timeout'])
-
     except Exception as e:
-        module.fail_json(msg=e.fp)
+        module.fail_json(msg=e)
+    module.warn(to_native(info['status']))
 
-    if info['status'] != 200:
+    if info['status'] >= 300:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
-
-    # module.fail_json(msg=info['status'])
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
-    if info['status'] == 200:
+    if info['status'] >= 200 and info['status'] <= 299:
         result['changed'] = True
-        # result['message'] = json.loads(to_native(resp.read()))
         try:
             result['message'] = json.loads(to_native(resp.read()))
         except:
             module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
 
-    # module.fail_json(msg=result['message'])
     # during the execution of the module, if there is an exception or a
     # conditional state that effectively causes a failure, run
     # AnsibleModule.fail_json() to pass in the message and the result
