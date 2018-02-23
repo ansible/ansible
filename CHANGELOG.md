@@ -10,6 +10,7 @@ Ansible Changes By Release
 ### Bugfixes
 * Fix setting of environment in a task that uses a loop:
   https://github.com/ansible/ansible/issues/32685
+* Fix https retrieval with TLSv1.2: https://github.com/ansible/ansible/pull/32053
 
 
 <a id="2.3.3"></a>
