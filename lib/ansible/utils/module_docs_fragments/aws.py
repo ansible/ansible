@@ -53,7 +53,7 @@ options:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
     required: false
     default: "yes"
-    choices: ["yes", "no"]
+    type: bool
     aliases: []
     version_added: "1.5"
   profile:
