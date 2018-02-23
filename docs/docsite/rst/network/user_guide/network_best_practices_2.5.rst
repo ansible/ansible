@@ -236,32 +236,32 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
        - name: Write facts to disk using a template
            copy:
-           content: |
-             #jinja2: lstrip_blocks: True
-             EOS device info:
-               {% for host in groups['eos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
-               Version: {{ hostvars[host].ansible_net_version }}
-               Model: {{ hostvars[host].ansible_net_model }}
-               Serial: {{ hostvars[host].ansible_net_serialnum }}
-               {% endfor %}
+              content: |
+                #jinja2: lstrip_blocks: True
+                EOS device info:
+                  {% for host in groups['eos'] %}
+                  Hostname: {{ hostvars[host].ansible_net_version }}
+                  Version: {{ hostvars[host].ansible_net_version }}
+                  Model: {{ hostvars[host].ansible_net_model }}
+                  Serial: {{ hostvars[host].ansible_net_serialnum }}
+                  {% endfor %}
 
-             IOS device info:
-               {% for host in groups['ios'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
-               Version: {{ hostvars[host].ansible_net_version }}
-               Model: {{ hostvars[host].ansible_net_model }}
-               Serial: {{ hostvars[host].ansible_net_serialnum }}
-               {% endfor %}
+                IOS device info:
+                  {% for host in groups['ios'] %}
+                  Hostname: {{ hostvars[host].ansible_net_version }}
+                  Version: {{ hostvars[host].ansible_net_version }}
+                  Model: {{ hostvars[host].ansible_net_model }}
+                  Serial: {{ hostvars[host].ansible_net_serialnum }}
+                  {% endfor %}
 
-             VyOS device info:
-               {% for host in groups['vyos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
-               Version: {{ hostvars[host].ansible_net_version }}
-               Model: {{ hostvars[host].ansible_net_model }}
-               Serial: {{ hostvars[host].ansible_net_serialnum }}
-               {% endfor %}
-           dest: /tmp/switch-facts
+                VyOS device info:
+                  {% for host in groups['vyos'] %}
+                  Hostname: {{ hostvars[host].ansible_net_version }}
+                  Version: {{ hostvars[host].ansible_net_version }}
+                  Model: {{ hostvars[host].ansible_net_model }}
+                  Serial: {{ hostvars[host].ansible_net_serialnum }}
+                  {% endfor %}
+              dest: /tmp/switch-facts
          run_once: yes
 
        ###
