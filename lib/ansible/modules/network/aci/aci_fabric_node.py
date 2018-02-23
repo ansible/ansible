@@ -58,7 +58,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add fabric node
-  aci_fabric_node: &aci_fabric_node_present
+  aci_fabric_node:
     host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
@@ -72,7 +72,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove fabric node
-  aci_fabric_node: &aci_fabric_node_absent
+  aci_fabric_node:
     host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
@@ -85,7 +85,7 @@ EXAMPLES = r'''
     state: absent
 
 - name: Query fabric nodes
-  aci_fabric_node: &aci_fabric_node_query
+  aci_fabric_node:
     host: '{{ aci_hostname }}'
     username: '{{ aci_username }}'
     password: '{{ aci_password }}'
