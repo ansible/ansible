@@ -14,6 +14,9 @@
 {% endif %}
 
 {% for name, info in subcategories.items() | sort %}
+
+.. _@{ name.lower() }@_modules:
+
 @{ name.title() }@
 @{ '-' * name | length }@
 
