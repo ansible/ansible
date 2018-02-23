@@ -29,27 +29,27 @@ options:
     username:
         description:
             - The username for use in HTTP basic authentication.
-        required: 'yes'
+        required: yes
     password:
         description:
             - The password for use in HTTP basic authentication.
-        required: 'yes'
+        required: yes
     host:
         description:
             - FQDN or IP address of DNA Central server.
-        required: 'yes'
+        required: yes
     method:
         description:
             - The HTTP method of the request.
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
             - Using C(post) is typically used for modifying objects.
-        required: 'yes'
+        required: yes
         choices: [ delete, get, post ]
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
-        required: 'yes'
+        required: yes
     timeout:
         description:
             - HTTP timeout value.
@@ -58,17 +58,17 @@ options:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: 'no'
+        default: no
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
         type: bool
-        default: 'yes'
+        default: yes
     validate_certs:
         description:
             - If C(no), HTTPS certificates will not be verified.
         type: bool
-        default: 'yes'
+        default: yes
     content:
         description:
             - Raw content which should be fed in body.
@@ -162,9 +162,11 @@ def main():
     else:
         protocol = 'https'
 
-    url = '{0}://{1}{2}'.format(protocol, module.params['host'], module.params['path'])
+    url = '{0}://{1}/{2}'.format(protocol, module.params['host'].rstrip('/'), module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json'}
     authheaders = {'Content-Type': 'application/json'}
+
+    module.fail_json(msg=url)
 
     try:
         authurl = '{0}://{1}/api/system/v1/auth/login'.format(protocol, module.params['host'])
