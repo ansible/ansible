@@ -62,9 +62,9 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    serial: ansible_test
-    node_id: 105
-    switch: test
+    serial: FDO2031124L
+    node_id: 1011
+    switch: fab4-sw1011
     state: present
 
 - name: Remove fabric node
@@ -72,8 +72,8 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    serial: ansible_test
-    node_id: 105
+    serial: FDO2031124L
+    node_id: 1011
     state: absent
 
 - name: Query fabric nodes
