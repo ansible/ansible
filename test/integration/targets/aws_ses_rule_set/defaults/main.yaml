@@ -1,0 +1,2 @@
+---
+default_rule_set: "{{ resource_prefix }}-default-rule-set"
