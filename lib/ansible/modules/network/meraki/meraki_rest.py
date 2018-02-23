@@ -29,11 +29,11 @@ options:
     authkey:
         description:
             - Authentication key provided by the dashboard.
-        required: true
+        required: yes
     host:
         description:
             - FQDN or IP address of Meraki dashboard.
-        required: true
+        required: yes
     method:
         description:
             - The HTTP method of the request.
@@ -41,12 +41,12 @@ options:
             - Using C(get) is typically used for querying objects.
             - Using C(put) is typically used for modifying objects.
             - Using C(post) is typically used for modifying objects.
-        required: true
+        required: yes
         choices: [ delete, get, post, put ]
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
-        required: true
+        required: yes
     timeout:
         description:
             - HTTP timeout value.
@@ -55,17 +55,17 @@ options:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: 'false'
+        default: no
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
         type: bool
-        default: 'true'
+        default: yes
     validate_certs:
         description:
             - If C(no), HTTPS certificates will not be verified.
         type: bool
-        default: 'true'
+        default: yes
     content:
         description:
             - Raw content which should be fed in body.
@@ -81,14 +81,14 @@ EXAMPLES = '''
     authkey: abc12345
     host: dashboard.meraki.com
     method: get
-    path: '/api/v0/organizations'
-    use_ssl: Yes
+    path: /api/v0/organizations
+    use_ssl: yes
   delegate_to: localhost
 
 '''
 
 RETURN = '''
-message:
+response:
     description: Data returned from Meraki dashboard.
     type: dict
     returned: info
@@ -96,25 +96,26 @@ message:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url, open_url
+from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.basic import json
 from ansible.module_utils._text import to_native
 
 
-def run_module():
+def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(
-        authkey=dict(type='str', required=True, no_log=True),
-        host=dict(type='str', required=True),
-        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
-        path=dict(type='path', required=True),
-        timeout=dict(type='int', default=30, required=False),
-        use_proxy=dict(type='bool', default=False, required=False),
-        use_ssl=dict(type='bool', default=True, required=False),
-        validate_certs=dict(type='bool', default=True, required=False),
-        content=dict(type='raw', required=False)
+                       authkey=dict(type='str', required=True, no_log=True),
+                       host=dict(type='str', required=True),
+                       method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
+                       path=dict(type='path', required=True),
+                       timeout=dict(type='int', default=30, required=False),
+                       use_proxy=dict(type='bool', default=False, required=False),
+                       use_ssl=dict(type='bool', default=True, required=False),
+                       validate_certs=dict(type='bool', default=True, required=False),
+                       content=dict(type='raw', required=False,
+        )
     )
 
     # seed the result dict in the object
@@ -124,7 +125,6 @@ def run_module():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
-        message=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -133,7 +133,7 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=False,
     )
     module.params['follow_redirects'] = 'all'
 
@@ -173,7 +173,8 @@ def run_module():
                                method=module.params['method'].upper(),
                                use_proxy=module.params['use_proxy'],
                                force=True,
-                               timeout=module.params['timeout'])
+                               timeout=module.params['timeout'],
+                               )
     except Exception as e:
         module.fail_json(msg=e)
     module.warn(to_native(info['status']))
@@ -203,9 +204,6 @@ def run_module():
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
-
-def main():
-    run_module()
 
 if __name__ == '__main__':
     main()
