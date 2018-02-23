@@ -446,7 +446,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
 
    :ref:`network_guide`
        Ansible for Network Automation
-   :ref:`List of ACI modules <aci_modules>`
+   :ref:`List of ACI modules <aci_network_modules>`
        A complete list of supported ACI modules
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation

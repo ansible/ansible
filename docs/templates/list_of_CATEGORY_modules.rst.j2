@@ -1,3 +1,5 @@
+.. _@{ title.lower() + '_' + plugin_type + 's' }@:
+
 @{ title }@ @{ plugin_type + 's' }@
 @{ '`' * title | length }@````````
 
@@ -15,7 +17,7 @@
 
 {% for name, info in subcategories.items() | sort %}
 
-.. _@{ name.lower() }@_modules:
+.. _@{ name.lower() + '_' + title.lower() + '_' + plugin_type + 's' }@:
 
 @{ name.title() }@
 @{ '-' * name | length }@
