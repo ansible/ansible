@@ -130,6 +130,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 
     # ssh TODO: remove
     ssh_executable=('ansible_ssh_executable', ),
+    scp_executable=('ansible_scp_executable', ),
+    sftp_executable=('ansible_sftp_executable', ),
     ssh_common_args=('ansible_ssh_common_args', ),
     sftp_extra_args=('ansible_sftp_extra_args', ),
     scp_extra_args=('ansible_scp_extra_args', ),

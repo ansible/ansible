@@ -68,6 +68,30 @@ DOCUMENTATION = '''
           yaml: {key: ssh_connection.ssh_executable}
           #const: ANSIBLE_SSH_EXECUTABLE
           version_added: "2.2"
+      scp_executable:
+          default: scp
+          description:
+            - This defines the location of the scp binary. It defaults to `scp` which will use the first scp binary available in $PATH.
+            - This option is usually not required, it might be useful when access to system ssh is restricted,
+              or when using ssh wrappers to connect to remote hosts.
+          env: [{name: ANSIBLE_SCP_EXECUTABLE}]
+          ini:
+          - {key: scp_executable, section: ssh_connection}
+          yaml: {key: ssh_connection.scp_executable}
+          #const: ANSIBLE_SCP_EXECUTABLE
+          version_added: "2.6"
+      sftp_executable:
+          default: sftp
+          description:
+            - This defines the location of the sftp binary. It defaults to `sftp` which will use the first sftp binary available in $PATH.
+            - This option is usually not required, it might be useful when access to system ssh is restricted,
+              or when using ssh wrappers to connect to remote hosts.
+          env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
+          ini:
+          - {key: sftp_executable, section: ssh_connection}
+          yaml: {key: ssh_connection.sftp_executable}
+          #const: ANSIBLE_SFTP_EXECUTABLE
+          version_added: "2.6"
       scp_extra_args:
           description: Extra exclusive to the 'scp' CLI
           vars:
@@ -914,15 +938,15 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command('sftp', to_bytes(host))
+                cmd = self._build_command(self._play_context.sftp_executable, to_bytes(host))
                 in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 if sftp_action == 'get':
-                    cmd = self._build_command('scp', u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
+                    cmd = self._build_command(self._play_context.scp_executable, u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command('scp', in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
+                    cmd = self._build_command(self._play_context.scp_executable, in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
