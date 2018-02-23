@@ -450,7 +450,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
        A complete list of supported ACI modules
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation
-   `Network Working Group<https://github.com/ansible/community/tree/master/group-network>`_
+   `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
