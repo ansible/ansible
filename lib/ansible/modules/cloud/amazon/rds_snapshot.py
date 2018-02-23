@@ -1,18 +1,9 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2014-2017 Ansible Project
+# Copyright (c) 2017, 2018 Will Thames
+# Copyright (c) 2017, 2018 Michael De La Rue
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -21,7 +12,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_snapshot
-version_added: "2.5"
+version_added: "2.6"
 short_description: manage Amazon RDS snapshots
 description:
      - Creates or deletes RDS snapshots.
@@ -31,18 +22,22 @@ options:
       - Specify the desired state of the snapshot
     default: present
     choices: [ 'present', 'absent']
-  snapshot:
+  db_snapshot_identifier:
     description:
-      - Name of snapshot to manage
+      - The snapshot to manage
     required: true
-  instance_name:
+    aliases:
+      - id
+  db_instance_identifier:
     description:
       - Database instance identifier. Required when state is present
+    aliases:
+      - instance
   wait:
     description:
       - Whether or not to wait for snapshot creation or deletion
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

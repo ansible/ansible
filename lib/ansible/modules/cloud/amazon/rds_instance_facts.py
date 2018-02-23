@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# Copyright (c) 2017, 2018 Michael De La Rue
+# Copyright (c) 2017, 2018 Will Thames
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -9,7 +11,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_instance_facts
-version_added: "2.5"
+version_added: "2.6"
 short_description: obtain facts about one or more RDS instances
 description:
   - obtain facts about one or more RDS instances
@@ -122,7 +124,7 @@ def instance_facts(module, conn):
 
 argument_spec = dict(
     db_instance_identifier=dict(aliases=['id']),
-    filters=dict(type='list', default=[])
+    filters=dict(type='list')
 )
 
 

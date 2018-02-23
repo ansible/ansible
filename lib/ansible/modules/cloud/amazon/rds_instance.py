@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright (c) 2014-2017 Ansible Project
-# Copyright (c) 2017 Will Thames
-# Copyright (c) 2017 Michael De La Rue
+# Copyright (c) 2017, 2018 Will Thames
+# Copyright (c) 2017, 2018 Michael De La Rue
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # This is a derivative of rds.py although no untouched lines survive.  See also that module.
@@ -39,7 +39,7 @@ notes:
 requirements:
     - "python >= 2.6"
     - "boto3"
-version_added: "2.5"
+version_added: "2.6"
 author:
     - Bruce Pennypacker (@bpennypacker)
     - Will Thames (@willthames)
@@ -47,22 +47,17 @@ author:
 options:
   state:
     description:
-      - Describes the desired state of the database instance. N.B. restarted is allowed as an alias for rebooted.
+      - Describes the desired state of the database instance with standard Ansible meanings. N.B. restarted is as an alias for rebooted.
     default: present
-    choices: [ 'present', 'absent', 'rebooted' ]
+    choices: [ 'present', 'absent', 'rebooted', 'restarted' ]
   db_instance_identifier:
-    aliases:
-      - id
+    aliases: [ 'id' ]
     description:
       - Database instance identifier.
     required: true
   source_db_instance_identifier:
     description:
-      - Name of the database when sourcing from a replica
-  replica:
-    description:
-    - whether or not a database is a read replica
-    default: False
+      - Name of the source database for a replica; if not given then the database is not a replica.
   engine:
     description:
       - The type of database. Used only when state=present.
@@ -74,12 +69,13 @@ options:
         [API documentation](https://botocore.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance)
         for details of limits
       - Required unless the database type is aurora.
+    aliases: [ 'size' ]
   storage_type:
     description:
       - Specifies the storage type to be associated with the DB instance. C(iops) must
-        be specified if C(io1) is chosen.
+        be specified if C(io1) is chosen.  If iops is set then storage type must be io1.
     choices: ['standard', 'gp2', 'io1' ]
-    default: standard unless iops is set
+    default: standard
   db_instance_class:
     description:
       - The instance type of the database. If source_db_instance_identifier is specified then the replica inherits
@@ -108,7 +104,8 @@ options:
   multi_az:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter.
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   iops:
     description:
       - Specifies the number of IOPS for the instance. Must be an integer greater than 1000.
@@ -116,15 +113,14 @@ options:
     description: Comma separated list of one or more security groups.
   vpc_security_group_ids:
     description: Comma separated list of one or more vpc security group ids. Also requires I(subnet) to be specified.
-    aliases:
-      - security_groups
+    aliases: [ 'security_groups' ]
   port:
     description: Port number that the DB instance uses for connections.
     default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
   auto_minor_version_upgrade:
     description: Indicates that minor version upgrades should be applied automatically.
+    type: bool
     default: "no"
-    choices: [ "yes", "no" ]
   option_group_name:
     description: The name of the option group to use. If not specified then the default option group is used.
   preferred_maintenance_window:
@@ -142,7 +138,7 @@ options:
   availability_zone:
     description:
       - availability zone in which to launch the instance.
-    aliases: ['aws_zone', 'ec2_zone']
+    aliases: ['aws_zone']
   db_subnet_group_name:
     description:
       - VPC subnet group. If specified then a VPC instance is created.
@@ -161,50 +157,66 @@ options:
         allowing the same parameter to be used for both backup and restore.
   wait:
     description:
-      - Wait for the database to enter the desired state.
-    default: "no"
-    choices: [ "yes", "no" ]
+      - Wait for the database to enter the desired state after sending commands to AWS.
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
-    default: 300
+      - how long before wait gives up, in seconds.  You may need to set this to wait a _very_ long
+        time.  Delays over 1200 seconds have been observed during successful creation and deletion.
+    default: 600
   apply_immediately:
     description:
       - If enabled, the modifications will be applied as soon as possible rather
       - than waiting for the next preferred maintenance window.
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   force_failover:
     description:
       - Used only when state=rebooted. If enabled, the reboot is done using a MultiAZ failover.
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   force_password_update:
     description:
       - Whether to try to update the DB password for an existing database. There is no API method
         to determine whether or not a password needs to be updated, and it causes problems with
         later operations if a password is updated unnecessarily.
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   old_db_instance_identifier:
     description:
       - Name to rename an instance from.
+    aliases: [ 'old_id' ]
   character_set_name:
     description:
       - Associate the DB instance with a specified character set.
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not.
-  cluster:
-    description:
-      -  The identifier of the DB cluster that the instance will belong to.
+    type: bool
+    default: 'no'
+#FIXME: have to make cluster work
+  # cluster:
+  #   description:
+  #     -  The identifier of the DB cluster that the instance will belong to.
   tags:
     description:
       - tags dict to apply to a resource.  If None then tags are ignored.  Use {} to set to empty.
   purge_tags:
     description:
       - whether to remove existing tags that aren't passed in the C(tags) parameter
-    default: no
+    type: bool
+    default: 'no'
+  skip_final_snapshot:
+    description:
+      - set this variable to allow deletion of the instance without creating a snapshot
+    type: bool
+    default: 'no'
+  log_level:
+    description:
+      - how much logging to put out; this parameter is likely to go away and be replaced with more
+        standard Ansible behavior
+    default: 10
 extends_documentation_fragment:
     - aws
     - ec2
@@ -423,7 +435,7 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
         str(wait_timeout), str(time.time()), str(await_pending), str(resource['DBInstanceStatus'])))
     rdat = resource["PendingModifiedValues"]
     while ((await_pending and rdat) or resource['DBInstanceStatus'] != status) and wait_timeout > time.time():
-        main_logger.log(70, "waiting with resource{}  ".format(str(resource)))
+        main_logger.log(70, "waiting with resource{0}  ".format(str(resource)))
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
         current_id = resource.get('DBInstanceIdentifier')
@@ -965,7 +977,7 @@ argument_spec = dict(
     # RDS present (create / modify) variables
     allocated_storage=dict(type='int', aliases=['size']),
     auto_minor_version_upgrade=dict(type='bool', default=False),
-    availability_zone=dict(),
+    availability_zone=dict(aliases=["aws_zone"]),
     backup_retention_period=dict(type='int'),
     character_set_name=dict(),
     db_instance_class=dict(),
@@ -987,17 +999,18 @@ argument_spec = dict(
     port=dict(type='int'),
     preferred_backup_window=dict(),
     preferred_maintenance_window=dict(),
-    publicly_accessible=dict(type='bool'),
+    publicly_accessible=dict(type='bool', default=False),
     snapshot=dict(),
     storage_type=dict(choices=['standard', 'io1', 'gp2'], default='standard'),
     tags=dict(type='dict'),
-    vpc_security_group_ids=dict(type='list'),
+    vpc_security_group_ids=dict(aliases=['security_groups'], type='list'),
 
     # RDS reboot only variables
     force_failover=dict(type='bool', default=False),
 
     # RDS absent / delete only variables
     final_db_snapshot_identifier=dict(),
+    # FIXME: verify that we test skip_final_snapshot functions properly
     skip_final_snapshot=dict(type='bool'),
     purge_tags=dict(type='bool', default=False)
 )
