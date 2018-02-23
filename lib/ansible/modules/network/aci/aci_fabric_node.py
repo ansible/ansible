@@ -57,18 +57,31 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Adding new Fabric Node Member (Spine)
+- name: Add fabric node
   aci_fabric_node:
     host: apic
-    username: someusername
-    password: somepassword
-    pod_id: 5
-    serial: someserial123
-    node_id: 112
-    switch: someswitchname
-    description: somedescription
-    role: spine
+    username: admin
+    password: SomeSecretPassword
+    serial: ansible_test
+    node_id: 105
+    switch: test
     state: present
+
+- name: Remove fabric node
+  aci_fabric_node:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    serial: ansible_test
+    node_id: 105
+    state: absent
+
+- name: Query fabric nodes
+  aci_fabric_node:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
 RETURN = r'''

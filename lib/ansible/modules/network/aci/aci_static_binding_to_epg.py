@@ -103,7 +103,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Deploy Static Path for EPG
+- name: Deploy Static Path binding for given EPG
   aci_static_binding_to_epg:
     host: apic
     username: admin
@@ -119,6 +119,34 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+
+- name: Remove Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: absent
+
+- name: Get specific Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: query
 '''
 
 RETURN = r'''
