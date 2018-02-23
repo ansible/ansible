@@ -1231,6 +1231,13 @@ files:
   docs/:
     labels: docs_pull_request
     notify: dharmabumstead
+  docs/docsite/rst/network/:
+    labels:
+      - docs_pull_request
+      - networking
+    maintainers:
+      - acozine
+      - gundalow
   packaging/:
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
