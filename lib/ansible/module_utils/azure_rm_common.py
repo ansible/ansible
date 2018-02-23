@@ -597,7 +597,7 @@ class AzureRMModuleBase(object):
                 return cli_credentials
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
-        
+
         return None
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
