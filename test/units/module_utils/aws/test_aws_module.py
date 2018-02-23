@@ -32,9 +32,9 @@ botocore = importorskip("botocore")
 
 class AWSModuleTestCase(unittest.TestCase):
 
-    basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
-
     def test_create_aws_module_should_set_up_params(self):
+
+        basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
         m = AnsibleAWSModule(argument_spec=dict(
             win_string_arg=dict(type='list', default=['win'])
         ))
@@ -58,7 +58,6 @@ class AWSModuleTestCase(unittest.TestCase):
 class ErrorReportingTestcase(unittest.TestCase):
 
     def test_botocore_exception_reports_nicely_via_fail_json_aws(self):
-
         basic._ANSIBLE_ARGS = to_bytes(json.dumps({'ANSIBLE_MODULE_ARGS': {}}))
         module = AnsibleAWSModule(argument_spec=dict(
             fail_mode=dict(type='list', default=['success'])
