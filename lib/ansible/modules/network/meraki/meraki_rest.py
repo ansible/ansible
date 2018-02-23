@@ -157,7 +157,7 @@ def main():
     else:
         protocol = 'https'
 
-    url = '{0}://{1}{2}'.format(protocol, module.params['host'], module.params['path'])
+    url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/')
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': module.params['authkey']}
 
