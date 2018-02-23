@@ -171,12 +171,13 @@ def main():
                             use_proxy=module.params['use_proxy'],
                             timeout=module.params['timeout'],
                             validate_certs=module.params['validate_certs'],
-                            username=module.params['username'],
-                            password=module.params['password'],
-                            force_basic_auth=True),
+                            url_username=module.params['username'],
+                            url_password=module.params['password'],
+                            force_basic_auth=True,
+                            )
 
     except Exception as e:
-        module.fail_json(msg=e.fp)
+        module.fail_json(msg=e)
 
     if to_native(authresp.read()) != "success":  # DNA Center returns success in body
         module.fail_json(msg="Authentication failed: {0}".format(authresp.read()))
@@ -200,10 +201,10 @@ def main():
                                method=module.params['method'].upper(),
                                use_proxy=module.params['use_proxy'],
                                force=True,
-                               timeout=module.params['timeout']),
+                               timeout=module.params['timeout'],)
 
-    except Exception as e:
-        module.fail_json(msg=e.fp)
+    except Exception:
+        module.fail_json(msg=resp['status'])
 
     if info['status'] != 200:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
