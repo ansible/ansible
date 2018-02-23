@@ -2,6 +2,85 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+v2.5.0rc1
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2018-02-22
+| Estimated Final Release: mid-March 2018
+| `Porting Guide <http://docs.ansible.com/ansible/devel/porting_guides.html>`_
+
+
+Minor Changes
+-------------
+
+- aci_* modules - added signature based authentication
+
+- aci_* modules - included dedicated ACI documentation
+
+- aci_* modules - improved ACI return values
+
+
+Deprecated Features
+-------------------
+
+- Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
+
+
+Bugfixes
+--------
+
+- include_role - improved performance and recursion depth (https://github.com/ansible/ansible/pull/36470)
+
+- lineinfile - fixed regexp used with insert(before|after) inserting duplicate lines (https://github.com/ansible/ansible/pull/36156)
+
+- Fix for ansible_*_interpreter on Python3 when using non-newstyle modules. Those include old-style ansible modules and Ansible modules written in non-python scripting languages (https://github.com/ansible/ansible/pull/36541)
+
+- fix for ansible-vault always requesting passwords (https://github.com/ansible/ansible/issues/33027)
+
+- ios CLI - fixed prompt detection (https://github.com/ansible/ansible/issues/35662)
+
+- nxos_user - fixed structured output issue (https://github.com/ansible/ansible/pull/36193)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36340)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36374)
+
+- nxos_install_os - kickstart_image_file is no longer required (https://github.com/ansible/ansible/pull/36319)
+
+- script/patch - fixed tempfile ownership issues (https://github.com/ansible/ansible/issues/36398)
+
+- nxos_bgp_neighbor - fixed various module arg issues (https://github.com/ansible/ansible/pull/36318)
+
+- vyos_l3_interface - fixed issues with multiple addresses on an interface (https://github.com/ansible/ansible/pull/36377)
+
+- nxos_banner - fixed issues with unstructured output (https://github.com/ansible/ansible/pull/36411)
+
+- nxos_bgp_neighbor_af - fixed various issues (https://github.com/ansible/ansible/pull/36472)
+
+- vyos_config - fixed IndexError in sanitize_config (https://github.com/ansible/ansible/pull/36375)
+
+- cs_user - fixed user_api_secret return for ACS 4.10+ (https://github.com/ansible/ansible/pull/36447)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36514)
+
+- fix cases where INVENTORY_UNPARSED_IS_FAILED didn't fail (https://github.com/ansible/ansible/issues/36034)
+
+- aws_ses_identity - fixed failure on missing identity info (https://github.com/ansible/ansible/issues/36065)
+
+- ec2_vpc_net_facts - fixed traceback for regions other than us-east-1 (https://github.com/ansible/ansible/pull/35302)
+
+- aws_waf_* - fixed traceback on WAFStaleDataException (https://github.com/ansible/ansible/pull/36405)
+
+- ec2_group - fixed check_mode when using tags (https://github.com/ansible/ansible/pull/36503)
+
+- loop item labels will now update if templated (https://github.com/ansible/ansible/pull/36430)
+
+- win_feature - will display a more helpful error when it fails during execution (https://github.com/ansible/ansible/pull/36491)
+
+
 v2.5.0b2
 ========
 
@@ -9,8 +88,6 @@ Release Summary
 ---------------
 
 | Release Date: 2018-02-15
-| Estimated Final Release: mid-March 2018
-| `Porting Guide <http://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
 
 Major Changes
@@ -18,15 +95,17 @@ Major Changes
 
 - New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will likely be deprecated in the near future and eventually removed.
 
-- Added fact namespacing, from now on facts will be available under ``ansible_facts`` namespace (i.e. ``ansible_facts.os_distribution``)
-  w/o the ``ansible_`` prefix. They will continue to be added into the main namespace directly, but now with a configuration toggle to
-  enable this, currently on by default, in the future it will be off.
+- Added fact namespacing; from now on facts will be available under ``ansible_facts`` namespace (for example: ``ansible_facts.os_distribution``)
+  without the ``ansible_`` prefix. They will continue to be added into the main namespace directly, but now with a configuration toggle to
+  enable this. This is currently on by default, but in the future it will default to off.
 
-- Added a configuration file to filter modules that a site administrator wants to exclude from being used.
+- Added a configuration file that a site administrator can use to specify modules to exclude from being used.
 
 
 Minor Changes
 -------------
+
+- ansible-inventory - now supports a ``--export`` option to preserve group_var data (https://github.com/ansible/ansible/pull/36188)
 
 - Added a few new magic vars corresponding to configuration/command
   line options: ``ansible_diff_mode``, ``ansible_inventory_sources``,
@@ -44,30 +123,33 @@ Minor Changes
   Administrator users without disabling UAC on Windows hosts
 
 - The jenkins\_plugin and yum\_repository plugins had their ``params``
-  option removed due to circumventing Ansible's option processing.
+  option removed because they circumvented Ansible's option processing.
 
-- combine filter now accepts a list of dicts as well as dicts directly
+- The combine filter now accepts a list of dicts as well as dicts directly
 
 - New CLI options for ansible-inventory, ansible-console and ansible to
   allow specifying a playbook\_dir to be used for relative search
   paths.
 
-- ``stat`` and ``win_stat`` have changed the default value of
+- `The `stat`` and ``win_stat`` modules have changed the default value of
   ``get_md5`` to ``False`` which will result in the ``md5`` return
   value not being returned. This option will be removed altogether in
-  Ansible 2.9. use ``get_checksum: True`` with
+  Ansible 2.9. Use ``get_checksum: True`` with
   ``checksum_algorithm: md5`` to return an md5 hash of the file under
   the ``checksum`` return value.
 
-- ``osx_say`` module was renamed into ``say``.
+- The ``osx_say`` module was renamed into ``say``.
 
 - Task debugger functionality was moved into ``StrategyBase``, and
   extended to allow explicit invocation from use of the ``debugger``
   keyword. The ``debug`` strategy is still functional, and is now just
-  a trigger to enable this functionality
+  a trigger to enable this functionality.
 
-- Reorganized the documentation into distinct guides for different
-  target audiences.
+- The documentation has undergone a major overhaul. Content has been moved into
+  targeted guides; the table of contents has been cleaned up and streamlined; 
+  the CSS theme has been updated to a custom version of the most recent 
+  ReadTheDocs theme, and the underlying directory structure for the RST files 
+  has been reorganized. 
 
 - The ANSIBLE\_REMOTE\_TMP environment variable has been added to
   supplement (and override) ANSIBLE\_REMOTE\_TEMP. This matches with
@@ -79,40 +161,40 @@ Deprecated Features
 -------------------
 
 - Previously deprecated 'hostfile' config settings have been
-  're-deprecated' as previously code did not warn about deprecated
+  're-deprecated' because previously code did not warn about deprecated
   configuration settings.
 
-- Using Ansible provided Jinja tests as filters is deprecated and will
-  be removed in Ansible 2.9
+- Using Ansible-provided Jinja tests as filters is deprecated and will
+  be removed in Ansible 2.9.
 
-- ``stat`` and ``win_stat`` have deprecated ``get_md5`` and the ``md5``
-  return value and these options will become undocumented in Ansible
+- The ``stat`` and ``win_stat`` modules have deprecated ``get_md5`` and the ``md5``
+  return values. These options will become undocumented in Ansible
   2.9 and removed in a later version.
 
-- The ``redis_kv`` lookup in favor of new ``redis`` lookup
+- The ``redis_kv`` lookup has been deprecated in favor of new ``redis`` lookup
 
 - Passing arbitrary parameters that begin with ``HEADER_`` to the uri
   module, used for passing http headers, is deprecated. Use the
   ``headers`` parameter with a dictionary of header names to value
-  instead. This will be removed in Ansible-2.9
+  instead. This will be removed in Ansible 2.9
 
 - Passing arbitrary parameters to the zfs module to set zfs properties
   is deprecated. Use the ``extra_zfs_properties`` parameter with a
   dictionary of property names to values instead. This will be removed
-  in Ansible-2.9.
+  in Ansible 2.9.
 
-- Use of the AnsibleModule parameter, check\_invalid\_arguments, in custom modules is deprecated. In the future, all parameters will be
+- Use of the AnsibleModule parameter ``check\_invalid\_arguments`` in custom modules is deprecated. In the future, all parameters will be
   checked to see whether they are listed in the arg spec and an error raised if they are not listed. This behaviour is the current and
-  future default so most custom modules can simply remove check\_invalid\_arguments if they set it to the default of True.
-  check\_invalid\_arguments will be removed in Ansible-2.9.
+  future default so most custom modules can simply remove ``check\_invalid\_arguments`` if they set it to the default value of True.
+  The ``check\_invalid\_arguments`` parameter will be removed in Ansible 2.9.
 
-- nxos\_ip\_interface module is deprecated in Ansible 2.5. Use nxos\_l3\_interface module instead.
+- The nxos\_ip\_interface module is deprecated in Ansible 2.5. Use nxos\_l3\_interface module instead.
 
-- nxos\_portchannel module is deprecated in Ansible 2.5. Use nxos\_linkagg module instead.
+- The nxos\_portchannel module is deprecated in Ansible 2.5. Use nxos\_linkagg module instead.
 
-- nxos\_switchport module is deprecated in Ansible 2.5. Use nxos\_l2\_interface module instead.
+- The nxos\_switchport module is deprecated in Ansible 2.5. Use nxos\_l2\_interface module instead.
 
-- ec2\_ami\_find has been deprecated, use ec2\_ami\_facts.
+- The ec2\_ami\_find has been deprecated; use ec2\_ami\_facts instead.
 
 - panos\_security\_policy: Use panos\_security\_rule - the old module uses deprecated API calls
 
@@ -132,13 +214,13 @@ Removed Features (previously deprecated)
   cl\_img\_install, cl\_ports, cl\_license, cl\_bond. Use ``nclu``
   instead
 
-- docker, use docker\_container and docker\_image instead.
+- docker. Use docker\_container and docker\_image instead.
 
 - ec2\_vpc.
 
 - ec2\_ami\_search, use ec2\_ami\_facts instead.
 
-- nxos\_mtu, use nxos\_system's ``system_mtu`` option. To specify an interface's MTU use nxos\_interface.
+- nxos\_mtu. Use nxos\_system's ``system_mtu`` option instead. To specify an interface's MTU use nxos\_interface.
 
 - panos\_nat\_policy: Use panos\_nat\_rule the old module uses deprecated API calls
 
@@ -185,8 +267,8 @@ New Connection Plugins
 - netconf
 
 - network\_cli
-   - While neither network\_cli nor netconf are technically new plugins, these connections may now be used directly with network modules. See
-     `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`__ for more details.
+   - The existing network\_cli and netconf connection plugins can now be used directly with network modules. See
+     `Network Best Practices for Ansible 2.5 <http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html>`_ for more details.
 
 
 New Filter Plugins
@@ -578,45 +660,45 @@ New Modules
 Bugfixes
 --------
 
-- azure_rm modules - internal changes to use API profiles and kwargs for future Azure Stack support and better stability between SDK updates. (https://github.com/ansible/ansible/pull/35538)
+- azure_rm modules - updated with internal changes to use API profiles and kwargs for future Azure Stack support and better stability between SDK updates. (https://github.com/ansible/ansible/pull/35538)
 
-- fix memory bloat on nested includes by preventing blocks from self-parenting (https://github.com/ansible/ansible/pull/36075)
+- fixed memory bloat on nested includes by preventing blocks from self-parenting (https://github.com/ansible/ansible/pull/36075)
 
-- ensure displayed messages under peristent connections are returned to the controller (https://github.com/ansible/ansible/pull/36064)
+- updated to ensure displayed messages under peristent connections are returned to the controller (https://github.com/ansible/ansible/pull/36064)
 
-- eos_vrf and eos_eapi - fix vrf parsing (https://github.com/ansible/ansible/pull/35791)
+- eos_vrf and eos_eapi - fixed vrf parsing (https://github.com/ansible/ansible/pull/35791)
 
-- interface_file - accept interfaces without address family or method (https://github.com/ansible/ansible/pull/34200)
+- interface_file - now accepts interfaces without address family or method (https://github.com/ansible/ansible/pull/34200)
 
-- lineinfile - fix insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
+- lineinfile - fixed insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
 
 - nxos_evpn_vni - fixed a number of issues (https://github.com/ansible/ansible/pull/35930)
 
-- nxos_igmp_interface - fix response handling for different nxos versions (https://github.com/ansible/ansible/pull/35959)
+- nxos_igmp_interface - fixed response handling for different nxos versions (https://github.com/ansible/ansible/pull/35959)
 
-- nxos_interface_ospf - various bugfixes (https://github.com/ansible/ansible/pull/35988)
+- nxos_interface_ospf - added various bugfixes (https://github.com/ansible/ansible/pull/35988)
 
-- openshift modules - update to client version 0.4.0 (https://github.com/ansible/ansible/pull/35127)
+- openshift modules - updated to client version 0.4.0 (https://github.com/ansible/ansible/pull/35127)
 
-- fix templating issues in loop_control (https://github.com/ansible/ansible/pull/36124)
+- fixed templating issues in loop_control (https://github.com/ansible/ansible/pull/36124)
 
-- ansible-config - fix traceback when no config file is present (https://github.com/ansible/ansible/issues/35965)
+- ansible-config - fixed traceback when no config file is present (https://github.com/ansible/ansible/issues/35965)
 
-- misc fixes to Linux virtualization facts (https://github.com/ansible/ansible/issues/36038)
+- added various fixes to Linux virtualization facts (https://github.com/ansible/ansible/issues/36038)
 
-- fix failure when remote_tmp is a subdir of a system tempdir (https://github.com/ansible/ansible/pull/36143)
+- fixed failure when remote_tmp is a subdir of a system tempdir (https://github.com/ansible/ansible/pull/36143)
 
-- ios_ping - allow for count > 70 (https://github.com/ansible/ansible/pull/36142)
+- ios_ping - updated to allow for count > 70 (https://github.com/ansible/ansible/pull/36142)
 
-- vmware_guest_snapshot - always check for root snapshot (https://github.com/ansible/ansible/pull/36001)
+- vmware_guest_snapshot - updated to always check for root snapshot (https://github.com/ansible/ansible/pull/36001)
 
-- vyos - fixes to check mode support (https://github.com/ansible/ansible/pull/35977)
+- vyos - added fixes to check mode support (https://github.com/ansible/ansible/pull/35977)
 
-- vyos_l3_interface - add support for localhost (https://github.com/ansible/ansible/pull/36141)
+- vyos_l3_interface - added support for localhost (https://github.com/ansible/ansible/pull/36141)
 
-- win_domain_controller - only specify ReadOnlyReplica when necessary (https://github.com/ansible/ansible/pull/36017)
+- win_domain_controller - updated to only specify ReadOnlyReplica when necessary (https://github.com/ansible/ansible/pull/36017)
 
-- win_updates - fix regresion with string category names(https://github.com/ansible/ansible/pull/36015)
+- win_updates - fixed regression with string category names (https://github.com/ansible/ansible/pull/36015)
 
 - win_uri - fixed issues with the creates and removes options (https://github.com/ansible/ansible/pull/36016)
 
