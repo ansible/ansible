@@ -3,20 +3,7 @@
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Copyright: (c) 2017, Swetha Chunduri (@schunduri)
 
-# This file is part of Ansible by Red Hat
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
@@ -31,8 +18,8 @@ options:
   port:
     description:
     - Port number to be used for REST connection.
-    default: 443 (for https) and 80 (for http)
     type: int
+    default: 443 (for https) and 80 (for http)
   username:
     description:
     - The username to use for authentication.
@@ -52,8 +39,8 @@ options:
     description:
     - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
     - It defaults to the C(private_key) basename, without extension.
-    aliases: [ cert_name ]
     default: C(private_key) basename
+    aliases: [ cert_name ]
   output_level:
     description:
     - Influence the output of this ACI module.
@@ -65,6 +52,7 @@ options:
   timeout:
     description:
     - The socket level timeout in seconds.
+    type: int
     default: 30
   use_proxy:
     description:
@@ -83,6 +71,5 @@ options:
     type: bool
     default: 'yes'
 notes:
-- Please read :ref:`the ACI guide <aci_guide>` for more detailed information
-  on how to manage your ACI infrastructure using Ansible.
+- Please read the :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
 '''
