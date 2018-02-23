@@ -60,7 +60,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new contract subject to filer binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -72,7 +72,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove an existing contract subject to filter binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -84,7 +84,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Query a specific contract subject to filter binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -95,7 +95,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query all contract subject to filter bindings
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
