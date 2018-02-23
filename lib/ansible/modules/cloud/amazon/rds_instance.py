@@ -61,8 +61,8 @@ options:
   engine:
     description:
       - The type of database. Used only when state=present.
-    choices: [ 'mariadb', 'mysql', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee', 'sqlserver-ee',
-                sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
+    choices: [ 'aurora', 'mariadb', 'mysql', 'oracle-ee', 'oracle-se', 'oracle-se1', 'oracle-se2',
+             'postgres', 'sqlserver-ee', 'sqlserver-ex', 'sqlserver-se', 'sqlserver-web' ]
   allocated_storage:
     description:
       - Size in gigabytes of the initial storage for the DB instance.  See
