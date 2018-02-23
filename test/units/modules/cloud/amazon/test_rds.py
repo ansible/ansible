@@ -27,6 +27,7 @@ import ansible.modules.cloud.amazon.rds_instance as rds_i
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 import ansible.module_utils.basic as basic
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 import ansible.module_utils.aws.rds as rds
 # from ansible.module_utils.aws.rds import
 from ansible.module_utils._text import to_bytes
@@ -669,13 +670,19 @@ def test_select_params_should_provide_needed_args_to_create_if_module_has_basics
         assert len(params[i]) > 0, "{0} parameter lacks value".format(i)
 
 
+def my_camelize(list):
+    params = snake_dict_to_camel_dict(list, capitalize_first=True)
+    params = dict((rds_i.fix_abbrevs_case(key), value) for (key, value) in params.items())
+    return params
+
+
 def test_camel_should_convert_varied_variables_correctly():
-    assert rds_i.camel('multi_az') == 'MultiAZ'
-    assert rds_i.camel('vpc_security_group_ids') == 'VpcSecurityGroupIds'
-    assert rds_i.camel('db_name') == 'DBName'
-    assert rds_i.camel('db_instance_id') == 'DBInstanceId'
-    assert rds_i.camel('tde_credential_arn') == 'TdeCredentialArn'
-    assert rds_i.camel('performance_insights_kms_key_id') == 'PerformanceInsightsKMSKeyId'
+    assert my_camelize({'multi_az': 1}) == {'MultiAZ': 1}
+    assert my_camelize({'vpc_security_group_ids': 1}) == {'VpcSecurityGroupIds': 1}
+    assert my_camelize({'db_name': 1}) == {'DBName': 1}
+    assert my_camelize({'db_instance_id': 1}) == {'DBInstanceId': 1}
+    assert my_camelize({'tde_credential_arn': 1}) == {'TdeCredentialArn': 1}
+    assert my_camelize({'performance_insights_kms_key_id': 1}) == {'PerformanceInsightsKMSKeyId': 1}
 
 
 def test_given_apply_immediately_and_wait_modify_should_call_await_function():
