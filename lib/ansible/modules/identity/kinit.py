@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: kinit
-version_added: "2.5"
+version_added: "2.6"
 author: "Ali (@bincyber)"
 short_description: Obtain a Kerberos ticket-granting ticket.
 description:
@@ -23,7 +23,7 @@ description:
   The M(expect) or M(shell) module could be used instead, however to ensure the principal's password is not logged,
   the I(no_log: True) task attribute must be set resulting in hidden error messages and the loss of an audit trail.
   By default, this module prevents the password for the authenticating principal from being shown or logged while
-  still displaying error messages and enabling the task to be logged for auditing purposes.
+  still displaying error messages and enabling the task to be logged for auditing purposes."
 options:
   principal:
     description:
@@ -42,10 +42,11 @@ options:
     default: 60
   state:
     description:
-      - The state of the Kerberos ticket. If set to C(absent), I(kdestroy) is executed to remove all existing Kerberos tickets for the principal.
+      - "The state of the Kerberos ticket. If set to C(absent), I(kdestroy) is executed to remove all existing Kerberos tickets for the principal.
+    The module will try to identify the credential cache that contains the TGT and destroy it, otherwise it will default to the primary credential cache."
     required: false
-    default: "present"
-    choices: [ "present", "absent" ]
+    default: present
+    choices: [ 'present', 'absent' ]
 requirements:
   - kinit
   - klist
@@ -141,10 +142,10 @@ class KerberosTicket(object):
 
         if rc == 0:
             # extract existing ticket
-            regexp = 'Ticket cache:\s'
+            regexp = r'Ticket cache:\s'
             res = re.split(regexp, out)
             ticket_caches = filter(None, res)
-            indexes = [ i for i, s in enumerate(ticket_caches) if self.principal in s ]
+            indexes = [i for i, s in enumerate(ticket_caches) if self.principal in s]
 
             for i in indexes:
                 cache = ticket_caches[i].strip().split('\n')
@@ -171,16 +172,16 @@ class KerberosTicket(object):
     def generate_new_ticket(self):
         cmd = shlex.split('{0} {1} -l {2}'.format(self.kinit, self.principal, self.lifetime))
 
-        rc, _, err = self.module.run_command(cmd, data=self.password, binary_data=False)
+        rc, dummy, err = self.module.run_command(cmd, data=self.password, binary_data=False)
         return rc, err
 
     def destroy_tickets(self):
-        cmd = shlex.split('{} -q'.format(self.kdestroy))
+        cmd = shlex.split('{0} -q'.format(self.kdestroy))
 
         if self.cache_name is not None:
-            cmd.extend(shlex.split('-c {}'.format(self.cache_name)))
+            cmd.extend(shlex.split('-c {0}'.format(self.cache_name)))
 
-        rc, _, err = self.module.run_command(cmd)
+        rc, dummy, err = self.module.run_command(cmd)
 
         self.cache_name = None
         self.ticket = None
