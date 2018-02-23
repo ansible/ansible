@@ -30,10 +30,12 @@ options:
     - since 2.5, I(dev) can be an image file.
     - vfat support was added in 2.5
     required: yes
+    aliases: [type]
   dev:
     description:
     - Target path to device or image file.
     required: yes
+    aliases: [device]
   force:
     description:
     - If C(yes), allows to create new filesystem on devices that already has filesystem.
@@ -276,11 +278,13 @@ def main():
         'lvm': 'LVM2_member',
     }
 
+    fstypes = set(FILESYSTEMS.keys()) - set(friendly_names.values()) | set(friendly_names.keys())
+
     # There is no "single command" to manipulate filesystems, so we map them all out and their options
     module = AnsibleModule(
         argument_spec=dict(
             fstype=dict(required=True, aliases=['type'],
-                        choices=list(FILESYSTEMS.keys()) + list(friendly_names.keys())),
+                        choices=list(fstypes)),
             dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default=False),
