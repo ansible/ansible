@@ -117,6 +117,10 @@ if __name__ == '__main__':
             cli.parse()
             exit_code = cli.run()
 
+# TQM takes care of these, but leaving comment to reserve the exit codes
+#    except AnsiblePlayFail as e:
+#        display.error(str(e))
+#        exit_code = 8
     except AnsibleOptionsError as e:
         cli.parser.print_help()
         display.error(to_text(e), wrap_text=False)
