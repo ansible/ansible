@@ -83,11 +83,14 @@ options:
               C(~/.azure/credentials).
             - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
             - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
+            - When set to C(msi), the host machine must be an azure resource which enabled MSI extension. You also need to set the C(subscription_id)
+              or C(AZURE_SUBSCRIPTION_ID) environment variable to identify the subscription id if your MSI is granted more than one subscriptions.
         choices:
         - auto
         - cli
         - credential_file
         - env
+        - msi
         default: auto
         version_added: 2.5
     api_profile:
