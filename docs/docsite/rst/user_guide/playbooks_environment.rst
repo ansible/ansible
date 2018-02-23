@@ -1,3 +1,5 @@
+.. _playbooks_environment:
+
 Setting the Environment (and Working With Proxies)
 ==================================================
 

@@ -1,3 +1,5 @@
+.. _aci_guide:
+
 Cisco ACI Guide
 ===============
 
@@ -100,7 +102,7 @@ Every Ansible ACI module accepts the following parameters that influence the mod
 
 Proxy support
 .............
-By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`setting the environment <playbooks_environment>`), or by using the ``use_proxy`` module parameter.
+By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`playbooks_environment`), or by using the ``use_proxy`` module parameter.
 
 HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
 
@@ -176,7 +178,7 @@ Password-based authentication is very simple to work with, but it is not the mos
 
 .. warning:: Never store passwords in plain text.
 
-The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :doc:`playbooks_vault` for more information.
+The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :ref:`playbooks_vault` for more information.
 
 
 Signature-based authentication using certificates
@@ -240,7 +242,7 @@ You need the following parameters with your ACI module(s) for it to work:
 
 More information
 ,,,,,,,,,,,,,,,,
-More information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
+Detailed information about Signature-based Authentication is available from `Cisco APIC Signature-Based Transactions <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/kb/b_KB_Signature_Based_Transactions.html>`_.
 
 
 .. _aci_guide_rest:
@@ -438,3 +440,19 @@ ACI Ansible community
 If you have specific issues with the ACI modules, or a feature request, or you like to contribute to the ACI project by proposing changes or documentation updates, look at the Ansible Community wiki ACI page at: https://github.com/ansible/community/wiki/Network:-ACI
 
 You will find our roadmap, an overview of open ACI issues and pull-requests and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join ! We occasionally meet online to track progress and prepare for new Ansible releases.
+
+
+.. seealso::
+
+   :ref:`network_guide`
+       Ansible for Network Automation
+   :ref:`List of ACI modules <aci_network_modules>`
+       A complete list of supported ACI modules
+   `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
+       The Ansible ACI community wiki page, includes roadmap, ideas and development documentation
+   `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
+       The Ansible Network community page, includes contact information and meeting information
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
+   `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
+       The #ansible-network IRC chat channel on Freenode.net
