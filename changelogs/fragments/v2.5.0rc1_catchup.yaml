@@ -23,4 +23,3 @@ bugfixes:
 - aws_waf_* - fixed traceback on WAFStaleDataException (https://github.com/ansible/ansible/pull/36405)
 - ec2_group - fixed check_mode when using tags (https://github.com/ansible/ansible/pull/36503)
 - loop item labels will now update if templated (https://github.com/ansible/ansible/pull/36430)
-
