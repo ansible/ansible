@@ -113,6 +113,8 @@ RESET_VARS = (
     'ansible_ssh_private_key_file',
     'ansible_ssh_pipelining',
     'ansible_ssh_executable',
+    'ansible_scp_executable',
+    'ansible_sftp_executable',
 )
 
 OPTION_FLAGS = ('connection', 'remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff',
@@ -149,6 +151,8 @@ class PlayContext(Base):
 
     # ssh # FIXME: remove these
     _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
+    _scp_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SCP_EXECUTABLE)
+    _sftp_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SFTP_EXECUTABLE)
     _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args = FieldAttribute(isa='string')
     _sftp_extra_args = FieldAttribute(isa='string')
