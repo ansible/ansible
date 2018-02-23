@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import yaml
 
+from collections import OrderedDict as omap
+
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -54,6 +56,11 @@ class AnsibleBaseYAMLObject(object):
 
 
 class AnsibleMapping(AnsibleBaseYAMLObject, dict):
+    ''' sub class for dictionaries '''
+    pass
+
+
+class AnsibleOrderedMapping(AnsibleBaseYAMLObject, omap):
     ''' sub class for dictionaries '''
     pass
 
