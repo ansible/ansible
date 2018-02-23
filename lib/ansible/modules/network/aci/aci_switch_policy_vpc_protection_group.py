@@ -56,14 +56,13 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add Explicit vPC Protection Group
+- name: Add vPC Protection Group
   aci_switch_policy_vpc_protection_group:
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: protectiongroupname
+    protection_group: ansible_test
     protection_group_id: 6
-    vpc_domain_policy: vpcdomainpolicyname
     switch_1_id: 3811
     switch_2_id: 3812
     state: present
@@ -73,8 +72,23 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: protectiongroupname
+    protection_group: ansible_test
     state: absent
+
+- name: Query vPC Protection Groups
+  aci_switch_policy_vpc_protection_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+
+- name: Query our vPC Protection Group
+  aci_switch_policy_vpc_protection_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    protection_group: ansible_test
+    state: query
 '''
 
 RETURN = r'''
