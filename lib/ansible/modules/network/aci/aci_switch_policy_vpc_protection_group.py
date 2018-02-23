@@ -56,25 +56,51 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add Explicit vPC Protection Group
+- name: Add vPC Protection Group
   aci_switch_policy_vpc_protection_group:
-    host: apic
-    username: admin
-    password: SomeSecretPassword
-    protection_group: protectiongroupname
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    protection_group: ansible_test
     protection_group_id: 6
-    vpc_domain_policy: vpcdomainpolicyname
     switch_1_id: 3811
     switch_2_id: 3812
     state: present
 
 - name: Remove Explicit vPC Protection Group
   aci_switch_policy_vpc_protection_group:
-    host: apic
-    username: admin
-    password: SomeSecretPassword
-    protection_group: protectiongroupname
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    protection_group: ansible_test
     state: absent
+
+- name: Query vPC Protection Groups
+  aci_switch_policy_vpc_protection_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    state: query
+
+- name: Query our vPC Protection Group
+  aci_switch_policy_vpc_protection_group:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    protection_group: ansible_test
+    state: query
 '''
 
 RETURN = r'''

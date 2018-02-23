@@ -57,18 +57,42 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Adding new Fabric Node Member (Spine)
-  aci_fabric_node:
-    host: apic
-    username: someusername
-    password: somepassword
-    pod_id: 5
-    serial: someserial123
-    node_id: 112
-    switch: someswitchname
-    description: somedescription
-    role: spine
+- name: Add fabric node
+  aci_fabric_node: &aci_fabric_node_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
+    serial: ansible_test
+    node_id: 105
+    switch: test
     state: present
+
+- name: Remove fabric node
+  aci_fabric_node: &aci_fabric_node_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: info
+    serial: ansible_test
+    node_id: 105
+    state: absent
+
+- name: Query fabric nodes
+  aci_fabric_node: &aci_fabric_node_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    state: query
 '''
 
 RETURN = r'''
