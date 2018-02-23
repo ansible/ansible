@@ -2,13 +2,10 @@
   pip:
     name: openshift
 
-- name: Create a project
-  openshift_raw:
+- name: Create a namespace
+  k8s_raw:
     name: testing
-    kind: project
-    description: My testing project
-    display_name: Testing Project
-    api_version: v1
+    kind: namespace 
   register: output
 
 - name: show output
@@ -16,7 +13,7 @@
     var: output
 
 - name: Create a service
-  openshift_raw:
+  k8s_raw:
     state: present
     resource_definition: &svc
       apiVersion: v1
@@ -43,7 +40,7 @@
     var: output
 
 - name: Create the service again
-  openshift_raw:
+  k8s_raw:
     state: present
     resource_definition: *svc 
   register: output
@@ -53,7 +50,7 @@
     that: not output.changed
 
 - name: Create PVC
-  openshift_raw:
+  k8s_raw:
     state: present
     inline: &pvc
       apiVersion: v1
@@ -73,7 +70,7 @@
     var: output
 
 - name: Create the PVC again
-  openshift_raw:
+  k8s_raw:
     state: present
     inline: *pvc
 
@@ -81,12 +78,12 @@
   assert:
     that: not output.changed
 
-- name: Create deployment config
-  openshift_raw:
+- name: Create deployment
+  k8s_raw:
     state: present
     inline: &dc
-      apiVersion: v1
-      kind: DeploymentConfig
+      apiVersion: Apps/V1Beta1
+      kind: Deployment
       metadata:
         name: elastic
         labels:
@@ -113,19 +110,19 @@
                 claimName: elastic-volume
         replicas: 1
         strategy:
-          type: Rolling
+          type: RollingUpdate
   register: output
 
 - name: Show output
   debug:
     var: output
 
-- name: Create deployment config again
-  openshift_raw:
+- name: Create deployment again
+  k8s_raw:
     state: present
     inline: *dc 
   register: output
 
-- name: DC creation should be idempotent
+- name: Deployment creation should be idempotent
   assert:
     that: not output.changed
