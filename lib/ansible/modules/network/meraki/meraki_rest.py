@@ -114,8 +114,7 @@ def main():
                        use_proxy=dict(type='bool', default=False, required=False),
                        use_ssl=dict(type='bool', default=True, required=False),
                        validate_certs=dict(type='bool', default=True, required=False),
-                       content=dict(type='raw', required=False,
-        )
+                       content=dict(type='raw', required=False),
     )
 
     # seed the result dict in the object
@@ -157,14 +156,9 @@ def main():
     else:
         protocol = 'https'
 
-    url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/')
+    url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': module.params['authkey']}
-
-    module.warn(url)
-    module.warn(to_native(headers))
-    module.warn(module.params['method'].upper())
-    module.warn(to_native(payload))
 
     try:
         resp, info = fetch_url(module, url,
@@ -178,6 +172,10 @@ def main():
     except Exception as e:
         module.fail_json(msg=e)
     module.warn(to_native(info['status']))
+    module.warn(info['url'])
+
+    if module.params['method'].upper() == "POST" and info['status'] == 200:
+        module.exit_json(msg=info['status'])
 
     if info['status'] >= 300:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
@@ -190,15 +188,6 @@ def main():
             result['message'] = json.loads(to_native(resp.read()))
         except:
             module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
-
-    # during the execution of the module, if there is an exception or a
-    # conditional state that effectively causes a failure, run
-    # AnsibleModule.fail_json() to pass in the message and the result
-    if info['status'] != 200:
-        try:
-            module.fail_json(msg="Meraki dashboard error: {0} - {1}: ".format(info['status'], info['body']))
-        except KeyError:
-            module.fail_json(msg="Connection failed for {0}: ".format(url))
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
