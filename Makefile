@@ -223,7 +223,7 @@ sdist_upload: clean docs
 # TODO: variable-ize major version number usages here
 .PHONY: changelog_reno
 changelog_reno:
-	reno -d changelogs/ report --title 'Ansible 2.5 "Kashmir" Release Notes' --no-collapse-pre-release --no-show-source --earliest-version v2.5.0b1 --output changelogs/CHANGELOG_v2.5.rst
+	reno -d changelogs/ report --title 'Ansible 2.5 "Kashmir" Release Notes' --no-collapse-pre-release --no-show-source --earliest-version v2.5.0b1 --output changelogs/CHANGELOG-v2.5.rst
 
 .PHONY: rpmcommon
 rpmcommon: sdist
