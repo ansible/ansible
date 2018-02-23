@@ -1,3 +1,5 @@
+.. _aci_guide:
+
 Cisco ACI Guide
 ===============
 
