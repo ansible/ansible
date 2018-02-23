@@ -1,0 +1,17 @@
+---
+- debug: msg="START connection={{ connection }} nxos_smoke extra tests"
+
+- name: hit conditional for lists of commands greater than 10
+  nxos_command:
+    commands:
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+      - show hostname
+    provider: "{{ connection }}"
