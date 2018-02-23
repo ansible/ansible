@@ -92,9 +92,13 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-message:
+response:
     description: Data returned from controller.
-    type: dict
+    type: string
+    returned: success
+version:
+    description: API version as reported by controller.
+    type: string
     returned: info
 '''
 
@@ -129,7 +133,6 @@ def main():
     # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
-        message=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -138,7 +141,7 @@ def main():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=False
+        supports_check_mode=False,
     )
 
     path = module.params['path']
@@ -203,8 +206,8 @@ def main():
                                force=True,
                                timeout=module.params['timeout'],)
 
-    except Exception:
-        module.fail_json(msg=resp['status'])
+    except Exception as e:
+        module.fail_json(msg=e)
 
     if info['status'] != 200:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
@@ -213,9 +216,8 @@ def main():
     # made any modifications to your target
     if info['status'] == 200:
         result['changed'] = True
-        # result['message']=json.loads(resp.read())
         try:
-            result['message'] = json.loads(resp.read())
+            result.update(json.loads(to_native(resp.read())))
         except:
             module.fail_json(msg="DNA Center didn't return JSON compatible data")
 
