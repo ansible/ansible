@@ -23,8 +23,7 @@ description:
   The M(expect) or M(shell) module could be used instead, however to ensure the principal's password is not logged,
   the I(no_log: True) task attribute must be set resulting in hidden error messages and the loss of an audit trail.
   By default, this module prevents the password for the authenticating principal from being shown or logged while
-  still displaying error messages and enabling the task to be logged for auditing purposes. The default location
-  of the Kerberos 5 credentials cache is used."
+  still displaying error messages and enabling the task to be logged for auditing purposes.
 options:
   principal:
     description:
@@ -38,7 +37,7 @@ options:
     default: null
   lifetime:
     description:
-      - The lifetime of the Kerberos ticket.
+      - The lifetime of the Kerberos ticket in seconds.
     required: false
     default: 60
   state:
@@ -59,13 +58,13 @@ EXAMPLES = '''
 # obtain a Kerberos ticket with a lifetime of 30 seconds
 - kinit:
     principal: johndoe
-    password: supersecretpassword
+    password: 'supersecretpassword'
     lifetime: 30
 
 # obtain a Kerberos ticket for a principal that includes the realm
 - kinit:
     principal: johndoe@REALM.EXAMPLE.COM
-    password: supersecretpassword
+    password: 'supersecretpassword'
 
 # destroy all existing Kerberos tickets for the principal
 - kinit:
@@ -78,13 +77,19 @@ msg:
     description: the status message describing what occurred
     returned: always
     type: string
-    sample: "Obtained a short-lived Kerberos ticket"
+    sample: "Obtained a Kerberos ticket"
 
 rc:
     description: the return code after executing klist, kinit, or kdestroy
-    returned: always
+    returned: failure
     type: int
-    sample: 0
+    sample: 1
+
+cache_name:
+    description: the name of the Kerberos cache
+    returned:  on success
+    type: string
+    sample: "KEYRING:persistent:1049221:krb_ccache_y8jzb2l"
 
 err:
     description: the error message after executing klist, kinit, or kdestroy
@@ -94,8 +99,9 @@ err:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-import shlex
 import datetime
+import re
+import shlex
 import time
 
 
@@ -107,40 +113,79 @@ class KerberosTicket(object):
         self.lifetime = module.params.get('lifetime', 60)
         self.state = module.params['state']
 
+        self.cache_name = None
+        self.ticket = None
+
     @property
     def klist(self):
-        return self.module.get_bin_path("klist", required=True)
+        return self.module.get_bin_path('klist', required=True)
 
     @property
     def kinit(self):
-        return self.module.get_bin_path("kinit", required=True)
+        return self.module.get_bin_path('kinit', required=True)
 
     @property
     def kdestroy(self):
-        return self.module.get_bin_path("kdestroy", required=True)
+        return self.module.get_bin_path('kdestroy', required=True)
 
     @property
     def max_ticket_expiry_datetime(self):
         return datetime.datetime.fromtimestamp(time.time() + self.lifetime)
 
-    def get_existing_tickets(self):
-        return self.module.run_command([self.klist])
+    @property
+    def ticket_expiry_datetime(self):
+        return datetime.datetime.strptime(' '.join(self.ticket.split()[2:4]), '%m/%d/%Y %H:%M:%S')
+
+    def get_existing_ticket(self):
+        rc, out, err = self.module.run_command([self.klist, '-A'])
+
+        if rc == 0:
+            # extract existing ticket
+            regexp = 'Ticket cache:\s'
+            res = re.split(regexp, out)
+            ticket_caches = filter(None, res)
+            indexes = [ i for i, s in enumerate(ticket_caches) if self.principal in s ]
+
+            for i in indexes:
+                cache = ticket_caches[i].strip().split('\n')
+
+                self.cache_name = cache[0]
+
+                for ticket in cache[3:]:
+                    if 'krbtgt/' not in ticket:
+                        continue
+                    else:
+                        self.ticket = ticket
+                        break
+
+        return self.cache_name, self.ticket
+
+    def renew_ticket(self):
+        if self.max_ticket_expiry_datetime > self.ticket_expiry_datetime:
+            rc, err = self.generate_new_ticket()
+        else:
+            rc = -1
+            err = 'An existing ticket has yet to expire'
+        return rc, err
 
     def generate_new_ticket(self):
         cmd = shlex.split('{0} {1} -l {2}'.format(self.kinit, self.principal, self.lifetime))
 
-        rc, out, err = self.module.run_command(cmd, data=self.password, binary_data=False)
-        if rc:
-            self.module.fail_json(msg="Failed to obtain a Kerberos ticket", rc=rc, err=err)
-        else:
-            self.module.exit_json(changed=True, msg='Obtained a short-lived Kerberos ticket', rc=rc)
+        rc, _, err = self.module.run_command(cmd, data=self.password, binary_data=False)
+        return rc, err
 
-    def destroy_existing_tickets(self):
-        rc, out, err = self.module.run_command([self.kdestroy, '-q'])
-        if rc:
-            self.module.fail_json(msg="Failed to destroy existing Kerberos tickets", rc=rc, err=err)
-        else:
-            self.module.exit_json(changed=True, msg='Destroyed existing Kerberos tickets', rc=rc)
+    def destroy_tickets(self):
+        cmd = shlex.split('{} -q'.format(self.kdestroy))
+
+        if self.cache_name is not None:
+            cmd.extend(shlex.split('-c {}'.format(self.cache_name)))
+
+        rc, _, err = self.module.run_command(cmd)
+
+        self.cache_name = None
+        self.ticket = None
+
+        return rc, err
 
 
 def main():
@@ -160,44 +205,51 @@ def main():
 
     kerberos_ticket = KerberosTicket(module)
 
-    rc, out, err = kerberos_ticket.get_existing_tickets()
+    cache_name, ticket = kerberos_ticket.get_existing_ticket()
 
-    # when rc != 0, klist returns stderr message that there are no existing tickets for the principal
-    if rc:
+    if ticket is None:
         if kerberos_ticket.state == 'present':
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            kerberos_ticket.generate_new_ticket()
+            rc, err = kerberos_ticket.generate_new_ticket()
+
+            if rc != 0:
+                module.fail_json(msg='Failed to obtain a Kerberos ticket', rc=rc, err=err)
+            else:
+                module.exit_json(changed=True, msg='Obtained a Kerberos ticket', cache_name=cache_name)
 
         elif kerberos_ticket.state == 'absent':
-            module.exit_json(changed=False, msg='No existing Kerberos tickets to destroy')
+            if module.check_mode:
+                module.exit_json(changed=False)
 
-    if kerberos_ticket.state == 'absent':
-        if module.check_mode:
-            module.exit_json(changed=True)
+            module.exit_json(changed=False, msg='No existing Kerberos tickets to destroy', cache_name=cache_name)
 
-        kerberos_ticket.destroy_existing_tickets()
+    else:
+        if kerberos_ticket.state == 'present':
+            if module.check_mode:
+                if kerberos_ticket.max_ticket_expiry_datetime > kerberos_ticket.ticket_expiry_datetime:
+                    module.exit_json(changed=True)
+                else:
+                    module.exit_json(changed=False)
 
-    klist_output = filter(None, out.split('\n'))
+            rc, err = kerberos_ticket.renew_ticket()
 
-    # info on tickets within the keytab starts from the 4th element in the list
-    for ticket in klist_output[3:]:
+            if rc == -1:
+                module.exit_json(changed=False, msg='An existing Kerberos ticket has yet to expire', cache_name=cache_name)
+            elif rc != 0:
+                module.fail_json(msg='Failed to obtain a Kerberos ticket', rc=rc, err=err)
+            else:
+                module.exit_json(changed=True, msg='Renewed an existing Kerberos ticket', cache_name=cache_name)
 
-        # we're only concerned with ticket-granting tickets (TGT)
-        if 'krbtgt/' not in ticket:
-            continue
-
-        ticket_expiry_datetime = datetime.datetime.strptime(' '.join(ticket.split()[2:4]), '%m/%d/%Y %H:%M:%S')
-
-        if kerberos_ticket.max_ticket_expiry_datetime > ticket_expiry_datetime:
+        elif kerberos_ticket.state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            kerberos_ticket.generate_new_ticket()
+            kerberos_ticket.destroy_tickets()
 
-        else:
-            module.exit_json(changed=False, msg='An existing ticket has yet to expire', ticket=ticket)
+            module.exit_json(changed=True, msg='Kerberos tickets destroyed', cache_name=cache_name)
+
 
 if __name__ == '__main__':
     main()
