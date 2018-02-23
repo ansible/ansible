@@ -61,10 +61,10 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: ansible_test
+    protection_group: leafPair101-vpcGrp
     protection_group_id: 6
-    switch_1_id: 3811
-    switch_2_id: 3812
+    switch_1_id: 1011
+    switch_2_id: 1012
     state: present
 
 - name: Remove Explicit vPC Protection Group
@@ -72,7 +72,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: ansible_test
+    protection_group: leafPair101-vpcGrp
     state: absent
 
 - name: Query vPC Protection Groups
@@ -87,7 +87,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: ansible_test
+    protection_group: leafPair101-vpcGrp
     state: query
 '''
 
