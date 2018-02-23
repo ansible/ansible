@@ -9,7 +9,7 @@ SOURCEDIR     = rst
 
 # Sets the build output directory if it's not specified on the command line
 ifndef BUILDDIR
-    BUILDDIR      = _build
+   BUILDDIR      = _build
 endif
 
 # Put it first so that "make" without argument is like "make help".

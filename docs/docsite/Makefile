@@ -11,6 +11,11 @@ else
 CPUS ?= $(shell nproc)
 endif
 
+# Sets the build output directory if it's not already specified
+ifndef BUILDDIR
+	BUILDDIR = _build
+endif
+
 MODULE_ARGS=
 ifdef MODULES
 	MODULE_ARGS = -l $(MODULES)
@@ -44,6 +49,7 @@ webdocs: docs
 
 #TODO: leaving htmlout removal for those having older versions, should eventually be removed also
 clean:
+	@echo "Cleaning $(BUILDDIR)"
 	-rm -rf $(BUILDDIR)/doctrees
 	-rm -rf $(BUILDDIR)/html
 	-rm -rf htmlout
