@@ -492,12 +492,12 @@ class AzureRMModuleBase(object):
 
         return None
 
-    def _get_msi_credentials(self):
+    def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
         if not credentials:
             return None
 
-        subscription_id = self.subscription_id or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
+        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             # use the first subscription of the MSI
             subscription_client = SubscriptionClient(credentials)
@@ -547,7 +547,7 @@ class AzureRMModuleBase(object):
         
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
-            return self._get_msi_credentials()
+            return self._get_msi_credentials(arg_credentials['subscription_id'])
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:

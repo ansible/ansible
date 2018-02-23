@@ -366,12 +366,12 @@ class AzureRM(object):
 
         return None
 
-    def _get_msi_credentials(self):
+    def _get_msi_credentials(self, subscription_id_param=None):
         credentials = MSIAuthentication()
         if not credentials:
             return None
 
-        subscription_id = self.subscription_id or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
+        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             # use the first subscription of the MSI
             subscription_client = SubscriptionClient(credentials)
@@ -438,7 +438,7 @@ class AzureRM(object):
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
-        msi_credential = self._get_msi_credentials()
+        msi_credential = self._get_msi_credentials(arg_credentials['subscription_id'])
         if msi_credential:
             self.log('Retrieved msi credentials from MSI')
             return msi_credential
