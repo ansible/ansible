@@ -77,7 +77,7 @@ class CallbackBase(AnsiblePlugin):
         if options is not None:
             self.set_options(options)
 
-        self._hide_in_debug = ('changed', 'failed', 'item', 'skipped', 'invocation')
+        self._hide_in_debug = ('changed', 'failed', 'skipped', 'invocation')
 
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
@@ -239,6 +239,8 @@ class CallbackBase(AnsiblePlugin):
         if task_name in ['debug']:
             for hideme in self._hide_in_debug:
                 result.pop(hideme, None)
+                if 'msg' in result:
+                    result.pop('item', None)
 
     def set_play_context(self, play_context):
         pass
