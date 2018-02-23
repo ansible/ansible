@@ -29,27 +29,27 @@ options:
     username:
         description:
             - The username for use in HTTP basic authentication.
-        required: true
+        required: 'yes'
     password:
         description:
             - The password for use in HTTP basic authentication.
-        required: true
+        required: 'yes'
     host:
         description:
             - FQDN or IP address of DNA Central server.
-        required: true
+        required: 'yes'
     method:
         description:
             - The HTTP method of the request.
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
             - Using C(post) is typically used for modifying objects.
-        required: true
+        required: 'yes'
         choices: [ delete, get, post ]
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
-        required: true
+        required: 'yes'
     timeout:
         description:
             - HTTP timeout value.
@@ -97,7 +97,7 @@ response:
     type: string
     returned: success
 version:
-    description: API version as reported by controller.
+    description: Version of returned data.
     type: string
     returned: info
 '''
@@ -219,7 +219,7 @@ def main():
         try:
             result.update(json.loads(to_native(resp.read())))
         except:
-            module.fail_json(msg="DNA Center didn't return JSON compatible data")
+            module.fail_json(msg="DNA Center did not return JSON compatible data")
 
     # during the execution of the module, if there is an exception or a
     # conditional state that effectively causes a failure, run
