@@ -295,11 +295,13 @@ class Rhn(redhat.RegistrationBase):
     def subscribe(self, channels):
         if not channels:
             return
+
         if self._is_hosted():
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             new_channels = [item['channel_label'] for item in current_channels]
             new_channels.extend(channels)
             return self.api('channel.software.setSystemChannels', self.systemid, list(new_channels))
+
         else:
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             current_channels = [item['label'] for item in current_channels]
@@ -315,10 +317,13 @@ class Rhn(redhat.RegistrationBase):
                         new_childs.append(ch)
             out_base = 0
             out_childs = 0
+
             if new_base:
                 out_base = self.api('system.setBaseChannel', self.systemid, new_base)
+
             if new_childs:
                 out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
+
             return out_base and out_childs
 
     def _is_hosted(self):
