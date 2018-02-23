@@ -1,3 +1,5 @@
+.. _network_guide:
+
 ******************************
 Ansible for Network Automation
 ******************************
