@@ -71,5 +71,5 @@ options:
     type: bool
     default: 'yes'
 notes:
-- Please read :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
+- Please read the :ref:`aci_guide` for more detailed information on how to manage your ACI infrastructure using Ansible.
 '''
