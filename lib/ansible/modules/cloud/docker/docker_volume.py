@@ -239,7 +239,7 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='local'),
         driver_options=dict(type='dict', default={}),
-        labels=dict(type='list'),
+        labels=dict(type='dict'),
         force=dict(type='bool', default=False),
         debug=dict(type='bool', default=False)
     )
