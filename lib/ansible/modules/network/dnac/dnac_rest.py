@@ -58,17 +58,17 @@ options:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: 'false'
+        default: 'no'
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
         type: bool
-        default: 'true'
+        default: 'yes'
     validate_certs:
         description:
             - If C(no), HTTPS certificates will not be verified.
         type: bool
-        default: 'true'
+        default: 'yes'
     content:
         description:
             - Raw content which should be fed in body.
@@ -85,8 +85,8 @@ EXAMPLES = '''
     password: dnaccpass
     host: dnac.yourorg.com
     method: get
-    path: '/api/v1/network-device'
-    use_ssl: Yes
+    path: /api/v1/network-device
+    use_ssl: yes
   delegate_to: localhost
 
 '''
@@ -105,7 +105,7 @@ from ansible.module_utils.basic import json
 from ansible.module_utils._text import to_native
 
 
-def run_module():
+def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
@@ -115,11 +115,11 @@ def run_module():
         host=dict(type='str', required=True),
         method=dict(type='str', choices=['delete', 'get', 'post'], required=True),
         path=dict(type='path', required=True),
-        timeout=dict(type='int', default=30, required=False),
-        use_proxy=dict(type='bool', default=False, required=False),
-        use_ssl=dict(type='bool', default=True, required=False),
-        validate_certs=dict(type='bool', default=True, required=False),
-        content=dict(type='raw', required=False)
+        timeout=dict(type='int', default=30),
+        use_proxy=dict(type='bool', default=False),
+        use_ssl=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+        content=dict(type='raw'),
     )
 
     # seed the result dict in the object
@@ -173,7 +173,7 @@ def run_module():
                             validate_certs=module.params['validate_certs'],
                             username=module.params['username'],
                             password=module.params['password'],
-                            force_basic_auth=True)
+                            force_basic_auth=True),
 
     except Exception as e:
         module.fail_json(msg=e.fp)
@@ -200,7 +200,7 @@ def run_module():
                                method=module.params['method'].upper(),
                                use_proxy=module.params['use_proxy'],
                                force=True,
-                               timeout=module.params['timeout'])
+                               timeout=module.params['timeout']),
 
     except Exception as e:
         module.fail_json(msg=e.fp)
@@ -230,10 +230,6 @@ def run_module():
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
-
-
-def main():
-    run_module()
 
 if __name__ == '__main__':
     main()
