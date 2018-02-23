@@ -373,7 +373,7 @@ def append_param(rule, param, flag, is_list):
 def append_tcp_flags(rule, param, flag):
     if param:
         if 'flags' in param and 'flags_set' in param:
-            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+            rule.extend([flag, param['flags'], param['flags_set']])
 
 
 def append_match_flag(rule, param, flag, negatable):
