@@ -494,6 +494,9 @@ class AzureRMModuleBase(object):
 
     def _get_msi_credentials(self):
         credentials = MSIAuthentication()
+        if not credentials:
+            return None
+
         subscription_id = self.subscription_id or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
             # use the first subscription of the MSI
@@ -593,12 +596,12 @@ class AzureRMModuleBase(object):
         try:
             if HAS_AZURE_CLI_CORE:
                 self.log('Retrieving credentials from AzureCLI profile')
-            cli_credentials = self._get_azure_cli_credentials()
-            return cli_credentials
+                cli_credentials = self._get_azure_cli_credentials()
+                return cli_credentials
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
-        return None
+        return self._get_msi_credentials()
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
