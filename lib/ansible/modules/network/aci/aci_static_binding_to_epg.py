@@ -125,9 +125,9 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    tenant: anstest
-    ap: anstest
-    epg: anstest
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
     interface_type: switch_port
     pod: 1
     leafs: 101
@@ -139,9 +139,9 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    tenant: anstest
-    ap: anstest
-    epg: anstest
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
     interface_type: switch_port
     pod: 1
     leafs: 101
