@@ -301,33 +301,6 @@ If you need to keep track of where you are in a loop, you can use the ``index_va
       loop_control:
         index_var: my_idx
 
-.. _loops_and_includes_2.0:
-
-Loops and Includes in 2.0
-`````````````````````````
-
-Because ``loop_control`` is not available in Ansible 2.0, when using an include with a loop you should use ``set_fact`` to save the "outer" loops value
-for ``item``::
-
-    # main.yml
-    - include_tasks: inner.yml
-      loop:
-        - 1
-        - 2
-        - 3
-
-    # inner.yml
-    - set_fact:
-        outer_item: "{{ item }}"
-
-    - debug:
-        msg: "outer item={{ outer_item }} inner item={{ item }}"
-      loop:
-        - a
-        - b
-        - c
-
-.. note:: `include` is deprecated, you should be using `include_tasks`, `import_tasks`, `import_play` instead.
 
 .. seealso::
 
