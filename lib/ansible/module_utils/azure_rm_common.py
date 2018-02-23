@@ -601,7 +601,12 @@ class AzureRMModuleBase(object):
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
-        return self._get_msi_credentials()
+        msi_credential = self._get_msi_credentials()
+        if msi_credential:
+            self.log('Retrieved msi credentials from MSI')
+            return msi_credential
+        
+        return None
 
     def serialize_obj(self, obj, class_name, enum_modules=None):
         '''
