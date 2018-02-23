@@ -220,7 +220,7 @@ class Base(with_metaclass(BaseMeta, object)):
                 return method(ds)
         return ds
 
-    def load_data(self, ds, variable_manager=None, loader=None, variables=None):
+    def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
@@ -261,9 +261,6 @@ class Base(with_metaclass(BaseMeta, object)):
 
         # run early, non-critical validation
         self.validate()
-
-        if variables:
-            self.vars.update(variables)
 
         # return the constructed object
         return self
