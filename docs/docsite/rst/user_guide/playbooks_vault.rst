@@ -1,3 +1,5 @@
+.. _playbooks_vault:
+
 Using Vault in playbooks
 ========================
 
