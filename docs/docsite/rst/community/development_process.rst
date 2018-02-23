@@ -44,7 +44,7 @@ pull request to backport the change to a previous stable branch.
 .. note::
 
    These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
-   is configured as a `git remote`` named ``origin``. If you do not use
+   is configured as a ``git remote`` named ``origin``. If you do not use
    a ``git remote`` named ``origin``, adjust the instructions accordingly.
 
 #. Prepare your devel, stable, and feature branches:
