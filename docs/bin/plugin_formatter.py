@@ -87,13 +87,13 @@ def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
     try:
-        t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
-        t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-        t = _MODULE.sub(r':ref:`module_docs/' + r"\1 <\1>" + r"`", t)
+        t = _ITALIC.sub(r"*\1*", text)
+        t = _BOLD.sub(r"**\1**", t)
+        t = _MODULE.sub(r":ref:`\1`", t)
         t = _URL.sub(r"\1", t)
-        t = _CONST.sub(r'``' + r"\1" + r"``", t)
+        t = _CONST.sub(r"`\1`", t)
     except Exception as e:
-        raise AnsibleError("Could not process (%s) : %s" % (str(text), str(e)))
+        raise AnsibleError("Could not process (%s) : %s" % (text, e))
 
     return t
 
@@ -102,11 +102,11 @@ def html_ify(text):
     ''' convert symbols like I(this is in italics) to valid HTML '''
 
     t = html_escape(text)
-    t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
-    t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
-    t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
-    t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
-    t = _CONST.sub("<code>" + r"\1" + "</code>", t)
+    t = _ITALIC.sub(r"<em>\1</em>", t)
+    t = _BOLD.sub(r"<b>\1</b>", t)
+    t = _MODULE.sub(r"<span class='module'>\1</span>", t)
+    t = _URL.sub(r"<a href='\1'>\1</a>", t)
+    t = _CONST.sub(r"<code>\1</code>", t)
 
     return t
 
