@@ -722,158 +722,33 @@ files:
   $modules/web_infrastructure/taiga_issue.py: lekum
   $modules/windows/:
     maintainers: $team_windows
-    ignored: angstwad
-  $modules/windows/async_status.ps1: $team_windows
-  $modules/windows/async_wrapper.ps1: $team_windows
+    ignored: angstwad georgefrank h0nig
   $modules/windows/setup.ps1: $team_ansible
   $modules/windows/slurp.ps1: $team_ansible
   $modules/windows/win_acl.ps1:
     maintainers: schwartzmx trondhindenes
-    ignored: h0nIg
-  $modules/windows/win_acl.py:
-    maintainers: schwartzmx trondhindenes
-    ignored: h0nIg
-  $modules/windows/win_acl_inheritance.ps1:
-    ignored: h0nIg
-  $modules/windows/win_acl_inheritance.py:
-    ignored: h0nIg
-  $modules/windows/win_chocolatey.ps1: elventear nitzmahone petemounce smadam813 trondhindenes
-  $modules/windows/win_chocolatey.py: elventear nitzmahone petemounce smadam813 trondhindenes
-  $modules/windows/win_command.ps1: $team_windows
-  $modules/windows/win_command.py: $team_windows
-  $modules/windows/win_copy.ps1: jhawkesworth
-  $modules/windows/win_copy.py: jhawkesworth
-  $modules/windows/win_defrag.ps1: $team_windows
-  $modules/windows/win_defrag.py: $team_windows
-  $modules/windows/win_disk_image.ps1: nitzmahone
-  $modules/windows/win_disk_image.py: nitzmahone
-  $modules/windows/win_dns_client.ps1: nitzmahone
-  $modules/windows/win_dns_client.py: nitzmahone
-  $modules/windows/win_domain.ps1: nitzmahone
-  $modules/windows/win_domain.py: nitzmahone
-  $modules/windows/win_domain_controller.ps1: nitzmahone
-  $modules/windows/win_domain_controller.py: nitzmahone
-  $modules/windows/win_domain_group.ps1: jborean93
-  $modules/windows/win_domain_group.py: jborean93
-  $modules/windows/win_domain_membership.ps1: nitzmahone
-  $modules/windows/win_domain_membership.py: nitzmahone
-  $modules/windows/win_dotnet_ngen.ps1: petemounce
-  $modules/windows/win_dotnet_ngen.py: petemounce
-  $modules/windows/win_dsc.ps1: trondhindenes
-  $modules/windows/win_dsc.py: trondhindenes
-  $modules/windows/win_environment.ps1: jhawkesworth
-  $modules/windows/win_environment.py: jhawkesworth
-  $modules/windows/win_feature.ps1: trondhindenes
-  $modules/windows/win_feature.py: trondhindenes
-  $modules/windows/win_file.ps1: jhawkesworth
-  $modules/windows/win_file.py: jhawkesworth
   $modules/windows/win_file_version.ps1: SamLiu79
   $modules/windows/win_file_version.py: SamLiu79
-  $modules/windows/win_find.ps1: jborean93
-  $modules/windows/win_find.py: jborean93
-  $modules/windows/win_firewall.ps1: if-meaton
-  $modules/windows/win_firewall.py: if-meaton
-  $modules/windows/win_firewall_rule.ps1: TimothyVandenbrande ar7z1
-  $modules/windows/win_firewall_rule.py: TimothyVandenbrande ar7z1
   $modules/windows/win_get_url.ps1: jhawkesworth
   $modules/windows/win_get_url.py: jhawkesworth
-  $modules/windows/win_group_membership.ps1: andrewsaraceni
-  $modules/windows/win_group_membership.py: andrewsaraceni
-  $modules/windows/win_group.ps1: chrishoffman
-  $modules/windows/win_group.py: chrishoffman
-  $modules/windows/win_hotfix.ps1: jborean93
-  $modules/windows/win_hotfix.py: jborean93
   $modules/windows/win_iis_virtualdirectory.ps1: $team_ansible
   $modules/windows/win_iis_virtualdirectory.py: $team_ansible
-  $modules/windows/win_iis_webapplication.ps1: $team_windows
-  $modules/windows/win_iis_webapplication.py: $team_windows
-  $modules/windows/win_iis_webapppool.ps1: $team_windows
-  $modules/windows/win_iis_webapppool.py: $team_windows
-  $modules/windows/win_iis_webbinding.ps1: $team_windows
-  $modules/windows/win_iis_webbinding.py: $team_windows
-  $modules/windows/win_iis_website.ps1: $team_windows
-  $modules/windows/win_iis_website.py: $team_windows
   $modules/windows/win_lineinfile.ps1: brianlloyd
   $modules/windows/win_lineinfile.py: brianlloyd
-  $modules/windows/win_mapped_drive.ps1: jborean93
-  $modules/windows/win_mapped_drive.py: jborean93
-  $modules/windows/win_msg.ps1: $team_windows
-  $modules/windows/win_msg.py: $team_windows
-  $modules/windows/win_msi.ps1:
-  $modules/windows/win_msi.py:
-  $modules/windows/win_nssm.ps1:
-    maintainers: smadam813
-    ignored: georgefrank h0nIg
-  $modules/windows/win_nssm.py:
-    maintainers: smadam813
-    ignored: georgefrank h0nIg
-  $modules/windows/win_owner.ps1:
-    maintainers: jborean93
-    ignored: h0nIg
-  $modules/windows/win_owner.py:
-    maintainers: jborean93
-    ignored: h0nIg
-  $modules/windows/win_package.ps1: trondhindenes
-  $modules/windows/win_package.py: trondhindenes
-  $modules/windows/win_path.ps1: nitzmahone
-  $modules/windows/win_path.py: nitzmahone
-  $modules/windows/win_ping.ps1: cchurch nitzmahone
-  $modules/windows/win_ping.py: cchurch nitzmahone
-  $modules/windows/win_psexec.ps1: dagwieers
-  $modules/windows/win_psexec.py: dagwieers
-  $modules/windows/win_psmodule.ps1: $team_windows
-  $modules/windows/win_psmodule.py: $team_windows
-  $modules/windows/win_rabbitmq_plugin.py: ar7z1
-  $modules/windows/win_reboot.py: nitzmahone
-  $modules/windows/win_reg_stat.ps1: jborean93
-  $modules/windows/win_reg_stat.py: jborean93
-  $modules/windows/win_regedit.ps1: joshludwig smadam813
-  $modules/windows/win_regedit.py: joshludwig smadam813
-  $modules/windows/win_region.ps1: jborean93
-  $modules/windows/win_region.py: jborean93
-  $modules/windows/win_regmerge.ps1: jhawkesworth
-  $modules/windows/win_regmerge.py: jhawkesworth
-  $modules/windows/win_robocopy.ps1: blakfeld
-  $modules/windows/win_robocopy.py: blakfeld
-  $modules/windows/win_route.ps1: $team_windows
-  $modules/windows/win_route.py: $team_windows
-  $modules/windows/win_say.ps1: jhawkesworth
-  $modules/windows/win_say.py: jhawkesworth
-  $modules/windows/win_scheduled_task.ps1: petemounce
-  $modules/windows/win_scheduled_task.py: petemounce
-  $modules/windows/win_security_policy.ps1: jborean93 rndmh3ro defionscode
-  $modules/windows/win_security_policy.py: jborean93 rndmh3ro defionscode
-  $modules/windows/win_service.ps1: chrishoffman
-  $modules/windows/win_service.py: chrishoffman
-  $modules/windows/win_share.ps1:
-    maintainers: jborean93 daBONDi
-    ignored: h0nIg
-  $modules/windows/win_share.py:
-    maintainers: jborean93 daBONDi
-    ignored: h0nIg
-  $modules/windows/win_shell.ps1: nitzmahone
-  $modules/windows/win_shell.py: nitzmahone
-  $modules/windows/win_shortcut.ps1: dagwieers
-  $modules/windows/win_shortcut.py: dagwieers
-  $modules/windows/win_stat.ps1: cchurch nitzmahone
-  $modules/windows/win_stat.py: cchurch nitzmahone
-  $modules/windows/win_tempfile.ps1: dagwieers
-  $modules/windows/win_tempfile.py: dagwieers
-  $modules/windows/win_template.py: jhawkesworth
+  $modules/windows/win_owner.ps1: jborean93
+  $modules/windows/win_owner.py: jborean93
+  $modules/windows/win_ping.ps1: nitzmahone
+  $modules/windows/win_ping.py: nitzmahone
+  $modules/windows/win_security_policy.ps1: rndmh3ro defionscode
+  $modules/windows/win_security_policy.py: rndmh3ro defionscode
+  $modules/windows/win_share.ps1: jborean93
+  $modules/windows/win_share.py: jborean93
+  $modules/windows/win_stat.ps1: nitzmahone
+  $modules/windows/win_stat.py: nitzmahone
   $modules/windows/win_timezone.ps1: schwartzmx
   $modules/windows/win_timezone.py: schwartzmx
-  $modules/windows/win_unzip.ps1: schwartzmx
-  $modules/windows/win_unzip.py: schwartzmx
-  $modules/windows/win_updates.ps1: nitzmahone
-  $modules/windows/win_updates.py: nitzmahone
-  $modules/windows/win_uri.ps1: blakfeld
-  $modules/windows/win_uri.py: blakfeld
-  $modules/windows/win_user.ps1: cchurch nitzmahone
-  $modules/windows/win_user.py: cchurch nitzmahone
-  $modules/windows/win_user_right.ps1: jborean93
-  $modules/windows/win_user_right.py: jborean93
-  $modules/windows/win_wakeonlan.ps1: dagwieers
-  $modules/windows/win_wakeonlan.py: dagwieers
+  $modules/windows/win_user.ps1: nitzmahone
+  $modules/windows/win_user.py: nitzmahone
   $modules/windows/win_webpicmd.ps1: petemounce
   $modules/windows/win_webpicmd.py: petemounce
   contrib/inventory:
@@ -1232,12 +1107,15 @@ files:
     labels: docs_pull_request
     notify: dharmabumstead
   docs/docsite/rst/network/:
-    labels:
-      - docs_pull_request
-      - networking
+    labels: networking
     maintainers:
       - acozine
       - gundalow
+  docs/docsite/rst/scenario_guides/guide_aci.rst:
+    maintainers: $team_aci
+    labels:
+    - aci
+    - networking
   packaging/:
   test/:
     # 'test' is a component path, then 'test' label will be automatically added
@@ -1289,6 +1167,7 @@ macros:
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_ipa: Nosmoht akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
@@ -1306,4 +1185,3 @@ macros:
   team_vmware: dav1x jctanner nerzhul akasurde
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
-  team_ipa: Nosmoht akasurde
