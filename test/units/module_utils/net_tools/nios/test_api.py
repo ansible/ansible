@@ -115,7 +115,7 @@ class TestNiosApi(unittest.TestCase):
             "fqdn": {"ib_req": True, 'update': False},
             "comment": {},
             "extattrs": {}
-            }
+        }
 
         wapi = self._get_wapi(test_object)
         res = wapi.run('testobject', test_spec)
