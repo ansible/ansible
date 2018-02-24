@@ -115,7 +115,7 @@ Options
                     <div class="outer-elbow-container">
                 </td>
                 {# required #}
-                <td><div class="cell-border">{% if value.get('required', False) %}yes{% else %}no{% endif %}</div></td>
+                <td><div class="cell-border">{% if value.get('required', False) %}required{% else %}optional{% endif %}</div></td>
                 {# default value #}
                 <td><div class="cell-border">{% if value.default %}@{ value.default }@{% endif %}</div></td>
                 {# choices #}
