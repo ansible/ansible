@@ -134,7 +134,7 @@ def main():
     )
 
     ib_spec = dict(
-        fqdn=dict(required=True, aliases=['name'], ib_req=True),
+        fqdn=dict(required=True, aliases=['name'], ib_req=True, update=False),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
 
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
