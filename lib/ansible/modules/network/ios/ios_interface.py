@@ -461,7 +461,7 @@ def main():
 
     if failed_conditions:
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions, changed=result['changed'])
 
     module.exit_json(**result)
 
