@@ -1,9 +1,13 @@
 <ul class="wy-breadcrumbs">
   <li><a href="{{ pathto(master_doc) }}">Docs</a> &raquo;</li>
   <li><a href="">{{ title }}</a></li>
-  {% if not pagename.endswith('_module') and (not 'list_of' in pagename) and (not 'category' in pagename) %}
+  {% if pagename.endswith('_module') %}
     <li class="wy-breadcrumbs-aside">
-      <a href="https://github.com/ansible/ansible/blob/devel/docs/docsite/rst/{{ pagename }}.rst" class="icon icon-github"> Edit on GitHub</a>
+      <a href="https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/{{ meta.get('source', '') }}" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  {% elif (not 'list_of' in pagename) and (not 'category' in pagename) %}
+    <li class="wy-breadcrumbs-aside">
+      <a href="https://github.com/ansible/ansible/edit/devel/docs/docsite/rst/{{ pagename }}.rst" class="icon icon-github"> Edit on GitHub</a>
     </li>
   {% endif %}
 </ul>
