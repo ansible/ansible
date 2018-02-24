@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_bd
-short_description: Manage Bridge Domains (BD) on Cisco ACI Fabrics (fv:BD)
+short_description: Manage Bridge Domains (BD) objects (fv:BD)
 description:
 - Manages Bridge Domains (BD) on Cisco ACI Fabrics.
 notes:

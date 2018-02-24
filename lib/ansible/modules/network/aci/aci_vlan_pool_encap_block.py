@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_vlan_pool_encap_block
-short_description: Manage encap blocks assigned to VLAN pools on Cisco ACI fabrics (fvns:EncapBlk)
+short_description: Manage encap blocks assigned to VLAN pools (fvns:EncapBlk)
 description:
 - Manage VLAN encap blocks that are assigned to VLAN pools on Cisco ACI fabrics.
 notes:

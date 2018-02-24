@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_span_src_group_to_dst_group
-short_description: Manage SPAN source group to destination group bindings on Cisco ACI fabrics (span:SpanLbl)
+short_description: Bind SPAN source groups to destination groups (span:SpanLbl)
 description:
-- Manage SPAN source groups' associated destinaton group on Cisco ACI fabrics.
+- Bind SPAN source groups to associated destinaton groups on Cisco ACI fabrics.
 notes:
 - The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.

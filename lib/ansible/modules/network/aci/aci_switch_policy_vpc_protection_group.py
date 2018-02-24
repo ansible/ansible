@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_switch_policy_vpc_protection_group
-short_description: Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics (fabric:ExplicitGEp, fabric:NodePEp).
+short_description: Manage switch policy explicit vPC protection groups (fabric:ExplicitGEp, fabric:NodePEp).
 description:
-- Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics.
+- Manage switch policy explicit vPC protection groups on Cisco ACI fabrics.
 notes:
 - More information from the internal APIC class
   I(fabric:ExplicitGEp) and I(fabric:NodePEp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).

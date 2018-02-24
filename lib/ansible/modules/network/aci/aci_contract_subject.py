@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract_subject
-short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Subj)
+short_description: Manage initial Contract Subjects (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
 notes:

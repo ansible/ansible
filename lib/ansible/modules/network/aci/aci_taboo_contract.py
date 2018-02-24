@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_taboo_contract
-short_description: Manage taboo contracts on Cisco ACI fabrics (vz:BrCP)
+short_description: Manage taboo contracts (vz:BrCP)
 description:
 - Manage taboo contracts on Cisco ACI fabrics.
 notes:
