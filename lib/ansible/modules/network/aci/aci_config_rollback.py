@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: aci_config_rollback
 short_description: Provides rollback and rollback preview functionality (config:ImportP)
 description:
-- Provides rollback and rollback preview functionality for Cisco ACI fabric.
+- Provides rollback and rollback preview functionality for Cisco ACI fabrics.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
 notes:
 - More information from the internal APIC class I(config:ImportP) at
