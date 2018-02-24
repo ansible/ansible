@@ -541,7 +541,7 @@ class AzureRMModuleBase(object):
         auth_source = params.get('auth_source', None)
         if not auth_source:
             auth_source = os.environ.get('ANSIBLE_AZURE_AUTH_SOURCE', 'auto')
-        
+
         if auth_source == 'msi':
             self.log('Retrieving credenitals from MSI')
             return self._get_msi_credentials(arg_credentials['subscription_id'])
