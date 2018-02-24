@@ -41,10 +41,10 @@
       tags: test_amazon_rds
       assert:
         that:
-          - 'rds_result|changed'
-          - 'not rds_instance_result|changed'
-          - 'not rds_result|failed'
-          - 'not rds_instance_result|failed'
+          - 'rds_result is changed'
+          - 'not rds_instance_result is changed'
+          - 'not rds_result is failed'
+          - 'not rds_instance_result is failed'
 
 
     # note; we probably inherit the RDS from the previous test
@@ -162,8 +162,8 @@
       tags: test_amazon_rds
       assert:
         that:
-          - 'not result|changed'
-          - 'not result|failed'
+          - 'not result is changed'
+          - 'not result is failed'
           - 'result.instance.storage_type == "gp2"'
 
     - name: Given that I have an RDS with SSD disks

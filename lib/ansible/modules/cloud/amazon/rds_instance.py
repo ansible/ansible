@@ -428,7 +428,8 @@ def await_resource(conn, instance_id, status, module, await_pending=None):
     wait_timeout = module.params.get('wait_timeout') + time.time()
     # Refresh the resource immediately in case we just changed it's state;
     # should we sleep first?
-    assert instance_id is not None
+    if instance_id is None:
+        raise AssertionError("internal error, no instance id given to wait for")
     resource = get_db_instance(conn, instance_id)
     main_logger.log(50, "await_resource called for " + instance_id)
     main_logger.log(40, "wait is {0} {1} await_pending is {2} status is {3}".format(

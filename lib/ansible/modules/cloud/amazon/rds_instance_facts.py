@@ -108,7 +108,8 @@ def instance_facts(module, conn):
 
     if instance_name:
         results = [x for x in results if x['DBInstanceIdentifier'] == instance_name]
-        assert len(results) == 1
+        if len(results) != 1:
+            raise AssertionError
 
     # FIXME: Get tags for each response
     # for instance in results:

@@ -79,6 +79,6 @@ def test_snapshot_facts_should_return_facts():
 
     facts_return = rds_s_f.snapshot_facts(module_double, rds_client_double)
 
-    rds_client_double.describe_db_snapshots.assert_called_once()
+    assert rds_client_double.describe_db_snapshots.call_count == 1
     module_double.fail_json.assert_not_called()
     assert not facts_return["changed"], "facts module returned changed!!"

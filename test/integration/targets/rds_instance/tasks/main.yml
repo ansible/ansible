@@ -100,7 +100,7 @@
     - name: check check mode said changed
       assert:
         that:
-         - rds_instance_check_mode|changed
+         - rds_instance_check_mode is changed
 
     - name: ensure non-existent instance is still not present
       rds_instance:
@@ -114,7 +114,7 @@
 
     - name: check check mode said changed
       assert:
-        that: not rds_non_existant_recheck|changed
+        that: not rds_non_existant_recheck is changed
 
     - name: ensure non-existent snapshot is not present
       rds_snapshot:
@@ -148,7 +148,7 @@
     - name: check that create instance worked
       assert:
         that:
-          - rds_instance|changed
+          - rds_instance is changed
           - "'TagOne' in rds_instance.instance.tags and rds_instance.instance.tags.TagOne == 'hello'"
           - "'TagTwo' in rds_instance.instance.tags and rds_instance.instance.tags.TagTwo == 'world'"
 
@@ -221,7 +221,7 @@
     - name: check that tag modification worked
       assert:
         that:
-          - rds_instance|changed
+          - rds_instance is changed
           - "'TagOne' in rds_instance.instance.tags and rds_instance.instance.tags.TagOne == 'hello'"
           - "'TagTwo' in rds_instance.instance.tags and rds_instance.instance.tags.TagTwo == 'world'"
           - "'this' in rds_instance.instance.tags and rds_instance.instance.tags.this == 'that'"
@@ -254,7 +254,7 @@
     - name: check that tag purging worked
       assert:
         that:
-          - rds_instance|changed
+          - rds_instance is changed
           - "'this' in rds_instance.instance.tags and rds_instance.instance.tags.this == 'that'"
           - "'thee' in rds_instance.instance.tags and rds_instance.instance.tags.thee == 'thou'"
           - "'then' in rds_instance.instance.tags and rds_instance.instance.tags.then == 'where'"
@@ -315,7 +315,7 @@
 
     - name: check modify instance changed
       assert:
-        that: rds_instance_modify|changed
+        that: rds_instance_modify is changed
 
     - name: fail to modify rds instance in check mode
       rds_instance:
@@ -337,7 +337,7 @@
     - name: check check mode said changed
       assert:
         that:
-         - rds_instance_modify_check_mode|changed
+         - rds_instance_modify_check_mode is changed
 
     - name: "give same parameters as before so don't modify rds instance"
       rds_instance:
@@ -357,7 +357,7 @@
 
     - name: check non modify worked
       assert:
-        that: not rds_instance_no_modify|changed
+        that: not rds_instance_no_modify is changed
 
     - name: create rds replica
       rds_instance:

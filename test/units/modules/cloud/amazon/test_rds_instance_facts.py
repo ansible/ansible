@@ -131,7 +131,7 @@ def test_instance_facts_should_return_facts():
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
-    rds_client_double.describe_db_instances.assert_called_once()
+    assert rds_client_double.describe_db_instances.call_count == 1
     assert not facts_return["changed"], "facts module returned changed!!"
 
 
@@ -152,6 +152,6 @@ def test_instance_facts_should_filter_extra_matching_facts():
     print("rds calls:\n" + str(rds_client_double.mock_calls))
     print("module calls:\n" + str(module_double.mock_calls))
 
-    rds_client_double.describe_db_instances.assert_called_once()
+    assert rds_client_double.describe_db_instances.call_count == 1
     assert len(facts_return['db_instances']) == 1
     assert not facts_return["changed"], "facts module returned changed!!"

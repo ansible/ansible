@@ -90,7 +90,8 @@ def get_snapshot(conn, snapshotid):
 
 
 def snapshot_to_facts(snapshot):
-    assert 'DBSnapshotIdentifier' in snapshot, "snapshot argument was not a valid snapshot"
+    if 'DBSnapshotIdentifier' not in snapshot:
+        raise AssertionError("snapshot argument was not a valid snapshot")
     return camel_dict_to_snake_dict(snapshot)
 
 
@@ -114,7 +115,8 @@ def instance_facts_diff(connection, state_a, state_b):
     operations_model = connection._service_model.operation_model("CreateDBInstance")
     compare_keys = [xform_name(x) for x in operations_model.input_shape.members.keys()]
 
-    assert len(compare_keys) > 1
+    if len(compare_keys) < 2:
+        raise AssertionError
 
     remove_if_null = []
     before = dict()
