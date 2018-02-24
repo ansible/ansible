@@ -137,6 +137,10 @@ class KerberosTicket(object):
     def ticket_expiry_datetime(self):
         return datetime.datetime.strptime(' '.join(self.ticket.split()[2:4]), '%m/%d/%Y %H:%M:%S')
 
+    @property
+    def ticket_renewal_required(self):
+        return self.max_ticket_expiry_datetime > self.ticket_expiry_datetime
+
     def get_existing_ticket(self):
         rc, out, err = self.module.run_command([self.klist, '-A'])
 
@@ -160,14 +164,6 @@ class KerberosTicket(object):
                         break
 
         return self.cache_name, self.ticket
-
-    def renew_ticket(self):
-        if self.max_ticket_expiry_datetime > self.ticket_expiry_datetime:
-            rc, err = self.generate_new_ticket()
-        else:
-            rc = -1
-            err = 'An existing ticket has yet to expire'
-        return rc, err
 
     def generate_new_ticket(self):
         cmd = shlex.split('{0} {1} -l {2}'.format(self.kinit, self.principal, self.lifetime))
@@ -211,7 +207,7 @@ def main():
     if ticket is None:
         if kerberos_ticket.state == 'present':
             if module.check_mode:
-                module.exit_json(changed=True)
+                module.exit_json(changed=True, msg='Obtained a Kerberos ticket')
 
             rc, err = kerberos_ticket.generate_new_ticket()
 
@@ -221,31 +217,26 @@ def main():
                 module.exit_json(changed=True, msg='Obtained a Kerberos ticket', cache_name=cache_name)
 
         elif kerberos_ticket.state == 'absent':
-            if module.check_mode:
-                module.exit_json(changed=False)
-
             module.exit_json(changed=False, msg='No existing Kerberos tickets to destroy', cache_name=cache_name)
 
     else:
         if kerberos_ticket.state == 'present':
-            if module.check_mode:
-                if kerberos_ticket.max_ticket_expiry_datetime > kerberos_ticket.ticket_expiry_datetime:
-                    module.exit_json(changed=True)
+            if kerberos_ticket.ticket_renewal_required:
+                if module.check_mode:
+                    module.exit_json(changed=True, msg='Renewed an existing Kerberos ticket', cache_name=cache_name)
+
+                rc, err = kerberos_ticket.generate_new_ticket()
+
+                if rc != 0:
+                    module.fail_json(msg='Failed to obtain a Kerberos ticket', rc=rc, err=err)
                 else:
-                    module.exit_json(changed=False)
-
-            rc, err = kerberos_ticket.renew_ticket()
-
-            if rc == -1:
-                module.exit_json(changed=False, msg='An existing Kerberos ticket has yet to expire', cache_name=cache_name)
-            elif rc != 0:
-                module.fail_json(msg='Failed to obtain a Kerberos ticket', rc=rc, err=err)
+                    module.exit_json(changed=True, msg='Renewed an existing Kerberos ticket', cache_name=cache_name)
             else:
-                module.exit_json(changed=True, msg='Renewed an existing Kerberos ticket', cache_name=cache_name)
+                module.exit_json(changed=False, msg='An existing Kerberos ticket has yet to expire', cache_name=cache_name)
 
         elif kerberos_ticket.state == 'absent':
             if module.check_mode:
-                module.exit_json(changed=True)
+                module.exit_json(changed=True, msg='Kerberos tickets destroyed')
 
             kerberos_ticket.destroy_tickets()
 
