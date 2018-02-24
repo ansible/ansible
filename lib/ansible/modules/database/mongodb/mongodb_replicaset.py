@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 from collections import OrderedDict
+from copy import deepcopy
 
 ANSIBLE_METADATA = {'metadata_version': '0.1',
                     'status': ['preview'],
@@ -117,7 +118,8 @@ cat << EOF > /tmp/args.json
 {
     "ANSIBLE_MODULE_ARGS": {
 	    "replica_set": "rs0",
-	    "members": "localhost:27017,localhost:27018,localhost:27019"
+	    "members": "localhost:27017,localhost:27018,localhost:27019",
+        "debug": true
     }
 }
 EOF
@@ -340,7 +342,7 @@ def replicaset_find(client):
     return False
 
 
-def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
+def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis, debug):
 
     members_dict_list = []
     index = 0
@@ -366,8 +368,10 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
                             ("members", members_dict_list),
                             ("settings", settings)
     ])
-    print(conf)
-    client["admin"].command('replSetInitiate', conf)
+    if debug: # doesn't output when called in playbook
+        module.exit_json(changed=False, replica_set=replica_set, conf=conf, msg="debug active replSetInitiate command not executed")
+    else:
+        client["admin"].command('replSetInitiate', conf)
 
 def replicaset_remove(module, client, replica_set):
     raise NotImplementedError
@@ -405,6 +409,8 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_database=dict(default="admin"),
+            login_host=dict(default="localhost"),
+            login_port=dict(default=27017),
             replica_set=dict(default=None),
             members=dict(required=False, default="{{ ansible_play_hosts }}"),
             arbiter_at_index=dict(required=False, default=None, type='int'),
@@ -414,7 +420,8 @@ def main():
             protocolVersion=dict(required=False, default=1, type='int', choices=[ 0, 1 ]),
             chainingAllowed=dict(required=False, default=True, type='bool'),
             heartbeatTimeoutSecs=dict(required=False, default=10, type='int'),
-            electionTimeoutMillis=dict(required=False, default=10000, type='int')
+            electionTimeoutMillis=dict(required=False, default=10000, type='int'),
+            debug=dict(required=False, default=False, type='bool')
         ),
         supports_check_mode=True
     )
@@ -425,6 +432,8 @@ def main():
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_database = module.params['login_database']
+    login_host = module.params['login_host']
+    login_port = module.params['login_port']
 
     replica_set = module.params['replica_set']
     members = module.params['members']
@@ -435,13 +444,14 @@ def main():
     chainingAllowed = module.params['chainingAllowed']
     heartbeatTimeoutSecs = int(module.params['heartbeatTimeoutSecs'])
     electionTimeoutMillis = int(module.params['electionTimeoutMillis'])
+    debug = module.params['debug']
 
     # convert members to python list if it's a commas seperated string
     if isinstance(members, str) and "," in members:
         temp = []
         for m in members.split(","):
             temp.append(m)
-        members = temp
+        members = deepcopy(temp)
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
@@ -449,11 +459,6 @@ def main():
         if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
             raise Exception # TODO Error properly here
 
-    if ':' in members[0]:
-        login_host, login_port = members[0].split(':')
-    else:
-        login_host = members[0]
-        login_port = 27017
     try:
 
         connection_params = {
@@ -486,7 +491,7 @@ def main():
                 if login_user is not None and login_password is not None:
                     client.admin.authenticate(login_user, login_password, source=login_database)
                 else:
-                    raise excep
+                    raise exceps
             else:
                 raise excep
 
@@ -504,7 +509,7 @@ def main():
             else:
                 module.exit_json(changed=False, replica_set=replica_set)
         if not replicaset_find(client):
-            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis, debug)
             replicaset_created = True
         else:
             rs = replicaset_find(client)
