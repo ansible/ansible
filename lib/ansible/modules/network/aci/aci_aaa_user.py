@@ -16,7 +16,7 @@ DOCUMENTATION = r'''
 module: aci_aaa_user
 short_description: Manage AAA users (aaa:User)
 description:
-- Manage AAA users.
+- Manage AAA users on Cisco ACI fabrics.
 notes:
 - This module is not idempotent when C(aaa_password) is being used
   (even if that password was already set identically). This

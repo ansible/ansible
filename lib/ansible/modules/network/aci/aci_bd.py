@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: aci_bd
 short_description: Manage Bridge Domains (BD) objects (fv:BD)
 description:
-- Manages Bridge Domains (BD) on Cisco ACI Fabrics.
+- Manages Bridge Domains (BD) on Cisco ACI fabrics.
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
