@@ -102,7 +102,7 @@ Function New-LegacySelfSignedCert
     $key = New-Object -COM "X509Enrollment.CX509PrivateKey.1"
     $key.ProviderName = "Microsoft Enhanced RSA and AES Cryptographic Provider"
     $key.KeySpec = 1
-    $key.Length = 3072
+    $key.Length = 4096
     $key.SecurityDescriptor = "D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)"
     $key.MachineContext = 1
     $key.ExportPolicy = 1
