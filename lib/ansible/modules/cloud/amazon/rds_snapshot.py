@@ -93,7 +93,7 @@ from ansible.module_utils.aws.rds import get_snapshot, snapshot_to_facts
 def await_resource(conn, resource_name, status, module):
     wait_timeout = module.params.get('wait_timeout') + time.time()
     resource = get_snapshot(conn, resource_name)
-    while wait_timeout > time.time() and resource['Status'] != status:
+    while not resource or (wait_timeout > time.time() and resource['Status'] != status):
         time.sleep(5)
         if wait_timeout <= time.time():
             module.fail_json(msg="Timeout waiting for RDS resource %s" % resource_name)
