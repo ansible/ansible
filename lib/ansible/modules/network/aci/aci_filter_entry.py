@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_filter_entry
-short_description: Manage filter entries on Cisco ACI fabrics (vz:Entry)
+short_description: Manage filter entries (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
 notes:

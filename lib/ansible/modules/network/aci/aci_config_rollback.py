@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_config_rollback
-short_description: Provides rollback and rollback preview functionality for Cisco ACI fabrics (config:ImportP)
+short_description: Provides rollback and rollback preview functionality (config:ImportP)
 description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabric.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.

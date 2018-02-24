@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_bd_to_l3out
-short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
+short_description: Bind Bridge Domain to L3 Out (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
 notes:

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_monitoring_policy
-short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
+short_description: Manage monitoring policies (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
 notes:
