@@ -342,7 +342,7 @@ def replicaset_find(client):
     return False
 
 
-def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis, debug):
+def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
 
     members_dict_list = []
     index = 0
@@ -368,10 +368,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
                             ("members", members_dict_list),
                             ("settings", settings)
     ])
-    if debug: # doesn't output when called in playbook
-        module.exit_json(changed=False, replica_set=replica_set, conf=conf, msg="debug active replSetInitiate command not executed")
-    else:
-        client["admin"].command('replSetInitiate', conf)
+    client["admin"].command('replSetInitiate', conf)
 
 def replicaset_remove(module, client, replica_set):
     raise NotImplementedError
@@ -509,7 +506,7 @@ def main():
             else:
                 module.exit_json(changed=False, replica_set=replica_set)
         if not replicaset_find(client):
-            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis, debug)
+            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion, chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
             replicaset_created = True
         else:
             rs = replicaset_find(client)
