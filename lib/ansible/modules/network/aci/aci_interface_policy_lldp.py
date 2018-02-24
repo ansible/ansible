@@ -41,7 +41,6 @@ options:
   transmit_state:
     description:
     - Enable or Disable Transmit state.
-    required: false
     choices: [ disabled, enabled ]
     default: enabled
   state:

@@ -16,11 +16,11 @@ The Cisco Application Centric Infrastructure (ACI) allows application requiremen
 
 Application Policy Infrastructure Controller (APIC)
 ...................................................
-The Cisco Application Policy Infrastructure Controller (APIC) API enables applications to directly connect with a secure, shared, high-performance resource pool that includes network, compute, and storage capabilities.
-
 The APIC manages the scalable ACI multi-tenant fabric. The APIC provides a unified point of automation and management, policy programming, application deployment, and health monitoring for the fabric. The APIC, which is implemented as a replicated synchronized clustered controller, optimizes performance, supports any application anywhere, and provides unified operation of the physical and virtual infrastructure.
 
 The APIC enables network administrators to easily define the optimal network for applications. Data center operators can clearly see how applications consume network resources, easily isolate and troubleshoot application and infrastructure problems, and monitor and profile resource usage patterns.
+
+The Cisco Application Policy Infrastructure Controller (APIC) API enables applications to directly connect with a secure, shared, high-performance resource pool that includes network, compute, and storage capabilities.
 
 
 ACI Fabric
@@ -400,14 +400,15 @@ The below example waits until the cluster is fully-fit. In this example you know
 
 APIC error messages
 -------------------
-The following error messages may occur and this section can help you understand what exactly is going on.
+The following error messages may occur and this section can help you understand what exactly is going on and how to fix/avoid them.
 
     APIC Error 122: unknown managed object class 'polUni'
-        In case you receive this error while you are certain your :ref:`aci_rest <aci_rest>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload.
+        In case you receive this error while you are certain your :ref:`aci_rest <aci_rest>` payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
 
 
     APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag
         Although the JSON specification allows unordered elements, the APIC REST API requires that the JSON ``attributes`` element precede the ``children`` array or other elements. So you need to ensure that your payload conforms to this requirement. Sorting your dictionary keys will do the trick just fine. If you don't have any attributes, it may be necessary to add: ``attributes: {}`` as the APIC does expect the entry to proceed any ``children``.
+
 
     APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'
         Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
@@ -417,9 +418,9 @@ The following error messages may occur and this section can help you understand 
 
 Known issues
 ------------
-The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of :ref:`the aci_rest module <aci_rest>`.
+The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of this module.
 
-All below issues either have been reported to the vendor, or can simply be avoided.
+All below issues either have been reported to the vendor, and most can simply be avoided.
 
     Too many consecutive API calls may result in connection throttling
         Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
@@ -457,14 +458,14 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
 .. seealso::
 
    :ref:`network_guide`
-       Ansible for Network Automation
+       A detailed guide on how to use Ansible for automating network infrastructure.
    :ref:`List of ACI modules <aci_network_modules>`
-       A complete list of supported ACI modules
+       A complete list of supported ACI modules.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
-       The Ansible ACI community wiki page, includes roadmap, ideas and development documentation
+       The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
-       The Ansible Network community page, includes contact information and meeting information
+       The Ansible Network community page, includes contact information and meeting information.
    `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
-       The #ansible-network IRC chat channel on Freenode.net
+       The #ansible-network IRC chat channel on Freenode.net.
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
