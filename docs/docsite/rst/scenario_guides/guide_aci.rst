@@ -3,6 +3,7 @@
 Cisco ACI Guide
 ===============
 
+
 .. _aci_guide_intro:
 
 What is Cisco ACI ?
@@ -12,6 +13,7 @@ Application Centric Infrastructure (ACI)
 ........................................
 The Cisco Application Centric Infrastructure (ACI) allows application requirements to define the network. This architecture simplifies, optimizes, and accelerates the entire application deployment life cycle.
 
+
 Application Policy Infrastructure Controller (APIC)
 ...................................................
 The Cisco Application Policy Infrastructure Controller (APIC) API enables applications to directly connect with a secure, shared, high-performance resource pool that includes network, compute, and storage capabilities.
@@ -19,6 +21,7 @@ The Cisco Application Policy Infrastructure Controller (APIC) API enables applic
 The APIC manages the scalable ACI multi-tenant fabric. The APIC provides a unified point of automation and management, policy programming, application deployment, and health monitoring for the fabric. The APIC, which is implemented as a replicated synchronized clustered controller, optimizes performance, supports any application anywhere, and provides unified operation of the physical and virtual infrastructure.
 
 The APIC enables network administrators to easily define the optimal network for applications. Data center operators can clearly see how applications consume network resources, easily isolate and troubleshoot application and infrastructure problems, and monitor and profile resource usage patterns.
+
 
 ACI Fabric
 ..........
@@ -31,6 +34,7 @@ The ACI fabric object-oriented operating system (OS) runs on each Cisco Nexus 90
 All the switch nodes contain a complete copy of the concrete model. When an administrator creates a policy in the APIC that represents a configuration, the APIC updates the logical model. The APIC then performs the intermediate step of creating a fully elaborated policy that it pushes into all the switch nodes where the concrete model is updated.
 
 The APIC is responsible for fabric activation, switch firmware management, network policy configuration, and instantiation. While the APIC acts as the centralized policy and network management engine for the fabric, it is completely removed from the data path, including the forwarding topology. Therefore, the fabric can still forward traffic even when communication with the APIC is lost.
+
 
 More information
 ................
@@ -62,6 +66,7 @@ For instance ensuring that a specific tenant exists, is done using the following
         state: present
 
 A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+
 
 Common parameters
 .................
@@ -100,6 +105,7 @@ Every Ansible ACI module accepts the following parameters that influence the mod
     output_level
         Influence the level of detail ACI modules return to the user. (One of ``normal``, ``info`` or ``debug``) *New in version 2.5*
 
+
 Proxy support
 .............
 By default, if an environment variable ``<protocol>_proxy`` is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see :ref:`playbooks_environment`), or by using the ``use_proxy`` module parameter.
@@ -109,6 +115,7 @@ HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your p
 If you don't need proxy support, but the system may have it configured nevertheless, you can add this parameter setting: ``use_proxy: no`` to avoid accidental proxy usage.
 
 .. hint:: Selective proxy support using the ``no_proxy`` environment variable is also supported.
+
 
 Return values
 .............
@@ -149,6 +156,7 @@ The following values are returned when ``output_level: debug`` or ``ANSIBLE_DEBU
         The url used for the request.
 
 .. note:: The module return values are documented in detail as part of each module's documentation.
+
 
 More information
 ................
@@ -251,11 +259,12 @@ Using ACI REST with Ansible
 ---------------------------
 While already a lot of ACI modules exists in the Ansible distribution, and the most common actions can be performed with these existing modules, there's always something that may not be possible with off-the-shelf modules.
 
-:ref:`The aci_rest module <aci_rest>` provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
+The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
+
 
 Using the aci-rest module
 .........................
-:ref:`The aci_rest module <aci_rest>` accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
+The :ref:`aci_rest <aci_rest>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
 
 When you're making modifications, you can use the POST or DELETE methods, whereas doing just queries require the GET method.
 
@@ -322,13 +331,14 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         description: Customer XYZ
         state: present
 
+
 More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
 
-- :ref:`The apic_rest Ansible module documentation <aci_rest>`
-- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_-- Detailed guide on how the APIC REST API is designed and used, incl. many examples
-- `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_-- Complete reference of the APIC object model
+- :ref:`The aci_rest module documentation <aci_rest>`
+- `APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_ -- Detailed guide on how the APIC REST API is designed and used, incl. many examples
+- `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_ -- Complete reference of the APIC object model
 - `Cisco DevNet Learning Labs about ACI and REST <https://learninglabs.cisco.com/labs/tags/ACI,REST>`_
 
 
@@ -338,6 +348,7 @@ Operational examples
 --------------------
 Here is a small overview of useful operational tasks to reuse in your playbooks.
 Feel free to contribute more snippets that are useful to others.
+
 
 Waiting for all controllers to be ready
 .......................................
@@ -357,6 +368,7 @@ You can use the below task after you started to build your APICs and configured 
       until: aci_ready|success and aci_ready.totalCount|int >= groups['apic']|count
       retries: 20
       delay: 30
+
 
 Waiting for cluster to be fully-fit
 ...................................
@@ -405,7 +417,7 @@ The following error messages may occur and this section can help you understand 
 
 Known issues
 ------------
-:ref:`The aci_rest module <aci_rest>` is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of :ref:`the aci_rest module <aci_rest>`.
+The :ref:`aci_rest <aci_rest>` module is a wrapper around the APIC REST API. As a result any issues related to the APIC will be reflected in the use of :ref:`the aci_rest module <aci_rest>`.
 
 All below issues either have been reported to the vendor, or can simply be avoided.
 
@@ -452,7 +464,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests and 
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
-       Have a question?  Stop by the google group!
    `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
        The #ansible-network IRC chat channel on Freenode.net
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+       Have a question?  Stop by the google group!
