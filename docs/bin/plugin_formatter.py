@@ -89,7 +89,7 @@ def rst_ify(text):
     try:
         t = _ITALIC.sub(r"*\1*", text)
         t = _BOLD.sub(r"**\1**", t)
-        t = _MODULE.sub(r":ref:`\1`", t)
+        t = _MODULE.sub(r":ref:`\1 <\1>`", t)
         t = _URL.sub(r"\1", t)
         t = _CONST.sub(r"`\1`", t)
     except Exception as e:
