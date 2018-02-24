@@ -28,7 +28,7 @@ description:
 options:
     authkey:
         description:
-            - Authentication key provided by the dashboard.
+            - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
         required: no
     host:
         description:
@@ -69,6 +69,9 @@ options:
     content:
         description:
             - Raw content which should be fed in body.
+    src:
+        description:
+            - Name of absolute path of the filename which contains content to be fed to Meraki Dashboard. Must be in JSON format.
 
 author:
     - Kevin Breit (@kbreit)
@@ -85,6 +88,16 @@ EXAMPLES = '''
     use_ssl: yes
   delegate_to: localhost
 
+- name: Create network
+  sda_rest:
+    authkey: abc12345
+    host: dashboard.meraki.com
+    method: post
+    path: /api/v0/organizations/133277/networks
+    src: /home/username/network.json
+    use_ssl: yes
+  delegate_to: localhost
+
 '''
 
 RETURN = '''
@@ -95,9 +108,8 @@ response:
 '''
 
 import os
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.basic import json
 from ansible.module_utils._text import to_native
 
 
@@ -109,11 +121,12 @@ def main():
                        host=dict(type='str', required=True),
                        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
                        path=dict(type='path', required=True),
-                       timeout=dict(type='int', default=30, required=False),
-                       use_proxy=dict(type='bool', default=False, required=False),
-                       use_ssl=dict(type='bool', default=True, required=False),
-                       validate_certs=dict(type='bool', default=True, required=False),
-                       content=dict(type='raw', required=False),
+                       timeout=dict(type='int', default=30),
+                       use_proxy=dict(type='bool', default=False),
+                       use_ssl=dict(type='bool', default=True),
+                       validate_certs=dict(type='bool', default=True),
+                       content=dict(type='raw'),
+                       src=dict(type='path'),
     )
     
 
@@ -134,6 +147,7 @@ def main():
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False,
+        mutually_exclusive=[['content', 'src']],
     )
     module.params['follow_redirects'] = 'all'
         
@@ -146,7 +160,19 @@ def main():
         module.fail_json(msg='Meraki Dashboard API key not set')
 
     path = module.params['path']
-    payload = module.params['content']
+    payload = None
+    
+    if module.params['content']:
+        payload = module.params['content']
+    elif module.params['src']:
+        src = module.params['src']
+        file_exists = False
+        if os.path.isfile(src):
+            file_exists = True
+            with open(src, 'r') as config_object:
+                payload = config_object.read()
+        else:
+            module.fail_json(msg="File does not exist")
 
     if payload:
         payload = json.dumps(payload)
@@ -167,7 +193,8 @@ def main():
 
     url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json',
-               'X-Cisco-Meraki-API-Key': module.params['authkey']}
+               'X-Cisco-Meraki-API-Key': module.params['authkey'],
+              }
 
     try:
         resp, info = fetch_url(module, url,
@@ -180,11 +207,6 @@ def main():
                                )
     except Exception as e:
         module.fail_json(msg=e)
-    module.warn(to_native(info['status']))
-    module.warn(info['url'])
-
-    if module.params['method'].upper() == "POST" and info['status'] == 200:
-        module.exit_json(msg=info['status'])
 
     if info['status'] >= 300:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
