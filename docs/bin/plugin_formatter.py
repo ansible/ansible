@@ -240,6 +240,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
 
         # save all the information
         module_info[module] = {'path': module_path,
+                               'source': os.path.relpath(module_path, module_dir),
                                'deprecated': deprecated,
                                'aliases': set(),
                                'metadata': metadata,
@@ -413,6 +414,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         doc['option_keys'] = option_names
         doc['filename'] = fname
+        doc['source'] = module_map[module]['source']
         doc['docuri'] = doc['module'].replace('_', '-')
         doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
         doc['ansible_version'] = ansible_version
