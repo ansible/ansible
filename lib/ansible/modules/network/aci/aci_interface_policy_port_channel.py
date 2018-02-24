@@ -26,7 +26,7 @@ options:
   port_channel:
     description:
     - Name of the port channel.
-    required: true
+    required: yes
     aliases: [ name ]
   description:
     description:
@@ -49,48 +49,48 @@ options:
     - Port channel interface policy mode.
     - Determines the LACP method to use for forming port-channels.
     - The APIC defaults new Port Channel Polices to C(off).
-    choices: [ active, mac-pin, mac-pin-nicload, off, passive ]
-    default: off
+    choices: [ active, mac-pin, mac-pin-nicload, 'off', passive ]
+    default: 'off'
   fast_select:
     description:
     - Determines if Fast Select is enabled for Hot Standby Ports.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults new LACP Policies to C(yes).
     type: bool
-    default: true
+    default: 'yes'
   graceful_convergence:
     description:
     - Determines if Graceful Convergence is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults new LACP Policies to C(yes).
     type: bool
-    default: true
+    default: 'yes'
   load_defer:
     description:
     - Determines if Load Defer is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(false).
+    - The APIC defaults new LACP Policies to C(no).
     type: bool
-    default: false
+    default: 'no'
   suspend_individual:
     description:
     - Determines if Suspend Individual is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults new LACP Policies to C(yes).
     type: bool
-    default: true
+    default: 'yes'
   symmetric_hash:
     description:
     - Determines if Symmetric Hashing is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(false).
+    - The APIC defaults new LACP Policies to C(no).
     type: bool
-    default: false
+    default: 'no'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
