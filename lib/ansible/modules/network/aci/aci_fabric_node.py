@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_fabric_node
-short_description: Add a new Fabric Node Member on Cisco ACI fabrics (fabric:NodeIdentP)
+short_description: Manage Fabric Node Members (fabric:NodeIdentP)
 description:
-- Add a new Fabric Node Member on Cisco ACI fabrics.
+- Manage Fabric Node Members on Cisco ACI fabrics.
 notes:
 - More information from the internal APIC class
   I(fabric:NodeIdentP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).

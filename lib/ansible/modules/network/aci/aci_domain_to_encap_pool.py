@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_domain_to_encap_pool
-short_description: Bind Domain to Encap Pools on Cisco ACI fabrics (infra:RsVlanNs)
+short_description: Bind Domain to Encap Pools (infra:RsVlanNs)
 description:
 - Bind Domain to Encap Pools on Cisco ACI fabrics.
 notes:

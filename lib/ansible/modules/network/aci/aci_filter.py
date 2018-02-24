@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_filter
-short_description: Manages top level filter objects on Cisco ACI fabrics (vz:Filter)
+short_description: Manages top level filter objects (vz:Filter)
 description:
 - Manages top level filter objects on Cisco ACI fabrics.
 - This modules does not manage filter entries, see M(aci_filter_entry) for this functionality.

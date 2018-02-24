@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_vrf
-short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabrics (fv:Ctx)
+short_description: Manage contexts or VRFs (fv:Ctx)
 description:
-- Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
+- Manage contexts or VRFs on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
