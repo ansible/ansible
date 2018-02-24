@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract
-short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
+short_description: Manage contract resources (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
 notes:

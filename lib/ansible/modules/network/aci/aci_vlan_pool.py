@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_vlan_pool
-short_description: Manage VLAN pools on Cisco ACI fabrics (fvns:VlanInstP)
+short_description: Manage VLAN pools (fvns:VlanInstP)
 description:
 - Manage VLAN pools on Cisco ACI fabrics.
 notes:

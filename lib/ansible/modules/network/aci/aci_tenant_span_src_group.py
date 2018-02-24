@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_span_src_group
-short_description: Manage SPAN source groups on Cisco ACI fabrics (span:SrcGrp)
+short_description: Manage SPAN source groups (span:SrcGrp)
 description:
 - Manage SPAN source groups on Cisco ACI fabrics.
 notes:

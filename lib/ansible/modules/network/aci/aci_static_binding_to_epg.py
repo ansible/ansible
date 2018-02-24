@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_static_binding_to_epg
-short_description: Bind static paths to EPGs on Cisco ACI fabrics (fv:RsPathAtt)
+short_description: Bind static paths to EPGs (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
 notes:

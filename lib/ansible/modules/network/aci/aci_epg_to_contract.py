@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_contract
-short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
+short_description: Bind EPGs to Contracts (fv:RsCons, fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
 notes:

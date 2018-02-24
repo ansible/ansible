@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant
-short_description: Manage tenants on Cisco ACI fabrics (fv:Tenant)
+short_description: Manage tenants (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
 notes:

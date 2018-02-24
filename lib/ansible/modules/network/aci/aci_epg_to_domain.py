@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_domain
-short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
+short_description: Bind EPGs to Domains (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
 notes:

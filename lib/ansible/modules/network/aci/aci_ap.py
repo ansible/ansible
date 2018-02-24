@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_ap
-short_description: Manage top level Application Profile (AP) objects on Cisco ACI fabrics (fv:Ap)
+short_description: Manage top level Application Profile (AP) objects (fv:Ap)
 description:
 - Manage top level Application Profile (AP) objects on Cisco ACI fabrics
 notes:
