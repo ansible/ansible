@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_firmware_source
-short_description: Manage firmware image sources on Cisco ACI fabrics (firmware:OSource)
+short_description: Manage firmware image sources (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
 author:

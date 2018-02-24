@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_port_channel
-short_description: Manage port channel interface policies on Cisco ACI fabrics (lacp:LagPol)
+short_description: Manage port channel interface policies (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
 notes:

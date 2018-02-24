@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_mcp
-short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol)
+short_description: Manage MCP interface policies (mcp:IfPol)
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
 notes:

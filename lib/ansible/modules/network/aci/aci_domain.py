@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_domain
-short_description: Manage physical, virtual, bridged, routed or FC domain profiles (*:DomP)
+short_description: Manage physical, virtual, bridged, routed or FC domain profiles (phys:DomP, vmm:DomP, l2ext:DomP, l3ext:DomP, fc:DomP)
 description:
 - Manage physical, virtual, bridged, routed or FC domain profiles.
 notes:

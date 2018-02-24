@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_config_snapshot
-short_description: Manage Config Snapshots on Cisco ACI fabrics (config:Snapshot, config:ExportP)
+short_description: Manage Config Snapshots (config:Snapshot, config:ExportP)
 description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.

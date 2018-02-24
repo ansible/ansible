@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_access_port_to_interface_policy_leaf_profile
-short_description: Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
+short_description: Manage Fabric interface policy leaf profile interface selectors (infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk)
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
 notes:
