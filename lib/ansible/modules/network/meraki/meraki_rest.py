@@ -29,7 +29,7 @@ options:
     authkey:
         description:
             - Authentication key provided by the dashboard.
-        required: yes
+        required: no
     host:
         description:
             - FQDN or IP address of Meraki dashboard.
@@ -94,7 +94,7 @@ response:
     returned: info
 '''
 
-
+import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.basic import json
@@ -105,8 +105,7 @@ def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args = dict(
-                       authkey=dict(type='str', required=True, no_log=True),
+    module_args = dict(authkey=dict(type='str', no_log=True),
                        host=dict(type='str', required=True),
                        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
                        path=dict(type='path', required=True),
@@ -116,7 +115,9 @@ def main():
                        validate_certs=dict(type='bool', default=True, required=False),
                        content=dict(type='raw', required=False),
     )
+    
 
+    
     # seed the result dict in the object
     # we primarily care about changed and state
     # change is if this module effectively modified the target
@@ -135,6 +136,14 @@ def main():
         supports_check_mode=False,
     )
     module.params['follow_redirects'] = 'all'
+        
+    try:
+        module.params['authkey'] = os.environ['MERAKI_KEY']
+    except KeyError:
+        pass
+    
+    if module.params['authkey'] is None:
+        module.fail_json(msg='Meraki Dashboard API key not set')
 
     path = module.params['path']
     payload = module.params['content']
