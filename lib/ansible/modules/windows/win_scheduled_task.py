@@ -1,14 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -26,8 +24,9 @@ notes:
 options:
   # module definition options
   name:
-    description: The name of the scheduled task without the path.
-    required: true
+    description:
+    - The name of the scheduled task without the path.
+    required: yes
   path:
     description:
     - Task folder in which this task will be stored.
@@ -58,7 +57,7 @@ options:
       path:
         description:
         - The path to the executable for the ExecAction.
-        required: true
+        required: yes
       arguments:
         description:
         - An argument string to supply for the executable.
@@ -96,7 +95,7 @@ options:
         description:
         - The trigger type, this value controls what below options are
           required.
-        required: true
+        required: yes
         choices: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
       enabled:
         description:

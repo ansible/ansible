@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -11,12 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_whoami
 version_added: "2.5"
-short_description: Returns information about the current user and process
+short_description: Get information about the current user and process
 description:
 - Designed to return the same information as the C(whoami /all) command.
 - Also includes information missing from C(whoami) such as logon metadata like

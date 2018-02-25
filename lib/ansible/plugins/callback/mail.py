@@ -13,6 +13,8 @@ short_description: Sends failure events via email
 description:
 - This callback will report failures via email
 version_added: '2.0'
+author:
+- Dag Wieers (@dagwieers)
 requirements:
 - whitelisting in configuration
 options:

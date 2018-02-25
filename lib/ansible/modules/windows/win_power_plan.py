@@ -1,12 +1,12 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -24,13 +24,13 @@ options:
     description:
       - String value that indicates the desired power plan. The power plan must already be
         present on the system. Commonly there will be options for C(balanced) and C(high performance).
-    required: True
+    required: yes
 requirements:
   - Windows Server 2008R2 (6.1)/Windows 7 or higher
 '''
 
 EXAMPLES = '''
-- name: change power plan to high performance
+- name: Change power plan to high performance
   win_power_plan:
     name: high performance
 '''
