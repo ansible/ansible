@@ -5,31 +5,27 @@
 # Copyright: (c) 2017, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
 module: win_iis_webbinding
 version_added: "2.0"
-short_description: Configures a IIS Web site binding.
+short_description: Configures a IIS Web site binding
 description:
-     - Creates, Removes and configures a binding to an existing IIS Web site
+     - Creates, removes and configures a binding to an existing IIS Web site.
 options:
   name:
     description:
-      - Names of web site
-    required: true
-    aliases: [website]
+      - Names of web site.
+    required: yes
+    aliases: [ website ]
   state:
     description:
-      - State of the binding
-    choices:
-      - present
-      - absent
+      - State of the binding.
+    choices: [ absent, present ]
     default: present
   port:
     description:
@@ -53,7 +49,7 @@ options:
   certificate_store_name:
     description:
       - Name of the certificate store where the certificate for the binding is located.
-    default: "my"
+    default: my
   ssl_flags:
     description:
       - This parameter is only valid on Server 2012 and newer.
