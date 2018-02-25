@@ -262,15 +262,20 @@ While already a lot of ACI modules exists in the Ansible distribution, and the m
 The :ref:`aci_rest <aci_rest>` module provides you with direct access to the APIC REST API and enables you to perform any task not already covered by the existing modules. This may seem like a complex undertaking, but you can generate the needed REST payload for any action performed in the ACI web interface effortlessly.
 
 
-Using the aci-rest module
+Built-in idempotency
+....................
+Because the APIC REST API is intrinsically idempotent and can report whether a change was made, the :ref:`aci_rest <aci_rest>` module automatically inherits both capabilities and is a first-class solution for automating your ACI infrastructure. As a result, users that require more powerful low-level access to their ACI infrastructure don't have to give up on idempotency and don't have to guess whether a change was performed when using the :ref:`aci_rest <aci_rest>` module.
+
+
+Using the aci_rest module
 .........................
-The :ref:`aci_rest <aci_rest>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require path to end with ``.json``.
+The :ref:`aci_rest <aci_rest>` module accepts the native XML and JSON payloads, but additionally accepts inline YAML payload (structured like JSON). The XML payload requires you to use a path ending with ``.xml`` whereas JSON or YAML require the path to end with ``.json``.
 
 When you're making modifications, you can use the POST or DELETE methods, whereas doing just queries require the GET method.
 
-For instance, if you would like to ensure a specific tenant exists on ACI, these below four examples are identical:
+For instance, if you would like to ensure a specific tenant exists on ACI, these below four examples are functionally identical:
 
-**XML** (Native ACI)
+**XML** (Native ACI REST)
 
 .. code-block:: yaml
 
@@ -283,7 +288,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         content: |
           <fvTenant name="customer-xyz" descr="Customer XYZ"/>
 
-**JSON** (Native ACI)
+**JSON** (Native ACI REST)
 
 .. code-block:: yaml
 
@@ -303,7 +308,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
             }
           }
 
-**YAML** (Ansible-style)
+**YAML** (Ansible-style REST)
 
 .. code-block:: yaml
 
@@ -332,6 +337,9 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         state: present
 
 
+.. hint:: The XML format is more practical when there is a need to template the REST payload (inline), but the YAML format is more convenient for maintaing your infrastructure-as-code and feels more naturely integrated with Ansible playbooks. The dedicated modules offer a more simple, abstracted, but also a more limited experience. Use what feels best for your use-case.
+
+
 More information
 ................
 Plenty of resources exist to learn about ACI's APIC REST interface, we recommend the links below:
@@ -347,7 +355,8 @@ Plenty of resources exist to learn about ACI's APIC REST interface, we recommend
 Operational examples
 --------------------
 Here is a small overview of useful operational tasks to reuse in your playbooks.
-Feel free to contribute more snippets that are useful to others.
+
+Feel free to contribute more useful snippets.
 
 
 Waiting for all controllers to be ready
@@ -362,7 +371,6 @@ You can use the below task after you started to build your APICs and configured 
         private_key: pki/admin.key
         method: get
         path: /api/node/class/topSystem.json?query-target-filter=eq(topSystem.role,"controller")
-      changed_when: no
       register: topsystem
       until: topsystem|success and topsystem.totalCount|int >= groups['apic']|count >= 3
       retries: 20
@@ -381,7 +389,6 @@ The below example waits until the cluster is fully-fit. In this example you know
         private_key: pki/admin.key
         method: get
         path: /api/node/class/infraWiNode.json?query-target-filter=wcard(infraWiNode.dn,"topology/pod-1/node-1/av")
-      changed_when: no
       register: infrawinode
       until: >
         infrawinode|success and
