@@ -26,7 +26,7 @@ options:
   name:
     description:
     - The name of the environment variable.
-    required: true
+    required: yes
   value:
     description:
     - The value to store in the environment variable.
@@ -38,7 +38,7 @@ options:
     - Use C(user) to set for the current user that ansible is connected as.
     - Use C(process) to set for the current process.  Probably not that useful.
     choices: [ machine, user, process ]
-    required: true
+    required: yes
 author:
 - Jon Hawkesworth (@jhawkesworth)
 notes:

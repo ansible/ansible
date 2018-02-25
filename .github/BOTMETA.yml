@@ -1,6 +1,6 @@
 # BOTMETA V2.0
 #
-# Data used by ansibot to indentify who works on each file in the repo.
+# Data used by ansibot to identify who works on each file in the repo.
 # If you have questions about this data format, please join #ansible-devel
 # on irc.freenode and ping anyone who is op'ed.
 #
@@ -303,7 +303,6 @@ files:
   $modules/cloud/vmware/vca_fw.py: privateip
   $modules/cloud/vmware/vca_nat.py: privateip
   $modules/cloud/vmware/vca_vapp.py: privateip
-  $modules/cloud/vmware/vcenter_license.py: dagwieers
   $modules/cloud/vmware/vmware_cluster.py: $team_ansible
   $modules/cloud/vmware/vmware_datacenter.py: $team_ansible kamsz
   $modules/cloud/vmware/vmware_dns_config.py: $team_ansible
@@ -328,7 +327,6 @@ files:
   $modules/cloud/vmware/vmware_vmotion.py: $team_ansible bedecarroll
   $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible
   $modules/cloud/vmware/vmware_vswitch.py: akasurde
-  $modules/cloud/vmware/vsphere_copy.py: dagwieers
   $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop dagwieers
   $modules/cloud/vultr/: resmo
   $modules/cloud/webfaction/: quentinsf
@@ -377,7 +375,6 @@ files:
   $modules/files/fetch.py: $team_ansible
   $modules/files/file.py: $team_ansible
   $modules/files/find.py: $team_ansible
-  $modules/files/iso_extract.py: dagwieers jhoekx ribbons
   $modules/files/lineinfile.py: ahtik $team_ansible dhozac
   $modules/files/replace.py: EvanK
   $modules/files/stat.py: bpennypacker
@@ -387,11 +384,12 @@ files:
   $modules/files/unarchive.py:
     labels: unarchive
     maintainers: pileofrogs
+    ignored: dagwieers
   $modules/files/xattr.py: $team_ansible bcoca
   $modules/files/xml.py:
     ignored: magnus919
     labels: xml
-    maintainers: tbielawa dagwieers sm4rk0 cmprescott
+    maintainers: sm4rk0 cmprescott
   $modules/identity/cyberark/:
     notified: cyberark-bizdev
   $modules/identity/ipa/:
@@ -523,7 +521,6 @@ files:
   $modules/notification/hall.py: bkimble
   $modules/notification/hipchat.py: pb8226 shirou
   $modules/notification/jabber.py: bcoca
-  $modules/notification/mail.py: dagwieers
   $modules/notification/mattermost.py: bjolivot
   $modules/notification/mqtt.py: jpmens
   $modules/notification/nexmo.py: sivel
@@ -604,7 +601,6 @@ files:
   $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
   $modules/remote_management/ucs/: $team_ucs
-  $modules/remote_management/wakeonlan.py: dagwieers
   $modules/source_control/bzr.py: andreparames
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/git_config.py: djmattyg007
@@ -671,7 +667,6 @@ files:
   $modules/system/puppet.py: emonty nibalizer
   $modules/system/runit.py: jsumners
   $modules/system/seboolean.py: $team_ansible sfromm
-  $modules/system/sefcontext.py: dagwieers
   $modules/system/selinux.py: goozbach
   $modules/system/selinux_permissive.py: mscherer
   $modules/system/seport.py: dankeder
@@ -690,16 +685,12 @@ files:
   $modules/utilities/logic/assert.py: $team_ansible
   $modules/utilities/logic/async_status.py: $team_ansible
   $modules/utilities/logic/async_wrapper.py: $team_ansible
-  $modules/utilities/logic/debug.py: dagwieers
-  $modules/utilities/logic/fail.py: dagwieers
   $modules/utilities/logic/include.py: $team_ansible
   $modules/utilities/logic/include_role.py: $team_ansible
   $modules/utilities/logic/include_vars.py: $team_ansible linuxdynasty
   $modules/utilities/logic/pause.py: tbielawa
-  $modules/utilities/logic/set_fact.py: dagwieers
   $modules/utilities/logic/set_stats.py: bcoca
   $modules/utilities/logic/wait_for.py: AnderEnder gregswift jarv jhoekx
-  $modules/utilities/logic/wait_for_connection.py: dagwieers
   $modules/web_infrastructure/ansible_tower/: $team_tower
   $modules/web_infrastructure/apache2_mod_proxy.py: oboukili
   $modules/web_infrastructure/deploy_helper.py: ramondelafuente
@@ -725,38 +716,14 @@ files:
     ignored: angstwad georgefrank h0nig
   $modules/windows/setup.ps1: $team_ansible
   $modules/windows/slurp.ps1: $team_ansible
-  $modules/windows/win_acl.ps1:
-    maintainers: schwartzmx trondhindenes
-  $modules/windows/win_file_version.ps1: SamLiu79
-  $modules/windows/win_file_version.py: SamLiu79
-  $modules/windows/win_get_url.ps1: jhawkesworth
-  $modules/windows/win_get_url.py: jhawkesworth
-  $modules/windows/win_iis_virtualdirectory.ps1: $team_ansible
   $modules/windows/win_iis_virtualdirectory.py: $team_ansible
-  $modules/windows/win_lineinfile.ps1: brianlloyd
-  $modules/windows/win_lineinfile.py: brianlloyd
-  $modules/windows/win_owner.ps1: jborean93
-  $modules/windows/win_owner.py: jborean93
-  $modules/windows/win_ping.ps1: nitzmahone
-  $modules/windows/win_ping.py: nitzmahone
-  $modules/windows/win_security_policy.ps1: rndmh3ro defionscode
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
-  $modules/windows/win_share.ps1: jborean93
-  $modules/windows/win_share.py: jborean93
-  $modules/windows/win_stat.ps1: nitzmahone
-  $modules/windows/win_stat.py: nitzmahone
-  $modules/windows/win_timezone.ps1: schwartzmx
-  $modules/windows/win_timezone.py: schwartzmx
-  $modules/windows/win_user.ps1: nitzmahone
-  $modules/windows/win_user.py: nitzmahone
-  $modules/windows/win_webpicmd.ps1: petemounce
-  $modules/windows/win_webpicmd.py: petemounce
   contrib/inventory:
     keywords:
     - dynamic inventory script
     - dynamic inventory
     - inventory script
-    labels: "c:inventory/contrib_script"
+    labels: c:inventory/contrib_script
     support: community
   contrib/inventory/digital_ocean.py:
     keywords:

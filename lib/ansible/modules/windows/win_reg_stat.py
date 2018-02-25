@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Ansible, inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016, Ansible, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -25,12 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_reg_stat
 version_added: "2.3"
-short_description: returns information about a Windows registry key or property of a key
+short_description: Get information about Windows registry keys
 description:
 - Like M(win_file), M(win_reg_stat) will return whether the key/property exists.
 - It also returns the sub keys and properties of the key specified.
@@ -38,24 +23,24 @@ description:
 options:
   path:
     description: The full registry key path including the hive to search for.
-    required: true
+    required: yes
     aliases: [ key ]
   name:
     description:
     - The registry property name to get information for, the return json will not include the sub_keys and properties entries for the I(key) specified.
-    required: false
     aliases: [ entry, value, property ]
-author: "Jordan Borean (@jborean93)"
+author:
+- Jordan Borean (@jborean93)
 '''
 
 EXAMPLES = r'''
-# Obtain information about a registry key using short form
-- win_reg_stat:
+- name: Obtain information about a registry key using short form
+  win_reg_stat:
     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
   register: current_version
 
-# Obtain information about a registry key property
-- win_reg_stat:
+- name: Obtain information about a registry key property
+  win_reg_stat:
     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
     name: CommonFilesDir
   register: common_files_dir

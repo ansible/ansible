@@ -26,13 +26,11 @@ options:
   name:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features.
-    required: true
+    required: yes
   state:
     description:
       - State of the features or roles on the system.
-    choices:
-      - present
-      - absent
+    choices: [ absent, present ]
     default: present
   restart:
     description:
@@ -59,8 +57,8 @@ options:
       - Can either be C({driveletter}:\sources\sxs) or C(\\{IP}\share\sources\sxs).
     version_added: "2.1"
 author:
-    - "Paul Durivage (@angstwad)"
-    - "Trond Hindenes (@trondhindenes)"
+    - Paul Durivage (@angstwad)
+    - Trond Hindenes (@trondhindenes)
 '''
 
 EXAMPLES = r'''
@@ -86,8 +84,8 @@ EXAMPLES = r'''
   win_feature:
     name: Web-Server
     state: present
-    include_sub_features: True
-    include_management_tools: True
+    include_sub_features: yes
+    include_management_tools: yes
   register: win_feature
 
 - name: reboot if installing Web-Server feature requires it

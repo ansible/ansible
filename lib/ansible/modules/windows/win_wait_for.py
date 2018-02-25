@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# This file is part of Ansible
+# -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub, actual code lives in the .ps1
@@ -10,7 +10,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -76,7 +75,7 @@ options:
       ensure that the file or string is present, C(absent) will check that the
       file or search string is absent or removed.
     default: started
-    choices: [ present, started, stopped, absent, drained ]
+    choices: [ absent, drained, present, started, stopped ]
   timeout:
     description:
     - The maximum number of seconds to wait for.
