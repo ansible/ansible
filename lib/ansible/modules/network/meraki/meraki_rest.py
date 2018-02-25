@@ -26,7 +26,7 @@ description:
     - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 
 options:
-    authkey:
+    auth_key:
         description:
             - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
         required: no
@@ -81,7 +81,7 @@ EXAMPLES = '''
 # Query inventory
 - name: Query network device inventory
   sda_rest:
-    authkey: abc12345
+    auth_key: abc12345
     host: dashboard.meraki.com
     method: get
     path: /api/v0/organizations
@@ -90,7 +90,7 @@ EXAMPLES = '''
 
 - name: Create network
   sda_rest:
-    authkey: abc12345
+    auth_key: abc12345
     host: dashboard.meraki.com
     method: post
     path: /api/v0/organizations/133277/networks
@@ -117,7 +117,7 @@ def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args = dict(authkey=dict(type='str', no_log=True),
+    module_args = dict(auth_key=dict(type='str', no_log=True),
                        host=dict(type='str', required=True),
                        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
                        path=dict(type='path', required=True),
@@ -149,14 +149,14 @@ def main():
         supports_check_mode=False,
         mutually_exclusive=[['content', 'src']],
     )
-    module.params['follow_redirects'] = 'all'
+    module.params['follow_redirects'] = 'urllib2'
         
     try:
-        module.params['authkey'] = os.environ['MERAKI_KEY']
+        module.params['auth_key'] = os.environ['MERAKI_KEY']
     except KeyError:
         pass
     
-    if module.params['authkey'] is None:
+    if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
 
     path = module.params['path']
@@ -164,6 +164,7 @@ def main():
     
     if module.params['content']:
         payload = module.params['content']
+        payload = json.dumps(payload)
     elif module.params['src']:
         src = module.params['src']
         file_exists = False
@@ -173,9 +174,6 @@ def main():
                 payload = config_object.read()
         else:
             module.fail_json(msg="File does not exist")
-
-    if payload:
-        payload = json.dumps(payload)
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -193,8 +191,13 @@ def main():
 
     url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json',
-               'X-Cisco-Meraki-API-Key': module.params['authkey'],
+               'X-Cisco-Meraki-API-Key': module.params['auth_key'],
               }
+
+    # result['url'] = url
+    # result['method'] = module.params['method']
+    # result['headers'] = headers
+    # result['payload'] = payload
 
     try:
         resp, info = fetch_url(module, url,
@@ -202,14 +205,20 @@ def main():
                                headers=headers,
                                method=module.params['method'].upper(),
                                use_proxy=module.params['use_proxy'],
-                               force=True,
+                               force=False,
                                timeout=module.params['timeout'],
+                               # use_ssl=module.params['use_ssl'],
                                )
+        # result['headers'] = str(dir(resp))
+        result['headers'] = str(resp.headers)
+
     except Exception as e:
         module.fail_json(msg=e)
 
     if info['status'] >= 300:
-        module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']))
+        module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
+
+    module.warn(to_native(info['status']))
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
