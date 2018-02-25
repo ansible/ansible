@@ -76,7 +76,7 @@ def instance_to_facts(instance):
     if not instance:
         return instance
     if 'DBInstanceIdentifier' not in instance:
-        raise AssertionError, "instance argument was not a valid instance"
+        raise AssertionError("instance argument was not a valid instance")
     return camel_dict_to_snake_dict(instance, ignore_list=['Tags'])
 
 
