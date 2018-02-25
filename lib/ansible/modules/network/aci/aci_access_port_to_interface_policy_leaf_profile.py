@@ -18,7 +18,7 @@ short_description: Manage Fabric interface policy leaf profile interface selecto
 description:
 - Manage Fabric interface policy leaf profile interface selectors on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(infra:HPortS, infra:RsAccBaseGrp, infra:PortBlk) at
+- More information about the internal APIC classes B(infra:HPortS), B(infra:RsAccBaseGrp) and B(infra:PortBlk) at
   U(https://developer.cisco.com/media/mim-ref).
 author:
 - Bruno Calogero (@brunocalogero)

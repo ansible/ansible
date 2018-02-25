@@ -13,12 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_aep
-short_description: Manage attachable Access Entity Profile (AEP) objects (infra:AttEntityP|infra:ProvAcc)
+short_description: Manage attachable Access Entity Profile (AEP) objects (infra:AttEntityP, infra:ProvAcc)
 description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC classes I(infra:AttEntityP) and I(infra:ProvAcc) at
+- More information about the internal APIC classes B(infra:AttEntityP) and B(infra:ProvAcc) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)

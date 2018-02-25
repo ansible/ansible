@@ -20,7 +20,7 @@ description:
 notes:
 - The C(domain) and C(vlan_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_vlan_pool) can be used for these.
-- More information from the internal APIC class I(infra:RsVlanNs) at
+- More information about the internal APIC class B(infra:RsVlanNs) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

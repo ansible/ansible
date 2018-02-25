@@ -21,7 +21,7 @@ notes:
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
-- More information from the internal APIC class I(fv:Subnet) at
+- More information about the internal APIC class B(fv:Subnet) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)

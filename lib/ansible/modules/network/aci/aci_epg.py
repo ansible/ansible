@@ -19,7 +19,7 @@ description:
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
-- More information from the internal APIC class I(fv:AEPg) at
+- More information about the internal APIC class B(fv:AEPg) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)

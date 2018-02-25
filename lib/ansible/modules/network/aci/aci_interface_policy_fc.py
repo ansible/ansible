@@ -20,7 +20,7 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 notes:
-- More information from the internal APIC class I(fc:IfPol) at
+- More information about the internal APIC class B(fc:IfPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   fc_policy:
