@@ -713,7 +713,7 @@ files:
   $modules/web_infrastructure/taiga_issue.py: lekum
   $modules/windows/:
     maintainers: $team_windows
-    ignored: angstwad georgefrank h0nig
+    ignored: angstwad georgefrank h0nIg
   $modules/windows/setup.ps1: $team_ansible
   $modules/windows/slurp.ps1: $team_ansible
   $modules/windows/win_iis_virtualdirectory.py: $team_ansible
