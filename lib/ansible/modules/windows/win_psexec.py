@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright 2017, Dag Wieers <dag@wieers.com>
+# Copyright: 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -20,7 +20,7 @@ options:
   command:
     description:
     - The command line to run through PsExec (limited to 260 characters).
-    required: true
+    required: yes
   executable:
     description:
     - The location of the PsExec utility (in case it is not located in your PATH).
@@ -151,14 +151,4 @@ stderr:
     returned: always
     type: string
     sample: Error 15 running E:\setup.exe
-msg:
-    description: Possible error message on failure
-    returned: failed
-    type: string
-    sample: The 'password' parameter is a required parameter.
-changed:
-    description: Whether or not any changes were made.
-    returned: always
-    type: bool
-    sample: True
 '''
