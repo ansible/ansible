@@ -17,7 +17,7 @@ short_description: Manage port security (l2:PortSecurityPol)
 description:
 - Manage port security on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(l2:PortSecurityPol) at
+- More information about the internal APIC class B(l2:PortSecurityPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

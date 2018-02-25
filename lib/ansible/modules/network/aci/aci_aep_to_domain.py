@@ -20,7 +20,7 @@ description:
 notes:
 - The C(aep) and C(domain) parameters should exist before using this module.
   The M(aci_aep) and M(aci_domain) can be used for these.
-- More information from the internal APIC class I(infra:RsDomP) at
+- More information about the internal APIC class B(infra:RsDomP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

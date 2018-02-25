@@ -19,7 +19,7 @@ description:
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
 - The M(aci_tenant) and M(aci_contract) modules can be used for this.
-- More information from the internal APIC class I(vz:Subj) at
+- More information about the internal APIC class B(vz:Subj) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)

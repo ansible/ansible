@@ -18,8 +18,8 @@ short_description: Manage switch policy explicit vPC protection groups (fabric:E
 description:
 - Manage switch policy explicit vPC protection groups on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class
-  I(fabric:ExplicitGEp) and I(fabric:NodePEp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information about the internal APIC classes B(fabric:ExplicitGEp) and B(fabric:NodePEp) at
+  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

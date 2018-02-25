@@ -17,7 +17,7 @@ short_description: Manage LLDP interface policies (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(lldp:IfPol) at
+- More information about the internal APIC class B(lldp:IfPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

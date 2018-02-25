@@ -17,7 +17,7 @@ short_description: Manage port channel interface policies (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(lacp:LagPol) at
+- More information about the internal APIC class B(lacp:LagPol) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
