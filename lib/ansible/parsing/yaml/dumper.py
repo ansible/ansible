@@ -23,7 +23,7 @@ import yaml
 
 from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleDictProxy
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
@@ -57,6 +57,11 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleUnsafeText,
     represent_unicode,
+)
+
+AnsibleDumper.add_multi_representer(
+    AnsibleDictProxy,
+    yaml.representer.SafeRepresenter.represent_dict,
 )
 
 AnsibleDumper.add_representer(

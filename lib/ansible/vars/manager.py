@@ -42,7 +42,7 @@ from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
-from ansible.utils.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafe
 from ansible.vars.clean import namespace_facts, clean_facts
 
 try:
@@ -75,8 +75,8 @@ def preprocess_vars(a):
 
 class VariableManager:
 
-    _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
-                          'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
+    _ALLOWED = frozenset(('plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
+                          'all_plugins_play', 'all_plugins_inventory', 'all_inventory'))
 
     def __init__(self, loader=None, inventory=None):
 
@@ -627,17 +627,11 @@ class VariableManager:
         '''
         Sets or updates the given facts for a host in the fact cache.
         '''
-
-        if not isinstance(facts, dict):
+        if not isinstance(facts, MutableMapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts))
 
-        if host.name not in self._nonpersistent_fact_cache:
-            self._nonpersistent_fact_cache[host.name] = facts
-        else:
-            try:
-                self._nonpersistent_fact_cache[host.name].update(facts)
-            except KeyError:
-                self._nonpersistent_fact_cache[host.name] = facts
+        # If you change this, make sure you call convert the Mapping into a plain dict before setting
+        self._nonpersistent_fact_cache[host.name].update(facts)
 
     def set_host_variable(self, host, varname, value):
         '''

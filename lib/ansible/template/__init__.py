@@ -49,7 +49,7 @@ from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
-from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var
+from ansible.utils.unsafe_proxy import UnsafeProxy, wrap_var, AnsibleDictProxy
 
 try:
     from __main__ import display
@@ -200,41 +200,46 @@ class AnsibleContext(Context):
         super(AnsibleContext, self).__init__(*args, **kwargs)
         self.unsafe = False
 
-    def _is_unsafe(self, val):
+        class MarkingUnsafeDict(AnsibleDictProxy):
+            transform = staticmethod(self._update_unsafe)
+
+        self.dict_proxy = MarkingUnsafeDict
+
+    def _unsafe(self, val):
         '''
         Our helper function, which will also recursively check dict and
         list entries due to the fact that they may be repr'd and contain
         a key or value which contains jinja2 syntax and would otherwise
         lose the AnsibleUnsafe value.
         '''
-        if isinstance(val, dict):
-            for key in val.keys():
-                if self._is_unsafe(val[key]):
-                    return True
+        if hasattr(val, '__UNSAFE__'):
+            self.unsafe = True
+            return val
+
+        if isinstance(val, Mapping):
+            val = self.dict_proxy(val)
         elif isinstance(val, list):
-            for item in val:
-                if self._is_unsafe(item):
-                    return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
-            return True
-        return False
+            for i, item in enumerate(val):
+                val[i] = self._unsafe(item)
+        return val
 
     def _update_unsafe(self, val):
-        if val is not None and not self.unsafe and self._is_unsafe(val):
-            self.unsafe = True
+        if val is not None and not self.unsafe:
+            val = self._unsafe(val)
+        return val
 
     def resolve(self, key):
         '''
         The intercepted resolve(), which uses the helper above to set the
-        internal flag whenever an unsafe variable value is returned.
+        internal flag whenever an unsafe variable is returned.
         '''
         val = super(AnsibleContext, self).resolve(key)
-        self._update_unsafe(val)
+        val = self._update_unsafe(val)
         return val
 
     def resolve_or_missing(self, key):
         val = super(AnsibleContext, self).resolve_or_missing(key)
-        self._update_unsafe(val)
+        val = self._update_unsafe(val)
         return val
 
 
