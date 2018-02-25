@@ -68,7 +68,7 @@ Aliases: @{ ','.join(aliases) }@
 {% if requirements %}
 {% set req = 'Requirements' %}
 {% if plugin_type == 'module' %}
-{% set req = req + ' (on host that executes module)' %}
+{% set req = req + ' (on each target host)' %}
 {% endif %}
 {% set req_len = req|length %}
 @{ req }@
