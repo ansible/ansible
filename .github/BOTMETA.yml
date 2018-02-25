@@ -714,9 +714,6 @@ files:
   $modules/windows/:
     maintainers: $team_windows
     ignored: angstwad georgefrank h0nIg
-  $modules/windows/setup.ps1: $team_ansible
-  $modules/windows/slurp.ps1: $team_ansible
-  $modules/windows/win_iis_virtualdirectory.py: $team_ansible
   $modules/windows/win_security_policy.py: rndmh3ro defionscode
   contrib/inventory:
     keywords:
