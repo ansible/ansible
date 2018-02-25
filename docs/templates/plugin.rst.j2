@@ -3,14 +3,13 @@
 .. _@{ module }@:
 
 {% if short_description %}
-{% set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{%   set title = module + ' - ' + short_description|convert_symbols_to_format %}
 {% else %}
-{% set title = module %}
+{%   set title = module %}
 {% endif %}
-{% set title_len = title|length %}
 
 @{ title }@
-@{ '+' * title_len }@
+@{ '+' * title|length }@
 
 {% if version_added is defined and version_added != '' -%}
 .. versionadded:: @{ version_added | default('') }@
@@ -48,13 +47,13 @@ Synopsis
 
 {% if description %}
 
-{% if description is string -%}
+{%   if description is string -%}
 * @{ description | convert_symbols_to_format }@
-{% else %}
-{% for desc in description -%}
+{%   else %}
+{%     for desc in description -%}
 * @{ desc | convert_symbols_to_format }@
-{% endfor %}
-{% endif %}
+{%     endfor %}
+{%   endif %}
 
 {% endif %}
 
@@ -66,17 +65,17 @@ Aliases: @{ ','.join(aliases) }@
 {% endif %}
 
 {% if requirements %}
-{% set req = 'Requirements' %}
-{% if plugin_type == 'module' %}
-{% set req = req + ' (on host that executes module)' %}
-{% endif %}
-{% set req_len = req|length %}
+{%   set req = 'Requirements' %}
+{%   if plugin_type == 'module' %}
+{%     set req = req + ' (on host that executes module)' %}
+{%   endif %}
+{%   set req_len = req|length %}
 @{ req }@
 @{ '-' * req_len }@
 
-{% for req in requirements %}
+{%   for req in requirements %}
   * @{ req | convert_symbols_to_format }@
-{% endfor %}
+{%   endfor %}
 
 {% endif %}
 
@@ -91,14 +90,14 @@ Options
     <table  border=0 cellpadding=0 class="documentation-table">
         {# Header of the documentation #}
         <tr>
-            <th class="head"><div class="cell-border">parameter</div></th>
-            <th class="head"><div class="cell-border">required</div></th>
-            <th class="head"><div class="cell-border">default</div></th>
-            <th class="head"><div class="cell-border">choices</div></th>
+            <th class="head"><div class="cell-border">Parameter</div></th>
+            <th class="head"><div class="cell-border">Required?</div></th>
+            <th class="head"><div class="cell-border">Default</div></th>
+            <th class="head"><div class="cell-border">Choices</div></th>
             {% if plugin_type != 'module' %}
-                <th class="head"><div class="cell-border">configuration</div></th>
+                <th class="head"><div class="cell-border">Configuration</div></th>
             {% endif %}
-            <th class="head"><div class="cell-border">comments</div></th>
+            <th class="head"><div class="cell-border">Comments</div></th>
         </tr>
         {% for key, value in options|dictsort recursive %}
             <tr class="return-value-column">
@@ -110,14 +109,14 @@ Options
                             </div>
                         {% endfor %}
                         <div class="elbow-key">
-                            @{ key }@<br/><div style="font-size: small;">{% if value.version_added %} (added in @{value.version_added}@){% endif %}</div>
+                            <b>@{ key }@</b><br/><div style="font-size: small;">{% if value.version_added %} (added in @{value.version_added}@){% endif %}</div>
                         </div>
                     <div class="outer-elbow-container">
                 </td>
                 {# required #}
-                <td><div class="cell-border">{% if value.get('required', False) %}required{% else %}optional{% endif %}</div></td>
+                <td><div class="cell-border">{% if value.get('required', False) %}required{% endif %}</div></td>
                 {# default value #}
-                <td><div class="cell-border">{% if value.default %}@{ value.default }@{% endif %}</div></td>
+                <td><div class="cell-border">{% if value.default %}@{ value.default | html_ify }@{% endif %}</div></td>
                 {# choices #}
                 <td>
                     <div class="cell-border">
@@ -197,11 +196,11 @@ Examples
 
 .. code-block:: yaml
 
-{% for example in examples %}
-{% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
+{%   for example in examples %}
+{%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
 @{ example['code'] | escape | indent(4, True) }@
-{% endfor %}
-{% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+{%   endfor %}
+{%   if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
 {% endif %}
 
 
@@ -217,11 +216,11 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 
     <table border=0 cellpadding=0 class="documentation-table">
         <tr>
-            <th class="head"><div class="cell-border">name</div></th>
-            <th class="head"><div class="cell-border">description</div></th>
-            <th class="head"><div class="cell-border">returned</div></th>
-            <th class="head"><div class="cell-border">type</div></th>
-            <th class="head"><div class="cell-border">sample</div></th>
+            <th class="head"><div class="cell-border">Name</div></th>
+            <th class="head"><div class="cell-border">Description</div></th>
+            <th class="head"><div class="cell-border">Returned</div></th>
+            <th class="head"><div class="cell-border">Type</div></th>
+            <th class="head"><div class="cell-border">Sample</div></th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
             <tr class="return-value-column">
@@ -232,7 +231,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                             </div>
                         {% endfor %}
                         <div class="elbow-key">
-                            @{ key }@
+                            <b>@{ key }@</b>
                         </div>
                     </div>
                 </td>
@@ -245,9 +244,9 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                     {% endfor %}
                     {% endif %}
                 </td>
-                <td align=center><div class="cell-border">@{ value.returned }@</div></td>
-                <td align=center><div class="cell-border">@{ value.type }@</div></td>
-                <td align=center><div class="cell-border">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div></td>
+                <td><div class="cell-border">@{ value.returned }@</div></td>
+                <td><div class="cell-border">@{ value.type }@</div></td>
+                <td><div class="cell-border">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div></td>
             </tr>
             {# ---------------------------------------------------------
              # sadly we cannot blindly iterate through the child dicts,
@@ -274,9 +273,9 @@ Notes
 -----
 
 .. note::
-{% for note in notes %}
+{%   for note in notes %}
     - @{ note | convert_symbols_to_format }@
-{% endfor %}
+{%   endfor %}
 
 
 {% endif %}
@@ -286,17 +285,17 @@ Notes
 Author
 ~~~~~~
 
-{% for author_name in author %}
+{%   for author_name in author %}
 * @{ author_name }@
-{% endfor %}
+{%   endfor %}
 
 
 {% endif %}
 {% if not deprecated %}
-{% set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
-{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
-{% if metadata %}
-{% if metadata.status %}
+{%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
+{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+{%   if metadata %}
+{%     if metadata.status %}
 
 
 Status
@@ -307,8 +306,8 @@ This module is flagged as **@{cur_state}@** which means that @{module_states[cur
 {% endfor %}
 
 
-{% endif %}
-{% if metadata.supported_by in ('core', 'network') %}
+{%     endif %}
+{%     if metadata.supported_by in ('core', 'network') %}
 
 
 Maintenance Info
@@ -317,8 +316,8 @@ Maintenance Info
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
 
-{% endif %}
-{% endif %}
+{%     endif %}
+{%   endif %}
 {% endif %}
 
 If you want to help with development, please read :doc:`../../community/index`,
