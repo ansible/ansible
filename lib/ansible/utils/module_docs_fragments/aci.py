@@ -19,7 +19,7 @@ options:
     description:
     - Port number to be used for REST connection.
     type: int
-    default: 443 (for https) and 80 (for http)
+    default: 443 (for https), 80 (for http)
   username:
     description:
     - The username to use for authentication.
@@ -29,17 +29,20 @@ options:
   password:
     description:
     - The password to use for authentication.
+    - This option is mutual exclusive with C(private_key). If C(private_key) is provided too, it will be used instead.
     required: yes
   private_key:
     description:
     - PEM formatted file that contains your private key to be used for signature-based authentication.
     - The name of the key (without extension) is used as the certificate name in ACI, unless C(certificate_name) is specified.
+    - This option is mutual exclusive with C(password). If C(password) is provided too, it will be ignored.
+    required: yes
     aliases: [ cert_key ]
   certificate_name:
     description:
     - The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
     - It defaults to the C(private_key) basename, without extension.
-    default: C(private_key) basename
+    default: private_key basename
     aliases: [ cert_name ]
   output_level:
     description:
@@ -67,7 +70,7 @@ options:
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
-    - This should only set to C(no) used on personally controlled sites using self-signed certificates.
+    - This should only set to C(no) when used on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
 notes:

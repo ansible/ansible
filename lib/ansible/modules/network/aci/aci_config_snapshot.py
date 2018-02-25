@@ -22,7 +22,7 @@ notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
 - 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
-- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
+- More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
