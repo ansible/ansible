@@ -23,7 +23,7 @@ notes:
   appears to be an inconsistency wrt. the idempotent nature
   of the APIC REST API. The vendor has been informed.
   More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- More information from the internal APIC class I(aaa:User) at
+- More information about the internal APIC class B(aaa:User) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

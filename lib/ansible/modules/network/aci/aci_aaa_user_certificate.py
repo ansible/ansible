@@ -20,7 +20,7 @@ description:
 notes:
 - The C(aaa_user) must exist before using this module in your playbook.
   The M(aci_aaa_user) module can be used for this.
-- More information from the internal APIC class I(aaa:UserCert) at
+- More information about the internal APIC class B(aaa:UserCert) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)

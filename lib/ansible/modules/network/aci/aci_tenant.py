@@ -17,7 +17,7 @@ short_description: Manage tenants (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(fv:Tenant) at
+- More information about the internal APIC class B(fv:Tenant) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
