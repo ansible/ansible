@@ -213,7 +213,7 @@ class Connection(ConnectionBase):
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        p.wait()
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
 
