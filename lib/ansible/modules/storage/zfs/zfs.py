@@ -166,7 +166,7 @@ class Zfs(object):
                     cmd += ['-b', value]
                 else:
                     cmd += ['-o', '%s="%s"' % (prop, value)]
-        if origin:
+        if origin and action == 'clone':
             cmd.append(origin)
         cmd.append(self.name)
         (rc, out, err) = self.module.run_command(' '.join(cmd))
@@ -239,6 +239,9 @@ def main():
 
     state = module.params.get('state')
     name = module.params.get('name')
+
+    if module.params.get('origin') and '@' in name:
+        module.fail_json(msg='cannot specify origin when operating on a snapshot')
 
     # The following is deprecated.  Remove in Ansible 2.9
     # Get all valid zfs-properties
