@@ -19,7 +19,7 @@ description:
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
-- More information from the internal APIC classes I(fv:RsCons) and I(fv:RsProv) at
+- More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)

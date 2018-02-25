@@ -20,7 +20,7 @@ notes:
 - This module does not manage EPGs, see M(aci_epg) to do this.
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information from the internal APIC class I(fv:Ap) at
+- More information about the internal APIC class B(fv:Ap) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)

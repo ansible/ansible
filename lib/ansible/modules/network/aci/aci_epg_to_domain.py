@@ -22,7 +22,7 @@ notes:
 - OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
   by the Cisco APIC Neutron plugin as part of the installation and configuration.
   This module can be used to query status of an OpenStack VMM domain.
-- More information from the internal APIC class I(fv:RsDomAtt) at
+- More information about the internal APIC class B(fv:RsDomAtt) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)

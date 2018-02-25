@@ -18,7 +18,7 @@ description:
 - Provides rollback and rollback preview functionality for Cisco ACI fabrics.
 - Config Rollbacks are done using snapshots C(aci_snapshot) with the configImportP class.
 notes:
-- More information from the internal APIC class I(config:ImportP) at
+- More information about the internal APIC class B(config:ImportP) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)

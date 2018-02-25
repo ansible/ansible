@@ -19,7 +19,7 @@ description:
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
   The M(aci_bd) and M(aci_l3out) can be used for these.
-- More information from the internal APIC class I(fv:RsBDToOut) at
+- More information about the internal APIC class B(fv:RsBDToOut) at
   U(https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
