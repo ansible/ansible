@@ -39,7 +39,7 @@ options:
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
-        - Required when no C(definition) is provided.
+        - Required when C(definition) is provided.
       required: false
   files:
       description:
