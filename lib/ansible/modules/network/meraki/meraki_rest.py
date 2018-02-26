@@ -154,10 +154,6 @@ def main():
     )
     module.params['follow_redirects'] = 'urllib2'
 
-    try:
-        module.params['auth_key'] = os.environ['MERAKI_KEY']
-    except KeyError:
-        pass
 
     if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
