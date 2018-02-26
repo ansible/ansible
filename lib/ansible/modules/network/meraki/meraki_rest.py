@@ -127,10 +127,8 @@ def main():
                        validate_certs=dict(type='bool', default=True),
                        content=dict(type='raw'),
                        src=dict(type='path'),
-    )
-    
+                       )
 
-    
     # seed the result dict in the object
     # we primarily care about changed and state
     # change is if this module effectively modified the target
@@ -150,18 +148,18 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
     module.params['follow_redirects'] = 'urllib2'
-        
+
     try:
         module.params['auth_key'] = os.environ['MERAKI_KEY']
     except KeyError:
         pass
-    
+
     if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
 
     path = module.params['path']
     payload = None
-    
+
     if module.params['content']:
         payload = module.params['content']
         payload = json.dumps(payload)
@@ -192,7 +190,7 @@ def main():
     url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': module.params['auth_key'],
-              }
+               }
 
     # result['url'] = url
     # result['method'] = module.params['method']
