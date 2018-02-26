@@ -109,6 +109,10 @@ options:
           version_added: 2.5'
     - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
           Unit is MHz. version_added: 2.5'
+    - ' - C(version) (integer): The Virtual machine hardware versions. Default is 10 (ESXi 5.5 and onwards).
+          Please check VMware documentation for correct virtual machine hardware version.
+          Incorrect hardware version may lead to failure in deployment. If hardware version is already to given version then no action is taken.
+          version_added: 2.6'
 
   guest_id:
     description:
@@ -292,6 +296,7 @@ EXAMPLES = r'''
       hotadd_cpu: True
       hotremove_cpu: True
       hotadd_memory: False
+      version: 12 # Hardware version of VM
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -880,9 +885,9 @@ class PyVmomiHelper(PyVmomi):
         Args:
             vm_obj: virtual machine object
         """
-        # maxMksConnections == max_connections
         if 'hardware' in self.params:
             if 'max_connections' in self.params['hardware']:
+                # maxMksConnections == max_connections
                 self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
                 if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
                     self.change_detected = True
@@ -891,6 +896,46 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.nestedHVEnabled = bool(self.params['hardware']['nested_virt'])
                 if vm_obj is None or self.configspec.nestedHVEnabled != bool(vm_obj.config.nestedHVEnabled):
                     self.change_detected = True
+
+            if 'version' in self.params['hardware']:
+                hw_version_check_failed = False
+                temp_version = self.params['hardware'].get('version', 10)
+                try:
+                    temp_version = int(temp_version)
+                except ValueError:
+                    hw_version_check_failed = True
+
+                if temp_version not in range(3, 15):
+                    hw_version_check_failed = True
+
+                if hw_version_check_failed:
+                    self.module.fail_json(msg="Failed to set hardware.version '%s' value as valid"
+                                              " values range from 3 (ESX 2.x) to 14 (ESXi 6.5 and greater)." % temp_version)
+                # Hardware version is denoted as "vmx-10"
+                version = "vmx-%02d" % temp_version
+                self.configspec.version = version
+                if vm_obj is None or self.configspec.version != vm_obj.config.version:
+                    self.change_detected = True
+                if vm_obj is not None:
+                    # VM exists and we need to update the hardware version
+                    current_version = vm_obj.config.version
+                    # current_version = "vmx-10"
+                    version_digit = int(current_version.split("-", 1)[-1])
+                    if temp_version < version_digit:
+                        self.module.fail_json(msg="Current hardware version '%d' which is greater than the specified"
+                                                  " version '%d'. Downgrading hardware version is"
+                                                  " not supported. Please specify version greater"
+                                                  " than the current version." % (version_digit,
+                                                                                  temp_version))
+                    new_version = "vmx-%02d" % temp_version
+                    try:
+                        task = vm_obj.UpgradeVM_Task(new_version)
+                        self.wait_for_task(task)
+                        if task.info.state != 'error':
+                            self.change_detected = True
+                    except vim.fault.AlreadyUpgraded:
+                        # Don't fail if VM is already upgraded.
+                        pass
 
     def get_vm_cdrom_device(self, vm=None):
         if vm is None:
