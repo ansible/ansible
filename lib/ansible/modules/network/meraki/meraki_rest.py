@@ -72,6 +72,10 @@ options:
     src:
         description:
             - Name of absolute path of the filename which contains content to be fed to Meraki Dashboard. Must be in JSON format.
+    output_level:
+        description:
+            - Set amount of debug output during module execution
+        choices: ['normal', 'debug']
 
 author:
     - Kevin Breit (@kbreit)
@@ -127,6 +131,7 @@ def main():
                        validate_certs=dict(type='bool', default=True),
                        content=dict(type='raw'),
                        src=dict(type='path'),
+                       output_level=dict(type='str', choices=['normal', 'debug'])
                        )
 
     # seed the result dict in the object
@@ -192,10 +197,11 @@ def main():
                'X-Cisco-Meraki-API-Key': module.params['auth_key'],
                }
 
-    # result['url'] = url
-    # result['method'] = module.params['method']
-    # result['headers'] = headers
-    # result['payload'] = payload
+    if module.params['output_level'] == 'debug':
+        result['url'] = url
+        result['method'] = module.params['method']
+        result['headers'] = headers
+        result['payload'] = payload
 
     try:
         resp, info = fetch_url(module, url,
@@ -205,18 +211,16 @@ def main():
                                use_proxy=module.params['use_proxy'],
                                force=False,
                                timeout=module.params['timeout'],
-                               # use_ssl=module.params['use_ssl'],
                                )
-        # result['headers'] = str(dir(resp))
-        result['headers'] = str(resp.headers)
+        if module.params['output_level'] == 'debug':
+            result['response_status_code'] = str(info['status'])
+            result['response_headers'] = str(resp.headers)
 
     except Exception as e:
         module.fail_json(msg=e)
 
     if info['status'] >= 300:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
-
-    module.warn(to_native(info['status']))
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
