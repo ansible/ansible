@@ -29,10 +29,13 @@
     vlan_id: 100
     provider: "{{ connection }}"
 
-- name: Add interfaces to vlan
+- name: Add interfaces to vlan and check intent (config + intent)
   nxos_vlan: &interfaces
     vlan_id: 100
     interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
     provider: "{{ connection }}"
@@ -57,6 +60,32 @@
 - assert:
     that:
       - 'result.changed == false'
+
+- name: Check interfaces intent
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - "{{ testint1 }}"
+      - "{{ testint2 }}"
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check interfaces intent fail
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - test
+    provider: "{{ connection }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
 
 - name: Remove interface from vlan
   nxos_vlan: &single_int
