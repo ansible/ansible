@@ -35,6 +35,12 @@ options:
     description:
       - List of interfaces that should be associated to the VLAN.
     required: true
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vlan C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vlan interfaces on device it will result in failure.
+    version_added: "2.5"
   delay:
     description:
       - Delay the play should wait to check for declarative intent params values.
@@ -59,12 +65,21 @@ EXAMPLES = """
     vlan_id: 100
     name: test-vlan
     state: present
+
 - name: Add interfaces to VLAN
   ios_vlan:
     vlan_id: 100
     interfaces:
       - GigabitEthernet0/0
       - GigabitEthernet0/1
+
+- name: Check if interfaces is assigned to VLAN
+  ios_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - GigabitEthernet0/0
+      - GigabitEthernet0/1
+
 - name: Delete vlan
   ios_vlan:
     vlan_id: 100
@@ -189,6 +204,7 @@ def map_params_to_obj(module):
             'vlan_id': str(module.params['vlan_id']),
             'name': module.params['name'],
             'interfaces': module.params['interfaces'],
+            'associated_interfaces': module.params['associated_interfaces'],
             'state': module.params['state']
         })
 
@@ -227,16 +243,26 @@ def map_config_to_obj(module):
     return objs
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(module)
+def check_declarative_intent_params(want, module, result):
 
-        for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['vlan_id'], have)
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
+    have = None
+    is_delay = False
+
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['vlan_id'], have)
+            if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
 
 def main():
@@ -246,6 +272,7 @@ def main():
         vlan_id=dict(type='int'),
         name=dict(),
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         state=dict(default='present',
                    choices=['present', 'absent', 'active', 'suspend'])
@@ -287,10 +314,10 @@ def main():
             load_config(module, commands)
         result['changed'] = True
 
-    if result['changed']:
-        check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

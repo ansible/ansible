@@ -76,6 +76,12 @@ options:
       - List of interfaces to check the VRF has been
         configured correctly.
     version_added: 2.5
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vrf C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vrf interfaces on device it will result in failure.
+    version_added: "2.5"
   aggregate:
     description: List of VRFs definitions.
     version_added: 2.5
@@ -134,6 +140,13 @@ EXAMPLES = '''
   nxos_vrf:
     name: test1
     interfaces:
+      - Ethernet2/3
+      - Ethernet2/5
+
+- name: Check interfaces assigend to VRF
+  nxos_vrf:
+    name: test1
+    associated_interfaces:
       - Ethernet2/3
       - Ethernet2/5
 
@@ -349,7 +362,8 @@ def map_params_to_obj(module):
             'rd': module.params['rd'],
             'admin_state': module.params['admin_state'],
             'state': module.params['state'],
-            'interfaces': module.params['interfaces']
+            'interfaces': module.params['interfaces'],
+            'associated_interfaces': module.params['associated_interfaces']
         })
     return obj
 
@@ -408,19 +422,29 @@ def map_config_to_obj(want, element_spec, module):
     return objs
 
 
-def check_declarative_intent_params(want, element_spec, module):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(want, element_spec, module)
+def check_declarative_intent_params(want, module, element_spec, result):
 
-        for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['name'], have)
+    have = None
+    is_delay = False
 
-                if obj_in_have:
-                    interfaces = obj_in_have.get('interfaces')
-                    if interfaces is not None and i not in interfaces:
-                        module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(want, element_spec, module)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['name'], have)
+
+            if obj_in_have:
+                interfaces = obj_in_have.get('interfaces')
+                if interfaces is not None and i not in interfaces:
+                    module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
 def main():
@@ -433,6 +457,7 @@ def main():
         rd=dict(type=str),
         admin_state=dict(default='up', choices=['up', 'down']),
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         delay=dict(default=10, type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -472,8 +497,7 @@ def main():
         load_config(module, commands)
         result['changed'] = True
 
-    if result['changed']:
-        check_declarative_intent_params(want, element_spec, module)
+    check_declarative_intent_params(want, module, element_spec, result)
 
     module.exit_json(**result)
 

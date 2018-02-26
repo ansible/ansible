@@ -72,6 +72,31 @@
       that:
         - "result.changed == false"
 
+  - name: Check interface assigned to vrf (intent)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - GigabitEthernet0/1
+        - GigabitEthernet0/2
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+
+  - name: Check interface assigned to vrf (fail)
+    ios_vlan:
+      vlan_id: 100
+      associated_interfaces:
+        - test
+      provider: "{{ cli }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == True"
+
   - name: Remove interface from vlan
     ios_vlan: &single_int
       vlan_id: 100
