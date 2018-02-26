@@ -64,7 +64,7 @@ Ansible has a thriving and knowledgeable community of module developers that is 
 On :doc:`../community` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
-* ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNodes IRC network works best for module developers so we can have an interactive dialogue.
+* ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for module developers so we can have an interactive dialogue.
 * IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 
@@ -114,7 +114,7 @@ Over the years we've experimented with different sized module PRs, ranging from 
 * PRs with multiple modules are harder for the creator to ensure all feedback has been applied
 * PRs with many modules take a lot more work to review, and tend to get passed over for easier-to-review PRs.
 
-You can raise up to five PRs at one (5 PRs = 5 new modules) **after** your first PR has been merged. We've found this is a good batch size to keep the review process flowing.
+You can raise up to five PRs at once (5 PRs = 5 new modules) **after** your first PR has been merged. We've found this is a good batch size to keep the review process flowing.
 
 Finally
 ```````
