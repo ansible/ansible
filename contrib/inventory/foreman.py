@@ -59,7 +59,7 @@ def json_format_dict(data, pretty=False):
 class ForemanInventory(object):
 
     def __init__(self):
-        self.inventory = defaultdict(list)  # A list of groups and the hosts in that group
+        self.inventory = defaultdict(dict)  # A dictionary of groups and the hosts in that group
         self.cache = dict()   # Details about hosts in the inventory
         self.params = dict()  # Params of each host
         self.facts = dict()   # Facts of each host
@@ -307,20 +307,23 @@ class ForemanInventory(object):
                 # First, put the relation with the hostgroup - no prefix is applied whatsoever
                 if hgname:
                     safe_key = self.to_safe('%s' % (hgname.lower()))
-                    self.inventory[safe_key].append(dns_name)
+                    if 'hosts' in self.inventory[safe_key].keys():
+                        self.inventory[safe_key]['hosts'].append(dns_name)
+                    else:
+                        self.inventory[safe_key]['hosts']=[dns_name]
                 if hgid:
                     parentid = self.hostgroups[hgid].get('parent_id')
                     if parentid:
                         parent = self.hostgroups[parentid]
                         safe_key = self.to_safe('%s' % (parent['name'].lower()))
                         if safe_key not in self.inventory.keys():
-                            self.inventory[safe_key] = {}
+                            self.inventory[safe_key]={}
                         safe_hgname = self.to_safe('%s' % hgname.lower())
                         try:
                             if safe_hgname not in self.inventory[safe_key]['children']:
                                 self.inventory[safe_key]['children'].append(safe_hgname)
                         except KeyError:
-                            self.inventory[safe_key]['children'] = [safe_hgname]
+                            self.inventory[safe_key]['children']=[safe_hgname]
 
             else:
                 # Create ansible groups for hostgroup
@@ -328,8 +331,11 @@ class ForemanInventory(object):
                 val = host.get('%s_title' % group) or host.get('%s_name' % group)
                 if val:
                     safe_key = self.to_safe('%s%s_%s' % (self.group_prefix, group, val.lower()))
-                    self.inventory[safe_key].append(dns_name)
-
+                    if 'hosts' in self.inventory[safe_key].keys():
+                      self.inventory[safe_key]['hosts'].append(dns_name)
+                    else:
+                      self.inventory[safe_key]={'hosts':[]}
+    
                 # Create ansible groups for environment, location and organization
                 for group in ['environment', 'location', 'organization']:
                     val = host.get('%s_name' % group)
@@ -371,7 +377,11 @@ class ForemanInventory(object):
             self.cache[dns_name] = host
             self.params[dns_name] = params
             self.facts[dns_name] = self._get_facts(host)
-            self.inventory['all'].append(dns_name)
+            if 'hosts' in self.inventory['all'].keys():
+                self.inventory['all']['hosts'].append(dns_name)
+            else:
+                self.inventory['all']['hosts']=[dns_name]
+
         self._write_cache()
 
     def is_cache_valid(self):
