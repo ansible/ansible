@@ -22,7 +22,7 @@ __metaclass__ = type
 from nose.plugins.skip import SkipTest
 
 try:
-    from ansible.modules.network.fortimanager import fmgr_script
+    from ansible.modules.network.fortimanager import fmgr_provisioning
     from .fortimanager_module import TestFortimanagerModule
     from units.modules.utils import set_module_args
 except ImportError:
@@ -34,27 +34,30 @@ except ImportError:
     raise SkipTest("FortiManager tests require pyFMG package")
 
 
-class TestFmgrScriptModule(TestFortimanagerModule):
+class TestFmgrProvisioningModule(TestFortimanagerModule):
 
-    module = fmgr_script
+    module = fmgr_provisioning
 
     def test_fmg_script_fail_connect(self):
-        set_module_args(dict(host='1.1.1.1', username='admin', password='admin', adom='root', script_name='TestScript',
-                             script_type='cli', script_target='remote_device', script_description='AnsibleTest',
-                             script_content='get system status'))
+        set_module_args(dict(host='1.1.1.1', username='admin', password='admin', adom='root',
+                             vdom='root', policy_package='root', name='FGT1', serial='FGVM000000117992',
+                             platform='FortiGate-VM64', os_version='5.0', minor_release='6',
+                             patch_release='0', os_type='fos'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'Connection to FortiManager Failed')
 
     def test_fmg_script_login_fail_host(self):
-        set_module_args(dict(username='admin', password='admin', adom='root', script_name='TestScript',
-                             script_type='cli', script_target='remote_device', script_description='AnsibleTest',
-                             script_content='get system status'))
+        set_module_args(dict(username='admin', password='admin', adom='root',
+                             vdom='root', policy_package='root', name='FGT1', serial='FGVM000000117992',
+                             platform='FortiGate-VM64', os_version='5.0', minor_release='6',
+                             patch_release='0', os_type='fos'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'missing required arguments: host')
 
     def test_fmg_script_login_fail_username(self):
-        set_module_args(dict(host='1.1.1.1', password='admin', adom='root', script_name='TestScript',
-                             script_type='cli', script_target='remote_device', script_description='AnsibleTest',
-                             script_content='get system status'))
+        set_module_args(dict(host='1.1.1.1', password='admin', adom='root',
+                             vdom='root', policy_package='root', name='FGT1', serial='FGVM000000117992',
+                             platform='FortiGate-VM64', os_version='5.0', minor_release='6',
+                             patch_release='0', os_type='fos'))
         result = self.execute_module(failed=True)
         self.assertEqual(result['msg'], 'Host and username are required for connection')
