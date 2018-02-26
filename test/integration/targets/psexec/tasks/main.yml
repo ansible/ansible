@@ -41,7 +41,7 @@
   - include_tasks: tests.yml
   
   always:
-  - name: remove test rule that allows SMB traffice inbound
+  - name: remove test rule that allows SMB traffic inbound
     win_firewall_rule:
       name: File and Printer Sharing (SMB-In) Test
       direction: in

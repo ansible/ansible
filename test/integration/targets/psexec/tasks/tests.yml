@@ -87,6 +87,7 @@
     connection_username: '{{psexec_username}}'
     connection_password: '{{psexec_password}}'
     encrypt: '{{psexec_encrypt}}'
+    load_profile: no  # on Azure, the profile does not exist yet so we don't load it for this task
     executable: powershell.exe
     arguments: '-'
     stdin: |
