@@ -97,6 +97,32 @@ class TestNiosApi(unittest.TestCase):
         self.assertTrue(res['changed'])
         wapi.update_object.called_once_with(test_object)
 
+    def test_wapi_change_false(self):
+        self.module.params = {'provider': None, 'state': 'present', 'name': 'default',
+                              'comment': 'updated comment', 'extattrs': None, 'fqdn': 'foo'}
+
+        test_object = [
+            {
+                "comment": "test comment",
+                "_ref": "networkview/ZG5zLm5ldHdvcmtfdmlldyQw:default/true",
+                "name": "default",
+                "extattrs": {}
+            }
+        ]
+
+        test_spec = {
+            "name": {"ib_req": True},
+            "fqdn": {"ib_req": True, 'update': False},
+            "comment": {},
+            "extattrs": {}
+        }
+
+        wapi = self._get_wapi(test_object)
+        res = wapi.run('testobject', test_spec)
+
+        self.assertTrue(res['changed'])
+        wapi.update_object.called_once_with(test_object)
+
     def test_wapi_extattrs_change(self):
         self.module.params = {'provider': None, 'state': 'present', 'name': 'default',
                               'comment': 'test comment', 'extattrs': {'Site': 'update'}}

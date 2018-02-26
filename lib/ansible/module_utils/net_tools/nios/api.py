@@ -240,6 +240,7 @@ class WapiModule(WapiBase):
                 elif 'view' in proposed_object:
                     self.check_if_dns_view_exists(proposed_object['view'])
                 if not self.module.check_mode:
+                    proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
                 result['changed'] = True
 
@@ -321,3 +322,23 @@ class WapiModule(WapiBase):
                     return False
 
         return True
+
+    def on_update(self, proposed_object, ib_spec):
+        ''' Event called before the update is sent to the API endpoing
+
+        This method will allow the final proposed object to be changed
+        and/or keys filtered before it is sent to the API endpoint to
+        be processed.
+
+        :args proposed_object: A dict item that will be encoded and sent
+            the the API endpoint with the updated data structure
+
+        :returns: updated object to be sent to API endpoint
+        '''
+        keys = set()
+        for key, value in iteritems(proposed_object):
+            update = ib_spec[key].get('update', True)
+            if not update:
+                keys.add(key)
+
+        return dict([(k, v) for k, v in iteritems(proposed_object) if k not in keys])
