@@ -1,0 +1,59 @@
+---
+- debug: msg="START cli/intent.yaml on connection={{ ansible_connection }}"
+
+- name: setup - remove vlan used in test
+  vyos_config: &delete
+    lines:
+      - delete interfaces ethernet eth1 vif 100
+      - delete interfaces ethernet eth0 vif 100
+
+- name: set vlan with name
+  vyos_vlan:
+    vlan_id: 100
+    name: vlan-100
+    interfaces: eth1
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set interfaces ethernet eth1 vif 100 description vlan-100' in result.commands"
+
+- name: check vlan interface intent
+  vyos_vlan:
+    vlan_id: 100
+    name: vlan-100
+    associated_interfaces: eth1
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: vlan interface config + intent
+  vyos_vlan:
+    vlan_id: 100
+    interfaces: eth0
+    associated_interfaces:
+    - eth0
+    - eth1
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: vlan intent fail
+  vyos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+    - eth3
+    - eth4
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
+
+- debug: msg="End cli/intent.yaml on connection={{ ansible_connection }}"

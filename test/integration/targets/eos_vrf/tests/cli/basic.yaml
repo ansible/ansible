@@ -85,13 +85,15 @@
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "result.session_name is not defined"
 
-- name: Add Ethernet2 to vrf
+- name: Add Ethernet2 to vrf and check interface assigned state
   eos_vrf:
     name: test
     rd: 1:201
     state: present
     authorize: yes
     interfaces:
+      - Ethernet2
+    associated_interfaces:
       - Ethernet2
     provider: "{{ cli }}"
   become: yes
@@ -123,6 +125,22 @@
       - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'session_name' not in result.commands"
+
+- name: vrf interface intent fail
+  eos_vrf:
+    name: test
+    state: present
+    authorize: yes
+    associated_interfaces:
+      - test
+    provider: "{{ cli }}"
+  become: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == True"
 
 - name: Add multiple interfaces to vrf
   eos_vrf:
