@@ -129,7 +129,8 @@ class VultrInventory:
         except:
             pass
 
-        if 'VULTR_API_TOKEN' in os.environ:  self.api_token = os.environ.get("VULTR_API_TOKEN")
+        if 'VULTR_API_TOKEN' in os.environ:
+            self.api_token = os.environ.get("VULTR_API_TOKEN")
 
         if not self.api_token:
             sys.stderr.write('You must provide (at least) your Vultr.com API token to generate the dynamic inventory.\n')
@@ -158,12 +159,17 @@ class VultrInventory:
             for server in r.json().values():
                 groups['vultr'].append(server['label'])
 
-                if not len(server['tag']):  pass
-                if 'tag_'+server['tag'] not in groups:  groups['tag_'+server['tag']] = [server['label']]
-                else:  groups['tag_'+server['tag']].append(server['label'])
+                if not len(server['tag']):
+                    pass
+                if 'tag_'+server['tag'] not in groups:
+                    groups['tag_'+server['tag']] = [server['label']]
+                else:
+                    groups['tag_'+server['tag']].append(server['label'])
 
-                if server['location'] not in groups:  groups[server['location']] = [server['label']]
-                else:  groups[server['location']].append(server['label'])
+                if server['location'] not in groups:
+                    groups[server['location']] = [server['label']]
+                else:
+                    groups[server['location']].append(server['label'])
 
                 groups['_meta']['hostvars'][server['label']] = {}
                 for key in ('SUBID','os','ram','disk','vcpu_count','location','DCID','status','netmask_v4','gateway_v4','main_ip',
@@ -173,7 +179,8 @@ class VultrInventory:
                 groups['_meta']['hostvars'][server['label']]['ansible_ssh_host'] = server['main_ip']
                 groups['_meta']['hostvars'][server['label']]['ansible_host'] = server['main_ip']
 
-                if len(server['internal_ip']): groups['_meta']['hostvars'][server['label']]['private_ip'] = server['internal_ip']
+                if len(server['internal_ip']):
+                    groups['_meta']['hostvars'][server['label']]['private_ip'] = server['internal_ip']
 
         return(groups)
 
