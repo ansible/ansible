@@ -112,7 +112,7 @@ response:
 '''
 
 import os
-from ansible.module_utils.basic import AnsibleModule, json
+from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 
@@ -121,7 +121,7 @@ def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args = dict(auth_key=dict(type='str', no_log=True),
+    module_args = dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                        host=dict(type='str', required=True),
                        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
                        path=dict(type='path', required=True),
@@ -186,11 +186,9 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    protocol = None
+    protocol = 'https'
     if module.params['use_ssl'] is not None and module.params['use_ssl'] is False:
         protocol = 'http'
-    else:
-        protocol = 'https'
 
     url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {'Content-Type': 'application/json',
