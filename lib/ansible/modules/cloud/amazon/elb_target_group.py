@@ -130,6 +130,19 @@ options:
     description:
       - The identifier of the virtual private cloud (VPC). Required when I(state) is C(present).
     required: false
+  wait:
+    description:
+      - Indicates if the module has to wait to the target group to be created.
+    required: false
+    default: yes
+    choices: [ 'yes', 'no' ]
+    version_added: 2.6
+  wait_timeout:
+    description:
+      - If wait is enable, the time to wait to the target group to be created.
+    required: false
+    default: 60
+    version_added: 2.6
 extends_documentation_fragment:
     - aws
     - ec2
@@ -685,8 +698,8 @@ def main():
             targets=dict(type='list'),
             unhealthy_threshold_count=dict(type='int'),
             vpc_id=dict(type='str'),
-            wait_timeout=dict(type='int'),
-            wait=dict(type='bool')
+            wait_timeout=dict(default=60, type='int'),
+            wait=dict(default=True, type='bool')
         )
     )
 
