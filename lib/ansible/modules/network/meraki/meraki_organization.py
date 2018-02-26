@@ -66,6 +66,7 @@ RETURN = '''
 response:
     description: Data returned from Meraki dashboard.
     type: dict
+    state: query
     returned: info
 '''
 
@@ -82,7 +83,7 @@ def main():
     module_args = dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                        name=dict(type='str', aliases=['organization_id']),
                        username=dict(type='str'),
-                       state=dict(type='str', choices=['present', 'absent']),
+                       state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
                        use_proxy=dict(type='bool', default=False),
                        use_ssl=dict(type='bool', default=True),
                        validate_certs=dict(type='bool', default=True),
@@ -102,10 +103,9 @@ def main():
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
     # supports check mode
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=False,
-    )
+    module = AnsibleModule(argument_spec=module_args,
+                           supports_check_mode=False,
+                           )
     module.params['follow_redirects'] = 'all'
 
     try:
@@ -137,7 +137,7 @@ def main():
                }
 
     method = 'GET'
-    if module.params['state']:
+    if module.params['state'] != 'query':
         method = 'POST'
 
     if module.params['output_level'] == 'debug':
@@ -158,11 +158,12 @@ def main():
                                force=False,
                                )
         if module.params['output_level'] == 'debug':
-            result['response_status_code'] = str(info['status'])
-            result['response_headers'] = str(resp.headers)
+            debug_result['status'] = str(info['status'])
+            debug_result['resp_headers'] = str(resp.headers)
+            debug_result['response'] = str(resp.read())
 
     except Exception as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), **debug_result)
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
