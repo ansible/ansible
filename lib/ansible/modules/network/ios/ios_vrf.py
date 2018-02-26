@@ -64,6 +64,12 @@ options:
       - Identifies the set of interfaces that
         should be configured in the VRF.  Interfaces must be routed
         interfaces in order to be placed into a VRF.
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vrf C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vrf interfaces on device it will result in failure.
+    version_added: "2.5"
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote
@@ -400,6 +406,7 @@ def map_params_to_obj(module):
         item['route_import'] = get_value('route_import')
         item['route_export'] = get_value('route_export')
         item['route_both'] = get_value('route_both')
+        item['associated_interfaces'] = get_value('associated_interfaces')
         objects.append(item)
 
     return objects
@@ -424,8 +431,12 @@ def update_objects(want, have):
     return updates
 
 
-def check_declarative_intent_params(want, module):
-    if module.params['interfaces']:
+def check_declarative_intent_params(want, module, result):
+    if module.params['associated_interfaces']:
+
+        if result['changed']:
+            time.sleep(module.params['delay'])
+
         name = module.params['name']
         rc, out, err = exec_command(module, 'show vrf | include {0}'.format(name))
 
@@ -439,7 +450,9 @@ def check_declarative_intent_params(want, module):
 
             for w in want:
                 if w['name'] == vrf:
-                    for i in w['interfaces']:
+                    if w.get('associated_interfaces') is None:
+                        continue
+                    for i in w['associated_interfaces']:
                         if get_interface_type(i) is not get_interface_type(interface):
                             module.fail_json(msg="Interface %s not configured on vrf %s" % (interface, name))
 
@@ -458,6 +471,7 @@ def main():
         route_both=dict(type='list'),
 
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
 
         delay=dict(default=10, type='int'),
         purge=dict(type='bool', default=False),
@@ -497,12 +511,10 @@ def main():
             load_config(module, commands)
         result['changed'] = True
 
-    if result['changed']:
-        time.sleep(module.params['delay'])
-
-    check_declarative_intent_params(want, module)
+    check_declarative_intent_params(want, module, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
