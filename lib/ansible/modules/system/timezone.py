@@ -356,9 +356,8 @@ class NosystemdTimezone(Timezone):
             # The key for timezone might be `ZONE` or `TIMEZONE`
             # (the former is used in RHEL/CentOS and the latter is used in SUSE linux).
             # So check the content of /etc/sysconfig/clock and decide which key to use.
-            file = open(self.conf_files['name'], mode='r')
-            sysconfig_clock = file.read()
-            file.close()
+            with open(self.conf_files['name'], mode='r') as f:
+                sysconfig_clock = f.read()
             if re.search(r'^TIMEZONE\s*=', sysconfig_clock, re.MULTILINE):
                 # For SUSE
                 self.regexps['name'] = re.compile(r'^TIMEZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
