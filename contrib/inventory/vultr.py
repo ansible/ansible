@@ -141,7 +141,7 @@ class VultrInventory:
         """Generate Ansible inventory.
         """
 
-        groups = {'vultr': [], '_meta':{ 'hostvars': {}}}
+        groups = {'vultr': [], '_meta': {'hostvars': {}}}
 
         r = requests.get('%s/v1/server/list' % self._API_ENDPOINT, headers={'API-Key': self.api_token})
 
