@@ -154,6 +154,7 @@ EXAMPLES = r"""
 - lineinfile:
     path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
+    create: true
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:
