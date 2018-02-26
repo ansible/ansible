@@ -258,8 +258,16 @@ def main():
                 org = org_res.get(name=organization)
                 params['organization'] = org['id']
 
-            credential_type = credential_type_for_v1_kind(module.params, module)
-            params['credential_type'] = credential_type['id']
+            try:
+                tower_cli.get_resource('credential_type')
+            except (AttributeError):
+                # /api/v1/ backwards compat
+                # older versions of tower-cli don't *have* a credential_type
+                # resource
+                params['kind'] = module.params['kind']
+            else:
+                credential_type = credential_type_for_v1_kind(module.params, module)
+                params['credential_type'] = credential_type['id']
 
             if module.params.get('description'):
                 params['description'] = module.params.get('description')
