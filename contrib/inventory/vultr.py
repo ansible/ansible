@@ -82,6 +82,7 @@ Version: 0.1
 import sys
 import os
 
+
 class VultrApiException(Exception):
     pass
 
@@ -136,22 +137,20 @@ class VultrInventory:
             sys.stderr.write('You must provide (at least) your Vultr.com API token to generate the dynamic inventory.\n')
             sys.exit(1)
 
-
     def get_inventory(self):
         """Generate Ansible inventory.
         """
 
-        groups = { 'vultr': [], '_meta': { 'hostvars': { } } }
+        groups = {'vultr': [], '_meta':{ 'hostvars': {}}}
 
-        r = requests.get('%s/v1/server/list' % self._API_ENDPOINT, headers={ 'API-Key': self.api_token })
+        r = requests.get('%s/v1/server/list' % self._API_ENDPOINT, headers={'API-Key': self.api_token})
 
-        if r.status_code in (401,403):
+        if r.status_code in (401, 403):
             sys.stderr.write('Error authenticating or error with providing API key.\n')
             sys.exit(1)
         elif r.status_code != 200:
             sys.stderr.write('Unexected http response code from Vultr API server (%s)\n' % r.status_code)
             sys.exit(1)
-
 
         # Build inventory from instances in all projects
         #
@@ -161,10 +160,10 @@ class VultrInventory:
 
                 if not len(server['tag']):
                     pass
-                if 'tag_'+server['tag'] not in groups:
-                    groups['tag_'+server['tag']] = [server['label']]
+                if 'tag_' + server['tag'] not in groups:
+                    groups['tag_' + server['tag']] = [server['label']]
                 else:
-                    groups['tag_'+server['tag']].append(server['label'])
+                    groups['tag_' + server['tag']].append(server['label'])
 
                 if server['location'] not in groups:
                     groups[server['location']] = [server['label']]
@@ -172,9 +171,9 @@ class VultrInventory:
                     groups[server['location']].append(server['label'])
 
                 groups['_meta']['hostvars'][server['label']] = {}
-                for key in ('SUBID','os','ram','disk','vcpu_count','location','DCID','status','netmask_v4','gateway_v4','main_ip',
-                            'power_status','server_state','v6_main_ip','v6_network_size','v6_network','internal_ip','auto_backups'):
-                    groups['_meta']['hostvars'][server['label']]['vultr_'+key] = server[key]
+                for key in ('SUBID', 'os', 'ram', 'disk', 'vcpu_count', 'location', 'DCID', 'status', 'netmask_v4', 'gateway_v4', 'main_ip',
+                            'power_status', 'server_state', 'v6_main_ip', 'v6_network_size', 'v6_network', 'internal_ip', 'auto_backups'):
+                    groups['_meta']['hostvars'][server['label']]['vultr_' + key] = server[key]
 
                 groups['_meta']['hostvars'][server['label']]['ansible_ssh_host'] = server['main_ip']
                 groups['_meta']['hostvars'][server['label']]['ansible_host'] = server['main_ip']
@@ -183,7 +182,6 @@ class VultrInventory:
                     groups['_meta']['hostvars'][server['label']]['private_ip'] = server['internal_ip']
 
         return(groups)
-
 
 
 # Run the script
