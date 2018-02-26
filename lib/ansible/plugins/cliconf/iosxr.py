@@ -56,7 +56,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', filter=None):
+    def get_config(self, source='running', format='text', filter=None):
         lookup = {'running': 'running-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
