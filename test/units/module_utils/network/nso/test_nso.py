@@ -237,6 +237,38 @@ SCHEMA_DATA = {
         ]
     }
 }
+''',
+    '/test:test/device-list': '''
+{
+    "meta": {
+        "types": {
+            "http://example.com/test:t15": [
+               {
+                  "leaf_type":[
+                     {
+                        "name":"string"
+                     }
+                  ],
+                  "list_type":[
+                     {
+                        "name":"http://example.com/test:t15",
+                        "leaf-list":true
+                     }
+                  ]
+               }
+            ]
+        }
+    },
+    "data": {
+        "kind":"leaf-list",
+        "name":"device-list",
+        "qname":"test:device-list",
+        "type": {
+           "namespace":"http://example.com/test",
+           "name":"t15"
+        }
+    }
+}
 '''
 }
 
@@ -342,7 +374,7 @@ class TestValueBuilder(unittest.TestCase):
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/an:id-name-values/id-name-value'),
             MockResponse('get_module_prefix_map', {}, 200, '{{"result": {0}}}'.format(MODULE_PREFIX_MAP)),
-            MockResponse('exists', {'path': '/an:id-name-values/id-name-value{an:id-one}'}, 200, '{"result": {"exists": true}}'),
+            MockResponse('exists', {'path': '/an:id-name-values/id-name-value{an:id-one}'}, 200, '{"result": {"exists": true}}')
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
 
@@ -395,6 +427,7 @@ class TestValueBuilder(unittest.TestCase):
     @patch('ansible.module_utils.network.nso.nso.open_url')
     def test_leaf_list_type(self, open_url_mock):
         calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.4"}'),
             MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
             get_schema_response('/test:test')
         ]
@@ -411,6 +444,35 @@ class TestValueBuilder(unittest.TestCase):
         value = vb.values[0]
         self.assertEquals('{0}/device-list'.format(parent), value.path)
         self.assertEquals(['one', 'two'], value.value)
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_leaf_list_type_45(self, open_url_mock):
+        calls = [
+            MockResponse('get_system_setting', {'operation': 'version'}, 200, '{"result": "4.5"}'),
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            get_schema_response('/test:test/device-list')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+
+        parent = "/test:test"
+        schema_data = json.loads(
+            SCHEMA_DATA['/test:test'])
+        schema = schema_data['data']
+
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc'))
+        vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
+        self.assertEquals(3, len(vb.values))
+        value = vb.values[0]
+        self.assertEquals('{0}/device-list'.format(parent), value.path)
+        self.assertEquals(nso.State.ABSENT, value.state)
+        value = vb.values[1]
+        self.assertEquals('{0}/device-list{{one}}'.format(parent), value.path)
+        self.assertEquals(nso.State.PRESENT, value.state)
+        value = vb.values[2]
+        self.assertEquals('{0}/device-list{{two}}'.format(parent), value.path)
+        self.assertEquals(nso.State.PRESENT, value.state)
 
         self.assertEqual(0, len(calls))
 
