@@ -106,6 +106,7 @@ class IncludedFile:
                                     if isinstance(parent_include, IncludeRole):
                                         parent_include_dir = parent_include._role_path
                                     else:
+                                        # Depending on how we got here, a task includes args may have been merged into vars
                                         args_or_vars = getattr(parent_include, 'args', {}) or getattr(parent_include, 'vars', {})
                                         parent_include_dir = os.path.dirname(templar.template(args_or_vars.get('_raw_params')))
                                     if cumulative_path is not None and not os.path.isabs(cumulative_path):

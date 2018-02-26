@@ -55,6 +55,7 @@ class Block(Base, Become, Conditional, Taggable):
         # end of role flag
         self._eor = False
 
+        # This tracks whether the blocks came from a flattened task include
         self._from_dyn_task_include = False
 
         _ti_vars = {}
@@ -72,6 +73,8 @@ class Block(Base, Become, Conditional, Taggable):
             self._parent = parent_block
 
         super(Block, self).__init__()
+
+        # Set initial vars from task include out of band of ds preprocessing to happen later
         self.vars.update(_ti_vars)
 
     def __repr__(self):
