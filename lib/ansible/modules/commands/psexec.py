@@ -350,6 +350,9 @@ def remove_artifacts(module, client):
         module.warn("%s with an SCMR fault: %s" % (warning_msg, to_text(exc)))
     except PypsexecException as exc:
         module.warn("%s with generic fault: %s" % (warning_msg, to_text(exc)))
+    except SMBException as exc:
+        module.warn("Failed to remove PAExec executable with SMB fault: %s"
+                    % to_text(exc))
 
 
 def main():
