@@ -54,6 +54,7 @@ class Connection(ConnectionBase):
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
     become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    default_user = 'root'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
