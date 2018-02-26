@@ -42,6 +42,7 @@ from ansible.parsing.splitter import parse_kv
 import ansible.executor.module_common as module_common
 import ansible.constants as C
 from ansible.module_utils._text import to_native, to_text
+from ansible.template import Templar
 
 try:
     import json
@@ -149,7 +150,8 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
         modname,
         modfile,
         complex_args,
-        task_vars=task_vars
+        task_vars=task_vars,
+        templar=Templar(loader=loader)
     )
 
     if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in to_native(module_data):
