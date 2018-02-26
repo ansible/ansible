@@ -171,17 +171,19 @@ def search_obj_in_list(vlan_id, lst):
             return o
 
 
-def get_diff(w, have):
+def get_diff(w, obj):
     c = deepcopy(w)
-    del c['interfaces']
-    del c['name']
-    del c['associated_interfaces']
-    for o in have:
-        del o['interfaces']
-        del o['name']
-        if o['vlan_id'] == w['vlan_id']:
-            diff_dict = dict(set(c.items()) - set(o.items()))
-            return diff_dict
+    entries = ('interfaces', 'associated_interfaces', 'name', 'delay', 'vlan_range')
+    for key in entries:
+        if key in c:
+            del c[key]
+
+    o = deepcopy(obj)
+    del o['interfaces']
+    del o['name']
+    if o['vlan_id'] == w['vlan_id']:
+        diff_dict = dict(set(c.items()) - set(o.items()))
+        return diff_dict
 
 
 def map_obj_to_commands(updates, module, os_platform):
@@ -269,7 +271,7 @@ def map_obj_to_commands(updates, module, os_platform):
                             commands.append('no switchport access vlan {0}'.format(vlan_id))
 
                 else:
-                    diff = get_diff(w, have)
+                    diff = get_diff(w, obj_in_have)
                     if diff:
                         commands.append('vlan {0}'.format(vlan_id))
                         for key, value in diff.items():
