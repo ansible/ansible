@@ -25,7 +25,7 @@ import re
 import itertools
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -372,7 +372,8 @@ class InventoryManager(object):
                 from random import shuffle
                 shuffle(hosts)
             elif order not in [None, 'inventory']:
-                raise AnsibleError("Invalid 'order' specified for inventory hosts: %s" % order)
+                raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s. 'order' may be one "
+                                          "of [null|inventory|reverse_inventory|reverse_sorted|shuffle|sorted]." % order)
 
         return hosts
 
