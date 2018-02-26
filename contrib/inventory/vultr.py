@@ -175,7 +175,7 @@ class VultrInventory:
 
                 if len(server['internal_ip']): groups['_meta']['hostvars'][server['label']]['private_ip'] = server['internal_ip']
 
-        return(groups) 
+        return(groups)
 
 
 
