@@ -185,7 +185,7 @@ DEFAULTS = {
     'all_rds_instances': 'False',
     'aws_access_key_id': None,
     'aws_secret_access_key': None,
-    'aws_security_token': None,
+    'aws_session_token': None,
     'boto_profile': None,
     'cache_max_age': '300',
     'cache_path': '~/.ansible/tmp',
@@ -435,15 +435,15 @@ class Ec2Inventory(object):
 
             aws_access_key_id = config.get('credentials', 'aws_access_key_id')
             aws_secret_access_key = config.get('credentials', 'aws_secret_access_key')
-            aws_security_token = config.get('credentials', 'aws_security_token')
+            aws_session_token = config.get('credentials', 'aws_session_token')
 
             if aws_access_key_id:
                 self.credentials = {
                     'aws_access_key_id': aws_access_key_id,
                     'aws_secret_access_key': aws_secret_access_key
                 }
-                if aws_security_token:
-                    self.credentials['security_token'] = aws_security_token
+                if aws_session_token:
+                    self.credentials['security_token'] = aws_session_token
 
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
@@ -560,8 +560,8 @@ class Ec2Inventory(object):
     def boto_fix_security_token_in_profile(self, connect_args):
         ''' monkey patch for boto issue boto/boto#2100 '''
         profile = 'profile ' + self.boto_profile
-        if boto.config.has_option(profile, 'aws_security_token'):
-            connect_args['security_token'] = boto.config.get(profile, 'aws_security_token')
+        if boto.config.has_option(profile, 'aws_session_token'):
+            connect_args['security_token'] = boto.config.get(profile, 'aws_session_token')
         return connect_args
 
     def connect_to_aws(self, module, region):
