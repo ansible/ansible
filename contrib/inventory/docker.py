@@ -716,8 +716,8 @@ class DockerInventory(object):
 
                 timeout = host.get('timeout') or def_timeout or self._args.timeout or self._env_args.timeout or \
                     DEFAULT_TIMEOUT_SECONDS
-                default_ip = host.get('default_ip') or def_ip or self._args.default_ip_address or \
-                    DEFAULT_IP
+                default_ip = host.get('default_ip') or def_ip or self._env_args.default_ip or \
+                    self._args.default_ip_address or DEFAULT_IP
                 default_ssh_port = host.get('private_ssh_port') or def_ssh_port or self._args.private_ssh_port or \
                     DEFAULT_SSH_PORT
                 host_dict = dict(
@@ -758,7 +758,7 @@ class DockerInventory(object):
                 key_path = os.path.join(key_path, 'key.pem')
 
             timeout = def_timeout or self._args.timeout or self._env_args.timeout or DEFAULT_TIMEOUT_SECONDS
-            default_ip = def_ip or self._args.default_ip_address or DEFAULT_IP
+            default_ip = def_ip or self._env_args.default_ip or self._args.default_ip_address or DEFAULT_IP
             default_ssh_port = def_ssh_port or self._args.private_ssh_port or DEFAULT_SSH_PORT
             host_dict = dict(
                 docker_host=docker_host,
