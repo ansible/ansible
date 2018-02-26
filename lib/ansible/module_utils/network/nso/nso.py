@@ -310,7 +310,9 @@ class ValueBuilder(object):
         if schema is None:
             schema = self._get_schema(path)
 
-        if self._is_leaf(schema):
+        if self._is_leaf_list(schema) and is_version(self._client, [(4, 5)]):
+            self._build_leaf_list(path, schema, value)
+        elif self._is_leaf(schema):
             if self._is_empty_leaf(schema):
                 exists = self._client.exists(path)
                 if exists and value != [None]:
@@ -318,9 +320,17 @@ class ValueBuilder(object):
                 elif not exists and value == [None]:
                     self._add_value(path, State.PRESENT, None)
             else:
-                value_type = self._get_type(parent, maybe_qname)
-                if value_type == 'identityref':
-                    value, t_value = self._get_prefix_name(value)
+                if maybe_qname is None:
+                    value_type = self._get_type(path)
+                else:
+                    value_type = self._get_child_type(parent, maybe_qname)
+
+                if 'identityref' in value_type:
+                    if isinstance(value, list):
+                        value = [ll_v for ll_v, t_ll_v
+                                 in [self._get_prefix_name(v) for v in value]]
+                    else:
+                        value, t_value = self._get_prefix_name(value)
                 self._add_value(path, State.SET, value)
         elif isinstance(value, dict):
             self._build_dict(path, schema, value)
@@ -349,6 +359,18 @@ class ValueBuilder(object):
             child_schema = self._find_child(path, schema, qname)
             self.build(path, dict_key, dict_value, child_schema)
 
+    def _build_leaf_list(self, path, schema, value):
+        entry_type = self._get_type(path, schema)
+        # remove leaf list if treated as a list and then re-create the
+        # expected list entries.
+        self._add_value(path, State.ABSENT, None)
+
+        for entry in value:
+            if 'identityref' in entry_type:
+                entry, t_entry = self._get_prefix_name(entry)
+            entry_path = '{0}{{{1}}}'.format(path, entry)
+            self._add_value(entry_path, State.PRESENT, None)
+
     def _build_list(self, path, schema, value):
         for entry in value:
             entry_key = self._build_key(path, entry, schema['key'])
@@ -376,8 +398,8 @@ class ValueBuilder(object):
                     'required leaf {0} in {1} not set in data'.format(
                         key, path))
 
-            value_type = self._get_type(path, key)
-            if value_type == 'identityref':
+            value_type = self._get_child_type(path, key)
+            if 'identityref' in value_type:
                 value, t_value = self._get_prefix_name(value)
             key_parts.append(self._quote_key(value))
         return ' '.join(key_parts)
@@ -422,8 +444,8 @@ class ValueBuilder(object):
         self._values_dirty = True
 
     def _get_prefix_name(self, qname):
-        if qname is None:
-            return None, None
+        if not isinstance(qname, (str, unicode)):
+            return qname, None
         if ':' not in qname:
             return qname, qname
 
@@ -439,16 +461,23 @@ class ValueBuilder(object):
     def _get_schema(self, path):
         return self._ensure_schema_cached(path)['data']
 
-    def _get_type(self, parent_path, key):
+    def _get_child_type(self, parent_path, key):
         all_schema = self._ensure_schema_cached(parent_path)
         parent_schema = all_schema['data']
         meta = all_schema['meta']
-
         schema = self._find_child(parent_path, parent_schema, key)
+        return self._get_type(parent_path, schema, meta)
+
+    def _get_type(self, path, schema=None, meta=None):
+        if schema is None or meta is None:
+            all_schema = self._ensure_schema_cached(path)
+            schema = all_schema['data']
+            meta = all_schema['meta']
+
         if self._is_leaf(schema):
             def get_type(meta, curr_type):
                 if curr_type.get('primitive', False):
-                    return curr_type['name']
+                    return [curr_type['name']]
                 if 'namespace' in curr_type:
                     curr_type_key = '{0}:{1}'.format(
                         curr_type['namespace'], curr_type['name'])
@@ -456,10 +485,14 @@ class ValueBuilder(object):
                     return get_type(meta, type_info)
                 if 'leaf_type' in curr_type:
                     return get_type(meta, curr_type['leaf_type'][-1])
-                return curr_type['name']
+                if 'union' in curr_type:
+                    union_types = []
+                    for union_type in curr_type['union']:
+                        union_types.extend(get_type(meta, union_type[-1]))
+                    return union_types
+                return [curr_type.get('name', 'unknown')]
 
             return get_type(meta, schema['type'])
-
         return None
 
     def _ensure_schema_cached(self, path):
@@ -502,7 +535,12 @@ class ValueBuilder(object):
                     return choice_child_schema
         return None
 
+    def _is_leaf_list(self, schema):
+        return schema.get('kind', None) == 'leaf-list'
+
     def _is_leaf(self, schema):
+        # still checking for leaf-list here to be compatible with pre
+        # 4.5 versions of NSO.
         return schema.get('kind', None) in ('key', 'leaf', 'leaf-list')
 
     def _is_empty_leaf(self, schema):
@@ -529,6 +567,11 @@ def verify_version(client, required_versions=None):
         raise ModuleFailException(
             'unsupported NSO version {0}. {1} or later supported'.format(
                 version_str, supported_versions))
+
+
+def is_version(client, required_versions):
+    version_str = client.get_system_setting('version')
+    return verify_version_str(version_str, required_versions)
 
 
 def verify_version_str(version_str, required_versions):
