@@ -21,26 +21,29 @@
     psexec_password: '{{ansible_password}}'
     psexec_encrypt: '{{encryption_supported_raw.stdout_lines[0]|bool}}'
 
-- name: create test inbound SMB firewall rule
+- name: create test rule to allow SMB traffic inbound
   win_firewall_rule:
-    name: Psexec Test
-    localport: 25
-    action: allow
+    name: File and Printer Sharing (SMB-In) Test
     direction: in
-    protocol: tcp
-    state: present
+    action: allow
+    localport: 445
     enabled: yes
+    protocol: tcp
+    program: System
+    profiles:
+    - domain
+    - private
+    - public
+    state: present
 
 - name: run tests
   block:
   - include_tasks: tests.yml
   
   always:
-  - name: remove test inbound SMB firewall rule
+  - name: remove test rule that allows SMB traffice inbound
     win_firewall_rule:
-      name: Psexec Test
-      action: allow
+      name: File and Printer Sharing (SMB-In) Test
       direction: in
-      protocol: tcp
+      action: allow
       state: absent
-

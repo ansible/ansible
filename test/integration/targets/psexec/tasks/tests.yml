@@ -228,4 +228,3 @@
     - psexec_process_working_dir.rc == 0
     - psexec_process_working_dir.stderr == ''
     - psexec_process_working_dir.stdout == 'C:\Windows\r\n'
-
