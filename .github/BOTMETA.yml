@@ -1074,9 +1074,7 @@ files:
     labels: docs
     notify: dharmabumstead
   docs/docsite/rst/network/:
-    labels:
-      - networking
-      - docs
+    labels: networking
     maintainers:
       - acozine
       - gundalow
