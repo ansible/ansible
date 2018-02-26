@@ -82,6 +82,8 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/36541
 * Fix vyos_config IndexError in sanitize_config
   (https://github.com/ansible/ansible/issues/36351)
+* Fix vyos_l3_interface multiple address assignment to interfaces
+  (https://github.com/ansible/ansible/pull/36721)
 
 
 <a id="2.4.3"></a
