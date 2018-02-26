@@ -106,6 +106,8 @@ EXAMPLES = '''
 
 import os
 import re
+import tempfile
+import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -239,11 +241,20 @@ def do_ini(module, filename, section=None, option=None, value=None,
     if changed and not module.check_mode:
         if backup:
             backup_file = module.backup_local(filename)
-        ini_file = open(filename, 'w')
+
         try:
-            ini_file.writelines(ini_lines)
-        finally:
-            ini_file.close()
+            tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
+            f = os.fdopen(tmpfd, 'w')
+            f.writelines(ini_lines)
+            f.close()
+        except IOError:
+            module.fail_json(msg="Unable to create temporary file %s", traceback=traceback.format_exc())
+
+        try:
+            module.atomic_move(tmpfile, filename)
+        except IOError:
+            module.ansible.fail_json(msg='Unable to move temporary \
+                                   file %s to %s, IOError' % (tmpfile, filename), traceback=traceback.format_exc())
 
     return (changed, backup_file, diff, msg)
 
