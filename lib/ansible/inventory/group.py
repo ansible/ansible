@@ -35,6 +35,7 @@ class Group:
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
+        self._ancestors_cache = None
         self.priority = 1
 
     def __repr__(self):
