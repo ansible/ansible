@@ -84,7 +84,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/36351)
 
 
-<a id="2.4.3"></a
+<a id="2.4.3"></a>
 
 ## 2.4.3 "Dancing Days" - 2018-01-31
 
