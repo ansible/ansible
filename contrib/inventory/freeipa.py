@@ -3,8 +3,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import argparse
+from distutils.version import LooseVersion
 import json
-from ipalib import api, errors
+import os
+import sys
+from ipalib import api, errors, __version__ as IPA_VERSION
 from six import u
 
 
@@ -12,10 +15,29 @@ def initialize():
     '''
     This function initializes the FreeIPA/IPA API. This function requires
     no arguments. A kerberos key must be present in the users keyring in
-    order for this to work.
+    order for this to work. IPA default configuration directory is /etc/ipa,
+    this path could be overridden with IPA_CONFDIR environment variable.
     '''
 
     api.bootstrap(context='cli')
+
+    if not os.path.isdir(api.env.confdir):
+        print("WARNING: IPA configuration directory (%s) is missing. "
+              "Environment variable IPA_CONFDIR could be used to override "
+              "default path." % api.env.confdir)
+
+    if LooseVersion(IPA_VERSION) >= LooseVersion('4.6.2'):
+        # With ipalib < 4.6.0 'server' and 'domain' have default values
+        # ('localhost:8888', 'example.com'), newer versions don't and
+        # DNS autodiscovery is broken, then one of jsonrpc_uri / xmlrpc_uri is
+        # required.
+        # ipalib 4.6.0 is unusable (https://pagure.io/freeipa/issue/7132)
+        # that's why 4.6.2 is explicitely tested.
+        if 'server' not in api.env or 'domain' not in api.env:
+            sys.exit("ERROR: ('jsonrpc_uri' or 'xmlrpc_uri') or 'domain' are not "
+                     "defined in '[global]' section of '%s' nor in '%s'." %
+                     (api.env.conf, api.env.conf_default))
+
     api.finalize()
     try:
         api.Backend.rpcclient.connect()
