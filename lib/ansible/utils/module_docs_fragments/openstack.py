@@ -47,7 +47,6 @@ options:
         password authentication, the name of the plugin should be indicated here
         and the contents of the I(auth) parameter should be updated accordingly.
     required: false
-    default: password
   region_name:
     description:
       - Name of the region.
@@ -55,9 +54,9 @@ options:
   wait:
     description:
       - Should ansible wait until the requested resource is complete.
+    type: bool
     required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    default: true
   timeout:
     description:
       - How long should ansible wait for the requested resource.
@@ -68,29 +67,25 @@ options:
       - How long should the socket layer wait before timing out for API calls.
         If this is omitted, nothing will be passed to the requests library.
     required: false
-    default: None
-  validate_certs:
+  verify:
     description:
       - Whether or not SSL API requests should be verified. Before 2.3 this defaulted to True.
+    type: bool
     required: false
-    default: null
-    aliases: ['verify']
+    aliases: ['validate_certs']
   cacert:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     required: false
-    default: None
   cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction.
     required: false
-    default: None
   key:
     description:
       - A path to a client key to use as part of the SSL transaction.
     required: false
-    default: None
   interface:
     description:
         - Endpoint URL type to fetch from the service catalog.
