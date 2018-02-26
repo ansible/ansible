@@ -599,21 +599,27 @@ class User(object):
             info[1] = self.user_password()
         return info
 
-    def user_password(self):
-        passwd = ''
+    def get_spwd_info(self):
         if HAVE_SPWD:
             try:
-                passwd = spwd.getspnam(self.name)[1]
+                return spwd.getspnam(self.name)
             except KeyError:
-                return passwd
-        if not self.user_exists():
-            return passwd
+                return False
         elif self.SHADOWFILE:
             # Read shadow file for user's encrypted password string
             if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
                 for line in open(self.SHADOWFILE).readlines():
                     if line.startswith('%s:' % self.name):
-                        passwd = line.split(':')[1]
+                        return line.split(':')
+        return False
+
+    def user_password(self):
+        passwd = ''
+        if not self.user_exists():
+            return passwd
+        passwd_info = self.get_spwd_info()
+        if passwd_info:
+            return passwd_info[1]
         return passwd
 
     def get_ssh_key_path(self):
@@ -2173,6 +2179,18 @@ def main():
         if user.user_exists():
             if module.check_mode:
                 module.exit_json(changed=True)
+            # Python library reported user exists, but user might be provided
+            # by other external sources such as identity management tools
+            # like FreeIPA. Hint about this and fail
+            if not user.get_spwd_info():
+                # User is not available in shadow file
+                # Must be external user
+                module.fail_json(name=user.name,
+                                 msg="User '%s' seems to be an external user"
+                                     " managed by identity management tools"
+                                     " like FreeIPA. Please ensure this before"
+                                     " proceeding this operation." % user.name,
+                                 rc=1)
             (rc, out, err) = user.remove_user()
             if rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
