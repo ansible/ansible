@@ -1,5 +1,13 @@
+from unittest import SkipTest
+try:
+    import vcr
+except ImportError:
+    raise SkipTest('vcr is needed.')
+try:
+    import avi.sdk
+except ImportError:
+    raise SkipTest('avisdk is needed.')
 import json
-import vcr
 import os
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
@@ -52,7 +60,7 @@ def get_bin_path(self, arg, required=False):
             fail_json(msg='%r not found !' % arg)
 
 
-class test_healthmonitor(unittest.TestCase):
+class TestHealthmonitor(unittest.TestCase):
     def setUp(self):
         self.mock_module_helper = patch.multiple(basic.AnsibleModule,
                                                  exit_json=exit_json,
