@@ -237,9 +237,9 @@ class Display:
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
-    def warning(self, msg):
+    def warning(self, msg, formatted=False):
         if C.SYSTEM_WARNINGS:
-            self.system_warning(msg)
+            self.system_warning(msg, formatted=False)
 
     def banner(self, msg, color=None, cows=True):
         '''
