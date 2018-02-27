@@ -23,17 +23,21 @@ version_added: "2.6"
 
 description:
     - Enables management of Cisco's Meraki line of products through their cloud based dashboard.
+
+notes:
     - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 
 options:
     auth_key:
         description:
-            - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
-        required: no
+            - Authentication key provided by the dashboard.
+            - Required if environmental variable MERAKI_KEY is not set.
+        default: MERAKI_KEY env var
     host:
         description:
             - FQDN or IP address of Meraki dashboard.
-        required: yes
+            - This is only useful if you are a Cisco developer working with an in-house Meraki setup.
+        default: api.meraki.com
     method:
         description:
             - The HTTP method of the request.
@@ -55,27 +59,32 @@ options:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: no
+        default: 'no'
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
+            - Disabling HTTPS will cause DELETE, POST and PUT methods to fail.
         type: bool
-        default: yes
+        default: 'yes'
     validate_certs:
         description:
             - If C(no), HTTPS certificates will not be verified.
+            - This is only useful if you are a Cisco developer working with an in-house Meraki setup.
         type: bool
-        default: yes
+        default: 'yes'
     content:
         description:
             - Raw content which should be fed in body.
+            - Mutual exclusive with C(src).
     src:
         description:
-            - Name of absolute path of the filename which contains content to be fed to Meraki Dashboard. Must be in JSON format.
+            - Name of absolute path of the filename which contains content to be fed to Meraki Dashboard.
+            - Must be in JSON format.
+            - Mutual exclusive with C(content).
     output_level:
         description:
-            - Set amount of debug output during module execution
-        choices: ['normal', 'debug']
+            - Set amount of debug output during module execution.
+        choices: [ 'debug', 'normal' ]
 
 author:
     - Kevin Breit (@kbreit)
@@ -84,28 +93,23 @@ author:
 EXAMPLES = '''
 # Query inventory
 - name: Query network device inventory
-  sda_rest:
+  meraki_rest:
     auth_key: abc12345
-    host: dashboard.meraki.com
     method: get
     path: /api/v0/organizations
-    use_ssl: yes
   delegate_to: localhost
 
 - name: Create network
-  sda_rest:
+  meraki_rest:
     auth_key: abc12345
-    host: dashboard.meraki.com
     method: post
     path: /api/v0/organizations/133277/networks
     src: /home/username/network.json
-    use_ssl: yes
   delegate_to: localhost
-
 '''
 
 RETURN = '''
-response:
+data:
     description: Data returned from Meraki dashboard.
     type: dict
     returned: info
@@ -114,7 +118,7 @@ response:
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
 
 def main():
@@ -122,7 +126,7 @@ def main():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
-                       host=dict(type='str', required=True),
+                       host=dict(type='str', default='api.meraki.com'),
                        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
                        path=dict(type='path', required=True),
                        timeout=dict(type='int', default=30),
@@ -152,8 +156,10 @@ def main():
         supports_check_mode=False,
         mutually_exclusive=[['content', 'src']],
     )
+#    module.params['follow_redirects'] = 'no'
     module.params['follow_redirects'] = 'urllib2'
-
+#    module.params['follow_redirects'] = 'all'
+#    module.params['follow_redirects'] = 'yes'
 
     if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
@@ -162,8 +168,7 @@ def main():
     payload = None
 
     if module.params['content']:
-        payload = module.params['content']
-        payload = json.dumps(payload)
+        payload = json.loads(to_native(module.params['content']))
     elif module.params['src']:
         src = module.params['src']
         file_exists = False
@@ -173,6 +178,8 @@ def main():
                 payload = config_object.read()
         else:
             module.fail_json(msg="File does not exist")
+
+#    payload = json.loads(to_native(payload))
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
@@ -187,47 +194,65 @@ def main():
         protocol = 'http'
 
     url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
-    headers = {'Content-Type': 'application/json',
-               'X-Cisco-Meraki-API-Key': module.params['auth_key'],
-               }
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Cisco-Meraki-API-Key': module.params['auth_key'],
+    }
 
-    if module.params['output_level'] == 'debug':
-        result['url'] = url
-        result['method'] = module.params['method']
-        result['headers'] = headers
-        result['payload'] = payload
+    import urllib2
+    debug_result = dict(
+        url=url,
+        method=module.params['method'],
+        headers=headers,
+        payload=json.dumps(payload),
+        dir=dir(urllib2.HTTPRedirectHandler),
+    )
 
     try:
         resp, info = fetch_url(module, url,
-                               data=payload,
+                               data=json.dumps(payload),
                                headers=headers,
                                method=module.params['method'].upper(),
                                use_proxy=module.params['use_proxy'],
                                force=False,
                                timeout=module.params['timeout'],
                                )
-        if module.params['output_level'] == 'debug':
-            result['response_status_code'] = str(info['status'])
-            result['response_headers'] = str(resp.headers)
 
     except Exception as e:
-        module.fail_json(msg=e)
+        result.update(debug_result)
+        module.fail_json(msg=str(e))
 
-    if info['status'] >= 300:
-        module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
+    if module.params['output_level'] == 'debug':
+        result['status'] = info['status']
+        result['response'] = info['msg']
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
-    if info['status'] >= 200 and info['status'] <= 299:
-        result['changed'] = True
+    if 200 <= info['status'] <= 300 and resp is not None:
         try:
-            result['message'] = json.loads(to_native(resp.read()))
-        except:
-            module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
+            result['data'] = json.loads(to_native(resp.read()))
+        except KeyError:
+            module.fail_json(msg="Meraki dashboard didn't return JSON compatible data", **result)
+    elif 400 <= info['status'] < 500:
+        try:
+            data = json.loads(to_native(info['body']))
+            module.fail_json(msg='Dashboard API Error: {0} '.format(';'.join(data['errors'])), **result)
+        except (KeyError, ValueError):
+            result.update(debug_result)
+            module.fail_json(msg=result['response'], **result)
+    else:
+        result.update(debug_result)
+        module.fail_json(msg='Unknown Error', info=info, **result)
+
+    if module.params['method'] != 'get':
+        result['changed'] = True
+
+    if module.params['output_level'] == 'debug':
+        result.update(debug_result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    module.exit_json(**result)
+    module.exit_json(info=info, **result)
 
 
 if __name__ == '__main__':
