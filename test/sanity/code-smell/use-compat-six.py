@@ -32,7 +32,7 @@ def main():
         'docs/bin/plugin_formatter.py',
     ])
 
-    for path in sys.argv[1:]:
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
         if path in skip:
             continue
 
