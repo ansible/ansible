@@ -273,13 +273,17 @@ class JsonRpc(object):
 
 
 class ValueBuilder(object):
-    class Value(object):
-        __slots__ = ['path', 'state', 'value']
+    PATH_RE = re.compile('{[^}]*}')
 
-        def __init__(self, path, state, value):
+    class Value(object):
+        __slots__ = ['path', 'tag_path', 'state', 'value', 'deps']
+
+        def __init__(self, path, state, value, deps):
             self.path = path
+            self.tag_path = ValueBuilder.PATH_RE.sub('', path)
             self.state = state
             self.value = value
+            self.deps = deps
 
         def __lt__(self, rhs):
             l_len = len(self.path.split('/'))
@@ -298,7 +302,6 @@ class ValueBuilder(object):
         self._module_prefix_map_cache = None
         self._values = []
         self._values_dirty = False
-        self._path_re = re.compile('{[^}]*}')
 
     def build(self, parent, maybe_qname, value, schema=None):
         qname, name = self._get_prefix_name(maybe_qname)
@@ -313,17 +316,18 @@ class ValueBuilder(object):
         if self._is_leaf_list(schema) and is_version(self._client, [(4, 5)]):
             self._build_leaf_list(path, schema, value)
         elif self._is_leaf(schema):
+            deps = schema.get('deps', [])
             if self._is_empty_leaf(schema):
                 exists = self._client.exists(path)
                 if exists and value != [None]:
-                    self._add_value(path, State.ABSENT, None)
+                    self._add_value(path, State.ABSENT, None, deps)
                 elif not exists and value == [None]:
-                    self._add_value(path, State.PRESENT, None)
+                    self._add_value(path, State.PRESENT, None, deps)
             else:
                 if maybe_qname is None:
                     value_type = self._get_type(path)
                 else:
-                    value_type = self._get_child_type(parent, maybe_qname)
+                    value_type = self._get_child_type(parent, qname)
 
                 if 'identityref' in value_type:
                     if isinstance(value, list):
@@ -331,7 +335,7 @@ class ValueBuilder(object):
                                  in [self._get_prefix_name(v) for v in value]]
                     else:
                         value, t_value = self._get_prefix_name(value)
-                self._add_value(path, State.SET, value)
+                self._add_value(path, State.SET, value, deps)
         elif isinstance(value, dict):
             self._build_dict(path, schema, value)
         elif isinstance(value, list):
@@ -344,10 +348,43 @@ class ValueBuilder(object):
     @property
     def values(self):
         if self._values_dirty:
-            self._values.sort()
+            self._values = self._sort_values(sorted(self._values))
             self._values_dirty = False
 
         return self._values
+
+    def _sort_values(self, values):
+        class N(object):
+            def __init__(self, v):
+                self.tmp_mark = False
+                self.mark = False
+                self.v = v
+
+        sorted_values = []
+        nodes = [N(v) for v in values]
+
+        def visit(n):
+            if n.tmp_mark:
+                return False
+            if not n.mark:
+                n.tmp_mark = True
+                for m in nodes:
+                    if m.v.tag_path in n.v.deps:
+                        if not visit(m):
+                            return False
+
+                n.tmp_mark = False
+                n.mark = True
+
+                sorted_values.insert(0, n.v)
+
+            return True
+
+        while any((not n.mark for n in nodes)):
+            n = next((node for node in nodes if not node.mark))
+            visit(n)
+
+        return sorted_values[::-1]
 
     def _build_dict(self, path, schema, value):
         keys = schema.get('key', [])
@@ -360,18 +397,20 @@ class ValueBuilder(object):
             self.build(path, dict_key, dict_value, child_schema)
 
     def _build_leaf_list(self, path, schema, value):
+        deps = schema.get('deps', [])
         entry_type = self._get_type(path, schema)
         # remove leaf list if treated as a list and then re-create the
         # expected list entries.
-        self._add_value(path, State.ABSENT, None)
+        self._add_value(path, State.ABSENT, None, deps)
 
         for entry in value:
             if 'identityref' in entry_type:
                 entry, t_entry = self._get_prefix_name(entry)
             entry_path = '{0}{{{1}}}'.format(path, entry)
-            self._add_value(entry_path, State.PRESENT, None)
+            self._add_value(entry_path, State.PRESENT, None, deps)
 
     def _build_list(self, path, schema, value):
+        deps = schema.get('deps', [])
         for entry in value:
             entry_key = self._build_key(path, entry, schema['key'])
             entry_path = '{0}{{{1}}}'.format(path, entry_key)
@@ -380,12 +419,12 @@ class ValueBuilder(object):
 
             if entry_state == 'absent':
                 if entry_exists:
-                    self._add_value(entry_path, State.ABSENT, None)
+                    self._add_value(entry_path, State.ABSENT, None, deps)
             else:
                 if not entry_exists:
-                    self._add_value(entry_path, State.PRESENT, None)
+                    self._add_value(entry_path, State.PRESENT, None, deps)
                 if entry_state in State.SYNC_STATES:
-                    self._add_value(entry_path, entry_state, None)
+                    self._add_value(entry_path, entry_state, None, deps)
 
             self.build(entry_path, None, entry)
 
@@ -439,8 +478,8 @@ class ValueBuilder(object):
             'no child in {0} with name {1}. children {2}'.format(
                 path, qname, ','.join((c.get('qname', c.get('name', None)) for c in schema['children']))))
 
-    def _add_value(self, path, state, value):
-        self._values.append(ValueBuilder.Value(path, state, value))
+    def _add_value(self, path, state, value, deps):
+        self._values.append(ValueBuilder.Value(path, state, value, deps))
         self._values_dirty = True
 
     def _get_prefix_name(self, qname):
@@ -496,7 +535,7 @@ class ValueBuilder(object):
         return None
 
     def _ensure_schema_cached(self, path):
-        path = self._path_re.sub('', path)
+        path = ValueBuilder.PATH_RE.sub('', path)
         if path not in self._schema_cache:
             schema = self._client.get_schema(path=path, levels=1)
             self._schema_cache[path] = schema
