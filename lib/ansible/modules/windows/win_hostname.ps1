@@ -6,14 +6,8 @@
 
 ########
 
-function Get-ComputerName() {
-    Get-Content env:computername
-    return
-}
-
 function Set-ComputerName($newComputerName) {
-    $systemInfo = Get-WmiObject Win32_ComputerSystem
-    $cmdResult = $systemInfo.Rename($newComputerName)    
+    $cmdResult = Rename-computer $newComputerName    
     if ($cmdResult.ReturnValue -ne 0) {         
         Fail-Json $result "The computer name could not be set. Check that it is a valid name."                
     }
@@ -28,12 +22,12 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 
-$result = New-Object psobject @{
-    changed = $false
+$result = @{
+ changed = $false
 };
 
 $newComputerName = Get-Attr $params "name"
-$currentComputerName = (Get-ComputerName)
+$currentComputerName = $env:computername
 
 if ($check_mode) {
   $result.msg = "Rename-computer $newComputerName -WhatIf" 

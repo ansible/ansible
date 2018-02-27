@@ -11,7 +11,7 @@
 DOCUMENTATION = '''
 ---
 module: win_hostname
-version_added: "2.4"
+version_added: "2.6"
 short_description: Manages local Windows computer name
 description:
      - Manages local Windows computer name. 
@@ -19,18 +19,14 @@ description:
 options:
   name:
     description:
-      - Name of the computer
-    required: true
-    default: null
-    aliases: []
+      - Name of the computer.
+    required: true    
   author: Ripon Banik (@riponbanik)
 '''
 
 EXAMPLES = '''
-# Ad-hoc example
-ansible -i hosts -m win_hostname -a "name=myhost" windows
-# Playbook example
-- win_hostname: 
+- name: Change hostname with the new name
+  win_hostname: 
     name: myhost
 '''
 
