@@ -54,14 +54,11 @@ EXAMPLES = '''
   emr_add_steps:
     cluster_id: j-4FCCDFFHRASSX
     steps:
-      - name: arbitrary_step
-        action_on_failure: 'CANCEL_AND_WAIT'
-        hadoop_jar_step:
-          jar: 'command-runner.jar'
-          args: ['-e', 'example-arg']
-          properties:
-            - key:
-              value:
+      - Name: arbitrary_step
+        ActionOnFailure: 'CANCEL_AND_WAIT'
+        HadoopJarStep:
+          Jar: 'command-runner.jar'
+          Args: ['-e', 'example-arg']
 '''
 
 RETURN = '''
@@ -78,8 +75,6 @@ try:
     import botocore
 except ImportError:
     pass  # caught by AnsibleAWSModule
-
-import json
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
@@ -101,13 +96,12 @@ class EMRConnection(object):
 
     def add_emr_steps(self):
         cluster_id = self.module.params.get('cluster_id')
-        steps_raw = self.module.params.get('steps')
-        steps_json = json.loads(steps_raw)
+        steps = self.module.params.get('steps')
 
         try:
             results = self.connection.add_job_flow_steps(
                 JobFlowId=cluster_id,
-                Steps=steps_json
+                Steps=steps
             )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Couldn't add step to EMR Cluster")
