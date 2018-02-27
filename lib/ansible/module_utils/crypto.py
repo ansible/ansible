@@ -56,22 +56,27 @@ def get_fingerprint(path, passphrase=None):
 
     return fingerprint
 
-
 def load_privatekey(path, passphrase=None):
     """Load the specified OpenSSL private key."""
 
     try:
-        if passphrase:
-            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                                open(path, 'rb').read(),
-                                                to_bytes(passphrase))
-        else:
-            privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                                open(path, 'rb').read())
+        privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                            open(path, 'rb').read(),
+                                            to_bytes(passphrase))
 
         return privatekey
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
+    except crypto.Error as exc:
+        error = exc[0][0][2]
+        if error in ['no start line', 'bad end line', 'bad base64 decode']:
+	    error_msg = '%s: does not look like a valid privatekey (%s)' % (path, error)
+        elif error in ['bad decrypt', 'bad password read']:
+	    error_msg = '%s: can\'t be decrypted (%s)' % (path, error)
+        else:
+            error_msg = to_native(exc[0][0][2])
+
+        raise OpenSSLObjectError(error_msg)
 
 
 def load_certificate(path):

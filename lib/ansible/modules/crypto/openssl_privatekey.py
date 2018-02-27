@@ -251,6 +251,19 @@ class PrivateKey(crypto_utils.OpenSSLObject):
         return result
 
 
+def sanity_check(module):
+
+    if not pyopenssl_found:
+        module.fail_json(msg='The python pyOpenSSL library is required')
+
+    base_dir = os.path.dirname(module.params['path'])
+    if not os.path.isdir(base_dir):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or the path is not a directory' % base_dir
+        )
+
+
 def main():
 
     module = AnsibleModule(
@@ -268,18 +281,9 @@ def main():
         required_together=[['cipher', 'passphrase']],
     )
 
-    if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
-
-    base_dir = os.path.dirname(module.params['path'])
-    if not os.path.isdir(base_dir):
-        module.fail_json(
-            name=base_dir,
-            msg='The directory %s does not exist or the file is not a directory' % base_dir
-        )
+    sanity_check(module)
 
     private_key = PrivateKey(module)
-
     if private_key.state == 'present':
 
         if module.check_mode:

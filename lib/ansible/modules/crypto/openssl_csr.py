@@ -501,6 +501,26 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
         return result
 
 
+def sanity_check(module):
+
+    if not pyopenssl_found:
+        module.fail_json(msg='The python pyOpenSSL library is required')
+
+    base_dir = os.path.dirname(module.params['path'])
+    if not os.path.isdir(base_dir):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or the path is not a directory' % base_dir
+        )
+
+    try:
+        crypto_utils.load_privatekey(
+            module.params['privatekey_path'], module.params['privatekey_passphrase']
+        )
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -534,20 +554,9 @@ def main():
         supports_check_mode=True,
     )
 
-    if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
-
-    try:
-        getattr(crypto.X509Req, 'get_extensions')
-    except AttributeError:
-        module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
-
-    base_dir = os.path.dirname(module.params['path'])
-    if not os.path.isdir(base_dir):
-        module.fail_json(name=base_dir, msg='The directory %s does not exist or the file is not a directory' % base_dir)
+    sanity_check(module)
 
     csr = CertificateSigningRequest(module)
-
     if module.params['state'] == 'present':
 
         if module.check_mode:

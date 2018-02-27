@@ -430,16 +430,6 @@ class SelfSignedCertificate(Certificate):
 
     def generate(self, module):
 
-        if not os.path.exists(self.privatekey_path):
-            raise CertificateError(
-                'The private key %s does not exist' % self.privatekey_path
-            )
-
-        if not os.path.exists(self.csr_path):
-            raise CertificateError(
-                'The certificate signing request file %s does not exist' % self.csr_path
-            )
-
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
             cert.set_serial_number(randint(1000, 99999))
@@ -786,6 +776,45 @@ class AcmeCertificate(Certificate):
         return result
 
 
+def sanity_check(module):
+
+    if not pyopenssl_found:
+        module.fail_json(msg='The python pyOpenSSL library is required')
+
+    base_dir = os.path.dirname(module.params['path'])
+    if not os.path.isdir(base_dir):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or the path is not a directory' % base_dir
+        )
+
+    if module.params['provider'] in ['selfsigned', 'assertonly']:
+        try:
+            getattr(crypto.X509Req, 'get_extensions')
+        except AttributeError:
+            module.fail_json(msg='You need to have PyOpenSSL>=0.15')
+
+    try:
+        crypto_utils.load_privatekey(
+            module.params['privatekey_path'], module.params['privatekey_passphrase']
+        )
+        if module.params['provider'] == 'acme':
+            crypto_utils.load_privatekey(module.params['acme_accountkey_path'])
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
+
+    if module.params['provider'] == 'acme' and not os.path.isdir(module.params['acme_challenge_path']):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or the path is not a directory' % module.params['acme_challenge_path']
+        )
+
+    try:
+        crypto_utils.load_certificate_request(module.params['csr_path'])
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -832,23 +861,9 @@ def main():
         add_file_common_args=True,
     )
 
-    if not pyopenssl_found:
-        module.fail_json(msg='The python pyOpenSSL library is required')
-    if module.params['provider'] in ['selfsigned', 'assertonly']:
-        try:
-            getattr(crypto.X509Req, 'get_extensions')
-        except AttributeError:
-            module.fail_json(msg='You need to have PyOpenSSL>=0.15')
-
-    base_dir = os.path.dirname(module.params['path'])
-    if not os.path.isdir(base_dir):
-        module.fail_json(
-            name=base_dir,
-            msg='The directory %s does not exist or the file is not a directory' % base_dir
-        )
+    sanity_check(module)
 
     provider = module.params['provider']
-
     if provider == 'selfsigned':
         certificate = SelfSignedCertificate(module)
     elif provider == 'acme':

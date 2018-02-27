@@ -162,11 +162,6 @@ class PublicKey(crypto_utils.OpenSSLObject):
     def generate(self, module):
         """Generate the public key."""
 
-        if not os.path.exists(self.privatekey_path):
-            raise PublicKeyError(
-                'The private key %s does not exist' % self.privatekey_path
-            )
-
         if not self.check(module, perms_required=False) or self.force:
             try:
                 if self.format == 'OpenSSH':
@@ -250,6 +245,26 @@ class PublicKey(crypto_utils.OpenSSLObject):
         return result
 
 
+def sanity_check(module):
+
+    if not pyopenssl_found:
+        module.fail_json(msg='The python pyOpenSSL library is required')
+
+    base_dir = os.path.dirname(module.params['path'])
+    if not os.path.isdir(base_dir):
+        module.fail_json(
+            name=base_dir,
+            msg='The directory %s does not exist or the path is not a directory' % base_dir
+        )
+
+    try:
+        crypto_utils.load_privatekey(
+            module.params['privatekey_path'], module.params['privatekey_passphrase']
+        )
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
+
+
 def main():
 
     module = AnsibleModule(
@@ -266,18 +281,9 @@ def main():
         required_if=[('state', 'present', ['privatekey_path'])]
     )
 
-    if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
-
-    base_dir = os.path.dirname(module.params['path'])
-    if not os.path.isdir(base_dir):
-        module.fail_json(
-            name=base_dir,
-            msg='The directory %s does not exist or the file is not a directory' % base_dir
-        )
+    sanity_check(module)
 
     public_key = PublicKey(module)
-
     if public_key.state == 'present':
 
         if module.check_mode:
