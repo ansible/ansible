@@ -4,8 +4,8 @@
         "lib/ansible/module_utils/",
         "test/units/"
     ],
-    "extensions": [
-        ".py"
+    "files": [
+        "__init__.py"
     ],
     "output": "path-message"
 }

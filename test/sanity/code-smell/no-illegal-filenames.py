@@ -54,45 +54,41 @@ ILLEGAL_END_CHARS = [
 
 
 def check_path(path, dir=False):
-    errors = []
     type_name = 'directory' if dir else 'file'
     parent, file_name = os.path.split(path)
     name, ext = os.path.splitext(file_name)
 
     if name.upper() in ILLEGAL_NAMES:
-        errors.append("Illegal %s name %s: %s" % (type_name, name.upper(), path))
+        print("%s: illegal %s name %s" % (path, type_name, name.upper()))
 
     if file_name[-1] in ILLEGAL_END_CHARS:
-        errors.append("Illegal %s name end-char '%s': %s" % (type_name, file_name[-1], path))
+        print("%s: illegal %s name end-char '%s'" % (path, type_name, file_name[-1]))
 
     bfile = to_bytes(file_name, encoding='utf-8')
     for char in ILLEGAL_CHARS:
         if char in bfile:
             bpath = to_bytes(path, encoding='utf-8')
-            errors.append("Illegal char %s in %s name: %s" % (char, type_name, bpath))
-    return errors
+            print("%s: illegal char '%s' in %s name" % (bpath, char, type_name))
 
 
 def main():
-    errors = []
-    pattern = re.compile("^./test/integration/targets/.*/backup")
+    pattern = re.compile("^test/integration/targets/.*/backup")
 
     for root, dirs, files in os.walk('.'):
+        if root == '.':
+            root = ''
+        elif root.startswith('./'):
+            root = root[2:]
+
         # ignore test/integration/targets/*/backup
         if pattern.match(root):
             continue
 
         for dir_name in dirs:
-            errors += check_path(os.path.abspath(os.path.join(root, dir_name)), dir=True)
+            check_path(os.path.join(root, dir_name), dir=True)
 
         for file_name in files:
-            errors += check_path(os.path.abspath(os.path.join(root, file_name)), dir=False)
-
-    if len(errors) > 0:
-        print('Ansible git repo should not contain any illegal filenames')
-        for error in errors:
-            print(error)
-        exit(1)
+            check_path(os.path.join(root, file_name), dir=False)
 
 
 if __name__ == '__main__':

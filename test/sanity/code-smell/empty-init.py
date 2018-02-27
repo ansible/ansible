@@ -19,9 +19,6 @@ def main():
         if path in skip:
             continue
 
-        if os.path.basename(path) != '__init__.py':
-            continue
-
         if os.path.getsize(path) > 0:
             print('%s: empty __init__.py required' % path)
 

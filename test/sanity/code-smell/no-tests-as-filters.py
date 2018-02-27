@@ -49,8 +49,6 @@ FILTER_RE = re.compile(r'((.+?)\s*(?P<left>[\w \.\'"]+)(\s*)\|(\s*)(?P<filter>\w
 
 
 def main():
-    failed = False
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path) as f:
             text = f.read()
@@ -67,7 +65,6 @@ def main():
             if test_name not in TESTS:
                 continue
 
-            failed = True
             left = match.group('left').strip()
             start = match.start('left')
 
@@ -79,9 +76,6 @@ def main():
             colno = start - previous + 1
 
             print('%s:%d:%d: use `%s is %s` instead of `%s | %s`' % (path, lineno, colno, left, test_name, left, filter_name))
-
-    if failed:
-        sys.exit(1)
 
 
 if __name__ == '__main__':

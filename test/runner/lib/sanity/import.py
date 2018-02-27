@@ -17,6 +17,7 @@ from lib.util import (
     run_command,
     intercept_command,
     remove_tree,
+    display,
 )
 
 from lib.ansible_util import (
@@ -88,12 +89,17 @@ class ImportTest(SanityMultipleVersion):
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
 
-        cmd = ['importer.py'] + paths
+        cmd = ['importer.py']
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         results = []
 
         try:
-            stdout, stderr = intercept_command(args, cmd, target_name=self.name, env=env, capture=True, python_version=python_version, path=env['PATH'])
+            stdout, stderr = intercept_command(args, cmd, data=data, target_name=self.name, env=env, capture=True, python_version=python_version,
+                                               path=env['PATH'])
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
