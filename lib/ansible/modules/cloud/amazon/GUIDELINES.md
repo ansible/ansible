@@ -214,7 +214,7 @@ exceptions.  Call this on your exception and it will report the error together w
 use in Ansible verbose mode.
 
 ```python
-from ansible.module_utils.aws.core AnsibleAWSModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 # Set up module parameters
 ...
