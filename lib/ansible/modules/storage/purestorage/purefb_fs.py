@@ -20,7 +20,7 @@ version_added: "2.6"
 short_description:  Manage filesystemon Pure Storage FlashBlade`
 description:
     - This module manages filesystems on Pure Storage FlashBlade.
-author: Simon Dodsley (@simondodsley)
+author: Simon Dodsley (@sdodsley)
 options:
   name:
     description:
