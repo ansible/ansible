@@ -54,12 +54,17 @@ if ($port -ne $null) {
 }
 
 Function Test-Port($hostname, $port) {
-    # try and resolve the IP/Host, if it fails then just use the host passed in
-    try {
-        $resolve_hostname = ([System.Net.Dns]::GetHostEntry($hostname)).HostName
-    } catch {
-        # oh well just use the IP addres
+    if ($hostname -eq "127.0.0.1") {
+        # use the loopback IP if it has been specified
         $resolve_hostname = $hostname
+    } else {
+        # try and resolve the IP/Host, if it fails then just use the host passed in
+        try {
+            $resolve_hostname = ([System.Net.Dns]::GetHostEntry($hostname)).HostName
+        } catch {
+            # oh well just use the IP addres
+            $resolve_hostname = $hostname
+        }
     }
 
     $timeout = $connect_timeout * 1000
