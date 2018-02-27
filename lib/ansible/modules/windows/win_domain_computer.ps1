@@ -94,7 +94,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
       -WhatIf:$check_mode
   } Catch { Fail-Json $result "Error in function Set-ConstructedState" }
 
-  If ($initial_state.distinguished_name -ne $desired_state.distinguished_name)
+  If ($initial_state.distinguished_name -cne $desired_state.distinguished_name)
   {
     # Move computer to OU
     Try {
@@ -140,12 +140,12 @@ Function Remove-ConstructedState($initial_state) {
 Function are_hashtables_equal($x, $y) {
   # Compare not nested HashTables
   Foreach ($key in $x.Keys) {
-      If (($y.Keys -notcontains $key) -or ($x[$key] -ne $y[$key])) {
+      If (($y.Keys -notcontains $key) -or ($x[$key] -cne $y[$key])) {
           Return $false
       }
   }
   foreach ($key in $y.Keys) {
-      if (($x.Keys -notcontains $key) -or ($x[$key] -ne $y[$key])) {
+      if (($x.Keys -notcontains $key) -or ($x[$key] -cne $y[$key])) {
           Return $false
       }
   }
