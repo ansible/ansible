@@ -62,16 +62,16 @@ Function Get-InitialState($desired_state) {
       -ErrorAction SilentlyContinue
   If ($computer) {
       $initial_state = @{
-      name = $computer.Name
-      sam_account_name = $computer.SamAccountName
-      dns_hostname = $computer.DNSHostName
-      # Get OU from regexp that removes all characters to the first ","
-      ou = $computer.DistinguishedName -creplace "^[^,]*,",""
-      distinguished_name = $computer.DistinguishedName
-      description = $computer.Description
-      enabled = $computer.Enabled
-      state = "present"
-    }
+        name = $computer.Name
+        sam_account_name = $computer.SamAccountName
+        dns_hostname = $computer.DNSHostName
+        # Get OU from regexp that removes all characters to the first ","
+        ou = $computer.DistinguishedName -creplace "^[^,]*,",""
+        distinguished_name = $computer.DistinguishedName
+        description = $computer.Description
+        enabled = $computer.Enabled
+        state = "present"
+      }
   } Else {
     $initial_state = @{
       name = $desired_state.name
