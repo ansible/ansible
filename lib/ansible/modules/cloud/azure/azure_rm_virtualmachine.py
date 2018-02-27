@@ -1648,7 +1648,6 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if not subnet_id:
                 self.fail(no_subnets_msg)
 
-        
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
             pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
