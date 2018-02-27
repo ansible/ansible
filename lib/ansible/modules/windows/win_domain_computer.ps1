@@ -24,7 +24,7 @@ Function Get-DesiredState($params) {
   $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true -resultobj $result
   $sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -default "$name$"
   If (-not $sam_account_name.EndsWith("$")) {
-    Fail-Json $result "sam_account_name must end in $"
+    Fail-Json -obj $result "sam_account_name must end in $"
   }
   $enabled = Get-AnsibleParam -obj $params -name "enabled" -default $true | ConvertTo-Bool
   $description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
@@ -92,18 +92,18 @@ Function Set-ConstructedState($initial_state, $desired_state) {
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
       -WhatIf:$check_mode
-  } Catch { Fail-Json $result "Error in function Set-ConstructedState" }
+  } Catch { Fail-Json -obj $result "Error in function Set-ConstructedState" }
 
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name)
   {
     # Move computer to OU
     Try {
-      Get-ADComputer $desired_state.name |
+      Get-ADComputer -Identity $desired_state.name |
           Move-ADObject `
             -TargetPath $desired_state.ou `
             -Confirm:$False `
             -WhatIf:$check_mode
-    } Catch { Fail-Json $result "Error in function Move-ADObject" }
+    } Catch { Fail-Json -obj $result "Error in function Move-ADObject" }
   }
   $result.changed = $true
 }
@@ -119,7 +119,7 @@ Function Add-ConstructedState($desired_state) {
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
       -WhatIf:$check_mode
-  } Catch { Fail-Json $result "Error in function Add-ConstructedState" }
+  } Catch { Fail-Json -obj $result "Error in function Add-ConstructedState" }
 
   $result.changed = $true
 }
@@ -131,7 +131,7 @@ Function Remove-ConstructedState($initial_state) {
       -Identity $initial_state.name `
       -Confirm:$False `
       -WhatIf:$check_mode
-  } Catch { Fail-Json $result "Error in function Remove-ADComputer" }
+  } Catch { Fail-Json -obj $result "Error in function Remove-ADComputer" }
 
   $result.changed = $true
 }
@@ -180,4 +180,4 @@ If ($diff_support) {
   $result.diff = $diff
 }
 
-Exit-Json $result
+Exit-Json -obj $result
