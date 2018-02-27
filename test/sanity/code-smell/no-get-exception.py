@@ -20,7 +20,7 @@ def main():
 
     basic_allow_once = True
 
-    for path in sys.argv[1:]:
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
         if path in skip:
             continue
 
