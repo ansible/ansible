@@ -150,8 +150,8 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
         modname,
         modfile,
         complex_args,
-        task_vars=task_vars,
-        templar=Templar(loader=loader)
+        Templar(loader=loader),
+        task_vars=task_vars
     )
 
     if module_style == 'new' and 'ANSIBALLZ_WRAPPER = True' in to_native(module_data):
