@@ -90,6 +90,10 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/36124
 * fix debug output
   https://github.com/ansible/ansible/pull/36307
+* Fix credentials for Ansible Tower modules to work with v1 and v2 of the API
+  (https://github.com/ansible/ansible/pull/36587)
+  (https://github.com/ansible/ansible/pull/36662)
+
 
 <a id="2.4.3"></a>
 
