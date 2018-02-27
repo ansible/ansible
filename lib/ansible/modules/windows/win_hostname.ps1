@@ -32,16 +32,10 @@ $result = New-Object psobject @{
     changed = $false
 };
 
-If (-not $params.name.GetType)
-{
-    Fail-Json $result "missing required arguments: name"
-}
-
 $newComputerName = Get-Attr $params "name"
 $currentComputerName = (Get-ComputerName)
 
 if ($check_mode) {
-  # $result.msg = "Running in check mode - would change computer name to $newComputerName from $currentComputerName"  
   $result.msg = "Rename-computer $newComputerName -WhatIf" 
 }
 if (-not $check_mode) {
@@ -49,7 +43,6 @@ if (-not $check_mode) {
         $setResult = (Set-ComputerName($newComputerName))
         $result.changed = $true
         $result.rc = $setResult
-        # Set-Attr $result "user" $user_obj
         Set-Attr $result "computer_name" $newComputerName
     }   
    
