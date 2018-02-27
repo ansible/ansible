@@ -235,6 +235,7 @@ class SanityCodeSmellTest(SanityTest):
             extensions = config.get('extensions')
             prefixes = config.get('prefixes')
             files = config.get('files')
+            always = config.get('always')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -244,6 +245,9 @@ class SanityCodeSmellTest(SanityTest):
                 pattern = ApplicationError('Unsupported output type: %s' % output)
 
             paths = sorted(i.path for i in targets.include)
+
+            if always:
+                paths = []
 
             # short-term work-around for paths being str instead of unicode on python 2.x
             if sys.version_info[0] == 2:
@@ -258,12 +262,13 @@ class SanityCodeSmellTest(SanityTest):
             if files:
                 paths = [p for p in paths if os.path.basename(p) in files]
 
-            if not paths:
+            if not paths and not always:
                 return SanitySkipped(self.name)
 
             data = '\n'.join(paths)
 
-            display.info(data, verbosity=4)
+            if data:
+                display.info(data, verbosity=4)
         try:
             stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
