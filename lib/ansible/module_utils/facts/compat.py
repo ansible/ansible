@@ -65,8 +65,8 @@ def ansible_facts(module, gather_subset=None):
     filter_spec = module.params.get('filter', '*')
 
     minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
-                                       'distribution', 'dns', 'env', 'fips', 'local', 'lsb',
-                                       'pkg_mgr', 'platform', 'python', 'selinux',
+                                       'distribution', 'dns', 'env', 'fips', 'local',
+                                       'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
                                        'service_mgr', 'ssh_pub_keys', 'user'])
 
     all_collector_classes = default_collectors.collectors
