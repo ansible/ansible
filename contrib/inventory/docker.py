@@ -409,6 +409,7 @@ DOCKER_ENV_ARGS = dict(
     ssl_version='DOCKER_SSL_VERSION',
     tls='DOCKER_TLS',
     tls_verify='DOCKER_TLS_VERIFY',
+    tls_hostname='DOCKER_TLS_HOSTNAME',
     timeout='DOCKER_TIMEOUT',
     private_ssh_port='DOCKER_DEFAULT_SSH_PORT',
     default_ip='DOCKER_DEFAULT_IP',
@@ -846,8 +847,8 @@ class DockerInventory(object):
         parser.add_argument('--docker-host', action='store', default=None,
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
                                  % (DEFAULT_DOCKER_HOST))
-        parser.add_argument('--tls-hostname', action='store', default='localhost',
-                            help="Host name to expect in TLS certs. Defaults to 'localhost'")
+        parser.add_argument('--tls-hostname', action='store', default=None,
+                            help="Host name to expect in TLS certs.")
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
