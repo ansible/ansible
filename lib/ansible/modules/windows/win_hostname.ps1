@@ -41,7 +41,8 @@ $newComputerName = Get-Attr $params "name"
 $currentComputerName = (Get-ComputerName)
 
 if ($check_mode) {
-  $result.msg = "Running in check mode - would change computer name to $newComputerName from $currentComputerName"  
+  # $result.msg = "Running in check mode - would change computer name to $newComputerName from $currentComputerName"  
+  $result.msg = "Rename-computer $newComputerName -WhatIf" 
 }
 if (-not $check_mode) {
     if ($newComputerName -ne $currentComputerName) {
