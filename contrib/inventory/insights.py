@@ -16,7 +16,7 @@ Requirements for use with Ansible Tower :
  - Combine both the credential and dynamic inventory scripts as part of an inventory
    definition
 
-Example Ansibkle Tower Custom Credential type.
+Example Ansible Tower Custom Credential type.
 -------
 INPUT CONFIGURATION
 fields:
@@ -101,8 +101,9 @@ class InsightsInventory(object):
         self.password = os.environ.get("INSIGHTS_PASSWORD")
         groups={}
         # This is the group name that will show up in the Tower inventory.
-        # playbooks should use hosts: insights
-        # In future we will honour the group definition within insights over statically defined.
+        # playbooks hosts section should use 'insights'
+        # The group definitions within insights will be the format in the future and
+        # wont need to statically define it here..
 
         section_name = 'insights'
 
@@ -151,5 +152,5 @@ class InsightsInventory(object):
         print(json.dumps(final))
         sys.exit(0)
 
-
-InsightsInventory()
+if __name__ == '__main__':
+    InsightsInventory()
