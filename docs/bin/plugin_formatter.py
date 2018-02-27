@@ -48,7 +48,7 @@ from jinja2 import Environment, FileSystemLoader
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.loader import fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.display import Display
@@ -100,6 +100,9 @@ def rst_ify(text):
 
 def html_ify(text):
     ''' convert symbols like I(this is in italics) to valid HTML '''
+
+    if not isinstance(text, string_types):
+        text = to_text(text)
 
     t = html_escape(text)
     t = _ITALIC.sub(r"<em>\1</em>", t)
