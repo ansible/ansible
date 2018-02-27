@@ -16,8 +16,8 @@ $result.changed = $false
 # Parameter ingestion
 $params = Parse-Args $args -supports_check_mode $true
 
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false | ConvertTo-Bool
-$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -default $false | ConvertTo-Bool
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool"  -default $false
+$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 # ------------------------------------------------------------------------------
 Function Get-DesiredState($params) {
@@ -26,7 +26,7 @@ Function Get-DesiredState($params) {
   If (-not $sam_account_name.EndsWith("$")) {
     Fail-Json -obj $result "sam_account_name must end in $"
   }
-  $enabled = Get-AnsibleParam -obj $params -name "enabled" -default $true | ConvertTo-Bool
+  $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
   $description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
   $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
   If ($state -eq "present") {
