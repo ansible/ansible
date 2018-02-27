@@ -14,7 +14,7 @@ from yamllint.config import YamlLintConfig
 
 def main():
     """Main program body."""
-    paths = sys.argv[1:]
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     checker = YamlChecker()
     checker.check(paths)
