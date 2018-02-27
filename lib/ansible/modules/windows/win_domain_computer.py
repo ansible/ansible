@@ -30,9 +30,9 @@ options:
       - Specifies the Security Account Manager (SAM) account name of the
         computer. It maximum is 256 characters, 15 is advised for older
         operating systems compatibility. The LDAP display name
-        (ldapDisplayName) for this property is sAMAccountName.
+        (ldapDisplayName) for this property is sAMAccountName. If ommitted the
+        value is the same as C(name).
         Note. All computer SAMAccountNames needs to end with a $.
-    default: C(name)
   enabled:
     description:
       - Specifies if an account is enabled. An enabled account requires a
@@ -66,7 +66,6 @@ options:
       - absent
     default: present
 notes:
-  - Enabled --check --diff options
 version_added: 2.6
 author: Daniel Sánchez Fábregas (@Daniel-Sanchez-Fabregas)
 '''
