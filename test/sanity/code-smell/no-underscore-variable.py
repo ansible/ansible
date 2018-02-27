@@ -123,7 +123,7 @@ def main():
         'test/units/modules/system/interfaces_file/test_interfaces_file.py',
     ])
 
-    for path in sys.argv[1:]:
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
         if path in skip:
             continue
 
