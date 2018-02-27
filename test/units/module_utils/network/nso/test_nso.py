@@ -269,6 +269,48 @@ SCHEMA_DATA = {
         }
     }
 }
+''',
+    '/test:deps': '''
+{
+    "meta": {
+    },
+    "data": {
+        "kind":"container",
+        "name":"deps",
+        "qname":"test:deps",
+        "children": [
+            {
+                "kind": "leaf",
+                "type": {
+                  "primitive": true,
+                  "name": "string"
+                },
+                "name": "a",
+                "qname": "test:a",
+                "deps": ["/test:deps/c"]
+            },
+            {
+                "kind": "leaf",
+                "type": {
+                  "primitive": true,
+                  "name": "string"
+                },
+                "name": "b",
+                "qname": "test:b",
+                "deps": ["/test:deps/a"]
+            },
+            {
+                "kind": "leaf",
+                "type": {
+                  "primitive": true,
+                  "name": "string"
+                },
+                "name": "c",
+                "qname": "test:c"
+            }
+        ]
+    }
+}
 '''
 }
 
@@ -473,6 +515,70 @@ class TestValueBuilder(unittest.TestCase):
         value = vb.values[2]
         self.assertEquals('{0}/device-list{{two}}'.format(parent), value.path)
         self.assertEquals(nso.State.PRESENT, value.state)
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_sort_by_deps(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            get_schema_response('/test:deps')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+
+        parent = "/test:deps"
+        schema_data = json.loads(
+            SCHEMA_DATA['/test:deps'])
+        schema = schema_data['data']
+
+        values = {
+            'a': '1',
+            'b': '2',
+            'c': '3',
+        }
+
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc'))
+        vb.build(parent, None, values, schema)
+        self.assertEquals(3, len(vb.values))
+        value = vb.values[0]
+        self.assertEquals('{0}/c'.format(parent), value.path)
+        self.assertEquals('3', value.value)
+        value = vb.values[1]
+        self.assertEquals('{0}/a'.format(parent), value.path)
+        self.assertEquals('1', value.value)
+        value = vb.values[2]
+        self.assertEquals('{0}/b'.format(parent), value.path)
+        self.assertEquals('2', value.value)
+
+        self.assertEqual(0, len(calls))
+
+    @patch('ansible.module_utils.network.nso.nso.open_url')
+    def test_sort_by_deps_not_included(self, open_url_mock):
+        calls = [
+            MockResponse('new_trans', {}, 200, '{"result": {"th": 1}}'),
+            get_schema_response('/test:deps')
+        ]
+        open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
+
+        parent = "/test:deps"
+        schema_data = json.loads(
+            SCHEMA_DATA['/test:deps'])
+        schema = schema_data['data']
+
+        values = {
+            'a': '1',
+            'b': '2'
+        }
+
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc'))
+        vb.build(parent, None, values, schema)
+        self.assertEquals(2, len(vb.values))
+        value = vb.values[0]
+        self.assertEquals('{0}/a'.format(parent), value.path)
+        self.assertEquals('1', value.value)
+        value = vb.values[1]
+        self.assertEquals('{0}/b'.format(parent), value.path)
+        self.assertEquals('2', value.value)
 
         self.assertEqual(0, len(calls))
 
