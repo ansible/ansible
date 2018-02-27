@@ -10,7 +10,7 @@ ASSERT_RE = re.compile(r'.*(?<![-:a-zA-Z#][ -])\bassert\b(?!:).*')
 def main():
     failed = False
 
-    for path in sys.argv[1:]:
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
                 matches = ASSERT_RE.findall(line)

@@ -51,7 +51,7 @@ FILTER_RE = re.compile(r'((.+?)\s*(?P<left>[\w \.\'"]+)(\s*)\|(\s*)(?P<filter>\w
 def main():
     failed = False
 
-    for path in sys.argv[1:]:
+    for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path) as f:
             text = f.read()
 
