@@ -108,11 +108,7 @@ options:
             - "Note that these parameters are not idempotent."
     fcp:
         description:
-            - "Dictionary with values for fibre channel storage type:"
-            - "C(address) - Address of the fibre channel storage server."
-            - "C(port) - Port of the fibre channel storage server."
-            - "C(lun_id) - LUN id."
-            - "Note that these parameters are not idempotent."
+            - "Indication for FCP storage domain, no additional values needed since it is connected directly to the host."
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -165,6 +161,13 @@ EXAMPLES = '''
        - 1IET_000d0001
        - 1IET_000d0002
       address: 10.34.63.204
+
+# Add data FCP storage domain:
+- ovirt_storage_domains:
+    name: data_iscsi
+    host: myhost
+    data_center: mydatacenter
+    fcp: {}
 
 # Add data glusterfs storage domain
 -  ovirt_storage_domains:
