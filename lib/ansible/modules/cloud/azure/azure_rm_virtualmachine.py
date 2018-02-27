@@ -1670,8 +1670,8 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
-                                                                 location=group.location,
-                                                                 resource_guid=group.resource_guid)
+                                                                                     location=group.location,
+                                                                                     resource_guid=group.resource_guid)
         parameters.ip_configurations[0].public_ip_address = None if pip is None else PublicIPAddress(id=pip.id,
                                                                                                      location=pip.location,
                                                                                                      resource_guid=pip.resource_guid)
