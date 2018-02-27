@@ -26,6 +26,7 @@ import tempfile
 import tarfile
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
 
@@ -188,12 +189,17 @@ class RoleRequirement(RoleDefinition):
             raise AnsibleError("- scm %s is not currently supported" % scm)
         tempdir = tempfile.mkdtemp()
         clone_cmd = [scm, 'clone', src, name]
-        with open('/dev/null', 'w') as devnull:
-            try:
-                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except:
-                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
-            rc = popen.wait()
+        stdout = ''
+        stderr = ''
+        try:
+            popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=stdout, stderr=stderr)
+        except Exception as e:
+            ran = " ".join(clone_cmd)
+            display.debug("ran %s:" % ran)
+            display.debug("\tstdout: " + stdout)
+            display.debug("\tstderr: " + stderr)
+            raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
+        rc = popen.wait()
         if rc != 0:
             raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
 
