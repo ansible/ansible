@@ -233,6 +233,7 @@ class SanityCodeSmellTest(SanityTest):
             output = config.get('output')
             extensions = config.get('extensions')
             prefixes = config.get('prefixes')
+            files = config.get('files')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -248,6 +249,9 @@ class SanityCodeSmellTest(SanityTest):
 
             if prefixes:
                 paths = [p for p in paths if any(p.startswith(pre) for pre in prefixes)]
+
+            if files:
+                paths = [p for p in paths if os.path.basename(p) in files]
 
             if not paths:
                 return SanitySkipped(self.name)
