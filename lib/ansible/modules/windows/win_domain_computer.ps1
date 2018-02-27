@@ -28,7 +28,7 @@ Function Get-DesiredState($params) {
   }
   $enabled = Get-AnsibleParam -obj $params -name "enabled" -default $true | ConvertTo-Bool
   $description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
-  $state =(Get-AnsibleParam -obj $params -name "state" -ValidateSet "Present","Absent" -default "Present").ToLower()
+  $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
   If ($state -eq "present") {
     $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
     $ou = Get-AnsibleParam -obj $params -name "ou" -failifempty $true -resultobj $result
@@ -156,8 +156,8 @@ Function are_hashtables_equal($x, $y) {
 $desired_state = Get-DesiredState($params)
 $initial_state = Get-InitialState($desired_state)
 
-If ($desired_state.state -eq "Present") {
-    If ($initial_state.state -eq "Present") {
+If ($desired_state.state -eq "present") {
+    If ($initial_state.state -eq "present") {
       $in_desired_state = are_hashtables_equal $initial_state $desired_state
 
       If (-not $in_desired_state) {
@@ -167,7 +167,7 @@ If ($desired_state.state -eq "Present") {
       Add-ConstructedState($desired_state)
     }
   } Else { # $desired_state.state = "Absent"
-    If ($initial_state.state -eq "Present") {
+    If ($initial_state.state -eq "present") {
       Remove-ConstructedState($initial_state)
     }
   }
