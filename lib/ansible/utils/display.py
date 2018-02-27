@@ -224,7 +224,7 @@ class Display:
             self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
-    def warning(self, msg, formatted=False):
+    def system_warning(self, msg, formatted=False):
 
         if not formatted:
             new_msg = "\n[WARNING]: %s" % msg
@@ -237,9 +237,9 @@ class Display:
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
-    def system_warning(self, msg):
+    def warning(self, msg):
         if C.SYSTEM_WARNINGS:
-            self.warning(msg)
+            self.system_warning(msg)
 
     def banner(self, msg, color=None, cows=True):
         '''
