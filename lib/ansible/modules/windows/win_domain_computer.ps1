@@ -56,10 +56,10 @@ Function Get-DesiredState($params) {
 # ------------------------------------------------------------------------------
 Function Get-InitialState($desired_state) {
   # Test computer exists
-  $computer = Try { Get-ADComputer `
+  $computer = Get-ADComputer `
       -Identity $desired_state.name `
-      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass
-    } Catch { $null }
+      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass `
+      -ErrorAction SilentlyContinue
   If ($computer) {
       $initial_state = @{
       name = $computer.Name
