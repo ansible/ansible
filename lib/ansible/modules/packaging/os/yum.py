@@ -639,6 +639,27 @@ def local_envra(path):
                                header[rpm.RPMTAG_ARCH])
 
 
+def set_env_proxy(conf_file, installroot):
+    yumb = yum_base(conf_file, installroot)
+    namepass = ""
+    try:
+        if yumb.conf.proxy:
+            if 'https:' in yumb.conf.proxy:
+                schem = 'https'
+            else:
+                schem = 'http'
+        if yumb.conf.proxy_username:
+            namepass = namepass + yumb.conf.proxy_username
+            if yumb.conf.proxy_password:
+                namepass = namepass + ":" + yumb.conf.proxy_password
+            namepass = namepass + '@'
+
+        os.environ["{}_proxy".format(schem)] = re.sub(r"({}://)".format(schem),
+                                                      r"\1" + namepass, yumb.conf.proxy)
+    except AttributeError as ae:
+        raise ae
+
+
 def pkg_to_dict(pkgstr):
     if pkgstr.strip():
         n, e, v, r, a, repo = pkgstr.split('|')
@@ -761,6 +782,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 module.fail_json(**res)
 
             if '://' in spec:
+                set_env_proxy(conf_file, installroot)
                 package = fetch_rpm_from_url(spec, module=module)
             else:
                 package = spec
@@ -1074,6 +1096,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
             # URL
             elif '://' in spec:
                 # download package so that we can check if it's already installed
+                set_env_proxy(conf_file, installroot)
                 package = fetch_rpm_from_url(spec, module=module)
                 envra = local_envra(package)
 
