@@ -211,6 +211,7 @@ options:
         choices:
             - Dynamic
             - Static
+            - Disabled
         default:
             - Static
         aliases:
@@ -652,7 +653,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                  default='ReadOnly'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
-            public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Static',
+            public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
@@ -1647,8 +1648,12 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if not subnet_id:
                 self.fail(no_subnets_msg)
 
-        self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-        pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
+        
+        if self.public_ip_allocation_method != 'Disabled':
+            self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
+            pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
+        else:
+            pip = None
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
@@ -1665,11 +1670,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.ip_configurations[0].subnet = self.network_models.Subnet(id=subnet_id)
         parameters.ip_configurations[0].name = 'default'
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
-                                                                                     location=group.location,
-                                                                                     resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(id=pip.id,
-                                                                                                location=pip.location,
-                                                                                                resource_guid=pip.resource_guid)
+                                                                 location=group.location,
+                                                                 resource_guid=group.resource_guid)
+        parameters.ip_configurations[0].public_ip_address = None if pip is None else PublicIPAddress(id=pip.id,
+                                                                                                     location=pip.location,
+                                                                                                     resource_guid=pip.resource_guid)
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
