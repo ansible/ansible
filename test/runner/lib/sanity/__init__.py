@@ -6,6 +6,7 @@ import glob
 import json
 import os
 import re
+import sys
 
 from lib.util import (
     ApplicationError,
@@ -243,6 +244,10 @@ class SanityCodeSmellTest(SanityTest):
                 pattern = ApplicationError('Unsupported output type: %s' % output)
 
             paths = sorted(i.path for i in targets.include)
+
+            # short-term work-around for paths being str instead of unicode on python 2.x
+            if sys.version_info[0] == 2:
+                paths = [p.decode('utf-8') for p in paths]
 
             if extensions:
                 paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
