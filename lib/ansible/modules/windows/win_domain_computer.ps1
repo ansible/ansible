@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 
 # Preparing result
 $result = @{}
-Set-Attr $result "changed" $false
+$result.changed = $false
 
 # Parameter ingestion
 $params = Parse-Args $args -supports_check_mode $true
@@ -105,7 +105,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
             -WhatIf:$check_mode
     } Catch { Fail-Json $result "Error in function Move-ADObject" }
   }
-  Set-Attr $result "changed" $true
+  $result.changed = $true
 }
 
 # ------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ Function Add-ConstructedState($desired_state) {
       -WhatIf:$check_mode
   } Catch { Fail-Json $result "Error in function Add-ConstructedState" }
 
-  Set-Attr $result "changed" $true
+  $result.changed = $true
 }
 
 # ------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ Function Remove-ConstructedState($initial_state) {
       -WhatIf:$check_mode
   } Catch { Fail-Json $result "Error in function Remove-ADComputer" }
 
-  Set-Attr $result "changed" $true
+  $result.changed = $true
 }
 
 # ------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ If ($diff_support) {
     before = $initial_state
     after = $desired_state
   }
-  Set-Attr $result "diff" $diff
+  $result.diff = $diff
 }
 
 Exit-Json $result
