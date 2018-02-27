@@ -55,7 +55,7 @@ options:
         description:
             - When creating a network interface, if a specific virtual network from another resource group should be
               used, use this parameter to specify the resource group to use.
-        version_added: 2.6    
+        version_added: 2.6
     virtual_network_name:
         description:
             - Name or id of an existing virtual network with which the network interface will be associated. Required
