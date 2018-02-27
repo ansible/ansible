@@ -6,6 +6,7 @@ import glob
 import json
 import os
 import re
+import sys
 
 from lib.util import (
     ApplicationError,
@@ -233,6 +234,8 @@ class SanityCodeSmellTest(SanityTest):
             output = config.get('output')
             extensions = config.get('extensions')
             prefixes = config.get('prefixes')
+            files = config.get('files')
+            always = config.get('always')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -243,18 +246,29 @@ class SanityCodeSmellTest(SanityTest):
 
             paths = sorted(i.path for i in targets.include)
 
+            if always:
+                paths = []
+
+            # short-term work-around for paths being str instead of unicode on python 2.x
+            if sys.version_info[0] == 2:
+                paths = [p.decode('utf-8') for p in paths]
+
             if extensions:
                 paths = [p for p in paths if os.path.splitext(p)[1] in extensions or (p.startswith('bin/') and '.py' in extensions)]
 
             if prefixes:
                 paths = [p for p in paths if any(p.startswith(pre) for pre in prefixes)]
 
-            if not paths:
+            if files:
+                paths = [p for p in paths if os.path.basename(p) in files]
+
+            if not paths and not always:
                 return SanitySkipped(self.name)
 
             data = '\n'.join(paths)
 
-            display.info(data, verbosity=4)
+            if data:
+                display.info(data, verbosity=4)
         try:
             stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
