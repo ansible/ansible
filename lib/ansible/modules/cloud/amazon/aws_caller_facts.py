@@ -51,32 +51,10 @@ user_id:
     returned: success
     type: string
     sample: 123456789012:my-federated-user-name
-error:
-    description: The details of the error response from AWS.
-    returned: on client error from AWS
-    type: complex
-    sample: {
-        "code": "InvalidParameterValue",
-        "message": "Feedback notification topic is not set.",
-        "type": "Sender"
-    }
-    contains:
-        code:
-            description: The AWS error code.
-            type: string
-        message:
-            description: The AWS error message.
-            type: string
-        type:
-            description: The AWS error type.
-            type: string
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3
-
-import traceback
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
@@ -85,18 +63,12 @@ except ImportError:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    module = AnsibleModule(
-        argument_spec=argument_spec,
+    module = AnsibleAWSModule(
+        argument_spec={},
         supports_check_mode=True,
     )
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    client = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
+    client = module.client('sts')
 
     try:
         caller_identity = client.get_caller_identity()
@@ -104,11 +76,8 @@ def main():
             changed=False,
             **camel_dict_to_snake_dict(caller_identity)
         )
-    except ClientError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    except BotoCoreError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to retrieve caller identity')
 
 
 if __name__ == '__main__':
