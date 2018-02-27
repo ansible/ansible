@@ -92,7 +92,9 @@ Function Set-ConstructedState($initial_state, $desired_state) {
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
       -WhatIf:$check_mode
-  } Catch { Fail-Json -obj $result "Error in function Set-ConstructedState" }
+  } Catch {
+    Fail-Json -obj $result -msg "Failed to set the AD object $($desired_state.name): $($_.Exception.Message)"`
+  }
 
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name)
   {
@@ -103,7 +105,9 @@ Function Set-ConstructedState($initial_state, $desired_state) {
             -TargetPath $desired_state.ou `
             -Confirm:$False `
             -WhatIf:$check_mode
-    } Catch { Fail-Json -obj $result "Error in function Move-ADObject" }
+    } Catch {
+      Fail-Json -obj $result -msg "Failed to move the AD object $($desired_state.name): $($_.Exception.Message)"`
+    }
   }
   $result.changed = $true
 }
@@ -119,7 +123,9 @@ Function Add-ConstructedState($desired_state) {
       -Enabled $desired_state.enabled `
       -Description $desired_state.description `
       -WhatIf:$check_mode
-  } Catch { Fail-Json -obj $result "Error in function Add-ConstructedState" }
+    } Catch {
+      Fail-Json -obj $result -msg "Failed to create the AD object $($desired_state.name): $($_.Exception.Message)"`
+    }
 
   $result.changed = $true
 }
@@ -131,7 +137,9 @@ Function Remove-ConstructedState($initial_state) {
       -Identity $initial_state.name `
       -Confirm:$False `
       -WhatIf:$check_mode
-  } Catch { Fail-Json -obj $result "Error in function Remove-ADComputer" }
+  } Catch {
+    Fail-Json -obj $result -msg "Failed to remove the AD object $($desired_state.name): $($_.Exception.Message)"`
+  }
 
   $result.changed = $true
 }
