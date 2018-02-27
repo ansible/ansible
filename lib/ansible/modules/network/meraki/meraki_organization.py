@@ -29,17 +29,13 @@ options:
     auth_key:
         description:
             - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
-        required: no
     name:
         description:
             - Organization ID of an organization
-        required: no
-        aliases: ['organization_id']
     use_proxy:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: no
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
@@ -55,11 +51,17 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Query network device inventory
+- name: List organizations associated to your user
   meraki_organization:
     auth_key: abc12345
+    status: query
   delegate_to: localhost
 
+- name: Query information about an organization
+  meraki_organization:
+    auth_key: abc12345
+    status: query
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -71,7 +73,7 @@ response:
 '''
 
 import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
+from ansible.module_utils.basic import AnsibleModule, json, env_fallback, jsonify
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 
@@ -81,7 +83,7 @@ def main():
     # define the available arguments/parameters that a user can pass to
     # the module
     module_args = dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
-                       name=dict(type='str', aliases=['organization_id']),
+                       name=dict(type='str'),
                        username=dict(type='str'),
                        state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
                        use_proxy=dict(type='bool', default=False),
@@ -131,7 +133,7 @@ def main():
         protocol = 'http'
     host = 'dashboard.meraki.com'
 
-    url = 'https://api.meraki.com/api/v0/organizations/{0}'.format(str(module.params['name']))
+    url = '{0}://dashboard.meraki.com/api/v0/organizations'.format(protocol)
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': module.params['auth_key'],
                }
@@ -157,24 +159,45 @@ def main():
                                use_proxy=module.params['use_proxy'],
                                force=False,
                                )
-        if module.params['output_level'] == 'debug':
-            debug_result['status'] = str(info['status'])
-            debug_result['resp_headers'] = str(resp.headers)
-            debug_result['response'] = str(resp.read())
 
     except Exception as e:
         module.fail_json(msg=str(e), **debug_result)
+    data = resp.read()
+    if module.params['output_level'] == 'debug':
+        debug_result['status'] = info['status']
+        debug_result['resp_headers'] = resp.headers
+        debug_result['response'] = data
+    response = json.loads(to_native(data))
 
-    # use whatever logic you need to determine whether or not this module
-    # made any modifications to your target
     if info['status'] >= 200 and info['status'] <= 299:
-        result['changed'] = True
         try:
-            result['message'] = json.loads(to_native(resp.read()))
+            result['changed'] = False
+            result['message'] = response
         except:
-            module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
+            module.fail_json(msg="Meraki dashboard didn't return JSON compatible data for user lookup")
     else:
         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
+
+    response_items = None
+    org_id = None
+
+    ''' Return all organizations'''
+    if module.params['state'] == 'query' and module.params['name'] is None:
+        response_items = response
+    elif module.params['state'] == 'query' and module.params['name']:
+        module.warn('If multiple organizations with the same name, only the first matching result will be returned')
+        for i in response:
+            if i['name'] == module.params['name']:
+                response_items = i
+                break
+
+    ''' Return the id for further processing. Some of these checks may not be necessary
+    '''
+    if (module.params['state'] == 'present' or module.params['state'] == 'absent') and module.params['name']:
+        if response_items:
+            org_id = response_items['id']
+    elif module.params['state'] == 'query':
+        result['message'] = response_items
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
