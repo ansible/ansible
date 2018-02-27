@@ -224,6 +224,7 @@ class SanityCodeSmellTest(SanityTest):
         env = ansible_environment(args, color=False)
 
         pattern = None
+        data = None
 
         if self.config:
             with open(self.config, 'r') as config_fd:
@@ -251,10 +252,11 @@ class SanityCodeSmellTest(SanityTest):
             if not paths:
                 return SanitySkipped(self.name)
 
-            cmd += paths
+            data = '\n'.join(paths)
 
+            display.info(data, verbosity=4)
         try:
-            stdout, stderr = run_command(args, cmd, env=env, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
