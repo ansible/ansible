@@ -19,40 +19,36 @@ $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool"  -default $false
 $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
-# ------------------------------------------------------------------------------
-Function Get-DesiredState($params) {
-  $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true -resultobj $result
-  $sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -default "$name$"
-  If (-not $sam_account_name.EndsWith("$")) {
-    Fail-Json -obj $result "sam_account_name must end in $"
-  }
-  $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
-  $description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
-  $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
-  If ($state -eq "present") {
-    $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
-    $ou = Get-AnsibleParam -obj $params -name "ou" -failifempty $true -resultobj $result
-    $distinguished_name = "CN=$name,$ou"
-
-    $desired_state = @{
-      name = $name
-      sam_account_name = $sam_account_name
-      dns_hostname = $dns_hostname
-      ou = $ou
-      distinguished_name = $distinguished_name
-      description = $description
-      enabled = $enabled
-      state = $state
-    }
-  } Else {
-    $desired_state = @{
-      name = $name
-      state = $state
-    }
-  }
-
-  Return $desired_state
+$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true -resultobj $result
+$sam_account_name = Get-AnsibleParam -obj $params -name "sam_account_name" -default "$name$"
+If (-not $sam_account_name.EndsWith("$")) {
+  Fail-Json -obj $result "sam_account_name must end in $"
 }
+$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
+$description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
+$state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
+If ($state -eq "present") {
+  $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
+  $ou = Get-AnsibleParam -obj $params -name "ou" -failifempty $true -resultobj $result
+  $distinguished_name = "CN=$name,$ou"
+
+  $desired_state = @{
+    name = $name
+    sam_account_name = $sam_account_name
+    dns_hostname = $dns_hostname
+    ou = $ou
+    distinguished_name = $distinguished_name
+    description = $description
+    enabled = $enabled
+    state = $state
+  }
+} Else {
+  $desired_state = @{
+    name = $name
+    state = $state
+  }
+}
+
 # ------------------------------------------------------------------------------
 Function Get-InitialState($desired_state) {
   # Test computer exists
@@ -161,7 +157,6 @@ Function are_hashtables_equal($x, $y) {
 }
 
 # ------------------------------------------------------------------------------
-$desired_state = Get-DesiredState($params)
 $initial_state = Get-InitialState($desired_state)
 
 If ($desired_state.state -eq "present") {
