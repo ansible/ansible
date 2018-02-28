@@ -229,7 +229,7 @@ modules like 'script', 'stat', 'uri', and 'assert'.
 Conclusion
 ``````````
 
-Ansible believes you should not need another framework to validate basic things of your infrastructure is true.  This is the case
+Ansible believes you should not need another framework to validate basic things if your infrastructure is true.  This is the case
 because Ansible is an order-based system that will fail immediately on unhandled errors for a host, and prevent further configuration
 of that host.  This forces errors to the top and shows them in a summary at the end of the Ansible run.
 
