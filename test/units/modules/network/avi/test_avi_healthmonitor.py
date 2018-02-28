@@ -1,4 +1,4 @@
-from unittest import SkipTest
+from nose.plugins.skip import SkipTest
 try:
     import vcr
 except ImportError:
