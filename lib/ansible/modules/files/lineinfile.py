@@ -125,6 +125,13 @@ EXAMPLES = r"""
     regexp: '^SELINUX='
     line: 'SELINUX=enforcing'
 
+# use double backslash to escape between double-quotes
+- name: enable IPv4 forwarding
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: "^#net\\.ipv4\\.ip_forward=1"
+    line: "net.ipv4.ip_forward=1"
+
 - lineinfile:
     path: /etc/sudoers
     state: absent
