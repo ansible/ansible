@@ -114,8 +114,6 @@ options:
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"
-            - "C(address) - Address of the fibre channel storage server."
-            - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
             - "C(override_luns) - If I(True) FCP storage domain luns will be overridden before adding."
             - "Note that these parameters are not idempotent."
@@ -246,6 +244,14 @@ EXAMPLES = '''
     nfs:
       address: 10.34.63.199
       path: /path/export
+
+# Import FCP storage domain:
+- ovirt_storage_domains:
+    state: imported
+    name: data_fcp
+    host: myhost
+    data_center: mydatacenter
+    fcp: {}
 
 # Update OVF_STORE:
 - ovirt_storage_domains:
