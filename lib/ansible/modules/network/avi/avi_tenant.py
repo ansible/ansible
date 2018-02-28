@@ -55,6 +55,7 @@ options:
         description:
             - Boolean flag to set local.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     name:
         description:
             - Name of the object.
