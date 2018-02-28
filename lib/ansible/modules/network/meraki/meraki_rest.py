@@ -60,7 +60,7 @@ options:
         description:
             - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
         type: bool
-        default: 'no'
+        default: 'yes'
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
@@ -86,6 +86,7 @@ options:
         description:
             - Set amount of debug output during module execution.
         choices: [ debug, normal ]
+        default: normal
 
 author:
     - Kevin Breit (@kbreit)
