@@ -600,3 +600,48 @@ class TestVerifyVersion(unittest.TestCase):
         self.assertFalse(nso.verify_version_str('4.4.1', [(4, 6), (4, 5, 1)]))
         self.assertFalse(nso.verify_version_str('4.4.1.2', [(4, 6), (4, 5, 1)]))
         self.assertFalse(nso.verify_version_str('4.5.0', [(4, 6), (4, 5, 1)]))
+
+
+class TestValueSort(unittest.TestCase):
+    def test_sort_parent_depend(self):
+        values = [
+            nso.ValueBuilder.Value('/test/list{entry}', '/test/list', 'CREATE', ['']),
+            nso.ValueBuilder.Value('/test/list{entry}/description', '/test/list/description', 'TEST', ['']),
+            nso.ValueBuilder.Value('/test/entry', '/test/entry', 'VALUE', ['/test/list', '/test/list/name'])
+        ]
+
+        result = [v.path for v in nso.ValueBuilder.sort_values(values)]
+
+        self.assertEquals(['/test/list{entry}', '/test/entry', '/test/list{entry}/description'], result)
+
+    def test_sort_break_direct_cycle(self):
+        values = [
+            nso.ValueBuilder.Value('/test/a', '/test/a', 'VALUE', ['/test/c']),
+            nso.ValueBuilder.Value('/test/b', '/test/b', 'VALUE', ['/test/a']),
+            nso.ValueBuilder.Value('/test/c', '/test/c', 'VALUE', ['/test/a'])
+        ]
+
+        result = [v.path for v in nso.ValueBuilder.sort_values(values)]
+
+        self.assertEquals(['/test/a', '/test/b', '/test/c'], result)
+
+    def test_sort_break_indirect_cycle(self):
+        values = [
+            nso.ValueBuilder.Value('/test/c', '/test/c', 'VALUE', ['/test/a']),
+            nso.ValueBuilder.Value('/test/a', '/test/a', 'VALUE', ['/test/b']),
+            nso.ValueBuilder.Value('/test/b', '/test/b', 'VALUE', ['/test/c'])
+        ]
+
+        result = [v.path for v in nso.ValueBuilder.sort_values(values)]
+
+        self.assertEquals(['/test/a', '/test/c', '/test/b'], result)
+
+    def test_sort_depend_on_self(self):
+        values = [
+            nso.ValueBuilder.Value('/test/a', '/test/a', 'VALUE', ['/test/a']),
+            nso.ValueBuilder.Value('/test/b', '/test/b', 'VALUE', [])
+        ]
+
+        result = [v.path for v in nso.ValueBuilder.sort_values(values)]
+
+        self.assertEqual(['/test/a', '/test/b'], result)
