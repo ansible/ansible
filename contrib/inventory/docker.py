@@ -394,6 +394,7 @@ except ImportError as exc:
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
+DEFAULT_TLS_HOSTNAME = "localhost"
 DEFAULT_IP = '127.0.0.1'
 DEFAULT_SSH_PORT = '22'
 
@@ -693,7 +694,7 @@ class DockerInventory(object):
                 api_version = host.get('version') or def_version or self._args.api_version or \
                     self._env_args.api_version or DEFAULT_DOCKER_API_VERSION
                 tls_hostname = host.get('tls_hostname') or def_tls_hostname or self._args.tls_hostname or \
-                    self._env_args.tls_hostname
+                    self._env_args.tls_hostname or DEFAULT_TLS_HOSTNAME
                 tls_verify = host.get('tls_verify') or def_tls_verify or self._args.tls_verify or \
                     self._env_args.tls_verify or DEFAULT_TLS_VERIFY
                 tls = host.get('tls') or def_tls or self._args.tls or self._env_args.tls or DEFAULT_TLS
@@ -741,7 +742,8 @@ class DockerInventory(object):
             docker_host = def_host or self._args.docker_host or self._env_args.docker_host or DEFAULT_DOCKER_HOST
             api_version = def_version or self._args.api_version or self._env_args.api_version or \
                 DEFAULT_DOCKER_API_VERSION
-            tls_hostname = def_tls_hostname or self._args.tls_hostname or self._env_args.tls_hostname
+            tls_hostname = def_tls_hostname or self._args.tls_hostname or self._env_args.tls_hostname or \
+                DEFAULT_TLS_HOSTNAME
             tls_verify = def_tls_verify or self._args.tls_verify or self._env_args.tls_verify or DEFAULT_TLS_VERIFY
             tls = def_tls or self._args.tls or self._env_args.tls or DEFAULT_TLS
             ssl_version = def_ssl_version or self._args.ssl_version or self._env_args.ssl_version
@@ -848,7 +850,7 @@ class DockerInventory(object):
                             help="The base url or Unix sock path to connect to the docker daemon. Defaults to %s"
                                  % (DEFAULT_DOCKER_HOST))
         parser.add_argument('--tls-hostname', action='store', default=None,
-                            help="Host name to expect in TLS certs.")
+                            help="Host name to expect in TLS certs. Defaults to %s" % DEFAULT_TLS_HOSTNAME)
         parser.add_argument('--api-version', action='store', default=None,
                             help="Docker daemon API version. Defaults to %s" % (DEFAULT_DOCKER_API_VERSION))
         parser.add_argument('--timeout', action='store', default=None,
