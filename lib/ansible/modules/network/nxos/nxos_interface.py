@@ -430,18 +430,21 @@ def map_obj_to_commands(updates, module):
         if name:
             w['interface_type'] = None
 
-        obj_in_have = search_obj_in_list(name, have)
-        is_default = is_default_interface(name, module)
+        if interface_type:
+            obj_in_have = {}
+            if state in ('present', 'default'):
+                module.fail_json(msg='The interface_type param can be used only with state absent.')
+        else:
+            obj_in_have = search_obj_in_list(name, have)
+            is_default = is_default_interface(name, module)
+
         if name:
             interface = 'interface ' + name
-
-        if interface_type and state == 'present':
-            module.fail_json(msg='The interface_type param can be used only with state absent.')
 
         if state == 'absent':
             if obj_in_have:
                 commands.append('no interface {0}'.format(name))
-            elif interface_type:
+            elif interface_type and not obj_in_have:
                 intfs = get_interfaces_dict(module)[interface_type]
                 cmds = get_interface_type_removed_cmds(intfs)
                 commands.extend(cmds)
@@ -567,6 +570,9 @@ def map_config_to_obj(want, module):
                    mtu=None, mode=None, duplex=None, interface_type=None,
                    ip_forward=None, fabric_forwarding_anycast_gateway=None)
 
+        if not w['name']:
+            return obj
+
         command = 'show interface {0}'.format(w['name'])
         try:
             body = execute_show_command(command, module)[0]
@@ -660,6 +666,9 @@ def check_declarative_intent_params(module, want):
         want_neighbors = w.get('neighbors')
 
         time.sleep(module.params['delay'])
+
+        if w['interface_type']:
+            return
 
         cmd = [{'command': 'show interface {0}'.format(w['name']), 'output': 'text'}]
         output = run_commands(module, cmd, check_rc=False)
@@ -755,7 +764,7 @@ def main():
     argument_spec.update(element_spec)
     argument_spec.update(nxos_argument_spec)
 
-    required_one_of = [['name', 'aggregate']]
+    required_one_of = [['name', 'aggregate', 'interface_type']]
     mutually_exclusive = [['name', 'aggregate'],
                           ['name', 'interface_type']]
 

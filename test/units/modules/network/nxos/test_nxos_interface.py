@@ -73,3 +73,8 @@ class TestNxosInterfaceModule(TestNxosModule):
         set_module_args(dict(interface='loopback0', state='absent'))
         result = self.execute_module(changed=False)
         self.assertEqual(result['commands'], [])
+
+    def test_nxos_interface_type(self):
+        set_module_args(dict(interface_type='loopback', state='absent'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['no interface loopback0'])
