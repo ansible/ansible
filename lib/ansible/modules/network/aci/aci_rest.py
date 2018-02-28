@@ -42,7 +42,6 @@ options:
     - Using C(delete) is typically used for deleting objects.
     - Using C(get) is typically used for querying objects.
     - Using C(post) is typically used for modifying objects.
-    required: yes
     default: get
     choices: [ delete, get, post ]
     aliases: [ action ]
