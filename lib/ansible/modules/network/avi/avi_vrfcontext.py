@@ -73,6 +73,7 @@ options:
         description:
             - Boolean flag to set system_default.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
