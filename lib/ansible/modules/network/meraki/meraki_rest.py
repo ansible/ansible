@@ -25,8 +25,8 @@ description:
     - Enables management of Cisco's Meraki line of products through their cloud based dashboard.
 
 notes:
-    - Disabling HTTPS (C(use_ssl: no) will cause DELETE, POST and PUT methods to perform a GET (query).
-    - Using C(host) and C(validate_certs) is only useful if you are a Cisco developer working with an in-house Meraki setup.
+    - Disabling HTTPS (C(use_ssl=no) will cause DELETE, POST and PUT methods to perform a GET (query).
+    - Using C(host) and C(validate_certs=no) is only useful if you are a Cisco developer working with an in-house Meraki setup.
     - More information about the Meraki API is available from U(https://dashboard.meraki.com/api_docs).
 
 options:
@@ -89,6 +89,7 @@ options:
 
 author:
     - Kevin Breit (@kbreit)
+    - Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = '''
