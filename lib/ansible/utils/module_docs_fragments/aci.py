@@ -23,7 +23,6 @@ options:
   username:
     description:
     - The username to use for authentication.
-    required: yes
     default: admin
     aliases: [ user ]
   password:
