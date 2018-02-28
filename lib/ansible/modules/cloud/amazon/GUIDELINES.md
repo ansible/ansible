@@ -125,10 +125,11 @@ if my_new_feature_Parameter_is_set:
 
 ### Connecting to AWS
 
-To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn`.
+AnsibleAWSModule provides the `resource` and `client` helper methods for obtaining boto3 connections.
+These handle some of the more esoteric connection options, such as security tokens and boto profiles.
 
-These functions handle some of the more esoteric connection options, such as security tokens and
-boto profiles.
+If using the basic AnsibleModule then you should use `get_aws_connection_info` and then `boto3_conn`
+to connect to AWS as these handle the same range of connection options.
 
 
 #### boto
@@ -157,6 +158,18 @@ exception handling like in boto.  Instead, an `AuthFailure` exception will be th
 caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
 See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
 so you don't have to.
+
+```python
+module.client('ec2')
+```
+
+or for the higher level ec2 resource:
+
+```python
+module.resource('ec2')
+```
+
+An example of the older style connection used for modules based on AnsibleModule rather than AnsibleAWSModule:
 
 ```python
 region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
