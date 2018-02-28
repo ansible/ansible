@@ -285,6 +285,10 @@ class ValueBuilder(object):
             self.value = value
             self.deps = deps
 
+            # nodes can depend on themselves
+            if self.tag_path in self.deps:
+                self.deps.remove(self.tag_path)
+
         def __lt__(self, rhs):
             l_len = len(self.path.split('/'))
             r_len = len(rhs.path.split('/'))
@@ -348,12 +352,13 @@ class ValueBuilder(object):
     @property
     def values(self):
         if self._values_dirty:
-            self._values = self._sort_values(sorted(self._values))
+            self._values = ValueBuilder.sort_values(self._values)
             self._values_dirty = False
 
         return self._values
 
-    def _sort_values(self, values):
+    @staticmethod
+    def sort_values(values):
         class N(object):
             def __init__(self, v):
                 self.tmp_mark = False
@@ -361,7 +366,32 @@ class ValueBuilder(object):
                 self.v = v
 
         sorted_values = []
-        nodes = [N(v) for v in values]
+        nodes = [N(v) for v in sorted(values)]
+
+        def get_node(tag_path):
+            return next((m for m in nodes
+                         if m.v.tag_path == tag_path), None)
+
+        def is_cycle(n, dep, visited):
+            visited.add(n.v.tag_path)
+            if dep in visited:
+                return True
+
+            dep_n = get_node(dep)
+            if dep_n is not None:
+                for sub_dep in dep_n.v.deps:
+                    if is_cycle(dep_n, sub_dep, visited):
+                        return True
+
+            return False
+
+        # check for dependency cycles, remove if detected. sort will
+        # not be 100% but allows for a best-effort to work around
+        # issue in NSO.
+        for n in nodes:
+            for dep in n.v.deps:
+                if is_cycle(n, dep, set()):
+                    n.v.deps.remove(dep)
 
         def visit(n):
             if n.tmp_mark:
@@ -380,9 +410,10 @@ class ValueBuilder(object):
 
             return True
 
-        while any((not n.mark for n in nodes)):
-            n = next((node for node in nodes if not node.mark))
+        n = next((n for n in nodes if not n.mark), None)
+        while n is not None:
             visit(n)
+            n = next((n for n in nodes if not n.mark), None)
 
         return sorted_values[::-1]
 
