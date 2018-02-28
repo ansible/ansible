@@ -593,8 +593,8 @@ class AzureRMModuleBase(object):
         try:
             if HAS_AZURE_CLI_CORE:
                 self.log('Retrieving credentials from AzureCLI profile')
-                cli_credentials = self._get_azure_cli_credentials()
-                return cli_credentials
+            cli_credentials = self._get_azure_cli_credentials()
+            return cli_credentials
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
