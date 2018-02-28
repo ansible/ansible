@@ -183,6 +183,7 @@ def main():
     path = module.params['path']
     content = module.params['content']
     src = module.params['src']
+    module.params['follow_redirects'] = 'all'
 
     # Report missing file
     file_exists = False
@@ -199,18 +200,7 @@ def main():
             # TODO: Would be nice to template this, requires action-plugin
             payload = config_object.read()
 
-    if content:
-        payload = json.loads(to_native(content))
-    elif src:
-        if os.path.isfile(src):
-            with open(src, 'r') as config_object:
-                payload = config_object.read()
-        else:
-            module.fail_json(msg="File does not exist")
-    elif method in ['post', 'put']:
-        module.fail_json(msg="one of the following parameters is required: content, src")
-
-    json_payload = None
+    json_payload = payload
     if content and isinstance(content, dict):
         # Validate inline YAML/JSON
         json_payload = json.dumps(payload)
@@ -220,6 +210,9 @@ def main():
             json_payload = json.dumps(yaml.safe_load(payload))
         except Exception as e:
             module.fail_json(msg='Failed to parse provided JSON/YAML payload: %s' % to_text(e), exception=to_text(e), payload=payload)
+
+    if method in ('delete', 'get'):
+        json_payload = None
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -236,6 +229,7 @@ def main():
 
     debug_result = dict(
         headers=headers,
+        json_payload=json_payload,
         method=method.upper(),
         payload=payload,
         url=url,
@@ -250,14 +244,14 @@ def main():
                                force=False,
                                timeout=module.params['timeout'],
                                )
-
     except Exception as e:
         result.update(debug_result)
         module.fail_json(msg=to_native(e))
 
     if module.params['output_level'] == 'debug':
-        result['status'] = info['status']
-        result['response'] = info['msg']
+        debug_result['status'] = info['status']
+        debug_result['response'] = info['msg']
+        result.update(debug_result)
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
@@ -270,18 +264,14 @@ def main():
         try:
             data = json.loads(to_native(info['body']))
             module.fail_json(msg='Dashboard API Error: {0} '.format(';'.join(data['errors'])), **result)
-        except (KeyError, ValueError):
-            result.update(debug_result)
+        except (ValueError, KeyError) as e:
+            result['data'] = to_native(info['body'])
             module.fail_json(msg=result['response'], **result)
     else:
-        result.update(debug_result)
         module.fail_json(msg='Unknown Error', info=info, **result)
 
     if method != 'get':
         result['changed'] = True
-
-    if module.params['output_level'] == 'debug':
-        result.update(debug_result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
