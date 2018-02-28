@@ -130,6 +130,7 @@ acl:
 import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
 
@@ -201,7 +202,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
     if default:
         cmd.insert(1, '-d')
 
-    cmd.append(path)
+    cmd.append(shlex_quote(path))
     return cmd
 
 
