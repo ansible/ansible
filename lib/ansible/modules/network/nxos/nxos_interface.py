@@ -93,6 +93,7 @@ options:
   fabric_forwarding_anycast_gateway:
     description:
       - Associate SVI with anycast gateway under VLAN configuration mode.
+        Applicable for SVI interface only.
     required: false
     default: null
     choices: ['true','false']
@@ -471,11 +472,11 @@ def map_obj_to_commands(updates, module):
                     add_command_to_interface(interface, 'no ip forward', commands)
 
                 if (fabric_forwarding_anycast_gateway is True and
-                        obj_in_have.get('fabric_forwarding_anycast_gateway') is True):
+                        obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
                     add_command_to_interface(interface, 'fabric forwarding mode anycast-gateway', commands)
 
                 elif (fabric_forwarding_anycast_gateway is False and
-                        obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
+                        obj_in_have.get('fabric_forwarding_anycast_gateway') is True):
                     add_command_to_interface(interface, 'no fabric forwarding mode anycast-gateway', commands)
 
                 for item in args:
@@ -620,10 +621,6 @@ def map_config_to_obj(want, module):
                         obj['ip_forward'] = 'enable'
                     else:
                         obj['ip_forward'] = 'disable'
-                    if 'fabric forwarding mode anycast-gateway' in body:
-                        obj['fabric_forwarding_anycast_gateway'] = True
-                    else:
-                        obj['fabric_forwarding_anycast_gateway'] = False
 
                 elif intf_type == 'svi':
                     obj['name'] = normalize_interface(interface_table.get('interface'))
