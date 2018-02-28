@@ -66,10 +66,12 @@ options:
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.4"
+        type: bool
     leader_cluster_uuid:
         description:
             - Mark this site as leader of gslb configuration.
             - This site is the one among the avi sites.
+        required: true
     maintenance_mode:
         description:
             - This field disables the configuration operations on the leader for all federated objects.
@@ -80,6 +82,7 @@ options:
             - Field introduced in 17.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     name:
         description:
             - Name for the gslb object.
@@ -152,7 +155,7 @@ def main():
         description=dict(type='str',),
         dns_configs=dict(type='list',),
         is_federated=dict(type='bool',),
-        leader_cluster_uuid=dict(type='str',),
+        leader_cluster_uuid=dict(type='str', required=True),
         maintenance_mode=dict(type='bool',),
         name=dict(type='str', required=True),
         send_interval=dict(type='int',),

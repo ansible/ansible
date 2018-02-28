@@ -48,6 +48,7 @@ options:
         description:
             - Use avi intelligent autoscale algorithm where autoscale is performed by comparing load on the pool against estimated capacity of all the servers.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     intelligent_scalein_margin:
         description:
             - Maximum extra capacity as percentage of load used by the intelligent scheme.
@@ -110,6 +111,7 @@ options:
         description:
             - Use predicted load rather than current load.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     uuid:
         description:
             - Unique object identifier of the object.
