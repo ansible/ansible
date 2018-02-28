@@ -199,12 +199,16 @@ Porting custom scripts
 
 No notable changes.
 
-Networking
-==========
+Network
+=======
 
+Top-level connection arguments will be removed in 2.9
+-----------------------------------------------------
 
-Change in deprecation notice of top-level connection arguments
---------------------------------------------------------------
+Top-level connection arguments like ``username``, ``host``, and ``password`` are deprecated and will be removed in version 2.9.
+
+OLD In Ansible 2.4
+
 .. code-block:: yaml
 
     - name: example of using top-level options for connection properties
@@ -216,19 +220,7 @@ Change in deprecation notice of top-level connection arguments
         authorize: yes
         auth_pass: cisco
 
-**OLD** In Ansible 2.4:
-
-Will result in:
-
-.. code-block:: yaml
-
-   [WARNING]: argument username has been deprecated and will be removed in a future version
-   [WARNING]: argument host has been deprecated and will be removed in a future version
-   [WARNING]: argument password has been deprecated and will be removed in a future version
-
-
-**NEW** In Ansible 2.5:
-
+The deprecation warnings reflect this schedule. The task above, run in Ansible 2.5, will result in:
 
 .. code-block:: yaml
 
@@ -239,13 +231,73 @@ Will result in:
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
-Notice when using provider dictionary with new persistent connection types
---------------------------------------------------------------------------
+We recommend setting connection properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`. To update the ``ios_command`` task above, move the connection properties to inventory like this:
 
-Using a provider dictionary with one of the new persistent connection types for networking
-(network_cli, netconf, etc.) will result in a warning. When using these connections
-the standard Ansible infrastructure for controlling connections should be used.
-(Link to basic inventory documentation?)
+NEW In Ansible 2.5
+
+.. code-block:: yaml
+
+    - name: example of using top-level options for connection properties
+      ios_command:
+        commands: show version
+        host: "{{ inventory_hostname }}"
+
+.. code-block:: ini
+
+   [ios:vars]
+   ansible_become=yes
+   ansible_become_method=enable
+   ansible_become_pass=cisco
+   ansible_network_os=ios
+   ansible_password=cisco
+   ansible_user=cisco
+
+Adding persistent connection types ``network_cli`` and ``netconf``
+------------------------------------------------------------------
+
+Ansible 2.5 introduces two persistent connection types, ``network_cli`` and ``netconf``. We recommend you use these whenever possible.
+Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to 
+specify your connection variables with standard Ansible connection variables:
+
+OLD In Ansible 2.4
+
+.. code-block:: yaml
+
+   ---
+   vars:
+       cli:
+          host: "{{ inventory_hostname }}"
+          username: operator
+          password: secret
+          transport: cli
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+       provider: "{{ cli }}"
+       username: admin
+       password: admin
+
+NEW In Ansible 2.5
+
+.. code-block:: ini
+
+   [nxos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=nxos
+   ansible_user=operator
+   ansible_password=secret
+
+.. code-block:: yaml
+
+   tasks:
+   - nxos_config:
+       src: config.j2
+
+Using a provider dictionary with either ``network_cli`` or ``netconf`` will result in a warning.
+
+Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the
+the :ref:`platform documentation<platform_options>` for more information. 
 
 Developers: Shared Module Utilities Moved
 -----------------------------------------
