@@ -54,6 +54,7 @@ options:
             - Note that the datapath status is determined by the association of health monitor profiles.
             - Only the controller provided status is determined through this configuration.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     created_by:
         description:
             - Creator name.
@@ -73,6 +74,7 @@ options:
             - If the gslb service is enabled, then the vips are sent in the dns responses based on reachability and configured algorithm.
             - If the gslb service is disabled, then the vips are no longer available in the dns response.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     groups:
         description:
             - Select list of pools belonging to this gslb service.
@@ -93,6 +95,7 @@ options:
             - This field indicates that this object is replicated across gslb federation.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     min_members:
         description:
             - The minimum number of members to distribute traffic to.
@@ -124,6 +127,7 @@ options:
             - Field introduced in 17.2.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -141,6 +145,7 @@ options:
             - Default is true.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     uuid:
         description:
             - Uuid of the gslb service.
@@ -151,6 +156,7 @@ options:
             - Default is false.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
 extends_documentation_fragment:
     - avi
 '''
