@@ -55,6 +55,7 @@ options:
             - This field indicates that this object is replicated across gslb federation.
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     name:
         description:
             - A user-friendly name for the geodb profile.
