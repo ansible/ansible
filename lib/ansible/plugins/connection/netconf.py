@@ -280,7 +280,8 @@ class Connection(ConnectionBase):
         if self._netconf:
             display.display('loaded netconf plugin for network_os %s' % network_os, log_only=True)
         else:
-            display.display('unable to load netconf for network_os %s' % network_os)
+            self._netconf = netconf_loader.get("default", self)
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % network_os)
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 
