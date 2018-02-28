@@ -29,7 +29,8 @@ Engine improvements
 - Assemble module improvements
 
   - assemble just skips when in check mode, it should be able to test if there is a difference and changed=true/false.
-  - The same with diff, it should work as template modules does
+  - The same with
+  diff, it should work as template modules does
 - Include AWX facts as default fact modules in Ansible
 - Handle Password reset prompts cleaner
 - Tasks stats for rescues and ignores
