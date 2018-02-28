@@ -739,7 +739,7 @@ def main():
         name=dict(aliases=['interface']),
         admin_state=dict(default='up', choices=['up', 'down']),
         description=dict(),
-        speed=dict(),
+        speed=dict(type='int'),
         mode=dict(choices=['layer2', 'layer3']),
         mtu=dict(),
         duplex=dict(choices=['full', 'half', 'auto']),
