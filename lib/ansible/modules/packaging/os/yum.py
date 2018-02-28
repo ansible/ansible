@@ -649,14 +649,13 @@ def set_env_proxy(conf_file, installroot):
                 schem = 'https'
             else:
                 schem = 'http'
-        if yumb.conf.proxy_username:
-            namepass = namepass + yumb.conf.proxy_username
-            if yumb.conf.proxy_password:
-                namepass = namepass + ":" + yumb.conf.proxy_password
-            namepass = namepass + '@'
-
-        os.environ["{0}_proxy".format(schem)] = re.sub(r"({0}://)".format(schem),
-                                                       r"\1" + namepass, yumb.conf.proxy)
+            if yumb.conf.proxy_username:
+                namepass = namepass + yumb.conf.proxy_username
+                if yumb.conf.proxy_password:
+                    namepass = namepass + ":" + yumb.conf.proxy_password
+                namepass = namepass + '@'
+            os.environ["{0}_proxy".format(schem)] = re.sub(r"({0}://)".format(schem),
+                                                           r"\1" + namepass, yumb.conf.proxy)
     except AttributeError as ae:
         raise ae
 
