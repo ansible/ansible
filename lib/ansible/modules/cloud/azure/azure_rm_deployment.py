@@ -490,6 +490,12 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 uri=self.template_link
             )
 
+        # this is to fix issue #35536 -- it's impossible to pass int parameters
+        if self.parameters and self.template:
+            for k in self.parameters:
+                if self.template['parameters'][k]['type'] == "int":
+                    self.parameters[k]['value'] = int(self.parameters[k]['value'])
+
         params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
         try:
