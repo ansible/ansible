@@ -185,7 +185,7 @@ def create_update_parameter(client, module):
                 describe_existing_parameter = None
                 try:
                     describe_existing_parameter = client.describe_parameters(Filters=[{"Key": "Name", "Values": [args['Name']]}])
-                except:
+                except ClientError as e:
                     module.fail_json_aws(e, msg="getting description value")
 
                 if describe_existing_parameter['Parameters'][0]['Description'] != args['Description']:
