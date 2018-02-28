@@ -1671,9 +1671,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
                                                                                      location=group.location,
                                                                                      resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = None if pip is None else PublicIPAddress(id=pip.id,
-                                                                                                     location=pip.location,
-                                                                                                     resource_guid=pip.resource_guid)
+        parameters.ip_configurations[0].public_ip_address = None if pip is None else self.network_models.PublicIPAddress(id=pip.id,
+                                                                                                                         location=pip.location,
+                                                                                                                         resource_guid=pip.resource_guid)
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
