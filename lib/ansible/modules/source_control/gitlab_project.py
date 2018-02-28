@@ -187,10 +187,15 @@ class GitLabProject(object):
 
     def createProject(self, is_user, user_id, import_url, arguments):
         if is_user:
-            return self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
+            result = self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
         else:
             group_id = user_id
-            return self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+            result = self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+
+        if not result:
+            self._module.fail_json(msg="Failed to create project %r" % arguments['name'])
+
+        return result
 
     def deleteProject(self, group_name, project_name):
         if self.existsGroup(group_name):
