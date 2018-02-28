@@ -158,8 +158,6 @@ except ImportError:
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
 network_os_device_param_map = {
-    "junos": "junos",
-    "iosxr": "iosxr",
     "nxos": "nexus"
 }
 
@@ -244,7 +242,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        device_params = {'name': (network_os_device_param_map.get(network_os) or 'default')}
+        device_params = {'name': (network_os_device_param_map.get(network_os) or network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
