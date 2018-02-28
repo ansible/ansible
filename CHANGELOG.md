@@ -19,6 +19,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 
 ### New Modules
 
+#### Cloud
+- amazon
+  * aws_caller_facts
+
 
 <a id="2.5"></a>
 
