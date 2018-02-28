@@ -9,6 +9,14 @@ def main():
     src = 'packaging/requirements/requirements-azure.txt'
     dst = 'test/runner/requirements/integration.cloud.azure.txt'
 
+    missing = [p for p in [src, dst] if not os.path.isfile(p)]
+
+    if missing:
+        for path in missing:
+            print('%s: missing required file' % path)
+
+        return
+
     if not filecmp.cmp(src, dst):
         print('%s: must be identical to `%s`' % (dst, src))
 
