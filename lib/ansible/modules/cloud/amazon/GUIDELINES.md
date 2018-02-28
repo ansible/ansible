@@ -509,3 +509,63 @@ other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag
 calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
+
+## Integration Tests for AWS Modules
+
+All new AWS modules should include integration tests to ensure that any changes in AWS APIs that
+affect the module are detected. At a minimum this should cover the key API calls and check the
+documented return values are present in the module result.
+
+For general information on running the integration tests see the [Integration Tests page of the
+Module Development Guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+
+The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
+
+You must have the following in `test/integration/targets/MODULE_NAME/aliases`
+
+```
+cloud/aws
+posix/ci/cloud/group4/aws
+```
+
+The first line indicates in an AWS test causing the test framework to make AWS credentials available
+during the test run. The second line puts the test in a test group causing it to be run in the continuous
+integration build.
+
+### AWS Credentials for Integration Tests
+
+The testing framework handles running the test with appropriate AWS credentials, these are made available
+to your test in the following variables:
+
+* `aws_region`
+* `aws_access_key`
+* `aws_secret_key`
+* `security_token`
+
+So all invocations of AWS modules in the test should set these parameters. E.g.
+
+```yaml
+  - ec2_instance:
+      ... params ...
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+```
+
+### AWS Permissions for Integration Tests
+
+As explained in the [Integration Test guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
+to run the AWS integration test.
+
+If your module is interacting with a new service or otherwise requires new permissions you must update the
+appropriate policy file to grant the permissions needed to run your integration test.
+
+There is no process for automatically granting additional permissions to the roles used by the continuous
+integration builds, so the tests will initially fail when you submit a pull request and the
+[Ansibullbot](https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md) will tag it as needing revision.
+
+Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
+tag and explain that it's due to missing permissions.
