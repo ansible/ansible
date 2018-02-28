@@ -55,6 +55,7 @@ options:
       - Option to overwrite an existing value if it already exists.
       - String
     required: false
+    version_added: "2.6"
     choices: ['never', 'changed', 'always']
     default: changed
   region:
