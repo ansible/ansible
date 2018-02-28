@@ -49,6 +49,7 @@ options:
         description:
             - Trigger notification to autoscale manager.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     description:
         description:
             - User defined description for the object.
@@ -61,6 +62,7 @@ options:
             - Generate alert only to external destinations.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         required: true
+        type: bool
     level:
         description:
             - When an alert is generated, mark its priority via the alert level.

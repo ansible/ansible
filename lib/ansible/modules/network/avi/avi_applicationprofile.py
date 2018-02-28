@@ -63,6 +63,7 @@ options:
             - Specifies if client ip needs to be preserved for backend connection.
             - Not compatible with connection multiplexing.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.

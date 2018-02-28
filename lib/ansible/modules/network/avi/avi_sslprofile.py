@@ -68,6 +68,7 @@ options:
         description:
             - Enable ssl session re-use.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     name:
         description:
             - Name of the object.
@@ -76,10 +77,12 @@ options:
         description:
             - Prefer the ssl cipher ordering presented by the client during the ssl handshake over the one specified in the ssl profile.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     send_close_notify:
         description:
             - Send 'close notify' alert message for a clean shutdown of the ssl connection.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     ssl_rating:
         description:
             - Sslrating settings for sslprofile.

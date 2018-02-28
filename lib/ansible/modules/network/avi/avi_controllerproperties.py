@@ -46,14 +46,17 @@ options:
         description:
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     allow_unauthenticated_apis:
         description:
             - Allow unauthenticated access for special apis.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     allow_unauthenticated_nodes:
         description:
             - Boolean flag to set allow_unauthenticated_nodes.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     api_idle_timeout:
         description:
             - Allowed values are 0-1440.
@@ -64,6 +67,7 @@ options:
             - Export configuration in appviewx compatibility mode.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     attach_ip_retry_interval:
         description:
             - Number of attach_ip_retry_interval.
@@ -79,6 +83,7 @@ options:
             - Field introduced in 17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
+        type: bool
     cluster_ip_gratuitous_arp_period:
         description:
             - Number of cluster_ip_gratuitous_arp_period.

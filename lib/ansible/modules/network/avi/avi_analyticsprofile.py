@@ -171,25 +171,30 @@ options:
         description:
             - Disable node (service engine) level analytics forvs metrics.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     disable_server_analytics:
         description:
             - Disable analytics on backend servers.
             - This may be desired in container environment when there are large number of  ephemeral servers.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_client_close_before_request_as_error:
         description:
             - Exclude client closed connection before an http request could be completed from being classified as an error.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_dns_policy_drop_as_significant:
         description:
             - Exclude dns policy drops from the list of errors.
             - Field introduced in 17.2.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     exclude_gs_down_as_error:
         description:
             - Exclude queries to gslb services that are operationally down from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_http_error_codes:
         description:
             - List of http status codes to be excluded from being classified as an error.
@@ -198,43 +203,53 @@ options:
         description:
             - Exclude dns queries to domains outside the domains configured in the dns application profile from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_invalid_dns_query_as_error:
         description:
             - Exclude invalid dns queries from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_no_dns_record_as_error:
         description:
             - Exclude queries to domains that did not have configured services/records from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_no_valid_gs_member_as_error:
         description:
             - Exclude queries to gslb services that have no available members from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_persistence_change_as_error:
         description:
             - Exclude persistence server changed while load balancing' from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_server_dns_error_as_error:
         description:
             - Exclude server dns error response from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_server_tcp_reset_as_error:
         description:
             - Exclude server tcp reset from errors.
             - It is common for applications like ms exchange.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_syn_retransmit_as_error:
         description:
             - Exclude 'server unanswered syns' from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_tcp_reset_as_error:
         description:
             - Exclude tcp resets by client from the list of potential errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     exclude_unsupported_dns_query_as_error:
         description:
             - Exclude unsupported dns queries from the list of errors.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     hs_event_throttle_window:
         description:
             - Time window (in secs) within which only unique health change events should occur.
