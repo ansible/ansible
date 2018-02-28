@@ -46,8 +46,8 @@ options:
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
             - Using C(post) and C(put) are typically used for modifying objects.
-        required: yes
         choices: [ delete, get, post, put ]
+        default: get
     path:
         description:
             - Directory path to the endpoint. Do not include FQDN specified in C(host).
@@ -131,6 +131,13 @@ from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_text
 
+# Optional, only used for YAML validation
+try:
+    import yaml
+    HAS_YAML = True
+except:
+    HAS_YAML = False
+
 
 def main():
 
@@ -139,7 +146,7 @@ def main():
     module_args = dict(
         auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
         host=dict(type='str', default='api.meraki.com'),
-        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
+        method=dict(type='str', default='get', choices=['delete', 'get', 'post', 'put']),
         path=dict(type='path', required=True),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
@@ -167,24 +174,52 @@ def main():
         argument_spec=module_args,
         supports_check_mode=False,
         mutually_exclusive=[['content', 'src']],
-        required_one_of=[['content', 'src']],
     )
 
     if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
 
-    payload = None
-    if module.params['content']:
-        payload = json.loads(to_native(module.params['content']))
-    elif module.params['src']:
-        src = module.params['src']
-        file_exists = False
+    method = module.params['method']
+    path = module.params['path']
+    content = module.params['content']
+    src = module.params['src']
+
+    # Report missing file
+    file_exists = False
+    if src:
         if os.path.isfile(src):
             file_exists = True
+        else:
+            module.fail_json(msg="Cannot find/access src '%s'" % src)
+
+    # We include the payload as it may be templated
+    payload = content
+    if file_exists:
+        with open(src, 'r') as config_object:
+            # TODO: Would be nice to template this, requires action-plugin
+            payload = config_object.read()
+
+    if content:
+        payload = json.loads(to_native(content))
+    elif src:
+        if os.path.isfile(src):
             with open(src, 'r') as config_object:
                 payload = config_object.read()
         else:
             module.fail_json(msg="File does not exist")
+    elif method in ['post', 'put']:
+        module.fail_json(msg="one of the following parameters is required: content, src")
+
+    json_payload = None
+    if content and isinstance(content, dict):
+        # Validate inline YAML/JSON
+        json_payload = json.dumps(payload)
+    elif payload and isinstance(payload, str) and HAS_YAML:
+        try:
+            # Validate YAML/JSON string
+            json_payload = json.dumps(yaml.safe_load(payload))
+        except Exception as e:
+            module.fail_json(msg='Failed to parse provided JSON/YAML payload: %s' % to_text(e), exception=to_text(e), payload=payload)
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -201,16 +236,16 @@ def main():
 
     debug_result = dict(
         headers=headers,
-        method=module.params['method'].upper(),
-        payload=json.dumps(payload),
+        method=method.upper(),
+        payload=payload,
         url=url,
     )
 
     try:
         resp, info = fetch_url(module, url,
-                               data=json.dumps(payload),
+                               data=json_payload,
                                headers=headers,
-                               method=module.params['method'].upper(),
+                               method=method.upper(),
                                use_proxy=module.params['use_proxy'],
                                force=False,
                                timeout=module.params['timeout'],
@@ -218,7 +253,7 @@ def main():
 
     except Exception as e:
         result.update(debug_result)
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=to_native(e))
 
     if module.params['output_level'] == 'debug':
         result['status'] = info['status']
@@ -242,7 +277,7 @@ def main():
         result.update(debug_result)
         module.fail_json(msg='Unknown Error', info=info, **result)
 
-    if module.params['method'] != 'get':
+    if method != 'get':
         result['changed'] = True
 
     if module.params['output_level'] == 'debug':
