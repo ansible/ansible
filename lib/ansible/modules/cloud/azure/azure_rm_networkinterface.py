@@ -502,9 +502,12 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
 
         if changed:
             if self.state == 'present':
-                subnet = self.get_subnet(virtual_network_resource_group, virtual_network_name, self.subnet_name)
-                if not subnet:
-                    self.fail('subnet {0} is not exist'.format(self.subnet_name))
+                subnet = self.network_models.SubResource('/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/virtualNetworks/{}/subnets/{}'.format(
+                                                         self.subscription_id,
+                                                         virtual_network_resource_group,
+                                                         virtual_network_name,
+                                                         self.subnet_name))
+
                 nic_ip_configurations = [
                     self.network_models.NetworkInterfaceIPConfiguration(
                         private_ip_allocation_method=ip_config.get('private_ip_allocation_method'),
@@ -569,13 +572,6 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.log("Fetching public ip address {0}".format(name))
         try:
             return self.network_client.public_ip_addresses.get(self.resource_group, name)
-        except Exception as exc:
-            return None
-
-    def get_subnet(self, resource_group, vnet_name, subnet_name):
-        self.log("Fetching subnet {0} in virtual network {1}".format(subnet_name, vnet_name))
-        try:
-            return self.network_client.subnets.get(resource_group, vnet_name, subnet_name)
         except Exception as exc:
             return None
 
