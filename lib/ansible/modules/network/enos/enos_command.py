@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
 # Copyright (C) 2017 Lenovo. All rights reserved.
 #
 # GNU General Public License v3.0+
