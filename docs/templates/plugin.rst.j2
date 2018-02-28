@@ -299,9 +299,9 @@ Author
 Status
 ~~~~~~
 
-{% for cur_state in  metadata.status %}
+{%       for cur_state in metadata.status %}
 This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
-{% endfor %}
+{%       endfor %}
 
 
 {%     endif %}
@@ -318,5 +318,4 @@ please refer to this `Knowledge Base article <https://access.redhat.com/articles
 {%   endif %}
 {% endif %}
 
-If you want to help with development, please read :doc:`../../community/index`,
-:doc:`../../dev_guide/testing` and {% if plugin_type == 'module' %}:doc:`../../dev_guide/developing_modules`{% else %}:doc:`../../dev_guide/developing_plugins`{% endif %}.
+If you notice any issues in this documentation you can ``edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@>`` to improve it.
