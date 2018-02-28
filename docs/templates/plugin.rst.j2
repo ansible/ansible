@@ -188,6 +188,19 @@ Options
     </br>
 
 {% endif %}
+{% if notes -%}
+
+
+Notes
+-----
+
+.. note::
+{%   for note in notes %}
+    - @{ note | convert_symbols_to_format }@
+{%   endfor %}
+
+
+{% endif %}
 {% if examples or plainexamples -%}
 
 
@@ -266,19 +279,6 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 {% endif %}
 
 
-{% if notes -%}
-
-
-Notes
------
-
-.. note::
-{%   for note in notes %}
-    - @{ note | convert_symbols_to_format }@
-{%   endfor %}
-
-
-{% endif %}
 {% if author is defined -%}
 
 
