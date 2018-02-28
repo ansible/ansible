@@ -65,16 +65,15 @@ Aliases: @{ ','.join(aliases) }@
 {% endif %}
 
 {% if requirements %}
-{%   set req = 'Requirements' %}
+{%   set req_title = 'Requirements' %}
 {%   if plugin_type == 'module' %}
-{%     set req = req + ' (on host that executes module)' %}
+{%     set req_title = req_title + ' (on host that executes module)' %}
 {%   endif %}
-{%   set req_len = req|length %}
-@{ req }@
-@{ '-' * req_len }@
+@{ req_title }@
+@{ '-' * req_title|length }@
 
 {%   for req in requirements %}
-  * @{ req | convert_symbols_to_format }@
+* @{ req | convert_symbols_to_format }@
 {%   endfor %}
 
 {% endif %}
