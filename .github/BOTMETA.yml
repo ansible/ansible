@@ -486,7 +486,7 @@ files:
   $modules/network/illumos/: xen0l
   $modules/network/interface/: $team_networking
   $modules/network/ios/: privateip rcarrillocruz kedarX
-  $modules/network/iosxr/: privateip rcarrillocruz kedarX
+  $modules/network/iosxr/: privateip rcarrillocruz kedarX gdpak
   $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
@@ -1140,12 +1140,12 @@ macros:
   team_netapp: hulquest lmprice broncofan gouthampacha
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
-  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX
+  team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX gdpak
   team_nso: cmoberg cnasten
   team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
   team_onyx: samerd
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
-  team_openswitch: Qalthos gundalow privateip
+  team_openswitch: Qalthos gundalow privateip gdpak
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3
