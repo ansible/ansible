@@ -507,10 +507,10 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if int(size) > this_lv['size']:
+            if float(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and int(size) < this_lv['size']:
-                if int(size) == 0:
+            elif shrink and float(size) < this_lv['size']:
+                if float(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
