@@ -9,13 +9,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 DOCUMENTATION = '''
 ---
@@ -25,8 +23,8 @@ description:
     - Manage a host system from distributed virtual switch.
 version_added: 2.0
 author:
-- "Joseph Callen (@jcpowermac)"
-- "Abhijeet Kasurde (@akasurde)"
+- Joseph Callen (@jcpowermac)
+- Abhijeet Kasurde (@akasurde)
 notes:
     - Tested on vSphere 5.5
 requirements:
