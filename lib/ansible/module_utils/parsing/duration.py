@@ -20,10 +20,68 @@ UNIT_MAP = {
     "ns": NANOSECOND,
     "us": MICROSECOND,
     "ms": MILLISECOND,
-    "s":  SECOND,
-    "m":  MINUTE,
-    "h":  HOUR,
+    "s": SECOND,
+    "m": MINUTE,
+    "h": HOUR,
 }
+
+
+def timedelta_to_dict(delta):
+    """Accepts a ``datetime.timedelta``, returns a dictionary of units
+
+    :param delta: timedelta
+    :type delta: datetime.timedelta
+    :return: returns a dictionary of units
+    :rtype: dict
+    """
+
+    delta = abs(delta)
+    return {
+        'year': delta.days // 365,
+        'day': delta.days % 365,
+        'hour': delta.seconds // 3600,
+        'minute': (delta.seconds // 60),
+        'second': delta.seconds % 60,
+        'microsecond': delta.microseconds
+    }
+
+
+def human_time_delta(dt, units=['year', 'day', 'hour', 'minute', 'second'],
+                     past_tense='{0} ago', future_tense='in {0}'):
+    """Accept a datetime or timedelta, return a human readable delta string
+
+    :param dt: datetime or timedelta
+    :param units: list of possible units to be used in resultant string
+    :params past_tense: string with ``{0}`` format for output of positive delta
+    :params future_tense: string with ``{0}`` format for output of negtive delta
+    :type delta: datetime.datetime or datetime.timedelta
+    :type units: list
+    :type past_tense: str
+    :type future_tense: str
+    :return: Human readable string representation of a time delta
+    :rtype: str
+    """
+
+    delta = dt
+    if isinstance(dt, datetime.timedelta):
+        delta = dt
+    else:
+        delta = datetime.datetime.now() - dt
+
+    if delta < datetime.timedelta(0):
+        tense = future_tense
+    else:
+        tense = past_tense
+
+    d = timedelta_to_dict(delta)
+    hlist = []
+    for unit in units:
+        if d[unit] == 0:
+            continue  # skip 0's
+        s = '' if d[unit] == 1 else 's'  # handle plurals
+        hlist.append('%s %s%s' % (d[unit], unit, s))
+    human_delta = ', '.join(hlist)
+    return tense.format(human_delta)
 
 
 def duration(s):

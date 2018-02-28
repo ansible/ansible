@@ -28,6 +28,7 @@ from os import isatty
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.parsing.duration import parse_duration, human_time_delta
 from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
 
@@ -74,7 +75,7 @@ class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
     BYPASS_HOST_LOOP = True
-    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds'))
+    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds', 'duration'))
 
     def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
@@ -122,6 +123,7 @@ class ActionModule(ActionBase):
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in self._task.args or 'seconds' in self._task.args:
+            display.deprecated('Use of `minutes` and `seconds` for pause is deprecated. Please use `duration` instead.', version='2.10')
             try:
                 if 'minutes' in self._task.args:
                     # The time() command operates in seconds so we need to
@@ -136,11 +138,19 @@ class ActionModule(ActionBase):
                 result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
                 return result
 
+        if 'duration' in self._task.args:
+            try:
+                seconds = int(parse_duration(self._task.args['duration']).total_seconds())
+            except ValueError:
+                result['failed'] = True
+                result['msg'] = to_text(e)
+                return result
+
         ########################################################################
         # Begin the hard work!
 
-        start = time.time()
-        result['start'] = to_text(datetime.datetime.now())
+        start = datetime.datetime.now()
+        result['start'] = to_text(start)
         result['user_input'] = b''
 
         stdin_fd = None
@@ -267,15 +277,12 @@ class ActionModule(ActionBase):
             if not(None in (stdin_fd, old_settings)) and isatty(stdin_fd):
                 termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
-            duration = time.time() - start
-            result['stop'] = to_text(datetime.datetime.now())
-            result['delta'] = int(duration)
+            stop = datetime.datetime.now()
+            duration = stop - start
+            result['stop'] = to_text(stop)
+            result['delta'] = int(duration.total_seconds())
 
-            if duration_unit == 'minutes':
-                duration = round(duration / 60.0, 2)
-            else:
-                duration = round(duration, 2)
-            result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
+            result['stdout'] = human_time_delta(duration, past_tense='Paused for {0}')
 
         result['user_input'] = to_text(result['user_input'], errors='surrogate_or_strict')
         return result
