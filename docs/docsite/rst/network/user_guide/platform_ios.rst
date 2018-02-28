@@ -27,6 +27,7 @@ Connections Available
 +---------------------------+-----------------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
+| |                         | | and ``ansible_become_pass:``                |
 +---------------------------+-----------------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
@@ -47,6 +48,7 @@ Example CLI ``group_vars/ios.yml``
    ansible_ssh_pass: !vault...
    ansible_become: yes
    ansible_become_method: enable
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
@@ -59,7 +61,7 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Backup switch (ios)
+   - name: Backup current switch config (ios)
      ios_config:
        backup: yes
      register: backup_ios_location

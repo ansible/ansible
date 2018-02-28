@@ -1,10 +1,10 @@
 .. _junos_platform_options:
 
 ***************************************
-JUNOS Platform Options
+Junos OS Platform Options
 ***************************************
 
-Juniper JUNOS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
+Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible 2.5 and how to use it. 
 
 .. contents:: Topics
 
@@ -12,8 +12,8 @@ Connections Available
 ================================================================================
 
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
-| |                          | | CLI                                                  | | Netconf                                                                                          |
-| |                          | | * ``junos_netconf`` & ``junos_command`` modules only | | * all modules except ``junos_netconf``, which enables Netconf                                    |
+| |                          | | CLI                                                  | | NETCONF                                                                                          |
+| |                          | | * ``junos_netconf`` & ``junos_command`` modules only | | * all modules except ``junos_netconf``, which enables NETCONF                                    |
 +============================+========================================================+====================================================================================================+
 | **Protocol**               | SSH                                                    | XML over SSH                                                                                       |
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
@@ -24,7 +24,7 @@ Connections Available
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
 | **Connection Settings**    |   ``ansible_connection: network_cli``                  |   ``ansible_connection: netconf``                                                                  |
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
-| | **Enable Mode**          | | not supported by JUNOS                               | | not supported by JUNOS                                                                           |
+| | **Enable Mode**          | | not supported by Junos OS                            | | not supported by Junos OS                                                                        |
 | | (Privilege Escalation)   | |                                                      | |                                                                                                  |
 +----------------------------+--------------------------------------------------------+----------------------------------------------------------------------------------------------------+
 | | **Returned Data Format** | | ``stdout[0].``                                       | | json: ``result[0]['software-information'][0]['host-name'][0]['data'] foo lo0``                   |
@@ -58,35 +58,35 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Backup switch (junos)
+   - name: Backup current switch config (junos)
      junos_config:
        backup: yes
      register: backup_junos_location
      when: ansible_network_os == 'junos'
 
 
-Using Netconf in Ansible 2.5
+Using NETCONF in Ansible 2.5
 ================================================================================
 
-Enabling Netconf
+Enabling NETCONF
 ----------------
 
-Before you can use Netconf to connect to a switch, you must:
+Before you can use NETCONF to connect to a switch, you must:
 
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
-- enable Netconf on the JunOS device(s)
+- enable NETCONF on the Junos OS device(s)
 
-To enable Netconf on a new switch via Ansible, use the ``junos_netconf`` module via the CLI connection. Set up group_vars/junos.yml just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module via the CLI connection. Set up group_vars/junos.yml just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
-   - name: Enable Netconf
+   - name: Enable NETCONF
       junos_netconf:
       when: ansible_network_os == 'junos'
 
-Once Netconf is enabled, change your ``group_vars/junos.yml`` to use the Netconf connection.
+Once NETCONF is enabled, change your ``group_vars/junos.yml`` to use the NETCONF connection.
 
-Example Netconf ``group_vars/junos.yml``
+Example NETCONF ``group_vars/junos.yml``
 ----------------------------------------
 
 .. code-block:: yaml
@@ -94,16 +94,16 @@ Example Netconf ``group_vars/junos.yml``
    ansible_connection: netconf
    ansible_network_os: junos
    ansible_user: myuser
-   ansible_pass: !vault | 
+   ansible_ssh_pass: !vault | 
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-Example Netconf Task
+Example NETCONF Task
 --------------------
 
 .. code-block:: yaml
 
-   - name: Backup switch (junos)
+   - name: Backup current switch config (junos)
      junos_config:
        backup: yes
      register: backup_junos_location

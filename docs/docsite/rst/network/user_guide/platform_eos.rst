@@ -26,7 +26,8 @@ Connections Available
 | |                         | |                                             | | in the ``provider`` dictionary        |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | supported - use ``authorize: yes``    |
-| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | in the ``provider`` dictionary        |
+| | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | | and ``auth_pass:`` in the             |
+| |                         | | and ``ansible_become_pass:``                | | ``provider`` dictionary               |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
@@ -46,6 +47,7 @@ Example CLI ``group_vars/eos.yml``
    ansible_ssh_pass: !vault...
    ansible_become: yes
    ansible_become_method: enable
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
@@ -58,7 +60,7 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Backup switch (eos)
+   - name: Backup current switch config (eos)
      eos_config:
        backup: yes
      register: backup_eos_location
@@ -84,7 +86,7 @@ Before you can use eAPI to connect to a switch, you must enable eAPI. To enable 
       become_method: enable
       when: ansible_network_os == 'eos'
 
-To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`eos_eapi <eos_eapi>` module documentation.
+You can find more options for enabling HTTP/HTTPS and local http in the :ref:`eos_eapi <eos_eapi>` module documentation.
 
 Once eAPI is enabled, change your ``group_vars/eos.yml`` to use the eAPI connection.
 
@@ -96,10 +98,12 @@ Example eAPI ``group_vars/eos.yml``
    ansible_connection: local
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_pass: !vault | 
+   ansible_ssh_pass: !vault... 
    eapi:
      host: "{{ inventory_hostname }}"
      transport: eapi
+     authorize: yes
+     auth_pass: !vault...
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 
@@ -112,7 +116,7 @@ Example eAPI Task
 
 .. code-block:: yaml
 
-   - name: Backup switch (eos)
+   - name: Backup current switch config (eos)
      eos_config:
        backup: yes
        provider: "{{ eapi }}"

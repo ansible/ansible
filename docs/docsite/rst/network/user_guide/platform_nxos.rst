@@ -12,7 +12,7 @@ Connections Available
 ================================================================================
 
 +---------------------------+-----------------------------------------------+-----------------------------------------+
-|..                         | CLI                                           | nxAPI                                   |
+|..                         | CLI                                           | NX-API                                  |
 +===========================+===============================================+=========================================+
 | **Protocol**              |  SSH                                          | HTTP(S)                                 |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
@@ -56,7 +56,7 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Backup switch (nxos)
+   - name: Backup current switch config (nxos)
      nxos_config:
        backup: yes
      register: backup_nxos_location
@@ -64,17 +64,17 @@ Example CLI Task
 
 
 
-Using nxAPI in Ansible 2.5
+Using NX-API in Ansible 2.5
 ================================================================================
 
-Enabling nxAPI
---------------
+Enabling NX-API
+---------------
 
-Before you can use nxAPI to connect to a switch, you must enable nxAPI. To enable nxAPI on a new switch via Ansible, use the ``nxos_nxapi`` module via the CLI connection. Set up group_vars/nxos.yml just like in the CLI example above, then run a playbook task like this:
+Before you can use NX-API to connect to a switch, you must enable NX-API. To enable NX-API on a new switch via Ansible, use the ``nxos_nxapi`` module via the CLI connection. Set up group_vars/nxos.yml just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
-   - name: Enable nxAPI
+   - name: Enable NX-API
       nxos_nxapi:
           enable_http: yes
           enable_https: yes
@@ -82,17 +82,17 @@ Before you can use nxAPI to connect to a switch, you must enable nxAPI. To enabl
 
 To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi>` module documentation.
 
-Once nxAPI is enabled, change your ``group_vars/nxos.yml`` to use the nxAPI connection.
+Once NX-API is enabled, change your ``group_vars/nxos.yml`` to use the NX-API connection.
 
-Example nxAPI ``group_vars/nxos.yml``
--------------------------------------
+Example NX-API ``group_vars/nxos.yml``
+--------------------------------------
 
 .. code-block:: yaml
 
    ansible_connection: local
    ansible_network_os: nxos
    ansible_user: myuser
-   ansible_pass: !vault | 
+   ansible_ssh_pass: !vault... 
    nxapi:
      host: "{{ inventory_hostname }}"
      transport: nxapi
@@ -103,12 +103,12 @@ Example nxAPI ``group_vars/nxos.yml``
 - If you are accessing your host through a web proxy using ``https``, change ``http_proxy`` to ``https_proxy``.
 
 
-Example nxAPI Task
-------------------
+Example NX-API Task
+-------------------
 
 .. code-block:: yaml
 
-   - name: Backup switch (nxos)
+   - name: Backup current switch config (nxos)
      nxos_config:
        backup: yes
        provider: "{{ nxapi }}"
