@@ -1141,7 +1141,7 @@ macros:
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi gundalow privateip
   team_networking: Qalthos ganeshrn gundalow privateip rcarrillocruz trishnaguha kedarX gdpak
-  team_nso: cmoberg cnasten
+  team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe privateip rahushen rcarrillocruz trishnaguha kedarX
   team_onyx: samerd
   team_openstack: emonty j2sol juliakreger rcarrillocruz shrews thingee dagnello
