@@ -65,6 +65,7 @@ options:
         description:
             - Boolean flag to set is_internal_policy.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     name:
         description:
             - Name of the http policy set.

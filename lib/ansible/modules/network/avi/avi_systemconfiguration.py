@@ -65,6 +65,7 @@ options:
         description:
             - Boolean flag to set docker_mode.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     email_configuration:
         description:
             - Emailconfiguration settings for systemconfiguration.

@@ -65,6 +65,7 @@ options:
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.4"
+        type: bool
     name:
         description:
             - A user-friendly name for the persistence profile.
