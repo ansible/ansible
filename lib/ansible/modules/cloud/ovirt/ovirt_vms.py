@@ -1099,7 +1099,7 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_shares'), entity.cpu_shares) and
             equal(self.param('delete_protected'), entity.delete_protected) and
             equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
-            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os.boot, 'devices', [])]) and
             equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True) and
             equal(self.param('description'), entity.description) and
             equal(self.param('comment'), entity.comment) and
