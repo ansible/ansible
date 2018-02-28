@@ -797,7 +797,7 @@ def main():
 
             # General properties of a certificate
             privatekey_path=dict(type='path'),
-            privatekey_passphrase=dict(type='path', no_log=True),
+            privatekey_passphrase=dict(type='str', no_log=True),
             signature_algorithms=dict(type='list'),
             subject=dict(type='dict'),
             subject_strict=dict(type='bool', default=False),
