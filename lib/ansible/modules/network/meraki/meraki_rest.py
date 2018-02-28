@@ -189,7 +189,7 @@ def main():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
     protocol = 'https'
-    if module.params['use_ssl'] is not None and module.params['use_ssl'] is False:
+    if module.params['use_ssl'] is False:
         protocol = 'http'
         module.warn('Using HTTP (without SSL) every request becomes a query (GET) request')
 
