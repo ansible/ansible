@@ -409,7 +409,11 @@ class Interfaces(FactsBase):
                     name = item['ROW_intf']['intf-name']
                     intf = self.facts['interfaces'][name]
                     intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
-                    self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+                    try:
+                        addr = item['ROW_intf']['addr']
+                    except KeyError:
+                        addr = item['ROW_intf']['TABLE_addr']['ROW_addr']['addr']
+                    self.facts['all_ipv6_addresses'].append(addr)
             else:
                 return ""
         except TypeError:
