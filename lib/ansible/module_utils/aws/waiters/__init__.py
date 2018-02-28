@@ -1,30 +1,11 @@
 # extra waiters for AWS utils
-import botocore.waiter as core_waiter
+from ansible.module_utils.aws.waiters import ec2 as ec2_waiters
 
-vpc_config = {
-  "version": 2,
-  "waiters": {
-    "RouteTableExists": {
-      "delay": 5,
-      "maxAttempts": 40,
-      "operation": "DescribeRouteTables",
-      "acceptors": [
-        {
-          "matcher": "path",
-          "expected": True,
-          "argument": "length(RouteTables[]) > `0`",
-          "state": "success"
-        },
-        {
-          "matcher": "error",
-          "expected": "InvalidRouteTableID.NotFound",
-          "state": "retry"
-        }
-      ]
-    }
-}}
 
-vpc_models = core_waiter.WaiterModel(waiter_config=vpc_config)
-
-def get_waiter(ec2, waiter_name):
-    return core_waiter.Waiter('route_table_exists', vpc_models.get_waiter('RouteTableExists'), ec2.describe_route_tables)
+def get_waiter(client, waiter_name):
+    if client.__class__.__name__ == 'EC2':
+        try:
+            return ec2_waiters.waiters_by_name[waiter_name](client)
+        except KeyError:
+            raise NotImplementedError("Waiter {0} could not be found for client {1}. Available waiters: {2}".format(
+                waiter_name, type(client), ', '.join(ec2_waitres.waiters_by_name.keys())))
