@@ -43,7 +43,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_file }}"
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -60,7 +60,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_file }}"
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -88,7 +88,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_file }}"
+  shell: "getfacl {{ test_file | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -110,7 +110,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_dir }}"
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -122,7 +122,7 @@
       - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  shell: "setfacl -b {{ test_dir }}"
+  shell: "setfacl -b {{ test_dir | quote }}"
 ##############################################################################
 - name: Same as previous but using entry shorthand
   acl:
@@ -133,7 +133,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_dir }}"
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -153,7 +153,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_dir }}"
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
 - name: verify output
@@ -165,7 +165,7 @@
       - "'default:user:{{ test_user }}:rw-' in getfacl_output.stdout_lines"
 ##############################################################################
 - name: Cleanup
-  shell: "setfacl -b {{ test_dir }}"
+  shell: "setfacl -b {{ test_dir | quote }}"
 ##############################################################################
 - name: Set default acls
   acl:
@@ -186,7 +186,7 @@
   register: output
 
 - name: get getfacl output
-  shell: "getfacl {{ test_dir }}"
+  shell: "getfacl {{ test_dir | quote }}"
   register: getfacl_output
 
 - name: verify output
