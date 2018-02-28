@@ -269,6 +269,7 @@ class SanityCodeSmellTest(SanityTest):
 
             if data:
                 display.info(data, verbosity=4)
+
         try:
             stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
             status = 0
