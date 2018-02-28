@@ -511,7 +511,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         private_ip_address=ip_config.get('private_ip_address'),
                         name=ip_config.get('name'),
                         subnet=subnet,
-                        public_ip_address=self.get_or_create_public_ip_address(ip_config),
+                        public_ip_address=(None if not self.public_ip else self.get_or_create_public_ip_address(ip_config)),
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
