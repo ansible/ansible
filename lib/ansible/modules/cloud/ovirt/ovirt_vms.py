@@ -1068,11 +1068,17 @@ class VmsModule(BaseModule):
                 return sorted(current) == sorted(passed)
             return True
 
+        def check_host():
+            if self.param('host') is not None:
+                return self.param('host') in [self._connection.follow_link(host).name for host in getattr(entity.placement_policy, 'hosts', None) or []]
+            return True
+
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
         return (
             check_cpu_pinning() and
             check_custom_properties() and
+            check_host() and
             not self.param('cloud_init_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
@@ -1106,9 +1112,8 @@ class VmsModule(BaseModule):
             equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
-            equal(self.param('placement_policy'), str(entity.placement_policy.affinity)) and
-            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
-            self.param('host') in [self._connection.follow_link(host).name for host in entity.placement_policy.hosts or []]
+            equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None) and
+            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None)
         )
 
     def pre_create(self, entity):
