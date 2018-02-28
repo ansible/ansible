@@ -29,7 +29,6 @@ class Cliconf(CliconfBase):
 
     def get_device_info(self):
         device_info = {}
-
         device_info['network_os'] = 'enos'
         reply = self.get(b'show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
