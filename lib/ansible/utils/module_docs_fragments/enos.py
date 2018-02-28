@@ -11,6 +11,7 @@
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
+
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
