@@ -25,7 +25,9 @@ description:
     - Enables management of Cisco's Meraki line of products through their cloud based dashboard.
 
 notes:
-    - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
+    - Disabling HTTPS (C(use_ssl: no) will cause DELETE, POST and PUT methods to perform a GET (query).
+    - Using C(host) and C(validate_certs) is only useful if you are a Cisco developer working with an in-house Meraki setup.
+    - More information about the Meraki API is available from U(https://dashboard.meraki.com/api_docs).
 
 options:
     auth_key:
@@ -43,8 +45,7 @@ options:
             - The HTTP method of the request.
             - Using C(delete) is typically used for deleting objects.
             - Using C(get) is typically used for querying objects.
-            - Using C(put) is typically used for modifying objects.
-            - Using C(post) is typically used for modifying objects.
+            - Using C(post) and C(put) are typically used for modifying objects.
         required: yes
         choices: [ delete, get, post, put ]
     path:
@@ -63,7 +64,7 @@ options:
     use_ssl:
         description:
             - If C(no), it will use HTTP. Otherwise it will use HTTPS.
-            - Disabling HTTPS will cause DELETE, POST and PUT methods to fail.
+            - Disabling HTTPS will cause DELETE, POST and PUT methods to perform a GET (query).
         type: bool
         default: 'yes'
     validate_certs:
@@ -84,7 +85,7 @@ options:
     output_level:
         description:
             - Set amount of debug output during module execution.
-        choices: [ 'debug', 'normal' ]
+        choices: [ debug, normal ]
 
 author:
     - Kevin Breit (@kbreit)
@@ -97,6 +98,14 @@ EXAMPLES = '''
     auth_key: abc12345
     method: get
     path: /api/v0/organizations
+  delegate_to: localhost
+
+- name: Create organization
+  meraki_rest:
+    auth_key: abc12345
+    method: post
+    path: /api/v0/organizations
+    content: '{ "name": "My new organization" }'
   delegate_to: localhost
 
 - name: Create network
@@ -125,18 +134,19 @@ def main():
 
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args = dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
-                       host=dict(type='str', default='api.meraki.com'),
-                       method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
-                       path=dict(type='path', required=True),
-                       timeout=dict(type='int', default=30),
-                       use_proxy=dict(type='bool', default=False),
-                       use_ssl=dict(type='bool', default=True),
-                       validate_certs=dict(type='bool', default=True),
-                       content=dict(type='raw'),
-                       src=dict(type='path'),
-                       output_level=dict(type='str', choices=['normal', 'debug'])
-                       )
+    module_args = dict(
+        auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
+        host=dict(type='str', default='api.meraki.com'),
+        method=dict(type='str', choices=['delete', 'get', 'post', 'put'], required=True),
+        path=dict(type='path', required=True),
+        timeout=dict(type='int', default=30),
+        use_proxy=dict(type='bool', default=True),
+        use_ssl=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+        content=dict(type='raw'),
+        src=dict(type='path'),
+        output_level=dict(type='str', default='normal', choices=['debug', 'normal']),
+    )
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -155,18 +165,13 @@ def main():
         argument_spec=module_args,
         supports_check_mode=False,
         mutually_exclusive=[['content', 'src']],
+        required_one_of=[['content', 'src']],
     )
-#    module.params['follow_redirects'] = 'no'
-    module.params['follow_redirects'] = 'urllib2'
-#    module.params['follow_redirects'] = 'all'
-#    module.params['follow_redirects'] = 'yes'
 
     if module.params['auth_key'] is None:
         module.fail_json(msg='Meraki Dashboard API key not set')
 
-    path = module.params['path']
     payload = None
-
     if module.params['content']:
         payload = json.loads(to_native(module.params['content']))
     elif module.params['src']:
@@ -179,33 +184,24 @@ def main():
         else:
             module.fail_json(msg="File does not exist")
 
-#    payload = json.loads(to_native(payload))
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return result
-
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
     protocol = 'https'
     if module.params['use_ssl'] is not None and module.params['use_ssl'] is False:
         protocol = 'http'
+        module.warn('Using HTTP (without SSL) every request becomes a query (GET) request')
 
-    url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
     headers = {
         'Content-Type': 'application/json',
         'X-Cisco-Meraki-API-Key': module.params['auth_key'],
     }
+    url = '{0}://{1}/{2}'.format(protocol, module.params['host'], module.params['path'].lstrip('/'))
 
-    import urllib2
     debug_result = dict(
-        url=url,
-        method=module.params['method'],
         headers=headers,
+        method=module.params['method'].upper(),
         payload=json.dumps(payload),
-        dir=dir(urllib2.HTTPRedirectHandler),
+        url=url,
     )
 
     try:
