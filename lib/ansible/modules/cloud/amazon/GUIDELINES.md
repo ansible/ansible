@@ -176,6 +176,28 @@ region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True
 connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
+### Common Documentation Fragments for Connection Parameters
+
+There are two [common documentation fragments](http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+that should be included into almost all AWS modules:
+
+* `aws` - contains the common boto connection parameters
+* `ec2` - contains the common region parameter required for many AWS modules
+
+These fragments should be used rather than re-documenting these properties to ensure consistency
+and that the more esoteric connection options are documented. e.g.
+
+```python
+DOCUMENTATION = '''
+module: my_module
+...
+requirements: [ 'botocore', 'boto3' ]
+extends_documentation_fragment:
+    - aws
+    - ec2
+'''
+```
+
 ### Exception Handling for boto
 
 You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how
