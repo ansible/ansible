@@ -56,7 +56,7 @@ options:
     version_added: 2.2
   speed:
     description:
-      - Interface link speed.
+      - Interface link speed. Applicable for ethernet interface only.
     version_added: 2.5
   admin_state:
     description:
@@ -73,12 +73,14 @@ options:
     description:
       - Manage Layer 2 or Layer 3 state of the interface.
         This option is supported for ethernet and portchannel interface.
+        Applicable for ethernet and portchannel interface only.
     required: false
     default: null
     choices: ['layer2','layer3']
   mtu:
     description:
       - MTU for a specific interface. Must be an even number between 576 and 9216.
+        Applicable for ethernet interface only.
     required: false
     version_added: 2.5
   ip_forward:
@@ -97,22 +99,24 @@ options:
     version_added: 2.2
   duplex:
     description:
-      - Interface link status
+      - Interface link status. Applicable for ethernet interface only.
     default: auto
     choices: ['full', 'half', 'auto']
     version_added: 2.5
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+        This is state check parameter only.
     version_added: 2.5
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+        This is state check parameter only.
     version_added: 2.5
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
-      - The following suboptions are available.
+      - The following suboptions are available. This is state check parameter only.
     suboptions:
         host:
           description:
@@ -451,13 +455,6 @@ def map_obj_to_commands(updates, module):
 
         elif state == 'present':
             if obj_in_have:
-                for item in args:
-                    candidate = w.get(item)
-
-                    if candidate and candidate != obj_in_have.get(item):
-                        cmd = item + ' ' + str(candidate)
-                        add_command_to_interface(interface, cmd, commands)
-
                 if mode == 'layer2' and mode != obj_in_have.get('mode'):
                     add_command_to_interface(interface, 'switchport', commands)
                 elif mode == 'layer3' and mode != obj_in_have.get('mode'):
@@ -481,6 +478,12 @@ def map_obj_to_commands(updates, module):
                         obj_in_have.get('fabric_forwarding_anycast_gateway') is False):
                     add_command_to_interface(interface, 'no fabric forwarding mode anycast-gateway', commands)
 
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate and candidate != obj_in_have.get(item):
+                        cmd = item + ' ' + str(candidate)
+                        add_command_to_interface(interface, cmd, commands)
+
                 if name and get_interface_type(name) == 'ethernet':
                     if mode != obj_in_have.get('mode'):
                         admin_state = w.get('admin_state') or obj_in_have.get('admin_state')
@@ -492,11 +495,6 @@ def map_obj_to_commands(updates, module):
 
             else:
                 commands.append(interface)
-                for item in args:
-                    candidate = w.get(item)
-                    if candidate:
-                        commands.append(item + ' ' + str(candidate))
-
                 if mode == 'layer2':
                     commands.append('switchport')
                 elif mode == 'layer3':
@@ -517,6 +515,11 @@ def map_obj_to_commands(updates, module):
 
                 elif fabric_forwarding_anycast_gateway is False:
                     commands.append('no fabric forwarding mode anycast-gateway')
+
+                for item in args:
+                    candidate = w.get(item)
+                    if candidate:
+                        commands.append(item + ' ' + str(candidate))
 
         elif state == 'default':
             if is_default is False:
