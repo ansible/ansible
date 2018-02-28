@@ -35,4 +35,4 @@ For documentation on using a particular network module, consult the :doc:`list o
    user_guide/network_best_practices_2.5
    user_guide/network_debug_troubleshooting
    user_guide/network_working_with_command_output
-
+   user_guide/platform_index
