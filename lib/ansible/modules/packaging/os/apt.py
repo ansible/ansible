@@ -893,7 +893,7 @@ def main():
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
             module.run_command(['apt-get', 'update'], check_rc=True)
-            module.run_command(['apt-get', 'install', PYTHON_APT, '-y', '-q'], check_rc=True)
+            module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile
