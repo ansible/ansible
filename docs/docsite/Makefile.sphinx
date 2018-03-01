@@ -6,7 +6,11 @@ SPHINXOPTS    = -j $(CPUS) -n -w rst_warnings
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = sdfsdf
 SOURCEDIR     = rst
-BUILDDIR      = _build
+
+# Sets the build output directory if it's not specified on the command line
+ifndef BUILDDIR
+   BUILDDIR      = _build
+endif
 
 # Put it first so that "make" without argument is like "make help".
 help:
