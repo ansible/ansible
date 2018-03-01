@@ -11,7 +11,7 @@ Any pre-requisites that may not be covered by Ansible itself or the role should 
 APB Variables
 --------------
 
-A description of the settable variables for this APB should go here, including any variables that are in defaults/main.yml, vars/main.yml, apb.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+A description of the settable variables for this APB should go here, including any variables that are in defaults/main.yml, vars/main.yml, apb.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (i.e. hostvars, group vars, etc.) should be mentioned here as well.
 
 Dependencies
 ------------
