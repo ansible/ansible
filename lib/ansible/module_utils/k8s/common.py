@@ -192,7 +192,7 @@ class KubernetesAnsibleModule(AnsibleModule):
             elif key in self.helper.argspec and value is not None:
                 parameters[key] = value
             elif isinstance(value, dict):
-                self._add_parameter(value, [key], parameters)
+                self._add_parameter(value, [to_snake(key)], parameters)
         return parameters
 
     def _add_parameter(self, request, path, parameters):
@@ -200,12 +200,12 @@ class KubernetesAnsibleModule(AnsibleModule):
             if path:
                 param_name = '_'.join(path + [to_snake(key)])
             else:
-                param_name = self.helper.attribute_to_snake(key)
+                param_name = to_snake(key)
             if param_name in self.helper.argspec and value is not None:
                 parameters[param_name] = value
             elif isinstance(value, dict):
                 continue_path = copy.copy(path) if path else []
-                continue_path.append(self.helper.attribute_to_snake(key))
+                continue_path.append(to_snake(key))
                 self._add_parameter(value, continue_path, parameters)
             else:
                 self.fail_json(
