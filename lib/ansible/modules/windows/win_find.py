@@ -192,7 +192,7 @@ EXAMPLES = r'''
 
 - name: Find files and do not return the checksum
   win_find:
-    path: C:\Temp
+    paths: C:\Temp
     get_checksum: no
 '''
 
