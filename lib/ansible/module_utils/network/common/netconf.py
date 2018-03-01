@@ -27,7 +27,7 @@
 #
 import sys
 
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
@@ -67,9 +67,9 @@ class NetconfConnection(Connection):
         response = self._exec_jsonrpc(name, *args, **kwargs)
         if 'error' in response:
             rpc_error = response['error'].get('data')
-            return self.parse_rpc_error(to_native(rpc_error, errors='surrogate_then_replace'))
+            return self.parse_rpc_error(to_bytes(rpc_error, errors='surrogate_then_replace'))
 
-        return fromstring(to_native(response['result'], errors='surrogate_then_replace'))
+        return fromstring(to_bytes(response['result'], errors='surrogate_then_replace'))
 
     def parse_rpc_error(self, rpc_error):
         if self.check_rc:
