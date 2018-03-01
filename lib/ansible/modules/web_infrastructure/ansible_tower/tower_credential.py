@@ -282,7 +282,6 @@ def main():
                 team = team_res.get(name=module.params.get('team'))
                 params['team'] = team['id']
 
-            params['inputs'] = {}
             if module.params.get('ssh_key_data'):
                 filename = module.params.get('ssh_key_data')
                 if not os.path.exists(filename):
@@ -290,15 +289,17 @@ def main():
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    params['inputs']['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = f.read()
 
             for key in ('authorize', 'authorize_password', 'client', 'secret',
                         'tenant', 'subscription', 'domain', 'become_method',
                         'become_username', 'become_password', 'vault_password',
                         'project', 'host', 'username', 'password',
-                        'ssh_key_unlock'):
-                if module.params.get(key):
-                    params['inputs'][key] = module.params.get(key)
+                        'ssh_key_data', 'ssh_key_unlock'):
+                if 'kind' in params:
+                    params[key] = module.params.get(key)
+                elif module.params.get(key):
+                    params.setdefault('inputs', {})[key] = module.params.get(key)
 
             if state == 'present':
                 result = credential.modify(**params)
