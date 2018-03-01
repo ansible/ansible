@@ -41,7 +41,6 @@ options:
     state:
         description:
             - Whether the database should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -54,8 +53,6 @@ options:
     password:
         description:
             - The password for the new database user.
-        required: false
-        default: null
 
     login_name:
         description:
@@ -70,7 +67,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        default: false
+        default: 'no'
 '''
 
 EXAMPLES = '''

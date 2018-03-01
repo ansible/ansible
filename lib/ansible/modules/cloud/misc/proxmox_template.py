@@ -33,55 +33,43 @@ options:
     description:
       - the password to authenticate with
       - you can use PROXMOX_PASSWORD environment variable
-    default: null
-    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
-    default: false
-    required: false
+    default: 'no'
     type: bool
   node:
     description:
       - Proxmox VE node, when you will operate with template
-    default: null
     required: true
   src:
     description:
       - path to uploaded file
       - required only for C(state=present)
-    default: null
-    required: false
     aliases: ['path']
   template:
     description:
       - the template name
       - required only for states C(absent), C(info)
-    default: null
-    required: false
   content_type:
     description:
       - content type
       - required only for C(state=present)
     default: 'vztmpl'
-    required: false
     choices: ['vztmpl', 'iso']
   storage:
     description:
       - target storage
     default: 'local'
-    required: false
   timeout:
     description:
       - timeout for operations
     default: 30
-    required: false
   force:
     description:
       - can be used only with C(state=present), exists template will be overwritten
-    default: false
-    required: false
     type: bool
+    default: 'no'
   state:
     description:
      - Indicate desired state of the template

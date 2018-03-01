@@ -53,14 +53,11 @@ options:
   version:
     description:
       - HSRP version.
-    required: false
     default: 2
     choices: ['1','2']
   priority:
     description:
       - HSRP priority.
-    required: false
-    default: null
   preempt:
     description:
       - Enable/Disable preempt.
@@ -68,23 +65,16 @@ options:
   vip:
     description:
       - HSRP virtual IP address.
-    required: false
-    default: null
   auth_string:
     description:
       - Authentication string.
-    required: false
-    default: null
   auth_type:
     description:
       - Authentication type.
-    required: false
-    default: null
     choices: ['text','md5']
   state:
     description:
       - Specify desired state of the resource.
-    required: false
     choices: ['present','absent']
     default: 'present'
 '''

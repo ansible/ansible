@@ -50,31 +50,24 @@ options:
   mode:
     description:
       - Mode for the port-channel, i.e. on, active, passive.
-    required: false
     default: on
     choices: ['active','passive','on']
   min_links:
     description:
       - Min links required to keep portchannel up.
-    required: false
-    default: null
   members:
     description:
       - List of interfaces that will be managed in a given portchannel.
-    required: false
-    default: null
   force:
     description:
       - When true it forces port-channel members to match what is
         declared in the members param. This can be used to remove
         members.
-    required: false
-    choices: ['true', 'false']
-    default: false
+    choices: [ 'false', 'true' ]
+    default: 'false'
   state:
     description:
       - Manage the state of the resource.
-    required: false
     default: present
     choices: ['present','absent']
 '''

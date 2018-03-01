@@ -26,16 +26,13 @@ options:
     description:
       - The name of the policy to manage.
     required: true
-    default: null
   vhost:
     description:
       - The name of the vhost to apply to.
-    required: false
     default: /
   apply_to:
     description:
       - What the policy applies to. Requires RabbitMQ 3.2.0 or later.
-    required: false
     default: all
     choices: [all, exchanges, queues]
     version_added: "2.1"
@@ -43,21 +40,17 @@ options:
     description:
       - A regex of queues to apply the policy to.
     required: true
-    default: null
   tags:
     description:
       - A dict or string describing the policy.
     required: true
-    default: null
   priority:
     description:
       - The priority of the policy.
-    required: false
     default: 0
   node:
     description:
       - Erlang node name of the rabbit we wish to configure.
-    required: false
     default: rabbit
   state:
     description:

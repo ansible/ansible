@@ -42,31 +42,22 @@ options:
     enable:
         description:
             - Set interface DLDP enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     mode_enable:
         description:
             - Set DLDP compatible-mode enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     local_mac:
         description:
             - Set the source MAC address for DLDP packets sent in the DLDP-compatible mode.
               The value of MAC address is in H-H-H format. H contains 1 to 4 hexadecimal digits.
-        required: false
-        default: null
     reset:
         description:
             - Specify whether reseting interface DLDP state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

@@ -22,15 +22,12 @@ options:
   cdb_id:
     description:
       - The databases server UUID
-    default: null
   db_username:
     description:
       - Name of the database user
-    default: null
   db_password:
     description:
       - Database user password
-    default: null
   databases:
     description:
       - Name of the databases that the user can access

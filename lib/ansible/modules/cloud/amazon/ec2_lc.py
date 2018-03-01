@@ -54,8 +54,6 @@ options:
     description:
       - Instance type to use for the instance
     required: true
-    default: null
-    aliases: []
   image_id:
     description:
       - The AMI unique identifier to be used for the group
@@ -87,7 +85,8 @@ options:
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
-    default: false
+    type: bool
+    default: 'no'
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address

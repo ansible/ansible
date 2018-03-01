@@ -29,20 +29,14 @@ options:
     name:
         description:
             - Only show results for a specific account.
-        required: false
-        default: null
     resource_group:
         description:
             - Limit results to a resource group. Required when filtering by name.
-        required: false
-        default: null
         aliases:
             - resource_group_name
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure

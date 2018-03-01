@@ -30,7 +30,6 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
-    default: null
     aliases:
       - containers
 
@@ -42,7 +41,6 @@ options:
   driver_options:
     description:
       - Dictionary of network settings. Consult docker docs for valid options and values.
-    default: null
 
   force:
     description:
@@ -52,25 +50,25 @@ options:
         network.  This option is required if you have changed the IPAM or
         driver options and want an existing network to be updated to use the
         new options.
-    default: false
+    type: bool
+    default: 'no'
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
         Use C(appends) to leave existing containers connected.
-    default: false
+    type: bool
+    default: 'no'
     aliases:
       - incremental
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
-    default: null
 
   ipam_options:
     description:
       - Dictionary of IPAM options.
-    default: null
 
   state:
     description:

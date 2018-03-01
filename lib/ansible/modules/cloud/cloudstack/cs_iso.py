@@ -40,102 +40,74 @@ options:
     description:
       - Display text of the ISO.
       - If not specified, C(name) will be used.
-    required: false
-    default: null
     version_added: "2.4"
   url:
     description:
       - URL where the ISO can be downloaded from. Required if C(state) is present.
-    required: false
-    default: null
   os_type:
     description:
       - Name of the OS that best represents the OS of this ISO. If the iso is bootable this parameter needs to be passed. Required if C(state) is present.
-    required: false
-    default: null
   is_ready:
     description:
-      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g.
-        successfully downloaded and installed. Recommended to set it to C(false).
-    required: false
-    default: false
+      - This flag is used for searching existing ISOs. If set to C(yes), it will only list ISO ready for deployment e.g.
+        successfully downloaded and installed. Recommended to set it to C(no).
+    type: bool
+    default: no
   is_public:
     description:
       - Register the ISO to be publicly available to all users. Only used if C(state) is present.
-    required: false
-    default: null
   is_featured:
     description:
       - Register the ISO to be featured. Only used if C(state) is present.
-    required: false
-    default: null
   is_dynamically_scalable:
     description:
       - Register the ISO having XS/VMWare tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if C(state) is present.
-    required: false
-    default: null
   checksum:
     description:
       - The MD5 checksum value of this ISO. If set, we search by checksum instead of name.
-    required: false
-    default: null
   bootable:
     description:
       - Register the ISO to be bootable. Only used if C(state) is present.
-    required: false
-    default: null
   domain:
     description:
       - Domain the ISO is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the ISO is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the ISO to be registered in.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone you wish the ISO to be registered or deleted from.
       - If not specified, first zone found will be used.
-    required: false
-    default: null
   cross_zones:
     description:
       - Whether the ISO should be synced or removed across zones.
       - Mutually exclusive with C(zone).
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.4"
   iso_filter:
     description:
       - Name of the filter used to search for the ISO.
-    required: false
     default: 'self'
     choices: [ 'featured', 'self', 'selfexecutable','sharedexecutable','executable', 'community' ]
   state:
     description:
       - State of the ISO.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     version_added: "2.3"
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases: [ 'tag' ]
     version_added: "2.4"
 extends_documentation_fragment: cloudstack

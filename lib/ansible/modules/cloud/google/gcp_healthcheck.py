@@ -43,7 +43,6 @@ options:
   check_interval:
     description:
        - How often (in seconds) to send a health check.
-    required: false
     default: 5
   healthcheck_name:
     description:
@@ -65,7 +64,6 @@ options:
     description:
        - The TCP port number for the health check request. The default value is
          443 for HTTPS and 80 for HTTP.
-    required: false
   request_path:
     description:
        - The request path of the HTTPS health check request.
@@ -80,33 +78,26 @@ options:
        - How long (in seconds) to wait for a response before claiming
          failure. It is invalid for timeout
          to have a greater value than check_interval.
-    required: false
     default: 5
   unhealthy_threshold:
     description:
        - A so-far healthy instance will be marked unhealthy after this
          many consecutive failures.
-    required: false
     default: 2
   healthy_threshold:
     description:
        - A so-far unhealthy instance will be marked healthy after this
          many consecutive successes.
-    required: false
     default: 2
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   service_account_permissions:
     version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -116,13 +107,9 @@ options:
   credentials_file:
     description:
       - Path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     description:
       - Your GCP project ID
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

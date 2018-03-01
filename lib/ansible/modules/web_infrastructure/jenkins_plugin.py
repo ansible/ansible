@@ -23,45 +23,35 @@ description:
 
 options:
   group:
-    required: false
-    default: jenkins
     description:
       - Name of the Jenkins group on the OS.
+    default: jenkins
   jenkins_home:
-    required: false
-    default: /var/lib/jenkins
     description:
       - Home directory of the Jenkins user.
+    default: /var/lib/jenkins
   mode:
-    required: false
-    default: '0664'
     description:
       - File mode applied on versioned plugins.
   name:
-    required: true
     description:
       - Plugin name.
   owner:
-    required: false
-    default: jenkins
     description:
       - Name of the Jenkins user on the OS.
+    default: jenkins
   state:
-    required: false
-    choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
-    default: present
     description:
       - Desired plugin state.
       - If the C(latest) is set, the check for new version will be performed
         every time. This is suitable to keep the plugin up-to-date.
+    choices: [absent, present, pinned, unpinned, enabled, disabled, latest]
+    default: present
   timeout:
-    required: false
-    default: 30
     description:
       - Server connection timeout in secs.
+    default: 30
   updates_expiration:
-    required: false
-    default: 86400
     description:
       - Number of seconds after which a new copy of the I(update-center.json)
         file is downloaded. This is used to avoid the need to download the
@@ -69,21 +59,18 @@ options:
       - Set it to C(0) if no cache file should be used. In that case, the
         plugin file will always be downloaded to calculate its checksum when
         C(latest) is specified.
+    default: 86400
   updates_url:
-    required: false
-    default: https://updates.jenkins-ci.org
     description:
       - URL of the Update Centre.
       - Used as the base URL to download the plugins and the
         I(update-center.json) JSON file.
+    default: https://updates.jenkins-ci.org
   url:
-    required: false
-    default: http://localhost:8080
     description:
       - URL of the Jenkins server.
+    default: http://localhost:8080
   version:
-    required: false
-    default: null
     description:
       - Plugin version number.
       - If this option is specified, all plugin dependencies must be installed
@@ -93,12 +80,11 @@ options:
       - Quote the version to prevent the value to be interpreted as float. For
         example if C(1.20) would be unquoted, it would become C(1.2).
   with_dependencies:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - Defines whether to install plugin dependencies.
       - This option takes effect only if the I(version) is not defined.
+    type: bool
+    default: 'yes'
 
 notes:
   - Plugin installation should be run under root or the same user which owns

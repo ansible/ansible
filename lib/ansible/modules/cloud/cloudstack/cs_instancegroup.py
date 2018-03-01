@@ -39,22 +39,15 @@ options:
   domain:
     description:
       - Domain the instance group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance group is related to.
-    required: false
-    default: null
   project:
     description:
       - Project the instance group is related to.
-    required: false
-    default: null
   state:
     description:
       - State of the instance group.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack

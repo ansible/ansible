@@ -27,43 +27,30 @@ options:
   name:
     description:
       - The name of the alert policy. This is mutually exclusive with id
-    required: False
-    default: None
   id:
     description:
       - The alert policy id. This is mutually exclusive with name
-    required: False
-    default: None
   alert_recipients:
     description:
       - A list of recipient email ids to notify the alert.
         This is required for state 'present'
-    required: False
-    default: None
   metric:
     description:
       - The metric on which to measure the condition that will trigger the alert.
         This is required for state 'present'
-    required: False
-    default: None
     choices: ['cpu','memory','disk']
   duration:
     description:
       - The length of time in minutes that the condition must exceed the threshold.
         This is required for state 'present'
-    required: False
-    default: None
   threshold:
     description:
       - The threshold that will trigger the alert when the metric equals or exceeds it.
         This is required for state 'present'
         This number represents a percentage and must be a value between 5.0 - 95.0 that is a multiple of 5.0
-    required: False
-    default: None
   state:
     description:
       - Whether to create or delete the policy.
-    required: False
     default: present
     choices: ['present','absent']
 requirements:

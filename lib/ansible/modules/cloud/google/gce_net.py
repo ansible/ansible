@@ -30,82 +30,54 @@ options:
     description:
       - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
         this parameter is mandatory when creating or updating a firewall rule
-    required: false
-    default: null
-    aliases: []
   ipv4_range:
     description:
       - the IPv4 address range in CIDR notation for the network
         this parameter is not mandatory when you specified existing network in name parameter, but when you create new network, this parameter is mandatory
-    required: false
     aliases: ['cidr']
   fwname:
     description:
       - name of the firewall rule
-    required: false
-    default: null
     aliases: ['fwrule']
   name:
     description:
       - name of the network
-    required: false
-    default: null
-    aliases: []
   src_range:
     description:
       - the source IPv4 address range in CIDR notation
-    required: false
     default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   state:
     description:
       - desired state of the network or firewall
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
-    aliases: []
   service_account_email:
     version_added: "1.6"
     description:
       - service account email
-    required: false
-    default: null
-    aliases: []
   pem_file:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
-    aliases: []
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    required: false
-    default: null
-    aliases: []
   project_id:
     version_added: "1.6"
     description:
       - your GCE project ID
-    required: false
-    default: null
-    aliases: []
   mode:
     version_added: "2.2"
     description:
@@ -114,31 +86,20 @@ options:
         "auto" automatically generates subnetworks in different regions
         "custom" uses networks to group subnets of user specified IP address ranges
         https://cloud.google.com/compute/docs/networking#network_types
-    required: false
     default: "legacy"
     choices: ["legacy", "auto", "custom"]
-    aliases: []
   subnet_name:
     version_added: "2.2"
     description:
       - name of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_region:
     version_added: "2.2"
     description:
       - region of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_desc:
     version_added: "2.2"
     description:
       - description of subnet to create
-    required: false
-    default: null
-    aliases: []
 
 requirements:
     - "python >= 2.6"

@@ -24,62 +24,51 @@ options:
     token:
         description:
             - GitHub Personal Access Token for authenticating
-        default: null
     user:
-        required: true
         description:
             - The GitHub account that owns the repository
-        default: null
+        required: true
     password:
         description:
             - The GitHub account password for the user
-        default: null
         version_added: "2.4"
     repo:
-        required: true
         description:
             - Repository name
-        default: null
-    action:
         required: true
+    action:
         description:
             - Action to perform
+        required: true
         choices: [ 'latest_release', 'create_release' ]
     tag:
-        required: false
         description:
             - Tag name when creating a release. Required when using action is set to C(create_release).
         version_added: 2.4
     target:
-        required: false
         description:
             - Target of release when creating a release
         version_added: 2.4
     name:
-        required: false
         description:
             - Name of release when creating a release
         version_added: 2.4
     body:
-        required: false
         description:
             - Description of the release when creating a release
         version_added: 2.4
     draft:
-        required: false
         description:
             - Sets if the release is a draft or not. (boolean)
-        default: false
+        type: 'bool'
+        default: 'no'
         version_added: 2.4
-        choices: ['True', 'False']
     prerelease:
-        required: false
         description:
             - Sets if the release is a prerelease or not. (boolean)
-        default: false
+        type: bool
+        default: 'no'
         version_added: 2.4
-        choices: ['True', 'False']
-
 
 author:
     - "Adrian Moisey (@adrianmoisey)"

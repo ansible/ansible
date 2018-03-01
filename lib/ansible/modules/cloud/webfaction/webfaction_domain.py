@@ -41,14 +41,12 @@ options:
     state:
         description:
             - Whether the domain should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
     subdomains:
         description:
             - Any subdomains to create.
-        required: false
         default: []
 
     login_name:

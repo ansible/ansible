@@ -29,18 +29,12 @@ options:
     name:
         description:
             - Only show results for a specific Public IP.
-        required: false
-        default: null
     resource_group:
         description:
             - Limit results by resource group. Required when using name parameter.
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure

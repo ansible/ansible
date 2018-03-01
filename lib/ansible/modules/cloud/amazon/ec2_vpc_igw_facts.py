@@ -25,13 +25,9 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInternetGateways.html) for possible filters.
-    required: false
-    default: null
   internet_gateway_ids:
     description:
       - Get details of specific Internet Gateway ID. Provide this value as a list.
-    required: false
-    default: None
 extends_documentation_fragment:
     - aws
     - ec2
