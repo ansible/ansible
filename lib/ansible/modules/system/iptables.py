@@ -238,7 +238,9 @@ options:
     version_added: "2.1"
   uid_owner:
     description:
-      - Specifies the UID or username to use in match by owner rule.
+      - Specifies the UID or username to use in match by owner rule. From
+        Ansible 2.6 when the C(!) argument is prepended then the it inverts
+        the rule to apply instead to all users except that one specified.
     version_added: "2.1"
   reject_with:
     description:
@@ -437,6 +439,7 @@ def construct_rule(params):
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
     append_match(rule, params['uid_owner'], 'owner')
+    append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
