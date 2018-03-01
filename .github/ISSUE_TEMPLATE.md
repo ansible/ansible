@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!---
 Verify first that your issue/request is not already reported on GitHub.
 Also test if the latest release, and master branch are affected too.
@@ -62,3 +63,10 @@ For new features, show how the feature would be used.
 ```
 
 ```
+=======
+# This repository is locked
+
+Please open all new issues and pull requests in https://github.com/ansible/ansible
+
+For more information please see http://docs.ansible.com/ansible/dev_guide/repomerge.html
+>>>>>>> f216ba8e0616bc8ad8794c22d4b48e1ab18886cf

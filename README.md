@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [![PyPI version](https://img.shields.io/pypi/v/ansible.svg)](https://pypi.python.org/pypi/ansible)
 [![Build Status](https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel)](https://app.shippable.com/projects/573f79d02a8192902e20e34b)
 
@@ -54,3 +55,11 @@ License
 GNU General Public License v3.0
 
 See [COPYING](COPYING) to see the full text.
+=======
+**NOTE:** As of Ansible 2.3, modules are now in the
+[main Ansible repository](https://github.com/ansible/ansible/tree/devel/lib/ansible/modules).
+
+See the [repo merge guide](https://docs.ansible.com/ansible/dev_guide/repomerge.html) for more information.
+
+This repo still exists to allow bug fixes for `stable-2.2` and older releases.
+>>>>>>> f216ba8e0616bc8ad8794c22d4b48e1ab18886cf
