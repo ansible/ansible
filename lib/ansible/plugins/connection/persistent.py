@@ -77,16 +77,9 @@ class Connection(ConnectionBase):
         '''
         master, slave = pty.openpty()
 
-        def find_file_in_path(filename):
-            path = os.environ['PATH']
-            for dirname in path.split(os.pathsep):
-                fullpath = os.path.join(dirname, filename)
-                if os.path.isfile(fullpath):
-                    return fullpath
-            raise AnsibleError("Unable to find '%s' in PATH" % filename)
-
         python = sys.executable
-        ansible_connection = find_file_in_path('ansible-connection')
+        # Assume ansible-connection is in the same dir as sys.argv[0]
+        ansible_connection = os.path.join(os.path.dirname(sys.argv[0]), 'ansible-connection')
         p = subprocess.Popen([python, ansible_connection, to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
