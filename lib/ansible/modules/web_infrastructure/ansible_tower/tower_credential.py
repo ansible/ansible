@@ -192,15 +192,16 @@ EXAMPLES = '''
 
 import os
 
-from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
+from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode
 
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
+    HAS_TOWER_CLI = True
 except ImportError:
-    pass
+    HAS_TOWER_CLI = False
 
 
 KIND_CHOICES = {
