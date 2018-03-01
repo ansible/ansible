@@ -49,7 +49,7 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_construct_empty_task(self):
-        t = Task()
+        Task()
 
     def test_construct_task_with_role(self):
         pass
@@ -92,9 +92,8 @@ class TestTask(unittest.TestCase):
 
     def test_task_auto_name(self):
         assert 'name' not in kv_command_task
-        t = Task.load(kv_command_task)
+        Task.load(kv_command_task)
         # self.assertEqual(t.name, 'shell echo hi')
-
 
     def test_task_auto_name_with_role(self):
         pass
