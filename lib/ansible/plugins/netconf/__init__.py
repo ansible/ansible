@@ -102,7 +102,7 @@ class NetconfBase(with_metaclass(ABCMeta, object)):
         """RPC to be execute on remote device
            :name: Name of rpc in string format"""
         try:
-            obj = to_ele(to_bytes(name, errors='surrogate_or_strict'))
+            obj = to_ele(name)
             resp = self.m.rpc(obj)
             return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
         except RPCError as exc:
