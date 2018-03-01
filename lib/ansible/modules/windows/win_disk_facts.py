@@ -12,15 +12,22 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_disk_facts
-version_added: '2.5'
+version_added: '2.6'
 short_description: Show the attached disks and disk information of the target host
 description:
    - With the module you can retrieve and output detailed information about the attached disks of the target and
      it's volumes and partitions if existent.
+   - You can use the trimmed option in order to get detailed disk information
+     but no details about the partitions and volumes of the disk.
 requirements:
     - Windows 8.1 / Windows 2012 (NT 6.2)
 author:
     - Marc Tschapek (@marqelme)
+options:
+  trimmed:
+      description: 
+        - The trimmed option can be used to reduce the output of the module.
+        - Then only the disk fact details will be displayed but no detailed information about the partitions and volumes of the disk.
 notes:
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
     U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
