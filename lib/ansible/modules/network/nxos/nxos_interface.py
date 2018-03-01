@@ -602,13 +602,9 @@ def map_config_to_obj(want, module):
                     obj['name'] = normalize_interface(interface_table.get('interface'))
                     obj['admin_state'] = interface_table.get('admin_state')
                     obj['description'] = interface_table.get('desc')
-                    obj['mtu'] = int(interface_table.get('eth_mtu'))
+                    obj['mtu'] = interface_table.get('eth_mtu')
                     obj['duplex'] = interface_table.get('eth_duplex')
                     speed = interface_table.get('eth_speed')
-                    if 'auto' in speed:
-                        obj['speed'] = speed
-                    else:
-                        obj['speed'] = int(speed.split()[0])
                     mode = interface_table.get('eth_mode')
                     if mode in ('access', 'trunk'):
                         obj['mode'] = 'layer2'
@@ -617,6 +613,17 @@ def map_config_to_obj(want, module):
 
                     command = 'show run interface {0}'.format(obj['name'])
                     body = execute_show_command(command, module)[0]
+
+                    if 'speed' in body:
+                        obj['speed'] = re.search(r'speed (\d+)', body).group(1)
+                    else:
+                        obj['speed'] = 'auto'
+
+                    if 'duplex' in body:
+                        obj['duplex'] = re.search(r'duplex (\S+)', body).group(1)
+                    else:
+                        obj['duplex'] = 'auto'
+
                     if 'ip forward' in body:
                         obj['ip_forward'] = 'enable'
                     else:
@@ -736,7 +743,7 @@ def main():
         name=dict(aliases=['interface']),
         admin_state=dict(default='up', choices=['up', 'down']),
         description=dict(),
-        speed=dict(type='int'),
+        speed=dict(),
         mode=dict(choices=['layer2', 'layer3']),
         mtu=dict(),
         duplex=dict(choices=['full', 'half', 'auto']),
