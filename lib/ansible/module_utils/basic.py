@@ -823,6 +823,18 @@ def dotted_accessor(obj, accessor=None):
     'qux'
     >>> dotted_accessor(obj)
     {'foo': {'bar': [{'baz': 'qux'}]}}
+    >>> dotted_accessor({None: {'False': 'foo'}}, 'None.False')
+    'foo'
+    >>> dotted_accessor({'1': ['foo']}, '1.0')
+    'foo'
+    >>> dotted_accessor({}, 'foo')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'foo'
+    >>> dotted_accessor(None, 'foo')
+    Traceback (most recent call last):
+        ...
+    TypeError: 'NoneType' object is not subscriptable
     """
     if not accessor:
         return obj
