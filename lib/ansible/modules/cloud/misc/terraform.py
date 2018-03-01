@@ -216,7 +216,7 @@ def main():
             '{0}={1}'.format(k, v)
         ])
     if variables_file:
-        variables_args.append('-var-file', variables_file)
+        variables_args.extend(['-var-file', variables_file])
 
     preflight_validation(command[0], project_path, variables_args)
 
