@@ -136,13 +136,13 @@ APPLY_ARGS = ('apply', '-no-color', '-auto-approve=true')
 module = None
 
 
-def preflight_validation(bin_path, project_path, variables_file=None, plan_file=None):
+def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None):
     if not os.path.exists(bin_path):
         module.fail_json(msg="Path for Terraform binary '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'], cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path)
     if rc != 0:
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
@@ -209,7 +209,16 @@ def main():
     else:
         command = [module.get_bin_path('terraform')]
 
-    preflight_validation(command[0], project_path)
+    variables_args = []
+    for k, v in variables.items():
+        variables_args.extend([
+            '-var',
+            '{0}={1}'.format(k, v)
+        ])
+    if variables_file:
+        variables_args.extend(['-var-file', variables_file])
+
+    preflight_validation(command[0], project_path, variables_args)
 
     if state == 'present':
         command.extend(APPLY_ARGS)
@@ -223,15 +232,6 @@ def main():
             command.append('-lock=true')
     if module.params.get('lock_timeout') is not None:
         command.append('-lock-timeout=%ds' % module.params.get('lock_timeout'))
-
-    variables_args = []
-    for k, v in variables.items():
-        variables_args.extend([
-            '-var',
-            '{0}={1}'.format(k, v)
-        ])
-    if variables_file:
-        variables_args.append('-var-file', variables_file)
 
     for t in (module.params.get('targets') or []):
         command.extend(['-target', t])
