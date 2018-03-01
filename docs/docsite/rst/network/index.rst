@@ -4,9 +4,6 @@
 Ansible for Network Automation
 ******************************
 
-Introduction
-============
-
 Ansible Network modules extend the benefits of simple, powerful, agentless automation to network administrators and teams. Ansible Network modules can configure your network stack, test and validate existing network state, and discover and correct network configuration drift.
 
 If you're new to Ansible, or new to using Ansible for network management, start with the Getting Started Guide.
@@ -25,8 +22,6 @@ For documentation on using a particular network module, consult the :doc:`list o
    getting_started/intermediate_concepts
 
 
-
-
 .. toctree::
    :maxdepth: 3
    :caption: User Guide
@@ -36,3 +31,10 @@ For documentation on using a particular network module, consult the :doc:`list o
    user_guide/network_debug_troubleshooting
    user_guide/network_working_with_command_output
    user_guide/platform_index
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Product Guides
+
+   product_guides/guide_aci

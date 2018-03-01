@@ -1,8 +1,6 @@
 ************************************************
-User Guide to to Network Automation with Ansible
+Network User Guide
 ************************************************
-
-More content coming soon!
 
 Who should use this guide?
 ================================================================================
@@ -13,3 +11,8 @@ If you're new to Ansible, or new to using Ansible for network automation, start 
 
 .. toctree::
    :maxdepth: 2
+
+   network_best_practices_2.5
+   network_debug_troubleshooting
+   network_working_with_command_output
+   platform_index
