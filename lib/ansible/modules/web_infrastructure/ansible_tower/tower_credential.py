@@ -260,7 +260,7 @@ def main():
 
             try:
                 tower_cli.get_resource('credential_type')
-            except (AttributeError):
+            except (ImportError, AttributeError):
                 # /api/v1/ backwards compat
                 # older versions of tower-cli don't *have* a credential_type
                 # resource
