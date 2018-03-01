@@ -6,7 +6,7 @@ import itertools
 import re
 
 DURATION_RE = re.compile(
-    '(?P<sign>[-+]?)(?P<value>[0-9]*(?:\.[0-9]*)?)(?P<unit>[a-z]{1,2})'
+    r'(?P<sign>[-+]?)(?P<value>[0-9]*(?:\.[0-9]*)?)(?P<unit>[a-z]{1,2})'
 )
 
 SECOND = 1
@@ -55,7 +55,7 @@ def timedelta_to_dict(delta):
     }
 
 
-def human_time_delta(dt, units=['year', 'day', 'hour', 'minute', 'second'],
+def human_time_delta(dt, units=('year', 'day', 'hour', 'minute', 'second'),
                      past_tense='{0} ago', future_tense='in {0}'):
     """Accept a datetime or timedelta, return a human readable delta string
 
