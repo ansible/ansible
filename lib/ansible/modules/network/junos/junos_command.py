@@ -171,6 +171,7 @@ import re
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.netconf import exec_rpc
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_configuration, get_connection, get_capabilities
 from ansible.module_utils.network.common.parsing import Conditional, FailedConditionalError
@@ -240,7 +241,7 @@ def rpc(module, items):
         if fetch_config:
             reply = get_configuration(module, format=xattrs['format'])
         else:
-            reply = exec_rpc(module, tostring(element), ignore_warning=False)
+            reply = exec_rpc(module, to_text(tostring(element), errors='surrogate_then_replace'), ignore_warning=False)
 
         if xattrs['format'] == 'text':
             if fetch_config:
