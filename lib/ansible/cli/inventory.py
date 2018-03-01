@@ -189,9 +189,24 @@ class InventoryCLI(CLI):
     def dump(self, stuff):
 
         if self.options.yaml or self.options.delay:
-            # FIXME: if self.options.delay is False, decrypt embded secrets
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
+            if not self.options.delay:
+                from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+                def walk_dicts(data):
+                    if isinstance(data, dict):
+                        yield data
+                        for key, value in data.items():
+                            for d in walk_dicts(value):
+                                yield d
+
+                # Convert Vault objects into strings
+                for d in walk_dicts(stuff):
+                    for key, value in d.items():
+                        if isinstance(value, AnsibleVaultEncryptedUnicode):
+                            d[key] = str(value)
+
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
             from ansible.module_utils.basic import jsonify, _json_encode_fallback
