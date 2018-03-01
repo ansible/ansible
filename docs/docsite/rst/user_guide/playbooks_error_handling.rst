@@ -56,7 +56,8 @@ You can change this behavior with the ``--force-handlers`` command-line option,
 or by including ``force_handlers: True`` in a play, or ``force_handlers = True``
 in ansible.cfg. When handlers are forced, they will run when notified even
 if a task fails on that host. (Note that certain errors could still prevent
-the handler from running, such as a host becoming unreachable.)
+the handler from running, such as a host becoming unreachable or
+``any_errors_fatal = True``.)
 
 .. _controlling_what_defines_failure:
 

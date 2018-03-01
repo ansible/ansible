@@ -1,0 +1,19 @@
+---
+
+- name: test force handlers with any_errors_fatal True should not run
+  hosts: testgroup
+  gather_facts: False
+  connection: local
+  force_handlers: yes
+  any_errors_fatal: yes
+  handlers:
+  - name: handler one
+    debug:
+      msg: Running handler one
+  tasks:
+  - name: run task to notify handler
+    shell: exit 0
+    notify: handler one
+
+  - name: run failure task that will stop the whole playbook, inc. handlers
+    shell: exit 1

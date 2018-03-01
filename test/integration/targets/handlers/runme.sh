@@ -24,6 +24,11 @@ ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 [ "$(ansible-playbook test_force_handlers.yml -i inventory.handlers -v "$@" --tags normal --force-handlers -e fail_all=yes \
 | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
 
+# Test handler doesn't run on any_errors_fatal: yes and force_handlers: yes
+# https://github.com/ansible/ansible/issues/36772
+[ "$(ansible-playbook test_force_handlers_error_fatal.yml -i inventory.handlers -v "$@" \
+| egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "" ]
+
 # Forcing from ansible.cfg
 [ "$(ANSIBLE_FORCE_HANDLERS=true ansible-playbook test_force_handlers.yml -i inventory.handlers -v "$@" --tags normal \
 | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_A CALLED_HANDLER_B" ]
