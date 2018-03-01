@@ -805,6 +805,25 @@ def jsonify(data, **kwargs):
 
 
 def dotted_accessor(obj, accessor=None):
+    """Function to fetch the value of an element or key in lists or dicts using
+    dot notation
+
+    >>> obj = {'foo': {'bar': [{'baz': 'qux'}]}}
+    >>> dotted_accessor(obj, 'foo["bar"][0].baz')
+    'qux'
+    >>> dotted_accessor(obj, 'foo["bar"].0.baz')
+    'qux'
+    >>> dotted_accessor(obj, 'foo.bar')
+    [{'baz': 'qux'}]
+    >>> dotted_accessor(obj, 'foo.bar.0.baz')
+    'qux'
+    >>> dotted_accessor(obj, ['foo', "bar", 0, 'baz'])
+    'qux'
+    >>> dotted_accessor(obj, ['foo', "bar", '0', 'baz'])
+    'qux'
+    >>> dotted_accessor(obj)
+    {'foo': {'bar': [{'baz': 'qux'}]}}
+    """
     if not accessor:
         return obj
 
