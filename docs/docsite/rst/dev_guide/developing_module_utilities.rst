@@ -8,6 +8,7 @@ Ansible provides a number of module utilities that provide helper functions that
 
 The following is a list of module_utils files and a general description. The module utility source code lives in the `./lib/module_utils` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
 
+- alicloud_ecs.py - Definitions and utilities for modules working with Alibaba Cloud ECS.
 - api.py - Adds shared support for generic API modules.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
