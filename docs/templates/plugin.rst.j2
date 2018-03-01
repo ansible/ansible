@@ -83,8 +83,7 @@ Options
         {# Header of the documentation #}
         <tr>
             <th class="head"><div class="cell-border">Parameter</div></th>
-            <th class="head"><div class="cell-border">Default</div></th>
-            <th class="head"><div class="cell-border">Choices</div></th>
+            <th class="head"><div class="cell-border" style="color: blue">Default</div></th>
             {% if plugin_type != 'module' %}
                 <th class="head"><div class="cell-border">Configuration</div></th>
             {% endif %}
@@ -106,24 +105,31 @@ Options
                         </div>
                     <div class="outer-elbow-container">
                 </td>
-                {# default value #}
-                <td><div class="cell-border">{% if value.default %}@{ value.default | html_ify }@{% endif %}</div></td>
-                {# choices #}
+                {# default / choices #}
                 <td>
                     <div class="cell-border">
-                        {% if value.type == 'bool' %}
-                            <ul>
-                                <li>yes</li>
-                                <li>no</li>
-                            </ul>
-                        {% else %}
-                            {% if value.choices %}
-                                <ul>
-                                    {% for choice in value.choices %}
-                                        <li>@{ choice }@</li>
-                                    {% endfor %}
-                                </ul>
+                        {% if value.default is defined %}
+                            {% if value.default == true %}
+                                {% set _x = value.update({'default': 'yes'}) %}
+                            {% elif value.default == false %}
+                                {% set _x = value.update({'default': 'no'}) %}
                             {% endif %}
+                        {% endif %}
+                        {% if value.type == 'bool' %}
+                            {% set _x = value.update({'choices': ['no', 'yes']}) %}
+                        {% endif %}
+                        {% if value.choices %}
+                            <ul><b>Choices:</b>
+                                {% for choice in value.choices %}
+                                    {% if value.default is defined and choice == value.default %}
+                                        <li><div style="color: blue"><b>@{ choice }@</b>&nbsp;&larr;</div></li>
+                                    {% else %}
+                                        <li>@{ choice }@</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% elif value.default is defined %}
+                            <div style="color: blue">@{ value.default | html_ify }@</div>
                         {% endif %}
                     </div>
                 </td>
@@ -162,7 +168,7 @@ Options
                             {% endfor %}
                         {% endif %}
                         {% if 'aliases' in value and value.aliases %}
-                            </br><div style="font-size: small;">aliases: @{ value.aliases|join(', ') }@</div>
+                            <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                         {% endif %}
                     </div>
                 </td>
