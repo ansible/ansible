@@ -1718,7 +1718,7 @@ class AnsibleModule(object):
         for term in check:
             try:
                 dotted_accessor(param, term)
-            except (KeyError, ValueError):
+            except KeyError:
                 pass
             else:
                 count += 1
@@ -1801,7 +1801,7 @@ class AnsibleModule(object):
 
             try:
                 param_val = dotted_accessor(param, key)
-            except (KeyError, ValueError):
+            except KeyError:
                 continue
 
             if param_val == val:
