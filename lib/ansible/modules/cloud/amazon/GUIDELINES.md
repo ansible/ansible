@@ -131,6 +131,32 @@ These handle some of the more esoteric connection options, such as security toke
 If using the basic AnsibleModule then you should use `get_aws_connection_info` and then `boto3_conn`
 to connect to AWS as these handle the same range of connection options.
 
+These helpers also for missing profiles or a region not set when it needs to be, so you don't have to.
+
+#### boto3
+
+An example of connecting to ec2 is shown below. Note that unlike boto there is no `NoAuthHandlerFound`
+exception handling like in boto. Instead, an `AuthFailure` exception will be thrown when you use the
+connection. To ensure that authorization, parameter validation and permissions errors are all caught,
+you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
+See exception handling.
+
+```python
+module.client('ec2')
+```
+
+or for the higher level ec2 resource:
+
+```python
+module.resource('ec2')
+```
+
+An example of the older style connection used for modules based on AnsibleModule rather than AnsibleAWSModule:
+
+```python
+region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+```
 
 #### boto
 
@@ -148,32 +174,6 @@ if region:
         module.fail_json(msg=str(e))
 else:
     module.fail_json(msg="region must be specified")
-```
-
-#### boto3
-
-An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHandlerFound`
-exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
-'connection'. To ensure that authorization, parameter validation and permissions errors are all
-caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
-See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
-so you don't have to.
-
-```python
-module.client('ec2')
-```
-
-or for the higher level ec2 resource:
-
-```python
-module.resource('ec2')
-```
-
-An example of the older style connection used for modules based on AnsibleModule rather than AnsibleAWSModule:
-
-```python
-region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 ```
 
 ### Common Documentation Fragments for Connection Parameters
@@ -548,12 +548,21 @@ You must have the following in `test/integration/targets/MODULE_NAME/aliases`
 
 ```
 cloud/aws
-posix/ci/cloud/group4/aws
+posix/ci/cloud/group2/aws
 ```
 
 The first line indicates in an AWS test causing the test framework to make AWS credentials available
-during the test run. The second line puts the test in a test group causing it to be run in the continuous
-integration build.
+during the test run.
+
+The second line puts the test in a test group causing it to be run in the continuous integration build.
+There are currently 5 groups (group1 - group5). The groups are just to parallelize the build, so try
+to place your new tests in the group that's currently taking the least time to run.
+
+Look at the recent sucessful [CI builds](https://app.shippable.com/github/ansible/ansible/runs?branchName=devel#completedJobs)
+to see if one of the _T=cloud/default/3.6/X_ builds is obviously shorter, if so put your test in group X.
+
+If there's not an obvious candidate just pick any group as this will achieve the goal of distributing
+the tests between the groups.
 
 ### AWS Credentials for Integration Tests
 
@@ -565,15 +574,28 @@ to your test in the following variables:
 * `aws_secret_key`
 * `security_token`
 
-So all invocations of AWS modules in the test should set these parameters. E.g.
+So all invocations of AWS modules in the test should set these parameters. To avoid duplication these
+for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2016/02/yaml.html) E.g.
 
 ```yaml
-  - ec2_instance:
-      ... params ...
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
+  no_log: yes
+
+- name: Do Something
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
+
+- name: Do Something Else
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
 ```
 
 ### AWS Permissions for Integration Tests
