@@ -1,0 +1,210 @@
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+- name: start vcsim with no folders
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of Clusters from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
+  register: clusterlist
+
+- debug: var=vcsim_instance
+- debug: var=clusterlist
+
+- name: Create VM without Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test1
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+
+- name: Add Floppy to VM without Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: Floppy-Test1
+    floppy:
+      type: none
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == true"
+
+- name: Create VM with Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    cluster: "{{ clusterlist['json'][0] }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: LocalDS_0
+    floppy:
+      type: flp
+      flp_path: "[LocalDS_0] base.flp"
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == true"
+
+- name: Update 'flp_path' for VM with Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    floppy:
+      type: flp
+      flp_path: "[LocalDS_0] base_new.flp"
+    state: present
+  register: floppy_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == true"
+
+- name: Update 'flp_path' for VM with Floppy (idempotent)
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    floppy:
+      type: flp
+      flp_path: "[LocalDS_0] base_new.flp"
+    state: present
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was NOT changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == false"
+
+- name: Update floppy type to 'client' for VM with Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    floppy:
+      type: client
+    state: present
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == true"
+
+- name: Update floppy type to 'none' for VM with Floppy
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    floppy:
+      type: none
+    state: present
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == true"
+
+- name: Update floppy type to 'none' for VM with Floppy (idempotent)
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
+    name: Floppy-Test2
+    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    floppy:
+      type: none
+    state: present
+  register: floppy_vm
+
+- debug: var=floppy_vm
+
+- name: assert the VM was NOT changed
+  assert:
+    that:
+      - "floppy_vm.failed == false"
+      - "floppy_vm.changed == false"

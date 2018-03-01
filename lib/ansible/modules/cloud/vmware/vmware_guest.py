@@ -146,6 +146,13 @@ options:
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
     version_added: '2.5'
+  floppy:
+    description:
+    - A floppy configuration for the VM.
+    - 'Valid attributes are:'
+    - ' - C(type) (string): The type of floppy, valid options are C(none), C(client) or C(flp). With C(none) the floppy will be disconnected but present.'
+    - ' - C(flp_path) (string): The datastore path to the flp file to use, in the form of C([datastore1] path/to/file.flp). Required if type is set C(flp).'
+    version_added: '2.6'
   resource_pool:
     description:
     - Affect machine to the given resource pool.
@@ -298,6 +305,9 @@ EXAMPLES = r'''
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
+    floppy:
+      type: flp
+      flp_path: "[datastore1] boot.flp"
     networks:
     - name: VM Network
       mac: aa:bb:dd:aa:00:14
@@ -509,6 +519,55 @@ class PyVmomiDeviceHelper(object):
                     cdrom_device.connectable.allowGuestControl and
                     cdrom_device.connectable.startConnected and
                     (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
+
+    @staticmethod
+    def create_sio_controller():
+        sio_ctl = vim.vm.device.VirtualDeviceSpec()
+        sio_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        sio_ctl.device = vim.vm.device.VirtualSIOController()
+        sio_ctl.device.deviceInfo = vim.Description()
+        sio_ctl.device.busNumber = 0
+
+        return sio_ctl
+
+    @staticmethod
+    def create_floppy(sio_ctl, floppy_type, flp_path=None):
+        if isinstance(sio_ctl, vim.vm.device.VirtualDeviceSpec):
+            sio_ctl = sio_ctl.device
+
+        floppy_spec = vim.vm.device.VirtualDeviceSpec()
+        floppy_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        floppy_spec.device = vim.vm.device.VirtualFloppy()
+        floppy_spec.device.controllerKey = sio_ctl.key
+        floppy_spec.device.key = -1
+        floppy_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+        floppy_spec.device.connectable.allowGuestControl = True
+        floppy_spec.device.connectable.startConnected = (floppy_type != "none")
+        if floppy_type in ["none", "client"]:
+            floppy_spec.device.backing = vim.vm.device.VirtualFloppy.RemoteDeviceBackingInfo()
+        elif floppy_type == "flp":
+            floppy_spec.device.backing = vim.vm.device.VirtualFloppy.ImageBackingInfo(fileName=flp_path)
+
+        return floppy_spec
+
+    @staticmethod
+    def is_equal_floppy(vm_obj, floppy_device, floppy_type, flp_path):
+        if floppy_type == "none":
+            return (isinstance(floppy_device.backing, vim.vm.device.VirtualFloppy.RemoteDeviceBackingInfo) and
+                    floppy_device.connectable.allowGuestControl and
+                    not floppy_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or not floppy_device.connectable.connected))
+        elif floppy_type == "client":
+            return (isinstance(floppy_device.backing, vim.vm.device.VirtualFloppy.RemoteDeviceBackingInfo) and
+                    floppy_device.connectable.allowGuestControl and
+                    floppy_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or floppy_device.connectable.connected))
+        elif floppy_type == "flp":
+            return (isinstance(floppy_device.backing, vim.vm.device.VirtualFloppy.ImageBackingInfo) and
+                    floppy_device.backing.fileName == flp_path and
+                    floppy_device.connectable.allowGuestControl and
+                    floppy_device.connectable.startConnected and
+                    (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or floppy_device.connectable.connected))
 
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
@@ -877,6 +936,55 @@ class PyVmomiHelper(PyVmomi):
                 self.change_detected = True
                 self.configspec.deviceChange.append(cdrom_spec)
 
+    def configure_floppy(self, vm_obj):
+        # Configure the VM floppy
+        if "floppy" in self.params and self.params["floppy"]:
+            if "type" not in self.params["floppy"] or self.params["floppy"]["type"] not in ["none", "client", "flp"]:
+                self.module.fail_json(msg="floppy.type is mandatory")
+            if self.params["floppy"]["type"] == "flp" and ("flp_path" not in self.params["floppy"] or not self.params["floppy"]["flp_path"]):
+                self.module.fail_json(msg="floppy.flp_path is mandatory in case floppy.type is flp")
+
+            if vm_obj and vm_obj.config.template:
+                # Changing floppy settings on a template is not supported
+                return
+
+            floppy_spec = None
+            floppy_device = self.get_vm_floppy_device(vm=vm_obj)
+            floppy_type = self.params["floppy"]["type"]
+            flp_path = self.params["floppy"]["flp_path"] if "flp_path" in self.params["floppy"] else None
+            if floppy_device is None:
+                # Creating new floppy
+                sio_device = self.get_vm_sio_device(vm=vm_obj)
+                if sio_device is None:
+                    # Creating new SIO device
+                    sio_device = self.device_helper.create_sio_controller()
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(sio_device)
+
+                floppy_spec = self.device_helper.create_floppy(sio_ctl=sio_device, floppy_type=floppy_type, flp_path=flp_path)
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    floppy_spec.device.connectable.connected = (floppy_type != "none")
+
+            elif not self.device_helper.is_equal_floppy(vm_obj=vm_obj, floppy_device=floppy_device, floppy_type=floppy_type, flp_path=flp_path):
+                # Updating an existing floppy
+                if floppy_type in ["client", "none"]:
+                    floppy_device.backing = vim.vm.device.VirtualFloppy.RemoteDeviceBackingInfo()
+                elif floppy_type == "flp":
+                    floppy_device.backing = vim.vm.device.VirtualFloppy.ImageBackingInfo(fileName=flp_path)
+                floppy_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+                floppy_device.connectable.allowGuestControl = True
+                floppy_device.connectable.startConnected = (floppy_type != "none")
+                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                    floppy_device.connectable.connected = (floppy_type != "none")
+
+                floppy_spec = vim.vm.device.VirtualDeviceSpec()
+                floppy_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                floppy_spec.device = floppy_device
+
+            if floppy_spec:
+                self.change_detected = True
+                self.configspec.deviceChange.append(floppy_spec)
+
     def configure_hardware_params(self, vm_obj):
         """
         Function to configure hardware related configuration of virtual machine
@@ -951,6 +1059,26 @@ class PyVmomiHelper(PyVmomi):
 
         for device in vm.config.hardware.device:
             if isinstance(device, vim.vm.device.VirtualIDEController):
+                return device
+
+        return None
+
+    def get_vm_sio_device(self, vm=None):
+        if vm is None:
+            return None
+
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualSIOController):
+                return device
+
+        return None
+
+    def get_vm_floppy_device(self, vm=None):
+        if vm is None:
+            return None
+
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualFloppy):
                 return device
 
         return None
@@ -1798,6 +1926,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
+        self.configure_floppy(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)
         network_changes = False
@@ -1933,6 +2062,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
+        self.configure_floppy(vm_obj=self.current_vm_obj)
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
@@ -2056,6 +2186,7 @@ def main():
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
         cdrom=dict(type='dict', default={}),
+        floppy=dict(type='dict', default={}),
         hardware=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         datacenter=dict(type='str', default='ha-datacenter'),
