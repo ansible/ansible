@@ -1067,6 +1067,12 @@ class ModuleValidator(Validator):
                          'should not be marked as required' % arg)
                 )
 
+            if arg in provider_args:
+                # Provider args are being removed from network module top level
+                # don't validate docs<->arg_spec checks below
+                continue
+
+            # TODO: needs to recursively traverse suboptions
             doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
             if data.get('type') == 'bool':
                 doc_default = maybe_convert_bool(doc_default)
@@ -1081,6 +1087,7 @@ class ModuleValidator(Validator):
                          'documentation (%r)' % (arg_default, arg, doc_default))
                 )
 
+            # TODO: needs to recursively traverse suboptions
             doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
             if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
                 self.reporter.error(
@@ -1089,6 +1096,7 @@ class ModuleValidator(Validator):
                     msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
                 )
 
+            # TODO: needs to recursively traverse suboptions
             doc_choices = docs.get('options', {}).get(arg, {}).get('choices', [])
             if not compare_unordered_lists(data.get('choices', []), doc_choices):
                 self.reporter.error(
