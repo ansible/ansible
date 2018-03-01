@@ -37,6 +37,10 @@ options:
   capabilities:
     description:
       - List of capabilities to add to the container.
+  cap_drop:
+    description:
+      - List of capabilities to drop from the container.
+    version_added: "2.7"
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
@@ -539,6 +543,15 @@ EXAMPLES = '''
     name: sleepy
     purge_networks: yes
 
+- name: Create a container with limited capabilities
+  docker_container:
+    name: sleepy
+    image: ubuntu:16.04
+    command: sleep infinity
+    capabilities:
+      - sys_time
+    cap_drop:
+      - all
 '''
 
 RETURN = '''
@@ -626,6 +639,7 @@ class TaskParameters(DockerBaseClass):
         self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
+        self.cap_drop = None
         self.cleanup = None
         self.command = None
         self.cpu_period = None
@@ -875,6 +889,7 @@ class TaskParameters(DockerBaseClass):
             network_mode='network_mode',
             userns_mode='userns_mode',
             cap_add='capabilities',
+            cap_drop='cap_drop',
             extra_hosts='etc_hosts',
             read_only='read_only',
             ipc_mode='ipc_mode',
@@ -1969,6 +1984,7 @@ def main():
         auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
+        cap_drop=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         cpu_period=dict(type='int'),
