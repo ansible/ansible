@@ -84,6 +84,8 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/issues/36351)
 * Fix vyos_l3_interface multiple address assignment to interfaces
   (https://github.com/ansible/ansible/pull/36721)
+* Protect from inventory plugins using verify incorrectly
+  https://github.com/ansible/ansible/pull/36591
 
 
 <a id="2.4.3"></a>
