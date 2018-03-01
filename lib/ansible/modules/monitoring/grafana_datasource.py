@@ -92,6 +92,10 @@ options:
     description:
       - The TLS CA certificate for self signed certificates.
       - Only used when C(tls_client_cert) and C(tls_client_key) are set.
+  tls_skip_verify:
+    required: false
+    description:
+      - Skip the TLS datasource certificate verification.
   is_default:
     description:
       - Make this datasource the default one.
@@ -156,15 +160,35 @@ EXAMPLES = '''
 ---
 - name: Create elasticsearch datasource
   grafana_datasource:
-    name: my_elastic
-    grafana_url: http://grafana.company.com
-    ds_type: elasticsearch
-    url: https://elasticsearch.company.com:9200
-    database: my-index_*
-    basic_auth_user: grafana
-    basic_auth_password: xxxxxxxx
-    json_data: '{"esVersion":5, "timeField": "@timestamp"}'
-    state: present
+    name: "datasource-elastic"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "elasticisearch"
+    url: "https://elastic.company.com:9200"
+    database: "[logstash_]YYYY.MM.DD"
+    basic_auth_user: "grafana"
+    basic_auth_password: "******"
+    time_field: "@timestamp"
+    time_interval: "1m"
+    interval: "Daily"
+    es_version: 56
+    max_concurrent_shard_requests: 42
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
+
+- name: Create influxdb datasource
+  grafana_datasource:
+    name: "datasource-influxdb"
+    grafana_url: "https://grafana.company.com"
+    grafana_user: "admin"
+    grafana_password: "xxxxxx"
+    org_id: "1"
+    ds_type: "influxdb"
+    url: "https://influx.company.com:8086"
+    database: "telegraf"
+    time_interval: ">10s"
+    tls_ca_cert: "/etc/ssl/certs/ca.pem"
 '''
 
 RETURN = '''
@@ -298,6 +322,13 @@ def grafana_create_datasource(module, data):
     else:
         json_data['tlsAuth'] = False
         json_data['tlsAuthWithCACert'] = False
+        if data.get('tls_ca_cert'):
+            payload['secureJsonData'] = {
+                'tlsCACert': data['tls_ca_cert']
+            }
+
+    if data.get('tls_skip_verify'):
+        json_data['tlsSkipVerify'] = True
 
     # datasource type related parameters
     if data['ds_type'] == 'elasticsearch':
@@ -446,6 +477,7 @@ def main():
             tls_client_cert=dict(type='str', no_log=True),
             tls_client_key=dict(type='str', no_log=True),
             tls_ca_cert=dict(type='str', no_log=True),
+            tls_skip_verify=dict(type='bool', default=False),
             is_default=dict(default=False, type='bool'),
             org_id=dict(default=1, type='int'),
             es_version=dict(type='int', default=5, choices=[2, 5, 56]),
@@ -460,7 +492,7 @@ def main():
         ),
         supports_check_mode=False,
         required_together=[['grafana_user', 'grafana_password', 'org_id'], ['tls_client_cert', 'tls_client_key']],
-        mutually_exclusive=[['grafana_user', 'grafana_api_key']],
+        mutually_exclusive=[['grafana_user', 'grafana_api_key'], ['tls_ca_cert', 'tls_skip_verify']],
         required_if=[
             ['ds_type', 'opentsdb', ['tsdb_version', 'tsdb_resolution']],
             ['ds_type', 'influxdb', ['database']],
