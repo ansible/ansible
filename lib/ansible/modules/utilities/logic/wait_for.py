@@ -484,10 +484,10 @@ def main():
     start = datetime.datetime.utcnow()
 
     if delay:
-        time.sleep(_timedelta_total_seconds(delay))
+        time.sleep(delay.total_seconds())
 
     if not port and not path and state != 'drained':
-        time.sleep(_timedelta_total_seconds(timeout))
+        time.sleep(timeout.total_seconds())
     elif state in ['absent', 'stopped']:
         # first wait for the stop condition
         end = start + timeout
@@ -501,13 +501,13 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection(host, port, _timedelta_total_seconds(connect_timeout))
+                    s = _create_connection(host, port, connect_timeout.total_seconds())
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except:
                     break
             # Conditions not yet met, wait and try again
-            time.sleep(_timedelta_total_seconds(module.params['sleep']))
+            time.sleep(module.params['sleep'].total_seconds())
         else:
             elapsed = datetime.datetime.utcnow() - start
             if port:
@@ -546,7 +546,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
-                    s = _create_connection(host, port, min(_timedelta_total_seconds(connect_timeout), alt_connect_timeout))
+                    s = _create_connection(host, port, min(connect_timeout.total_seconds(), alt_connect_timeout))
                 except:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
@@ -596,7 +596,7 @@ def main():
                         break
 
             # Conditions not yet met, wait and try again
-            time.sleep(_timedelta_total_seconds(module.params['sleep']))
+            time.sleep(module.params['sleep'].total_seconds())
 
         else:   # while-else
             # Timeout expired
@@ -623,7 +623,7 @@ def main():
             except IOError:
                 pass
             # Conditions not yet met, wait and try again
-            time.sleep(_timedelta_total_seconds(module.params['sleep']))
+            time.sleep(module.params['sleep'].total_seconds())
         else:
             elapsed = datetime.datetime.utcnow() - start
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)

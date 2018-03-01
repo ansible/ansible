@@ -26,6 +26,15 @@ UNIT_MAP = {
 }
 
 
+class timedelta(datetime.timedelta):
+    """Compat class that provides total_seconds for python<2.7"""
+
+    def total_seconds(self):
+        """Total seconds in the duration."""
+        return ((self.days * 86400 + self.seconds) * 10**6 +
+                self.microseconds) / 10**6
+
+
 def timedelta_to_dict(delta):
     """Accepts a ``datetime.timedelta``, returns a dictionary of units
 
@@ -96,18 +105,18 @@ def duration(s):
     :rtype: datetime.timedelta
 
     >>> duration(300)
-    datetime.timedelta(0, 300)
+    timedelta(0, 300)
     >>> duration(300.0)
-    datetime.timedelta(0, 300)
+    timedelta(0, 300)
     >>> duration('300.0')
-    datetime.timedelta(0, 300)
+    timedelta(0, 300)
     >>> duration('5m')
-    datetime.timedelta(0, 300)
+    timedelta(0, 300)
 
     """
 
     try:
-        return datetime.timedelta(seconds=float(s))
+        return timedelta(seconds=float(s))
     except ValueError:
         return parse_duration(s)
 
@@ -128,25 +137,25 @@ def parse_duration(s):
     :rtype: datetime.timedelta
 
     >>> parse_duration("1h15m30.918273645s")
-    datetime.timedelta(0, 4530, 918274)
+    timedelta(0, 4530, 918274)
     >>> parse_duration("10h")
-    datetime.timedelta(0, 36000)
+    timedelta(0, 36000)
     >>> parse_duration("1h10m10s")
-    datetime.timedelta(0, 4210)
+    timedelta(0, 4210)
     >>> parse_duration("4h30m")
-    datetime.timedelta(0, 16200)
+    timedelta(0, 16200)
     >>> parse_duration("1h30m")
-    datetime.timedelta(0, 5400)
+    timedelta(0, 5400)
     >>> parse_duration("1000ns")
-    datetime.timedelta(0, 0, 1)
+    timedelta(0, 0, 1)
     >>> parse_duration("1m30s")
-    datetime.timedelta(0, 90)
+    timedelta(0, 90)
     >>> parse_duration("-1m")
-    datetime.timedelta(-1, 86340)
+    timedelta(-1, 86340)
     >>> parse_duration("9007199254.740993ms")
-    datetime.timedelta(104, 21599, 254741)
+    timedelta(104, 21599, 254741)
     >>> parse_duration("9007199254740993ns")
-    datetime.timedelta(104, 21599, 254741)
+    timedelta(104, 21599, 254741)
     >>> parse_duration("7199254.740993ms") == parse_duration("7199254740993ns")
     True
 
@@ -168,4 +177,4 @@ def parse_duration(s):
         except KeyError:
             raise ValueError("%r is not a valid unit" % match.group('unit'))
 
-    return datetime.timedelta(seconds=sum(run))
+    return timedelta(seconds=sum(run))
