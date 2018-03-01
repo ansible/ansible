@@ -544,25 +544,13 @@ Particularly the [cloud test configuration section](http://docs.ansible.com/ansi
 
 The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
 
-You must have the following in `test/integration/targets/MODULE_NAME/aliases`
+You must also have a aliases file in `test/integration/targets/MODULE_NAME/aliases`. This file serves
+two purposes. First indicates it's in an AWS test causing the test framework to make AWS credentials
+available during the test run. Second putting the test in a test group causing it to be run in the
+continuous integration build.
 
-```
-cloud/aws
-posix/ci/cloud/group2/aws
-```
-
-The first line indicates in an AWS test causing the test framework to make AWS credentials available
-during the test run.
-
-The second line puts the test in a test group causing it to be run in the continuous integration build.
-There are currently 5 groups (group1 - group5). The groups are just to parallelize the build, so try
-to place your new tests in the group that's currently taking the least time to run.
-
-Look at the recent sucessful [CI builds](https://app.shippable.com/github/ansible/ansible/runs?branchName=devel#completedJobs)
-to see if one of the _T=cloud/default/3.6/X_ builds is obviously shorter, if so put your test in group X.
-
-If there's not an obvious candidate just pick any group as this will achieve the goal of distributing
-the tests between the groups.
+Tests for new modules should be added to the same group as existing AWS tests. In general just copy
+an existing aliases file such as the [aws_s3 tests aliases file](https://github.com/ansible/ansible/blob/devel/test/integration/targets/aws_s3/aliases).
 
 ### AWS Credentials for Integration Tests
 
