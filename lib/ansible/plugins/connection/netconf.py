@@ -157,6 +157,10 @@ except ImportError:
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
+network_os_device_param_map = {
+    "nxos": "nexus"
+}
+
 
 class Connection(ConnectionBase):
     """NetConf connections"""
@@ -238,7 +242,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        device_params = {'name': (network_os or 'default')}
+        device_params = {'name': (network_os_device_param_map.get(network_os) or network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
@@ -276,7 +280,8 @@ class Connection(ConnectionBase):
         if self._netconf:
             display.display('loaded netconf plugin for network_os %s' % network_os, log_only=True)
         else:
-            display.display('unable to load netconf for network_os %s' % network_os)
+            self._netconf = netconf_loader.get("default", self)
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % network_os)
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 
