@@ -32,7 +32,7 @@ options:
     state:
         description:
             - Whether the cgroup should be present or absent.
-        required: true
+        default: present
         choices: ['absent', 'present']
     memlimit:
         description:
@@ -80,7 +80,7 @@ from ansible.module_utils.basic import AnsibleModule
 def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', required=True, choices=['absent', 'present']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         memlimit=dict(type='str', required=False),
         memswaplimit=dict(type='str', required=False)
     )
@@ -248,8 +248,11 @@ def parse_config(config):
             continue
 
         if char == NEW_BLOCK:
+            if word == '':
+                word = word_stack.pop()
+
             current_object = result_stack[len(result_stack) - 1]
-            object_name = word_stack.pop()
+            object_name = word
             current_object[object_name] = {}
             result_stack.append(current_object[object_name])
             continue
