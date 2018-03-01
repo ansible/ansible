@@ -58,7 +58,7 @@
         # cpu_reservation: 4096
         max_connections: 10
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           autoselect_datastore: True
     state: poweredoff
@@ -88,7 +88,7 @@
         num_cpu_cores_per_socket: 2
         memory_mb: 512
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           autoselect_datastore: True
     state: poweredoff

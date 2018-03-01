@@ -40,7 +40,7 @@
     template: "{{ item|basename }}"
     datacenter: "{{ (item|basename).split('_')[0] }}"
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           autoselect_datastore: True
     state: poweredoff
