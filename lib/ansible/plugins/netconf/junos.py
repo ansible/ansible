@@ -50,7 +50,7 @@ class Netconf(NetconfBase):
         device_info['network_os'] = 'junos'
         ele = new_ele('get-software-information')
         data = self.execute_rpc(to_xml(ele))
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
+        reply = to_ele(data)
         sw_info = reply.find('.//software-information')
 
         device_info['network_os_version'] = self.get_text(sw_info, 'junos-version')
