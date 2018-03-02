@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Russell Teague <rteague2 () csc.com>
+# Copyright: (c) 2015, Russell Teague <rteague2 () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,8 @@ short_description: Configure VSAN clustering on an ESXi host
 description:
     - This module can be used to configure VSAN clustering on an ESXi host
 version_added: 2.0
-author: "Russell Teague (@mtnbikenc)"
+author:
+- Russell Teague (@mtnbikenc)
 notes:
     - Tested on vSphere 5.5
 requirements:

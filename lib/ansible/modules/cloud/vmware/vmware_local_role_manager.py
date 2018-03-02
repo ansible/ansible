@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Author(s): Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -21,7 +22,8 @@ short_description: Manage local roles on an ESXi host
 description:
     - Manage local roles on an ESXi host
 version_added: "2.5"
-author: Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+author:
+- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:
     - Tested on ESXi 6.5
     - Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit roles
