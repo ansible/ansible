@@ -336,7 +336,11 @@ class DigitalOceanInventory(object):
 
         # Private IP Address
         if config.has_option('digital_ocean', 'use_private_network'):
-            self.use_private_network = config.getboolean('digital_ocean', 'use_private_network')
+            try:
+                self.use_private_network = config.getboolean('digital_ocean', 'use_private_network')
+            except ValueError:
+                private_regions = config.get('digital_ocean', 'use_private_network')
+                self.use_private_network = [x.strip() for x in private_regions.split(',')]
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
@@ -446,8 +450,10 @@ class DigitalOceanInventory(object):
             if net['type'] == 'public':
                 dest = net['ip_address']
             elif net['type'] == 'private' and self.use_private_network:
-                dest = net['ip_address']
-                break
+                if (self.use_private_network is True or
+                        droplet['region']['slug'] in self.use_private_network):
+                    dest = net['ip_address']
+                    break
 
         return dest
 
