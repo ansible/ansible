@@ -94,9 +94,11 @@ class MerakiModule(object):
         if self.module._debug or self.params['output_level'] == 'debug':
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
 
-        module.required_if=[
-                               ['state', 'present', ['name']],
-                               ['state', 'absent', ['name']],
+
+        # TODO: This isn't working
+        self.module.required_if=[
+                               ('state', 'present', ['name']),
+                               ('state', 'absent', ['name']),
                            ]
 
     def define_protocol(self):
@@ -112,7 +114,12 @@ class MerakiModule(object):
         elif self.params['state'] == 'absent':
             self.method = 'DELETE'
         elif self.params['state'] == 'present':
-            self.method = 'POST'
+            if self.is_new() is True:
+                self.method = 'POST'
+            elif self.is_update_required() is True:
+                self.method = 'PUT'
+            else:
+                return -1
 
     def response_json(self, rawoutput):
         ''' Handle Dashboard API response output '''
@@ -123,9 +130,26 @@ class MerakiModule(object):
             self.result['raw'] = rawoutput
             return
 
+    def is_update_required(self):
+        ''' Check original and proposed data to see if an update is needed '''
+        try:
+            for k, v in self.original.iteritems():
+                if self.proposed['k'] != v:
+                    return True
+        except KeyError as e:
+            return True
+
+    def is_new(self):
+        r = self.get_existing(self.path)
+        for i in r:
+            if self.module.params['name'] == i['name']:
+                self.fail_json(msg='False')
+                return False
+        self.fail_json(msg='True')
+        return True
+
     def get_existing(self, path):
         self.define_protocol()
-        self.define_method()
         self.path = path
 
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
@@ -139,8 +163,6 @@ class MerakiModule(object):
         self.response = info['msg']
         self.status = info['status']
         response = json.loads(to_native(resp.read()))
-        # self.module.fail_json(msg="Error", response=response)
-        # self.module
 
         if self.status >= 300:
             try:
@@ -150,6 +172,33 @@ class MerakiModule(object):
             except KeyError:
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         return response
+
+    def post_new(self, path):
+        self.path = path        
+        self.define_protocol()
+        if self.define_method() is -1:  # No changes are needed to existing object
+            return
+
+        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
+
+        resp, info = fetch_url(self.module, self.url,
+                               headers=self.headers,
+                               method=self.method,
+                               timeout=self.params['timeout'],
+                               use_proxy=self.params['use_proxy'],
+                               )
+        self.response = info['msg']
+        self.status = info['status']
+        response = json.loads(to_native(resp.read()))
+
+        if self.status >= 300:
+            try:
+                self.error['text'] = self.response_json(info['body'])
+                self.error['code'] = info['status']
+                self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
+            except KeyError:
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
+        return response                
 
     def exit_json(self, **kwargs):
 
