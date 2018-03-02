@@ -3,38 +3,28 @@
 Python API
 ==========
 
-.. note:: This document is out of date: 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
+.. note:: This document is out of date; 'ansible.parsing.dataloader' and 'ansible.runner' are not available in the current version of Ansible.
 
 .. contents:: Topics
 
-Please note that while we make this API available it is not intended for direct consumption, it is here
-for the support of the Ansible command line tools. We try not to make breaking changes but we reserve the
-right to do so at any time if it makes sense for the Ansible toolset.
+.. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. 
 
+There are several ways to use Ansible from an API perspective.   You can use
+the Ansible Python API to control nodes, you can extend Ansible to respond to various Python events, you can
+write plugins, and you can plug in inventory data from external data sources.  This document
+gives a basic overview and examples of the Ansible execution and playbook API.
 
-The following documentation is provided for those that still want to use the API directly, but be mindful this is not something the Ansible team supports.
+If you would like to use Ansible programmatically from a language other than Python, trigger events asynchronously, 
+or have access control and logging demands, please see the `Ansible Tower documentation <http://docs.ansible.com/ansible-tower/>`_.
 
-There are several interesting ways to use Ansible from an API perspective.   You can use
-the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
-write various plugins, and you can plug in inventory data from external data sources.  This document
-covers the execution and Playbook API at a basic level.
-
-If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
-or have access control and logging demands, take a look at :doc:`../tower` 
-as it has a very nice REST API that provides all of these things at a higher level.
-
-Ansible is written in its own API so you have a considerable amount of power across the board.  
-This chapter discusses the Python API.
-
-.. note:: Ansible relies on forking processes, as such the API is not thread safe.
+.. note:: Because Ansible relies on forking processes, this API is not thread safe.
 
 .. _python_api_example:
 
 Python API example
 ------------------
 
-This example is by no means comphrehensive and is not meant to show you how to use all of Ansible's feautres,
-it is just a simple demonstration on how to minmally run a couple of tasks.::
+This example is a simple demonstration that shows how to minimally run a couple of tasks::
 
     #!/usr/bin/env python
 
@@ -72,7 +62,7 @@ it is just a simple demonstration on how to minmally run a couple of tasks.::
     loader = DataLoader() # Takes care of finding and reading yaml, json and ini files
     passwords = dict(vault_pass='secret')
 
-    # Instantiate our ResultCallback for handling results as they come in, Ansible expects this to be one of it's main display outlets
+    # Instantiate our ResultCallback for handling results as they come in. Ansible expects this to be one of its main display outlets
     results_callback = ResultCallback()
 
     # create inventory, use path to host config file as source or hosts in a comma separated string
@@ -96,7 +86,7 @@ it is just a simple demonstration on how to minmally run a couple of tasks.::
     # this will also automatically create the task objects from the info provided in play_source
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 
-    # actually run it, instantiate task queue manager, which takes care of forking and setting up all objects to iterate over host list and tasks
+    # Run it - instantiate task queue manager, which takes care of forking and setting up all objects to iterate over host list and tasks
     tqm = None
     try:
         tqm = TaskQueueManager(
@@ -109,7 +99,7 @@ it is just a simple demonstration on how to minmally run a couple of tasks.::
               )
         result = tqm.run(play) # most interesting data for a play is actually sent to the callback's methods
     finally:
-        # we always need to cleanup child procs, and the strucutres we use to communicate with them
+        # we always need to cleanup child procs and the structres we use to communicate with them
         if tqm is not None:
             tqm.cleanup()
         
@@ -119,9 +109,8 @@ it is just a simple demonstration on how to minmally run a couple of tasks.::
 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
 
-Advanced programmers may also wish to read the source to ansible itself,
-for it uses the API (with all available options) to implement the ``ansible``
-command line tools (``lib/ansible/cli/``).
+The source code for the ``ansible``
+command line tools (``lib/ansible/cli/``) is `available on Github <https://github.com/ansible/ansible/tree/devel/lib/ansible/cli>`_.
 
 .. seealso::
 
