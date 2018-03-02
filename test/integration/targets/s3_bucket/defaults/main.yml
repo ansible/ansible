@@ -1,0 +1,3 @@
+---
+test_id: "{{ resource_prefix | regex_findall('^.*-([0-9]+)$') }}"
+bucket_name: "ansible-test-{{ test_id[0] }}"
