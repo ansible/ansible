@@ -1,0 +1,114 @@
+# Test code for the vmware_datastore_maintenancemode module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support datastore maintenance mode properties
+#- name: make sure pyvmomi is installed
+#  pip:
+#    name: pyvmomi
+#    state: latest
+#  when: "{{ ansible_user_id == 'root' }}"
+
+#- name: store the vcenter container ip
+#  set_fact:
+#    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+#- debug: var=vcsim
+
+#- name: Wait for Flask controller to come up online
+#  wait_for:
+#    host: "{{ vcsim }}"
+#    port: 5000
+#    state: started
+
+#- name: kill vcsim
+#  uri:
+#    url: http://{{ vcsim }}:5000/killall
+
+#- name: start vcsim
+#  uri:
+#    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+#  register: vcsim_instance
+
+#- name: Wait for vcsim server to come up online
+#  wait_for:
+#    host: "{{ vcsim }}"
+#    port: 443
+#    state: started
+
+#- name: Get a list of datastores from vcsim
+#  uri:
+#    url: http://{{ vcsim }}:5000/govc_find?filter=D
+#  register: datastores
+
+#- name: Enter datastore in maintenance mode
+#  vmware_datastore_maintenancemode:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    state: present
+#    datastore: "{{ item | basename }}"
+#    validate_certs: False
+#  with_items: "{{ datastores['json'] }}"
+#  register: test_result_0001
+
+#- debug: var=test_result_0001
+
+#- name: assert that changes were made
+#  assert:
+#    that:
+#      - "test_result_0001.results|map(attribute='changed')|unique|list == [true]"
+
+#- name: Enter datastore in maintenance mode again
+#  vmware_datastore_maintenancemode:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    state: present
+#    datastore: "{{ item | basename }}"
+#    validate_certs: no
+#  with_items: "{{ datastores['json'] }}"
+#  register: test_result_0002
+
+#- debug: var=test_result_0002
+
+#- name: assert that no changes were made
+#  assert:
+#    that:
+#      - "test_result_0002.results|map(attribute='changed')|unique|list == [false]"
+
+#- name: Exit datastores from maintenance mode
+#  vmware_datastore_maintenancemode:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    state: absent
+#    esxi_hostname: "{{ item | basename }}"
+#    validate_certs: no
+#  with_items: "{{ datastores['json'] }}"
+#  register: test_result_0003
+
+#- debug: var=test_result_0003
+
+#- name: assert that changes were made
+#  assert:
+#    that:
+#      - "test_result_0003.results|map(attribute='changed')|unique|list == [true]"
+
+#- name: Exit datastores from maintenance mode again
+#  vmware_datastore_maintenancemode:
+#    hostname: "{{ vcsim }}"
+#    username: "{{ vcsim_instance.json.username }}"
+#    password: "{{ vcsim_instance.json.password }}"
+#    state: absent
+#    esxi_hostname: "{{ item | basename }}"
+#    validate_certs: no
+#  with_items: "{{ datastores['json'] }}"
+#  register: test_result_0004
+
+#- debug: var=test_result_0004
+
+#- name: assert that no changes were made
+#  assert:
+#    that:
+#      - "test_result_0004.results|map(attribute='changed')|unique|list == [false]"
