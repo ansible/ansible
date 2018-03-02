@@ -9,6 +9,13 @@
         region: "{{ aws_region }}"
     no_log: yes
 
+  - name: load balancer name has to be less than 32 characters
+    # the 8 digit identifier at the end of resource_prefix helps determine during which test something
+    # was created and allows tests to be run in parallel
+    set_fact:
+      alb_name: "my-alb-{{ item }}"
+    with_items: "{{ resource_prefix | regex_findall('.{8}$') }}"
+
   - name: create VPC
     ec2_vpc_net:
       cidr_block: 10.228.228.0/22
@@ -16,6 +23,13 @@
       state: present
       <<: *aws_connection_info
     register: vpc
+
+  - name: create internet gateway
+    ec2_vpc_igw:
+      vpc_id: "{{ vpc.vpc.id }}"
+      state: present
+      <<: *aws_connection_info
+    register: igw
 
   - name: create public subnet
     ec2_vpc_subnet:
@@ -49,8 +63,8 @@
     register: vpc_subnets
 
   - ec2_group:
-      name: my_alb_sec_group
-      description: "{{ resource_prefix }} security group"
+      name: "{{ resource_prefix }}"
+      description: "security group for Ansible ALB integration tests"
       state: present
       vpc_id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
@@ -97,32 +111,39 @@
   #############################################################################
   # TEAR DOWN STARTS HERE
   #############################################################################
-  - name: destroy sec group
-    ec2_group:
-      name: "{{ sec_group.group_name }}"
-      description: "{{ resource_prefix }} security group"
-      state: absent
-      vpc_id: "{{ vpc.vpc.id }}"
-      <<: *aws_connection_info
-    ignore_errors: yes
+    - name: destroy sec group
+      ec2_group:
+        name: "{{ sec_group.group_name }}"
+        description: "security group for Ansible ALB integration tests"
+        state: absent
+        vpc_id: "{{ vpc.vpc.id }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
 
-  - name: destroy subnets
-    ec2_vpc_subnet:
-      cidr: "{{ item.cidr }}"
-      vpc_id: "{{ vpc.vpc.id }}"
-      state: absent
-      <<: *aws_connection_info
-    with_items:
-      - cidr: 10.228.228.0/24
-      - cidr: 10.228.229.0/24
-      - cidr: 10.228.230.0/24
-      - cidr: 10.228.231.0/24
-    ignore_errors: yes
+    - name: destroy subnets
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      with_items:
+        - cidr: 10.228.228.0/24
+        - cidr: 10.228.229.0/24
+        - cidr: 10.228.230.0/24
+        - cidr: 10.228.231.0/24
+      ignore_errors: yes
 
-  - name: destroy VPC
-    ec2_vpc_net:
-      cidr_block: 10.228.228.0/22
-      name: "{{ resource_prefix }}_vpc"
-      state: absent
-      <<: *aws_connection_info
-    ignore_errors: yes
+    - name: destroy internet gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: destroy VPC
+      ec2_vpc_net:
+        cidr_block: 10.228.228.0/22
+        name: "{{ resource_prefix }}_vpc"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
