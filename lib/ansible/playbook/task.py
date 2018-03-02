@@ -36,7 +36,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-
+from ansible.utils.vars import parse_environment_file_vars
 
 try:
     from __main__ import display
@@ -298,6 +298,13 @@ class Task(Base, Conditional, Taggable, Become):
                 # at this point it should be a simple string, also should not happen
                 env = templar.template(value, convert_bare=False)
 
+        return env
+
+    def _post_validate_environment_file(self, attr, value, templar):
+        env = parse_environment_file_vars(value)
+        if not env:
+            display.warning(u"Could not parse environment file, skipping: %s"
+                            % value)
         return env
 
     def _post_validate_changed_when(self, attr, value, templar):

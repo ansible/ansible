@@ -154,6 +154,9 @@ class Base(with_metaclass(BaseMeta, object)):
 
     # flags and misc. settings
     _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _environment_file = FieldAttribute(isa='string', private=False, default=None,
+                                       required=False, priority=0,
+                                       always_post_validate=False, inherit=True)
     _no_log = FieldAttribute(isa='bool')
     _always_run = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')

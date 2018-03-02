@@ -41,7 +41,7 @@ from ansible.plugins.loader import lookup_loader, vars_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, parse_environment_file_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts
 
@@ -411,6 +411,14 @@ class VariableManager:
         # may have set it as a variable and we don't want to stomp on it
         if task:
             all_vars['environment'] = task.environment
+
+            # merge the environment file vars
+            environment_file_vars = \
+                parse_environment_file_vars(task.environment_file)
+
+            for idx, item in enumerate(all_vars['environment']):
+                all_vars['environment'][idx].update(environment_file_vars)
+
 
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later

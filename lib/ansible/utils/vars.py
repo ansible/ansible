@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import os
 import random
 import uuid
 
@@ -190,3 +191,31 @@ def isidentifier(ident):
         return False
 
     return True
+
+def parse_environment_file_vars(path):
+    env = {}
+    if path is not None:
+
+        def _parse_env_line(line):
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                return None, None
+            k, v = line.split('=', 1)
+            k, v = k.strip(), v.strip()
+            if (v.startswith('"') and v.endswith('"')) or \
+                (v.startswith("'") and v.endswith("'")):
+                v = v[1:-1]
+            return k, v
+
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                try:
+                    for line in f:
+                        k, v = _parse_env_line(line)
+                        if k:
+                           env[k] = v
+                except Exception as e:
+                    return None
+        else:
+            return None
+    return env
