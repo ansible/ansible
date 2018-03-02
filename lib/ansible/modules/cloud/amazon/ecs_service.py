@@ -103,6 +103,13 @@ options:
           - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
             a list of group names or group IDs for the task
         version_added: 2.6
+    launch_type:
+        description:
+          - The launch type on which to run your service
+        required: false
+        version_added: 2.5
+        choices: ["EC2", "FARGATE"]
+        default: "EC2"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -357,7 +364,8 @@ class EcsServiceManager:
 
     def create_service(self, service_name, cluster_name, task_definition, load_balancers,
                        desired_count, client_token, role, deployment_configuration,
-                       placement_constraints, placement_strategy, network_configuration):
+                       placement_constraints, placement_strategy, network_configuration,
+                       launch_type):
         params = dict(
             cluster=cluster_name,
             serviceName=service_name,
@@ -368,7 +376,8 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy)
+            placementStrategy=placement_strategy,
+            launchType=launch_type)
         if network_configuration:
             params['networkConfiguration'] = network_configuration
         response = self.ecs.create_service(**params)
@@ -431,7 +440,8 @@ def main():
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
         placement_strategy=dict(required=False, default=[], type='list'),
-        network_configuration=dict(required=False, type='dict')
+        network_configuration=dict(required=False, type='dict'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE'], default='EC2')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
@@ -501,7 +511,8 @@ def main():
                                                           deploymentConfiguration,
                                                           module.params['placement_constraints'],
                                                           module.params['placement_strategy'],
-                                                          network_configuration)
+                                                          network_configuration,
+                                                          module.params['launch_type'])
 
                 results['service'] = response
 
