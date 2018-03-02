@@ -263,7 +263,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     query_password_data = dict(password=password, expires=expires)
     query = ['CREATE USER %(user)s' %
              {"user": pg_quote_identifier(user, 'role')}]
-    if password is not None:
+    if password is not None and password != '':
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
     if expires is not None:
@@ -380,8 +380,11 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
         if pwchanging:
-            alter.append("WITH %(crypt)s" % {"crypt": encrypted})
-            alter.append("PASSWORD %(password)s")
+            if password != '':
+                alter.append("WITH %(crypt)s" % {"crypt": encrypted})
+                alter.append("PASSWORD %(password)s")
+            else:
+                alter.append("WITH PASSWORD NULL")
             alter.append(role_attr_flags)
         elif role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
