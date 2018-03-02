@@ -96,6 +96,8 @@ options:
     required: false
     description:
       - Skip the TLS datasource certificate verification.
+    type: bool
+    version_added: 2.6
   is_default:
     description:
       - Make this datasource the default one.
