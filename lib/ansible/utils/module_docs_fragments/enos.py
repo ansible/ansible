@@ -1,5 +1,6 @@
 #
-# Copyright © 2017 Lenovo. All rights reserved.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo. 
 #
 # GNU General Public License v3.0+
 #
@@ -9,7 +10,6 @@
 # GNU General Public License for more details.
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
 
 
 class ModuleDocFragment(object):
