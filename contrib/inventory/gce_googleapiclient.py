@@ -305,8 +305,12 @@ def get_ssh_host(network_interfaces, looking_public=True):
 
 def get_boot_image(disks):
     for disk in disks:
-        if disk['boot']:
+        # If the instance have been created from a snapshot, the image source is lost
+        if disk['boot'] and 'sourceImage' in disk['additionalData']:
             return disk['additionalData']['sourceImage'].split('/')[-1]
+
+        # In the gce.py gce_image is null
+        return None
 
 
 def get_uuid(instance):
@@ -361,7 +365,11 @@ def get_inventory(instances):
                         inventory[access_config['natIP']].append(instance['name'])
 
             # group by images
-            inventory[get_boot_image(instance['disks'])].append(instance['name'])
+            image = get_boot_image(instance['disks'])
+            # If the instance doesn't have a source image, we put it in the persistent_disk group
+            # This keep the retro-compatibility with the gce.py inventory
+            image = image and image or 'persistent_disk'
+            inventory[image].append(instance['name'])
 
     return inventory
 
