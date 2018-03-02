@@ -300,34 +300,10 @@ files:
   $modules/cloud/vmware/:
     maintainers: $team_vmware
     ignored: jcpowermac mtnbikenc
-  $modules/cloud/vmware/vca_fw.py: privateip
-  $modules/cloud/vmware/vca_nat.py: privateip
-  $modules/cloud/vmware/vca_vapp.py: privateip
-  $modules/cloud/vmware/vmware_cluster.py: $team_ansible
-  $modules/cloud/vmware/vmware_datacenter.py: $team_ansible kamsz
-  $modules/cloud/vmware/vmware_dns_config.py: $team_ansible
-  $modules/cloud/vmware/vmware_dvs_host.py: $team_ansible
-  $modules/cloud/vmware/vmware_dvs_portgroup.py: $team_ansible
-  $modules/cloud/vmware/vmware_dvswitch.py: $team_ansible
   $modules/cloud/vmware/vmware_guest.py: dagwieers
-  $modules/cloud/vmware/vmware_guest_facts.py: nerzhul
-  $modules/cloud/vmware/vmware_guest_find.py:
-  $modules/cloud/vmware/vmware_host.py: $team_ansible  dagwieers
-  $modules/cloud/vmware/vmware_local_user_manager.py: $team_ansible
-  $modules/cloud/vmware/vmware_maintenancemode.py: $team_ansible
-  $modules/cloud/vmware/vmware_migrate_vmk.py: $team_ansible
-  $modules/cloud/vmware/vmware_portgroup.py: $team_ansible
-  $modules/cloud/vmware/vmware_resource_pool.py: dav1x
-  $modules/cloud/vmware/vmware_target_canonical_facts.py: $team_ansible
-  $modules/cloud/vmware/vmware_vm_facts.py: $team_ansible
-  $modules/cloud/vmware/vmware_vm_shell.py: chrrrles ritzk
-  $modules/cloud/vmware/vmware_vm_vss_dvs_migrate.py: $team_ansible
-  $modules/cloud/vmware/vmware_vmkernel.py: $team_ansible
-  $modules/cloud/vmware/vmware_vmkernel_ip_config.py: $team_ansible
-  $modules/cloud/vmware/vmware_vmotion.py: $team_ansible bedecarroll
-  $modules/cloud/vmware/vmware_vsan_cluster.py: $team_ansible
-  $modules/cloud/vmware/vmware_vswitch.py: akasurde
-  $modules/cloud/vmware/vsphere_guest.py: $team_ansible rhoop dagwieers
+  $modules/cloud/vmware/vmware_host.py: dagwieers
+  $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
+  $modules/cloud/vmware/vsphere_guest.py: dagwieers
   $modules/cloud/vultr/: resmo
   $modules/cloud/webfaction/: quentinsf
   $modules/clustering/consul.py: sgargan
@@ -1150,6 +1126,6 @@ macros:
   team_rhn: alikins barnabycourt flossware vritant
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough vallard vvb dagwieers
-  team_vmware: dav1x jctanner nerzhul akasurde
+  team_vmware: akasurde dav1x jctanner nerzhul
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
