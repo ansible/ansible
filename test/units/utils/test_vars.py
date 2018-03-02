@@ -24,7 +24,8 @@ from collections import defaultdict
 
 from ansible.compat.tests import mock, unittest
 from ansible.errors import AnsibleError
-from ansible.utils.vars import combine_vars, merge_hash
+from ansible.module_utils.six.moves import builtins
+from ansible.utils.vars import combine_vars, merge_hash, parse_environment_file_vars
 
 
 class TestVariableUtils(unittest.TestCase):
@@ -96,3 +97,37 @@ class TestVariableUtils(unittest.TestCase):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
             for test in self.test_merge_data:
                 self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+
+    @mock.patch('os.path.exists')
+    def test_parse_environment_file_vars(self, mock_ospe):
+        # test not existing environment file
+        with mock.patch.object(builtins, 'open', mock.mock_open(read_data=b'')):
+            # test if file does not exist
+            mock_ospe.return_value = False
+            env = parse_environment_file_vars('/tmp/not_found_file.sh')
+            self.assertEqual(env, None)
+
+        # test env file with vars
+        with mock.patch.object(builtins, 'open',
+                               mock.mock_open(read_data='ENV1_VAR=abc\nENV2_VAR=def')) as m:
+            m.return_value.__iter__ = lambda self: iter(self.readline, '')
+            mock_ospe.return_value = True
+            env = parse_environment_file_vars('/tmp/env_file.sh')
+            self.assertEqual(env, defaultdict(ENV1_VAR='abc',
+                                              ENV2_VAR='def'))
+
+        # test env file with comments
+        with mock.patch.object(builtins, 'open',
+                               mock.mock_open(read_data='#ENV1_VAR=abc\nENV2_VAR=def')) as m:
+            m.return_value.__iter__ = lambda self: iter(self.readline, '')
+            mock_ospe.return_value = True
+            env = parse_environment_file_vars('/tmp/env_file.sh')
+            self.assertEqual(env, defaultdict(ENV2_VAR='def'))
+
+        # test vars with quotes
+        with mock.patch.object(builtins, 'open',
+                               mock.mock_open(read_data='ENV1_VAR=\'abc\'\nENV2_VAR="def"')) as m:
+            m.return_value.__iter__ = lambda self: iter(self.readline, '')
+            mock_ospe.return_value = True
+            env = parse_environment_file_vars('/tmp/env_file.sh')
+            self.assertEqual(env, defaultdict(ENV1_VAR='abc', ENV2_VAR='def'))

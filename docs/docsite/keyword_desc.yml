@@ -28,6 +28,7 @@ delegate_facts: Boolean that allows you to apply facts to a delegated host inste
 delegate_to: Host to execute task instead of the target (inventory_hostname). Connection vars from the delegated host will also be used for the task.
 diff: "Toggle to make tasks return 'diff' information or not."
 environment: A dictionary that gets converted into environment vars to be provided for the task upon execution.
+environment_file: An string with the path of a local file that contains a set of env vars to be sourced.
 fact_path: Set the fact path option for the fact gathering plugin controlled by :term:`gather_facts`.
 failed_when: "Conditional expression that overrides the task's normal 'failed' status."
 force_handlers: Will force notified handler execution for hosts even if they failed during the play. Will not trigger if the play itself fails.

@@ -415,10 +415,13 @@ class VariableManager:
             # merge the environment file vars
             environment_file_vars = \
                 parse_environment_file_vars(task.environment_file)
-
-            for idx, item in enumerate(all_vars['environment']):
-                all_vars['environment'][idx].update(environment_file_vars)
-
+            if environment_file_vars:
+                if len(all_vars['environment']) > 0:
+                    for idx, item in enumerate(all_vars['environment']):
+                        if isinstance(all_vars['environment'][idx], dict):
+                            all_vars['environment'][idx].update(environment_file_vars)
+                else:
+                    task.environment = environment_file_vars
 
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later

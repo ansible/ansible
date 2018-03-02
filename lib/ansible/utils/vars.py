@@ -192,6 +192,7 @@ def isidentifier(ident):
 
     return True
 
+
 def parse_environment_file_vars(path):
     env = {}
     if path is not None:
@@ -202,8 +203,7 @@ def parse_environment_file_vars(path):
                 return None, None
             k, v = line.split('=', 1)
             k, v = k.strip(), v.strip()
-            if (v.startswith('"') and v.endswith('"')) or \
-                (v.startswith("'") and v.endswith("'")):
+            if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
                 v = v[1:-1]
             return k, v
 
@@ -213,7 +213,7 @@ def parse_environment_file_vars(path):
                     for line in f:
                         k, v = _parse_env_line(line)
                         if k:
-                           env[k] = v
+                            env[k] = v
                 except Exception as e:
                     return None
         else:

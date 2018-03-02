@@ -1,8 +1,8 @@
 Advanced Playbooks Features
 ===========================
 
-Here are some playbook features that not everyone may need to learn, but can be quite useful for particular applications. 
-Browsing these topics is recommended as you may find some useful tips here, but feel free to learn the basics of Ansible first 
+Here are some playbook features that not everyone may need to learn, but can be quite useful for particular applications.
+Browsing these topics is recommended as you may find some useful tips here, but feel free to learn the basics of Ansible first
 and adopt these only if they seem relevant or useful to your environment.
 
 .. toctree::
@@ -15,6 +15,7 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_debugger
    playbooks_delegation
    playbooks_environment
+   playbooks_environment_file
    playbooks_error_handling
    playbooks_advanced_syntax
    plugins
