@@ -309,7 +309,8 @@ def update_notification_topic(connection, module, identity, identity_notificatio
 
     if current != required:
         try:
-            connection.set_identity_notification_topic(Identity=identity, NotificationType=notification_type, SnsTopic=required, aws_retry=True)
+            if not module.check_mode:
+                connection.set_identity_notification_topic(Identity=identity, NotificationType=notification_type, SnsTopic=required, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to set identity notification topic for {identity} {notification_type}'.format(
                 identity=identity,
@@ -341,7 +342,9 @@ def update_notification_topic_headers(connection, module, identity, identity_not
 
     if current != required:
         try:
-            connection.set_identity_headers_in_notifications_enabled(Identity=identity, NotificationType=notification_type, Enabled=required, aws_retry=True)
+            if not module.check_mode:
+                connection.set_identity_headers_in_notifications_enabled(Identity=identity, NotificationType=notification_type, Enabled=required,
+                                                                         aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to set identity headers in notification for {identity} {notification_type}'.format(
                 identity=identity,
@@ -374,11 +377,29 @@ def update_feedback_forwarding(connection, module, identity, identity_notificati
 
     if current != required:
         try:
-            connection.set_identity_feedback_forwarding_enabled(Identity=identity, ForwardingEnabled=required, aws_retry=True)
+            if not module.check_mode:
+                connection.set_identity_feedback_forwarding_enabled(Identity=identity, ForwardingEnabled=required, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to set identity feedback forwarding for {identity}'.format(identity=identity))
         return True
     return False
+
+
+def create_mock_notifications_response(module):
+    resp = {
+        "ForwardingEnabled": module.params.get('feedback_forwarding'),
+    }
+    for notification_type in ('Bounce', 'Complaint', 'Delivery'):
+        arg_dict = module.params.get(notification_type.lower() + '_notifications')
+        if arg_dict is not None and 'topic' in arg_dict:
+            resp[notification_type + 'Topic'] = arg_dict['topic']
+
+        header_key = 'HeadersIn' + notification_type + 'NotificationsEnabled'
+        if arg_dict is not None and 'include_headers' in arg_dict:
+            resp[header_key] = arg_dict['include_headers']
+        else:
+            resp[header_key] = False
+    return resp
 
 
 def update_identity_notifications(connection, module):
@@ -393,7 +414,10 @@ def update_identity_notifications(connection, module):
     changed |= update_feedback_forwarding(connection, module, identity, identity_notifications)
 
     if changed or identity_notifications is None:
-        identity_notifications = get_identity_notifications(connection, module, identity, retries=4)
+        if module.check_mode:
+            identity_notifications = create_mock_notifications_response(module)
+        else:
+            identity_notifications = get_identity_notifications(connection, module, identity, retries=4)
     return changed, identity_notifications
 
 
@@ -403,13 +427,19 @@ def create_or_update_identity(connection, module, region, account_id):
     verification_attributes = get_verification_attributes(connection, module, identity)
     if verification_attributes is None:
         try:
-            if '@' in identity:
-                connection.verify_email_identity(EmailAddress=identity, aws_retry=True)
-            else:
-                connection.verify_domain_identity(Domain=identity, aws_retry=True)
+            if not module.check_mode:
+                if '@' in identity:
+                    connection.verify_email_identity(EmailAddress=identity, aws_retry=True)
+                else:
+                    connection.verify_domain_identity(Domain=identity, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to verify identity {identity}'.format(identity=identity))
-        verification_attributes = get_verification_attributes(connection, module, identity, retries=4)
+        if module.check_mode:
+            verification_attributes = {
+                "VerificationStatus": "Pending",
+            }
+        else:
+            verification_attributes = get_verification_attributes(connection, module, identity, retries=4)
         changed = True
     elif verification_attributes['VerificationStatus'] not in ('Pending', 'Success'):
         module.fail_json(msg="Identity " + identity + " in bad status " + verification_attributes['VerificationStatus'],
@@ -441,7 +471,8 @@ def destroy_identity(connection, module):
     verification_attributes = get_verification_attributes(connection, module, identity)
     if verification_attributes is not None:
         try:
-            connection.delete_identity(Identity=identity, aws_retry=True)
+            if not module.check_mode:
+                connection.delete_identity(Identity=identity, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to delete identity {identity}'.format(identity=identity))
         changed = True
@@ -471,6 +502,7 @@ def main():
             "delivery_notifications": dict(type='dict'),
             "feedback_forwarding": dict(default=True, type='bool'),
         },
+        supports_check_mode=True,
     )
 
     for notification_type in ('bounce', 'complaint', 'delivery'):
