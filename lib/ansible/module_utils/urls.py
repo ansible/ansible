@@ -509,7 +509,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
 
                 return RequestWithMethod(newurl,
                                          method=method,
-                                         headers=req.headers,
+                                         headers=newheaders,
                                          data=data,
                                          origin_req_host=origin_req_host,
                                          unverifiable=True,
