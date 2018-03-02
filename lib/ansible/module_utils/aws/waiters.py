@@ -1,3 +1,5 @@
+# Copyright: (c) 2018, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 try:
     import botocore.waiter as core_waiter
 except ImportError:
@@ -35,8 +37,16 @@ def model_for(name):
 
 
 waiters_by_name = {
-    'route_table_exists': lambda ec2: core_waiter.Waiter(
+    ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         model_for('RouteTableExists'),
         ec2.describe_route_tables)
 }
+
+
+def get_waiter(client, waiter_name):
+    try:
+        return waiters_by_name[(client.__class__.__name__, waiter_name)](client)
+    except KeyError:
+        raise NotImplementedError("Waiter {0} could not be found for client {1}. Available waiters: {2}".format(
+            waiter_name, type(client), ', '.join(repr(k) for k in ec2_waiters.waiters_by_name.keys())))
