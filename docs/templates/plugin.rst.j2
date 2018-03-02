@@ -215,6 +215,12 @@ Examples
 {% endif %}
 
 
+{% if returnfacts -%}
+Returned Facts
+--------------
+
+{% endif %}
+
 {% if returndocs -%}
 
 
@@ -228,10 +234,8 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
     <table border=0 cellpadding=0 class="documentation-table">
         <tr>
             <th class="head"><div class="cell-border">Name</div></th>
-            <th class="head"><div class="cell-border">Description</div></th>
             <th class="head"><div class="cell-border">Returned</div></th>
-            <th class="head"><div class="cell-border">Type</div></th>
-            <th class="head"><div class="cell-border">Sample</div></th>
+            <th class="head"><div class="cell-border">Description</div></th>
         </tr>
         {% for key, value in returndocs|dictsort recursive %}
             <tr class="return-value-column">
@@ -243,21 +247,28 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
+                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
                         </div>
                     </div>
                 </td>
-                <td>
-                    {% if value.description is string %}
-                        <div class="cell-border">@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
-                    {% else %}
-                    {% for desc in value.description %}
-                        <div class="cell-border">@{ desc | replace('\n', '\n    ') | html_ify }@</div>
-                    {% endfor %}
-                    {% endif %}
-                </td>
                 <td><div class="cell-border">@{ value.returned }@</div></td>
-                <td><div class="cell-border">@{ value.type }@</div></td>
-                <td><div class="cell-border">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div></td>
+                <td>
+                    <div class="cell-border">
+                        {% if value.description is string %}
+                            <div>@{ value.description | html_ify }@</div>
+                        {% else %}
+                            {% for desc in value.description %}
+                                <div>@{ desc | html_ify }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        <br/>
+                        {% if value.sample %}
+                            <div style="font-size: smaller"><b>Sample:</b></div>
+{#                            <div style="font-size: smaller; color: blue; word-wrap: break-word; overflow-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div> #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
             {# ---------------------------------------------------------
              # sadly we cannot blindly iterate through the child dicts,
