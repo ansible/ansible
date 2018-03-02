@@ -4,7 +4,9 @@
 
 # hit NetworkConfig
 # Select interface for test
-- debug: msg="START connection={{ connection }} nxos_smoke common_config test"
+- debug: msg="START connection={{ ansible_connection }} common/common_config.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 

@@ -3,8 +3,9 @@
 # nxos_config -> to_list
 # nxos_interface -> conditional, remove_default_spec
 
-- debug: msg="START connection={{ connection }} nxos_smoke common_utils test"
-
+- debug: msg="START connection={{ ansible_connection }} common/common_utils.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # hit ComplexList
 - name: test contains operator

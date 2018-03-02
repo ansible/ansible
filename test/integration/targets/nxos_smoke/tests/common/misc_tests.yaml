@@ -1,5 +1,7 @@
 ---
-- debug: msg="START connection={{ connection }} nxos_smoke extra tests"
+- debug: msg="START connection={{ ansible_connection }} common/misc_tests.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: hit conditional for lists of commands greater than 10
   nxos_command:
@@ -15,3 +17,8 @@
       - show hostname
       - show hostname
     provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - result.stdout|length == 10
