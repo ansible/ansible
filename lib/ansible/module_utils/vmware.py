@@ -1147,3 +1147,14 @@ class PyVmomi(object):
                     self.module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
 
         return host_obj_list
+
+    def find_datastore_by_name(self, datastore_name):
+        """
+        Function to get datastore managed object by name
+        Args:
+            datastore_name: Name of datastore
+
+        Returns: datastore managed object if found else None
+
+        """
+        return find_datastore_by_name(self.content, datastore_name=datastore_name)
