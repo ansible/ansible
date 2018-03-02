@@ -1,5 +1,6 @@
-#
-# Copyright (C) 2017 Lenovo. All rights reserved.
+#	
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo. 
 #
 # GNU General Public License v3.0+
 #
@@ -10,9 +11,9 @@
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-#
 # Contains Action Plugin methods for ENOS Config Module
 # Lenovo Networking
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
