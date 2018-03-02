@@ -12,7 +12,7 @@
     - no ip route 192.168.3.0/24 192.168.0.1
     authorize: yes
     provider: "{{ eapi }}"
-   
+
 - name: configure static route
   eos_static_route:
     address: 192.168.3.0/24
@@ -50,7 +50,7 @@
 
 - debug: msg="END cli/common_utils.yaml on connection={{ ansible_connection }}"
 
-
+# FIXME: uncomment when https://github.com/ansible/ansible/issues/36919 is fixed
 # hit conditional()
 # - name: Set test interface
 #   set_fact:
