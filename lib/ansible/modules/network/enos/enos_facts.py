@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017 Lenovo. All rights reserved.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo. 
 #
 # GNU General Public License v3.0+
 #
@@ -10,9 +11,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
-# Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)# Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
 # Lenovo Networking
 #
 from __future__ import absolute_import, division, print_function
