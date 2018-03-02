@@ -125,11 +125,38 @@ if my_new_feature_Parameter_is_set:
 
 ### Connecting to AWS
 
-To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn`.
+AnsibleAWSModule provides the `resource` and `client` helper methods for obtaining boto3 connections.
+These handle some of the more esoteric connection options, such as security tokens and boto profiles.
 
-These functions handle some of the more esoteric connection options, such as security tokens and
-boto profiles.
+If using the basic AnsibleModule then you should use `get_aws_connection_info` and then `boto3_conn`
+to connect to AWS as these handle the same range of connection options.
 
+These helpers also for missing profiles or a region not set when it needs to be, so you don't have to.
+
+#### boto3
+
+An example of connecting to ec2 is shown below. Note that unlike boto there is no `NoAuthHandlerFound`
+exception handling like in boto. Instead, an `AuthFailure` exception will be thrown when you use the
+connection. To ensure that authorization, parameter validation and permissions errors are all caught,
+you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
+See exception handling.
+
+```python
+module.client('ec2')
+```
+
+or for the higher level ec2 resource:
+
+```python
+module.resource('ec2')
+```
+
+An example of the older style connection used for modules based on AnsibleModule rather than AnsibleAWSModule:
+
+```python
+region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+```
 
 #### boto
 
@@ -149,18 +176,26 @@ else:
     module.fail_json(msg="region must be specified")
 ```
 
-#### boto3
+### Common Documentation Fragments for Connection Parameters
 
-An example of connecting to ec2 is shown below.  Note that there is no `NoAuthHandlerFound`
-exception handling like in boto.  Instead, an `AuthFailure` exception will be thrown when you use
-'connection'. To ensure that authorization, parameter validation and permissions errors are all
-caught, you should catch `ClientError` and `BotoCoreError` exceptions with every boto3 connection call.
-See exception handling. module_utils.ec2 checks for missing profiles or a region not set when it needs to be,
-so you don't have to.
+There are two [common documentation fragments](http://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#documentation-fragments)
+that should be included into almost all AWS modules:
+
+* `aws` - contains the common boto connection parameters
+* `ec2` - contains the common region parameter required for many AWS modules
+
+These fragments should be used rather than re-documenting these properties to ensure consistency
+and that the more esoteric connection options are documented. e.g.
 
 ```python
-region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+DOCUMENTATION = '''
+module: my_module
+...
+requirements: [ 'botocore', 'boto3' ]
+extends_documentation_fragment:
+    - aws
+    - ec2
+'''
 ```
 
 ### Exception Handling for boto
@@ -496,3 +531,73 @@ other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag
 calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
+
+## Integration Tests for AWS Modules
+
+All new AWS modules should include integration tests to ensure that any changes in AWS APIs that
+affect the module are detected. At a minimum this should cover the key API calls and check the
+documented return values are present in the module result.
+
+For general information on running the integration tests see the [Integration Tests page of the
+Module Development Guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html).
+Particularly the [cloud test configuration section](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#other-configuration-for-cloud-tests)
+
+The integration tests for your module should be added in `test/integration/targets/MODULE_NAME`.
+
+You must also have a aliases file in `test/integration/targets/MODULE_NAME/aliases`. This file serves
+two purposes. First indicates it's in an AWS test causing the test framework to make AWS credentials
+available during the test run. Second putting the test in a test group causing it to be run in the
+continuous integration build.
+
+Tests for new modules should be added to the same group as existing AWS tests. In general just copy
+an existing aliases file such as the [aws_s3 tests aliases file](https://github.com/ansible/ansible/blob/devel/test/integration/targets/aws_s3/aliases).
+
+### AWS Credentials for Integration Tests
+
+The testing framework handles running the test with appropriate AWS credentials, these are made available
+to your test in the following variables:
+
+* `aws_region`
+* `aws_access_key`
+* `aws_secret_key`
+* `security_token`
+
+So all invocations of AWS modules in the test should set these parameters. To avoid duplication these
+for every call, it's preferrable to use [YAML Anchors](http://blog.daemonl.com/2016/02/yaml.html) E.g.
+
+```yaml
+- name: set connection information for all tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: Do Something
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
+
+- name: Do Something Else
+  ec2_instance:
+    ... params ...
+    <<: *aws_connection_info
+```
+
+### AWS Permissions for Integration Tests
+
+As explained in the [Integration Test guide](http://docs.ansible.com/ansible/latest/dev_guide/testing_integration.html#iam-policies-for-aws)
+there are defined IAM policies in `hacking/aws_config/testing_policies/` that contain the necessary permissions
+to run the AWS integration test.
+
+If your module is interacting with a new service or otherwise requires new permissions you must update the
+appropriate policy file to grant the permissions needed to run your integration test.
+
+There is no process for automatically granting additional permissions to the roles used by the continuous
+integration builds, so the tests will initially fail when you submit a pull request and the
+[Ansibullbot](https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md) will tag it as needing revision.
+
+Once you're certain the failure is only due to the missing permissions, add a comment with the `ready_for_review`
+tag and explain that it's due to missing permissions.
