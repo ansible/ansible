@@ -34,88 +34,121 @@
 import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
+
+URL_MAPPING = dict(
+    organization=dict(path='organization'),
+    )
+
+def construct_url(action):
+    print('test')
 
 def meraki_argument_spec():
-    return dict(auth_key=(dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
+    return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
                 name=dict(type='str'),
                 username=dict(type='str'),
                 state=dict(type='str', choices=['present', 'absent', 'query',], required=True),
-                use_proxy=dict(type='boo0l', default=True),
+                use_proxy=dict(type='bool', default=True),
+                use_ssl=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
-        ))
+                timeout=dict(type='int', default=30),
+    )
 
-class MerakiModule(self, module):
-    self.module = module
-    self.params = module.params
-    self.result = dict(changed=False)
-    self.headers = dict()
+class MerakiModule(object):
 
-    # error output
-    self.error = dict(code=None, text=None)
+    def __init__(self, module):
+        self.module = module
+        self.params = module.params
+        self.result = dict(changed=False)
+        self.headers = dict()
 
-    # normal output
-    self.existing = None
+        if module.params['auth_key'] is None:
+            module.fail_json(msg='Meraki API key not specified')
+        else:
+            self.headers = {'Content-Type': 'application/json',
+                            'X-Cisco-Meraki-API-Key': module.params['auth_key'],
+                            }
 
-    # info output
-    self.config = dict()
-    self.original = None
-    self.proposed = dict()
+        # error output
+        self.error = dict(code=None, text=None)
 
-    # debug output
-    self.filter_string = ''
-    self.method = None
-    self.path = None
-    self.response = None
-    self.status = None
-    self.url = None
+        # normal output
+        self.existing = None
 
-    if self.module._debug or self.params['output_level'] == 'debug':
-        self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
+        # info output
+        self.config = dict()
+        self.original = None
+        self.proposed = dict()
 
-    def define_protocol(self, protocol):
+        # debug output
+        self.filter_string = ''
+        self.method = None
+        self.path = None
+        self.response = None
+        self.status = None
+        self.url = None
+
+        if self.module._debug or self.params['output_level'] == 'debug':
+            self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
+
+        module.required_if=[
+                               ['state', 'present', ['name']],
+                               ['state', 'absent', ['name']],
+                           ]
+
+    def define_protocol(self):
         ''' Set protocol based on use_ssl parameters '''
-        if params['use_ssl'] is True:
-            params['protocol'] = 'https'
-        elif params['use_ssl'] is False:
-            params['protocol'] = 'http'
+        if self.params['use_ssl'] is True:
+            self.params['protocol'] = 'https'
+        else:
+            self.params['protocol'] = 'http'
+
+    def define_method(self):
+        if self.params['state'] == 'query':
+            self.method = 'GET'
+        elif self.params['state'] == 'absent':
+            self.method = 'DELETE'
+        elif self.params['state'] == 'present':
+            self.method = 'POST'
 
     def response_json(self, rawoutput):
         ''' Handle Dashboard API response output '''
         try:
-            jsondata = json.loads(rawoutput)
+            return json.loads(rawoutput)
         except Exception as e:
             self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. {0}".format(e))
             self.result['raw'] = rawoutput
             return
 
-    def request(self, path, payload=None):
-        ''' Perform a REST request '''
+    def get_existing(self, path):
+        self.define_protocol()
         self.define_method()
         self.path = path
 
-        self.url = '{0}://{1}/{2}'.format(params['protocol'], self.params['host'], self.path.lstrip('/'))
+        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
 
         resp, info = fetch_url(self.module, self.url,
-                               data=payload,
                                headers=self.headers,
-                               method=self.params['method'].upper(),
+                               method='GET',
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
         self.response = info['msg']
         self.status = info['status']
+        response = json.loads(to_native(resp.read()))
+        # self.module.fail_json(msg="Error", response=response)
+        # self.module
 
         if self.status >= 300:
             try:
-                self.response_json(info['body'])
+                self.error['text'] = self.response_json(info['body'])
+                self.error['code'] = info['status']
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
             except KeyError:
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-
-        self.response(resp.read())
+        return response
 
     def exit_json(self, **kwargs):
 
