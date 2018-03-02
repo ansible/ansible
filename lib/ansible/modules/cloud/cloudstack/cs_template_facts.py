@@ -22,6 +22,9 @@ options:
     description:
       - Name of the template.
     required: true
+  display_text:
+    description:
+      - Display text of the template.
   domain:
     description:
       - Domain the template is related to.
