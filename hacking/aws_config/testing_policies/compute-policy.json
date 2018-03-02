@@ -75,6 +75,7 @@
                 "ec2:ModifyVpcAttribute",
                 "ec2:RegisterImage",
                 "ec2:ReleaseAddress",
+                "ec2:ReplaceRoute",
                 "ec2:ReplaceRouteTableAssociation"
             ],
             "Resource": "*"

@@ -26,6 +26,7 @@
 
     - name: Get aws account ID
       aws_caller_facts:
+        profile: "{{ profile|default(omit) }}"
       register: aws_caller_facts
 
     - name: Set aws_account_fact
