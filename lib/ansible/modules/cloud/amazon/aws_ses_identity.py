@@ -210,50 +210,17 @@ notification_attributes:
         headers_in_delivery_notifications_enabled:
             description: Whether or not headers are included in messages delivered to the delivery topic.
             type: bool
-error:
-    description: The details of the error response from AWS.
-    returned: on client error from AWS
-    type: complex
-    sample: {
-        "code": "InvalidParameterValue",
-        "message": "Feedback notification topic is not set.",
-        "type": "Sender"
-    }
-    contains:
-        code:
-            description: The AWS error code.
-            type: string
-        message:
-            description: The AWS error message.
-            type: string
-        type:
-            description: The AWS error type.
-            type: string
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 
 import time
 
-import traceback
-
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-    from botocore.config import Config
 except ImportError:
     pass  # caught by imported HAS_BOTO3
-
-
-def call_and_handle_errors(module, method, **kwargs):
-    try:
-        return method(**kwargs)
-    except ClientError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
-    except BotoCoreError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 
 def get_verification_attributes(connection, module, identity, retries=0, retryDelay=10):
@@ -263,7 +230,10 @@ def get_verification_attributes(connection, module, identity, retries=0, retryDe
     # a consistent return from the module.
     # To avoid this we have an internal retry that we use only after registering the identity.
     for attempt in range(0, retries + 1):
-        response = call_and_handle_errors(module, connection.get_identity_verification_attributes, Identities=[identity])
+        try:
+            response = connection.get_identity_verification_attributes(Identities=[identity], aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to retrieve identity verification attributes for {identity}'.format(identity=identity))
         identity_verification = response['VerificationAttributes']
         if identity in identity_verification:
             break
@@ -281,7 +251,10 @@ def get_identity_notifications(connection, module, identity, retries=0, retryDel
     # To avoid this we have an internal retry that we use only when getting the current notification
     # status for return.
     for attempt in range(0, retries + 1):
-        response = call_and_handle_errors(module, connection.get_identity_notification_attributes, Identities=[identity])
+        try:
+            response = connection.get_identity_notification_attributes(Identities=[identity], aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to retrieve identity notification attributes for {identity}'.format(identity=identity))
         notification_attributes = response['NotificationAttributes']
 
         # No clear AWS docs on when this happens, but it appears sometimes identities are not included in
@@ -335,13 +308,13 @@ def update_notification_topic(connection, module, identity, identity_notificatio
     required = desired_topic(module, notification_type)
 
     if current != required:
-        call_and_handle_errors(
-            module,
-            connection.set_identity_notification_topic,
-            Identity=identity,
-            NotificationType=notification_type,
-            SnsTopic=required,
-        )
+        try:
+            connection.set_identity_notification_topic(Identity=identity, NotificationType=notification_type, SnsTopic=required, aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to set identity notification topic for {identity} {notification_type}'.format(
+                identity=identity,
+                notification_type=notification_type,
+            ))
         return True
     return False
 
@@ -367,13 +340,13 @@ def update_notification_topic_headers(connection, module, identity, identity_not
         required = False
 
     if current != required:
-        call_and_handle_errors(
-            module,
-            connection.set_identity_headers_in_notifications_enabled,
-            Identity=identity,
-            NotificationType=notification_type,
-            Enabled=required,
-        )
+        try:
+            connection.set_identity_headers_in_notifications_enabled(Identity=identity, NotificationType=notification_type, Enabled=required, aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to set identity headers in notification for {identity} {notification_type}'.format(
+                identity=identity,
+                notification_type=notification_type,
+            ))
         return True
     return False
 
@@ -400,12 +373,10 @@ def update_feedback_forwarding(connection, module, identity, identity_notificati
     required = module.params.get('feedback_forwarding')
 
     if current != required:
-        call_and_handle_errors(
-            module,
-            connection.set_identity_feedback_forwarding_enabled,
-            Identity=identity,
-            ForwardingEnabled=required,
-        )
+        try:
+            connection.set_identity_feedback_forwarding_enabled(Identity=identity, ForwardingEnabled=required, aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to set identity feedback forwarding for {identity}'.format(identity=identity))
         return True
     return False
 
@@ -431,10 +402,13 @@ def create_or_update_identity(connection, module, region, account_id):
     changed = False
     verification_attributes = get_verification_attributes(connection, module, identity)
     if verification_attributes is None:
-        if '@' in identity:
-            call_and_handle_errors(module, connection.verify_email_identity, EmailAddress=identity)
-        else:
-            call_and_handle_errors(module, connection.verify_domain_identity, Domain=identity)
+        try:
+            if '@' in identity:
+                connection.verify_email_identity(EmailAddress=identity, aws_retry=True)
+            else:
+                connection.verify_domain_identity(Domain=identity, aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to verify identity {identity}'.format(identity=identity))
         verification_attributes = get_verification_attributes(connection, module, identity, retries=4)
         changed = True
     elif verification_attributes['VerificationStatus'] not in ('Pending', 'Success'):
@@ -466,7 +440,10 @@ def destroy_identity(connection, module):
     changed = False
     verification_attributes = get_verification_attributes(connection, module, identity)
     if verification_attributes is not None:
-        call_and_handle_errors(module, connection.delete_identity, Identity=identity)
+        try:
+            connection.delete_identity(Identity=identity, aws_retry=True)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg='Failed to delete identity {identity}'.format(identity=identity))
         changed = True
 
     module.exit_json(
@@ -475,31 +452,26 @@ def destroy_identity(connection, module):
     )
 
 
-def get_account_id(sts):
-    caller_identity = sts.get_caller_identity()
+def get_account_id(module):
+    sts = module.client('sts')
+    try:
+        caller_identity = sts.get_caller_identity()
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to retrieve caller identity')
     return caller_identity['Account']
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(
-        dict(
-            identity=dict(required=True, type='str'),
-            state=dict(default='present', choices=['present', 'absent']),
-            bounce_notifications=dict(type='dict'),
-            complaint_notifications=dict(type='dict'),
-            delivery_notifications=dict(type='dict'),
-            feedback_forwarding=dict(default=True, type='bool'),
-        )
+    module = AnsibleAWSModule(
+        argument_spec={
+            "identity": dict(required=True, type='str'),
+            "state": dict(default='present', choices=['present', 'absent']),
+            "bounce_notifications": dict(type='dict'),
+            "complaint_notifications": dict(type='dict'),
+            "delivery_notifications": dict(type='dict'),
+            "feedback_forwarding": dict(default=True, type='bool'),
+        },
     )
-
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-    )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     for notification_type in ('bounce', 'complaint', 'delivery'):
         param_name = notification_type + '_notifications'
@@ -509,23 +481,17 @@ def main():
             if extra_keys:
                 module.fail_json(msg='Unexpected keys ' + str(extra_keys) + ' in ' + param_name + ' valid keys are topic or include_headers')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    # Allow up to 10 attempts to call the SES APIs before giving up (9 retries).
     # SES APIs seem to have a much lower throttling threshold than most of the rest of the AWS APIs.
     # Docs say 1 call per second. This shouldn't actually be a big problem for normal usage, but
-    # the ansible build runs multiple instances of the test in parallel.
-    # As a result there are build failures due to throttling that exceeds boto's default retries.
-    # The back-off is exponential, so upping the retry attempts allows multiple parallel runs
-    # to succeed.
-    boto_core_config = Config(retries={'max_attempts': 9})
-    connection = boto3_conn(module, conn_type='client', resource='ses', region=region, endpoint=ec2_url, config=boto_core_config, **aws_connect_params)
+    # the ansible build runs multiple instances of the test in parallel that's caused throttling
+    # failures so apply a jittered backoff to call SES calls.
+    connection = module.client('ses', retry_decorator=AWSRetry.jittered_backoff())
 
     state = module.params.get("state")
 
     if state == 'present':
-        sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_params)
-        account_id = get_account_id(sts)
+        region = module.params.get('region')
+        account_id = get_account_id(module)
         create_or_update_identity(connection, module, region, account_id)
     else:
         destroy_identity(connection, module)
