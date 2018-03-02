@@ -241,6 +241,7 @@ try:
 except:
     HAVE_SPWD = False
 
+
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
@@ -300,10 +301,10 @@ class User(object):
 
         if module.params['expires']:
             try:
-                self.expires = time.gmtime(module.params['expires']//86400*86400)
+                self.expires = time.gmtime(module.params['expires'] // 86400 * 86400)
             except Exception:
                 e = get_exception()
-                module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
+                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -521,7 +522,7 @@ class User(object):
             cmd.append(self.shell)
 
         if self.expires is not None and info[7] != self.expires:
-            #cmd.append('--expiredate') # SLES11 usermod does not know --expiredate
+            # cmd.append('--expiredate') # SLES11 usermod does not know --expiredate
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
@@ -603,10 +604,10 @@ class User(object):
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
         expire = self.user_expire()
-        if expire is not None and len(expire)>0:
-            info.append( time.gmtime(float(expire)*86400) )
+        if expire is not None and len(expire) > 0:
+            info.append(time.gmtime(float(expire) * 86400))
         else:
-            info.append( None )
+            info.append(None)
         return info
 
     def user_password(self):
@@ -779,10 +780,10 @@ class FreeBsdUser(User):
         if len(info[1]) == 1 or len(info[1]) == 0:
             info[1] = self.user_password()
         expire = self.user_expire()
-        if expire is not None and len(expire)>0:
-            info.append( time.gmtime(float(expire)) )
+        if expire is not None and len(expire) > 0:
+            info.append(time.gmtime(float(expire)))
         else:
-            info.append( None )
+            info.append(None)
         return info
 
     def user_expire(self):
@@ -865,11 +866,11 @@ class FreeBsdUser(User):
             cmd.append(self.login_class)
 
         if self.expires:
-            expire=calendar.timegm(self.expires)
-            if expire==0:
-                expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
+            expire = calendar.timegm(self.expires)
+            if expire == 0:
+                expire = 1  # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
-            cmd.append( str(expire) )
+            cmd.append(str(expire))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -965,11 +966,11 @@ class FreeBsdUser(User):
                 cmd.append(','.join(new_groups))
 
         if self.expires is not None and info[7] != self.expires:
-            expire=calendar.timegm(self.expires)
-            if expire==0:
-                expire=1 # on FreeBSD 0 means unlock account (not 1.1.1970)
+            expire = calendar.timegm(self.expires)
+            if expire == 0:
+                expire = 1  # on FreeBSD 0 means unlock account (not 1.1.1970)
             cmd.append('-e')
-            cmd.append( str(expire) )
+            cmd.append(str(expire))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
