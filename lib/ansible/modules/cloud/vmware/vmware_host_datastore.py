@@ -1,5 +1,7 @@
 #!/usr/bin/python
-# Copyright (c) 2018 Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,7 +24,7 @@ description:
 - All parameters and VMware object names are case sensitive.
 version_added: '2.5'
 author:
-- Ludovic Rivallain <ludovic.rivallain@gmail.com> @lrivallain
+- Ludovic Rivallain (@lrivallain) <ludovic.rivallain@gmail.com>
 notes:
 - Tested on vSphere 6.0 and 6.5
 requirements:
