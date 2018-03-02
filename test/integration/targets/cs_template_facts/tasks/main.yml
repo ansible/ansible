@@ -1,0 +1,47 @@
+---
+- name: test fail cross_zones template facts
+  cs_template_facts:
+    name: "{{ test_cs_template_facts_name }}"
+    template_filter: executable
+  register: template_facts
+  ignore_errors: yes
+- name: verify test fail cross_zones template facts
+  assert:
+    that:
+    - template_facts is failed
+    - template_facts.msg.startswith("Template not found")
+
+- name: test template facts in check mode
+  cs_template_facts:
+    name: "{{ test_cs_template_facts_name }}"
+    template_filter: executable
+    cross_zones: yes
+  register: template_facts
+  check_mode: yes
+- name: verify test instance facts in check mode
+  assert:
+    that:
+    - template_facts is successful
+    - template_facts is not changed
+    - template_facts.is_ready
+    - template_facts.id != ""
+    - template_facts.domain == "ROOT"
+    - template_facts.account == "system"
+    - template_facts.name == "{{ test_cs_template_facts_name }}"
+
+- name: test template facts
+  cs_template_facts:
+    name: "{{ test_cs_template_facts_name }}"
+    template_filter: executable
+    cross_zones: yes
+  register: template_facts
+- name: verify test instance facts
+  assert:
+    that:
+    - template_facts is successful
+    - template_facts is not changed
+    - template_facts.is_ready
+    - template_facts.id != ""
+    - template_facts.domain == "ROOT"
+    - template_facts.account == "system"
+    - template_facts.name == "{{ test_cs_template_facts_name }}"

@@ -1,0 +1,1 @@
+test_cs_template_facts_name: "{{ cs_common_template }}"
