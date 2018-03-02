@@ -242,6 +242,7 @@ class DigitalOceanInventory(object):
         self.cache_path = '.'
         self.cache_max_age = 0
         self.use_private_network = False
+        self.use_ipv6 = False
         self.group_variables = {}
 
         # Read settings, environment variables, and CLI arguments
@@ -341,6 +342,10 @@ class DigitalOceanInventory(object):
             except ValueError:
                 private_regions = config.get('digital_ocean', 'use_private_network')
                 self.use_private_network = [x.strip() for x in private_regions.split(',')]
+
+        # IPv6 Address
+        if config.has_option('digital_ocean', 'use_ipv6'):
+            self.use_ipv6 = config.getboolean('digital_ocean', 'use_ipv6')
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
@@ -446,15 +451,28 @@ class DigitalOceanInventory(object):
         return
 
     def select_droplet_address(self, droplet):
-        for net in droplet['networks']['v4']:
-            if net['type'] == 'public':
-                dest = net['ip_address']
-            elif net['type'] == 'private' and self.use_private_network:
-                if (self.use_private_network is True or
-                        droplet['region']['slug'] in self.use_private_network):
-                    dest = net['ip_address']
-                    break
+        PREFERENCE_PRIVATE = 3
+        PREFERENCE_IPV6 = 2
+        PREFERENCE_PUBLIC = 1
 
+        # List of (preference, address)
+        dests = []
+
+        for family in ['v4', 'v6']:
+            if family == 'v6' and not self.use_ipv6:
+                continue
+
+            for net in droplet['networks'][family]:
+                if net['type'] == 'public':
+                    preference = PREFERENCE_IPV6 if family == 'v6' else PREFERENCE_PUBLIC
+                    dests.append((preference, net['ip_address']))
+                elif net['type'] == 'private' and self.use_private_network:
+                    if (self.use_private_network is True or
+                            droplet['region']['slug'] in self.use_private_network):
+                        dests.append((PREFERENCE_PRIVATE, net['ip_address']))
+
+        dests.sort(key=lambda x: -x[0])
+        preference, dest = dests[0]
         return dest
 
     def build_inventory(self):
