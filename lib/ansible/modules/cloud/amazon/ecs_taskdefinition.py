@@ -73,6 +73,25 @@ options:
         description:
             - A list of names of volumes to be attached
         required: False
+    launch_type:
+        description:
+            - The launch type on which to run your task
+        required: false
+        version_added: 2.5
+        choices: ["EC2", "FARGATE"]
+        default: "EC2"
+    cpu:
+        description:
+            - The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used. 
+              If using the Fargate launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
+        required: false
+        version_added: 2.5
+    memory:
+        description:
+            - The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used. 
+              If using the Fargate launch type, this field is required and is limited by the cpu
+        required: false
+        version_added: 2.5
 extends_documentation_fragment:
     - aws
     - ec2
@@ -153,7 +172,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes):
+    def register_task(self, family, task_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
         # Ensures the number parameters are int as required by boto
@@ -174,12 +193,21 @@ class EcsTaskManager:
 
             validated_containers.append(container)
 
+        params = dict(
+            family=family,
+            taskRoleArn=task_role_arn,
+            networkMode=network_mode,
+            containerDefinitions=container_definitions,
+            volumes=volumes,
+            requiresCompatibilities=launch_type
+        )
+        if cpu:
+            params['cpu'] = cpu
+        if memory:
+            params['memory'] = memory
+
         try:
-            response = self.ecs.register_task_definition(family=family,
-                                                         taskRoleArn=task_role_arn,
-                                                         networkMode=network_mode,
-                                                         containerDefinitions=container_definitions,
-                                                         volumes=volumes)
+            response = self.ecs.register_task_definition(**params)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -234,7 +262,11 @@ def main():
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none', 'awsvpc'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
-        volumes=dict(required=False, type='list')))
+        volumes=dict(required=False, type='list'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE'], default='EC2'),
+        cpu=dict(required=False, type='str'),
+        memory=dict(required=False, type='str')
+    ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
@@ -255,6 +287,13 @@ def main():
 
         if 'family' not in module.params or not module.params['family']:
             module.fail_json(msg="To use task definitions, a family must be specified")
+
+        launch_type = module.params['launch_type']
+        if launch_type == 'EC2' and ('cpu' not in module.params or  not module.params['cpu']):
+            module.fail_json(msg="To use FARGATE launch type, cpu must be specified")
+
+        if launch_type == 'EC2' and ('memory' not in module.params or  not module.params['memory']):
+            module.fail_json(msg="To use FARGATE launch type, memory must be specified")
 
         family = module.params['family']
         existing_definitions_in_family = task_mgr.describe_task_definitions(module.params['family'])
@@ -365,7 +404,10 @@ def main():
                                                                    module.params['task_role_arn'],
                                                                    module.params['network_mode'],
                                                                    module.params['containers'],
-                                                                   volumes)
+                                                                   volumes,
+                                                                   module.params['launch_type'],
+                                                                   module.params['cpu'],
+                                                                   module.params['memory'])
             results['changed'] = True
 
     elif module.params['state'] == 'absent':
