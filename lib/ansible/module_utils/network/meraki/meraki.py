@@ -7,6 +7,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 
+# Copyright: (c) 2018, Kevin Breit <kevin.breit@kevinbreit.net>
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 # Copyright: (c) 2017, Swetha Chunduri (@schunduri)
@@ -198,10 +199,10 @@ class MerakiModule(object):
                     self.result['previous'] = self.existing
 
             # Return the gory details when we need it
-            if self.params['output_level'] == 'debug':
-                if self.imdata is not None:
-                    self.result['imdata'] = self.imdata
-                    self.result['totalCount'] = self.totalCount
+            # if self.params['output_level'] == 'debug':
+            #     if self.imdata is not None:
+            #         self.result['imdata'] = self.imdata
+            #         self.result['totalCount'] = self.totalCount
 
         if self.params['output_level'] == 'debug':
             if self.url is not None:
