@@ -456,8 +456,9 @@ class DigitalOceanInventory(object):
             for net in droplet['networks']['v4']:
                 if net['type'] == 'public':
                     dest = net['ip_address']
-                else:
-                    continue
+                elif net['type'] == 'private' and self.use_private_network:
+                    dest = net['ip_address']
+                    break
 
             self.inventory['all']['hosts'].append(dest)
 
