@@ -1,7 +1,7 @@
 try:
     import botocore.waiter as core_waiter
 except ImportError:
-    pass # caught by HAS_BOTO3
+    pass  # caught by HAS_BOTO3
 
 
 ec2_data = {
