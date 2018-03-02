@@ -6,6 +6,8 @@ Ansible Changes By Release
 ## 2.4.4 "Dancing Days" - TBD
 
 ### Bugfixes
+* Fix python 3 dictionary runtime error in ios_confg and eos_config
+  (https://github.com/ansible/ansible/issues/36717)
 * Fix `win_script` to work with large arguments and removed uneeded function
   that produces errors and was not needed
   (https://github.com/ansible/ansible/pull/33855)
