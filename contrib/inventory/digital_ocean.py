@@ -441,6 +441,16 @@ class DigitalOceanInventory(object):
             self.inventory[group]['hosts'].append(host)
         return
 
+    def select_droplet_address(self, droplet):
+        for net in droplet['networks']['v4']:
+            if net['type'] == 'public':
+                dest = net['ip_address']
+            elif net['type'] == 'private' and self.use_private_network:
+                dest = net['ip_address']
+                break
+
+        return dest
+
     def build_inventory(self):
         """ Build Ansible inventory of droplets """
         self.inventory = {
@@ -453,12 +463,7 @@ class DigitalOceanInventory(object):
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            for net in droplet['networks']['v4']:
-                if net['type'] == 'public':
-                    dest = net['ip_address']
-                elif net['type'] == 'private' and self.use_private_network:
-                    dest = net['ip_address']
-                    break
+            dest = self.select_droplet_address(droplet)
 
             self.inventory['all']['hosts'].append(dest)
 
