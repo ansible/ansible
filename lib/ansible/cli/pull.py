@@ -245,7 +245,7 @@ class PullCLI(CLI):
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif self.options.ifchanged and '"changed": true' not in out:
+        elif self.options.ifchanged and b'"changed": true' not in out:
             display.display("Repository has not changed, quitting.")
             return 0
 
