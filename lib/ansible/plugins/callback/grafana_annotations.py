@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -16,42 +17,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = '''
-    callback: grafana_annotations
-    type: notification
-    short_description: Sends events to Grafana HTTP API
-    description:
-      - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
-    version_added: "2.5"
-    requirements:
-      - whitelisting in configuration
-    options:
-      server:
-        description: Address of the Logstash server
-        env:
-          - name: GRAFANA_SERVER
-        default: localhost
-      port:
-        description: Port on which Grafana is listening
-        env:
-            - name: GRAFANA_PORT
-        default: 3000
-      secure:
-        description: Boolean specifying if HTTPS should be used. (0=HTTP, 1=HTTPS)
-        env:
-          - name: GRAFANA_SECURE
-        default: 0
-      token:
-        description: Grafana API Token, allowing to authenticate when posting on the HTTP API.
-                     If not provided, the callback will be disabled.
-        env:
-          - name: GRAFANA_API_TOKEN
-'''
-
 import os
 import json
 import socket
 import getpass
+from base64 import b64encode
 from datetime import datetime
 
 try:
@@ -61,6 +31,45 @@ except ImportError:
     import http.client as httplib
 
 from ansible.plugins.callback import CallbackBase
+
+DOCUMENTATION = '''
+    callback: grafana_annotations
+    type: notification
+    short_description: send ansible events as annotations on charts to grafana over http api.
+    description:
+      - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
+    version_added: "2.5"
+    requirements:
+      - whitelisting in configuration
+    options:
+      grafana_host:
+        description: Grafana server address and port
+        env:
+          - name: GRAFANA_HOST
+        default: 127.0.0.1:3000
+      api_key:
+        description: Grafana API key, allowing to authenticate when posting on the HTTP API.
+                     If not provided, grafana_login and grafana_password will
+                     be required.
+        env:
+          - name: GRAFANA_API_KEY
+      grafana_user:
+        description: Grafana user used for authentication. Ignored if api_key is provided.
+        env:
+          - name: GRAFANA_USER
+      grafana_password:
+        description: Grafana password used for authentication. Ignored if api_key is provided.
+        env:
+          - name: GRAFANA_PASSWORD
+      grafana_dashboard_id:
+        description: The grafana dashboard id where the annotation shall be created.
+        env:
+          - name: GRAFANA_DASHBOARD_ID
+      grafana_panel_id:
+        description: The grafana panel id where the annotation shall be created.
+        env:
+          - name: GRAFANA_PANEL_ID
+'''
 
 
 PLAYBOOK_START_TXT = """\
@@ -103,36 +112,39 @@ class CallbackModule(CallbackBase):
     ansible grafana callback plugin
     ansible.cfg:
         callback_plugins   = <path_to_callback_plugins_folder>
-        callback_whitelist = grafana
+        callback_whitelist = grafana_annotations
     and put the plugin in <path_to_callback_plugins_folder>
-
-    This plugin makes use of the following environment variables:
-        GRAFANA_SERVER   (optional): defaults to localhost
-        GRAFANA_PORT     (optional): defaults to 3000
-        GRAFANA_SECURE   (optional): Set to 1 if HTTPs is implemented on Grafana.
-                                     defaults to 0 (false)
-        GRAFANA_API_TOKEN          : Grafana API authentication token
     """
 
     CALLBACK_VERSION = 1.0
     CALLBACK_TYPE = 'aggregate'
-    CALLBACK_NAME = 'grafana'
+    CALLBACK_NAME = 'grafana_annotations'
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        token = os.getenv('GRAFANA_API_TOKEN')
+        self.grafana_host = os.getenv('GRAFANA_HOST', '127.0.0.1:3000')
         self.secure = int(os.getenv('GRAFANA_SECURE', 0))
         if self.secure not in [0, 1]:
             self.secure = 0
-        if token is None:
+        api_key = os.getenv('GRAFANA_API_KEY', None)
+        grafana_user = os.getenv('GRAFANA_USER', None)
+        grafana_password = os.getenv('GRAFANA_PASSWORD', '')
+        self.dashboard_id = os.getenv('GRAFANA_DASHBOARD_ID', None)
+        self.panel_id = os.getenv('GRAFANA_PANEL_ID', None)
+
+        if api_key:
+            authorization = "Bearer %s" % api_key
+        elif grafana_user is not None:
+            authorization = "Basic %s" % b64encode("%s:%s" % (grafana_user, grafana_password))
+        else:
             self.disabled = True
-            self._display.warning("GRAFANA_API_TOKEN not defined in the environment")
-        self.grafana_server = os.getenv('GRAFANA_SERVER', 'localhost')
-        self.grafana_port = int(os.getenv('GRAFANA_PORT', 3000))
+            self._display.warning("Authentcation required, please set GRAFANA_API_KEY or GRAFANA_USER/GRAFANA_PASSWORD")
+            return
+
         self.headers = {'Content-Type': 'application/json',
-                        'Authorization': 'Bearer %s' % token}
+                        'Authorization': authorization}
         self.errors = 0
         self.hostname = socket.gethostname()
         self.username = getpass.getuser()
@@ -140,21 +152,18 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
-        text = PLAYBOOK_START_TXT.format(playbook=self.playbook,
-                                         hostname=self.hostname, username=self.username)
+        text = PLAYBOOK_START_TXT.format(playbook=self.playbook, hostname=self.hostname,
+                                         username=self.username)
         data = {
             'time': to_millis(self.start_time),
             'text': text,
             'tags': ['ansible', 'ansible_event_start', self.playbook]
         }
-        if int(self.secure) == 1:
-            self.http = httplib.HTTPSConnection(self.grafana_server, self.grafana_port)
-        else:
-            self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
-        self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
-        response = self.http.getresponse()
-        if response.status != 200:
-            self._display.warning("Grafana server responded with HTTP %d", response.status)
+        if self.dashboard_id:
+            data["dashboardId"] = int(self.dashboard_id)
+        if self.panel_id:
+            data["panelId"] = int(self.panel_id)
+        self._send_annotation(json.dumps(data))
 
     def v2_playbook_on_stats(self, stats):
         end_time = datetime.now()
@@ -163,10 +172,9 @@ class CallbackModule(CallbackBase):
         for host in stats.processed.keys():
             summarize_stat[host] = stats.summarize(host)
 
+        status = "FAILED"
         if self.errors == 0:
             status = "OK"
-        else:
-            status = "FAILED"
 
         text = PLAYBOOK_STATS_TXT.format(playbook=self.playbook, hostname=self.hostname,
                                          duration=duration.total_seconds(),
@@ -180,11 +188,11 @@ class CallbackModule(CallbackBase):
             'text': text,
             'tags': ['ansible', 'ansible_report', self.playbook]
         }
-        self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
-        self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
-        response = self.http.getresponse()
-        if response.status != 200:
-            self._display.warning("Grafana server responded with HTTP %d", response.status)
+        if self.dashboard_id:
+            data["dashboardId"] = int(self.dashboard_id)
+        if self.panel_id:
+            data["panelId"] = int(self.panel_id)
+        self._send_annotation(json.dumps(data))
 
     def v2_runner_on_failed(self, result, **kwargs):
         text = PLAYBOOK_ERROR_TXT.format(playbook=self.playbook, hostname=self.hostname,
@@ -196,8 +204,18 @@ class CallbackModule(CallbackBase):
             'tags': ['ansible', 'ansible_event_failure', self.playbook]
         }
         self.errors += 1
-        self.http = httplib.HTTPConnection(self.grafana_server, self.grafana_port)
-        self.http.request("POST", "/api/annotations", json.dumps(data), self.headers)
+        if self.dashboard_id:
+            data["dashboardId"] = int(self.dashboard_id)
+        if self.panel_id:
+            data["panelId"] = int(self.panel_id)
+        self._send_annotation(json.dumps(data))
+
+    def _send_annotation(self, annotation):
+        if int(self.secure) == 1:
+            self.http = httplib.HTTPSConnection(self.grafana_host)
+        else:
+            self.http = httplib.HTTPConnection(self.grafana_host)
+        self.http.request("POST", "/api/annotations", annotation, self.headers)
         response = self.http.getresponse()
         if response.status != 200:
-            self._display.warning("Grafana server responded with HTTP %d", response.status)
+            self._display.warning("Grafana server responded with HTTP %d" % response.status)
