@@ -243,6 +243,7 @@ class DigitalOceanInventory(object):
         self.cache_max_age = 0
         self.use_private_network = False
         self.use_ipv6 = False
+        self.identifier = 'address'
         self.group_variables = {}
 
         # Read settings, environment variables, and CLI arguments
@@ -346,6 +347,10 @@ class DigitalOceanInventory(object):
         # IPv6 Address
         if config.has_option('digital_ocean', 'use_ipv6'):
             self.use_ipv6 = config.getboolean('digital_ocean', 'use_ipv6')
+
+        # Desired identifier
+        if config.has_option('digital_ocean', 'identifier'):
+            self.identifier = config.get('digital_ocean', 'identifier')
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
@@ -487,7 +492,22 @@ class DigitalOceanInventory(object):
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            dest = self.select_droplet_address(droplet)
+
+            do_id = droplet['id']
+            do_name = droplet['name']
+
+            if self.identifier == 'address':
+                dest = self.select_droplet_address(droplet)
+            elif self.identifier == 'name':
+                dest = do_name
+                suffix = 0
+                while dest in self.inventory['all']['hosts']:
+                    suffix += 1
+                    dest = '%s-%d' % (do_name, suffix)
+            elif self.identifier == 'id':
+                dest = do_id
+            else:
+                raise ValueError('unknown identifier type %s configured' % self.identifier)
 
             self.inventory['all']['hosts'].append(dest)
 
@@ -524,6 +544,7 @@ class DigitalOceanInventory(object):
         host = int(self.args.host)
         droplet = self.manager.show_droplet(host)
         info = self.do_namespace(droplet)
+        info['ansible_host'] = self.select_droplet_address(droplet)
         return {'droplet': info}
 
     ###########################################################################
