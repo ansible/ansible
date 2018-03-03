@@ -487,35 +487,53 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
 
             do_redirect = False
             if follow_redirects in ['all', 'yes', True]:
-                do_redirect = (code >= 300 and code < 400)
+                if 300 > code or code >= 400:
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
-            elif follow_redirects == 'safe':
-                do_redirect = (code >= 300 and code < 400 and method in ('GET', 'HEAD'))
+            if follow_redirects == 'safe':
+                if 300 > code or code >= 400 or method not in ('GET', 'HEAD'):
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
-            if do_redirect:
-                # Be conciliant with URIs containing a space
-                newurl = newurl.replace(' ', '%20')
-                newheaders = dict((k, v) for k, v in req.headers.items()
-                                  if k.lower() not in ("content-length"))
+            try:
+                # Python 2-3.3
+                data = req.get_data()
+                origin_req_host = req.get_origin_req_host()
+            except AttributeError:
+                # Python 3.4+
+                data = req.data
+                origin_req_host = req.origin_req_host
 
-                try:
-                    # Python 2-3.3
-                    data = req.get_data()
-                    origin_req_host = req.get_origin_req_host()
-                except AttributeError:
-                    # Python 3.4+
-                    data = req.data
-                    origin_req_host = req.origin_req_host
+            # Be conciliant with URIs containing a space
+            newurl = newurl.replace(' ', '%20')
 
-                return RequestWithMethod(newurl,
-                                         method=method,
-                                         headers=newheaders,
-                                         data=data,
-                                         origin_req_host=origin_req_host,
-                                         unverifiable=True,
-                                         )
+            # Suport redirect with payload and original headers
+            if code in (307, 308):
+                headers = req.headers
             else:
-                raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
+                data = None
+                headers = dict((k, v) for k, v in req.headers.items()
+                               if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
+
+                # http://tools.ietf.org/html/rfc7231#section-6.4.4
+                if code == 303 and method != 'HEAD':
+                    method = 'GET'
+
+                # Do what the browsers do, despite standards...
+                # First, turn 302s into GETs.
+                if code == 302 and method != 'HEAD':
+                    method = 'GET'
+
+                # Second, if a POST is responded to with a 301, turn it into a GET.
+                if code == 301 and method == 'POST':
+                    method = 'GET'
+
+            return RequestWithMethod(newurl,
+                                     method=method,
+                                     headers=headers,
+                                     data=data,
+                                     origin_req_host=origin_req_host,
+                                     unverifiable=True,
+                                     )
 
     return RedirectHandler
 
