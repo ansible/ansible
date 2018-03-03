@@ -106,4 +106,3 @@ htmlcov/
 # ansible-test coverage results
 test/units/.coverage.*
 /test/integration/cloud-config-azure.yml
-/test/integration/cloud-config-digital_ocean.yml

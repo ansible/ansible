@@ -1,0 +1,4 @@
+- name: SSH Key module tests
+  include: tasks/sshkey.yml
+- name: Floating IPs module tests
+  include: tasks/floating_ip.yml
