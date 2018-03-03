@@ -473,6 +473,15 @@ DEFAULT_CALLBACK_WHITELIST:
   - {key: callback_whitelist, section: defaults}
   type: list
   yaml: {key: plugins.callback.whitelist}
+DEFAULT_CLICONF_PLUGIN_PATH:
+  name: Cliconf Plugins Path
+  default: ~/.ansible/plugins/cliconf:/usr/share/ansible/plugins/cliconf
+  description: Colon separated paths in which Ansible will search for Cliconf Plugins.
+  env: [{name: ANSIBLE_CLICONF_PLUGINS}]
+  ini:
+  - {key: cliconf_plugins, section: defaults}
+  type: pathspec
+  yaml: {key: plugins.connection.path}
 DEFAULT_CONNECTION_PLUGIN_PATH:
   name: Connection Plugins Path
   default: ~/.ansible/plugins/connection:/usr/share/ansible/plugins/connection
@@ -799,6 +808,14 @@ DEFAULT_MODULE_UTILS_PATH:
   env: [{name: ANSIBLE_MODULE_UTILS}]
   ini:
   - {key: module_utils, section: defaults}
+  type: pathspec
+DEFAULT_NETCONF_PLUGIN_PATH:
+  name: Netconf Plugins Path
+  default: ~/.ansible/plugins/netconf:/usr/share/ansible/plugins/netconf
+  description: Colon separated paths in which Ansible will search for Netconf Plugins.
+  env: [{name: ANSIBLE_NETCONF_PLUGINS}]
+  ini:
+  - {key: cliconf_plugins, section: defaults}
   type: pathspec
 DEFAULT_NO_LOG:
   name: No log
