@@ -38,7 +38,6 @@ options:
     domain:
         description:
             - The preference domain. E.g. C(com.apple.finder), C(/path/to/some.plist), C(NSGlobalDomain).
-        required: false
         default: NSGlobalDomain
     user:
         description:
@@ -46,7 +45,6 @@ options:
               C(anyUser) will set the preference for all users on the machine.
             - See U(https://developer.apple.com/library/content/documentation/CoreFoundation/Conceptual/CFPreferences/Concepts/PreferenceDomains.html)
               for further information.
-        required: false
         default: currentUser
         choices: ["anyUser", "currentUser"]
     host:
@@ -55,7 +53,6 @@ options:
               live in the C(anyHost) domain.
             - See U(https://developer.apple.com/library/content/documentation/CoreFoundation/Conceptual/CFPreferences/Concepts/PreferenceDomains.html)
               for further information.
-        required: false
         default: anyHost
         choices: ["anyHost", "currentHost"]
     key:
@@ -68,19 +65,15 @@ options:
         description:
             - The type of the value to write. If unspecified, I(type) will
               be deduced mostly the same way YAML casts types (see Notes for special cases).
-        required: false
-        default: null
         choices: ["array", "bool", "boolean", "data", "date", "dict", "float", "real", "int", "integer", "string"]
     value:
         description:
             - The value that will be set for the specified key.
               If C(value) is omitted and C(state) is not C(absent), the preference value of C(key) will be returned.
-        required: false
     state:
         description:
             - The state of the preference.
               c(merge) performs a deep merge of dictionaries and arrays.
-        required: false
         default: replace
         choices: ["replace", "merge", "absent"]
 notes:
@@ -1006,61 +999,13 @@ class MacOSPref(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            domain=dict(
-                default='NSGlobalDomain',
-                type='str',
-                required=False
-            ),
-            user=dict(
-                default='currentUser',
-                choices=[
-                    'anyUser',
-                    'currentUser'
-                ],
-                required=False
-            ),
-            host=dict(
-                default='anyHost',
-                choices=[
-                    'anyHost',
-                    'currentHost'
-                ],
-                required=False
-            ),
-            key=dict(
-                type='str',
-                required=True
-            ),
-            type=dict(
-                default=None,
-                choices=[
-                    'array',
-                    'bool',
-                    'boolean',
-                    'data',
-                    'date',
-                    'dict',
-                    'float',
-                    'real',
-                    'int',
-                    'integer',
-                    'string',
-                ],
-                required=False
-            ),
-            value=dict(
-                type='raw',
-                required=False
-            ),
-            state=dict(
-                default='replace',
-                choices=[
-                    'replace',
-                    'merge',
-                    'absent'
-                ],
-                required=False
-            ),
+            domain=dict(default='NSGlobalDomain', type='str'),
+            user=dict(default='currentUser', choices=['anyUser', 'currentUser']),
+            host=dict(default='anyHost', choices=['anyHost', 'currentHost']),
+            key=dict(type='str', required=True),
+            type=dict(choices=['array', 'bool', 'boolean', 'data', 'date', 'dict', 'float', 'real', 'int', 'integer', 'string']),
+            value=dict(type='raw'),
+            state=dict(default='replace', choices=['replace', 'merge', 'absent']),
         ),
         supports_check_mode=True
     )
