@@ -1,0 +1,4 @@
+- name: Create a Tower team
+  tower_team:
+    name: Test Team
+    organization: Default
