@@ -720,6 +720,9 @@ def command_integration_filtered(args, targets, all_targets):
                 tries -= 1
 
                 try:
+                    if cloud_environment:
+                        cloud_environment.setup_once()
+
                     run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, False)
 
                     start_time = time.time()
