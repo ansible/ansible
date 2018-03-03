@@ -40,6 +40,12 @@ options:
     description:
       - cd into this directory on the remote node before running the script
     version_added: "2.4"
+  interpreter:
+    description:
+      - Name or path of an interpreter to invoke the script with
+    version_added: "2.6"
+    required: false
+    default: null
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
@@ -66,4 +72,14 @@ EXAMPLES = '''
 - script: /some/local/remove_file.sh --some-arguments 1234
   args:
     removes: /the/removed/file.txt
+
+# Run a script using an interpreter in a non-system path
+- script: /some/local/script
+  args:
+    interpreter: /some/remote/interpreter
+
+# Run a script using an interpreter in a system path
+- script: /some/local/script.py
+  args:
+    interpreter: python3
 '''
