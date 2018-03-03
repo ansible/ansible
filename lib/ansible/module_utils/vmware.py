@@ -474,8 +474,7 @@ def set_vnc_extraconfig(content, vm, enabled, ip, port, password):
         options_values["remotedisplay.vnc.password"] = str(password).strip()
         options_values["remotedisplay.vnc.ip"] = str(ip).strip()
         options_values["remotedisplay.vnc.port"] = str(port).strip()
-        
-    for k, v in options_values.iteritems():
+    for k, v in options_values.items():
         opt = vim.option.OptionValue()
         opt.key = k
         opt.value = v
