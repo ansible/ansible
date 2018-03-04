@@ -25,6 +25,8 @@ module: panos_import
 short_description: import file on PAN-OS devices
 description:
     - Import file on PAN-OS device
+notes:
+    - API reference documentation can be read from the C(/api/) directory of your appliance
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -47,6 +49,11 @@ options:
     category:
         description:
             - Category of file uploaded. The default is software.
+<<<<<<< HEAD
+=======
+            - See API > Import section of the API reference for category options.            
+        required: false
+>>>>>>> Fix bug 36936
         default: software
     file:
         description:
@@ -54,6 +61,15 @@ options:
     url:
         description:
             - URL of the file that will be imported to device.
+<<<<<<< HEAD
+=======
+        required: false
+        default: None
+    validate_ssl:
+        description:
+            - Whether or not certificates should be validated
+        default: True
+>>>>>>> Fix bug 36936
 '''
 
 EXAMPLES = '''
@@ -113,7 +129,7 @@ def import_file(xapi, module, ip_address, file_, category):
 
     r = requests.post(
         'https://' + ip_address + '/api/',
-        verify=False,
+        verify=module.params['validate_ssl'],
         params=params,
         headers={'Content-Type': mef.content_type},
         data=mef
@@ -150,7 +166,8 @@ def main():
         username=dict(default='admin'),
         category=dict(default='software'),
         file=dict(),
-        url=dict()
+        url=dict(),
+        validate_ssl=dict(type='bool', default=True),
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['file', 'url']])
     if not HAS_LIB:
