@@ -29,7 +29,14 @@ options:
             - If C(absent), will verify timezone is unset (absent) and will unset (delete) if needed.
         choices: [present, absent]
         default: absent
-        aliases: [admin_state]
+        required: true
+
+    admin_state:
+        description: admin state indicates if the timezone confguration is enabled (utilized by UCS Manager)
+            or disabled (not utilized by UCS Manager)
+        choices: ['disabled', 'enabled']
+        default: "enabled"
+        required: false
 
     timezone:
         description:
@@ -38,17 +45,15 @@ options:
             - This name can be between 0 and 510 alphanumeric characters.
             - You cannot use spaces or any special characters other than
             - "\"-\" (hyphen), \"_\" (underscore), \"/\" (backslash)."
-        default: unset
-        required: no
+        required: false
 
-    description:
+    descr:
         description:
             - A user-defined description of the timezone object.
             - Enter up to 256 characters.
             - "You can use any characters or spaces except the following:"
             - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
         required: no
-        aliases: [ descr ]
 
 extends_documentation_fragment:
     - ucs
@@ -56,7 +61,6 @@ extends_documentation_fragment:
 requirements:
 
     - ucsmsdk
-    - pytz
 
 author:
 
@@ -71,6 +75,7 @@ EXAMPLES = r'''
     username: admin
     password: password
     state: present
+    admin_state: enabled
     timezone: America/Los_Angeles
     descr: 'Time Zone for Los Angeles'
 
@@ -80,13 +85,13 @@ EXAMPLES = r'''
     username: admin
     password: password
     state: absent
+    admin_state: disabled
 '''
 
 RETURN = r'''
 #
 '''
 
-import pytz
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
@@ -94,8 +99,9 @@ from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_s
 def main():
     argument_spec = ucs_argument_spec
     argument_spec.update(
-        timezone=dict(type='str', default=''),
+        timezone=dict(type='str'),
         descr=dict(type='str'),
+        admin_state=dict(type='str', default='absent', choices=['disabled', 'enabled']),
         state=dict(type='str', default='absent', choices=['present', 'absent']),
     )
 
@@ -117,43 +123,39 @@ def main():
         mo_exists = False
         props_match = False
 
-        if (module.params['timezone'] in pytz.all_timezones or
-                len(module.params['timezone']) <= 0):
+        dn = 'sys/svc-ext/datetime-svc'
 
-            dn = 'sys/svc-ext/datetime-svc'
+        mo = ucs.login_handle.query_dn(dn)
+        if mo:
+            mo_exists = True
 
-            mo = ucs.login_handle.query_dn(dn)
-            if mo:
-                mo_exists = True
-
-            if module.params['state'] == 'absent':
-                # mo must exist but all properties do not have to match
-                if mo_exists:
-                    if not module.check_mode:
-                        mo.timezone = ""
-                        mo.descr = ""
-                        ucs.login_handle.add_mo(mo, modify_present=True)
-                        ucs.login_handle.commit()
-                    changed = True
-            else:
-                if mo_exists:
-                    # check top-level mo props
-                    kwargs = dict(timezone=module.params['timezone'])
-                    kwargs['descr'] = module.params['descr']
-                    if mo.check_prop_match(**kwargs):
-                        props_match = True
-
-                if not props_match:
-                    if not module.check_mode:
-                        # update mo timezone mo always exists
-                        mo.timezone = module.params['timezone']
-                        mo.descr = module.params['descr']
-                        ucs.login_handle.add_mo(mo, modify_present=True)
-                        ucs.login_handle.commit()
-                    changed = True
+        if module.params['state'] == 'absent':
+            # mo must exist but all properties do not have to match
+            if mo_exists:
+                if not module.check_mode:
+                    mo.timezone = ""
+                    mo.descr = ""
+                    ucs.login_handle.add_mo(mo, modify_present=True)
+                    ucs.login_handle.commit()
+                changed = True
         else:
-            err = True
-            module.fail_json(msg='time zone: ' + module.params['timezone'] + ' is not a valid time zone string')
+            if mo_exists:
+                # check top-level mo props
+                kwargs = dict(timezone=module.params['timezone'])
+                kwargs['descr'] = module.params['descr']
+                kwargs['admin_state'] = module.params['admin_state']
+                if mo.check_prop_match(**kwargs):
+                    props_match = True
+
+            if not props_match:
+                if not module.check_mode:
+                    # update mo timezone mo always exists
+                    mo.timezone = module.params['timezone']
+                    mo.descr = module.params['descr']
+                    mo.admin_state = module.params['admin_state']
+                    ucs.login_handle.add_mo(mo, modify_present=True)
+                    ucs.login_handle.commit()
+                changed = True
 
     except Exception as e:
         err = True
