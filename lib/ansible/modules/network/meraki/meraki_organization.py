@@ -62,7 +62,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Query information about all organizations
+- name: Query information about all organizations associated to the user
   meraki_organization:
     auth_key: abc12345
     state: query
