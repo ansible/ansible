@@ -101,7 +101,7 @@ def main():
     argument_spec.update(
         timezone=dict(type='str'),
         descr=dict(type='str'),
-        admin_state=dict(type='str', default='absent', choices=['disabled', 'enabled']),
+        admin_state=dict(type='str', default='enabled', choices=['disabled', 'enabled']),
         state=dict(type='str', default='absent', choices=['present', 'absent']),
     )
 
