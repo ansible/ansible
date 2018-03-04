@@ -815,7 +815,7 @@ DEFAULT_NETCONF_PLUGIN_PATH:
   description: Colon separated paths in which Ansible will search for Netconf Plugins.
   env: [{name: ANSIBLE_NETCONF_PLUGINS}]
   ini:
-  - {key: cliconf_plugins, section: defaults}
+  - {key: netconf_plugins, section: defaults}
   type: pathspec
 DEFAULT_NO_LOG:
   name: No log
