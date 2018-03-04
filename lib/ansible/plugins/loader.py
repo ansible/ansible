@@ -60,7 +60,6 @@ class PluginLoader:
         elif not config:
             config = []
 
-        import q; q(config)
         self.config = config
 
         if class_name not in MODULE_CACHE:
