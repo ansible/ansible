@@ -15,6 +15,8 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting
 
 ### Minor Changes
 
+* Ansible 2.6 and onwards, `target_id` parameter in `vmware_target_canonical_facts` module is an optional parameter.
+
 #### Removed modules (previously deprecated)
 
 ### New Modules
