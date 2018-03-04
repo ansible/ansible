@@ -32,6 +32,10 @@ options:
     name:
         description:
         - Organization ID of an organization
+    state:
+        description:
+        - Create or query organizations
+        choices: ['query', 'present']
     host:
         description:
         - Hostname for Meraki dashboard
@@ -61,21 +65,21 @@ EXAMPLES = '''
 - name: Query information about all organizations
   meraki_organization:
     auth_key: abc12345
-    status: query
+    state: query
   delegate_to: localhost
 
 - name: Query information about a single organization named YourOrg
   meraki_organization:
     auth_key: abc12345
     name: YourOrg
-    status: query
+    state: query
   delegate_to: localhost
 
 - name: Create a new organization named YourOrg
   meraki_organization:
     auth_key: abc12345
     name: YourOrg
-    status: present
+    state: present
   delegate_to: localhost
 '''
 
@@ -138,7 +142,7 @@ def main():
                        host=dict(type='str', default='api.meraki.com'),
                        name=dict(type='str'),
                        username=dict(type='str'),
-                       state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
+                       state=dict(type='str', choices=['present', 'query'], required=True),
                        use_proxy=dict(type='bool', default=False),
                        use_ssl=dict(type='bool', default=True),
                        validate_certs=dict(type='bool', default=True),
@@ -165,7 +169,6 @@ def main():
 
     module.required_if=[
                            ['state', 'present', ['name']],
-                           ['state', 'absent', ['name']],
                        ]
 
     try:
@@ -249,14 +252,14 @@ def main():
                 break
 
     ''' Return the id for further processing. Some of these checks may not be necessary'''
-    if module.params['state'] == 'present' or module.params['state'] == 'absent':
+    if module.params['state'] == 'present':
         if response_items:
             org_id = find_org_id(response_items, module.params['name'])
             # module.fail_json(msg=org_id)
             if module.params['state'] == 'present':
                 module.fail_json(msg='Modifying an existing organization is not implemented')
-            elif module.params['state'] == 'absent':
-                module.fail_json(msg='Deleting an organization is not implemented')
+            # elif module.params['state'] == 'absent':
+            #     module.fail_json(msg='Deleting an organization is not implemented')
         else:
             module.warn("Create module")
             url = '{0}://{1}/api/v0/organizations'.format(protocol, module.params['host'])
