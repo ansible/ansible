@@ -49,11 +49,9 @@ options:
     category:
         description:
             - Category of file uploaded. The default is software.
-<<<<<<< HEAD
-=======
-            - See API > Import section of the API reference for category options.            
+
+            - See API > Import section of the API reference for category options.
         required: false
->>>>>>> Fix bug 36936
         default: software
     file:
         description:
@@ -61,15 +59,14 @@ options:
     url:
         description:
             - URL of the file that will be imported to device.
-<<<<<<< HEAD
-=======
         required: false
         default: None
     validate_ssl:
         description:
             - Whether or not certificates should be validated
+        type: bool
         default: True
->>>>>>> Fix bug 36936
+        version_added: "2.6"
 '''
 
 EXAMPLES = '''
