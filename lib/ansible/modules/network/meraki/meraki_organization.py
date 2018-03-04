@@ -54,8 +54,12 @@ options:
         default: 'yes'
     output_level:
         description:
-        - Set amount of debug output during module execution
+        - Set amount of debug output during module execution.
         choices: ['normal', 'debug']
+    clone:
+        description:
+        - Organization to clone to a new organization.
+        type: string
 
 author:
     - Kevin Breit (@kbreit)
@@ -147,6 +151,20 @@ def main():
                        use_ssl=dict(type='bool', default=True),
                        validate_certs=dict(type='bool', default=True),
                        output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
+                       clone=dict(type='str'),
+                       claim=dict(type='str'),
+                       claim_mode=dict(type='str'),
+                       inventory=dict(type='bool'),
+                       snmp_v2c=dict(type='bool'),
+                       snmp_v3=dict(type='bool'),
+                       snmp_v3AuthMode=dict(type='str', choices=['md5', 'sha']),
+                       snmp_v3AuthPass=dict(type='str', no_log=True),
+                       snmp_v3PrivMode=dict(type='str', choices=['des', 'aes128']),
+                       snmp_v3PrivPass=dict(type='str', no_log=True),
+                       snmp_PeerIP=dict(type='str'),
+                       vpn_PublicIP=dict(type='str'),
+                       vpn_PrivateSubnets=dict(type='str'),
+                       vpn_secret=dict(type='str', no_log=True),
                        )
 
     # seed the result dict in the object
@@ -169,6 +187,8 @@ def main():
 
     module.required_if=[
                            ['state', 'present', ['name']],
+                           ['clone', ['name']],
+                           ['vpn_PublicIP', ['name']],
                        ]
 
     try:
