@@ -67,6 +67,7 @@ options:
             - If C(no), SSL certificates will not be validated. This should only set to no used on personally controlled sites using self-signed certificates.
         default: yes
         type: bool
+        version_added: "2.6"
 '''
 
 EXAMPLES = '''
