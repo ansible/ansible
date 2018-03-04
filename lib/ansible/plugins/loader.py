@@ -630,8 +630,9 @@ strategy_loader = PluginLoader(
 terminal_loader = PluginLoader(
     'TerminalModule',
     'ansible.plugins.terminal',
+    C.DEFAULT_TERMINAL_PLUGIN_PATH,
     'terminal_plugins',
-    'terminal_plugins'
+    required_base_class='TerminalBase'
 )
 
 vars_loader = PluginLoader(
