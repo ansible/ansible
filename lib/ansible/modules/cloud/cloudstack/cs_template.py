@@ -482,29 +482,43 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
     def get_template(self):
         args = {
+            'name': self.module.params.get('name'),
             'templatefilter': self.module.params.get('template_filter'),
             'domainid': self.get_domain(key='id'),
             'account': self.get_account(key='name'),
             'projectid': self.get_project(key='id')
         }
-        if not self.module.params.get('cross_zones'):
+
+        cross_zones = self.module.params.get('cross_zones')
+        if not cross_zones:
             args['zoneid'] = self.get_zone(key='id')
 
-        # if checksum is set, we only look on that.
-        checksum = self.module.params.get('checksum')
-        if not checksum:
-            args['name'] = self.module.params.get('name')
+        template_found = None
 
         templates = self.query_api('listTemplates', **args)
         if templates:
-            # if checksum is set, we only look on that.
-            if not checksum:
-                return templates['template'][0]
-            else:
-                for i in templates['template']:
-                    if 'checksum' in i and i['checksum'] == checksum:
-                        return i
-        return None
+            checksum = self.module.params.get('checksum')
+            display_text = self.module.params.get('display_text')
+
+            for tmpl in templates['template']:
+                if tmpl['crossZones'] != cross_zones:
+                    continue
+
+                if checksum and 'checksum' in tmpl and tmpl['checksum'] != checksum:
+                    continue
+
+                if display_text and tmpl['displaytext'] != display_text:
+                    continue
+
+                if not template_found:
+                    template_found = tmpl
+                # A cross zones template has one entry per zone but the same id
+                elif tmpl['id'] == template_found['id']:
+                    continue
+                else:
+                    self.fail_json(msg="Multiple templates found matching provided params. Please specifiy more precisely.")
+
+        return template_found
 
     def extract_template(self):
         template = self.get_template()
