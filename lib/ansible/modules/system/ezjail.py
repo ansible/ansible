@@ -56,6 +56,7 @@ options:
         considered a valid combination.)
     required: false
     default: true
+    type: bool
   ip_addr:
     description:
       - Ip address string to use for the jail. The string will not be
