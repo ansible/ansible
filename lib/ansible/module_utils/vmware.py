@@ -104,17 +104,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
     return None
 
 
-# Maintain for legacy, or remove with 2.1 ?
-# Should be replaced with find_cluster_by_name
-def find_cluster_by_name_datacenter(datacenter, cluster_name):
-
-    host_folder = datacenter.hostFolder
-    for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
-    return None
-
-
 def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
     if not isinstance(obj_type, list):
         obj_type = [obj_type]
