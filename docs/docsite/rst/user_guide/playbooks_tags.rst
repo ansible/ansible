@@ -137,6 +137,24 @@ display all tags applied to the tasks with the ``--list-tags`` option.
     ``block:`` may be used to tag more than one task at once. The include
     itself should also be tagged.
 
+    To include a role in a play, and execute it using the tag 'mytag':
+
+    - hosts: all
+      tasks:
+        - include_role:
+            name: myrole
+          tags: mytag  
+    ...
+
+    (role tasks file)
+    - block:
+        - name: First task to run
+          ...
+        - name: Second task to run
+          ...
+      tags:
+        - mytag
+
 
 .. _special_tags:
 
