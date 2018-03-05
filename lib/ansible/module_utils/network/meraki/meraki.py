@@ -204,6 +204,21 @@ class MerakiModule(object):
         org = is_org_dupe(self.params['org_name'], self.get_orgs())
         return org['id']
 
+    def get_net(self, org_name, net_name):
+        ''' Return network information '''
+        org_id = get_org_id(org_name)
+        path = '/organizations/{0}/networks'.format(org_id)
+        return = self.response_json(self.request('GET', path))
+
+    def get_net_id(self, org_name=None, net_name=None, data=None):
+        ''' Returne network id from lookup or existing data '''
+        if data is not None:
+            return net['id']
+        else:
+            if org_name is not None and net_name is not None:
+                net = self.get_net(org_name, net_name)
+                return net['id']
+
     def request(self, method, path):
         ''' Generic HTTP method for Meraki requests '''
         self.path = path        
