@@ -868,7 +868,13 @@ def main():
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
         for filename in handler.files_in_archive:
+            # GNU tar won't create absolute filenames. We don't support it either (It causes
+            # problems here.  Could cause issues in other parts of the code as well)
+            if filename.startswith('/'):
+                filename = filename[1:]
+
             file_args['path'] = os.path.join(dest, filename)
+
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
