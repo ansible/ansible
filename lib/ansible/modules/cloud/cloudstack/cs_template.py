@@ -94,8 +94,9 @@ options:
   template_filter:
     description:
       - Name of the filter used to search for the template.
+      - The filter C(all) was added in 2.6.
     default: self
-    choices: [ featured, self, selfexecutable, sharedexecutable, executable, community ]
+    choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new template.
@@ -562,7 +563,7 @@ def main():
         is_extractable=dict(type='bool', default=False),
         is_routing=dict(type='bool'),
         checksum=dict(),
-        template_filter=dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
+        template_filter=dict(default='self', choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         hypervisor=dict(choices=CS_HYPERVISORS),
         requires_hvm=dict(type='bool', default=False),
         password_enabled=dict(type='bool', default=False),
