@@ -20,8 +20,8 @@ description:
 notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile)
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
