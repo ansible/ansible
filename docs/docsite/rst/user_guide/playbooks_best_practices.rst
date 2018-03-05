@@ -33,7 +33,7 @@ The top level of the directory would contain files and directories like so::
        group1.yml             # here we assign variables to particular groups
        group2.yml
     host_vars/
-       hostname1.yml          # here we assign variables to particular system
+       hostname1.yml          # here we assign variables to particular systems
        hostname2.yml
 
     library/                  # if any custom modules, put them here (optional)
