@@ -156,6 +156,7 @@ options:
   kms_key_id:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
+    version_added: "2.6"
 
 requirements: [ "boto3", "botocore" ]
 author:
