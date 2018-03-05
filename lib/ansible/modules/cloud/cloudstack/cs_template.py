@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -57,38 +43,39 @@ options:
     description:
       - The MD5 checksum value of this template.
       - If set, we search by checksum instead of name.
-    default: false
   is_ready:
     description:
-      - This flag is used for searching existing templates.
-      - If set to C(true), it will only list template ready for deployment e.g. successfully downloaded and installed.
-      - Recommended to set it to C(false).
-    default: false
+      - "Note: this flag was not implemented and therefore marked as deprecated."
+      - Deprecated, will be removed in version 2.10.
+    type: bool
   is_public:
     description:
       - Register the template to be publicly available to all users.
       - Only used if C(state) is present.
-    default: false
+    default: no
+    type: bool
   is_featured:
     description:
       - Register the template to be featured.
       - Only used if C(state) is present.
-    default: false
+    default: no
+    type: bool
   is_dynamically_scalable:
     description:
       - Register the template having XS/VMWare tools installed in order to support dynamic scaling of VM CPU/memory.
       - Only used if C(state) is present.
-    default: false
+    default: no
+    type: bool
   cross_zones:
     description:
       - Whether the template should be synced or removed across zones.
       - Only used if C(state) is present or absent.
-    default: false
+    default: no
+    type: bool
   mode:
     description:
       - Mode for the template extraction.
       - Only used if C(state=extracted).
-    required: false
     default: http_download
     choices: [ http_download, ftp_upload ]
   domain:
@@ -107,7 +94,6 @@ options:
   template_filter:
     description:
       - Name of the filter used to search for the template.
-    required: false
     default: self
     choices: [ featured, self, selfexecutable, sharedexecutable, executable, community ]
   hypervisor:
@@ -118,22 +104,26 @@ options:
   requires_hvm:
     description:
       - true if this template requires HVM.
-    default: false
+    default: no
+    type: bool
   password_enabled:
     description:
       - True if the template supports the password reset feature.
-    default: false
+    default: no
+    type: bool
   template_tag:
     description:
       - the tag for this template.
   sshkey_enabled:
     description:
       - True if the template supports the sshkey upload feature.
-    default: false
+    default: no
+    type: bool
   is_routing:
     description:
-      - True if the template type is routing i.e., if template is used to deploy router.
+      - Sets the template type to routing, i.e. if template is used to deploy routers.
       - Only considered if C(url) is used.
+    type: bool
   format:
     description:
       - The format for the template.
@@ -141,15 +131,15 @@ options:
     choices: [ QCOW2, RAW, VHD, OVA ]
   is_extractable:
     description:
-      - True if the template or its derivatives are extractable.
-    default: false
+      - Allows the template or its derivatives to be extractable.
+    default: no
+    type: bool
   details:
     description:
       - Template details in key/value pairs.
   bits:
     description:
       - 32 or 64 bits support.
-    required: false
     default: 64
   display_text:
     description:
@@ -157,13 +147,13 @@ options:
   state:
     description:
       - State of the template.
-    required: false
     default: present
     choices: [ present, absent, extracted ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
+    default: yes
+    type: bool
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -491,7 +481,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
     def get_template(self):
         args = {
-            'isready': self.module.params.get('is_ready'),
             'templatefilter': self.module.params.get('template_filter'),
             'domainid': self.get_domain(key='id'),
             'account': self.get_account(key='name'),
@@ -566,7 +555,7 @@ def main():
         vm=dict(),
         snapshot=dict(),
         os_type=dict(),
-        is_ready=dict(type='bool', default=False),
+        is_ready=dict(type='bool', removed_in_version='2.10'),
         is_public=dict(type='bool', default=True),
         is_featured=dict(type='bool', default=False),
         is_dynamically_scalable=dict(type='bool', default=False),
