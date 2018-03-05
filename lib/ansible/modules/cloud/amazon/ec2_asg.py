@@ -1421,12 +1421,8 @@ def wait_for_new_inst(connection, group_name, wait_timeout, desired_size, prop):
 
 def asg_exists(connection):
     group_name = module.params.get('name')
-
     as_group = describe_autoscaling_groups(connection, group_name)
-    if len(as_group) == 0:
-        return False
-
-    return True
+    return bool(len(as_group))
 
 
 def main():
