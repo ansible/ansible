@@ -212,13 +212,15 @@ def main():
     variables_file = module.params.get('variables_file')
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
+    force_init = module.params.get('force_init')
 
     if bin_path is not None:
         command = [bin_path]
     else:
         command = [module.get_bin_path('terraform')]
 
-    init_plugins(command[0], project_path)
+    if force_init:
+        init_plugins(command[0], project_path)
 
     variables_args = []
     for k, v in variables.items():
