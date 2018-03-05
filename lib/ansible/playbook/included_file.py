@@ -25,8 +25,6 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role_include import IncludeRole
 from ansible.template import Templar
 
-from copy import deepcopy
-
 try:
     from __main__ import display
 except ImportError:
@@ -148,7 +146,7 @@ class IncludedFile:
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
-                        original_task_copy = deepcopy(original_task)
+                        original_task_copy = original_task.copy()
                         original_task_copy._role_name = role_name
                         for from_arg in original_task_copy.FROM_ARGS:
                             if from_arg in include_variables:
