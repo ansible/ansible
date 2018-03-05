@@ -15,6 +15,7 @@ module: cs_template_facts
 short_description: Gathering facts of templates on Apache CloudStack based clouds.
 description:
   - Gathering facts of templates.
+  - Sets Ansible facts accessable by the key C(cloudstack_template) and also returns results.
 version_added: "2.6"
 author: "René Moser (@resmo)"
 options:
@@ -302,8 +303,11 @@ def main():
     )
 
     acs_template_facts = AnsibleCloudStackTemplateFacts(module)
-    template_facts = acs_template_facts.get_facts()
-    module.exit_json(**template_facts)
+    result = acs_template_facts.get_result_and_facts(
+        facts_name='cloudstack_template',
+        resource=acs_template_facts.get_template()
+    )
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
