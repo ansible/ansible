@@ -245,6 +245,8 @@ def parse_show_install(data):
             ud['server_error'] = True
         elif data == -32603:
             ud['server_error'] = True
+        elif data == 'No install all data found':
+            ud['server_error'] = True
         return ud
     else:
         ud['list_data'] = data.split('\n')
@@ -383,6 +385,7 @@ def build_install_cmd_set(issu, image, kick, type):
     else:
         commands.append(
             '%s system %s kickstart %s' % (rootcmd, image, kick))
+
     return commands
 
 
@@ -452,7 +455,7 @@ def check_mode_nextgen(module, issu, image, kick=None):
         # The system may be busy from the previous call to check_mode so loop
         # until it's done.
         data = check_install_in_progress(module, commands, opts)
-    if re.search(r'No install all data found', data['raw']):
+    if data['server_error']:
         data['error'] = True
     return data
 
