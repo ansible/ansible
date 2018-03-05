@@ -79,8 +79,9 @@ options:
       - To avoid duplicating infra, if a state file can't be found this will
         force a `terraform init`. Generally, this should be turned off unless
         you intend to provision an entirely new Terraform deployment.
-    required: false
     default: false
+    required: false
+    type: bool
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
