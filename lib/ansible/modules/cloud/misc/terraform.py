@@ -155,6 +155,13 @@ def _state_args(state_file):
     return []
 
 
+def init_plugins(bin_path, project_path):
+    command = [bin_path, 'init']
+    rc, out, err = module.run_command(command, cwd=project_path)
+    if rc != 0:
+        module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
+
+
 def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
@@ -191,6 +198,7 @@ def main():
             targets=dict(type='list', default=[]),
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
+            force_init=dict(type='bool', default=False)
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -208,6 +216,8 @@ def main():
         command = [bin_path]
     else:
         command = [module.get_bin_path('terraform')]
+
+    init_plugins(command[0], project_path)
 
     variables_args = []
     for k, v in variables.items():
