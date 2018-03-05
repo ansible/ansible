@@ -257,6 +257,8 @@ def main():
     if state == 'absent':
         # deleting cannot use a statefile
         needs_application = True
+        # add variables settings to destroy command
+        command.extend(variables_args)
     elif plan_file and os.path.exists(plan_file):
         command.append(plan_file)
     elif plan_file and not os.path.exists(plan_file):
