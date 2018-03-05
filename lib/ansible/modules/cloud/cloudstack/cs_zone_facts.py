@@ -28,17 +28,17 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-- name: Gather facts from zone
-  local_action
-    module: cs_zone_facts:
+- name: Gather facts from a zone
+  local_action:
+    module: cs_zone_facts
     name: ch-gva-1
   register: zone
 
-- name: Use the returned result in register
+- name: Show the returned results of the registered variable
   debug:
     var: zone
 
-- name: Use the facts by ansible_facts key cloudstack_zone
+- name: Show the facts by the ansible_facts key cloudstack_zone
   debug:
     var: cloudstack_zone
 '''
