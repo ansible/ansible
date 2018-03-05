@@ -39,11 +39,11 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-IGNORED_ALWAYS = [b"^\.", b"^host_vars$", b"^group_vars$", b"^vars_plugins$"]
-IGNORED_PATTERNS = [to_bytes(x) for x in C.INVENTORY_IGNORE_PATTERNS]
-IGNORED_EXTS = [b'%s$' % to_bytes(re.escape(x)) for x in C.INVENTORY_IGNORE_EXTS]
+IGNORED_ALWAYS = ["^\.", "^host_vars$", "^group_vars$", "^vars_plugins$"]
+IGNORED_PATTERNS = C.INVENTORY_IGNORE_PATTERNS
+IGNORED_EXTS = ['%s$' % re.escape(x) for x in C.INVENTORY_IGNORE_EXTS]
 
-IGNORED = re.compile(b'|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
+IGNORED = re.compile('|'.join(IGNORED_ALWAYS + IGNORED_PATTERNS + IGNORED_EXTS))
 
 
 def order_patterns(patterns):
