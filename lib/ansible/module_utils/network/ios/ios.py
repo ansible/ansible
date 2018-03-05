@@ -108,15 +108,15 @@ def get_defaults_flag(module):
 
 
 def get_config(module, flags=None):
-    global _DEVICE_CONFIGS
+    flag_str = ' '.join(to_list(flags))
 
-    if _DEVICE_CONFIGS != {}:
-        return _DEVICE_CONFIGS
-    else:
+    try:
+        return _DEVICE_CONFIGS[flag_str]
+    except KeyError:
         connection = get_connection(module)
-        out = connection.get_config()
+        out = connection.get_config(flags=flags)
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-        _DEVICE_CONFIGS = cfg
+        _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
 
 
