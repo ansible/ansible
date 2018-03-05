@@ -78,9 +78,10 @@ options:
   allow_no_value:
      description:
        - allow option without value and without '=' symbol
+     type: bool
      required: false
      default: false
-     version_added: "2.5"
+     version_added: "2.6"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
