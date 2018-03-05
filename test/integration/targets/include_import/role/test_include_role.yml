@@ -47,7 +47,6 @@
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
-      register: loop_test
       with_items:
         - role1
         - role3
