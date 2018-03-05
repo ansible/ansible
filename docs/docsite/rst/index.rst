@@ -49,12 +49,12 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    :maxdepth: 2
    :caption: Scenario Guides
 
-   scenario_guides/guide_aci
    scenario_guides/guide_aws
    scenario_guides/guide_azure
    scenario_guides/guide_rax
    scenario_guides/guide_gce
    scenario_guides/guide_cloudstack
+   scenario_guides/guide_aci
    scenario_guides/guide_vagrant
    scenario_guides/guide_docker
    scenario_guides/guide_packet
