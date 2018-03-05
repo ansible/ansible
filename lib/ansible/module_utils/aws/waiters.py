@@ -123,8 +123,8 @@ waf_data = {
     "version": 2,
     "waiters": {
         "ChangeTokenInSync": {
-            "delay": 15,
-            "maxAttempts": 40,
+            "delay": 20,
+            "maxAttempts": 60,
             "operation": "GetChangeTokenStatus",
             "acceptors": [
                 {

@@ -210,7 +210,7 @@ def find_and_update_rule(client, module, rule_id):
         try:
             result = run_func_with_change_token_backoff(client, module, update, client.update_rule)
             get_waiter(
-                self.client, 'change_token_in_sync',
+                client, 'change_token_in_sync',
             ).wait(
                 ChangeToken=result['ChangeToken']
             )
