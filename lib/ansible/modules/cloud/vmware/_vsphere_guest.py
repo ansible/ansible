@@ -1808,7 +1808,7 @@ def main():
         module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
                              'validate_certs=False on the task')
 
-    if not validate_certs:
+    if not validate_certs and hasattr(ssl, 'SSLContext'):
         ssl._create_default_https_context = ssl._create_unverified_context
 
     try:
