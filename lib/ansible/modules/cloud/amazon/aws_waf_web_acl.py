@@ -194,10 +194,12 @@ def find_and_update_web_acl(client, module, web_acl_id):
         'WebACLId': acl['WebACLId'],
         'DefaultAction': acl['DefaultAction']
     }
+    change_tokens = []
     if deletions:
         try:
             params['Updates'] = deletions
             result = run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            change_tokens.append(result['ChangeToken'])
             get_waiter(
                 client, 'change_token_in_sync',
             ).wait(
@@ -209,13 +211,16 @@ def find_and_update_web_acl(client, module, web_acl_id):
         try:
             params['Updates'] = insertions
             result = run_func_with_change_token_backoff(client, module, params, client.update_web_acl)
+            change_tokens.append(result['ChangeToken'])
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not update Web ACL')
+    if change_tokens:
+        for token in change_tokens:
             get_waiter(
                 client, 'change_token_in_sync',
             ).wait(
-                ChangeToken=result['ChangeToken']
+                ChangeToken=token
             )
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg='Could not update Web ACL')
     if changed:
         acl = get_web_acl(client, module, web_acl_id)
     return changed, acl
