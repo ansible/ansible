@@ -656,7 +656,13 @@ class VaultLib:
         :returns: a byte string containing the decrypted data and the vault-id that was used
 
         '''
-        plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
+        try:
+            plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
+        except AnsibleVaultError as e:
+            if C.ERROR_ON_VAULT_FAIL:
+                raise
+            else:
+                display.warning('Vault decryption failed: %s' % to_native(e))
         return plaintext
 
     def decrypt_and_get_vault_id(self, vaulttext, filename=None):
