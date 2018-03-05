@@ -176,9 +176,19 @@ class MerakiModule(object):
         return response
 
     def get_orgs(self):
+        ''' Downloads all organizations '''
         return self.response_json(self.request('GET', '/organizations'))
 
+    def is_org(self, org_id):
+        ''' Checks whether an organization exists based on its id '''
+        orgs = get_orgs()
+        for o in orgs:
+            if o['id'] == org_id:
+                return True
+        self.fail_json(msg='No organization found with ID {0}'.format(org_id))
+
     def is_org_dupe(self, org_name, data):
+        ''' Checks whether multiple organizations exist with the same name '''
         dupe_orgs = list()
         for o in data:
             if o['name'] == org_name:
@@ -193,10 +203,12 @@ class MerakiModule(object):
             self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
 
     def get_org_id(self, org_name):
+        ''' Returns an organization id based on organization name, only if unique '''
         org = is_org_dupe(self.params['org_name'], self.get_orgs())
         return org['id']
 
     def request(self, method, path):
+        ''' Generic HTTP method for Meraki requests '''
         self.path = path        
         self.define_protocol()
         if self.define_method() is -1:  # No changes are needed to existing object
