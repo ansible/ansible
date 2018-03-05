@@ -61,8 +61,7 @@ class Cliconf(CliconfBase):
         else:
             cmd = 'show startup-config'
 
-        flags = [] if flags is None else flags
-        cmd += ' '.join(flags)
+        cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
 
         return self.send_command(cmd)
