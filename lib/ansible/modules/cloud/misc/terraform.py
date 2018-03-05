@@ -79,8 +79,9 @@ options:
       - To avoid duplicating infra, if a state file can't be found this will
         force a `terraform init`. Generally, this should be turned off unless
         you intend to provision an entirely new Terraform deployment.
-    required: false
     default: false
+    required: false
+    type: bool
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -155,6 +156,13 @@ def _state_args(state_file):
     return []
 
 
+def init_plugins(bin_path, project_path):
+    command = [bin_path, 'init']
+    rc, out, err = module.run_command(command, cwd=project_path)
+    if rc != 0:
+        module.fail_json(msg="Failed to initialize Terraform modules:\r\n{0}".format(err))
+
+
 def build_plan(bin_path, project_path, variables_args, state_file, plan_path=None):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
@@ -191,6 +199,7 @@ def main():
             targets=dict(type='list', default=[]),
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
+            force_init=dict(type='bool', default=False)
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -203,11 +212,15 @@ def main():
     variables_file = module.params.get('variables_file')
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
+    force_init = module.params.get('force_init')
 
     if bin_path is not None:
         command = [bin_path]
     else:
         command = [module.get_bin_path('terraform')]
+
+    if force_init:
+        init_plugins(command[0], project_path)
 
     variables_args = []
     for k, v in variables.items():
