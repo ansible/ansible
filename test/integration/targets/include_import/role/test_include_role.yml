@@ -53,6 +53,13 @@
         - role3
         - role2
 
+    - name: Assert that roles run with_items
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+          - _role2_result.msg == 'In role2'
+          - _role3_result.msg == 'In role3'
+
     - name: Test including a task file from a role
       include_role:
         name: role1
