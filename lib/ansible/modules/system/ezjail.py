@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: ezjail
-version_added: "2.5"
+version_added: "2.6"
 author:
   - Hans-Christian Halfbrodt (@hc42)
 short_description: Manage jails with Ezjail
@@ -46,13 +46,16 @@ options:
       - C(absent) will delete the jail if
         present (Caution This will also wipe the jailroot. Consider
         stopping and disabling the jail if you want to keep the jailroot.)
-    required: true
+    required: false
+    default: present
+    choices: ['stopped', 'started', 'restarted', 'absent']
   enabled:
     description:
       - Sets the runnable state of the jail (Does not stop the jail if
         set to false. I(state)=C(started) I(enabled)=C(no) is
         considered a valid combination.)
     required: false
+    default: true
   ip_addr:
     description:
       - Ip address string to use for the jail. The string will not be
@@ -63,6 +66,7 @@ options:
         (according to the jail config file) the ip will be updated and the
         jail will be restarted if I(state)=C(started) or I(state)=C(restarted).
     required: false
+    default: null
 '''
 
 EXAMPLES = '''
