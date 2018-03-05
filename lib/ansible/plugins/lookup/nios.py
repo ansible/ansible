@@ -57,7 +57,7 @@ EXAMPLES = """
 
 - name: fetch the default dns view
   set_fact:
-    dns_views: "{{ lookup('nios', 'view', filter={'view': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    dns_views: "{{ lookup('nios', 'view', filter={'name': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 # all of the examples below use credentials that are  set using env variables
 # export INFOBLOX_HOST=nios01
