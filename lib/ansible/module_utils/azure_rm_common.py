@@ -496,10 +496,13 @@ class AzureRMModuleBase(object):
         credentials = MSIAuthentication()
         subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
         if not subscription_id:
-            # use the first subscription of the MSI
-            subscription_client = SubscriptionClient(credentials)
-            subscription = next(subscription_client.subscriptions.list())
-            subscription_id = str(subscription.subscription_id)
+            try:
+                # use the first subscription of the MSI
+                subscription_client = SubscriptionClient(credentials)
+                subscription = next(subscription_client.subscriptions.list())
+                subscription_id = str(subscription.subscription_id)
+            except CLIError as exc:
+                self.fail("Failed to get MSI token. {0}".format(str(exc)))
         return {
             'credentials': credentials,
             'subscription_id': subscription_id

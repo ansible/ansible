@@ -214,13 +214,12 @@ try:
     from msrestazure import azure_cloud
     from azure.mgmt.compute import __version__ as azure_compute_version
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials
+    from azure.common.credentials import ServicePrincipalCredentials, UserPassCredentials, get_azure_cli_credentials
     from azure.mgmt.network import NetworkManagementClient
     from azure.mgmt.resource.resources import ResourceManagementClient
     from azure.mgmt.resource.subscriptions import SubscriptionClient
     from azure.mgmt.compute import ComputeManagementClient
     from azure.cli.core.util import CLIError
-    from azure.common.credentials import get_azure_cli_credentials
     from azure.common.cloud import get_cli_active_cloud
 except ImportError as exc:
     HAS_AZURE_EXC = exc
@@ -415,10 +414,10 @@ class AzureRM(object):
             return default_credentials
 
         try:
-            cli_credentials = self._get_azure_cli_credentials()
-            if cli_credentials:
+            if HAS_AZURE:
                 self.log('Retrieving credentials from AzureCLI profile')
-                return cli_credentials
+            cli_credentials = self._get_azure_cli_credentials()
+            return cli_credentials
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
 
