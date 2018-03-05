@@ -78,8 +78,16 @@ options:
     required: false
   vpc_endpoint_id:
     description:
-      - One or more vpc endpoint ids to remove from the AWS account
+      - One or more vpc endpoint ids to remove from the AWS account with C(state=absent)
+        or as of Ansible 2.6 to update if used with C(state=present).
     required: false
+  purge_route_tables:
+    description:
+      - May be used in combination with state=present and vpc_endpoint_id to update
+        an endpoint.
+    default: False
+    type: bool
+    version_added: "2.6"
   client_token:
     description:
       - Optional client token to ensure idempotency
@@ -128,6 +136,17 @@ EXAMPLES = '''
       - rtb-87654321
   register: new_vpc_endpoint
 
+- name: Update routes and policy from the task above
+  # Also update the policy
+  ec2_vpc_endpoint:
+    state: present
+    vpc_endpoint_id: "{{ new_vpc_endpoint.result.vpc_endpoint_id }}"
+    route_table_ids:
+      - rtb-11111111
+      - rtb-22222222
+    purge_route_tables: True  # removes route tables rtb-12345678 and rtb-87654321
+    policy_file: "{{ role_path }}/files/new_endpoint_policy.json"
+
 - name: Delete newly created vpc endpoint
   ec2_vpc_endpoint:
     state: absent
@@ -175,14 +194,15 @@ import time
 import traceback
 
 try:
-    import botocore
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # will be picked up by imported HAS_BOTO3
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3,
-                                      camel_dict_to_snake_dict)
+                                      camel_dict_to_snake_dict, compare_policies)
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
 
 
 def date_handler(obj):
@@ -195,55 +215,120 @@ def wait_for_status(client, module, resource_id, status):
     status_achieved = False
 
     for x in range(0, max_retries):
-        try:
-            resource = get_endpoints(client, module, resource_id)['VpcEndpoints'][0]
-            if resource['State'] == status:
+        resource = get_endpoints(client, module)['VpcEndpoints']
+        if resource:
+            if resource[0]['State'] == status:
                 status_achieved = True
                 break
-            else:
-                time.sleep(polling_increment_secs)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
+        elif resource == [] and status == 'deleted':
+            status_achieved = True
+            break
+        time.sleep(polling_increment_secs)
 
+    if resource:
+        resource = camel_dict_to_snake_dict(resource[0])
     return status_achieved, resource
 
 
-def get_endpoints(client, module, resource_id=None):
-    params = dict()
-    if resource_id:
-        params['VpcEndpointIds'] = [resource_id]
+def get_endpoints(client, module):
+    params = {'Filters': []}
+    if module.params.get('vpc_endpoint_id'):
+        params['VpcEndpointIds'] = [module.params['vpc_endpoint_id']]
+    if module.params.get('vpc_id'):
+        params['Filters'].append({'Name': 'vpc-id', 'Values': [module.params['vpc_id']]})
+    if module.params.get('service'):
+        params['Filters'].append({'Name': 'service-name', 'Values': [module.params['service']]})
 
-    result = json.loads(json.dumps(client.describe_vpc_endpoints(**params), default=date_handler))
-    return result
+    try:
+        return json.loads(json.dumps(client.describe_vpc_endpoints(**params), default=date_handler))
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidVpcEndpointId.NotFound':
+            return {'VpcEndpoints': []}
+        else:
+            module.fail_json_aws(e, msg="Unable to describe endpoints")
+    except BotoCoreError as e:
+        module.fail_json_aws(e, msg="Unable to describe endpoints")
 
 
 def setup_creation(client, module):
     vpc_id = module.params.get('vpc_id')
     service_name = module.params.get('service')
 
-    if module.params.get('route_table_ids'):
+    if module.params.get('route_table_ids') is not None:
         route_table_ids = module.params.get('route_table_ids')
-        existing_endpoints = get_endpoints(client, module)
-        for endpoint in existing_endpoints['VpcEndpoints']:
-            if endpoint['VpcId'] == vpc_id and endpoint['ServiceName'] == service_name:
-                sorted_endpoint_rt_ids = sorted(endpoint['RouteTableIds'])
-                sorted_route_table_ids = sorted(route_table_ids)
-                if sorted_endpoint_rt_ids == sorted_route_table_ids:
-                    return False, camel_dict_to_snake_dict(endpoint)
+        existing_endpoints = get_endpoints(client, module)['VpcEndpoints']
+        if len(existing_endpoints) > 1:
+            module.fail_json("More than one endpoint matches your criteria: {0}".format(existing_endpoints))
+
+        for endpoint in existing_endpoints:
+            new_endpoint_rt_ids = set(route_table_ids) - set(endpoint['RouteTableIds'])
+            obsolete_endpoint_rt_ids = set(endpoint['RouteTableIds']) - set(route_table_ids)
+            current_policy = json.loads(to_native(endpoint['PolicyDocument']))
+            new_policy = get_policy(client, module)
+
+            # if/elif for backwards compatibility with Ansible < 2.5
+            if not module.params.get('vpc_endpoint_id') and not any([new_endpoint_rt_ids, obsolete_endpoint_rt_ids]):
+                return False, camel_dict_to_snake_dict(endpoint)
+            elif module.params.get('vpc_endpoint_id'):
+                return modify_endpoint(client, module, endpoint, new_policy, current_policy,
+                                       new_endpoint_rt_ids, obsolete_endpoint_rt_ids)
 
     changed, result = create_vpc_endpoint(client, module)
 
     return changed, json.loads(json.dumps(result, default=date_handler))
 
 
-def create_vpc_endpoint(client, module):
-    params = dict()
+def modify_endpoint(client, module, endpoint, new_policy, current_policy, new_endpoint_rt_ids, obsolete_endpoint_rt_ids):
     changed = False
+    modification_params = {'VpcEndpointId': module.params['vpc_endpoint_id']}
+    if new_policy is not None and compare_policies(current_policy, new_policy):
+        changed = True
+        modification_params['PolicyDocument'] = new_policy
+    if new_endpoint_rt_ids:
+        changed = True
+        modification_params['AddRouteTableIds'] = list(new_endpoint_rt_ids)
+    if obsolete_endpoint_rt_ids and module.params.get('purge_route_tables'):
+        changed = True
+        modification_params['RemoveRouteTableIds'] = list(obsolete_endpoint_rt_ids)
+    if changed and not module.check_mode:
+        try:
+            client.modify_vpc_endpoint(**modification_params)
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Unable to modify endpoint {0}".format(module.params['vpc_endpoint_id']))
+        else:
+            endpoint = get_endpoints(client, module)['VpcEndpoints'][0]
+    return changed, camel_dict_to_snake_dict(endpoint)
+
+
+def get_policy(client, module):
+    policy = None
+    if module.params.get('policy'):
+        try:
+            policy = json.loads(module.params.get('policy'))
+        except ValueError as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+
+    elif module.params.get('policy_file'):
+        try:
+            with open(module.params.get('policy_file'), 'r') as json_data:
+                policy = json.load(json_data)
+        except Exception as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+
+    if policy is None:
+        return policy
+
+    return json.dumps(policy)
+
+
+def create_vpc_endpoint(client, module):
+    if module.check_mode:
+        return True, 'Would have created VPC Endpoint if not in check mode'
+
+    params = dict()
     token_provided = False
     params['VpcId'] = module.params.get('vpc_id')
     params['ServiceName'] = module.params.get('service')
-    params['DryRun'] = module.check_mode
 
     if module.params.get('route_table_ids'):
         params['RouteTableIds'] = module.params.get('route_table_ids')
@@ -253,74 +338,47 @@ def create_vpc_endpoint(client, module):
         request_time = datetime.datetime.utcnow()
         params['ClientToken'] = module.params.get('client_token')
 
-    policy = None
-    if module.params.get('policy'):
-        try:
-            policy = json.loads(module.params.get('policy'))
-        except ValueError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-
-    elif module.params.get('policy_file'):
-        try:
-            with open(module.params.get('policy_file'), 'r') as json_data:
-                policy = json.load(json_data)
-        except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-
+    policy = get_policy(client, module)
     if policy:
-        params['PolicyDocument'] = json.dumps(policy)
+        params['PolicyDocument'] = policy
 
     try:
         changed = True
         result = camel_dict_to_snake_dict(client.create_vpc_endpoint(**params)['VpcEndpoint'])
         if token_provided and (request_time > result['creation_timestamp'].replace(tzinfo=None)):
             changed = False
-        elif module.params.get('wait') and not module.check_mode:
+        elif module.params.get('wait'):
             status_achieved, result = wait_for_status(client, module, result['vpc_endpoint_id'], 'available')
             if not status_achieved:
                 module.fail_json(msg='Error waiting for vpc endpoint to become available - please check the AWS console')
-    except botocore.exceptions.ClientError as e:
-        if "DryRunOperation" in e.message:
-            changed = True
-            result = 'Would have created VPC Endpoint if not in check mode'
-        elif "IdempotentParameterMismatch" in e.message:
-            module.fail_json(msg="IdempotentParameterMismatch - updates of endpoints are not allowed by the API")
-        elif "RouteAlreadyExists" in e.message:
-            module.fail_json(msg="RouteAlreadyExists for one of the route tables - update is not allowed by the API")
+    except ClientError as e:
+        if e.response['Error']['Code'] in ["IdempotentParameterMismatch", "RouteAlreadyExists"]:
+            module.fail_json_aws(e, msg="To update an endpoint, provide the vpc_endpoint_id to the task")
         else:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, msg="Failed to create endpoint")
+    except BotoCoreError as e:
+        module.fail_json_aws(e, msg="Failed to create endpoint.")
 
     return changed, result
 
 
 def setup_removal(client, module):
-    params = dict()
-    changed = False
-    params['DryRun'] = module.check_mode
-    if isinstance(module.params.get('vpc_endpoint_id'), string_types):
-        params['VpcEndpointIds'] = [module.params.get('vpc_endpoint_id')]
+    existing_endpoints = get_endpoints(client, module)['VpcEndpoints']
+    if not existing_endpoints:
+        return False, []
     else:
-        params['VpcEndpointIds'] = module.params.get('vpc_endpoint_id')
+        changed = True
+
+    if module.check_mode:
+        return changed, 'Would have deleted VPC Endpoint if not in check mode'
     try:
-        result = client.delete_vpc_endpoints(**params)['Unsuccessful']
-        if not module.check_mode and (result != []):
-            module.fail_json(msg=result)
-    except botocore.exceptions.ClientError as e:
-        if "DryRunOperation" in e.message:
-            changed = True
-            result = 'Would have deleted VPC Endpoint if not in check mode'
-        else:
-            module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-    except Exception as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        result = client.delete_vpc_endpoints(VpcEndpointIds=[module.params['vpc_endpoint_id']])['Unsuccessful']
+        if module.params.get('wait'):
+            status_achieved, result = wait_for_status(client, module, module.params['vpc_endpoint_id'], 'deleted')
+            if not status_achieved:
+                module.fail_json(msg='Error waiting for vpc endpoint to delete - please check the AWS console')
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to delete endpoint {0}".format(module.params['vpc_endpoint_id']))
     return changed, result
 
 
@@ -337,45 +395,24 @@ def main():
             wait_timeout=dict(type='int', default=320, required=False),
             route_table_ids=dict(type='list'),
             vpc_endpoint_id=dict(),
+            purge_route_tables=dict(type='bool', default=False),
             client_token=dict(),
         )
     )
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[['policy', 'policy_file']],
-        required_if=[
-            ['state', 'present', ['vpc_id', 'service']],
-            ['state', 'absent', ['vpc_endpoint_id']],
-        ]
+        required_together=[['vpc_id', 'service']],
+        required_if=[['state', 'absent', ['vpc_endpoint_id']]]
     )
-
-    # Validate Requirements
-    if not HAS_BOTO3:
-        module.fail_json(msg='botocore and boto3 are required for this module')
+    if module.params.get('state') == 'present' and not module.params.get('vpc_id') and not module.params.get('vpc_endpoint_id'):
+        module.fail_json(msg="state is present but all of the following are missing: [vpc_id, service] or [vpc_endpoint_id]")
 
     state = module.params.get('state')
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    except NameError as e:
-        # Getting around the get_aws_connection_info boto reliance for region
-        if "global name 'boto' is not defined" in e.message:
-            module.params['region'] = botocore.session.get_session().get_config_variable('region')
-            if not module.params['region']:
-                module.fail_json(msg="Error - no region provided")
-        else:
-            module.fail_json(msg="Can't retrieve connection information - " + str(e),
-                             exception=traceback.format_exc(),
-                             **camel_dict_to_snake_dict(e.response))
-
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg="Failed to connect to AWS due to wrong or missing credentials: %s" % str(e),
-                         exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     # Ensure resource is present
     if state == 'present':
