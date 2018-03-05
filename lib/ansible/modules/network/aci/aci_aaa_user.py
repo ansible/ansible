@@ -23,8 +23,8 @@ notes:
   appears to be an inconsistency wrt. the idempotent nature
   of the APIC REST API. The vendor has been informed.
   More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- More information about the internal APIC class B(aaa:User) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(aaa:User) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 requirements:

@@ -20,8 +20,8 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 notes:
-- More information about the internal APIC class B(fc:IfPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(fc:IfPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   fc_policy:
     description:
