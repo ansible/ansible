@@ -45,15 +45,15 @@ DEPRECATED
 Synopsis
 --------
 
-{% if description %}
+{% if description -%}
 
 {%   if description is string -%}
 * @{ description | convert_symbols_to_format }@
-{%   else %}
-{%     for desc in description -%}
+{%   else -%}
+{%     for desc in description %}
 * @{ desc | convert_symbols_to_format }@
 {%     endfor %}
-{%   endif %}
+{%   endif -%}
 
 {% endif %}
 
@@ -66,9 +66,9 @@ Aliases: @{ ','.join(aliases) }@
 
 {% if requirements %}
 {%   set req_title = 'Requirements' %}
-{%   if plugin_type == 'module' %}
+{%   if plugin_type == 'module' -%}
 {%     set req_title = req_title + ' (on host that executes module)' %}
-{%   endif %}
+{%   endif -%}
 @{ req_title }@
 @{ '-' * req_title|length }@
 
@@ -79,7 +79,6 @@ Aliases: @{ ','.join(aliases) }@
 {% endif %}
 
 {% if options -%}
-
 
 Options
 -------
@@ -186,21 +185,20 @@ Options
     </br>
 
 {% endif %}
-{% if notes -%}
 
+{% if notes -%}
 
 Notes
 -----
 
 .. note::
 {%   for note in notes %}
-    - @{ note | convert_symbols_to_format }@
+- @{ note | convert_symbols_to_format }@
 {%   endfor %}
 
-
 {% endif %}
-{% if examples or plainexamples -%}
 
+{% if examples or plainexamples -%}
 
 Examples
 --------
@@ -212,17 +210,80 @@ Examples
 @{ example['code'] | escape | indent(4, True) }@
 {%   endfor %}
 {%   if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+
 {% endif %}
 
+{% if not returnfacts and returndocs and returndocs.ansible_facts is defined %}
+{%   set returnfacts = returndocs.ansible_facts.contains %}
+{%   set _x = returndocs.pop('ansible_facts', None) %}
+{% endif %}
 
 {% if returnfacts -%}
+
 Returned Facts
 --------------
+Facts returned by modules can be referenced by name as any other host fact.
+
+.. raw:: html
+
+    <table border=0 cellpadding=0 class="documentation-table">
+        <tr>
+            <th class="head"><div class="cell-border">Fact</div></th>
+            <th class="head"><div class="cell-border">Returned</div></th>
+            <th class="head"><div class="cell-border">Description</div></th>
+        </tr>
+        {% for key, value in returnfacts|dictsort recursive %}
+            <tr class="return-value-column">
+                <td>
+                    <div class="outer-elbow-container">
+                        {% for i in range(1, loop.depth) %}
+                            <div class="elbow-placeholder">
+                            </div>
+                        {% endfor %}
+                        <div class="elbow-key">
+                            <b>@{ key }@</b>
+                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="cell-border">@{ value.returned }@</div></td>
+                <td>
+                    <div class="cell-border">
+                        {% if value.description is string %}
+                            <div>@{ value.description | html_ify }@</div>
+                        {% else %}
+                            {% for desc in value.description %}
+                                <div>@{ desc | html_ify }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        <br/>
+                        {% if value.sample %}
+                            <div style="font-size: smaller"><b>Sample:</b></div>
+{#                            <div style="font-size: smaller; color: blue; word-wrap: break-word; overflow-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div> #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {% if value.contains %}
+                {% if value.contains.items %}
+                    @{ loop(value.contains.items()) }@
+                {% elif value.contains[0].items %}
+                    @{ loop(value.contains[0].items()) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/><br/>
 
 {% endif %}
 
 {% if returndocs -%}
-
 
 Return Values
 -------------
@@ -284,12 +345,11 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
             {% endif %}
         {% endfor %}
     </table>
-    </br></br>
+    <br/><br/>
+
 {% endif %}
 
-
 {% if author is defined -%}
-
 
 Author
 ~~~~~~
@@ -298,14 +358,15 @@ Author
 * @{ author_name }@
 {%   endfor %}
 
-
 {% endif %}
-{% if not deprecated %}
+
+{% if not deprecated -%}
+
 {%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
 {%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
-{%   if metadata %}
-{%     if metadata.status %}
 
+{%   if metadata -%}
+{%     if metadata.status -%}
 
 Status
 ~~~~~~
@@ -314,10 +375,9 @@ Status
 This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
 {%       endfor %}
 
+{%     endif -%}
 
-{%     endif %}
-{%     if metadata.supported_by in ('core', 'network') %}
-
+{%     if metadata.supported_by in ('core', 'network') -%}
 
 Maintenance Info
 ~~~~~~~~~~~~~~~~
@@ -325,8 +385,10 @@ Maintenance Info
 For more information about Red Hat's support of this @{ plugin_type }@,
 please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
 
-{%     endif %}
-{%   endif %}
+{%     endif -%}
+{%   endif -%}
+
 {% endif %}
 
+.. hint::
 If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A+label:%20docsite_pr>`_ to improve it.
