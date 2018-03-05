@@ -98,6 +98,8 @@ class InventoryCLI(CLI):
         self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
                                help="When doing an --list, represent in a way that is optimized for export,"
                                     "not as an accurate representation of how Ansible has processed it")
+        self.parser.add_option("--delay", action="store_true", default=C.INVENTORY_DELAY_DECRYPTION, dest='delay',
+                               help="Delay decryption of vault content (do not use with vault options)")
         # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
         #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
@@ -186,13 +188,36 @@ class InventoryCLI(CLI):
 
     def dump(self, stuff):
 
-        if self.options.yaml:
+        if self.options.yaml or self.options.delay:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
+            if not self.options.delay:
+                from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+                def walk_dicts(data):
+                    if isinstance(data, dict):
+                        yield data
+                        for key, value in data.items():
+                            for d in walk_dicts(value):
+                                yield d
+
+                # Convert Vault objects into strings
+                for d in walk_dicts(stuff):
+                    for key, value in d.items():
+                        if isinstance(value, AnsibleVaultEncryptedUnicode):
+                            d[key] = str(value)
+
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         else:
-            from ansible.module_utils.basic import jsonify
-            results = jsonify(stuff, sort_keys=True, indent=4)
+            from ansible.module_utils.basic import jsonify, _json_encode_fallback
+            from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+            def vault_converter(s):
+                if isinstance(s, AnsibleVaultEncryptedUnicode):
+                    return str(s)
+                return _json_encode_fallback(s)
+
+            results = jsonify(stuff, sort_keys=True, indent=4, default=vault_converter)
 
         return results
 

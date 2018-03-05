@@ -1341,6 +1341,14 @@ INVENTORY_EXPORT:
   ini:
   - {key: export, section: inventory}
   type: bool
+INVENTORY_DELAY_DECRYPTION:
+  name: Set ansible-inventory to delay decryption
+  default: False
+  description: Controls if ansible-inventory will delay decrypting embded values.
+  env: [{name: INVENTORY_DELAY_DECRYPTION}]
+  ini:
+  - {key: delay_decryption, section: inventory}
+  type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
   default: "{{(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))}}"
