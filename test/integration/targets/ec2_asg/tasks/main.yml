@@ -387,6 +387,122 @@
 
     # ============================================================
 
+    # perform rolling replace with new launch configuration and lc_check:false
+
+    # Note - this is done async so we can query asg_facts during
+    # the execution. Issues #28087 and #35993 result in correct
+    # end result, but spin up extraneous instances during execution.
+    - name: "perform rolling update to new AMI with lc_check: false"
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc-2"
+        health_check_type: EC2
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: []
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        replace_batch_size: 3
+        lc_check: false
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      async: 1800
+      poll: 0
+      register: asg_job
+
+    - name: get ec2_asg facts for 3 minutes
+      ec2_asg_facts:
+        name: "{{ resource_prefix }}-asg"
+        <<: *aws_connection_info
+      register: output
+      loop_control:
+          pause: 15
+      with_sequence: count=12
+
+    - set_fact:
+        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+
+    # Since we started with 3 servers and replace all of them.
+    # We should see 6 servers total.
+    - assert:
+        that:
+          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 6"
+
+    - name: Ensure ec2_asg task completes
+      async_status: jid="{{ asg_job.ansible_job_id }}"
+      register: status
+      until: status.finished
+      retries: 200
+      delay: 15
+
+    # ============================================================
+
+    - name: kill asg
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        state: absent
+        <<: *aws_connection_info
+      async: 300
+
+    # Create new asg with replace_all_instances and lc_check:false
+
+    # Note - this is done async so we can query asg_facts during
+    # the execution. Issues #28087 results in correct
+    # end result, but spin up extraneous instances during execution.
+    - name: "new asg with lc_check: false"
+      ec2_asg:
+        name: "{{ resource_prefix }}-asg"
+        launch_config_name: "{{ resource_prefix }}-lc"
+        health_check_type: EC2
+        desired_capacity: 3
+        min_size: 1
+        max_size: 5
+        health_check_period: 900
+        load_balancers: []
+        vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+        wait_for_instances: yes
+        replace_all_instances: yes
+        replace_batch_size: 3
+        lc_check: false
+        wait_timeout: 1800
+        state: present
+        <<: *aws_connection_info
+      async: 1800
+      poll: 0
+      register: asg_job
+
+    # Collect ec2_asg_facts for 3 minutes
+    - name: get ec2_asg facts
+      ec2_asg_facts:
+        name: "{{ resource_prefix }}-asg"
+        <<: *aws_connection_info
+      register: output
+      loop_control:
+          pause: 15
+      with_sequence: count=12
+
+    - set_fact:
+        inst_id_json_query: 'results[*].results[*].instances[*].instance_id'
+
+    # Get all instance_ids we saw and assert we saw number expected
+    # Should only see 3 (don't replace instances we just created)
+    - assert:
+        that:
+          - "lookup('flattened',output|json_query(inst_id_json_query)).split(',')|unique|length == 3"
+
+    - name: Ensure ec2_asg task completes
+      async_status: jid="{{ asg_job.ansible_job_id }}"
+      register: status
+      until: status.finished
+      retries: 200
+      delay: 15
+
+# ============================================================
+
   always:
 
     - name: kill asg
