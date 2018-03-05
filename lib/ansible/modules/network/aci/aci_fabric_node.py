@@ -19,7 +19,7 @@ description:
 - Manage Fabric Node Members on Cisco ACI fabrics.
 notes:
 - More information about the internal APIC class B(fabric:NodeIdentP) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

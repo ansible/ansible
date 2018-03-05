@@ -239,10 +239,10 @@ Configure your local user
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 Perform the following steps:
 
-- Add the X.509 certificate to your ACI AAA local user at :menuselection:`ADMIN --> AAA`
+- Add the X.509 certificate to your ACI AAA local user at :guilabel:`ADMIN` » :guilabel:`AAA`
 - Click :guilabel:`AAA Authentication`
 - Check that in the :guilabel:`Authentication` field the :guilabel:`Realm` field displays :guilabel:`Local`
-- Expand :menuselection:`Security Management --> Local Users`
+- Expand :guilabel:`Security Management` » :guilabel:`Local Users`
 - Click the name of the user you want to add a certificate to, in the :guilabel:`User Certificates` area
 - Click the :guilabel:`+` sign and in the :guilabel:`Create X509 Certificate` enter a certificate name in the :guilabel:`Name` field
 
