@@ -14,7 +14,9 @@ DOCUMENTATION = '''
 module: cs_template
 short_description: Manages templates on Apache CloudStack based clouds.
 description:
-  - Register a template from URL, create a template from a ROOT volume of a stopped VM or its snapshot, extract and delete templates.
+  - Register templates from an URL.
+  - Create templates from a ROOT volume of a stopped VM or its snapshot.
+  - Update (since version 2.6), extract and delete templates.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -423,24 +425,36 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                     return self._get_by_key(key, s)
         self.module.fail_json(msg="Snapshot '%s' not found" % snapshot)
 
-    def create_template(self):
+    def present_template(self):
         template = self.get_template()
-        if not template:
-            self.result['changed'] = True
+        if template:
+            template = self.update_template(template)
+        elif self.module.params.get('url'):
+            template = self.register_template()
+        elif self.module.params.get('vm'):
+            template = self.create_template()
+        else:
+            self.fail_json(msg="one of the following is required on state=present: url, vm")
+        return template
 
-            args = self._get_args()
-            snapshot_id = self.get_snapshot(key='id')
-            if snapshot_id:
-                args['snapshotid'] = snapshot_id
-            else:
-                args['volumeid'] = self.get_root_volume('id')
+    def create_template(self):
+        template = None
+        self.result['changed'] = True
 
-            if not self.module.check_mode:
-                template = self.query_api('createTemplate', **args)
+        args = self._get_args()
+        snapshot_id = self.get_snapshot(key='id')
+        if snapshot_id:
+            args['snapshotid'] = snapshot_id
+        else:
+            args['volumeid'] = self.get_root_volume('id')
 
-                poll_async = self.module.params.get('poll_async')
-                if poll_async:
-                    template = self.poll_job(template, 'template')
+        if not self.module.check_mode:
+            template = self.query_api('createTemplate', **args)
+
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                template = self.poll_job(template, 'template')
+
         if template:
             template = self.ensure_tags(resource=template, resource_type='Template')
 
@@ -453,31 +467,65 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'hypervisor',
         ]
         self.module.fail_on_missing_params(required_params=required_params)
-        template = self.get_template()
-        if not template:
+        template = None
+        self.result['changed'] = True
+        args = self._get_args()
+        args.update({
+            'url': self.module.params.get('url'),
+            'format': self.module.params.get('format'),
+            'checksum': self.module.params.get('checksum'),
+            'isextractable': self.module.params.get('is_extractable'),
+            'isrouting': self.module.params.get('is_routing'),
+            'sshkeyenabled': self.module.params.get('sshkey_enabled'),
+            'hypervisor': self.get_hypervisor(),
+            'domainid': self.get_domain(key='id'),
+            'account': self.get_account(key='name'),
+            'projectid': self.get_project(key='id'),
+        })
+
+        if not self.module.params.get('cross_zones'):
+            args['zoneid'] = self.get_zone(key='id')
+        else:
+            args['zoneid'] = -1
+
+        if not self.module.check_mode:
+            res = self.query_api('registerTemplate', **args)
+            template = res['template']
+        return template
+
+    def update_template(self, template):
+        args = {
+            'id': template['id'],
+            'displaytext': self.get_or_fallback('display_text', 'name'),
+            'format': self.module.params.get('format'),
+            'isdynamicallyscalable': self.module.params.get('is_dynamically_scalable'),
+            'isrouting': self.module.params.get('is_routing'),
+            'name': self.module.params.get('name'),
+            'ostypeid': self.get_os_type(key='id'),
+            'passwordenabled': self.module.params.get('password_enabled'),
+            'requireshvm': self.module.params.get('requires_hvm'),
+        }
+        if self.has_changed(args, template):
             self.result['changed'] = True
-            args = self._get_args()
-            args.update({
-                'url': self.module.params.get('url'),
-                'format': self.module.params.get('format'),
-                'checksum': self.module.params.get('checksum'),
-                'isextractable': self.module.params.get('is_extractable'),
-                'isrouting': self.module.params.get('is_routing'),
-                'sshkeyenabled': self.module.params.get('sshkey_enabled'),
-                'hypervisor': self.get_hypervisor(),
-                'domainid': self.get_domain(key='id'),
-                'account': self.get_account(key='name'),
-                'projectid': self.get_project(key='id'),
-            })
-
-            if not self.module.params.get('cross_zones'):
-                args['zoneid'] = self.get_zone(key='id')
-            else:
-                args['zoneid'] = -1
-
             if not self.module.check_mode:
-                res = self.query_api('registerTemplate', **args)
-                template = res['template']
+                template = self.query_api('updateTemplate', **args)
+
+        args = {
+            'id': template['id'],
+            'isextractable': self.module.params.get('is_extractable'),
+            'isfeatured': self.module.params.get('is_featured'),
+            'ispublic': self.module.params.get('is_public'),
+        }
+        if self.has_changed(args, template):
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                self.query_api('updateTemplatePermissions', **args)
+                # Refresh
+                template = self.get_template()
+
+        if template:
+            template = self.ensure_tags(resource=template, resource_type='Template')
+
         return template
 
     def get_template(self):
@@ -610,19 +658,13 @@ def main():
     acs_tpl = AnsibleCloudStackTemplate(module)
 
     state = module.params.get('state')
-    if state in ['absent']:
+    if state == 'absent':
         tpl = acs_tpl.remove_template()
 
-    elif state in ['extracted']:
+    elif state == 'extracted':
         tpl = acs_tpl.extract_template()
-
     else:
-        if module.params.get('url'):
-            tpl = acs_tpl.register_template()
-        elif module.params.get('vm'):
-            tpl = acs_tpl.create_template()
-        else:
-            module.fail_json(msg="one of the following is required on state=present: url,vm")
+        tpl = acs_tpl.present_template()
 
     result = acs_tpl.get_result(tpl)
 
