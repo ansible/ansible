@@ -1,0 +1,180 @@
+---
+- block:
+
+    # ============================================================
+    - debug: msg="Setting up ec2_vpc_endpoint dependencies"
+
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "120.0.0.0/24"
+        <<: *aws_connection_info
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc
+
+    - name: create route tables
+      ec2_vpc_route_table:
+        vpc_id: "{{ vpc.vpc.id }}"
+        tags:
+          ansible-test: "{{ resource_prefix }}-{{ item }}"
+        routes: []
+        <<: *aws_connection_info
+      register: route_tables
+      loop:
+        - route-table-1
+        - route-table-2
+
+    # ============================================================
+    - debug: msg="Running ec2_vpc_endpoint tests"
+
+    - name: test failure with no parameters
+      ec2_vpc_endpoint:
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg == "state is present but all of the following are missing: vpc_id, service"'
+
+    # ============================================================
+    - name: test failure with no parameters and state=absent
+      ec2_vpc_endpoint:
+        state: absent
+      register: result
+      ignore_errors: true
+
+    - name: assert failure with no parameters
+      assert:
+        that:
+          - 'result.failed'
+          - 'result.msg == "state is absent but all of the following are missing: vpc_endpoint_id"'
+
+    # ============================================================
+    # FIXME: currently not VPC endpoint removal is not idempotent and fails
+    #- name: remove an endpoint that does not exist
+    #  ec2_vpc_endpoint:
+    #    state: absent
+    #    vpc_endpoint_id: vpce-12345678
+    #    <<: *aws_connection_info
+    #  register: result
+
+    # ============================================================
+    - name: create a VPC endpoint and add it to the route table
+      ec2_vpc_endpoint:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        service: "com.amazonaws.{{ aws_region }}.s3"
+        route_table_ids:
+          - "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+          - "{{ route_tables['results'][1]['route_table']['route_table_id'] }}"
+        <<: *aws_connection_info
+      register: result_1
+
+    - name: assert the VPC endpoint was correctly created
+      assert:
+        that:
+          - result_1.changed
+          - result_1.result.vpc_endpoint_id.startswith('vpce-')
+
+    # ============================================================
+    - name: test idempotence
+      ec2_vpc_endpoint:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        service: "com.amazonaws.{{ aws_region }}.s3"
+        route_table_ids:
+          - "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+          - "{{ route_tables['results'][1]['route_table']['route_table_id'] }}"
+        <<: *aws_connection_info
+      register: result_1_again
+
+    - name: assert nothing changed
+      assert:
+        that:
+          - not result_1_again.changed
+          - result_1_again.result.vpc_endpoint_id == result_1.result.vpc_endpoint_id
+
+    # ============================================================
+    - name: assert that using the same vpc and service still results in a new vpc endpoint
+      ec2_vpc_endpoint:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        service: "com.amazonaws.{{ aws_region }}.s3"
+        route_table_ids: []
+        <<: *aws_connection_info
+      register: result_2
+
+    - name: assert a new VPC endpoint was created
+      assert:
+        that:
+          - result_2.changed
+          - result_2.result.vpc_endpoint_id != result_1.result.vpc_endpoint_id
+
+    # ============================================================
+    - name: Delete the first VPC endpoint
+      ec2_vpc_endpoint:
+        state: absent
+        vpc_endpoint_id: "{{ result_1.result.vpc_endpoint_id }}"
+        <<: *aws_connection_info
+      register: result
+
+    # FIXME: Removing a VPC endpoint does not display changed=true
+    #- name: assert VPC endpoint was removed
+    #  assert:
+    #    that:
+    #      - result.changed
+
+    # ============================================================
+    - name: Delete the second VPC endpoint
+      ec2_vpc_endpoint:
+        state: absent
+        vpc_endpoint_id: "{{ result_2.result.vpc_endpoint_id }}"
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert that the results are empty now
+      assert:
+        that:
+          - not result.result
+
+    # ============================================================
+
+  always:
+
+    # ============================================================
+    - debug: msg="Cleaning up after ec2_vpc_endpoint tests"
+
+    - name: remove route tables
+      ec2_vpc_route_table:
+        vpc_id: "{{ vpc.vpc.id }}"
+        route_table_id: "{{ item['route_table']['route_table_id'] }}"
+        #route_table_id: "{{ item }}"
+        lookup: id
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+      loop: "{{ route_tables['results'] }}"
+
+    - name: Remove VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: absent
+        cidr_block: "120.0.0.0/24"
+        <<: *aws_connection_info
+      ignore_errors: yes
