@@ -75,6 +75,7 @@ _ITALIC = re.compile(r"I\(([^)]+)\)")
 _BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL = re.compile(r"U\(([^)]+)\)")
+_LINK = re.compile(r"L\(([^)]+),([^)]+)\)")
 _CONST = re.compile(r"C\(([^)]+)\)")
 
 DEPRECATED = b" (D)"
@@ -90,6 +91,7 @@ def rst_ify(text):
         t = _ITALIC.sub(r"*\1*", text)
         t = _BOLD.sub(r"**\1**", t)
         t = _MODULE.sub(r":ref:`\1 <\1>`", t)
+        t = _LINK.sub(r"`\1 <\2>`_", t)
         t = _URL.sub(r"\1", t)
         t = _CONST.sub(r"`\1`", t)
     except Exception as e:
@@ -109,6 +111,7 @@ def html_ify(text):
     t = _BOLD.sub(r"<b>\1</b>", t)
     t = _MODULE.sub(r"<span class='module'>\1</span>", t)
     t = _URL.sub(r"<a href='\1'>\1</a>", t)
+    t = _LINK.sub(r"<a href='\2'>\1</a>", t)
     t = _CONST.sub(r"<code>\1</code>", t)
 
     return t

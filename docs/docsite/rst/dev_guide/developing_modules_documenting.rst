@@ -407,6 +407,8 @@ Example usage::
     See also M(win_copy) or M(win_template).
     ...
     See U(https://www.ansible.com/tower) for an overview.
+    ...
+    See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 
 
 .. note::
