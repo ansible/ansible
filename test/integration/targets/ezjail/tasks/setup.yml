@@ -1,3 +1,5 @@
+---
+
 - name: install ezjail
   pkgng: name=ezjail state=present
 

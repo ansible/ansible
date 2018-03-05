@@ -1,3 +1,5 @@
+---
+
 - name: test14 create check mode
   ezjail: name=test4 state=started ip_addr=127.0.0.1
   register: result

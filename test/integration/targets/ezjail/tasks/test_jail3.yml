@@ -1,3 +1,5 @@
+---
+
 - name: test11 create jail 3
   ezjail: name=some-+crazy_.name state=started ip_addr=127.0.0.1
   register: result
