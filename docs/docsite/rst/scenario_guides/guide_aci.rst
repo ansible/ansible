@@ -51,7 +51,7 @@ Using the ACI modules
 ---------------------
 The Ansible ACI modules provide a user-friendly interface to managing your ACI environment using Ansible playbooks.
 
-For instance ensuring that a specific tenant exists, is done using the following Ansible task:
+For instance ensuring that a specific tenant exists, is done using the following Ansible task using module `aci_tenant <aci_tenant>`:
 
 .. code-block:: yaml
 
@@ -66,6 +66,37 @@ For instance ensuring that a specific tenant exists, is done using the following
         state: present
 
 A complete list of existing ACI modules is available for `the latest stable release <http://docs.ansible.com/ansible/latest/modules/list_of_network_modules.html#aci>`_ as well as `the current development version <http://docs.ansible.com/ansible/devel/modules/list_of_network_modules.html#aci>`_.
+
+Querying ACI configuration
+..........................
+
+A module can also be used to query a specific object.
+
+.. code-block:: yaml
+
+    - name: Query tenant customer-xyz
+      aci_tenant:
+        host: my-apic-1
+        username: admin
+        password: my-password
+    
+      tenant: customer-xyz
+      state: query
+
+Or query all objects.
+
+.. code-block:: yaml
+
+    - name: Query all tenants
+      aci_tenant:
+        host: my-apic-1
+        username: admin
+        password: my-password
+    
+        state: query
+      register: all_tenants
+
+After registering the return values of the `aci_tenant <aci_tenant>` task as shown above, you can access all tenant information from variable ``all_tenants``.
 
 
 Common parameters
@@ -125,7 +156,7 @@ Return values
 The following values are always returned:
 
     current
-        The resulting state of the managed object.
+        The resulting state of the managed object, or results of your query.
 
 The following values are returned when ``output_level: info``:
 
@@ -173,7 +204,7 @@ ACI authentication
 
 Password-based authentication
 .............................
-If you want to logon using a username and password, you can use the following parameters with your ACI modules:
+If you want to log on using a username and password, you can use the following parameters with your ACI modules:
 
 .. code-block:: yaml
 
@@ -208,16 +239,16 @@ Configure your local user
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 Perform the following steps:
 
-- Add the X.509 certificate to your ACI AAA local user at **ADMIN > AAA**
-- Click **AAA Authentication**
-- Check that in the **Authentication** field the **Realm** field displays **Local**
-- Expand **Security Management > Local Users**
-- Click the name of the user you want to add a certificate to, in the **User Certificates** area
-- Click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field
+- Add the X.509 certificate to your ACI AAA local user at :guilabel:`ADMIN` » :guilabel:`AAA`
+- Click :guilabel:`AAA Authentication`
+- Check that in the :guilabel:`Authentication` field the :guilabel:`Realm` field displays :guilabel:`Local`
+- Expand :guilabel:`Security Management` » :guilabel:`Local Users`
+- Click the name of the user you want to add a certificate to, in the :guilabel:`User Certificates` area
+- Click the :guilabel:`+` sign and in the :guilabel:`Create X509 Certificate` enter a certificate name in the :guilabel:`Name` field
 
   * If you use the basename of your private key here, you don't need to enter ``certificate_name`` in Ansible
 
-- Copy and paste your X.509 certificate in the **Data** field.
+- Copy and paste your X.509 certificate in the :guilabel:`Data` field.
 
 You can automate this by using the following Ansible task:
 

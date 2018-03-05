@@ -19,8 +19,8 @@ description:
 notes:
 - The C(tenant), C(src_group), and C(dst_group) must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_tenant_span_src_group), and M(aci_tenant_span_dst_group) modules can be used for this.
-- More information about the internal APIC class B(span:SrcGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(span:SrcGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
