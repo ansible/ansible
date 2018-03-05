@@ -239,16 +239,16 @@ Configure your local user
 ,,,,,,,,,,,,,,,,,,,,,,,,,
 Perform the following steps:
 
-- Add the X.509 certificate to your ACI AAA local user at **ADMIN > AAA**
-- Click **AAA Authentication**
-- Check that in the **Authentication** field the **Realm** field displays **Local**
-- Expand **Security Management > Local Users**
-- Click the name of the user you want to add a certificate to, in the **User Certificates** area
-- Click the **+** sign and in the **Create X509 Certificate** enter a certificate name in the **Name** field
+- Add the X.509 certificate to your ACI AAA local user at :menuselection:`ADMIN --> AAA`
+- Click :guilabel:`AAA Authentication`
+- Check that in the :guilabel:`Authentication` field the :guilabel:`Realm` field displays :guilabel:`Local`
+- Expand :menuselection:`Security Management --> Local Users`
+- Click the name of the user you want to add a certificate to, in the :guilabel:`User Certificates` area
+- Click the :guilabel:`+` sign and in the :guilabel:`Create X509 Certificate` enter a certificate name in the :guilabel:`Name` field
 
   * If you use the basename of your private key here, you don't need to enter ``certificate_name`` in Ansible
 
-- Copy and paste your X.509 certificate in the **Data** field.
+- Copy and paste your X.509 certificate in the :guilabel:`Data` field.
 
 You can automate this by using the following Ansible task:
 
