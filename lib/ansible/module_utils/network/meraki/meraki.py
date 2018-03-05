@@ -37,13 +37,6 @@ from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
-URL_MAPPING = dict(
-    organization=dict(path='organization'),
-    )
-
-def construct_url(action):
-    print('test')
-
 def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
@@ -57,6 +50,7 @@ def meraki_argument_spec():
                 timeout=dict(type='int', default=30),
                 org_name=dict(type='str'),
                 org_id=dict(type='str'),
+                net_name=dict(type='str'),
     )
 
 class MerakiModule(object):
@@ -111,6 +105,7 @@ class MerakiModule(object):
             self.params['protocol'] = 'http'
 
     def define_method(self):
+        ''' Set method. May not need to stay. '''
         if self.params['state'] == 'query':
             self.method = 'GET'
         elif self.params['state'] == 'absent':
@@ -142,6 +137,7 @@ class MerakiModule(object):
             return True
 
     def is_new(self):
+        ''' Check whether an object is new and should be created '''
         r = self.get_existing(self.path)
         for i in r:
             if self.module.params['name'] == i['name']:
@@ -151,6 +147,7 @@ class MerakiModule(object):
         return True
 
     def get_existing(self, path):
+        ''' Query existing objects associated to path. May not need to stay. '''
         self.define_protocol()
         self.path = path
 
@@ -236,6 +233,7 @@ class MerakiModule(object):
         return response
 
     def post_new(self, path):
+        ''' Create a new object based on path. May not need to stay. '''
         self.path = path        
         self.define_protocol()
         if self.define_method() is -1:  # No changes are needed to existing object
