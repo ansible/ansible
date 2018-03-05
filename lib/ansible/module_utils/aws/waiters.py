@@ -119,9 +119,39 @@ ec2_data = {
 }
 
 
-def model_for(name):
+waf_data = {
+    "version": 2,
+    "waiters": {
+        "ChangeTokenInSync": {
+            "delay": 15,
+            "maxAttempts": 40,
+            "operation": "GetChangeTokenStatus",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "ChangeTokenStatus == 'INSYNC'",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "WAFInternalErrorException",
+                    "state": "retry"
+                }
+            ]
+        }
+    }
+}
+
+
+def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
+
+
+def waf_model(name):
+    waf_models = core_waiter.WaiterModel(waiter_config=waf_data)
+    return waf_models.get_waiter(name)
 
 
 waiters_by_name = {
@@ -166,6 +196,12 @@ waiters_by_name = {
         model_for('SubnetDeleted'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
+        )),
+    ('WAF', 'change_token_in_sync'): lambda waf: core_waiter.Waiter(
+        'change_token_in_sync',
+        waf_model('ChangeTokenInSync'),
+        core_waiter.NormalizedOperationMethod(
+            waf.get_change_token_status
         )),
 }
 
