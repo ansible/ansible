@@ -1191,6 +1191,7 @@ def replace(connection):
     desired_capacity = module.params.get('desired_capacity')
     lc_check = module.params.get('lc_check')
     replace_instances = module.params.get('replace_instances')
+    replace_all_instances = module.params.get('replace_all_instances')
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     if desired_capacity is None:
@@ -1199,6 +1200,10 @@ def replace(connection):
     wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
     props = get_properties(as_group)
     instances = props['instances']
+    if replace_all_instances:
+        # If replacing all instances, then set replace_instances to current set
+        # This allows replace_instances and replace_all_instances to behave same
+        replace_instances = instances
     if replace_instances:
         instances = replace_instances
     # check to see if instances are replaceable if checking launch configs
@@ -1235,7 +1240,7 @@ def replace(connection):
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     update_size(connection, as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
+    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'] + batch_size, 'viable_instances')
     wait_for_elb(connection, group_name)
     wait_for_target_group(connection, group_name)
     as_group = describe_autoscaling_groups(connection, group_name)[0]
@@ -1414,6 +1419,12 @@ def wait_for_new_inst(connection, group_name, wait_timeout, desired_size, prop):
     return props
 
 
+def asg_exists(connection):
+    group_name = module.params.get('name')
+    as_group = describe_autoscaling_groups(connection, group_name)
+    return bool(len(as_group))
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -1483,13 +1494,16 @@ def main():
                             endpoint=ec2_url,
                             **aws_connect_params)
     changed = create_changed = replace_changed = False
+    exists = asg_exists(connection)
 
     if state == 'present':
         create_changed, asg_properties = create_autoscaling_group(connection)
     elif state == 'absent':
         changed = delete_autoscaling_group(connection)
         module.exit_json(changed=changed)
-    if replace_all_instances or replace_instances:
+
+    # Only replace instances if asg existed at start of call
+    if exists and (replace_all_instances or replace_instances):
         replace_changed, asg_properties = replace(connection)
     if create_changed or replace_changed:
         changed = True
