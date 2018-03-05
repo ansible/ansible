@@ -77,6 +77,7 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL = re.compile(r"U\(([^)]+)\)")
 _LINK = re.compile(r"L\(([^)]+),([^)]+)\)")
 _CONST = re.compile(r"C\(([^)]+)\)")
+_RULER = re.compile(r"HORIZONTALLINE")
 
 DEPRECATED = b" (D)"
 
@@ -94,6 +95,7 @@ def rst_ify(text):
         t = _LINK.sub(r"`\1 <\2>`_", t)
         t = _URL.sub(r"\1", t)
         t = _CONST.sub(r"`\1`", t)
+        t = _RULER.sub(r"------------", t)
     except Exception as e:
         raise AnsibleError("Could not process (%s) : %s" % (text, e))
 
@@ -113,6 +115,7 @@ def html_ify(text):
     t = _URL.sub(r"<a href='\1'>\1</a>", t)
     t = _LINK.sub(r"<a href='\2'>\1</a>", t)
     t = _CONST.sub(r"<code>\1</code>", t)
+    t = _RULER.sub(r"<hr/>", t)
 
     return t
 
