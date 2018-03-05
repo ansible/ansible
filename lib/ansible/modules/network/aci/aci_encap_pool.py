@@ -17,8 +17,8 @@ short_description: Manage encap pools (fvns:VlanInstP, fvns:VxlanInstP, fvns:Vsa
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
 notes:
-- More information about the internal APIC classes B(fvns:VlanInstP), B(fvns:VxlanInstP) and B(fvns:VsanInstP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(fvns:VlanInstP), B(fvns:VxlanInstP) and B(fvns:VsanInstP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'

@@ -19,8 +19,8 @@ description:
 - Bind interface selector profiles to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
 - This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
-- More information about the internal APIC class B(infra:RsAccPortP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:RsAccPortP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

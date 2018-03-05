@@ -20,8 +20,8 @@ description:
 notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
-- More information about the internal APIC class B(infra:RsVlanNs) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:RsVlanNs) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
