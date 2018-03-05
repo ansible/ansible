@@ -441,7 +441,6 @@ lib/ansible/modules/cloud/azure/azure_rm_containerregistry.py E324
 lib/ansible/modules/cloud/azure/azure_rm_containerregistry.py E325
 lib/ansible/modules/cloud/azure/azure_rm_containerregistry.py E326
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E322
-<<<<<<< HEAD
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E324
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E325
 lib/ansible/modules/cloud/azure/azure_rm_deployment.py E326
@@ -449,8 +448,6 @@ lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E322
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E324
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E325
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset.py E326
-=======
->>>>>>> fix lint
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset_facts.py E322
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset_facts.py E324
 lib/ansible/modules/cloud/azure/azure_rm_dnsrecordset_facts.py E325
