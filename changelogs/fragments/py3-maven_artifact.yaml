@@ -1,0 +1,2 @@
+bugfixes:
+- Fix bytes/text handling in maven_artifact that was causing tracebacks on Python3
