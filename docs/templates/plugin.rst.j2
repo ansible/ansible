@@ -13,10 +13,7 @@
 
 {% if version_added is defined and version_added != '' -%}
 .. versionadded:: @{ version_added | default('') }@
-
-
 {% endif %}
-
 
 .. contents::
    :local:
@@ -33,7 +30,6 @@
 
 DEPRECATED
 ----------
-
 {# use unknown here? skip the fields? #}
 :Removed in Ansible: version: @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@
 :Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
@@ -44,36 +40,34 @@ DEPRECATED
 
 Synopsis
 --------
-
 {% if description -%}
 
 {%   if description is string -%}
-* @{ description | convert_symbols_to_format }@
-{%   else -%}
+- @{ description | convert_symbols_to_format }@
+{%   else %}
 {%     for desc in description %}
-* @{ desc | convert_symbols_to_format }@
+- @{ desc | convert_symbols_to_format }@
 {%     endfor %}
-{%   endif -%}
+{%   endif %}
 
 {% endif %}
 
 {% if aliases is defined -%}
-
 Aliases: @{ ','.join(aliases) }@
-
-
 {% endif %}
 
-{% if requirements %}
-{%   set req_title = 'Requirements' %}
-{%   if plugin_type == 'module' -%}
-{%     set req_title = req_title + ' (on host that executes module)' %}
-{%   endif -%}
-@{ req_title }@
-@{ '-' * req_title|length }@
+{% if requirements -%}
+
+Requirements
+~~~~~~~~~~~~
+{%   if plugin_type == 'module' %}
+The below requirements are needed on the host that executes this @{ plugin_type }@.
+{%   else %}
+The below requirements are needed on the local master node that executes this @{ plugin_type }@.
+{%   endif %}
 
 {%   for req in requirements %}
-* @{ req | convert_symbols_to_format }@
+- @{ req | convert_symbols_to_format }@
 {%   endfor %}
 
 {% endif %}
@@ -193,7 +187,7 @@ Notes
 
 .. note::
 {%   for note in notes %}
-- @{ note | convert_symbols_to_format }@
+    - @{ note | convert_symbols_to_format }@
 {%   endfor %}
 
 {% endif %}
@@ -222,7 +216,7 @@ Examples
 
 Returned Facts
 --------------
-Facts returned by modules can be referenced by name as any other host fact.
+Facts returned by this module are added/updated in the ``hostvars`` host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
 
 .. raw:: html
 
@@ -287,14 +281,13 @@ Facts returned by modules can be referenced by name as any other host fact.
 
 Return Values
 -------------
-
 Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this @{ plugin_type }@:
 
 .. raw:: html
 
     <table border=0 cellpadding=0 class="documentation-table">
         <tr>
-            <th class="head"><div class="cell-border">Name</div></th>
+            <th class="head"><div class="cell-border">Key</div></th>
             <th class="head"><div class="cell-border">Returned</div></th>
             <th class="head"><div class="cell-border">Description</div></th>
         </tr>
@@ -349,46 +342,48 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
 
 {% endif %}
 
+Status
+------
+{% if not deprecated %}
+
+{%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
+{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+
+{%   if metadata %}
+{%     if metadata.status %}
+
+{%       for cur_state in metadata.status %}
+This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+{%       endfor %}
+
+{%     endif %}
+
+{%     if metadata.supported_by in ('core', 'network') %}
+
+Support
+~~~~~~~
+For more information about Red Hat's support of this @{ plugin_type }@,
+please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
+
+{%     endif %}
+{%   endif %}
+
+{% else %}
+
+This module is flagged as **deprecated** and will be removed in version { deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see :ref:`DEPRECATED`.
+
+{% endif %}
+
 {% if author is defined -%}
 
 Author
 ~~~~~~
 
 {%   for author_name in author %}
-* @{ author_name }@
+- @{ author_name }@
 {%   endfor %}
 
 {% endif %}
 
-{% if not deprecated -%}
-
-{%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
-{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
-
-{%   if metadata -%}
-{%     if metadata.status -%}
-
-Status
-~~~~~~
-
-{%       for cur_state in metadata.status %}
-This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
-{%       endfor %}
-
-{%     endif -%}
-
-{%     if metadata.supported_by in ('core', 'network') -%}
-
-Maintenance Info
-~~~~~~~~~~~~~~~~
-
-For more information about Red Hat's support of this @{ plugin_type }@,
-please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
-
-{%     endif -%}
-{%   endif -%}
-
-{% endif %}
-
 .. hint::
-If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A+label:%20docsite_pr>`_ to improve it.
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A+label:%20docsite_pr>`_ to improve it.
