@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Fix a bug calling the zookeeper API under Python3 https://github.com/ansible/ansible/pull/36999
