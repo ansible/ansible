@@ -3,7 +3,7 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- name: hit conditional for lists of commands greater than 10
+- name: hit conditional for lists of 10 or more commands
   nxos_command:
     commands:
       - show hostname
