@@ -55,6 +55,8 @@ def meraki_argument_spec():
                 validate_certs=dict(type='bool', default=True),
                 output_level=dict(type='str', default='normal', choices=['normal', 'debug']),
                 timeout=dict(type='int', default=30),
+                org_name=dict(type='str'),
+                org_id=dict(type='str'),
     )
 
 class MerakiModule(object):
@@ -157,6 +159,54 @@ class MerakiModule(object):
         resp, info = fetch_url(self.module, self.url,
                                headers=self.headers,
                                method='GET',
+                               timeout=self.params['timeout'],
+                               use_proxy=self.params['use_proxy'],
+                               )
+        self.response = info['msg']
+        self.status = info['status']
+        response = json.loads(to_native(resp.read()))
+
+        if self.status >= 300:
+            try:
+                self.error['text'] = self.response_json(info['body'])
+                self.error['code'] = info['status']
+                self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
+            except KeyError:
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
+        return response
+
+    def get_orgs(self):
+        return self.response_json(self.request('GET', '/organizations'))
+
+    def is_org_dupe(self, org_name, data):
+        dupe_orgs = list()
+        for o in data:
+            if o['name'] == org_name:
+                dupe_orgs.append(o)
+        if len(dupe_orgs) == 0:
+            self.fail_json(msg="Found no organizations matching name {0}".format(org_name))
+        elif len(dupe_orgs) == 1:
+            return dupe_orgs[0]
+        elif len(dupe_orgs) > 1:
+            # TODO: Output organization info for each matching org
+            # TODO: Output networks associated for each matching org
+            self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
+
+    def get_org_id(self, org_name):
+        org = is_org_dupe(self.params['org_name'], self.get_orgs())
+        return org['id']
+
+    def request(self, method, path):
+        self.path = path        
+        self.define_protocol()
+        if self.define_method() is -1:  # No changes are needed to existing object
+            return
+
+        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
+
+        resp, info = fetch_url(self.module, self.url,
+                               headers=self.headers,
+                               method=self.method,
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
