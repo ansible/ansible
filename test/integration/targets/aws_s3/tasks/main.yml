@@ -279,6 +279,18 @@
       assert:
         that:
           - file1stat.stat.checksum == file2stat.stat.checksum
+      # FIXME - could use a test that checks uploaded file is *actually* aws:kms encrypted
+    - name: test get KMS encrypted object using v4 signature
+      aws_s3:
+        bucket: "{{ bucket_name }}"
+        mode: get
+        dest: "{{ tmp2.path }}"
+        object: delete_encrypt_kms.txt
+        use_v4_signature: yes
+        <<: *aws_connection_info
+      retries: 3
+      delay: 3
+      until: "result.msg == 'GET operation complete'"
     - name: delete KMS encrypted file
       aws_s3:
         bucket: "{{ bucket_name }}"
@@ -291,6 +303,10 @@
       file:
         path: "{{ tmp2.path }}"
         state: absent
+
+    # FIXME: could use a test that checks non standard KMS key
+    #        but that would require ability to create and remove such keys.
+    #        PRs exist for that, but propose deferring until after merge.
 
     - name: test creation of empty path
       aws_s3:
@@ -362,10 +378,6 @@
         that:
           - result.changed == False
 
-    - name: show ansible distribution
-      debug:
-        var: ansible_distribution
-
     - name: make tempfile 4 GB for OSX
       command:
         _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1m count=4096"
@@ -374,7 +386,7 @@
     - name: make tempfile 4 GB for linux
       command:
         _raw_params: "dd if=/dev/zero of={{ tmp1.path }} bs=1M count=4096"
-      when: ansible_distribution == 'Linux'
+      when: ansible_system == 'Linux'
 
     - name: test multipart download - platform specific
       block:
@@ -424,7 +436,7 @@
           assert:
             that:
               - not result.changed
-      when: ansible_distribution in ['MacOSX', 'Linux']
+      when: ansible_system == 'Linux' or ansible_distribution == 'MacOSX'
 
   always:
     ###### TEARDOWN STARTS HERE ######
