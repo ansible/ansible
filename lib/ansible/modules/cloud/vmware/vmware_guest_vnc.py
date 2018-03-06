@@ -31,32 +31,6 @@ requirements:
   - PyVmomi
 
 options:
-  hostname:
-    description:
-      - vSphere or VCenter hostname.
-    required: true
-  username:
-    description:
-      - vSphere or VCenter username.
-    required: true
-  password:
-    description:
-      - vSphere or VCenter password.
-    required: true
-  port:
-    description:
-      - vSphere or VCenter port.
-    required: false
-    default: 443
-  validate_certs:
-    description:
-      - Validate SSL certs when connecting to host.
-    choices:
-      - true
-      - false
-    default: true
-    required: false
-    type: bool
   state:
     description:
       - Set the state of VNC on virtual machine.
