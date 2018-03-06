@@ -95,6 +95,9 @@ Ansible Changes By Release
 * Fix credentials for Ansible Tower modules to work with v1 and v2 of the API
   (https://github.com/ansible/ansible/pull/36587)
   (https://github.com/ansible/ansible/pull/36662)
+* Python3 fixes:
+  * Fix for the znode zookeeper module: https://github.com/ansible/ansible/pull/36999
+  * Fix for the maven_artifact module: https://github.com/ansible/ansible/pull/37035
 
 
 <a id="2.4.3"></a>
