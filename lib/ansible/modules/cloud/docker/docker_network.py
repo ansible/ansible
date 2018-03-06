@@ -151,11 +151,11 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
@@ -268,12 +268,12 @@ class DockerNetworkManager(object):
         if not self.existing_network:
             ipam_pools = []
             if self.parameters.ipam_options:
-                if HAS_DOCKER_PY_2:
+                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                     ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
                 else:
                     ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
 
-            if HAS_DOCKER_PY_2:
+            if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
                                          pool_configs=ipam_pools)
             else:

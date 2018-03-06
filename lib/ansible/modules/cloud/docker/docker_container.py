@@ -676,12 +676,12 @@ import re
 import shlex
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
@@ -879,13 +879,15 @@ class TaskParameters(DockerBaseClass):
             environment='env',
             name='name',
             entrypoint='entrypoint',
-            cpu_shares='cpu_shares',
             mac_address='mac_address',
             labels='labels',
             stop_signal='stop_signal',
-            volume_driver='volume_driver',
             working_dir='working_dir',
         )
+
+        if not HAS_DOCKER_PY_3:
+            create_params['cpu_shares'] = 'cpu_shares'
+            create_params['volume_driver'] = 'volume_driver'
 
         result = dict(
             host_config=self._host_config(),
@@ -974,9 +976,14 @@ class TaskParameters(DockerBaseClass):
             tmpfs='tmpfs'
         )
 
-        if HAS_DOCKER_PY_2:
+        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
+
+        if HAS_DOCKER_PY_3:
+            # cpu_shares and volume_driver moved to create_host_config in > 3
+            host_config_params['cpu_shares'] = 'cpu_shares'
+            host_config_params['volume_driver'] = 'volume_driver'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1956,7 +1963,10 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
             if not self.parameters.detach:
-                status = self.client.wait(container_id)
+                if HAS_DOCKER_PY_3:
+                    status = self.client.wait(container_id)['StatusCode']
+                else:
+                    status = self.client.wait(container_id)
                 output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
                 if status != 0:
                     self.fail(output, status=status)
@@ -2115,8 +2125,8 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg="'auto_remove' is not compatible with docker-py, and requires the docker python module")
+    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)
