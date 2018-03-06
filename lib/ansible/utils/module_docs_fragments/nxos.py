@@ -24,6 +24,11 @@ class ModuleDocFragment(object):
 options:
   provider:
     description:
+      - B(Deprecated)
+      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli)."
+      - This option is only required if you are using NX-API.
+      - For more information please see the L(NXOS Platform Options guide, ../network/user_guide/platform_nxos.html).
+      - HORIZONTALLINE
       - A dict object containing connection details.
     default: null
     suboptions:
@@ -102,5 +107,7 @@ options:
         version_added: "2.5"
 
 notes:
-  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
+  - For information on using CLI and NX-API see the :ref:`NXOS Platform Options guide <nxos_platform_options>`
+  - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
+  - For more information on using Ansible to manage Cisco devices see the `Cisco integration page <https://www.ansible.com/integrations/networks/cisco>`_.
 """
