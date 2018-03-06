@@ -228,6 +228,16 @@ EXAMPLES = '''
 try:
     import consul
     from requests.exceptions import ConnectionError
+
+    class PatchedConsulAgentService(consul.Consul.Agent.Service):
+        def deregister(self, service_id, token=None):
+            params = {}
+            if token:
+                params['token'] = token
+            return self.agent.http.put(consul.base.CB.bool(),
+                                       '/v1/agent/service/deregister/%s' % service_id,
+                                       params=params)
+
     python_consul_installed = True
 except ImportError:
     python_consul_installed = False
@@ -337,18 +347,20 @@ def remove_service(module, service_id):
     consul_api = get_consul_api(module)
     service = get_service_by_id_or_name(consul_api, service_id)
     if service:
-        consul_api.agent.service.deregister(service_id)
+        consul_api.agent.service.deregister(service_id, token=module.params.get('token'))
         module.exit_json(changed=True, id=service_id)
 
     module.exit_json(changed=False, id=service_id)
 
 
 def get_consul_api(module, token=None):
-    return consul.Consul(host=module.params.get('host'),
-                         port=module.params.get('port'),
-                         scheme=module.params.get('scheme'),
-                         verify=module.params.get('validate_certs'),
-                         token=module.params.get('token'))
+    consulClient = consul.Consul(host=module.params.get('host'),
+                                 port=module.params.get('port'),
+                                 scheme=module.params.get('scheme'),
+                                 verify=module.params.get('validate_certs'),
+                                 token=module.params.get('token'))
+    consulClient.agent.service = PatchedConsulAgentService(consulClient)
+    return consulClient
 
 
 def get_service_by_id_or_name(consul_api, service_id_or_name):
