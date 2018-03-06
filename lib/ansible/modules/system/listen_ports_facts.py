@@ -232,6 +232,7 @@ def main():
                 if p['protocol'] == 'tcp':
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
+                    result['ansible_facts']['udp_listen'].append(p)
     except Exception as e:
         module.fail_json(msg=str(e))
 
