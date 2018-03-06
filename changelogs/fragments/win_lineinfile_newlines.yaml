@@ -1,2 +1,2 @@
 bugfixes:
-- win_lineinfil - fixed issue where \r and \n as a string was converted to newline (https://github.com/ansible/ansible/pull/35100)
+- win_lineinfile - fixed issue where \r and \n as a string was converted to newline (https://github.com/ansible/ansible/pull/35100)
