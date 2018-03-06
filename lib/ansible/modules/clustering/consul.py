@@ -230,8 +230,13 @@ try:
     from requests.exceptions import ConnectionError
 
     class PatchedConsulAgentService(consul.Consul.Agent.Service):
-        def deregister(self, service_id):
-            return self.agent.http.put(consul.base.CB.bool(), '/v1/agent/service/deregister/%s' % service_id)
+        def deregister(self, service_id, token=None):
+            params = {}
+            if token:
+                params['token'] = token
+            return self.agent.http.put(consul.base.CB.bool(),
+                                       '/v1/agent/service/deregister/%s' % service_id,
+                                       params=params)
 
     python_consul_installed = True
 except ImportError:
@@ -342,7 +347,7 @@ def remove_service(module, service_id):
     consul_api = get_consul_api(module)
     service = get_service_by_id_or_name(consul_api, service_id)
     if service:
-        consul_api.agent.service.deregister(service_id)
+        consul_api.agent.service.deregister(service_id, token=module.params.get('token'))
         module.exit_json(changed=True, id=service_id)
 
     module.exit_json(changed=False, id=service_id)
