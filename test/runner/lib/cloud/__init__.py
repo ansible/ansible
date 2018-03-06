@@ -350,7 +350,7 @@ class CloudProvider(CloudBase):
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
 
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0])
+        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
 
         return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
 
