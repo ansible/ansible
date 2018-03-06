@@ -232,7 +232,7 @@ def main():
                 if p['protocol'] == 'tcp':
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
     # if a TCP whitelist was supplied, determine which if any pids violate it
