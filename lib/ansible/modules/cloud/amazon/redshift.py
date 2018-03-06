@@ -267,7 +267,7 @@ def create_cluster(module, redshift):
     changed = True
     # Package up the optional parameters
     params = {}
-    for p in ( 'cluster_type', 'cluster_security_groups',
+    for p in ('cluster_type', 'cluster_security_groups',
               'vpc_security_group_ids', 'cluster_subnet_group_name',
               'availability_zone', 'preferred_maintenance_window',
               'cluster_parameter_group_name',
@@ -312,7 +312,7 @@ def create_cluster(module, redshift):
                 resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Failed to create cluster %s" % idnetifier)
+            module.fail_json_aws(e, msg="Failed to create cluster %s" % identifier)
 
     return(changed, _collect_facts(resource))
 
@@ -406,7 +406,6 @@ def modify_cluster(module, redshift):
             if module.params.get(p) is not None:
                 params[p] = module.params.get(p)
 
-
     try:
         redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except botocore.exceptions.ClientError as e:
@@ -414,12 +413,12 @@ def modify_cluster(module, redshift):
             redshift.modify_cluster(ClusterIdentifier=identifier,
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier )
+            module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
     try:
         resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-        module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier )
+        module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
     if wait:
         try:
@@ -434,7 +433,7 @@ def modify_cluster(module, redshift):
                 resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json(e, msg="Couldn't modify redshift cluster %s" % identifier )
+            module.fail_json(e, msg="Couldn't modify redshift cluster %s" % identifier)
 
     return(True, _collect_facts(resource))
 
@@ -486,7 +485,7 @@ def main():
     command = module.params.get('command')
     skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
-    if command == 'delete' and skip_final_cluster_snapshot == False and final_cluster_snapshot_identifier is None:
+    if command == 'delete' and skip_final_cluster_snapshot is False and final_cluster_snapshot_identifier is None:
         module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if final_cluster_snapshot_identifier is False")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
