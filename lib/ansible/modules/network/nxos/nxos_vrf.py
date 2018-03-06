@@ -74,7 +74,7 @@ options:
   interfaces:
     description:
       - List of interfaces to check the VRF has been
-        configured correctly.
+        configured correctly or keyword 'default'.
     version_added: 2.5
   associated_interfaces:
     description:
@@ -98,7 +98,7 @@ options:
     choices: ['present','absent']
   description:
     description:
-      - Description of the VRF.
+      - Description of the VRF or keyword 'default'.
     required: false
     default: null
   delay:
