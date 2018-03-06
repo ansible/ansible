@@ -29,6 +29,7 @@ from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FA
 
 HAS_DOCKER_PY = True
 HAS_DOCKER_PY_2 = False
+HAS_DOCKER_PY_3 = False
 HAS_DOCKER_ERROR = None
 
 try:
@@ -38,7 +39,12 @@ try:
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
     from docker import auth
-    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+
+    if LooseVersion(docker_version) >= LooseVersion('3.0.0'):
+        HAS_DOCKER_PY_3 = True
+        from docker import APIClient as Client
+        from docker.types import Ulimit, LogConfig
+    elif LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         HAS_DOCKER_PY_2 = True
         from docker import APIClient as Client
         from docker.types import Ulimit, LogConfig
