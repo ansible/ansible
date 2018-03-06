@@ -22,9 +22,7 @@
 </script>
 
   <p>
+  {%- if last_updated %}{% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>{% endif %}
   Copyright © 2018 Red Hat, Inc. <br/>
-  {%- if last_updated %}
-    {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-  {%- endif %}
   </p>
 </footer>
