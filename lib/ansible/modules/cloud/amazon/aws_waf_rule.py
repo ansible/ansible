@@ -124,6 +124,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
@@ -207,7 +208,12 @@ def find_and_update_rule(client, module, rule_id):
     }
     if changed:
         try:
-            run_func_with_change_token_backoff(client, module, update, client.update_rule)
+            result = run_func_with_change_token_backoff(client, module, update, client.update_rule)
+            get_waiter(
+                self.client, 'change_token_in_sync',
+            ).wait(
+                ChangeToken=result['ChangeToken']
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
