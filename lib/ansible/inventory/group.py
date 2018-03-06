@@ -113,12 +113,21 @@ class Group:
 
             self.clear_hosts_cache()
 
-    def _check_children_depth(self):
+    def _check_children_depth(self, exclude=None):
+        '''
+        optimization:
+        if 'exclude' set is provided, these groups will not be recursed into
+        '''
 
+        if exclude is None:
+            exclude = set([])
         try:
             for group in self.child_groups:
+                if group.name in exclude:
+                    continue
                 group.depth = max([self.depth + 1, group.depth])
-                group._check_children_depth()
+                group._check_children_depth(exclude=exclude)
+                exclude.add(group.name)
         except RuntimeError:
             raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
@@ -144,11 +153,21 @@ class Group:
         else:
             self.vars[key] = value
 
-    def clear_hosts_cache(self):
+    def clear_hosts_cache(self, exclude=None):
+        '''
+        optimization:
+        if 'exclude' set is provided, these groups will not be recursed into
+        '''
+
+        if exclude is None:
+            exclude = set([])
 
         self._hosts_cache = None
         for g in self.parent_groups:
-            g.clear_hosts_cache()
+            if g.name in exclude:
+                continue
+            g.clear_hosts_cache(exclude=exclude)
+            exclude.add(g.name)
 
     def get_hosts(self):
 
@@ -179,12 +198,19 @@ class Group:
     def get_vars(self):
         return self.vars.copy()
 
-    def _get_ancestors(self):
+    def _get_ancestors(self, results=None):
+        '''
+        optimization:
+        if `results` kwarg is supplied, this method adds its parentage
+        onto a running dictionary of parents of a lower depth group
+        '''
 
-        results = {}
+        if results is None:
+            results = {}
         for g in self.parent_groups:
-            results[g.name] = g
-            results.update(g._get_ancestors())
+            if g.name not in results:
+                results[g.name] = g
+                results = g._get_ancestors(results=results)
         return results
 
     def get_ancestors(self):
