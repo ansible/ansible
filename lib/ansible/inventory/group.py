@@ -35,6 +35,7 @@ class Group:
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
+        self._ancestors_cache = None
         self.priority = 1
 
     def __repr__(self):
@@ -105,9 +106,10 @@ class Group:
             group._check_children_depth()
 
             # now add self to child's parent_groups list, but only if there
-            # isn't already a group with the same name
+            # isn't already a group with the same name, also invalidate cache
             if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
+                group.clear_ancestors_cache()
                 for h in group.get_hosts():
                     h.populate_ancestors()
 
@@ -143,6 +145,9 @@ class Group:
             self.set_priority(int(value))
         else:
             self.vars[key] = value
+
+    def clear_ancestors_cache(self):
+        self._ancestors_cache = None
 
     def clear_hosts_cache(self):
 
@@ -189,7 +194,9 @@ class Group:
 
     def get_ancestors(self):
 
-        return self._get_ancestors().values()
+        if self._ancestors_cache is None:
+            self._ancestors_cache = self._get_ancestors().values()
+        return self._ancestors_cache
 
     def set_priority(self, priority):
         try:
