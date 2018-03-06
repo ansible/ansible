@@ -1,0 +1,236 @@
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      region: "{{ aws_region }}"
+      aws_access_key: "{{ aws_access_key|default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key|default(omit) }}"
+      security_token: "{{ security_token|default(omit) }}"
+  no_log: yes
+
+- block:
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}vpc"
+        state: present
+        cidr_block: "10.231.10.0/24"
+        <<: *aws_connection_info
+      register: ec2_vpc_net_create
+
+    - name: Create security group
+      ec2_group:
+        name: "{{ resource_prefix }}elasticache-sg"
+        state: present
+        description: Ansible Test Elasticache SG
+        rules:
+          - ports: 1234
+            cidr: "10.231.10.0/24"
+        vpc_id: "{{ ec2_vpc_net_create.vpc.id }}"
+        <<: *aws_connection_info
+      register: ec2_group_create
+
+    - name: Create subnet
+      ec2_vpc_subnet:
+        state: present
+        cidr: "10.231.10.0/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ ec2_vpc_net_create.vpc.id }}"
+        <<: *aws_connection_info
+      register: ec2_vpc_subnet_create
+
+    - name: Create elasticache subnet group
+      elasticache_subnet_group:
+        name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        description: Ansible Test Elasticache Subnet Group
+        subnets:
+          - "{{ ec2_vpc_subnet_create.subnet.id }}"
+        <<: *aws_connection_info
+      register: elasticache_subnet_group_create
+
+    - name: Create elasticache_replication group
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 1
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.micro
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_create
+
+    - name: test elasticache replication group creation
+      assert:
+        that:
+          - erg_create.changed
+
+    - name: Do nothing to elasticache_replication group
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 1
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.micro
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        <<: *aws_connection_info
+      register: erg_no_update
+
+    - name: test elasticache replication group idempotency
+      assert:
+        that:
+          - not erg_no_update.changed
+
+    - name: Increase elasticache_replication group size
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 2
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.micro
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_increase_size
+
+    - name: check that replication group size has increased
+      assert:
+        that:
+          - erg_increase_size.changed
+          - erg_increase_size.member_clusters|length == 2
+
+    # FIXME: need a massive wait here until replication to the second node is complete
+
+    - name: increase node size without apply_immediately
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 2
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.small
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_enable_failover
+
+    - name: check that cache_node_type is awaiting modification
+      assert:
+        that:
+          - erg_increase_size.changed
+          - "erg_increase_size.cache_node_type == 'cache.t2.micro'"
+          - "'cache_node_type' in erg_increase_node_size.pending_modification"
+
+    - name: reboot replication group
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        state: rebooted
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_reboot
+
+    - name: check that cache_node_type is now correct
+      assert:
+        that:
+          - erg_reboot.changed
+          - "erg_reboot.cache_node_type == 'cache.t2.small'"
+          - "'cache_node_type' not in erg_reboot.pending_modification"
+
+    - name: decrease node size again with apply_immediately
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 2
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.micro
+        apply_immediately: yes
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_immediate_node_increase
+
+    - name: check that cache_node_type is immediately applied
+      assert:
+        that:
+          - erg_immediate_node_increase.changed
+          - "erg_immediate_node_increase.cache_node_type == 'cache.t2.small'"
+          - "'cache_node_type' not in erg_immediate_node_increase.pending_modification"
+
+    - name: Turn on automatic failover
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        num_cache_clusters: 2
+        description: Ansible Test Elasticache Replication Group
+        node_type: cache.t2.micro
+        failover_enabled: yes
+        security_group_ids:
+          - "{{ ec2_group_create.group_id }}"
+        cache_subnet_group_name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: present
+        wait: yes
+        <<: *aws_connection_info
+      register: erg_enable_failover
+
+    - name: check that failover is enabled
+      assert:
+        that:
+          - erg_increase_size.changed
+          - erg_increase_size.automatic_failover
+
+
+  ### TEARDOWN STARTS HERE
+
+  always:
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. TEARDOWN STARTING *****"
+
+    - name: Destroy elasticache replication group
+      elasticache_replication_group:
+        name: "{{ elasticache_replication_group_id }}"
+        state: absent
+        num_cache_clusters: 1
+        wait: yes
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: Destroy security group
+      ec2_group:
+        name: "{{ resource_prefix }}elasticache-sg"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: Destroy elasticache subnet group
+      elasticache_subnet_group:
+        name: "{{ resource_prefix}}elasticache-subnet-group"
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+      when: ec2_vpc_subnet_create is defined and not ec2_vpc_subnet_create.failed
+
+    - name: Destroy subnet
+      ec2_vpc_subnet:
+        state: absent
+        cidr: "10.231.10.0/28"
+        az: "{{ ec2_region }}a"
+        vpc_id: "{{ ec2_vpc_net_create.vpc.id }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
+      when: ec2_vpc_net_create is defined and not ec2_vpc_net_create.failed
+
+    - name: Destroy VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}vpc"
+        state: absent
+        cidr_block: "10.231.10.0/24"
+        <<: *aws_connection_info
+      ignore_errors: yes
