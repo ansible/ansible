@@ -24,7 +24,7 @@ Prior to 1.5 the order was::
 
 Ansible will process the above list and use the first file found. Settings in files are not merged.
 
-.. note:: Comments
+.. note::
     The configuration file is one variant of an INI format.  Both the hash
     sign ("#") and semicolon (";") are allowed as comment markers when the
     comment starts the line.  However, if the comment is inline with regular
