@@ -145,6 +145,6 @@ options:
 notes:
   - For information on using CLI, eAPI and privileged mode see the :ref:`EOS Platform Options guide <eos_platform_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
-  - For more information on using Ansible to manage Arista EOS devices see the `Ansible and Arista integration page <https://www.ansible.com/ansible-arista-networks>`_.
+  - For more information on using Ansible to manage Arista EOS devices see the `Arista integration page <https://www.ansible.com/ansible-arista-networks>`_.
 
 """
