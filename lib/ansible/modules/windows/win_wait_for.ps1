@@ -54,17 +54,9 @@ if ($port -ne $null) {
 }
 
 Function Test-Port($hostname, $port) {
-    # try and resolve the IP/Host, if it fails then just use the host passed in
-    try {
-        $resolve_hostname = ([System.Net.Dns]::GetHostEntry($hostname)).HostName
-    } catch {
-        # oh well just use the IP addres
-        $resolve_hostname = $hostname
-    }
-
     $timeout = $connect_timeout * 1000
     $socket = New-Object -TypeName System.Net.Sockets.TcpClient
-    $connect = $socket.BeginConnect($resolve_hostname, $port, $null, $null)
+    $connect = $socket.BeginConnect($hostname, $port, $null, $null)
     $wait = $connect.AsyncWaitHandle.WaitOne($timeout, $false)
 
     if ($wait) {
