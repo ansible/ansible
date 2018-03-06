@@ -277,7 +277,7 @@ def ensure_web_acl_absent(client, module):
         if web_acl['Rules']:
             remove_rules_from_web_acl(client, module, web_acl_id)
         try:
-            run_func_with_change_token_backoff(client, module, {'WebACLId': web_acl_id}, client.delete_web_acl)
+            run_func_with_change_token_backoff(client, module, {'WebACLId': web_acl_id}, client.delete_web_acl, wait=True)
             return True, {}
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete Web ACL')
