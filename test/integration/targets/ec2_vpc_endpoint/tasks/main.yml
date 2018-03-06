@@ -96,6 +96,7 @@
         that:
           - result_1.changed
           - result_1.result.vpc_endpoint_id.startswith('vpce-')
+          - "'Allow' in result_1.result.policy_document"
 
     # ============================================================
     - name: test idempotence
@@ -150,6 +151,7 @@
       ec2_vpc_endpoint:
         state: absent
         vpc_endpoint_id: "{{ result_2.result.vpc_endpoint_id }}"
+        wait: yes
         <<: *aws_connection_info
       register: result
 
@@ -159,6 +161,107 @@
           - not result.result
 
     # ============================================================
+    - name: create a VPC endpoint to test modifying it
+      ec2_vpc_endpoint:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        service: "com.amazonaws.{{ aws_region }}.s3"
+        wait: yes
+        route_table_ids:
+          - "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+          - "{{ route_tables['results'][1]['route_table']['route_table_id'] }}"
+        <<: *aws_connection_info
+      register: result
+
+    - name: set the vpc endpoint id as a fact for future tasks
+      set_fact:
+        vpc_endpoint: "{{ result.result.vpc_endpoint_id }}"
+
+    - name: assert that it has two route tables
+      assert:
+        that:
+          - result.changed
+          - result.result.route_table_ids|length == 2
+
+    # ============================================================
+    - name: test a helpful error is given if trying to modify without id
+      ec2_vpc_endpoint:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        service: "com.amazonaws.{{ aws_region }}.s3"
+        route_table_ids:
+          - "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: yes
+
+    - name: assert a vpc endpoint id should be provided for modification
+      assert:
+        that:
+          - result.failed
+          - result.msg.startswith('To update an endpoint, provide the vpc_endpoint_id to the task')
+
+    # ============================================================
+    - name: test purging a route table
+      ec2_vpc_endpoint:
+        state: present
+        vpc_endpoint_id: "{{ vpc_endpoint }}"
+        route_table_ids:
+          - "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+        purge_route_tables: True
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert there is only one route table
+      assert:
+        that:
+          - result.changed
+          - result.result.route_table_ids|length == 1
+          - result.result.route_table_ids[0] == "{{ route_tables['results'][0]['route_table']['route_table_id'] }}"
+
+    # ============================================================
+    - name: test no modifications are made with purge_route_tables=false
+      ec2_vpc_endpoint:
+        state: present
+        vpc_endpoint_id: "{{ vpc_endpoint }}"
+        route_table_ids: []
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert there is still one route table
+      assert:
+        that:
+          - not result.changed
+          - result.result.route_table_ids|length == 1
+
+    # ============================================================
+    - name: test modifying the policy of the vpc endpoint
+      ec2_vpc_endpoint:
+        state: present
+        vpc_endpoint_id: "{{ vpc_endpoint }}"
+        purge_route_tables: False
+        route_table_ids: []
+        policy:
+          Version: 2008-10-17
+          Statement:
+            - Effect: "Deny"
+              Principal: "*"
+              Action: "*"
+              Resource: "*"
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert the policy now denies all rather than allows all
+      assert:
+        that:
+          - "'Deny' in result.result.policy_document"
+
+    # ============================================================
+    - name: remove the endpoint
+      ec2_vpc_endpoint:
+        state: absent
+        vpc_endpoint_id: "{{ vpc_endpoint }}"
+        <<: *aws_connection_info
 
   always:
 
