@@ -46,7 +46,7 @@ class IncludedFile:
             self._hosts.append(host)
 
     def __eq__(self, other):
-        return other._filename == self._filename and other._args == self._args
+        return other._filename == self._filename and other._args == self._args and other._task._parent._uuid == self._task._parent._uuid
 
     def __repr__(self):
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
