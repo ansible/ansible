@@ -26,7 +26,6 @@ options:
     description:
       - B(Deprecated)
       - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) or C(connection: netconf)."
-      - This option is only required if you are using eAPI.
       - For more information please see the L(Junos OS Platform Options guide, ../network/user_guide/platform_junos.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
