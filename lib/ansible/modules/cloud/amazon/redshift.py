@@ -348,7 +348,7 @@ def delete_cluster(module, redshift):
 
     params = {}
     for p in ('skip_final_cluster_snapshot',
-            'final_cluster_snapshot_identifier'):
+              'final_cluster_snapshot_identifier'):
         if p in module.params:
             # https://github.com/boto/boto3/issues/400
             if module.params.get(p) is not None:
@@ -375,7 +375,7 @@ def delete_cluster(module, redshift):
                 resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-            module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier )
+            module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier)
 
     return(True, {})
 
