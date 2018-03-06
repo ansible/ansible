@@ -215,13 +215,12 @@ cluster:
 import time
 
 try:
-    import boto.exception
-    import boto.redshift
+    import botocore
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO
+    pass  # handled by AnsibleAWSModule
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import HAS_BOTO, connect_to_aws, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
 
 
 def _collect_facts(resource):
@@ -261,13 +260,14 @@ def create_cluster(module, redshift):
     node_type = module.params.get('node_type')
     username = module.params.get('username')
     password = module.params.get('password')
+    db_name = module.params.get('db_name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
     changed = True
     # Package up the optional parameters
     params = {}
-    for p in ('db_name', 'cluster_type', 'cluster_security_groups',
+    for p in ( 'cluster_type', 'cluster_security_groups',
               'vpc_security_group_ids', 'cluster_subnet_group_name',
               'availability_zone', 'preferred_maintenance_window',
               'cluster_parameter_group_name',
@@ -276,21 +276,28 @@ def create_cluster(module, redshift):
               'number_of_nodes', 'publicly_accessible',
               'encrypted', 'elastic_ip', 'enhanced_vpc_routing'):
         if p in module.params:
-            params[p] = module.params.get(p)
+            # https://github.com/boto/boto3/issues/400
+            if module.params.get(p) is not None:
+                params[p] = module.params.get(p)
 
     try:
-        redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
+        redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
         changed = False
-    except boto.exception.JSONResponseError as e:
+    except botocore.exceptions.ClientError as e:
         try:
-            redshift.create_cluster(identifier, node_type, username, password, **params)
-        except boto.exception.JSONResponseError as e:
-            module.fail_json(msg=str(e))
+            redshift.create_cluster(ClusterIdentifier=identifier,
+                                    NodeType=node_type,
+                                    MasterUsername=username,
+                                    MasterUserPassword=password,
+                                    DBName=db_name,
+                                    **snake_dict_to_camel_dict(params, capitalize_first=True))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to create cluster")
 
     try:
-        resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError as e:
-        module.fail_json(msg=str(e))
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Failed to create cluster")
 
     if wait:
         try:
@@ -302,10 +309,10 @@ def create_cluster(module, redshift):
                 if wait_timeout <= time.time():
                     module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
-                resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
+                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
-        except boto.exception.JSONResponseError as e:
-            module.fail_json(msg=str(e))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Failed to create cluster %s" % idnetifier)
 
     return(changed, _collect_facts(resource))
 
@@ -320,9 +327,9 @@ def describe_cluster(module, redshift):
     identifier = module.params.get('identifier')
 
     try:
-        resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError as e:
-        module.fail_json(msg=str(e))
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Error describing cluster")
 
     return(True, _collect_facts(resource))
 
@@ -338,32 +345,37 @@ def delete_cluster(module, redshift):
     identifier = module.params.get('identifier')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
-    skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
-    final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
+
+    params = {}
+    for p in ('skip_final_cluster_snapshot',
+            'final_cluster_snapshot_identifier'):
+        if p in module.params:
+            # https://github.com/boto/boto3/issues/400
+            if module.params.get(p) is not None:
+                params[p] = module.params.get(p)
 
     try:
         redshift.delete_cluster(
-            identifier,
-            skip_final_cluster_snapshot,
-            final_cluster_snapshot_identifier
+            ClusterIdentifier=identifier,
+            **snake_dict_to_camel_dict(params, capitalize_first=True)
         )
-    except boto.exception.JSONResponseError as e:
-        module.fail_json(msg=str(e))
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier)
 
     if wait:
         try:
             wait_timeout = time.time() + wait_timeout
-            resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
+            resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
             while wait_timeout > time.time() and resource['ClusterStatus'] != 'deleting':
                 time.sleep(5)
                 if wait_timeout <= time.time():
                     module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
-                resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
+                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
-        except boto.exception.JSONResponseError as e:
-            module.fail_json(msg=str(e))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json_aws(e, msg="Couldn't delete the %s cluster" % identifier )
 
     return(True, {})
 
@@ -390,20 +402,24 @@ def modify_cluster(module, redshift):
               'allow_version_upgrade', 'number_of_nodes', 'new_cluster_identifier',
               'enhanced_vpc_routing'):
         if p in module.params:
-            params[p] = module.params.get(p)
+            # https://github.com/boto/boto3/issues/400
+            if module.params.get(p) is not None:
+                params[p] = module.params.get(p)
+
 
     try:
-        redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError as e:
+        redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except botocore.exceptions.ClientError as e:
         try:
-            redshift.modify_cluster(identifier, **params)
-        except boto.exception.JSONResponseError as e:
-            module.fail_json(msg=str(e))
+            redshift.modify_cluster(ClusterIdentifier=identifier,
+                                    **snake_dict_to_camel_dict(params, capitalize_first=True))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier )
 
     try:
-        resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
-    except boto.exception.JSONResponseError as e:
-        module.fail_json(msg=str(e))
+        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier )
 
     if wait:
         try:
@@ -415,11 +431,10 @@ def modify_cluster(module, redshift):
                 if wait_timeout <= time.time():
                     module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
 
-                resource = redshift.describe_clusters(identifier)['DescribeClustersResponse']['DescribeClustersResult']['Clusters'][0]
+                resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
 
-        except boto.exception.JSONResponseError as e:
-            # https://github.com/boto/boto/issues/2776 is fixed.
-            module.fail_json(msg=str(e))
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json(e, msg="Couldn't modify redshift cluster %s" % identifier )
 
     return(True, _collect_facts(resource))
 
@@ -444,7 +459,7 @@ def main():
         availability_zone=dict(aliases=['aws_zone', 'zone']),
         preferred_maintenance_window=dict(aliases=['maintance_window', 'maint_window']),
         cluster_parameter_group_name=dict(aliases=['param_group_name']),
-        automated_snapshot_retention_period=dict(aliases=['retention_period']),
+        automated_snapshot_retention_period=dict(aliases=['retention_period'], type='int'),
         port=dict(type='int'),
         cluster_version=dict(aliases=['version'], choices=['1.0']),
         allow_version_upgrade=dict(aliases=['version_upgrade'], type='bool', default=True),
@@ -459,29 +474,30 @@ def main():
     ))
 
     required_if = [
-        ('command', 'delete', ['skip_final_cluster_snapshot']),
-        ('skip_final_cluster_snapshot', False, ['final_cluster_snapshot_identifier'])
+        ('command', 'delete', ['skip_final_cluster_snapshot'])
     ]
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         required_if=required_if
     )
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto v2.9.0+ required for this module')
-
+    # can't use module basic
     command = module.params.get('command')
+    skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
+    final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
+    if command == 'delete' and skip_final_cluster_snapshot == False and final_cluster_snapshot_identifier is None:
+        module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if final_cluster_snapshot_identifier is False")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
         module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
 
     # connect to the rds endpoint
     try:
-        conn = connect_to_aws(boto.redshift, region, **aws_connect_params)
-    except boto.exception.JSONResponseError as e:
-        module.fail_json(msg=str(e))
+        conn = boto3_conn(module, conn_type='client', resource='redshift', region=region, endpoint=ec2_url, **aws_connect_params)
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+        module.fail_json_aws(e, msg="Exeption connecting to AWS")
 
     changed = True
     if command == 'create':
