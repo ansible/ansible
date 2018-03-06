@@ -102,7 +102,8 @@ options:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
       - This option will only be used when C(acme_version) is not 1.
-    default: false
+    default: no
+    type: bool
     version_added: "2.5"
   challenge:
     description: The challenge to be performed.
@@ -140,8 +141,6 @@ options:
   chain_dest:
     description:
       - If specified, the intermediate certificate will be written to this file.
-    required: false
-    default: null
     aliases: ['chain']
     version_added: 2.5
   remaining_days:
@@ -156,8 +155,8 @@ options:
       - Whether calls to the ACME directory will validate TLS certificates.
       - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
         for example when testing against a local Pebble server.
-    required: false
-    default: true
+    default: yes
+    type: bool
     version_added: 2.5
   deactivate_authzs:
     description:
@@ -167,8 +166,17 @@ options:
          for a certain amount of time, and can be used to issue certificates
          without having to re-authenticate the domain. This can be a security
          concern. "
-    required: false
-    default: false
+    default: no
+    type: bool
+    version_added: 2.6
+  force:
+    description:
+      - Enforces the execution of the challenge and validation, even if an
+        existing certificate is still valid.
+      - This is especially helpful when having an updated CSR e.g. with
+        additional domains for which a new certificate is desired.
+    default: no
+    type: bool
     version_added: 2.6
 '''
 
@@ -1281,6 +1289,7 @@ def main():
             remaining_days=dict(required=False, default=10, type='int'),
             validate_certs=dict(required=False, default=True, type='bool'),
             deactivate_authzs=dict(required=False, default=False, type='bool'),
+            force=dict(required=False, default=False, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -1306,7 +1315,8 @@ def main():
             cert_days = get_cert_days(module, module.params['dest'])
         else:
             cert_days = get_cert_days(module, module.params['fullchain_dest'])
-        if cert_days < module.params['remaining_days']:
+
+        if module.params['force'] or cert_days < module.params['remaining_days']:
             # If checkmode is active, base the changed state solely on the status
             # of the certificate file as all other actions (accessing an account, checking
             # the authorization status...) would lead to potential changes of the current
