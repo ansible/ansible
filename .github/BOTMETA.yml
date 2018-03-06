@@ -209,7 +209,7 @@ files:
     maintainers: $team_azure
   $modules/cloud/centurylink/: clc-runner
   $modules/cloud/cloudscale/cloudscale_server.py: gaudenz
-  $modules/cloud/cloudstack/: resmo
+  $modules/cloud/cloudstack/: $team_cloudstack
   $modules/cloud/digital_ocean/: BondAnthony
   $modules/cloud/digital_ocean/digital_ocean.py: alukovenko zbal
   $modules/cloud/digital_ocean/digital_ocean_domain.py: alukovenko mgregson
@@ -797,7 +797,7 @@ files:
     maintainers: QijunPan
     labels: networking
   $module_utils/cloudstack.py:
-    maintainers: resmo
+    maintainers: $team_cloudstack
     labels: cloudstack
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
@@ -1108,6 +1108,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
+  team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
   team_ipa: Nosmoht akasurde
