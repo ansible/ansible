@@ -329,7 +329,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
@@ -538,6 +537,7 @@ class Condition(object):
             func = getattr(self.client, 'update_' + self.method_suffix)
             params = self.format_for_deletion(current_condition)
             try:
+                # We do not need to wait for the conditiontuple delete because we wait later for the delete_* call
                 run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not delete filters from condition')
@@ -545,7 +545,7 @@ class Condition(object):
         params = dict()
         params[self.conditionsetid] = condition_set_id
         try:
-            run_func_with_change_token_backoff(self.client, self.module, params, func)
+            run_func_with_change_token_backoff(self.client, self.module, params, func, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete condition')
         # tidy up regex patterns
@@ -581,12 +581,7 @@ class Condition(object):
             update['Updates'] = missing + extra
             func = getattr(self.client, 'update_' + self.method_suffix)
             try:
-                result = run_func_with_change_token_backoff(self.client, self.module, update, func)
-                get_waiter(
-                    self.client, 'change_token_in_sync',
-                ).wait(
-                    ChangeToken=result['ChangeToken']
-                )
+                result = run_func_with_change_token_backoff(self.client, self.module, update, func, wait=True)
             except botocore.exceptions.WaiterError as e:
                 self.module.fail_json_aws(
                     e,

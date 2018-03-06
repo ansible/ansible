@@ -124,7 +124,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
@@ -208,12 +207,7 @@ def find_and_update_rule(client, module, rule_id):
     }
     if changed:
         try:
-            result = run_func_with_change_token_backoff(client, module, update, client.update_rule)
-            get_waiter(
-                client, 'change_token_in_sync',
-            ).wait(
-                ChangeToken=result['ChangeToken']
-            )
+            run_func_with_change_token_backoff(client, module, update, client.update_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
@@ -288,7 +282,7 @@ def ensure_rule_absent(client, module):
     if rule_id:
         remove_rule_conditions(client, module, rule_id)
         try:
-            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule)
+            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete rule')
     return False, {}
