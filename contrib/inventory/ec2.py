@@ -126,6 +126,34 @@ destination_format_tags: Name,clusterid,deployment,private_dns_name
 
 These settings would produce a destination_format as the following:
 'webserver-ansible-blue-172.31.0.1'
+
+When hostname_format and hostname_format_tags are specified
+the hostname_format can be built from the instance tags and attributes.
+The behavior will first check the user defined tags, then proceed to
+check instance attributes, and finally if neither are found 'nil' will
+be used instead.
+
+'my_instance': {
+    'region': 'us-east-1',             # attribute
+    'availability_zone': 'us-east-1a', # attribute
+    'private_dns_name': '172.31.0.1',  # attribute
+    'ec2_tag_deployment': 'blue',      # tag
+    'ec2_tag_clusterid': 'ansible',    # tag
+    'ec2_tag_Name': 'webserver',       # tag
+    ...
+}
+
+Inside of the ec2.ini file the following settings are specified:
+...
+hostname_format: {0}-{1}-{2}-{3}
+hostname_format_tags: Name,clusterid,deployment,private_dns_name
+...
+
+These settings would produce a hostname_format as the following:
+'webserver-ansible-blue-172.31.0.1'
+
+There's also an option to prevent hostname stripping:
+'hostname_nostrip: False'
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -370,6 +398,19 @@ class Ec2Inventory(object):
         else:
             self.destination_format = None
             self.destination_format_tags = None
+
+        if config.has_option('ec2', 'hostname_format') and \
+           config.has_option('ec2', 'hostname_format_tags'):
+            self.hostname_format = config.get('ec2', 'hostname_format')
+            self.hostname_format_tags = config.get('ec2', 'hostname_format_tags').split(',')
+        else:
+            self.hostname_format = None
+            self.hostname_format_tags = None
+
+        if config.has_option('ec2', 'hostname_nostrip'):
+            self.hostname_nostrip = config.get('ec2', 'hostname_nostrip')
+        else:
+            self.hostname_nostrip = False
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
@@ -915,7 +956,19 @@ class Ec2Inventory(object):
 
         # Set the inventory name
         hostname = None
-        if self.hostname_variable:
+        if self.hostname_format and self.hostname_format_tags:
+            hostname_vars = []
+            inst_tags = getattr(instance, 'tags')
+            for tag in self.hostname_format_tags:
+                if tag in inst_tags:
+                    hostname_vars.append(inst_tags[tag])
+                elif hasattr(instance, tag):
+                    hostname_vars.append(getattr(instance, tag))
+                else:
+                    hostname_vars.append('nil')
+
+            hostname = self.hostname_format.format(*hostname_vars)
+        elif self.hostname_variable:
             if self.hostname_variable.startswith('tag_'):
                 hostname = instance.tags.get(self.hostname_variable[4:], None)
             else:
@@ -933,6 +986,9 @@ class Ec2Inventory(object):
             hostname = dest
         # to_safe strips hostname characters like dots, so don't strip route53 hostnames
         elif self.route53_enabled and self.route53_hostnames and hostname.endswith(self.route53_hostnames):
+            hostname = hostname.lower()
+        # to_safe strips hostname characters like dots, so skip if 'hostname_nostrip', useful for custom format
+        elif self.hostname_nostrip:
             hostname = hostname.lower()
         else:
             hostname = self.to_safe(hostname).lower()
