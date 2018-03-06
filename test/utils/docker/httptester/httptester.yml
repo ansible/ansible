@@ -134,7 +134,7 @@
       with_items:
         - name: gunicorn
         - name: httpbin
-          version: '0.5.0'
+          version: '0.6.2'
 
     - name: Copy services.sh script
       copy:
