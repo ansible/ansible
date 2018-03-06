@@ -72,5 +72,5 @@ requirements:
     - "lxml >= 4.1.1 when using netconf"
 notes:
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
-  - For more information on using Ansible to manage Cisco devices see U(https://www.ansible.com/ansible-cisco).
+  - For more information on using Ansible to manage Cisco devices see the `Cisco integration page <https://www.ansible.com/integrations/networks/cisco>`_.
 """
