@@ -49,9 +49,13 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
