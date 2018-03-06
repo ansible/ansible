@@ -224,6 +224,36 @@ rds_data = {
 }
 
 
+elbv2_data = {
+    "version": 2,
+    "waiters": {
+        "TargetGroupExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeTargetGroups",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(TargetGroups[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "TargetGroupNotFound",
+                    "state": "retry"
+                }
+            ]
+        }
+    }
+}
+
+
+def elbv2_model(name):
+    elbv2_models = core_waiter.WaiterModel(waiter_config=elbv2_data)
+    return elbv2_models.get_waiter(name)
+
+
 def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
@@ -316,6 +346,12 @@ waiters_by_name = {
         rds_model('DBInstanceStopped'),
         core_waiter.NormalizedOperationMethod(
             rds.describe_db_instances
+        )),
+    ('ElasticLoadBalancingv2', 'target_group_exists'): lambda elbv2: core_waiter.Waiter(
+        'target_group_exists',
+        elbv2_model('TargetGroupExists'),
+        core_waiter.NormalizedOperationMethod(
+            elbv2.describe_target_groups
         )),
 }
 

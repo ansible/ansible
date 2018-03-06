@@ -324,6 +324,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, ec2_argument_spec,
                                       compare_aws_tags, ansible_dict_to_boto3_tag_list)
+from ansible.module_utils.aws.waiters import get_waiter
 from distutils.version import LooseVersion
 
 
@@ -592,6 +593,12 @@ def create_or_update_target_group(connection, module):
             connection.create_target_group(**params)
             changed = True
             new_target_group = True
+            # try to wait for target group to be present before moving on
+            get_waiter(
+                connection, 'target_group_exists'
+            ).wait(
+                Names=[params['Name']],
+            )
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create target group")
 
