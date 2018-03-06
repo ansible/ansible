@@ -8,19 +8,26 @@ __metaclass__ = type
 DOCUMENTATION = '''
 ---
 module: listen_ports_facts
+
 author:
     - Nathan Davison (@ndavison)
+
 version_added: "2.6"
+
 description:
     - Gather facts on processes listening on TCP and UDP ports. Optionally provide whitelists to gather facts on violations of the whitelist.
+
 short_description: Gather facts on processes listening on TCP and UDP ports.
+
 options:
   whitelist_tcp:
     description:
       - A list of TCP port numbers that are expected to have processes listening.
+    default: list()
   whitelist_udp:
     description:
       - A list of UDP port numbers that are expected to have processes listening.
+    default: list()
 '''
 
 EXAMPLES = '''
@@ -127,7 +134,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 import re
 import platform
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 
 def netStatParse(raw):
@@ -226,10 +232,7 @@ def main():
                 if p['protocol'] == 'tcp':
                     result['ansible_facts']['tcp_listen'].append(p)
                 elif p['protocol'] == 'udp':
-                    result['ansible_facts']['udp_listen'].append(p)
-
-    except:
-        e = get_exception()
+    except Exception, e:
         module.fail_json(msg=str(e))
 
     # if a TCP whitelist was supplied, determine which if any pids violate it
