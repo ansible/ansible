@@ -6,6 +6,13 @@
     test_interface_1: ethernet1
     test_interface_2: ethernet2
 
+- name: Make sure LLDP is running
+  eos_config:
+    lines: lldp run
+    authorize: yes
+    provider: "{{ eapi }}"
+  become: yes
+
 - name: Check intent arguments
   eos_interface:
     name: "{{ test_interface_1 }}"
@@ -159,3 +166,9 @@
           - "'host dummy_host' in result.failed_conditions"
           - "'port dummy_port' in result.failed_conditions"
   when: "'an-vyos-02' in show_lldp_neighbors_result.stdout[0]"
+
+- name: Make sure LLDP is running (teardown)
+  eos_config:
+    lines: no lldp run
+    authorize: yes
+    provider: "{{ eapi }}"
