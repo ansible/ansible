@@ -2186,5 +2186,4 @@ lib/ansible/modules/web_infrastructure/jenkins_script.py E325
 lib/ansible/modules/web_infrastructure/jira.py E322
 lib/ansible/modules/web_infrastructure/jira.py E324
 lib/ansible/modules/web_infrastructure/jira.py E325
-lib/ansible/modules/web_infrastructure/letsencrypt.py E325
 lib/ansible/modules/web_infrastructure/taiga_issue.py E324
