@@ -867,11 +867,6 @@ lib/ansible/modules/cloud/vultr/vr_user.py E322
 lib/ansible/modules/cloud/vultr/vr_user.py E324
 lib/ansible/modules/cloud/vultr/vr_user.py E325
 lib/ansible/modules/cloud/vultr/vr_user.py E326
-lib/ansible/modules/cloud/webfaction/webfaction_app.py E321
-lib/ansible/modules/cloud/webfaction/webfaction_db.py E321
-lib/ansible/modules/cloud/webfaction/webfaction_domain.py E321
-lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py E321
-lib/ansible/modules/cloud/webfaction/webfaction_site.py E321
 lib/ansible/modules/clustering/consul.py E322
 lib/ansible/modules/clustering/consul.py E324
 lib/ansible/modules/clustering/consul.py E325

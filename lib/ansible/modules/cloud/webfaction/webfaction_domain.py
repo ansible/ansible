@@ -49,7 +49,7 @@ options:
         description:
             - Any subdomains to create.
         required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -82,12 +82,11 @@ EXAMPLES = '''
 
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
