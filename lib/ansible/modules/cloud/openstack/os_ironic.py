@@ -93,6 +93,14 @@ options:
           description:
             - size of first storage device in this machine (typically /dev/sda), in GB
           default: 1
+        capabilities:
+          description:
+            - special capabilities for the node, such as boot_option, node_role etc
+          default: ""
+        root_device:
+          description:
+            - Root disk selections. eg: /dev/sda
+          default: ""
     skip_update_of_driver_password:
       description:
         - Allows the code that would assert changes to nodes to skip the
@@ -120,6 +128,9 @@ EXAMPLES = '''
       cpu_arch: "x86_64"
       ram: 8192
       disk_size: 64
+      capabilities: "boot_option:local"
+      root_device:
+        name: "/dev/sda"
     nics:
       - mac: "aa:bb:cc:aa:bb:cc"
       - mac: "dd:ee:ff:dd:ee:ff"
@@ -149,6 +160,8 @@ def _parse_properties(module):
         cpus=p.get('cpus') if p.get('cpus') else 1,
         memory_mb=p.get('ram') if p.get('ram') else 1,
         local_gb=p.get('disk_size') if p.get('disk_size') else 1,
+        capabilities=p.get('capabilities') if p.get('capabilities') else '',
+        root_device=p.get('root_device') if p.get('root_device') else '',
     )
     return props
 
