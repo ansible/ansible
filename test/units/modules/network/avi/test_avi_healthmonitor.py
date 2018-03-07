@@ -208,7 +208,6 @@ class TestHealthmonitor(unittest.TestCase):
             "type": "HEALTH_MONITOR_HTTPS",
             "name": "MyWebsite-HTTPS"
         })
-
         with self.assertRaises(AnsibleExitJson) as result:
             avi_healthmonitor.main()
         self.assertFalse(result.exception.args[0]['changed'])
@@ -216,7 +215,6 @@ class TestHealthmonitor(unittest.TestCase):
     @my_vcr.use_cassette()
     def test7_hm_fail_for_missing_name(self):
         set_module_args({
-
             "controller": "10.10.26.133",
             "username": "admin",
             "password": "avi123$%",
@@ -232,6 +230,5 @@ class TestHealthmonitor(unittest.TestCase):
             "successful_checks": 3,
             "type": "HEALTH_MONITOR_HTTPS"
         })
-
         with self.assertRaises(AnsibleFailJson) as result:
             avi_healthmonitor.main()
