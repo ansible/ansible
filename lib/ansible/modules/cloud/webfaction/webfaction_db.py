@@ -55,7 +55,7 @@ options:
         description:
             - The password for the new database user.
         required: false
-        default: None
+        default: null
 
     login_name:
         description:
@@ -70,7 +70,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
+        default: false
 '''
 
 EXAMPLES = '''
@@ -91,12 +91,11 @@ EXAMPLES = '''
 
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
