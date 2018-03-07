@@ -69,6 +69,7 @@ class AnsibleCoreCI(object):
                 'vyos',
                 'junos',
                 'ios',
+                'tower',
             ),
             azure=(
                 'azure',
