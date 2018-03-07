@@ -40,10 +40,10 @@ interactions:
       cache-control: ['no-store, no-cache']
       connection: [keep-alive]
       content-type: [application/json]
-      date: ['Tue, 20 Feb 2018 19:00:56 GMT']
-      set-cookie: ['csrftoken=hteYX3NiBJaYw8MiTuM43tkg6k61ArsJ; expires=Tue, 19-Feb-2019
-          19:00:56 GMT; Max-Age=31449600; Path=/; secure', 'sessionid=1qr1fhuqxkmkadhxcpak70vtxgag1txo;
-          expires=Wed, 21-Feb-2018 19:00:56 GMT; httponly; Max-Age=86400; Path=/;
+      date: ['Wed, 07 Mar 2018 14:53:35 GMT']
+      set-cookie: ['csrftoken=O1UKJHjoxV4amVrd4gSaBjt4JgAq5KSL; expires=Wed, 06-Mar-2019
+          14:53:35 GMT; Max-Age=31449600; Path=/; secure', 'sessionid=ibzrbhue7lb0e6oe6ce9e2cki9gkcxb6;
+          expires=Thu, 08-Mar-2018 14:53:35 GMT; httponly; Max-Age=86400; Path=/;
           secure']
       strict-transport-security: [max-age=31536000; includeSubdomains]
       vary: ['Accept, Cookie']
@@ -53,22 +53,23 @@ interactions:
     body: null
     headers:
       Content-Type: [application/json]
-      Cookie: ['[<Cookie csrftoken=hteYX3NiBJaYw8MiTuM43tkg6k61ArsJ for 10.10.26.133/>,
-          <Cookie sessionid=1qr1fhuqxkmkadhxcpak70vtxgag1txo for 10.10.26.133/>]']
+      Cookie: ['[<Cookie csrftoken=O1UKJHjoxV4amVrd4gSaBjt4JgAq5KSL for 10.10.26.133/>,
+          <Cookie sessionid=ibzrbhue7lb0e6oe6ce9e2cki9gkcxb6 for 10.10.26.133/>]']
       Referer: ['https://10.10.26.133']
       X-Avi-Tenant: [admin]
       X-Avi-Version: [17.2.1]
-      X-CSRFToken: [hteYX3NiBJaYw8MiTuM43tkg6k61ArsJ]
+      X-CSRFToken: [O1UKJHjoxV4amVrd4gSaBjt4JgAq5KSL]
       timeout: ['300']
     method: GET
     uri: https://10.10.26.133/api/healthmonitor?include_refs=&include_name=&name=MyWebsite-HTTPS
   response:
     body: {string: !!python/unicode '{"count": 1, "results": [{"https_monitor": {"http_request":
-        "HEAD / HTTP/1.0", "http_response_code": ["HTTP_2XX", "HTTP_3XX"]}, "receive_timeout":
-        4, "_last_modified": "1518770318339460", "url": "https://10.10.26.133/api/healthmonitor/healthmonitor-26559a3c-a884-4708-8e34-495172593481#MyWebsite-HTTPS",
+        "HEAD / HTTP/1.0", "http_response_code": ["HTTP_2XX", "HTTP_3XX"]}, "uuid":
+        "healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed", "receive_timeout": 4,
+        "_last_modified": "1520434414525204", "url": "https://10.10.26.133/api/healthmonitor/healthmonitor-9797cf06-4bdf-4552-a549-0a6278f1cfed#MyWebsite-HTTPS",
         "tenant_ref": "https://10.10.26.133/api/tenant/admin#admin", "is_federated":
-        false, "name": "MyWebsite-HTTPS", "failed_checks": 3, "send_interval": 10,
-        "successful_checks": 3, "type": "HEALTH_MONITOR_HTTPS", "uuid": "healthmonitor-26559a3c-a884-4708-8e34-495172593481"}]}'}
+        false, "failed_checks": 3, "send_interval": 10, "successful_checks": 3, "type":
+        "HEALTH_MONITOR_HTTPS", "name": "MyWebsite-HTTPS"}]}'}
     headers:
       access-control-allow-credentials: ['true']
       access-control-allow-headers: ['Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Mx-ReqToken,X-Requested-With,X-Avi-Tenant,X-Avi-UserAgent,X-Avi-Tenant-UUID,X-CSRFToken']
@@ -78,7 +79,7 @@ interactions:
       cache-control: ['no-store, no-cache']
       connection: [keep-alive]
       content-type: [application/json]
-      date: ['Tue, 20 Feb 2018 19:00:56 GMT']
+      date: ['Wed, 07 Mar 2018 14:53:35 GMT']
       strict-transport-security: [max-age=31536000; includeSubdomains]
       vary: ['Accept, Cookie']
       x-frame-options: [SAMEORIGIN]

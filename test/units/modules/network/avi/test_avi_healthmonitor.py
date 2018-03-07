@@ -70,7 +70,7 @@ class TestHealthmonitor(unittest.TestCase):
         self.addCleanup(self.mock_module_helper.stop)
 
     @my_vcr.use_cassette()
-    def test_create_http_hm(self):
+    def test1_create_http_hm(self):
         set_module_args({
 
             "controller": "10.10.26.133",
@@ -91,6 +91,127 @@ class TestHealthmonitor(unittest.TestCase):
 
         with self.assertRaises(AnsibleExitJson) as result:
             avi_healthmonitor.main()
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    @my_vcr.use_cassette()
+    def test2_create_http_hm_re_run(self):
+        set_module_args({
+
+            "controller": "10.10.26.133",
+            "username": "admin",
+            "password": "avi123$%",
+            "api_version": "17.2.1",
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
+            "receive_timeout": 4,
+            "failed_checks": 3,
+            "send_interval": 10,
+            "successful_checks": 3,
+            "type": "HEALTH_MONITOR_HTTPS",
+            "name": "MyWebsite-HTTPS"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            avi_healthmonitor.main()
+        self.assertFalse(result.exception.args[0]['changed'])
+
+    @my_vcr.use_cassette()
+    def test3_update_http_hm(self):
+        set_module_args({
+
+            "controller": "10.10.26.133",
+            "username": "admin",
+            "password": "avi123$%",
+            "api_version": "17.2.1",
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
+            "receive_timeout": 5,
+            "failed_checks": 3,
+            "send_interval": 10,
+            "successful_checks": 3,
+            "type": "HEALTH_MONITOR_HTTPS",
+            "name": "MyWebsite-HTTPS"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            avi_healthmonitor.main()
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    @my_vcr.use_cassette()
+    def test4_update_http_hm_re_run(self):
+        set_module_args({
+
+            "controller": "10.10.26.133",
+            "username": "admin",
+            "password": "avi123$%",
+            "api_version": "17.2.1",
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
+            "receive_timeout": 5,
+            "failed_checks": 3,
+            "send_interval": 10,
+            "successful_checks": 3,
+            "type": "HEALTH_MONITOR_HTTPS",
+            "name": "MyWebsite-HTTPS"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            avi_healthmonitor.main()
+        self.assertFalse(result.exception.args[0]['changed'])
+
+    @my_vcr.use_cassette()
+    def test5_delete_http_hm(self):
+        set_module_args({
+            "state": "absent",
+            "controller": "10.10.26.133",
+            "username": "admin",
+            "password": "avi123$%",
+            "api_version": "17.2.1",
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
+            "receive_timeout": 5,
+            "failed_checks": 3,
+            "send_interval": 10,
+            "successful_checks": 3,
+            "type": "HEALTH_MONITOR_HTTPS",
+            "name": "MyWebsite-HTTPS"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            avi_healthmonitor.main()
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    @my_vcr.use_cassette()
+    def test6_delete_http_hm_re_run(self):
+        set_module_args({
+            "state": "absent",
+            "controller": "10.10.26.133",
+            "username": "admin",
+            "password": "avi123$%",
+            "api_version": "17.2.1",
+            "https_monitor": {
+                "http_request": "HEAD / HTTP/1.0",
+                "http_response_code": ["HTTP_2XX", "HTTP_3XX"]
+            },
+            "receive_timeout": 5,
+            "failed_checks": 3,
+            "send_interval": 10,
+            "successful_checks": 3,
+            "type": "HEALTH_MONITOR_HTTPS",
+            "name": "MyWebsite-HTTPS"
+        })
+
+        with self.assertRaises(AnsibleExitJson) as result:
+            avi_healthmonitor.main()
+        self.assertFalse(result.exception.args[0]['changed'])
 
     @my_vcr.use_cassette()
     def test_hm_fail_for_missing_name(self):
