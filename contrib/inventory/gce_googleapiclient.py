@@ -365,10 +365,9 @@ def get_inventory(instances):
                         inventory[access_config['natIP']].append(instance['name'])
 
             # group by images
-            image = get_boot_image(instance['disks'])
             # If the instance doesn't have a source image, we put it in the persistent_disk group
             # This keep the retro-compatibility with the gce.py inventory
-            image = image and image or 'persistent_disk'
+            image = get_boot_image(instance.get('disks', 'persistent_disk'))
             inventory[image].append(instance['name'])
 
     return inventory
