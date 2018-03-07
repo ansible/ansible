@@ -872,7 +872,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
-.. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+.. note:: The previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
 Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
