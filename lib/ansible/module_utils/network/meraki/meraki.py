@@ -78,6 +78,7 @@ class MerakiModule(object):
         self.config = dict()
         self.original = None
         self.proposed = dict()
+        self.merged = None
 
         # debug output
         self.filter_string = ''
@@ -129,12 +130,18 @@ class MerakiModule(object):
 
     def is_update_required(self):
         ''' Check original and proposed data to see if an update is needed '''
-        try:
-            for k, v in self.original.iteritems():
-                if self.proposed['k'] != v:
-                    return True
-        except KeyError as e:
-            return True
+        self.merged = self.original
+        is_changed = False
+        for k, v in original.items():
+            try:
+                if v != proposed[k]:
+                    is_changed = True
+                    merged[k] = proposed[k]
+            except KeyError:
+                merged[k] = ''
+                if v != '':
+                    is_changed = True
+        return is_changed
 
     def is_new(self):
         ''' Check whether an object is new and should be created '''
