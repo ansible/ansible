@@ -320,3 +320,21 @@
     timeout: 5
   register: get_with_timeout_fail
   failed_when: '"The operation has timed out" not in get_with_timeout_fail.msg'
+
+- name: connect to fakepath that does not exist
+  win_uri:
+    url: http://{{httpbin_host}}/fakepath
+    status_code: 404
+    return_content: yes
+  register: invalid_path
+
+# verifies the return values are still set on a non 200 response
+- name: assert connect to fakepath that does not exist
+  assert:
+    that:
+    - not invalid_path.changed
+    - invalid_path.status_code == 404
+    - invalid_path.status_description == 'NOT FOUND'
+    - invalid_path.content is defined
+    - invalid_path.method == 'GET'
+    - invalid_path.connection is defined
