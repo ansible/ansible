@@ -231,9 +231,9 @@ class PylintTest(SanitySingleVersion):
     def pylint(self, args, context, paths):
         """
         :type args: SanityConfig
-        :param context: str
-        :param paths: list[str]
-        :return: list[dict[str, str]]
+        :type context: str
+        :type paths: list[str]
+        :rtype: list[dict[str, str]]
         """
         rcfile = 'test/sanity/pylint/config/%s' % context
 

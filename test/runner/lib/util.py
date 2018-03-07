@@ -466,6 +466,25 @@ def is_binary_file(path):
         return b'\0' in path_fd.read(1024)
 
 
+def generate_password():
+    """Generate a random password.
+    :rtype: str
+    """
+    chars = [
+        string.ascii_letters,
+        string.digits,
+        string.ascii_letters,
+        string.digits,
+        '-',
+    ] * 4
+
+    password = ''.join([random.choice(char) for char in chars[:-1]])
+
+    display.sensitive.add(password)
+
+    return password
+
+
 class Display(object):
     """Manages color console output."""
     clear = '\033[0m'
