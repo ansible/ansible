@@ -20,7 +20,7 @@ version_added: "2.0"
 options:
   ports:
     description:
-      - Ports or port ranges. Can be a comma separated string or actual list.
+      - Ports or port ranges. Can be a list (since 2.6) or comma separated string.
     required: true
   proto:
     description:
