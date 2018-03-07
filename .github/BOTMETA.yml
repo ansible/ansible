@@ -453,6 +453,7 @@ files:
   $modules/network/dellos10/: skg-net
   $modules/network/dellos6/: abirami-n skg-net
   $modules/network/dellos9/: dhivyap skg-net
+  $modules/network/edgeos/: samdoran
   $modules/network/enos/: amuraleedhar
   $modules/network/eos/: privateip trishnaguha
   $modules/network/f5/:
@@ -487,7 +488,7 @@ files:
   $modules/network/routing/: $team_networking
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
-  $modules/network/vyos/: Qalthos
+  $modules/network/vyos/: Qalthos samdoran
   $modules/notification/bearychat.py: tonyseek
   $modules/notification/campfire.py: fabulops
   $modules/notification/catapult.py: Jmainguy
@@ -1010,6 +1011,9 @@ files:
   lib/ansible/plugins/terminal/dellos10:
     maintainers: skg-net
     labels: networking
+  lib/ansible/plugins/terminal/edgeos.py:
+    maintainers: samdoran
+    labels: networking
   lib/ansible/plugins/terminal/eos.py:
     maintainers: $team_networking
     labels: networking
@@ -1037,7 +1041,7 @@ files:
     maintainers: $team_networking
     labels: networking
   lib/ansible/plugins/terminal/vyos.py:
-    maintainers: $team_networking
+    maintainers: $team_networking samdoran
     labels: networking
   lib/ansible/template:
     keywords:
