@@ -34,6 +34,22 @@ options:
             - Whether the cgroup should be present or absent.
         default: present
         choices: ['absent', 'present']
+    permtaskuser:
+        description:
+            - The system user id allowed to submit tasks to the cgroup.
+        default: root
+    permtaskgroup:
+        description:
+            - The system group id allowed to submit tasks to the cgroup.
+        default: root
+    permadminuser:
+        description:
+            - The system user id allowed to modify the cgroup subsystem parameters.
+        default: root
+    permadmingroup:
+        description:
+            - The system group id allowed to modify the cgroup subsystem parameters.
+        default: root
     memlimit:
         description:
             - The maximum RSS memory for the cgroup.
@@ -81,6 +97,10 @@ def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
+        permtaskuser=dict(type='str', default='root'),
+        permtaskgroup=dict(type='str', default='root'),
+        permadminuser=dict(type='str', default='root'),
+        permadmingroup=dict(type='str', default='root'),
         memlimit=dict(type='str', required=False),
         memswaplimit=dict(type='str', required=False)
     )
@@ -98,10 +118,29 @@ def run_module():
 
     name = module.params['name']
     state = module.params['state']
+
+    permtaskuser = module.params['permtaskuser']
+    permtaskgroup = module.params['permtaskgroup']
+    permadminuser = module.params['permadminuser']
+    permadmingroup = module.params['permadmingroup']
+
     memlimit = module.params['memlimit']
     memswaplimit = module.params['memswaplimit']
 
     config = {}
+
+    if permtaskuser != 'root' or permtaskgroup != 'root' or permadminuser != 'root' or permadmingroup != 'root':
+        config['perm'] = {
+            'task': {
+                'uid': permtaskuser,
+                'gid': permtaskgroup
+            },
+            'admin': {
+                'uid': permadminuser,
+                'gid': permadmingroup
+            }
+        }
+
     if memlimit is not None or memswaplimit is not None:
         config['memory'] = {}
 
@@ -175,6 +214,8 @@ def has_config_changed(cgroup_name, raw_config, desired_config):
     config = config[cgroup_name]
 
     for subsystem in config:
+        if subsystem == 'perm':
+            continue
         subsystems.add(subsystem)
         for param in config[subsystem]:
             if subsystem not in desired_config or param not in desired_config[subsystem]:
@@ -184,19 +225,24 @@ def has_config_changed(cgroup_name, raw_config, desired_config):
                 deleted_params[subsystem].append(param)
 
     for subsystem in desired_config:
+        if subsystem == 'perm':
+            continue
         subsystems.add(subsystem)
         for param in desired_config[subsystem]:
             if subsystem not in config or param not in config[subsystem]:
+                # Some param was added
                 if subsystem not in added_params:
                     added_params[subsystem] = []
                 added_params[subsystem].append(param)
             else:
                 if config[subsystem][param] != desired_config[subsystem][param]:
+                    # Some param was modified
                     if subsystem not in modified_params:
                         modified_params[subsystem] = []
                     modified_params[subsystem].append(param)
 
-    diff = []
+    diff = diff_perm(config, desired_config)
+
     for subsystem in subsystems:
         changes = []
         if subsystem in added_params:
@@ -217,6 +263,72 @@ def has_config_changed(cgroup_name, raw_config, desired_config):
             diff.append("}")
 
     return '\n'.join(diff)
+
+
+def diff_perm(config, desired_config):
+    previous_perm_settings = 'perm' in config
+    desired_perm_settings = 'perm' in desired_config
+
+    diff = []
+
+    if desired_perm_settings != previous_perm_settings:
+        if desired_perm_settings:
+            # Perm settings were added
+            diff.append('perm {')
+            diff.append('\ttask {')
+            diff.append('+\t\tuid = %s;' % desired_config['perm']['task']['uid'])
+            diff.append('+\t\tgid = %s;' % desired_config['perm']['task']['gid'])
+            diff.append('\t} admin {')
+            diff.append('+\t\tuid = %s;' % desired_config['perm']['admin']['uid'])
+            diff.append('+\t\tgid = %s;' % desired_config['perm']['admin']['gid'])
+            diff.append('\t}')
+            diff.append('}')
+        else:
+            # Perm settings were deleted
+            diff.append('perm {')
+            diff.append('\ttask {')
+            diff.append('-\t\tuid = %s;' % config['perm']['task']['uid'])
+            diff.append('-\t\tgid = %s;' % config['perm']['task']['gid'])
+            diff.append('\t} admin {')
+            diff.append('-\t\tuid = %s;' % config['perm']['admin']['uid'])
+            diff.append('-\t\tgid = %s;' % config['perm']['admin']['gid'])
+            diff.append('\t}')
+            diff.append('}')
+    elif desired_perm_settings and config['perm'] != desired_config['perm']:
+        # Perm settings have been altered
+        permtaskuser = config['perm']['task']['uid']
+        permtaskgroup = config['perm']['task']['gid']
+        permadminuser = config['perm']['admin']['uid']
+        permadmingroup = config['perm']['admin']['gid']
+        desired_permtaskuser = desired_config['perm']['task']['uid']
+        desired_permtaskgroup = desired_config['perm']['task']['gid']
+        desired_permadminuser = desired_config['perm']['admin']['uid']
+        desired_permadmingroup = desired_config['perm']['admin']['gid']
+
+        diff.append('perm {')
+
+        if config['perm']['task'] != desired_config['perm']['task']:
+            diff.append('\ttask {')
+            if permtaskuser != desired_permtaskuser:
+                diff.append('-\t\tuid = %s;' % config['perm']['task']['uid'])
+                diff.append('+\t\tuid = %s;' % desired_config['perm']['task']['uid'])
+            if permtaskgroup != desired_permtaskgroup:
+                diff.append('-\t\tgid = %s;' % config['perm']['task']['gid'])
+                diff.append('+\t\tgid = %s;' % desired_config['perm']['task']['gid'])
+            diff.append('\t}')
+
+        if config['perm']['admin'] != desired_config['perm']['admin']:
+            diff.append('\tadmin {')
+            if permadminuser != desired_permadminuser:
+                diff.append('-\t\tuid = %s;' % config['perm']['admin']['uid'])
+                diff.append('+\t\tuid = %s;' % desired_config['perm']['admin']['uid'])
+            if permadmingroup != desired_permadmingroup:
+                diff.append('-\t\tgid = %s;' % config['perm']['admin']['gid'])
+                diff.append('+\t\tgid = %s;' % desired_config['perm']['admin']['gid'])
+            diff.append('\t}')
+
+        diff.append('}')
+    return diff
 
 
 def parse_config(config):
@@ -283,7 +395,20 @@ def generate_config_file_content(name, config):
 
     lines.append("# Ansible: %s" % (name))
     lines.append("group %s {" % (name))
+    if 'perm' in config:
+        lines.append('\tperm {')
+        lines.append('\t\ttask {')
+        lines.append('\t\t\tuid = %s;' % config['perm']['task']['uid'])
+        lines.append('\t\t\tgid = %s;' % config['perm']['task']['gid'])
+        lines.append('\t\t} admin {')
+        lines.append('\t\t\tuid = %s;' % config['perm']['admin']['uid'])
+        lines.append('\t\t\tgid = %s;' % config['perm']['admin']['gid'])
+        lines.append('\t\t}')
+        lines.append('\t}')
+
     for subsystem, params in config.items():
+        if subsystem == 'perm':
+            continue
         lines.append("\t%s {" % (subsystem))
         for param, value in params.items():
             lines.append("\t\t%s = %s;" % (param, value))
