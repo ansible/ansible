@@ -87,6 +87,15 @@ class MerakiModule(object):
         self.response = None
         self.status = None
         self.url = None
+        self.url_list = {'org_get_all': '/organizations/',
+                         'org_get_one': '/organizations/replace_org_id',
+                         'org_post': '/organizations/',
+                         'org_put': '/organizations/replace_org_id',
+                         'net_get_all': '/organizations/replace_org_id/networks',
+                         'net_get_one': '/networks/replace_net_id',
+                         'net_post': '/organizations/replace_org_id/networks',
+                         'net_put': '/networks/replace_net_id',
+                        }
 
         if self.module._debug or self.params['output_level'] == 'debug':
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
@@ -228,7 +237,7 @@ class MerakiModule(object):
 
     def request(self, method, path):
         ''' Generic HTTP method for Meraki requests '''
-        self.path = path        
+        self.path = path
         self.define_protocol()
         if self.define_method() is -1:  # No changes are needed to existing object
             return
@@ -254,36 +263,7 @@ class MerakiModule(object):
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         return response
 
-    def post_new(self, path):
-        ''' Create a new object based on path. May not need to stay. '''
-        self.path = path        
-        self.define_protocol()
-        if self.define_method() is -1:  # No changes are needed to existing object
-            return
-
-        self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
-
-        resp, info = fetch_url(self.module, self.url,
-                               headers=self.headers,
-                               method=self.method,
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'],
-                               )
-        self.response = info['msg']
-        self.status = info['status']
-        response = json.loads(to_native(resp.read()))
-
-        if self.status >= 300:
-            try:
-                self.error['text'] = self.response_json(info['body'])
-                self.error['code'] = info['status']
-                self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
-            except KeyError:
-                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-        return response                
-
     def exit_json(self, **kwargs):
-
         if 'state' in self.params:
             if self.params['state'] in ('absent', 'present'):
                 if self.params['output_level'] in ('debug', 'info'):
