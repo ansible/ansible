@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -39,52 +25,41 @@ options:
   affinity_type:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
-    required: false
-    default: null
     aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
-    required: false
-    default: null
   state:
     description:
       - State of the affinity group.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   domain:
     description:
       - Domain the affinity group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the affinity group is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the affinity group is related to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
     default: true
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a affinity group
-- local_action:
+- name: Create a affinity group
+  local_action:
     module: cs_affinitygroup
     name: haproxy
     affinity_type: host anti-affinity
 
-# Remove a affinity group
-- local_action:
+- name: Remove a affinity group
+  local_action:
     module: cs_affinitygroup
     name: haproxy
     state: absent

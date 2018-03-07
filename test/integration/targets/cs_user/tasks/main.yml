@@ -66,7 +66,8 @@
     - user.account == "admin"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is not defined
+    - not user.user_api_key
+    - not user.user_api_secret
 
 - name: test create user idempotence
   cs_user:
@@ -90,7 +91,8 @@
     - user.account == "admin"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is not defined
+    - not user.user_api_key
+    - not user.user_api_secret
 
 - name: test create account
   cs_account:
@@ -154,7 +156,8 @@
     - user.account == "{{ cs_resource_prefix }}_acc"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is defined
+    - user.user_api_key is defined and user.user_api_key
+    - user.user_api_secret is defined and user.user_api_secret
 
 - name: test create user2 idempotence
   cs_user:
@@ -179,7 +182,8 @@
     - user.account == "{{ cs_resource_prefix }}_acc"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is defined
+    - user.user_api_key is defined and user.user_api_key
+    - user.user_api_secret is defined and user.user_api_secret
 
 - name: test update user in check mode
   cs_user:
@@ -205,7 +209,8 @@
     - user.account == "admin"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is not defined
+    - not user.user_api_key
+    - not user.user_api_secret
 
 - name: test update user
   cs_user:
@@ -230,7 +235,8 @@
     - user.account == "admin"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is defined
+    - user.user_api_key is defined and user.user_api_key
+    - user.user_api_secret is defined and user.user_api_secret
 
 - name: test update user idempotence
   cs_user:
@@ -255,7 +261,8 @@
     - user.account == "admin"
     - user.state == "enabled"
     - user.domain == "ROOT"
-    - user.user_api_key is defined
+    - user.user_api_key is defined and user.user_api_key
+    - user.user_api_secret is defined and user.user_api_secret
 
 - name: test lock user in check mode
   cs_user:
