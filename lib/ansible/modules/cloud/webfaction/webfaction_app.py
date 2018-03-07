@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: webfaction_app
 short_description: Add or remove applications on a Webfaction host
 description:
-    - Add or remove applications on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
+    - Add or remove applications on a Webfaction host. Further documentation at U(http://github.com/quentinsf/ansible-webfaction).
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -50,12 +50,12 @@ options:
 
     type:
         description:
-            - The type of application to create. See the Webfaction docs at http://docs.webfaction.com/xmlrpc-api/apps.html for a list.
+            - The type of application to create. See the Webfaction docs at U(http://docs.webfaction.com/xmlrpc-api/apps.html) for a list.
         required: true
 
     autostart:
         description:
-            - Whether the app should restart with an autostart.cgi script
+            - Whether the app should restart with an C(autostart.cgi) script
         type: bool
         default: "no"
 
@@ -63,7 +63,7 @@ options:
         description:
             - Any extra parameters required by the app
         required: false
-        default: null
+        default: ''
 
     port_open:
         description:
@@ -84,7 +84,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
+        default: false
 
 '''
 
@@ -99,12 +99,11 @@ EXAMPLES = '''
       machine: "{{webfaction_machine}}"
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
