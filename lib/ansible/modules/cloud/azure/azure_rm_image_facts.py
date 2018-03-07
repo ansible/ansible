@@ -29,9 +29,10 @@ options:
 
 extends_documentation_fragment:
   - azure
-
-short_description: "Capture Azure Virtual Machine Images"
-version_added: "2.5"
+  - azure_tags
+  
+short_description: "Show information about available Azure Virtual Machine Images"
+version_added: "2.6"
 
 '''
 
