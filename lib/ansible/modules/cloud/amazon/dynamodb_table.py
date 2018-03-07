@@ -150,6 +150,7 @@ import traceback
 
 try:
     import boto
+    from boto.compat import urlparse
     import boto.dynamodb2
     from boto.dynamodb2.table import Table
     from boto.dynamodb2.fields import HashKey, RangeKey, AllIndex, GlobalAllIndex, GlobalIncludeIndex, GlobalKeysOnlyIndex, IncludeIndex, KeysOnlyIndex
@@ -293,13 +294,23 @@ def delete_dynamo_table(connection, module):
         module.exit_json(**result)
 
 
+def _is_table_not_found_error(error):
+    msg = error.message
+    if not msg:
+        return False
+
+    return (msg.startswith('Requested resource not found') or
+            # DynamoDB local has a different error reason from the real service
+            msg == 'Cannot do operations on a non-existent table')
+
+
 def dynamo_table_exists(table):
     try:
         table.describe()
         return True
 
     except JSONResponseError as e:
-        if e.message and e.message.startswith('Requested resource not found'):
+        if _is_table_not_found_error(e):
             return False
         else:
             raise e
@@ -458,6 +469,12 @@ def main():
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
         module.fail_json(msg='region must be specified')
+
+    if ec2_url:
+        purl = urlparse(ec2_url)
+        aws_connect_params['port'] = purl.port
+        aws_connect_params['host'] = purl.hostname
+        aws_connect_params['is_secure'] = (purl.scheme == "https")
 
     try:
         connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
