@@ -214,7 +214,7 @@ class TestHealthmonitor(unittest.TestCase):
         self.assertFalse(result.exception.args[0]['changed'])
 
     @my_vcr.use_cassette()
-    def test_hm_fail_for_missing_name(self):
+    def test7_hm_fail_for_missing_name(self):
         set_module_args({
 
             "controller": "10.10.26.133",
