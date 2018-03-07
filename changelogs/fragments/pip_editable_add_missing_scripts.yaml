@@ -1,0 +1,2 @@
+bugfixes:
+ - setup.py - Ensure we install ansible-config and ansible-inventory with `pip install -e` (https://github.com/ansible/ansible/pull/37151)
