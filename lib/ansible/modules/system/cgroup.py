@@ -83,10 +83,6 @@ action:
     description: If something changed the corresponding action (Creating, Updating or Deleting cgroup)
     type: str
     returned: only if changed
-config_diff:
-    description: If we're updating the configuration, the diff between the former and the new configuration
-    type: str
-    returned: only when updating configuration
 '''
 
 import os
@@ -108,7 +104,7 @@ def run_module():
     result = dict(
         changed=False,
         action=None,
-        config_diff=None
+        diff=[]
     )
 
     module = AnsibleModule(
@@ -126,6 +122,9 @@ def run_module():
 
     memlimit = module.params['memlimit']
     memswaplimit = module.params['memswaplimit']
+
+    diff = {}
+    result['diff'].append(diff)
 
     config = {}
 
@@ -151,20 +150,22 @@ def run_module():
         config['memory']['memory.memsw.limit_in_bytes'] = memswaplimit
 
     # Checks if cgroup exists
-    raw_config = read_config_from_file(name)
+    previous_raw_config = read_config_from_file(name)
 
-    previous_state = 'absent' if raw_config is None else 'present'
+    previous_state = 'absent' if previous_raw_config is None else 'present'
     state_changed = state != previous_state
+
+    previous_config = ''
+    if previous_state == 'present':
+        previous_config = parse_config(previous_raw_config)[name]
+
+    diff['before'] = '' if previous_state == 'absent' else generate_config_file_content(name, previous_config)
+    diff['after'] = '' if state == 'absent' else generate_config_file_content(name, config)
 
     if state_changed:
         result['action'] = ("Creating cgroup %s" if state == 'present' else "Deleting cgroup %s") % (name)
-
-    if previous_state == 'present' and state != 'absent':
-        # Checks for changes in existing cgroup only if it exists and is to be kept
-        diff = has_config_changed(name, raw_config, config)
-        if len(diff) > 0:
-            result['action'] = "Updating cgroup %s" % (name)
-            result['config_diff'] = diff
+    elif state == 'present' and previous_config != config:
+        result['action'] = "Updating cgroup %s" % (name)
 
     changed = result['action'] is not None
     result['changed'] = changed
@@ -177,7 +178,7 @@ def run_module():
     if state == 'present':
         with open("/etc/cgconfig.d/%s.conf" % (name), 'a') as fh:
             fh.truncate(0)
-            fh.write(generate_config_file_content(name, config))
+            fh.write(diff['after'])
             fh.close()
     else:
         os.remove("/etc/cgconfig.d/%s.conf" % (name))
@@ -198,137 +199,6 @@ def read_config_from_file(desired_cgroup):
 
 def get_cgconfig_file_name(cgroup_name):
     return "/etc/cgconfig.d/%s.conf" % (cgroup_name)
-
-
-def has_config_changed(cgroup_name, raw_config, desired_config):
-    subsystems = set()
-    added_params = {}
-    deleted_params = {}
-    modified_params = {}
-
-    config = parse_config(raw_config)
-
-    if cgroup_name not in config:
-        return ''
-
-    config = config[cgroup_name]
-
-    for subsystem in config:
-        if subsystem == 'perm':
-            continue
-        subsystems.add(subsystem)
-        for param in config[subsystem]:
-            if subsystem not in desired_config or param not in desired_config[subsystem]:
-                # Some param disappeared
-                if subsystem not in deleted_params:
-                    deleted_params[subsystem] = []
-                deleted_params[subsystem].append(param)
-
-    for subsystem in desired_config:
-        if subsystem == 'perm':
-            continue
-        subsystems.add(subsystem)
-        for param in desired_config[subsystem]:
-            if subsystem not in config or param not in config[subsystem]:
-                # Some param was added
-                if subsystem not in added_params:
-                    added_params[subsystem] = []
-                added_params[subsystem].append(param)
-            else:
-                if config[subsystem][param] != desired_config[subsystem][param]:
-                    # Some param was modified
-                    if subsystem not in modified_params:
-                        modified_params[subsystem] = []
-                    modified_params[subsystem].append(param)
-
-    diff = diff_perm(config, desired_config)
-
-    for subsystem in subsystems:
-        changes = []
-        if subsystem in added_params:
-            for param in added_params[subsystem]:
-                changes.append("+\t%s = \"%s\";" % (param, desired_config[subsystem][param]))
-
-        if subsystem in deleted_params:
-            for param in deleted_params[subsystem]:
-                changes.append("-\t%s = \"%s\";" % (param, config[subsystem][param]))
-
-        if subsystem in modified_params:
-            for param in modified_params[subsystem]:
-                changes.append("-\t%s = \"%s\";" % (param, config[subsystem][param]))
-                changes.append("+\t%s = \"%s\";" % (param, desired_config[subsystem][param]))
-        if len(changes) > 0:
-            diff.append("%s {" % (subsystem))
-            diff.extend(changes)
-            diff.append("}")
-
-    return '\n'.join(diff)
-
-
-def diff_perm(config, desired_config):
-    previous_perm_settings = 'perm' in config
-    desired_perm_settings = 'perm' in desired_config
-
-    diff = []
-
-    if desired_perm_settings != previous_perm_settings:
-        if desired_perm_settings:
-            # Perm settings were added
-            diff.append('perm {')
-            diff.append('\ttask {')
-            diff.append('+\t\tuid = %s;' % desired_config['perm']['task']['uid'])
-            diff.append('+\t\tgid = %s;' % desired_config['perm']['task']['gid'])
-            diff.append('\t} admin {')
-            diff.append('+\t\tuid = %s;' % desired_config['perm']['admin']['uid'])
-            diff.append('+\t\tgid = %s;' % desired_config['perm']['admin']['gid'])
-            diff.append('\t}')
-            diff.append('}')
-        else:
-            # Perm settings were deleted
-            diff.append('perm {')
-            diff.append('\ttask {')
-            diff.append('-\t\tuid = %s;' % config['perm']['task']['uid'])
-            diff.append('-\t\tgid = %s;' % config['perm']['task']['gid'])
-            diff.append('\t} admin {')
-            diff.append('-\t\tuid = %s;' % config['perm']['admin']['uid'])
-            diff.append('-\t\tgid = %s;' % config['perm']['admin']['gid'])
-            diff.append('\t}')
-            diff.append('}')
-    elif desired_perm_settings and config['perm'] != desired_config['perm']:
-        # Perm settings have been altered
-        permtaskuser = config['perm']['task']['uid']
-        permtaskgroup = config['perm']['task']['gid']
-        permadminuser = config['perm']['admin']['uid']
-        permadmingroup = config['perm']['admin']['gid']
-        desired_permtaskuser = desired_config['perm']['task']['uid']
-        desired_permtaskgroup = desired_config['perm']['task']['gid']
-        desired_permadminuser = desired_config['perm']['admin']['uid']
-        desired_permadmingroup = desired_config['perm']['admin']['gid']
-
-        diff.append('perm {')
-
-        if config['perm']['task'] != desired_config['perm']['task']:
-            diff.append('\ttask {')
-            if permtaskuser != desired_permtaskuser:
-                diff.append('-\t\tuid = %s;' % config['perm']['task']['uid'])
-                diff.append('+\t\tuid = %s;' % desired_config['perm']['task']['uid'])
-            if permtaskgroup != desired_permtaskgroup:
-                diff.append('-\t\tgid = %s;' % config['perm']['task']['gid'])
-                diff.append('+\t\tgid = %s;' % desired_config['perm']['task']['gid'])
-            diff.append('\t}')
-
-        if config['perm']['admin'] != desired_config['perm']['admin']:
-            diff.append('\tadmin {')
-            if permadminuser != desired_permadminuser:
-                diff.append('-\t\tuid = %s;' % config['perm']['admin']['uid'])
-                diff.append('+\t\tuid = %s;' % desired_config['perm']['admin']['uid'])
-            if permadmingroup != desired_permadmingroup:
-                diff.append('-\t\tgid = %s;' % config['perm']['admin']['gid'])
-                diff.append('+\t\tgid = %s;' % desired_config['perm']['admin']['gid'])
-            diff.append('\t}')
-
-        diff.append('}')
-    return diff
 
 
 def parse_config(config):
