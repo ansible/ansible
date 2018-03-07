@@ -30,7 +30,7 @@ options:
 extends_documentation_fragment:
   - azure
   - azure_tags
-  
+
 short_description: "Show information about available Azure Virtual Machine Images"
 version_added: "2.6"
 
