@@ -386,9 +386,6 @@ lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E326
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py E325
 lib/ansible/modules/cloud/cloudstack/cs_project.py E322
 lib/ansible/modules/cloud/cloudstack/cs_project.py E325
-lib/ansible/modules/cloud/cloudstack/cs_router.py E322
-lib/ansible/modules/cloud/cloudstack/cs_router.py E324
-lib/ansible/modules/cloud/cloudstack/cs_router.py E325
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py E325
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
