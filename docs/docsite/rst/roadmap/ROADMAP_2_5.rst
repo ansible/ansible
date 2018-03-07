@@ -189,9 +189,9 @@ Documentation
 - Document vault-password-client scripts.
 - Network Documentation
 
-  - New landing page (to replace intro_networking)
-  - Platform specific guides
-  - Walk through: Getting Started
+  - New landing page (to replace intro_networking) **(done)**
+  - Platform specific guides **(done)**
+  - Walk through: Getting Started **(done)**
   - Networking and ``become`` **(done)**
   - Best practice **(done)**
 
