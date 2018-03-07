@@ -385,6 +385,7 @@ def common_environment():
         # MacOS High Sierra Compatibility
         # http://sealiesoftware.com/blog/archive/2017/6/5/Objective-C_and_fork_in_macOS_1013.html
         'OBJC_DISABLE_INITIALIZE_FORK_SAFETY',
+        'ANSIBLE_KEEP_REMOTE_FILES',
     )
 
     env.update(pass_vars(required=required, optional=optional))
