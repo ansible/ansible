@@ -368,10 +368,6 @@ lib/ansible/modules/cloud/cloudstack/cs_instance.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
-lib/ansible/modules/cloud/cloudstack/cs_ip_address.py E322
-lib/ansible/modules/cloud/cloudstack/cs_ip_address.py E324
-lib/ansible/modules/cloud/cloudstack/cs_ip_address.py E325
-lib/ansible/modules/cloud/cloudstack/cs_ip_address.py E326
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E325
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E322
