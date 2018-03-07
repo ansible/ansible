@@ -71,7 +71,7 @@ class DocCLI(CLI):
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
                                help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type (defaults to "module")',
+                               help='Choose which plugin type (defaults to "module")\n plugin types: (cache, callback, connection, inventory, lookup, module, shell, strategy, vars)',
                                choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'shell', 'strategy', 'vars'])
 
         super(DocCLI, self).parse()
