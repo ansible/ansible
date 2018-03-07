@@ -1,21 +1,7 @@
 major_changes:
   - |
-    This bullet item includes a paragraph and a nested list,
-    which works because the content of the YAML list item
-    is an escaped string block with reStructuredText formatting.
-
-    * list item 1
-    * list item 2
-
-    .. code-block:: text
-
-      This example is also rendered
-      correctly on multiple lines
-      as a pre-formatted block.
-
-  - Network
+    Various changes to Networking
 
     * Created new connection plugins ``network_cli`` and ``netconf`` to replace ``connection=local`` (which will continue to work).
     * No more ``unable to open shell``. A clear and descriptive message will be displayed in ansible-playbook normal output without needing to enable debug mode
     * Loads of documentation. FIXME LINK
-
