@@ -176,17 +176,33 @@ if ($null -ne $body) {
 
 try {
     $response = $client.GetResponse()
+} catch [System.Net.WebException] {
+    $response = $null
+    if ($_.Exception.PSObject.Properties.Name -match "Response") {
+        # was a non-successful response but we at least have a response and
+        # should parse it below according to module input
+        $response = $_.Exception.Response
+    }
+
+    # in the case a response (or empty response) was on the exception like in
+    # a timeout scenario, we should still fail
+    if ($null -eq $response) {
+        Fail-Json -obj $result -message "WebException occurred when sending web request: $($_.Exception.Message)"
+    }
 } catch [System.Net.ProtocolViolationException] {
     Fail-Json -obj $result -message "ProtocolViolationException when sending web request: $($_.Exception.Message)"
-} catch [System.Net.WebException] {
-    Fail-Json -obj $result -message "WebException occurred when sending web request: $($_.Exception.Message)"
 } catch {
     Fail-Json -obj $result -message "Unhandled exception occured when sending web request. Exception: $($_.Exception.Message)"
 }
 
 ForEach ($prop in $response.psobject.properties) {
     $result_key = Convert-StringToSnakeCase -string $prop.Name
-    $result.$result_key = $prop.Value
+    $prop_value = $prop.Value
+    # convert and DateTime values to ISO 8601 standard
+    if ($prop_value -is [System.DateTime]) {
+        $prop_value = $prop_value.ToString("o", [System.Globalization.CultureInfo]::InvariantCulture)
+    }
+    $result.$result_key = $prop_value
 }
 
 # manually get the headers as not all of them are in the response properties
@@ -195,10 +211,6 @@ foreach ($header_key in $response.Headers.GetEnumerator()) {
     $header_key = $header_key.Replace("-", "") # replace - with _ for snake conversion
     $header_key = Convert-StringToSnakeCase -string $header_key
     $result.$header_key = $header_value
-}
-
-if ($status_code -notcontains $response.StatusCode) {
-    Fail-Json -obj $result -message "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
 }
 
 # we only care about the return body if we need to return the content or create a file
@@ -252,5 +264,8 @@ if ($return_content -or $dest) {
     }
 }
 
-Exit-Json -obj $result
+if ($status_code -notcontains $response.StatusCode) {
+    Fail-Json -obj $result -message "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
+}
 
+Exit-Json -obj $result
