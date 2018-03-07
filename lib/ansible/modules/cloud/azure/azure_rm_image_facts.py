@@ -120,7 +120,6 @@ class AzureRMImageFacts(AzureRMModuleBase):
 
         named_images = []
 
-
         for image in image_list:
 
             data_disks = []
