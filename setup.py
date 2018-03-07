@@ -218,6 +218,8 @@ setup(
         'bin/ansible-console',
         'bin/ansible-connection',
         'bin/ansible-vault',
+        'bin/ansible-config',
+        'bin/ansible-inventory',
     ],
     data_files=[],
     extras_require=extra_requirements

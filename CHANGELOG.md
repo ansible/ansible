@@ -100,6 +100,8 @@ Ansible Changes By Release
   * Fix for the maven_artifact module: https://github.com/ansible/ansible/pull/37035
 * Add changes to get docker_container, docker_common, and docker_network
   working with Docker SDK 3.x: https://github.com/ansible/ansible/pull/36973
+* Ensure we install ansible-config and ansible-inventory with `pip install -e`
+  (https://github.com/ansible/ansible/pull/37151)
 
 <a id="2.4.3"></a>
 
