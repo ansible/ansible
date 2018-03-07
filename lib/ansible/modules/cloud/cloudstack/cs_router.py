@@ -70,6 +70,11 @@ options:
     required: false
     default: 'present'
     choices: [ 'present', 'absent', 'started', 'stopped', 'restarted' ]
+  poll_async:
+    description:
+      - Poll async jobs until job has finished.
+    default: yes
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
