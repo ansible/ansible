@@ -487,6 +487,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 
