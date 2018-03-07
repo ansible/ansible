@@ -140,6 +140,9 @@ def install_command_requirements(args):
     if not args.requirements:
         return
 
+    if isinstance(args, ShellConfig):
+        return
+
     packages = []
 
     if isinstance(args, TestConfig):
