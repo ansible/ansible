@@ -42,6 +42,9 @@ class HttpClient(object):
         self.always = always
         self.insecure = insecure
 
+        self.username = None
+        self.password = None
+
     def get(self, url):
         """
         :type url: str
@@ -82,6 +85,13 @@ class HttpClient(object):
             headers = {}
 
         headers['Expect'] = ''  # don't send expect continue header
+
+        if self.username:
+            if self.password:
+                display.sensitive.add(self.password)
+                cmd += ['-u', '%s:%s' % (self.username, self.password)]
+            else:
+                cmd += ['-u', self.username]
 
         for header in headers.keys():
             cmd += ['-H', '%s: %s' % (header, headers[header])]
