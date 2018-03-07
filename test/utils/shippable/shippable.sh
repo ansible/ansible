@@ -9,6 +9,9 @@ script="${args[0]}"
 
 test="$1"
 
+export P=aws
+export S=dev
+
 docker images ansible/ansible
 docker ps
 
