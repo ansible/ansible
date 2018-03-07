@@ -12,6 +12,7 @@
 #
 # Contains Action Plugin methods for ENOS Config Module
 # Lenovo Networking
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

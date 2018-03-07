@@ -13,7 +13,7 @@
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Module to configure Lenovo Switches.
+# Module to configure Lenovo switches.
 # Lenovo Networking
 #
 
