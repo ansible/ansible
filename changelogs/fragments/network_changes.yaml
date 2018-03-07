@@ -1,6 +1,7 @@
 major_changes:
-- Network
-  - Created new connection plugins ``network_cli`` and ``netconf`` to replace ``connection=local`` (which will continue to work).
-  - No more ``unable to open shell``. A clear and descriptive message will be displayed in ansible-playbook normal output without needing to enable debug mode
-  - Loads of documentation. FIXME LINK
+  - Network
+
+    * Created new connection plugins ``network_cli`` and ``netconf`` to replace ``connection=local`` (which will continue to work).
+    * No more ``unable to open shell``. A clear and descriptive message will be displayed in ansible-playbook normal output without needing to enable debug mode
+    * Loads of documentation. FIXME LINK
 
