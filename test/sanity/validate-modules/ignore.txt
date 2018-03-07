@@ -63,7 +63,6 @@ lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E322
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E322
 lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_project.py E322
-lib/ansible/modules/cloud/cloudstack/cs_router.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
