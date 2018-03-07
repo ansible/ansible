@@ -27,6 +27,10 @@
     state: absent
     provider: "{{ connection }}"
 
+- name: Sleep for 2 seconds on Fretta Platform
+  wait_for: timeout=2
+  when: platform is match("N9K-F")
+
 - block:
   - name: Configure interface for access_vlan aggregate
     nxos_l2_interface: &conf_agg
@@ -39,6 +43,10 @@
   - assert:
       that:
         - "result.changed == true"
+
+  - name: Sleep for 2 seconds on Fretta Platform
+    wait_for: timeout=2
+    when: platform is match("N9K-F")
 
   - name: Configure interface for access_vlan aggregate(Idempotence)
     nxos_l2_interface: *conf_agg
@@ -60,6 +68,10 @@
   - assert:
       that:
         - "result.changed == true"
+
+  - name: Sleep for 2 seconds on Fretta Platform
+    wait_for: timeout=2
+    when: platform is match("N9K-F")
 
   - name: Remove interface aggregate(Idempotence)
     nxos_l2_interface: *rm_agg
