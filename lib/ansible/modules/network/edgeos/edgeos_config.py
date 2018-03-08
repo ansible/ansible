@@ -27,6 +27,9 @@ description:
     in the device configuration.
 notes:
   - Tested against EdgeOS 1.9.7
+  - Setting C(ANSIBLE_PERSISTENT_COMMAND_TIMEOUT) to 30 is recommended since
+    the save command can take longer than the default of 10 seconds on
+    some EdgeOS hardware.
 options:
   lines:
     description:

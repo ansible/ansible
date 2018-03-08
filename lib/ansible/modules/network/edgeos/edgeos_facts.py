@@ -170,7 +170,7 @@ class Config(FactsBase):
                              by=str(match.group(3)).strip(),
                              via=str(match.group(4)).strip(),
                              comment=None)
-            else:
+            elif entry:
                 entry['comment'] = line.strip()
 
         self.facts['commits'] = entries
