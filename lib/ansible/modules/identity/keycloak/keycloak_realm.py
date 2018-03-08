@@ -307,7 +307,7 @@ options:
     enabled_event_types:
         description:
             - List of event types to be saved. This list may be extensible through SPIs in Keycloak.
-              Keycloak (3.4) ships the following listed types by default:
+              Keycloak (3.4) ships the following listed types by default
             - C(SEND_RESET_PASSWORD)
             - C(REGISTER_NODE_ERROR)
             - C(REMOVE_TOTP)
