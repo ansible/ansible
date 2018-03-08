@@ -54,6 +54,8 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 class OnePassException(AnsibleError):
+
+
     pass
 
 
@@ -74,11 +76,11 @@ class OnePass(object):
 
     def get_field(self, item_id, field, vault=None):
         escaped_field = field.replace('\\', '\\\\').replace('"', '\\"')
-        parser = '.details.sections[].fields[]? | select(.t=="{}").v'.format(escaped_field)
+        parser = '.details.sections[].fields[]? | select(.t=="{0}").v'.format(escaped_field)
         args = ["get", "item", item_id]
         if vault is not None:
-            args += ['--vault={}'.format(vault)]
-        json, _ = self._run(args)
+            args += ['--vault={0}'.format(vault)]
+        json, dummy = self._run(args)
         return jq(parser).transform(text=json) if json != '' else ''
 
     def _run(self, args, stdin=None, expected_rc=0):

@@ -20,7 +20,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json, datetime
+import json
+import datetime
 from urllib.parse import urlparse
 from argparse import ArgumentParser
 
@@ -93,6 +94,7 @@ MOCK_ENTRIES = [
     },
 ]
 
+
 def get_mock_query_generator(require_field=None):
     for entry in MOCK_ENTRIES:
         for query in entry['queries']:
@@ -100,6 +102,7 @@ def get_mock_query_generator(require_field=None):
                 for field in section['fields']:
                     if require_field is None or field['t'] == require_field:
                         yield entry, query, field
+
 
 def get_one_mock_query(require_field=None):
     generator = get_mock_query_generator(require_field)
@@ -150,7 +153,7 @@ class MockOnePass(OnePass):
                 raise OnePassException(error)
             if error != '':
                 now = datetime.date.today()
-                error = '[LOG] {} (ERROR) {}'.format(now.strftime('%Y/%m/%d %H:$M:$S'), error)
+                error = '[LOG] {0} (ERROR) {1}'.format(now.strftime('%Y/%m/%d %H:$M:$S'), error)
             return output, error
 
         if args.command == 'get':
@@ -164,15 +167,15 @@ class MockOnePass(OnePass):
                 mock_entry = self._lookup_mock_entry(args.item_id, args.vault)
 
                 if mock_entry is None:
-                    return mock_exit(error='Item {} not found'.format(args.item_id))
+                    return mock_exit(error='Item {0} not found'.format(args.item_id))
 
                 return mock_exit(output=json.dumps(mock_entry))
 
-            if args.object_type  == 'account':
+            if args.object_type == 'account':
                 # Since we don't actually ever use this output, don't bother mocking output.
                 return mock_exit()
 
-        raise OnePassException('Unsupported command string passed to OnePass mock: {}'.format(args))
+        raise OnePassException('Unsupported command string passed to OnePass mock: {0}'.format(args))
 
 
 class LoggedOutMockOnePass(MockOnePass):
@@ -211,7 +214,7 @@ class TestOnePass(unittest.TestCase):
     def test_onepassword_get(self):
         op = MockOnePass()
         query_generator = get_mock_query_generator()
-        for _, query, field in query_generator:
+        for dummy, query, field in query_generator:
             self.assertEqual(field['v'], op.get_field(query, field['t']))
 
     def test_onepassword_get_not_found(self):
@@ -226,7 +229,7 @@ class TestOnePass(unittest.TestCase):
 
     def test_onepassword_get_with_wrong_vault(self):
         op = MockOnePass()
-        _, query, field = get_one_mock_query()
+        dummy, query, field = get_one_mock_query()
         self.assertEqual('', op.get_field(query, field['t'], 'a fake vault'))
 
 
@@ -247,5 +250,5 @@ class TestLookupModule(unittest.TestCase):
     def test_onepassword_plugin_default_field(self):
         lookup_plugin = LookupModule()
 
-        _, query, field = get_one_mock_query('password')
+        dummy, query, field = get_one_mock_query('password')
         self.assertEqual([field['v']], lookup_plugin.run([query]))
