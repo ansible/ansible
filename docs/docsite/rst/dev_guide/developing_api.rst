@@ -42,6 +42,7 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     #!/usr/bin/env python
 
     import json
+    import shutil
     from collections import namedtuple
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
@@ -49,6 +50,7 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
     from ansible.plugins.callback import CallbackBase
+    import ansible.constants as C
 
     class ResultCallback(CallbackBase):
         """A sample callback plugin used for performing an action as results come in
@@ -107,6 +109,9 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
     finally:
         if tqm is not None:
             tqm.cleanup()
+        
+         # Remove ansible tmpdir
+         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
 
 .. _python_api_old:
