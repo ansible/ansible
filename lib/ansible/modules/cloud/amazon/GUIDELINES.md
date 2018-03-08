@@ -299,7 +299,7 @@ catch throttling exceptions to work correctly), you'd need to provide a backoff 
 and then put exception handling around the backoff function.
 
 You can use `exponential_backoff` or `jittered_backoff` strategies - see
-the [cloud module_utils](/tree/devel/lib/ansible/module_utils/cloud.py)
+the [cloud module_utils](https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
