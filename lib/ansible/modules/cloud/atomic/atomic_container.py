@@ -77,7 +77,7 @@ EXAMPLES = '''
     image: rhel/etcd
     backend: ostree
     state: latest
-    system: True
+    mode: system
     values:
         - ETCD_NAME=etcd.server
 
@@ -87,7 +87,7 @@ EXAMPLES = '''
     image: rhel/etcd
     backend: ostree
     state: absent
-    system: True
+    mode: system
 '''
 
 RETURN = '''
