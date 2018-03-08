@@ -102,6 +102,10 @@ Ansible Changes By Release
   working with Docker SDK 3.x: https://github.com/ansible/ansible/pull/36973
 * Ensure we install ansible-config and ansible-inventory with `pip install -e`
   (https://github.com/ansible/ansible/pull/37151)
+* Fix for unarchive when users use the --strip-components extra_opt to tar
+  causing ansible to set permissions on the wrong directory.
+  https://github.com/ansible/ansible/pull/37048
+
 
 <a id="2.4.3"></a>
 
