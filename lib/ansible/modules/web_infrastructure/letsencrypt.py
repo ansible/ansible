@@ -675,7 +675,7 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-6.2
         '''
         failed_tries = 0
         while True:
@@ -719,7 +719,10 @@ class ACMEAccount(object):
                 data["header"] = self.jws_header
             data = self.module.jsonify(data)
 
-            resp, info = fetch_url(self.module, url, data=data, method='POST')
+            headers = {
+                'Content-Type': 'application/jose+json',
+            }
+            resp, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
             result = {}
             try:
                 content = resp.read()
