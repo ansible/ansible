@@ -49,68 +49,57 @@ options:
        description:
             - FortiOS or FortiGate ip adress.
        required: true
-       type: string
     username:
         description:
             - FortiOS or FortiGate username.
         required: true
-        type: string
     password:
         description:
             - FortiOS or FortiGate password.
-        type: string
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
-        type: string
         default: root
     webfilter_url:
-        description: 
+        description:
             - Container for a group of url entries that the FortiGate
               must act upon
-        type: dict
         default: null
         suboptions:
             id:
                 description:
                     - Id of URL filter list.
                 required: true
-                type: string
             name:
                 description:
                     - Name of URL filter list.
-                type: string
             comment:
                 description:
                     - Optional comments.
-                type: string
                 default: null
             one-arm-ips-url-filter:
                 description:
                     - Enable/disable DNS resolver for one-arm IPS URL filter operation.
-                type: string
                 choices:
                     - enable
-                    - disable          
+                    - disable
                 default: disable
             ip-addr-block:
                 description:
                     - Enable/disable blocking URLs when the hostname appears as an IP address.
-                type: string
                 choices:
                     - enable
-                    - disable          
+                    - disable
                 default: disable
             entries:
                 description:
                     - URL filter entries.
-                type: list
                 default: []
                 suboptions:
-                    id: 
+                    id:
                         description:
                             - Id of URL.
                         required: true
@@ -119,41 +108,36 @@ options:
                         description:
                             - URL to be filtered.
                         required: true
-                        type: string
-                    type: 
+                    type:
                         description:
                             - Filter type (simple, regex, or wildcard).
                         required: true
-                        type: string
                         choices:
                             - simple
                             - regex
-                            - wildcard          
-                    action: 
+                            - wildcard
+                    action:
                         description:
                             - Action to take for URL filter matches.
                         required: true
-                        type: string
                         choices:
                             - exempt
                             - block
                             - allow
                             - monitor
-                    status: 
+                    status:
                         description:
                             - Enable/disable this URL filter.
                         required: true
-                        type: string
                         choices:
                             - enable
                             - disable
-                    exempt: 
+                    exempt:
                         description:
-                            - If action is set to exempt, select the security profile 
-                              operations that exempt URLs skip. Separate multiple 
+                            - If action is set to exempt, select the security profile
+                              operations that exempt URLs skip. Separate multiple
                               options with a space.
                         required: true
-                        type: string
                         choices:
                             - av
                             - web-content
@@ -167,70 +151,60 @@ options:
                         description:
                             - Web proxy profile.
                         required: true
-                        type: string
             state:
                 description:
                     - Configures the intended state of this object on the FortiGate.
-                      When this value is set to I(present), the object is configured 
-                      on the device and when this value is set to I(absent) the 
+                      When this value is set to I(present), the object is configured
+                      on the device and when this value is set to I(absent) the
                       object is removed from the device.
                 required: true
                 choices:
                     - absent
-                    - present          
+                    - present
     webfilter_content:
         description:
-            - Container for a group of content-filtering entries that 
+            - Container for a group of content-filtering entries that
               the FortiGate must act upon
-        type: dict
         default: null
         suboptions:
             id:
                 description:
                     - Id of content-filter list.
                 required: true
-                type: string
             name:
                 description:
                     - Name of content-filter list.
-                type: string
             comment:
                 description:
                     - Optional comments.
-                type: string
                 default: null
             entries:
                 description:
                     - Content filter entries.
-                type: list
                 default: []
                 suboptions:
-                    name: 
+                    name:
                         description:
                             - Banned word.
                         required: true
-                        type: string
                     pattern-type:
                         description:
                             - Banned word pattern type: wildcard pattern or Perl regular expression.
                         required: true
-                        type: string
                         choices:
                             - wildcard
                             - regexp
-                    status: 
+                    status:
                         description:
                             - Enable/disable banned word.
                         required: true
-                        type: string
                         choices:
                             - enable
                             - disable
-                    lang: 
+                    lang:
                         description:
                             - Language of banned word.
                         required: true
-                        type: string
                         choices:
                             - western
                             - simch
@@ -241,29 +215,27 @@ options:
                             - thai
                             - spanish
                             - cyrillic
-                    score: 
+                    score:
                         description:
                             - Score, to be applied every time the word appears on a web page.
                         required: true
-                        type: integer
-                    action: 
+                    action:
                         description:
                             - Block or exempt word when a match is found.
                         required: true
-                        type: string
                         choices:
                             - block
                             - exempt
             state:
                 description:
                     - Configures the intended state of this object on the FortiGate.
-                      When this value is set to I(present), the object is configured 
-                      on the device and when this value is set to I(absent) the 
+                      When this value is set to I(present), the object is configured
+                      on the device and when this value is set to I(absent) the
                       object is removed from the device.
                 required: true
                 choices:
                     - absent
-                    - present          
+                    - present
 '''
 
 EXAMPLES = '''
@@ -336,7 +308,7 @@ EXAMPLES = '''
             lang: "western"
             score: 42
             action: "block"
-        state: "present"       
+        state: "present"
 '''
 
 RETURN = '''
@@ -345,7 +317,7 @@ build:
   returned: always
   type: string
   sample: '1547'
-http_method: 
+http_method:
   description: Last method used to provision the content into FortiGate
   returned: always
   type: string
@@ -353,8 +325,8 @@ http_method:
 http_status:
   description: Last result given by FortiGate on last operation applied
   returned: always
-  type: integer
-  sample: 200
+  type: string
+  sample: "200"
 mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
