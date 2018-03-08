@@ -22,6 +22,8 @@ __metaclass__ = type
 
 import re
 import json
+import signal
+import time
 
 from io import StringIO
 
@@ -150,3 +152,32 @@ class TestConnectionClass(unittest.TestCase):
         with self.assertRaises(AnsibleConnectionFailure) as exc:
             conn.send(b'command', None, None, None)
         self.assertEqual(str(exc.exception), 'ERROR: error message device#')
+
+    def test_network_cli_receive(self):
+
+        def timeout(signum, frame):
+            raise AnsibleConnectionFailure("timeout trying to send command")
+
+        signal.signal(signal.SIGALRM, timeout)
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = network_cli.Connection(pc, new_stdin)
+        pc.network_os = 'ios'
+        pc.timeout = 1
+
+        conn.ssh = MagicMock()
+        mock__terminal = MagicMock()
+        mock__terminal.terminal_stdout_re = [re.compile(b'dontmatch#')]
+        mock__terminal.terminal_stderr_re = [re.compile(b'^dontmatcherror')]
+        conn._terminal = mock__terminal
+
+        mock__shell = MagicMock()
+        conn._ssh_shell = mock__shell
+        response_1 = b"junk\r\n"
+        response_2 = 'test' * 50000**2
+
+        mock__shell.recv.side_effect = [response_1, response_2, None]
+        with self.assertRaises(AnsibleConnectionFailure) as exc:
+            conn.receive()
+
+        self.assertEqual(str(exc.exception), 'timeout trying to send command')
