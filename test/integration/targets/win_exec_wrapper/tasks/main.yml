@@ -1,0 +1,26 @@
+---
+- name: test out environment block for task
+  win_shell: set | more
+  args:
+    executable: cmd.exe
+  environment:
+    String: string value
+    Int: 1234
+    Bool: True
+    double_quote: 'double " quote'
+    single_quote: "single ' quote"
+    hyphen-var: abc@123
+    '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0': '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0'
+  register: environment_block
+
+- name: assert environment block for task
+  assert:
+    that:
+    - '"String=string value" in environment_block.stdout_lines'
+    - '"Int=1234" in environment_block.stdout_lines'
+    - '"Bool=True" in environment_block.stdout_lines'
+    - '"double_quote=double \" quote" in environment_block.stdout_lines'
+    - '"single_quote=single '' quote" in environment_block.stdout_lines'
+    - '"hyphen-var=abc@123" in environment_block.stdout_lines'
+    # yaml escaping rules - (\\ == \), (\" == "), ('' == ')
+    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block.stdout_lines'

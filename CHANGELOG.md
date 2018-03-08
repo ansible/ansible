@@ -105,6 +105,9 @@ Ansible Changes By Release
 * Fix for unarchive when users use the --strip-components extra_opt to tar
   causing ansible to set permissions on the wrong directory.
   https://github.com/ansible/ansible/pull/37048
+* Fix powershell plugin to handle special chars in environment keys as well as
+  int and bool values
+  (https://github.com/ansible/ansible/pull/37215)
 
 
 <a id="2.4.3"></a>

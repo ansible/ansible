@@ -112,7 +112,10 @@ Function Run($payload) {
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
     ForEach ($env_kv in $payload.environment.GetEnumerator()) {
-        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        # need to escape ' in both the key and value
+        $env_key = $env_kv.Key.ToString().Replace("'", "''")
+        $env_value = $env_kv.Value.ToString().Replace("'", "''")
+        $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('{0}', '{1}')" -f $env_key, $env_value
         $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
     }
 
