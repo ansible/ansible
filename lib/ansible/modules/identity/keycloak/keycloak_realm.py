@@ -19,7 +19,7 @@ module: keycloak_realm
 
 short_description: Allows administration of Keycloak realms via Keycloak API
 
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - This module allows the administration of Keycloak realms via the Keycloak REST API. It
@@ -229,6 +229,7 @@ options:
             - Is brute force detection enabled for this realm or not.
         aliases:
             - bruteForceProtected
+        type: bool
 
     client_authentication_flow:
         description:
@@ -306,92 +307,91 @@ options:
     enabled_event_types:
         description:
             - List of event types to be saved. This list may be extensible through SPIs in Keycloak.
-              Keycloak (3.4) ships the listed types by default.
-        choices:
-            - SEND_RESET_PASSWORD
-            - REGISTER_NODE_ERROR
-            - REMOVE_TOTP
-            - REVOKE_GRANT
-            - UPDATE_TOTP
-            - LOGIN_ERROR
-            - CLIENT_LOGIN
-            - IDENTITY_PROVIDER_RETRIEVE_TOKEN_ERROR
-            - RESET_PASSWORD_ERROR
-            - IMPERSONATE_ERROR
-            - CODE_TO_TOKEN_ERROR
-            - CUSTOM_REQUIRED_ACTION
-            - RESTART_AUTHENTICATION
-            - CLIENT_INFO
-            - IMPERSONATE
-            - UPDATE_PROFILE_ERROR
-            - VALIDATE_ACCESS_TOKEN
-            - LOGIN
-            - UPDATE_PASSWORD_ERROR
-            - CLIENT_INITIATED_ACCOUNT_LINKING
-            - IDENTITY_PROVIDER_LOGIN
-            - TOKEN_EXCHANGE
-            - LOGOUT
-            - REGISTER
-            - CLIENT_INFO_ERROR
-            - CLIENT_REGISTER
-            - IDENTITY_PROVIDER_LINK_ACCOUNT
-            - INTROSPECT_TOKEN_ERROR
-            - REFRESH_TOKEN
-            - UPDATE_PASSWORD
-            - INTROSPECT_TOKEN
-            - CLIENT_DELETE
-            - FEDERATED_IDENTITY_LINK_ERROR
-            - IDENTITY_PROVIDER_FIRST_LOGIN
-            - CLIENT_DELETE_ERROR
-            - VERIFY_EMAIL
-            - CLIENT_LOGIN_ERROR
-            - RESTART_AUTHENTICATION_ERROR
-            - EXECUTE_ACTIONS
-            - REMOVE_FEDERATED_IDENTITY_ERROR
-            - TOKEN_EXCHANGE_ERROR
-            - UNREGISTER_NODE
-            - REGISTER_NODE
-            - SEND_IDENTITY_PROVIDER_LINK_ERROR
-            - INVALID_SIGNATURE
-            - USER_INFO_REQUEST_ERROR
-            - EXECUTE_ACTION_TOKEN_ERROR
-            - SEND_VERIFY_EMAIL
-            - IDENTITY_PROVIDER_RESPONSE
-            - EXECUTE_ACTIONS_ERROR
-            - REMOVE_FEDERATED_IDENTITY
-            - IDENTITY_PROVIDER_RETRIEVE_TOKEN
-            - IDENTITY_PROVIDER_POST_LOGIN
-            - IDENTITY_PROVIDER_LINK_ACCOUNT_ERROR
-            - UNREGISTER_NODE_ERROR
-            - VALIDATE_ACCESS_TOKEN_ERROR
-            - UPDATE_EMAIL
-            - REGISTER_ERROR
-            - REVOKE_GRANT_ERROR
-            - EXECUTE_ACTION_TOKEN
-            - LOGOUT_ERROR
-            - UPDATE_EMAIL_ERROR
-            - CLIENT_UPDATE_ERROR
-            - INVALID_SIGNATURE_ERROR
-            - UPDATE_PROFILE
-            - CLIENT_REGISTER_ERROR
-            - FEDERATED_IDENTITY_LINK
-            - USER_INFO_REQUEST
-            - IDENTITY_PROVIDER_RESPONSE_ERROR
-            - SEND_IDENTITY_PROVIDER_LINK
-            - SEND_VERIFY_EMAIL_ERROR
-            - IDENTITY_PROVIDER_LOGIN_ERROR
-            - RESET_PASSWORD
-            - CLIENT_INITIATED_ACCOUNT_LINKING_ERROR
-            - REMOVE_TOTP_ERROR
-            - VERIFY_EMAIL_ERROR
-            - SEND_RESET_PASSWORD_ERROR
-            - CLIENT_UPDATE
-            - REFRESH_TOKEN_ERROR
-            - CUSTOM_REQUIRED_ACTION_ERROR
-            - IDENTITY_PROVIDER_POST_LOGIN_ERROR
-            - UPDATE_TOTP_ERROR
-            - CODE_TO_TOKEN
-            - IDENTITY_PROVIDER_FIRST_LOGIN_ERROR
+              Keycloak (3.4) ships the following listed types by default:
+            - C(SEND_RESET_PASSWORD)
+            - C(REGISTER_NODE_ERROR)
+            - C(REMOVE_TOTP)
+            - C(REVOKE_GRANT)
+            - C(UPDATE_TOTP)
+            - C(LOGIN_ERROR)
+            - C(CLIENT_LOGIN)
+            - C(IDENTITY_PROVIDER_RETRIEVE_TOKEN_ERROR)
+            - C(RESET_PASSWORD_ERROR)
+            - C(IMPERSONATE_ERROR)
+            - C(CODE_TO_TOKEN_ERROR)
+            - C(CUSTOM_REQUIRED_ACTION)
+            - C(RESTART_AUTHENTICATION)
+            - C(CLIENT_INFO)
+            - C(IMPERSONATE)
+            - C(UPDATE_PROFILE_ERROR)
+            - C(VALIDATE_ACCESS_TOKEN)
+            - C(LOGIN)
+            - C(UPDATE_PASSWORD_ERROR)
+            - C(CLIENT_INITIATED_ACCOUNT_LINKING)
+            - C(IDENTITY_PROVIDER_LOGIN)
+            - C(TOKEN_EXCHANGE)
+            - C(LOGOUT)
+            - C(REGISTER)
+            - C(CLIENT_INFO_ERROR)
+            - C(CLIENT_REGISTER)
+            - C(IDENTITY_PROVIDER_LINK_ACCOUNT)
+            - C(INTROSPECT_TOKEN_ERROR)
+            - C(REFRESH_TOKEN)
+            - C(UPDATE_PASSWORD)
+            - C(INTROSPECT_TOKEN)
+            - C(CLIENT_DELETE)
+            - C(FEDERATED_IDENTITY_LINK_ERROR)
+            - C(IDENTITY_PROVIDER_FIRST_LOGIN)
+            - C(CLIENT_DELETE_ERROR)
+            - C(VERIFY_EMAIL)
+            - C(CLIENT_LOGIN_ERROR)
+            - C(RESTART_AUTHENTICATION_ERROR)
+            - C(EXECUTE_ACTIONS)
+            - C(REMOVE_FEDERATED_IDENTITY_ERROR)
+            - C(TOKEN_EXCHANGE_ERROR)
+            - C(UNREGISTER_NODE)
+            - C(REGISTER_NODE)
+            - C(SEND_IDENTITY_PROVIDER_LINK_ERROR)
+            - C(INVALID_SIGNATURE)
+            - C(USER_INFO_REQUEST_ERROR)
+            - C(EXECUTE_ACTION_TOKEN_ERROR)
+            - C(SEND_VERIFY_EMAIL)
+            - C(IDENTITY_PROVIDER_RESPONSE)
+            - C(EXECUTE_ACTIONS_ERROR)
+            - C(REMOVE_FEDERATED_IDENTITY)
+            - C(IDENTITY_PROVIDER_RETRIEVE_TOKEN)
+            - C(IDENTITY_PROVIDER_POST_LOGIN)
+            - C(IDENTITY_PROVIDER_LINK_ACCOUNT_ERROR)
+            - C(UNREGISTER_NODE_ERROR)
+            - C(VALIDATE_ACCESS_TOKEN_ERROR)
+            - C(UPDATE_EMAIL)
+            - C(REGISTER_ERROR)
+            - C(REVOKE_GRANT_ERROR)
+            - C(EXECUTE_ACTION_TOKEN)
+            - C(LOGOUT_ERROR)
+            - C(UPDATE_EMAIL_ERROR)
+            - C(CLIENT_UPDATE_ERROR)
+            - C(INVALID_SIGNATURE_ERROR)
+            - C(UPDATE_PROFILE)
+            - C(CLIENT_REGISTER_ERROR)
+            - C(FEDERATED_IDENTITY_LINK)
+            - C(USER_INFO_REQUEST)
+            - C(IDENTITY_PROVIDER_RESPONSE_ERROR)
+            - C(SEND_IDENTITY_PROVIDER_LINK)
+            - C(SEND_VERIFY_EMAIL_ERROR)
+            - C(IDENTITY_PROVIDER_LOGIN_ERROR)
+            - C(RESET_PASSWORD)
+            - C(CLIENT_INITIATED_ACCOUNT_LINKING_ERROR)
+            - C(REMOVE_TOTP_ERROR)
+            - C(VERIFY_EMAIL_ERROR)
+            - C(SEND_RESET_PASSWORD_ERROR)
+            - C(CLIENT_UPDATE)
+            - C(REFRESH_TOKEN_ERROR)
+            - C(CUSTOM_REQUIRED_ACTION_ERROR)
+            - C(IDENTITY_PROVIDER_POST_LOGIN_ERROR)
+            - C(UPDATE_TOTP_ERROR)
+            - C(CODE_TO_TOKEN)
+            - C(IDENTITY_PROVIDER_FIRST_LOGIN_ERROR)
         aliases:
             - enabledEventTypes
 
