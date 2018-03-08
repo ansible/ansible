@@ -19,6 +19,8 @@ DOCUMENTATION = '''
 
 import json
 
+from functools import partial
+
 from ansible.plugins.callback import CallbackBase
 
 
@@ -34,7 +36,7 @@ class CallbackModule(CallbackBase):
     def _new_play(self, play):
         return {
             'play': {
-                'name': play.name,
+                'name': play.get_name(),
                 'id': str(play._uuid)
             },
             'tasks': []
@@ -43,7 +45,7 @@ class CallbackModule(CallbackBase):
     def _new_task(self, task):
         return {
             'task': {
-                'name': task.name,
+                'name': task.get_name(),
                 'id': str(task._uuid)
             },
             'hosts': {}
@@ -79,6 +81,24 @@ class CallbackModule(CallbackBase):
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
 
-    v2_runner_on_failed = v2_runner_on_ok
-    v2_runner_on_unreachable = v2_runner_on_ok
-    v2_runner_on_skipped = v2_runner_on_ok
+    def _record_task_result(self, on_info, result, **kwargs):
+        """This function is used as a partial to add failed/skipped info in a single method"""
+        host = result._host
+        task = result._task
+        task_result = result._result.copy()
+        task_result.update(on_info)
+        task_result['action'] = task.action
+        self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
+
+    def __getattribute__(self, name):
+        """Return ``_record_task_result`` partial with a dict containing skipped/failed if necessary"""
+        if name not in ('v2_runner_on_ok', 'v2_runner_on_failed', 'v2_runner_on_unreachable', 'v2_runner_on_skipped'):
+            return object.__getattribute__(self, name)
+
+        on = name.rsplit('_', 1)[1]
+
+        on_info = {}
+        if on in ('failed', 'skipped'):
+            on_info[on] = True
+
+        return partial(self._record_task_result, on_info)
