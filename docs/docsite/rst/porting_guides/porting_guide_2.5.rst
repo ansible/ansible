@@ -188,6 +188,13 @@ For a full list, check the shell plugin you are using, the default shell plugin 
 Those that had to work around the global configuration limitations can now migrate to a per host/group settings,
 but also note that the new defaults might conflict with existing usage if the assumptions don't correlate to your environment.
 
+Filter
+------
+
+The lookup plugin API requires lookup plugins to return lists.  However, previously if a number or
+other non-iterable type was returned, this would have been silently accepted.  We now throw an error
+in this case.  If you have a custom lookup plugin that falls in this camp, you need to update it to
+wrap the values in a list.
 
 Porting custom scripts
 ======================
