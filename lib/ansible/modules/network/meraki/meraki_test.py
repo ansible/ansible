@@ -134,8 +134,8 @@ def main():
     elif meraki.params['state'] == 'present':
         if meraki.params['org_name']:
             meraki.original = meraki.create_object(meraki.params['org_name'])
-    # elif meraki.params['state'] == 'absent':
-    #     mearki.original = meraki.delete('organizations')
+    elif meraki.params['state'] == 'absent':
+        mearki.original = meraki.delete_object('organizations')
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

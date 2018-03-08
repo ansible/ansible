@@ -118,11 +118,15 @@ class MerakiModule(object):
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
 
 
-        # TODO: This isn't working
-        self.module.required_if=[
-                               ('state', 'present', ['name']),
-                               ('state', 'absent', ['name']),
+        # TODO: This needs to be tested
+        self.module.required_if=[('state', 'present', ['name']),
+                                 ('state', 'absent', ['name']),
                            ]
+
+        # Validate whether parameters are compatible
+        if self.params['state'] == 'absent':
+            if self.params['org_name'] or self.params['org_id']:
+                module.fail_json('State cannot be absent if specifying org_name or org_id.')
 
         self.modifiable_methods=['POST', 'PUT', 'DELETE']
 
@@ -271,8 +275,11 @@ class MerakiModule(object):
 
     def create_object(self, payload):
         create_path = self.construct_path('create')
-        # self.fail_json(msg=create_path)
         return self.response_json(self.request('POST', create_path, payload=payload))
+
+    def delete_object(self, payload):
+        delete_path = self.construct_path('delete')
+        return self.response_json(self.request('DELETE', delete_path, payload=payload))
 
 
     def request(self, method, path, payload=None):
