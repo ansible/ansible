@@ -74,8 +74,8 @@ The below requirements are needed on the local master node that executes this @{
 
 {% if options -%}
 
-Options
--------
+Parameters
+----------
 
 .. raw:: html
 
@@ -83,47 +83,55 @@ Options
         {# Header of the documentation #}
         <tr>
             <th class="head"><div class="cell-border">Parameter</div></th>
-            <th class="head"><div class="cell-border">Default</div></th>
-            <th class="head"><div class="cell-border">Choices</div></th>
+            <th class="head"><div class="cell-border">Choices/<font color="blue">Defaults</font></div></th>
             {% if plugin_type != 'module' %}
                 <th class="head"><div class="cell-border">Configuration</div></th>
             {% endif %}
-            <th class="head"><div class="cell-border">Comments</div></th>
+            <th class="head" width="100%"><div class="cell-border">Comments</div></th>
         </tr>
         {% for key, value in options|dictsort recursive %}
             <tr class="return-value-column">
-                {# parameter name with introduced label #}
+                {# parameter name with required and/or introduced label #}
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">
-                            </div>
+                            <div class="elbow-placeholder"></div>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
                             {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
                             {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
                         </div>
-                    <div class="outer-elbow-container">
+                    </div>
                 </td>
-                {# default value #}
-                <td><div class="cell-border">{% if value.default %}@{ value.default | html_ify }@{% endif %}</div></td>
-                {# choices #}
+                {# default / choices #}
                 <td>
                     <div class="cell-border">
-                        {% if value.type == 'bool' %}
-                            <ul>
-                                <li>yes</li>
-                                <li>no</li>
-                            </ul>
-                        {% else %}
-                            {% if value.choices %}
-                                <ul>
-                                    {% for choice in value.choices %}
-                                        <li>@{ choice }@</li>
-                                    {% endfor %}
-                                </ul>
+                        {% if value.default is defined %}
+                            {% if value.default == true %}
+                                {% set _x = value.update({'default': 'yes'}) %}
+                            {% elif value.default == false %}
+                                {% set _x = value.update({'default': 'no'}) %}
                             {% endif %}
+                        {% endif %}
+                        {% if value.type == 'bool' %}
+                            {% set _x = value.update({'choices': ['no', 'yes']}) %}
+                        {% endif %}
+                        {% if value.choices %}
+                            <ul style="list-style-type: circle"><b>Choices:</b>
+                                {% if value.default not in value.choices %}
+                                    <li type="disc"><div style="color: blue"><b>@{ value.default }@</b>&nbsp;&larr;</div></li>
+                                {% endif %}
+                                {% for choice in value.choices %}
+                                    {% if value.default is defined and choice == value.default %}
+                                        <li type="disc"><div style="color: blue"><b>@{ value.default }@</b>&nbsp;&larr;</div></li>
+                                    {% else %}
+                                        <li>@{ choice }@</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% elif value.default is defined %}
+                            <div style="color: blue">@{ value.default | html_ify }@</div>
                         {% endif %}
                     </div>
                 </td>
@@ -162,7 +170,7 @@ Options
                             {% endfor %}
                         {% endif %}
                         {% if 'aliases' in value and value.aliases %}
-                            </br><div style="font-size: small;">aliases: @{ value.aliases|join(', ') }@</div>
+                            <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
                         {% endif %}
                     </div>
                 </td>
@@ -176,7 +184,7 @@ Options
             {% endif %}
         {% endfor %}
     </table>
-    </br>
+    <br/>
 
 {% endif %}
 
