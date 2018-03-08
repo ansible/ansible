@@ -19,24 +19,23 @@ short_description: Configures timezone on Cisco UCS Manager
 version_added: "2.6"
 
 description:
-    - Configures time zone on Cisco UCS Manager.
+    - Configures timezone on Cisco UCS Manager.
     - Examples can be used with the UCS Platform Emulator U(https://communities.cisco.com/ucspe).
 
 options:
     state:
         description:
-            - If C(present), will verify timezone is set (persent) and will set (create) if needed.
-            - If C(absent), will verify timezone is unset (absent) and will unset (delete) if needed.
+            - If C(present), will set or update timezone.
+            - If C(absent), will unset timezone.
         choices: [present, absent]
-        default: absent
+        default: present
         required: true
 
     admin_state:
-        description: admin state indicates if the timezone confguration is enabled (utilized by UCS Manager)
-            or disabled (not utilized by UCS Manager)
+        description: admin state indicates if the timezone confguration is enabled and being utilized by UCS Manager
+            or disabled and being ignored by UCS Manager
         choices: ['disabled', 'enabled']
         default: "enabled"
-        required: false
 
     timezone:
         description:
@@ -45,15 +44,14 @@ options:
             - This name can be between 0 and 510 alphanumeric characters.
             - You cannot use spaces or any special characters other than
             - "\"-\" (hyphen), \"_\" (underscore), \"/\" (backslash)."
-        required: false
 
-    descr:
+    description:
         description:
             - A user-defined description of the timezone object.
             - Enter up to 256 characters.
             - "You can use any characters or spaces except the following:"
             - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
-        required: no
+        aliases: [ descr ]
 
 extends_documentation_fragment:
     - ucs
@@ -77,7 +75,7 @@ EXAMPLES = r'''
     state: present
     admin_state: enabled
     timezone: America/Los_Angeles
-    descr: 'Time Zone for Los Angeles'
+    description: 'Time Zone for Los Angeles'
 
 - name: Unconfigure Time Zone
   ucs_timezone:
@@ -100,7 +98,7 @@ def main():
     argument_spec = ucs_argument_spec
     argument_spec.update(
         timezone=dict(type='str'),
-        descr=dict(type='str'),
+        description=dict(type='str', aliases=['descr'], default=''),
         admin_state=dict(type='str', default='enabled', choices=['disabled', 'enabled']),
         state=dict(type='str', default='absent', choices=['present', 'absent']),
     )
@@ -115,8 +113,6 @@ def main():
     ucs = UCSModule(module)
 
     err = False
-
-    # UCSModule creation above verifies ucsmsdk is present and exits on failure, so additional imports are done below.
 
     changed = False
     try:
@@ -141,17 +137,17 @@ def main():
         else:
             if mo_exists:
                 # check top-level mo props
-                kwargs = dict(timezone=module.params['timezone'])
-                kwargs['descr'] = module.params['descr']
+                kwargs = dict(descr=module.params['description'])
+                kwargs['timezone'] = module.params['timezone']
                 kwargs['admin_state'] = module.params['admin_state']
                 if mo.check_prop_match(**kwargs):
                     props_match = True
 
             if not props_match:
                 if not module.check_mode:
-                    # update mo timezone mo always exists
+                    # update mo, timezone mo always exists
                     mo.timezone = module.params['timezone']
-                    mo.descr = module.params['descr']
+                    mo.descr = module.params['description']
                     mo.admin_state = module.params['admin_state']
                     ucs.login_handle.add_mo(mo, modify_present=True)
                     ucs.login_handle.commit()
