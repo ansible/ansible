@@ -60,6 +60,7 @@ class MerakiModule(object):
         self.params = module.params
         self.result = dict(changed=False)
         self.headers = dict()
+        self.function = None
 
         if module.params['auth_key'] is None:
             module.fail_json(msg='Meraki API key not specified')
@@ -95,7 +96,23 @@ class MerakiModule(object):
                          'net_get_one': '/networks/replace_net_id',
                          'net_post': '/organizations/replace_org_id/networks',
                          'net_put': '/networks/replace_net_id',
-                        }
+                         }
+
+        self.get_urls = {'organizations': '/organizations',
+                         'networks': '/organizations/replace_org_id/networks',
+                         }
+
+        self.get_one_urls = {'organizations': 'organizations/replace_org_id',
+                             'networks': 'neteworks/replace_net_id',
+                             }
+
+        self.create_urls = {'organizations': 'organizations/',
+                            }
+
+        self.url_catalog = {'get_all': self.get_urls,
+                            'get_one': self.get_one_urls,
+                            'create': self.create_urls,
+                            }
 
         if self.module._debug or self.params['output_level'] == 'debug':
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
@@ -106,6 +123,8 @@ class MerakiModule(object):
                                ('state', 'present', ['name']),
                                ('state', 'absent', ['name']),
                            ]
+
+        self.modifiable_methods=['POST', 'PUT', 'DELETE']
 
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameters '''
@@ -121,7 +140,9 @@ class MerakiModule(object):
         elif self.params['state'] == 'absent':
             self.method = 'DELETE'
         elif self.params['state'] == 'present':
-            if self.is_new() is True:
+            if self.function == 'organizations':
+                self.method = 'POST'
+            elif self.is_new() is True:
                 self.method = 'POST'
             elif self.is_update_required() is True:
                 self.method = 'PUT'
@@ -157,9 +178,9 @@ class MerakiModule(object):
         r = self.get_existing(self.path)
         for i in r:
             if self.module.params['name'] == i['name']:
-                self.fail_json(msg='False')
+                # self.fail_json(msg='False')
                 return False
-        self.fail_json(msg='True')
+        # self.fail_json(msg='True')
         return True
 
     def get_existing(self, path):
@@ -216,7 +237,12 @@ class MerakiModule(object):
             self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
 
     def get_org_id(self, org_name):
-        ''' Returns an organization id based on organization name, only if unique '''
+        ''' Returns an organization id based on organization name, only if unique 
+            If org_id is specified, return that instead of a lookup
+        '''
+        if self.params['org_id'] is not None:
+            if self.is_org(self.params['org_id']) is True:
+                return self.params['org_id']
         org = is_org_dupe(self.params['org_name'], self.get_orgs())
         return org['id']
 
@@ -224,7 +250,7 @@ class MerakiModule(object):
         ''' Return network information '''
         org_id = get_org_id(org_name)
         path = '/organizations/{0}/networks'.format(org_id)
-        return = self.response_json(self.request('GET', path))
+        return self.response_json(self.request('GET', path))
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         ''' Returne network id from lookup or existing data '''
@@ -235,7 +261,21 @@ class MerakiModule(object):
                 net = self.get_net(org_name, net_name)
                 return net['id']
 
-    def request(self, method, path):
+    def construct_path(self, action):
+        built_path = self.url_catalog[action][self.function]
+        if 'replace_org_id' in built_path:
+            built_path.replace('replace_org_id', self.get_org_id(module.params['org_name']))
+        if 'replace_net_id' in built_path:
+            built_path.replace('replace_net_id', self.get_net_id(module.params['net_name']))
+        return built_path
+
+    def create_object(self, payload):
+        create_path = self.construct_path('create')
+        # self.fail_json(msg=create_path)
+        return self.response_json(self.request('POST', create_path, payload=payload))
+
+
+    def request(self, method, path, payload=None):
         ''' Generic HTTP method for Meraki requests '''
         self.path = path
         self.define_protocol()
@@ -244,12 +284,21 @@ class MerakiModule(object):
 
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
 
-        resp, info = fetch_url(self.module, self.url,
-                               headers=self.headers,
-                               method=self.method,
-                               timeout=self.params['timeout'],
-                               use_proxy=self.params['use_proxy'],
-                               )
+        if payload is None:
+            resp, info = fetch_url(self.module, self.url,
+                                   headers=self.headers,
+                                   method=self.method,
+                                   timeout=self.params['timeout'],
+                                   use_proxy=self.params['use_proxy'],
+                                   )
+        elif payload:
+            resp, info = fetch_url(self.module, self.url,
+                                   headers=self.headers,
+                                   data=payload,
+                                   method=self.method,
+                                   timeout=self.params['timeout'],
+                                   use_proxy=self.params['use_proxy'],
+                                   )
         self.response = info['msg']
         self.status = info['status']
         response = json.loads(to_native(resp.read()))
@@ -261,6 +310,8 @@ class MerakiModule(object):
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
             except KeyError:
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
+        if self.status >= 201 and self.status <= 299 and method in self.modifiable_methods:
+            self.result['changed'] = True
         return response
 
     def exit_json(self, **kwargs):
@@ -279,21 +330,16 @@ class MerakiModule(object):
             self.result['status'] = self.status
             self.result['url'] = self.url
 
-        if 'state' in self.params:
-            self.original = self.existing
-            if self.params['state'] in ('absent', 'present'):
-                self.get_existing()
+        # if 'state' in self.params:
+        #     self.original = self.existing
+        #     if self.params['state'] in ('absent', 'present'):
+        #         self.get_existing()
 
-            # if self.module._diff and self.original != self.existing:
-            #     self.result['diff'] = dict(
-            #         before=json.dumps(self.original, sort_keys=True, indent=4),
-            #         after=json.dumps(self.existing, sort_keys=True, indent=4),
-            #     )
-            self.result['current'] = self.existing
+        #     self.result['current'] = self.existing
 
-            if self.params['output_level'] in ('debug', 'info'):
-                self.result['sent'] = self.config
-                self.result['proposed'] = self.proposed
+        #     if self.params['output_level'] in ('debug', 'info'):
+        #         self.result['sent'] = self.config
+        #         self.result['proposed'] = self.proposed
 
         self.result.update(**kwargs)
         self.module.exit_json(**self.result)
