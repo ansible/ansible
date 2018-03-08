@@ -17,6 +17,7 @@ DOCUMENTATION = '''
       - Set as stdout in config
     options:
       show_custom_stats:
+        version_added: "2.6"
         name: Show custom stats
         description: 'This adds the custom stats set via the set_stats plugin to the play recap'
         default: False
