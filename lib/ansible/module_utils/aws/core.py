@@ -118,15 +118,17 @@ class AnsibleAWSModule(object):
     def warn(self, *args, **kwargs):
         return self._module.warn(*args, **kwargs)
 
-    def client(self, service):
+    def client(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='client', resource=service,
+        conn = boto3_conn(self, conn_type='client', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
-    def resource(self, service):
+    def resource(self, service, retry_decorator=None):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        return boto3_conn(self, conn_type='resource', resource=service,
+        conn = boto3_conn(self, conn_type='resource', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception
@@ -158,3 +160,18 @@ class AnsibleAWSModule(object):
         else:
             self._module.fail_json(msg=message, exception=last_traceback,
                                    **camel_dict_to_snake_dict(response))
+
+
+class _RetryingBotoClientWrapper:
+    def __init__(self, client, retry):
+        self.client = client
+        self.retry = retry
+
+    def __getattr__(self, name):
+        unwrapped = getattr(self.client, name)
+        if callable(unwrapped):
+            wrapped = self.retry(unwrapped)
+            setattr(self, name, wrapped)
+            return wrapped
+        else:
+            return unwrapped
