@@ -348,8 +348,13 @@ instance_name:
 
 import base64
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import (AnsibleCloudStack, CS_HYPERVISORS, cs_argument_spec,
-                                             cs_required_together)
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CS_HYPERVISORS,
+    cs_argument_spec,
+    cs_required_together
+)
 
 
 class AnsibleCloudStackInstance(AnsibleCloudStack):
@@ -592,7 +597,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def get_user_data(self):
         user_data = self.module.params.get('user_data')
         if user_data is not None:
-            user_data = base64.b64encode(str(user_data))
+            user_data = to_text(base64.b64encode(to_bytes(user_data)))
         return user_data
 
     def get_details(self):
