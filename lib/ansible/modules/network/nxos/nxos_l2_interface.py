@@ -254,7 +254,7 @@ def remove_switchport_config_commands(name, existing, proposed, module):
     elif mode == 'trunk':
         tv_check = existing.get('trunk_vlans_list') == proposed.get('trunk_vlans_list')
 
-        if not tv_check:
+        if tv_check:
             existing_vlans = existing.get('trunk_vlans_list')
             proposed_vlans = proposed.get('trunk_vlans_list')
             vlans_to_remove = set(proposed_vlans).intersection(existing_vlans)
