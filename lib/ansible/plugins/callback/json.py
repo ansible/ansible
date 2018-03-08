@@ -15,11 +15,25 @@ DOCUMENTATION = '''
     type: stdout
     requirements:
       - Set as stdout in config
+    options:
+      show_custom_stats:
+        name: Show custom stats
+        description: 'This adds the custom stats set via the set_stats plugin to the play recap'
+        default: False
+        env:
+          - name: ANSIBLE_SHOW_CUSTOM_STATS
+        ini:
+          - key: show_custom_stats
+            section: defaults
+        type: bool
 '''
 
 import json
 
 from functools import partial
+
+from ansible import constants as C
+from ansible.inventory.host import Host
 
 from ansible.plugins.callback import CallbackBase
 
@@ -60,9 +74,10 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self.results[-1]['tasks'].append(self._new_task(task))
 
-    def v2_runner_on_ok(self, result, **kwargs):
-        host = result._host
-        self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
+    def _convert_host_to_name(self, key):
+        if isinstance(key, (Host,)):
+            return key.get_name()
+        return key
 
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
@@ -74,9 +89,15 @@ class CallbackModule(CallbackBase):
             s = stats.summarize(h)
             summary[h] = s
 
+        custom_stats = {}
+        if self._plugin_options.get('show_custom_stats', C.SHOW_CUSTOM_STATS) and stats.custom:  # fallback on constants for inherited plugins missing docs
+            custom_stats.update(dict((self._convert_host_to_name(k), v) for k, v in stats.custom.items()))
+            custom_stats.pop('_run', None)
+
         output = {
             'plays': self.results,
-            'stats': summary
+            'stats': summary,
+            'custom_stats': custom_stats,
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
