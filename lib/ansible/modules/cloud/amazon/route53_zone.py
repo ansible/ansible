@@ -195,34 +195,38 @@ def create_or_update_private(module, client, matching_zones, record):
         if record['vpc_id'] == current_vpc_id and record['vpc_region'] == current_vpc_region:
             record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
             if 'Comment' in zone_details['Config'] and zone_details['Config']['Comment'] != record['comment']:
-                try:
-                    client.update_hosted_zone_comment(Id=zone_details['Id'], Comment=record['comment'])
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Could not update comment for hosted zone %s" % zone_details['Id'])
+                if not module.check_mode:
+                    try:
+                        client.update_hosted_zone_comment(Id=zone_details['Id'], Comment=record['comment'])
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Could not update comment for hosted zone %s" % zone_details['Id'])
                 return True, record
             else:
                 record['msg'] = "There is already a private hosted zone in the same region with the same VPC \
                     you chose. Unable to create a new private hosted zone in the same name space."
                 return False, record
 
-    try:
-        result = client.create_hosted_zone(
-            Name=record['name'],
-            HostedZoneConfig={
-                'Comment': record['comment'] if record['comment'] is not None else "",
-                'PrivateZone': True,
-            },
-            VPC={
-                'VPCRegion': record['vpc_region'],
-                'VPCId': record['vpc_id'],
-            },
-            CallerReference="%s-%s" % (record['name'], time.time()),
-        )
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg="Could not create hosted zone")
-    hosted_zone = result['HostedZone']
-    zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
-    record['zone_id'] = zone_id
+    if not module.check_mode:
+        try:
+            result = client.create_hosted_zone(
+                Name=record['name'],
+                HostedZoneConfig={
+                    'Comment': record['comment'] if record['comment'] is not None else "",
+                    'PrivateZone': True,
+                },
+                VPC={
+                    'VPCRegion': record['vpc_region'],
+                    'VPCId': record['vpc_id'],
+                },
+                CallerReference="%s-%s" % (record['name'], time.time()),
+            )
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json_aws(e, msg="Could not create hosted zone")
+
+        hosted_zone = result['HostedZone']
+        zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
+        record['zone_id'] = zone_id
+
     changed = True
     return changed, record
 
@@ -235,35 +239,38 @@ def create_or_update_public(module, client, matching_zones, record):
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Could not get details about hosted zone %s" % matching_zone['Id'])
         if 'Comment' in zone_details['Config'] and zone_details['Config']['Comment'] != record['comment']:
-            try:
-                client.update_hosted_zone_comment(
-                    Id=zone_details['Id'],
-                    Comment=record['comment']
-                )
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Could not update comment for hosted zone %s" % zone_details['Id'])
+            if not module.check_mode:
+                try:
+                    client.update_hosted_zone_comment(
+                        Id=zone_details['Id'],
+                        Comment=record['comment']
+                    )
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Could not update comment for hosted zone %s" % zone_details['Id'])
             changed = True
         else:
             changed = False
         break
 
     if zone_details is None:
-        try:
-            result = client.create_hosted_zone(
-                Name=record['name'],
-                HostedZoneConfig={
-                    'Comment': record['comment'] if record['comment'] is not None else "",
-                    'PrivateZone': False,
-                },
-                CallerReference="%s-%s" % (record['name'], time.time())
-            )
-        except (BotoCoreError, ClientError) as e:
-            module.fail_json_aws(e, msg="Could not create hosted zone")
-        zone_details = result['HostedZone']
+        if not module.check_mode:
+            try:
+                result = client.create_hosted_zone(
+                    Name=record['name'],
+                    HostedZoneConfig={
+                        'Comment': record['comment'] if record['comment'] is not None else "",
+                        'PrivateZone': False,
+                    },
+                    CallerReference="%s-%s" % (record['name'], time.time())
+                )
+                zone_details = result['HostedZone']
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Could not create hosted zone")
         changed = True
 
-    record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
-    record['name'] = zone_details['Name']
+    if not module.check_mode:
+        record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
+        record['name'] = zone_details['Name']
 
     return changed, record
 
@@ -278,17 +285,19 @@ def delete_private(module, client, matching_zones, vpc_id, vpc_region):
         vpc_details = result['VPCs']
         if isinstance(vpc_details, dict):
             if vpc_details['VPC']['VPCId'] == vpc_id and vpc_region == vpc_details['VPC']['VPCRegion']:
-                try:
-                    client.delete_hosted_zone(Id=z['Id'])
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
+                if not module.check_mode:
+                    try:
+                        client.delete_hosted_zone(Id=z['Id'])
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
                 return True, "Successfully deleted %s" % zone_details['Name']
         else:
             if vpc_id in [v['VPCId'] for v in vpc_details] and vpc_region in [v['VPCRegion'] for v in vpc_details]:
-                try:
-                    client.delete_hosted_zone(Id=z['Id'])
-                except (BotoCoreError, ClientError) as e:
-                    module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
+                if not module.check_mode:
+                    try:
+                        client.delete_hosted_zone(Id=z['Id'])
+                    except (BotoCoreError, ClientError) as e:
+                        module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
                 return True, "Successfully deleted %s" % zone_details['Name']
 
     return False, "The vpc_id and the vpc_region do not match a private hosted zone."
@@ -299,10 +308,11 @@ def delete_public(module, client, matching_zones):
         changed = False
         msg = "There are multiple zones that match. Use hosted_zone_id to specify the correct zone."
     else:
-        try:
-            client.delete_hosted_zone(Id=matching_zones[0]['Id'])
-        except (BotoCoreError, ClientError) as e:
-            module.fail_json_aws(e, msg="Could not get delete hosted zone %s" % matching_zones[0]['Id'])
+        if not module.check_mode:
+            try:
+                client.delete_hosted_zone(Id=matching_zones[0]['Id'])
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Could not get delete hosted zone %s" % matching_zones[0]['Id'])
         changed = True
         msg = "Successfully deleted %s" % matching_zones[0]['Id']
     return changed, msg
@@ -313,17 +323,19 @@ def delete_hosted_id(module, client, hosted_zone_id, matching_zones):
         deleted = []
         for z in matching_zones:
             deleted.append(z['Id'])
-            try:
-                client.delete_hosted_zone(Id=z['Id'])
-            except (BotoCoreError, ClientError) as e:
-                module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
+            if not module.check_mode:
+                try:
+                    client.delete_hosted_zone(Id=z['Id'])
+                except (BotoCoreError, ClientError) as e:
+                    module.fail_json_aws(e, msg="Could not delete hosted zone %s" % z['Id'])
         changed = True
         msg = "Successfully deleted zones: %s" % deleted
     elif hosted_zone_id in [zo['Id'].replace('/hostedzone/', '') for zo in matching_zones]:
-        try:
-            client.delete_hosted_zone(Id=hosted_zone_id)
-        except (BotoCoreError, ClientError) as e:
-            module.fail_json_aws(e, msg="Could not delete hosted zone %s" % hosted_zone_id)
+        if not module.check_mode:
+            try:
+                client.delete_hosted_zone(Id=hosted_zone_id)
+            except (BotoCoreError, ClientError) as e:
+                module.fail_json_aws(e, msg="Could not delete hosted zone %s" % hosted_zone_id)
         changed = True
         msg = "Successfully deleted zone: %s" % hosted_zone_id
     else:
@@ -367,7 +379,7 @@ def main():
         vpc_region=dict(default=None),
         comment=dict(default=''),
         hosted_zone_id=dict()))
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     zone_in = module.params.get('zone').lower()
     state = module.params.get('state').lower()
