@@ -361,10 +361,10 @@ class ModuleFailException(Exception):
     def __init__(self, msg, **args):
         super(ModuleFailException, self).__init__(self, msg)
         self.msg = msg
-        self.args = args
+        self.module_fail_args = args
 
     def do_fail(self, module):
-        module.fail_json(msg=self.msg, **self.args)
+        module.fail_json(msg=self.msg, other=self.module_fail_args)
 
 
 def _lowercase_fetch_url(*args, **kwargs):
