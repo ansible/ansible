@@ -42,6 +42,7 @@
     double_quote: 'double " quote'
     single_quote: "single ' quote"
     hyphen-var: abc@123
+    '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0': '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0'
   register: environment_block
 
 - name: assert environment block for task
@@ -52,6 +53,9 @@
     - '"Bool=True" in environment_block.stdout_lines'
     - '"double_quote=double \" quote" in environment_block.stdout_lines'
     - '"single_quote=single '' quote" in environment_block.stdout_lines'
+    - '"hyphen-var=abc@123" in environment_block.stdout_lines'
+    # yaml escaping rules - (\\ == \), (\" == "), ('' == ')
+    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block.stdout_lines'
 
 - name: test out become requires without become_user set
   test_all_options:
