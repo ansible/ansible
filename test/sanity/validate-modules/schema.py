@@ -173,6 +173,5 @@ def metadata_1_1_schema(deprecated):
 # 1) Don't allow empty options for choices, aliases, etc
 # 2) If type: bool ensure choices isn't set - perhaps use Exclusive
 # 3) both version_added should be quoted floats
-# 4) Use Recursive Schema via `Self`, see `suboption_schema` above
 
 #  Tool that takes JSON and generates RETURN skeleton (needs to support complex structures)
