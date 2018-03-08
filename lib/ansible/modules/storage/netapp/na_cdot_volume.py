@@ -69,23 +69,26 @@ options:
     - Name of the vserver to use.
     required: true
     default: None
-    
+
   junction_path:
     description:
     - Junction path where to mount the volume
     required: false
+    version_added: '2.6'
 
   export_policy:
     description:
     - Export policy to set for the specified junction path.
     required: false
     default: default
+    version_added: '2.6'
     
   snapshot_policy:
     description:
     - Snapshot policy to set for the specified volume.
     required: false
-    default: default    
+    default: default
+    version_added: '2.6'
 
 '''
 
@@ -188,7 +191,7 @@ class NetAppCDOTVolume(object):
         self.junction_path = p['junction_path']
         self.export_policy = p['export_policy']
         self.snapshot_policy = p['snapshot_policy']
-    	
+
         if p['size'] is not None:
             self.size = p['size'] * self._size_unit_map[self.size_unit]
         else:
@@ -256,15 +259,14 @@ class NetAppCDOTVolume(object):
         create_parameters = {'volume': self.name,
                              'containing-aggr-name': self.aggregate_name,
                              'size': str(self.size),
-                            }
+        }
         if self.junction_path:
             create_parameters['junction-path'] = str(self.junction_path)
-        if self.export_policy != 'default':    
+        if self.export_policy != 'default':
             create_parameters['export-policy'] = str(self.export_policy)
-        if self.snapshot_policy != 'default':    
+        if self.snapshot_policy != 'default':
             create_parameters['snapshot-policy'] = str(self.snapshot_policy)
-            
-                                
+
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **create_parameters)
 
