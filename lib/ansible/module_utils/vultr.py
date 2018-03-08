@@ -139,10 +139,16 @@ class Vultr:
             for k, v in data.items():
                 if isinstance(v, list):
                     for s in v:
-                        data_list += '&%s[]=%s' % (k, urllib.quote(s))
+                        try:
+                            data_list += '&%s[]=%s' % (k, urllib.quote(s))
+                        except AttributeError:
+                            data_list += '&%s[]=%s' % (k, urllib.parse.quote(s))
                 elif v is not None:
                     data_encoded[k] = v
-            data = urllib.urlencode(data_encoded) + data_list
+            try:
+                data = urllib.urlencode(data_encoded) + data_list
+            except AttributeError:
+                data = urllib.parse.urlencode(data_encoded) + data_list
 
         for s in range(0, self.api_config['api_retries']):
             response, info = fetch_url(
