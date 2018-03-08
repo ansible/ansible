@@ -141,9 +141,9 @@ display all tags applied to the tasks with the ``--list-tags`` option.
 
     - hosts: all
       tasks:
-        - include_role:
-            name: myrole
-          tags: mytag  
+      - include_role:
+          name: myrole
+        tags: mytag  
     ...
 
     (role tasks file)
