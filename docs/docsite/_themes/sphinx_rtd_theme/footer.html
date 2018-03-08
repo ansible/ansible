@@ -22,14 +22,7 @@
 </script>
 
   <p>
-  Copyright © 2018 Red Hat, Inc.
-  <br>
-
-  {%- if last_updated %}
-    {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-  {%- endif %}
+  {%- if last_updated %}{% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>{% endif %}
+  Copyright © 2018 Red Hat, Inc. <br/>
   </p>
-<p>
-Ansible docs are generated from <a href="https://github.com/ansible/ansible">GitHub sources</a> using <a href="http://sphinx-doc.org/">Sphinx</a> using a theme provided by <a href="http://readthedocs.org">Read the Docs</a>.
-</p>
 </footer>
