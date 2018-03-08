@@ -53,8 +53,8 @@ from subprocess import Popen, PIPE
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
-class OnePassException(AnsibleError):
 
+class OnePassException(AnsibleError):
 
     pass
 

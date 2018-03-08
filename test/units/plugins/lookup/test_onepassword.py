@@ -58,10 +58,10 @@ MOCK_ENTRIES = [
             'details': {
                 'sections': [{
                     'fields': [
-                        { 't': 'username', 'v': 'jamesbond' },
-                        { 't': 'password', 'v': 't0pS3cret' },
-                        { 't': 'notes', 'v': 'Test note with\nmultiple lines and trailing space.\n\n' },
-                        { 't': 'tricksy "quot\'d" field\\', 'v': '"quot\'d" value' }
+                        {'t': 'username', 'v': 'jamesbond'},
+                        {'t': 'password', 'v': 't0pS3cret'},
+                        {'t': 'notes', 'v': 'Test note with\nmultiple lines and trailing space.\n\n'},
+                        {'t': 'tricksy "quot\'d" field\\', 'v': '"quot\'d" value'}
                     ]
                 }]
             }
@@ -80,13 +80,13 @@ MOCK_ENTRIES = [
             'overview': {
                 'title': 'Mock Website',
                 'URLs': [
-                    { 'l': 'website', 'u': 'https://acme.com/login' }
+                    {'l': 'website', 'u': 'https://acme.com/login'}
                 ]
             },
             'details': {
                 'sections': [{
                     'fields': [
-                        { 't': 'password', 'v': 't0pS3cret' }
+                        {'t': 'password', 'v': 't0pS3cret'}
                     ]
                 }]
             }
