@@ -307,7 +307,7 @@ class Droplet(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_active_droplets()
-        return map(cls, json)
+        return [cls(j) for j in json]
 
 
 class SSH(JsonfyMixIn):
@@ -338,7 +338,7 @@ class SSH(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_ssh_keys()
-        return map(cls, json)
+        return [cls(j) for j in json]
 
     @classmethod
     def add(cls, name, key_pub):
