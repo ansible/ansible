@@ -3,6 +3,7 @@ placebo
 cryptography
 pycrypto
 jinja2
+jq
 mock
 nose
 passlib
