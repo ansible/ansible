@@ -126,10 +126,14 @@ def main():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
+    meraki.function = 'organizations'
+
+
     if meraki.params['state'] == 'query':
-        meraki.result['response'] = meraki.get_existing('organizations')
+        meraki.result['response'] = meraki.get_orgs()
     elif meraki.params['state'] == 'present':
-        meraki.original = meraki.post_new('organizations')
+        if meraki.params['org_name']:
+            meraki.original = meraki.create_object(meraki.params['org_name'])
     # elif meraki.params['state'] == 'absent':
     #     mearki.original = meraki.delete('organizations')
 
