@@ -21,6 +21,7 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
+     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
 options:
   name:
     description:
@@ -1342,9 +1343,9 @@ def main():
 
     error_msgs = []
     if not HAS_RPM_PYTHON:
-        error_msgs.append('python2 bindings for rpm are needed for this module')
+        error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
     if not HAS_YUM_PYTHON:
-        error_msgs.append('python2 yum module is needed for this  module')
+        error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
     if error_msgs:
         module.fail_json(msg='. '.join(error_msgs))
