@@ -82,7 +82,7 @@ options:
     required: false
     default: default
     version_added: '2.6'
-    
+
   snapshot_policy:
     description:
     - Snapshot policy to set for the specified volume.
@@ -259,7 +259,7 @@ class NetAppCDOTVolume(object):
         create_parameters = {'volume': self.name,
                              'containing-aggr-name': self.aggregate_name,
                              'size': str(self.size),
-        }
+                             }
         if self.junction_path:
             create_parameters['junction-path'] = str(self.junction_path)
         if self.export_policy != 'default':
