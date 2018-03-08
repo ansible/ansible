@@ -19,7 +19,7 @@ module: keycloak_scope
 
 short_description: Allows administration of Keycloak scope mappings via the Keycloak REST API
 
-version_added: "2.5"
+version_added: "2.6"
 
 description:
     - This module allows the administration of Keycloak scope mappings through the Keycloak REST
@@ -298,7 +298,7 @@ def main():
     argument_spec = keycloak_argument_spec()
 
     meta_args = dict(
-        realm=dict(type='str', default='master'),
+        realm=dict(type='str'),
         target=dict(default='client', choices=['client', 'client-template']),
         id=dict(type='str'),
         name=dict(type='str'),
