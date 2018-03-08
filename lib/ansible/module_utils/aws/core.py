@@ -67,9 +67,19 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.six import string_types
+from collections import OrderedDict
+import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
 __all__ = ('AnsibleAWSModule', 'HAS_BOTO3',)
+
+try:
+    from botocore.utils import ArgumentGenerator
+    from botocore.stub import Stubber
+    HAS_MOCK_REQ = True
+except ImportError:
+    HAS_MOCK_REQ = False
 
 
 class AnsibleAWSModule(object):
@@ -218,6 +228,121 @@ class AnsibleAWSModule(object):
         """
         existing = self._gather_versions()
         return LooseVersion(existing['botocore_version']) >= LooseVersion(desired)
+
+    def create_response_dict(self, item):
+        if isinstance(item, string_types):
+            return item
+        elif isinstance(item, list):
+            return [self.create_response_dict(i) for i in item]
+        elif isinstance(item, OrderedDict):
+            item = dict(item)
+            for k, v in item.items():
+                item[k] = self.create_response_dict(v)
+        return item
+
+    def populate_response(self, response, extra_output):
+        if isinstance(response, string_types):
+            return response
+        elif isinstance(response, list):
+            return [self.populate_response(i, extra_output) for i in response]
+        elif isinstance(response, dict):
+            for output_key, v in dict(response).items():
+                if output_key in extra_output:
+                    response[output_key] = extra_output[output_key]
+                else:
+                    # Careful. If doing diffs with deeply nested structures with repeat keys this will
+                    # do weird things. Safer to pass extra_output as a complex structure in cases like that.
+                    # TODO: make extra_output smarter
+                    response[output_key] = self.populate_response(v, extra_output)
+        return response
+
+    def call_with_check_mode(self, client, method, extra_output, params):
+
+        arg_gen = ArgumentGenerator()
+        resp_stub = Stubber(client)
+        op = client.meta.method_to_api_mapping.get(method)
+        output_shape = client._service_model.operation_model(op).output_shape
+        if not output_shape:
+            return None
+        output_args = arg_gen.generate_skeleton(output_shape)
+
+        # Generate response dict
+        resp = self.create_response_dict(output_args)
+        if extra_output:
+            resp = self.populate_response(dict(resp), extra_output)
+
+        # Validate input parameters
+        resp_stub.add_response(method, resp)
+        with resp_stub:
+            return getattr(client, method)(**params)
+
+    def get_resource_before(self, client, method, params, output_dict=None):
+        if output_dict is not None:
+            return output_dict
+        if method:
+            if not any(method.startswith(r) for r in ('get', 'describe', 'list')):
+                self.warn("This may be an implementation error of diff mode. The compare "
+                          "method should be a read-only method. Setting 'before' to an empty dict.")
+                return {}
+            # ensure optional var is a dict
+            if params is None:
+                params = {}
+            resource_before = camel_dict_to_snake_dict(getattr(client, method)(**params))
+            resource_before.pop('response_metadata', None)
+            return resource_before
+        return {}
+
+    def get_resource_after(self, client, method, params, extra_output):
+        # ensure optional vars are dicts
+        params = params or {}
+        extra_output = extra_output or {}
+
+        if self.check_mode:
+            response = self.call_with_check_mode(client, method, extra_output, params)
+        else:
+            response = getattr(client, method)(**params)
+        if response is not None:
+            resource_after = camel_dict_to_snake_dict(dict(response))
+            resource_after.pop('response_metadata', None)
+        else:
+            resource_after = {}
+        return response, resource_after
+
+    def call_method(self, client, method, comp_method=None, extra_output=None,
+                    params=None, comp_method_params=None, comp_output=None):
+        '''
+            Handles check and diff mode. If check mode is used, creates a fake boto3 response
+            so it may be used in tandem with diff mode.
+
+            :arg client: a boto3 client
+            :arg method: a string, name of a boto3 method
+            :kwarg comp_method: a string, name of a boto3 method to use for the diff['before'] when running with diff
+            :kwarg extra_output: a dict of any output parameters that have an expected value but no corresponding input -
+                                 useful if a module only uses exit_json after describing something that would be created
+            :kwarg params: a dict of parameters to call the method
+            :kwarg comp_method_params: a dict of parameters to call the comp_method
+            :kwarg comp_output: a boto3 response to use as the diff['before'] instead of comp_method
+
+            :returns: a boto3 response
+
+        '''
+        if self.check_mode and not HAS_MOCK_REQ:
+            self.fail_json(msg="Try uninstalling and reinstalling botocore: botocore.utils and botocore.stub "
+                           "are required to generate fake boto3 responses when using check mode for this module.")
+
+        if self._diff:
+            diff = {}
+
+            diff['before'] = self.get_resource_before(client, comp_method, comp_method_params, comp_output)
+            response, diff['after'] = self.get_resource_after(client, method, params, extra_output)
+
+            self.difflist.append(diff)
+            return response
+
+        elif self.check_mode:
+            return self.call_with_check_mode(client, method, extra_output or {}, params or {})
+        else:
+            return getattr(client, method)(**params)
 
 
 class _RetryingBotoClientWrapper(object):
