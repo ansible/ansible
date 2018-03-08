@@ -361,10 +361,10 @@ class ModuleFailException(Exception):
     def __init__(self, msg, **args):
         super(ModuleFailException, self).__init__(self, msg)
         self.msg = msg
-        self.args = args
+        self.module_fail_args = args
 
     def do_fail(self, module):
-        module.fail_json(msg=self.msg, **self.args)
+        module.fail_json(msg=self.msg, other=self.module_fail_args)
 
 
 def _lowercase_fetch_url(*args, **kwargs):
@@ -675,7 +675,7 @@ class ACMEAccount(object):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
         the response as dictionary
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-6.2
+        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-6.2
         '''
         failed_tries = 0
         while True:
@@ -719,7 +719,10 @@ class ACMEAccount(object):
                 data["header"] = self.jws_header
             data = self.module.jsonify(data)
 
-            resp, info = fetch_url(self.module, url, data=data, method='POST')
+            headers = {
+                'Content-Type': 'application/jose+json',
+            }
+            resp, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
             result = {}
             try:
                 content = resp.read()
@@ -979,13 +982,13 @@ class ACMEClient(object):
                 continue
 
             uri = challenge['uri'] if self.version == 1 else challenge['url']
-            token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
-            keyauthorization = self.account.get_keyauthorization(token)
 
-            challenge_response = {
-                "resource": "challenge",
-                "keyAuthorization": keyauthorization,
-            }
+            challenge_response = {}
+            if self.version == 1:
+                token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
+                keyauthorization = self.account.get_keyauthorization(token)
+                challenge_response["resource"] = "challenge"
+                challenge_response["keyAuthorization"] = keyauthorization
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
                 raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
