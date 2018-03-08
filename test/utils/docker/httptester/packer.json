@@ -1,8 +1,11 @@
 {
+    "variables": {
+        "docker_image": "nginx:1.13.8-alpine"
+    },
     "builders": [
         {
             "type": "docker",
-            "image": "nginx:alpine",
+            "image": "{{user `docker_image`}}",
             "commit": true,
             "run_command": [
                 "-d",
@@ -22,7 +25,7 @@
                 "[ -f /usr/bin/dnf ] && /usr/bin/dnf -y install ansible python2-dnf || true",
                 "[ ! -f /usr/bin/dnf -a -f /usr/bin/yum ] && /usr/bin/yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-`grep -o [0-9] /etc/redhat-release | head -1`.noarch.rpm || true",
                 "[ ! -f /usr/bin/dnf -a -f /usr/bin/yum ] && /usr/bin/yum -y install ansible || true",
-                "[ -f /usr/bin/apt-get ] && /usr/bin/apt-get update && /usr/bin/apt-get -y install ansible || true"
+                "[ -f /usr/bin/apt-get ] && /usr/bin/apt-get update && /usr/bin/apt-get -y install software-properties-common && /usr/bin/add-apt-repository ppa:ansible/ansible && /usr/bin/apt-get update && /usr/bin/apt-get -y install ansible || true"
             ]
         },
         {

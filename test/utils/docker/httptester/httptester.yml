@@ -6,15 +6,31 @@
       apk:
         - openssl
         - py-pip
+        - ca-certificates
+        - openssl-dev
+        - python2-dev
+        - libffi-dev
+        - gcc
+        - libstdc\+\+
+        - make
+        - musl-dev
       apt:
         - openssl
         - python-pip
+        - python-dev
+        - libffi-dev
       yum:
         - openssl
         - python-pip
+        - python-devel
+        - gcc
+        - libffi-devel
       dnf:
         - openssl
         - python-pip
+        - python-devel
+        - gcc
+        - libffi-devel
   tasks:
     - name: Check for nginx
       stat:
@@ -29,9 +45,15 @@
 
     - name: Install OS Packages
       package:
-        name: "{{ item }}"
+        name: "{{ os_packages[ansible_pkg_mgr] }}"
         update_cache: "{{ (ansible_pkg_mgr == 'dnf')|ternary(omit, 'yes') }}"
-      with_items: "{{ os_packages[ansible_pkg_mgr] }}"
+
+    - name: Symlink libstdc++
+      file:
+        state: link
+        src: /usr/lib/libstdc++.so.6
+        dest: /usr/lib/libstdc++.so
+      when: ansible_pkg_mgr == 'apk'
 
     - name: Create cert directories
       file:
@@ -134,7 +156,7 @@
       with_items:
         - name: gunicorn
         - name: httpbin
-          version: '0.5.0'
+          version: '0.6.2'
 
     - name: Copy services.sh script
       copy:
