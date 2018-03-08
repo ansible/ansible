@@ -60,4 +60,5 @@ options:
         description:
             - Verify TLS certificates (do not disable this in production).
         default: True
+        type: bool
 '''
