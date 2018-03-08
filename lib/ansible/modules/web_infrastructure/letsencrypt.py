@@ -982,13 +982,13 @@ class ACMEClient(object):
                 continue
 
             uri = challenge['uri'] if self.version == 1 else challenge['url']
-            token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
-            keyauthorization = self.account.get_keyauthorization(token)
 
-            challenge_response = {
-                "resource": "challenge",
-                "keyAuthorization": keyauthorization,
-            }
+            challenge_response = {}
+            if self.version == 1:
+                token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
+                keyauthorization = self.account.get_keyauthorization(token)
+                challenge_response["resource"] = "challenge"
+                challenge_response["keyAuthorization"] = keyauthorization
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
                 raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
