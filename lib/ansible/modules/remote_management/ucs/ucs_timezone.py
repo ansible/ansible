@@ -29,7 +29,6 @@ options:
             - If C(absent), will unset timezone.
         choices: [present, absent]
         default: present
-        required: true
 
     admin_state:
         description: admin state indicates if the timezone confguration is enabled and being utilized by UCS Manager
@@ -52,6 +51,7 @@ options:
             - "You can use any characters or spaces except the following:"
             - "` (accent mark), \ (backslash), ^ (carat), \" (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote)."
         aliases: [ descr ]
+        default: ""
 
 extends_documentation_fragment:
     - ucs
@@ -100,7 +100,7 @@ def main():
         timezone=dict(type='str'),
         description=dict(type='str', aliases=['descr'], default=''),
         admin_state=dict(type='str', default='enabled', choices=['disabled', 'enabled']),
-        state=dict(type='str', default='absent', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
     module = AnsibleModule(
