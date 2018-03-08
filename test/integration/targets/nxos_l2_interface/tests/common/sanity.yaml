@@ -95,7 +95,7 @@
     nxos_l2_interface: &no_tag
       name: "{{ intname }}"
       mode: trunk
-      trunk_vlans: 30-4094
+      trunk_vlans: 2-50
       state: absent
       provider: "{{ connection }}"
     register: result
