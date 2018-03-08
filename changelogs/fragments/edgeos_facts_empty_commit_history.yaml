@@ -1,0 +1,2 @@
+bugfixes:
+  - edgeos_facts - fix error when there are no commit revisions (https://github.com/ansible/ansible/issues/37123)
