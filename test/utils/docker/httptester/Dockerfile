@@ -23,7 +23,7 @@ RUN set -x && \
     cp /root/ca/cacert.pem /usr/share/nginx/html/cacert.pem && \
     cp /root/ca/client.ansible.http.tests-cert.pem /usr/share/nginx/html/client.pem && \
     cp /root/ca/private/client.ansible.http.tests-key.pem /usr/share/nginx/html/client.key && \
-    pip install gunicorn httpbin==0.5.0
+    pip install gunicorn httpbin==0.6.2
 
 ADD services.sh /services.sh
 ADD nginx.sites.conf /etc/nginx/conf.d/default.conf
