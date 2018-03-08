@@ -191,10 +191,8 @@ but also note that the new defaults might conflict with existing usage if the as
 Filter
 ------
 
-The lookup plugin API requires lookup plugins to return lists.  However, previously if a number or
-other non-iterable type was returned, this would have been silently accepted.  We now throw an error
-in this case.  If you have a custom lookup plugin that falls in this camp, you need to update it to
-wrap the values in a list.
+The lookup plugin API now throws an error if a non-list value is returned from a plugin.  Previously, numbers or
+other non-iterable types returned by a plugin were accepted without error or warning. If you have a custom lookup plugin that does not return a list, you need to modify it to wrap the return values in a list.
 
 Porting custom scripts
 ======================
