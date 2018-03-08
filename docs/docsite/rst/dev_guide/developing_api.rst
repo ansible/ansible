@@ -27,6 +27,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
     #!/usr/bin/env python
 
     import json
+    import shutil
     from collections import namedtuple
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
@@ -34,6 +35,7 @@ This example is a simple demonstration that shows how to minimally run a couple 
     from ansible.playbook.play import Play
     from ansible.executor.task_queue_manager import TaskQueueManager
     from ansible.plugins.callback import CallbackBase
+    import ansible.constants as C
 
     class ResultCallback(CallbackBase):
         """A sample callback plugin used for performing an action as results come in
@@ -98,6 +100,9 @@ This example is a simple demonstration that shows how to minimally run a couple 
         # we always need to cleanup child procs and the structres we use to communicate with them
         if tqm is not None:
             tqm.cleanup()
+        
+         # Remove ansible tmpdir
+         shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
 
 .. note:: Ansible emits warnings and errors via the display object, which prints directly to stdout, stderr and the Ansible log.
