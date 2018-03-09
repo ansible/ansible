@@ -412,7 +412,13 @@ class Eapi:
         fallback to using configure() to load the commands.  If that happens,
         there will be no returned diff or session values
         """
-        if not self.supports_sessions:
+        use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
+        try:
+            use_session = int(use_session)
+        except ValueError:
+            pass
+
+        if not all((bool(use_session), self.supports_sessions)):
             if commit:
                 return self.configure(self, config)
             else:
