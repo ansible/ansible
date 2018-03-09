@@ -542,11 +542,11 @@ def serialize_revoke(grant, rule):
                   'FromPort': rule.get('FromPort'),
                   'ToPort': rule.get('ToPort')}
     if 'GroupId' in grant:
-        permission.update(UserIdGroupPairs=[{'GroupId': grant['GroupId']}])
+        permission['UserIdGroupPairs'] = [{'GroupId': grant['GroupId']}]
     elif 'CidrIp' in grant:
-        permission.update(IpRanges=[grant])
+        permission['IpRanges'] = [grant]
     elif 'CidrIpv6' in grant:
-        permission.update(Ipv6Ranges=[grant])
+        permission['Ipv6Ranges'] = [grant]
     return fix_port_and_protocol(permission)
 
 
@@ -663,8 +663,10 @@ def check_rule_description_update(client, module, rule_id, rule, grant_type, cur
         if grant_type == 'group':
             current_rule_description = current_rules[rule_id][0]['UserIdGroupPairs'][0].get('Description', '')
         else:
-            current_rule_description = current_rules[rule_id][0].get('IpRanges') or current_rules[rule_id][0].get('Ipv6Ranges')
-            current_rule_description = current_rule_description[0].get('Description')
+            current_rule_description = (
+                current_rules[rule_id][0].get('IpRanges')
+                or current_rules[rule_id][0].get('Ipv6Ranges')
+            )[0].get('Description')
         if new_rule_description != current_rule_description:
             needs_update = True
     return needs_update
@@ -791,9 +793,7 @@ def main():
         module.fail_json(msg='Must provide description when state is present.')
 
     changed = False
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='ec2',
-                        endpoint=ec2_url, region=region, **aws_connect_params)
+    client = module.client('ec2')
 
     verify_rules_with_descriptions_permitted(client, module, rules, rules_egress)
     group, groups = group_exists(client, module, vpc_id, group_id, name)
@@ -913,7 +913,8 @@ def main():
                                         egress=(present_egress, current_egress, 'out'), changed=changed)
 
     if group:
-        time.sleep(5)
+        if changed:
+            time.sleep(5)
         security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group)
         security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
