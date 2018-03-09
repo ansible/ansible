@@ -188,6 +188,11 @@ For a full list, check the shell plugin you are using, the default shell plugin 
 Those that had to work around the global configuration limitations can now migrate to a per host/group settings,
 but also note that the new defaults might conflict with existing usage if the assumptions don't correlate to your environment.
 
+Filter
+------
+
+The lookup plugin API now throws an error if a non-iterable value is returned from a plugin. Previously, numbers or
+other non-iterable types returned by a plugin were accepted without error or warning. This change was made because plugins should always return a list. Please note that plugins that return strings and other non-list iterable values will not throw an error, but may cause unpredictable behavior. If you have a custom lookup plugin that does not return a list, you should modify it to wrap the return values in a list.
 
 Porting custom scripts
 ======================
