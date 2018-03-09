@@ -68,7 +68,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict, ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.six import string_types
-from collections import OrderedDict
 import traceback
 
 # We will also export HAS_BOTO3 so end user modules can use it.
@@ -234,7 +233,9 @@ class AnsibleAWSModule(object):
             return item
         elif isinstance(item, list):
             return [self.create_response_dict(i) for i in item]
-        elif isinstance(item, OrderedDict):
+        # from collections import OrderedDict fails on Python 2.6
+        # botocore uses its own OrderedDict class that is compatible with Python 2.6
+        elif item.__class__.__name__ == 'OrderedDict':
             item = dict(item)
             for k, v in item.items():
                 item[k] = self.create_response_dict(v)
