@@ -124,14 +124,14 @@ def main():
 
         if current:
             have = 'route-target both auto evpn' in current
-            want = bool(module.params['route_target_both_auto_evpn'])
-
-            if want and not have:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('route-target both auto evpn')
-            elif have and not want:
-                commands.append('address-family %s unicast' % module.params['afi'])
-                commands.append('no route-target both auto evpn')
+            if module.params['route_target_both_auto_evpn'] is not None:
+                want = bool(module.params['route_target_both_auto_evpn'])
+                if want and not have:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('route-target both auto evpn')
+                elif have and not want:
+                    commands.append('address-family %s unicast' % module.params['afi'])
+                    commands.append('no route-target both auto evpn')
 
         else:
             commands.append('address-family %s unicast' % module.params['afi'])
