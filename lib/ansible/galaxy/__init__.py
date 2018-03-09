@@ -42,17 +42,32 @@ class Galaxy(object):
         roles_path = getattr(self.options, 'roles_path', [])
         # cli option handling is responsible for making roles_path a list
         self.roles_paths = roles_path
-
+        # Roles dict
         self.roles = {}
-
-        # load data path for resource usage
-        this_dir, this_filename = os.path.split(__file__)
-        type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
-        self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
+        # Skeleton type path
+        self.skeleton_type_path = None
+        # Skeleton path for content
+        self.DATA_PATH = None
 
     @property
     def default_role_skeleton_path(self):
+        # load data path for resource usage
+        this_dir, this_filename = os.path.split(__file__)
+        self.DATA_PATH = os.path.join(this_dir, 'data', self.default_role_skeleton_type_path)
+
         return self.DATA_PATH
+
+    @property
+    def default_role_skeleton_type_path(self):
+        # check the skeleton type
+        if getattr(self.options, 'container_enabled', True):
+            self.skeleton_type_path = 'container_enabled'
+        elif getattr(self.options, 'network', True):
+            self.skeleton_type_path = 'network'
+        else:
+            self.skeleton_type_path = 'default'
+
+        return self.skeleton_type_path
 
     def add_role(self, role):
         self.roles[role.name] = role

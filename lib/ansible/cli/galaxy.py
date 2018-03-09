@@ -83,6 +83,8 @@ class GalaxyCLI(CLI):
                                    help='The path in which the skeleton role will be created. The default is the current working directory.')
             self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
                                    help='Initialize the skeleton role with default contents for a Container Enabled role.')
+            self.parser.add_option('--network', dest='network', action='store_true', default=False,
+                                   help='Initialize the skeleton role with default contents for a Network role.')
             self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
