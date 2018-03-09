@@ -32,7 +32,7 @@ import time
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
@@ -121,6 +121,13 @@ class Cli:
 
         return self._connection
 
+    def close_session(self, session):
+        conn = self._get_connection()
+        # to close session gracefully execute abort in top level session prompt.
+        conn.get('end')
+        conn.get('configure session %s' % session)
+        conn.get('abort')
+
     @property
     def supports_sessions(self):
         if self._session_support is not None:
@@ -206,8 +213,10 @@ class Cli:
 
         try:
             self.send_config(commands)
-        except:
-            conn.get('abort')
+        except ConnectionError as exc:
+            conn.get('end')
+            message = getattr(exc, 'err', exc)
+            self._module.fail_json(msg="Error on executing commands %s" % commands, data=to_text(message, errors='surrogate_then_replace'))
 
         conn.get('end')
         return {}
@@ -235,8 +244,10 @@ class Cli:
 
         try:
             self.send_config(commands)
-        except:
-            conn.get('abort')
+        except ConnectionError as exc:
+            self.close_session(session)
+            message = getattr(exc, 'err', exc)
+            self._module.fail_json(msg="Error on executing commands %s" % commands, data=to_text(message, errors='surrogate_then_replace'))
 
         out = conn.get('show session-config diffs')
         if out:
@@ -245,7 +256,7 @@ class Cli:
         if commit:
             conn.get('commit')
         else:
-            conn.get('abort')
+            self.close_session(session)
 
         return result
 
