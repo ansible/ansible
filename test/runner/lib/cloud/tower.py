@@ -121,10 +121,6 @@ class TowerCloudProvider(CloudProvider):
 
         connection = aci.get()
 
-        self._set_cloud_config('ssh_hostname', connection.hostname)
-        self._set_cloud_config('ssh_username', connection.username)
-        self._set_cloud_config('ssh_port', connection.port)
-
         config = self._read_config_template()
 
         if not self.args.explain:
@@ -133,8 +129,8 @@ class TowerCloudProvider(CloudProvider):
             values = dict(
                 VERSION=self.version,
                 HOST=connection.hostname,
-                USERNAME='admin',
-                PASSWORD=generate_password(),
+                USERNAME=connection.username,
+                PASSWORD=connection.password,
             )
 
             config = self._populate_config_template(config, values)
@@ -147,50 +143,7 @@ class TowerCloudEnvironment(CloudEnvironment):
     def setup(self):
         """Setup which should be done once per environment instead of once per test target."""
         self.setup_cli()
-
-        if self.managed:
-            self.setup_dynamic()
-
-        self.ping_tower_api()
         self.disable_pendo()
-
-    def setup_dynamic(self):
-        """Dynamic setup which should be done once per environment instead of once per test target."""
-        display.info('Waiting for Tower instance to become reachable over SSH')
-
-        ssh_hostname = self._get_cloud_config('ssh_hostname')
-        ssh_username = self._get_cloud_config('ssh_username')
-        ssh_port = self._get_cloud_config('ssh_port')
-
-        config = TowerConfig.parse(self.config_path)
-
-        aci = get_tower_aci(self.args)
-        aci.connection = InstanceConnection(True, ssh_hostname, ssh_port, ssh_username, None)
-
-        mci = ManagePosixCI(aci)
-        mci.wait()
-
-        display.info('Waiting for Tower to be reconfigured')
-
-        attempts = 60
-
-        while attempts:
-            attempts -= 1
-
-            try:
-                # Tower is supposed to drop a /etc/tower/reset/.reconfigured file when it is reconfigured.
-                # However, the playbook sometimes fails, so we'll look for the completion of the playbook in the log instead.
-                mci.ssh(['grep', '--quiet', '--no-messages', 'PLAY RECAP', '/etc/tower/reset/reset.log'])
-                break
-            except SubprocessError:
-                time.sleep(5)
-        else:
-            raise ApplicationError('Timed out waiting for Tower to be reconfigured.')
-
-        display.info('Updating the Tower %s password' % config.username)
-
-        cmd = ['awx-manage', 'update_password', '--username', config.username, '--password', config.password]
-        mci.ssh(cmd)
 
     def setup_cli(self):
         """Install the correct Tower CLI for the version of Tower being tested."""
@@ -203,31 +156,6 @@ class TowerCloudEnvironment(CloudEnvironment):
 
         run_command(self.args, cmd)
 
-    def ping_tower_api(self):
-        """Wait for Tower API to become available."""
-        display.info('Waiting for the Tower API to become reachable')
-
-        config = TowerConfig.parse(self.config_path)
-
-        http = HttpClient(self.args, insecure=True)
-        http.username = config.username
-        http.password = config.password
-
-        uri = 'https://%s/api/v1/ping/' % config.host
-
-        attempts = 60
-
-        while attempts:
-            attempts -= 1
-            response = http.get(uri)
-
-            if response.status_code == 200:
-                return
-
-            time.sleep(5)
-
-        raise ApplicationError('Timed out waiting for Tower API to become reachable.')
-
     def disable_pendo(self):
         """Disable Pendo tracking."""
         display.info('Disable Pendo tracking')
@@ -238,7 +166,19 @@ class TowerCloudEnvironment(CloudEnvironment):
         cmd = ['tower-cli', 'setting', 'modify', 'PENDO_TRACKING_STATE', 'off',
                '-h', config.host, '-u', config.username, '-p', config.password]
 
-        run_command(self.args, cmd)
+        attempts = 60
+
+        while True:
+            attempts -= 1
+
+            try:
+                run_command(self.args, cmd, capture=True)
+                return
+            except SubprocessError as ex:
+                if not attempts:
+                    raise ApplicationError('Timed out trying to disable Pendo tracking:\n%s' % ex)
+
+            time.sleep(5)
 
     def configure_environment(self, env, cmd):
         """Configuration which should be done once for each test target.
