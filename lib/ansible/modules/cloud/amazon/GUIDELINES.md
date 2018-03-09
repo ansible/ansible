@@ -385,19 +385,29 @@ argument_spec.update(
 ```
 
 Note that AWS is unlikely to return the policy in the same order that is was submitted. Therefore,
-a helper function has been created to order policies before comparison.
+use the `compare_policies` helper function which handles this variance.
+
+`compare_policies` takes two dictionaries, recursively sorts and makes them hashable for comparison
+and returns True if they are different.
 
 ```python
-# Get the policy from AWS
-current_policy = aws_object.get_policy()
+from ansible.module_utils.ec2 import compare_policies
 
-# Compare the user submitted policy to the current policy but sort them first
-if sort_json_policy_dict(user_policy) == sort_json_policy_dict(current_policy):
-    # Nothing to do
-    pass
-else:
+import json
+
+......
+
+# Get the policy from AWS
+current_policy = json.loads(aws_object.get_policy())
+user_policy = json.loads(module.params.get('policy'))
+
+# Compare the user submitted policy to the current policy ignoring order
+if compare_policies(user_policy, current_policy):
     # Update the policy
     aws_object.set_policy(user_policy)
+else:
+    # Nothing to do
+    pass
 ```
 
 ### Dealing with tags
@@ -472,13 +482,24 @@ Pass this function a list of security group names or combination of security gro
 and this function will return a list of IDs.  You should also pass the VPC ID if known because
 security group names are not necessarily unique across VPCs.
 
+#### compare_policies
+
+Pass two dicts of policies to check if there are any meaningful differences and returns true
+if there are. This recursively sorts the dicts and makes them hashable before comparison.
+
+This method should be used any time policies are being compared so that a change in order
+doesn't result in unnecessary changes.
+
 #### sort_json_policy_dict
 
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is
 useful because AWS rarely return lists in the same order that they were submitted so without this
 function, comparison of identical policies returns false.
 
-### compare_aws_tags
+Note if your goal is to check if two policies are the same you're better to use the `compare_policies`
+helper which sorts recursively.
+
+#### compare_aws_tags
 
 Pass two dicts of tags and an optional purge parameter and this function will return a dict
 containing key pairs you need to modify and a list of tag key names that you need to remove.  Purge
