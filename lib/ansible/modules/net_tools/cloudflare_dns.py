@@ -42,9 +42,8 @@ options:
     required: false
     default: "1"
   proto:
-    description: Service protocol. Required for C(type=SRV)
+    description: Service protocol. Required for C(type=SRV). Common values are tcp and udp. (Before Ansible 2.6 only tcp and udp were available).
     required: false
-    choices: [ 'tcp', 'udp' ]
     default: null
   proxied:
     description: Proxy through cloudflare network or just use DNS
@@ -602,7 +601,7 @@ def main():
             account_email=dict(required=True, type='str'),
             port=dict(required=False, default=None, type='int'),
             priority=dict(required=False, default=1, type='int'),
-            proto=dict(required=False, default=None, choices=['tcp', 'udp'], type='str'),
+            proto=dict(required=False, default=None, type='str'),
             proxied=dict(required=False, default=False, type='bool'),
             record=dict(required=False, default='@', aliases=['name'], type='str'),
             service=dict(required=False, default=None, type='str'),
