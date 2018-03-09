@@ -286,6 +286,7 @@ owner_id:
   returned: on create/update
 '''
 
+import time
 import json
 import re
 from collections import namedtuple
@@ -912,6 +913,7 @@ def main():
                                         egress=(present_egress, current_egress, 'out'), changed=changed)
 
     if group:
+        time.sleep(5)
         security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group)
         security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
