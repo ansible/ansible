@@ -221,7 +221,7 @@ install_manpages:
 	cp $(wildcard ./docs/man/man1/ansible*.1.gz) $(PREFIX)/man/man1/
 
 .PHONY: sdist
-sdist: clean docs changelog_unified
+sdist: clean docs changelog_aggregate
 	$(PYTHON) setup.py sdist
 
 .PHONY: sdist_upload
@@ -233,7 +233,7 @@ sdist_upload: clean docs
 changelog_reno:
 	reno -d changelogs/ report --title 'Ansible 2.5 "Kashmir" Release Notes' --no-collapse-pre-release --no-show-source --earliest-version v2.5.0b1 --output changelogs/CHANGELOG-v2.5.rst
 
-.PHONY: changelog_unified
+.PHONY: changelog_aggregate
 changelog_aggregate:
 	echo "TODO: unified changelog" > changelogs/CHANGELOG.rst
 
