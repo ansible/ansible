@@ -81,8 +81,8 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog init [options] role_name")
             self.parser.add_option('--init-path', dest='init_path', default="./",
                                    help='The path in which the skeleton role will be created. The default is the current working directory.')
-            self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
-                                   help='Initialize the skeleton role with default contents for a Container Enabled role.')
+            self.parser.add_option('--type', dest='role_type', action='store', default='default',
+                                   help="Initialize using an alternate role type. Valid types include: 'container', and 'apb'.")
             self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
@@ -214,7 +214,7 @@ class GalaxyCLI(CLI):
             license='license (GPLv2, CC-BY, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='1.2',
-            container_enabled=self.options.container_enabled
+            role_type=self.options.role_type
         )
 
         # create role directory
