@@ -360,6 +360,7 @@ def main():
                    ("action", "delete", ["snapshot_name"])]
 
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     warnings = list()
