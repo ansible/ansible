@@ -312,6 +312,9 @@ def get_cmd(m, subcommand):
     if (is_install or is_refresh) and m.params['disable_gpg_check']:
         cmd.append('--no-gpg-checks')
 
+    if subcommand == 'search':
+        cmd.append('--disable-repositories')
+
     cmd.append(subcommand)
     if subcommand not in ['patch', 'dist-upgrade'] and not is_refresh:
         cmd.extend(['--type', m.params['type']])
