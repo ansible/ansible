@@ -35,7 +35,7 @@ from io import BytesIO
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader, ps_module_utils_loader
 from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec, exec_wrapper
 # Must import strategy and use write_locks from there
@@ -60,6 +60,7 @@ REPLACER_SELINUX = b"<<SELINUX_SPECIAL_FILESYSTEMS>>"
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
 ENCODING_STRING = u'# -*- coding: utf-8 -*-'
+b_ENCODING_STRING = b'# -*- coding: utf-8 -*-'
 
 # module_common is relative to module_utils, so fix the path
 _MODULE_UTILS_PATH = os.path.join(os.path.dirname(__file__), '..', 'module_utils')
@@ -599,7 +600,7 @@ def _is_binary(b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, environment):
+                       become_method, become_user, become_password, become_flags, environment):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -787,6 +788,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = become_user
             exec_manifest["become_password"] = become_password
+            exec_manifest['become_flags'] = become_flags
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         lines = b_module_data.split(b'\n')
@@ -842,6 +844,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             exec_manifest["actions"].insert(0, 'become')
             exec_manifest["become_user"] = "SYSTEM"
             exec_manifest["become_password"] = None
+            exec_manifest['become_flags'] = None
             exec_manifest["become"] = to_text(base64.b64encode(to_bytes(become_wrapper)))
 
         # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
@@ -872,7 +875,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
 
 def modify_module(module_name, module_path, module_args, task_vars=None, templar=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, environment=None):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -903,31 +906,35 @@ def modify_module(module_name, module_path, module_args, task_vars=None, templar
 
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
-                                                                become_user=become_user, become_password=become_password,
+                                                                become_user=become_user, become_password=become_password, become_flags=become_flags,
                                                                 environment=environment)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
-        lines = b_module_data.split(b"\n", 1)
-        if lines[0].startswith(b"#!"):
-            shebang = lines[0].strip()
-            args = shlex.split(str(shebang[2:]))
+        b_lines = b_module_data.split(b"\n", 1)
+        if b_lines[0].startswith(b"#!"):
+            b_shebang = b_lines[0].strip()
+            # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
+            args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+
+            # _get_shebang() takes text strings
+            args = [to_text(a, errors='surrogate_or_strict') for a in args]
             interpreter = args[0]
-            interpreter = to_bytes(interpreter)
+            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
+                                     errors='surrogate_or_strict', nonstring='passthru')
 
-            new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0], errors='surrogate_or_strict', nonstring='passthru')
-            if new_shebang:
-                lines[0] = shebang = new_shebang
+            if b_new_shebang:
+                b_lines[0] = b_shebang = b_new_shebang
 
-            if os.path.basename(interpreter).startswith(b'python'):
-                lines.insert(1, to_bytes(ENCODING_STRING))
+            if os.path.basename(interpreter).startswith(u'python'):
+                b_lines.insert(1, b_ENCODING_STRING)
+
+            shebang = to_text(b_shebang, nonstring='passthru', errors='surrogate_or_strict')
         else:
             # No shebang, assume a binary module?
             pass
 
-        b_module_data = b"\n".join(lines)
-    else:
-        shebang = to_bytes(shebang, errors='surrogate_or_strict')
+        b_module_data = b"\n".join(b_lines)
 
-    return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
+    return (b_module_data, module_style, shebang)

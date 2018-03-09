@@ -6,42 +6,155 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    author: Ansible Networking Team
-    connection: network_cli
-    short_description: Use network_cli to run command on network appliances
+---
+author: Ansible Networking Team
+connection: network_cli
+short_description: Use network_cli to run command on network appliances
+description:
+  - This connection plugin provides a connection to remote devices over the
+    SSH and implements a CLI shell.  This connection plugin is typically used by
+    network devices for sending and receiving CLi commands to network devices.
+version_added: "2.3"
+options:
+  host:
     description:
-        - This plugin actually forces use of 'local' execution but using paramiko to establish a remote ssh shell on the appliance.
-        - Also this plugin ignores the become_method but still uses the becoe_user and become_pass to
-          do privilege escalation, method depending on network_os used.
-    version_added: "2.3"
-    options:
-      network_os:
-        description:
-            - Appliance specific OS
-        default: 'default'
-        vars:
-            - name: ansible_netconf_network_os
-      password:
-        description:
-            - Secret used to authenticate
-        vars:
-            - name: ansible_pass
-            - name: ansible_netconf_pass
-      private_key_file:
-        description:
-            - Key or certificate file used for authentication
-        ini:
-            - section: defaults
-              key: private_key_file
-        env:
-            - name: ANSIBLE_PRIVATE_KEY_FILE
-        vars:
-            - name: ansible_private_key_file
-      timeout:
-        type: int
-        description:
-          - Connection timeout in seconds
-        default: 120
+      - Specifies the remote device FQDN or IP address to establish the SSH
+        connection to.
+    default: inventory_hostname
+    vars:
+      - name: ansible_host
+  port:
+    type: int
+    description:
+      - Specifies the port on the remote device to listening for connections
+        when establishing the SSH connection.
+    default: 22
+    ini:
+      - section: defaults
+        key: remote_port
+    env:
+      - name: ANSIBLE_REMOTE_PORT
+    vars:
+      - name: ansible_port
+  network_os:
+    description:
+      - Configures the device platform network operating system.  This value is
+        used to load the correct terminal and cliconf plugins to communicate
+        with the remote device
+    default: null
+    vars:
+      - name: ansible_network_os
+  remote_user:
+    description:
+      - The username used to authenticate to the remote device when the SSH
+        connection is first established.  If the remote_user is not specified,
+        the connection will use the username of the logged in user.
+      - Can be configured form the CLI via the C(--user) or C(-u) options
+    ini:
+      - section: defaults
+        key: remote_user
+    env:
+      - name: ANSIBLE_REMOTE_USER
+    vars:
+      - name: ansible_user
+  password:
+    description:
+      - Configures the user password used to authenticate to the remote device
+        when first establishing the SSH connection.
+    vars:
+      - name: ansible_pass
+  private_key_file:
+    description:
+      - The private SSH key or certificate file used to to authenticate to the
+        remote device when first establishing the SSH connection.
+    ini:
+     section: defaults
+     key: private_key_file
+    env:
+      - name: ANSIBLE_PRIVATE_KEY_FILE
+    vars:
+      - name: ansible_private_key_file
+  timeout:
+    type: int
+    description:
+      - Sets the connection time, in seconds, for the communicating with the
+        remote device.  This timeout is used as the default timeout value for
+        commands when issuing a command to the network CLI.  If the command
+        does not return in timeout seconds, the an error is generated.
+    default: 120
+  become:
+    type: boolean
+    description:
+      - The become option will instruct the CLI session to attempt privilege
+        escalation on platforms that support it.  Normally this means
+        transitioning from user mode to C(enable) mode in the CLI session.
+        If become is set to True and the remote device does not support
+        privilege escalation or the privilege has already been elevated, then
+        this option is silently ignored
+      - Can be configured form the CLI via the C(--become) or C(-b) options
+    default: False
+    ini:
+      section: privilege_escalation
+      key: become
+    env:
+      - name: ANSIBLE_BECOME
+    vars:
+      - name: ansible_become
+  become_method:
+    description:
+      - This option allows the become method to be specified in for handling
+        privilege escalation.  Typically the become_method value is set to
+        C(enable) but could be defined as other values.
+    default: sudo
+    ini:
+      section: privilege_escalation
+      key: become_method
+    env:
+      - name: ANSIBLE_BECOME_METHOD
+    vars:
+      - name: ansible_become_method
+  host_key_auto_add:
+    type: boolean
+    description:
+      - By default, Ansible will prompt the user before adding SSH keys to the
+        known hosts file.  Since persistent connections such as network_cli run
+        in background processes, the user will never be prompted.  By enabling
+        this option, unknown host keys will automatically be added to the
+        known hosts file.
+      - Be sure to fully understand the security implications of enabling this
+        option on production systems as it could create a security vulnerability.
+    default: False
+    ini:
+      section: paramiko_connection
+      key: host_key_auto_add
+    env:
+      - name: ANSIBLE_HOST_KEY_AUTO_ADD
+  persistent_connect_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait when trying to
+        initially establish a persistent connection.  If this value expires
+        before the connection to the remote device is completed, the connection
+        will fail
+    default: 30
+    ini:
+      section: persistent_connection
+      key: persistent_connect_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+  persistent_command_timeout:
+    type: int
+    description:
+      - Configures, in seconds, the amount of time to wait for a command to
+        return from the remote device.  If this timer is exceeded before the
+        command returns, the connection plugin will raise an exception and
+        close
+    default: 10
+    ini:
+      section: persistent_connection
+      key: persistent_command_timeout
+    env:
+      - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
 """
 
 import json
@@ -121,8 +234,10 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompt', 'answer', 'sendonly'):
-                    if cmd.get(key) is not None:
+                for key in ('prompt', 'answer', 'sendonly', 'newline', 'prompt_retry_check'):
+                    if cmd.get(key) is True or cmd.get(key) is False:
+                        kwargs[key] = cmd[key]
+                    elif cmd.get(key) is not None:
                         kwargs[key] = to_bytes(cmd[key], errors='surrogate_or_strict')
                 return self.send(**kwargs)
             except ValueError:
@@ -168,10 +283,10 @@ class Connection(ConnectionBase):
         if self.connected:
             return
 
-        p = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        p.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        p.force_persistence = self.force_persistence
-        ssh = p._connect()
+        self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        self.paramiko_conn.force_persistence = self.force_persistence
+        ssh = self.paramiko_conn._connect()
 
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
@@ -257,7 +372,7 @@ class Connection(ConnectionBase):
             self._connected = False
             display.debug("ssh connection has been closed successfully")
 
-    def receive(self, command=None, prompts=None, answer=None):
+    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''
         Handles receiving of output from command
         '''
@@ -265,6 +380,8 @@ class Connection(ConnectionBase):
         handled = False
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
+        matched_prompt_window = window_count = 0
 
         while True:
             data = self._ssh_shell.recv(256)
@@ -278,15 +395,24 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            window_count += 1
+
             if prompts and not handled:
-                handled = self._handle_prompt(window, prompts, answer)
+                handled = self._handle_prompt(window, prompts, answer, newline)
+                matched_prompt_window = window_count
+            elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
+                # check again even when handled, if same prompt repeats in next window
+                # (like in the case of a wrong enable password, etc) indicates
+                # value of answer is wrong, report this as error.
+                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check):
+                    raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, sendonly=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False):
         '''
         Sends the command to the device in the opened shell
         '''
@@ -295,7 +421,7 @@ class Connection(ConnectionBase):
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer)
+            response = self.receive(command, prompt, answer, newline, prompt_retry_check)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -309,7 +435,7 @@ class Connection(ConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer):
+    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False):
         '''
         Matches the command prompt and responds
 
@@ -325,7 +451,13 @@ class Connection(ConnectionBase):
         for regex in prompts:
             match = regex.search(resp)
             if match:
-                self._ssh_shell.sendall(b'%s\r' % answer)
+                # if prompt_retry_check is enabled to check if same prompt is
+                # repeated don't send answer again.
+                if not prompt_retry_check:
+                    self._ssh_shell.sendall(b'%s' % answer)
+                    if newline:
+                        self._ssh_shell.sendall(b'\r')
+                self._matched_cmd_prompt = match.group()
                 return True
         return False
 
@@ -355,6 +487,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 

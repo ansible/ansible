@@ -1,9 +1,21 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
+#
 # GNU General Public License v3.0+
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+#
+# Module to configure Lenovo Switches.
+# Lenovo Networking
+#
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -52,7 +64,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is
-        mutually exclusive with I(lines).
+        mutually exclusive with I(lines), I(parents).
     required: false
     default: null
   before:
@@ -183,10 +195,7 @@ def get_running_config(module):
 def get_candidate(module):
     candidate = NetworkConfig(indent=1)
     if module.params['src']:
-        try:
-            candidate.loadfp(module.params['src'])
-        except IOError:
-            candidate.load(module.params['src'])
+        candidate.load(module.params['src'])
     elif module.params['lines']:
         parents = module.params['parents'] or list()
         candidate.add(module.params['lines'], parents=parents)
@@ -253,7 +262,8 @@ def main():
 
     argument_spec.update(enos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

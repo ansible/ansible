@@ -124,7 +124,7 @@ options:
   gpgcheck:
     required: false
     choices: ['yes', 'no']
-    default: 'no'
+    default: null
     description:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
@@ -431,25 +431,6 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
-
-#
-# Allow to overwrite the yum_repository parameters by defining the parameters
-# as a variable in the defaults or vars file:
-#
-# my_role_somerepo_params:
-#   # Disable GPG checking
-#   gpgcheck: no
-#   # Remove the gpgkey option
-#   gpgkey: null
-#
-- name: Add Some repo
-  yum_repository:
-    name: somerepo
-    description: Some YUM repo
-    baseurl: http://server.com/path/to/the/repo
-    gpgkey: http://server.com/keys/somerepo.pub
-    gpgcheck: yes
-    params: "{{ my_role_somerepo_params }}"
 '''
 
 RETURN = '''
@@ -466,9 +447,10 @@ state:
 '''
 
 import os
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
+from ansible.module_utils._text import to_native
 
 
 class YumRepo(object):
@@ -585,32 +567,29 @@ class YumRepo(object):
             # Write data into the file
             try:
                 fd = open(self.params['dest'], 'w')
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot open repo file %s." % self.params['dest'],
-                    details=str(e))
+                    details=to_native(e))
 
             self.repofile.write(fd)
 
             try:
                 fd.close()
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot write repo file %s." % self.params['dest'],
-                    details=str(e))
+                    details=to_native(e))
         else:
             # Remove the file if there are not repos
             try:
                 os.remove(self.params['dest'])
-            except OSError:
-                e = get_exception()
+            except OSError as e:
                 self.module.fail_json(
                     msg=(
                         "Cannot remove empty repo file %s." %
                         self.params['dest']),
-                    details=str(e))
+                    details=to_native(e))
 
     def remove(self):
         # Remove section if exists
@@ -634,63 +613,66 @@ class YumRepo(object):
 
 def main():
     # Module settings
+    argument_spec = dict(
+        bandwidth=dict(),
+        baseurl=dict(type='list'),
+        cost=dict(),
+        deltarpm_metadata_percentage=dict(),
+        deltarpm_percentage=dict(),
+        description=dict(),
+        enabled=dict(type='bool'),
+        enablegroups=dict(type='bool'),
+        exclude=dict(type='list'),
+        failovermethod=dict(choices=['roundrobin', 'priority']),
+        file=dict(),
+        gpgcakey=dict(),
+        gpgcheck=dict(type='bool'),
+        gpgkey=dict(type='list'),
+        http_caching=dict(choices=['all', 'packages', 'none']),
+        include=dict(),
+        includepkgs=dict(type='list'),
+        ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
+        keepalive=dict(type='bool'),
+        keepcache=dict(choices=['0', '1']),
+        metadata_expire=dict(),
+        metadata_expire_filter=dict(
+            choices=[
+                'never',
+                'read-only:past',
+                'read-only:present',
+                'read-only:future']),
+        metalink=dict(),
+        mirrorlist=dict(),
+        mirrorlist_expire=dict(),
+        name=dict(required=True),
+        params=dict(type='dict'),
+        password=dict(no_log=True),
+        priority=dict(),
+        protect=dict(type='bool'),
+        proxy=dict(),
+        proxy_password=dict(no_log=True),
+        proxy_username=dict(),
+        repo_gpgcheck=dict(type='bool'),
+        reposdir=dict(default='/etc/yum.repos.d', type='path'),
+        retries=dict(),
+        s3_enabled=dict(type='bool'),
+        skip_if_unavailable=dict(type='bool'),
+        sslcacert=dict(),
+        ssl_check_cert_permissions=dict(type='bool'),
+        sslclientcert=dict(),
+        sslclientkey=dict(),
+        sslverify=dict(type='bool'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        throttle=dict(),
+        timeout=dict(),
+        ui_repoid_vars=dict(),
+        username=dict(),
+    )
+
+    argument_spec['async'] = dict(type='bool')
+
     module = AnsibleModule(
-        argument_spec=dict(
-            async=dict(type='bool'),
-            bandwidth=dict(),
-            baseurl=dict(type='list'),
-            cost=dict(),
-            deltarpm_metadata_percentage=dict(),
-            deltarpm_percentage=dict(),
-            description=dict(),
-            enabled=dict(type='bool'),
-            enablegroups=dict(type='bool'),
-            exclude=dict(type='list'),
-            failovermethod=dict(choices=['roundrobin', 'priority']),
-            file=dict(),
-            gpgcakey=dict(),
-            gpgcheck=dict(type='bool'),
-            gpgkey=dict(type='list'),
-            http_caching=dict(choices=['all', 'packages', 'none']),
-            include=dict(),
-            includepkgs=dict(type='list'),
-            ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
-            keepalive=dict(type='bool'),
-            keepcache=dict(choices=['0', '1']),
-            metadata_expire=dict(),
-            metadata_expire_filter=dict(
-                choices=[
-                    'never',
-                    'read-only:past',
-                    'read-only:present',
-                    'read-only:future']),
-            metalink=dict(),
-            mirrorlist=dict(),
-            mirrorlist_expire=dict(),
-            name=dict(required=True),
-            params=dict(type='dict'),
-            password=dict(no_log=True),
-            priority=dict(),
-            protect=dict(type='bool'),
-            proxy=dict(),
-            proxy_password=dict(no_log=True),
-            proxy_username=dict(),
-            repo_gpgcheck=dict(type='bool'),
-            reposdir=dict(default='/etc/yum.repos.d', type='path'),
-            retries=dict(),
-            s3_enabled=dict(type='bool'),
-            skip_if_unavailable=dict(type='bool'),
-            sslcacert=dict(),
-            ssl_check_cert_permissions=dict(type='bool'),
-            sslclientcert=dict(),
-            sslclientkey=dict(),
-            sslverify=dict(type='bool'),
-            state=dict(choices=['present', 'absent'], default='present'),
-            throttle=dict(),
-            timeout=dict(),
-            ui_repoid_vars=dict(),
-            username=dict(),
-        ),
+        argument_spec=argument_spec,
         add_file_common_args=True,
         supports_check_mode=True,
     )

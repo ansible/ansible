@@ -54,6 +54,24 @@
       - "test_script_with_args_result is not failed"
       - "test_script_with_args_result is changed"
 
+# Bug: https://github.com/ansible/ansible/issues/32850
+- name: set fact of long string
+  set_fact:
+    long_string: "{{ lookup('pipe', 'printf \"a%.0s\" {1..1000}') }}"
+
+- name: run test script with args that exceed the stdin buffer
+  script: test_script_with_args.ps1 {{ long_string }}
+  register: test_script_with_large_args_result
+
+- name: check that script ran and received arguments correctly
+  assert:
+    that:
+    - test_script_with_large_args_result.rc == 0
+    - test_script_with_large_args_result.stdout == long_string + "\r\n"
+    - not test_script_with_large_args_result.stderr
+    - test_script_with_large_args_result is not failed
+    - test_script_with_large_args_result is changed
+
 - name: run test script that takes parameters passed via splatting
   script: test_script_with_splatting.ps1 @{ This = 'this'; That = '{{ test_win_script_value }}'; Other = 'other'}
   register: test_script_with_splatting_result
@@ -201,20 +219,17 @@
       - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
       - "test_script_bool_result.stdout_lines[1] == 'True'"
 
-# FIXME: re-enable this test once script can run under the wrapper with powershell
-#- name: run test script that uses envvars
-#  script: test_script_with_env.ps1
-#  environment:
-#    taskenv: task
-#  register: test_script_env_result
-#
-#- name: ensure that script ran and that environment var was passed
-#  assert:
-#    that:
-#    - test_script_env_result is successful
-#    - test_script_env_result.stdout_lines[0] == 'task'
-#
+- name: run test script that uses envvars
+  script: test_script_with_env.ps1
+  environment:
+    taskenv: task
+  register: test_script_env_result
 
+- name: ensure that script ran and that environment var was passed
+  assert:
+    that:
+    - test_script_env_result is successful
+    - test_script_env_result.stdout_lines[0] == 'task'
 
 # check mode
 - name: Run test script that creates a file in check mode

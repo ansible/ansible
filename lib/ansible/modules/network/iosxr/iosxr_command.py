@@ -94,7 +94,7 @@ tasks:
       commands:
         - show version
         - show interfaces
-        - [{ command: example command that prompts, prompt: expected prompt, answer: yes}]
+        - { command: example command that prompts, prompt: expected prompt, answer: yes}
 
   - name: run multiple commands and evaluate the output
     iosxr_command:
@@ -209,7 +209,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result = {

@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_evpn_vni sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_evpn_vni sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_config: &remove_evpn
@@ -26,9 +28,13 @@
       vni: 6000
       route_distinguisher: "60:10"
       route_target_import:
+          - auto
           - "5000:10"
           - "4100:100"
-      route_target_export: auto
+      route_target_export:
+          - auto
+          - "5000:10"
+          - "1.1.1.1:43"
       provider: "{{ connection }}"
     register: result
 
@@ -43,6 +49,40 @@
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni1
+      vni: 6000
+      route_distinguisher: "50:20"
+      route_target_import: auto
+      route_target_export: auto
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni1
+    register: result
+
+  - assert: *false
+
+  - name: "Configure nxos_evpn_vni"
+    nxos_evpn_vni: &evpn_vni_def
+      vni: 6000
+      route_distinguisher: default
+      route_target_import: default
+      route_target_export: default
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_evpn_vni: *evpn_vni_def
+    register: result
+
+  - assert: *false
 
   - name: "remove nxos_evpn_vni"
     nxos_evpn_vni: &rvni
@@ -59,6 +99,8 @@
 
   - assert: *false
 
+  when: not (platform is search('N3K')) and not (platform is match('N35'))
+
   always:
   - name: "Remove nv overlay evpn"
     nxos_config: *remove_evpn
@@ -71,4 +113,4 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_evpn_vni sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_evpn_vni sanity test"

@@ -27,21 +27,17 @@ options:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'absent']
-  oauth_token:
-    description:
-     - DigitalOcean api token.
-    version_added: "1.9.5"
-    aliases: ['api_token']
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+    aliases: ['droplet_id']
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
   ip:
     description:
      - The IP address to point a domain at.
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Environment variables DO_OAUTH_TOKEN can be used for the oauth_token.
   - As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes C(client_id) and C(api_key) options in favor of C(oauth_token).
@@ -83,7 +79,6 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import env_fallback
 
 
 class DoManager(DigitalOceanHelper, object):
@@ -184,18 +179,16 @@ def core(module):
 
 
 def main():
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str'),
+        id=dict(aliases=['droplet_id'], type='int'),
+        ip=dict(type='str')
+    )
+
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
-            oauth_token=dict(
-                aliases=['API_TOKEN'],
-                no_log=True,
-                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN'])
-            ),
-            name=dict(type='str'),
-            id=dict(aliases=['droplet_id'], type='int'),
-            ip=dict(type='str'),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['id', 'name'],
         ),

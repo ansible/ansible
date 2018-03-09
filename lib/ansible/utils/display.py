@@ -47,6 +47,14 @@ except NameError:
     pass
 
 
+class FilterBlackList(logging.Filter):
+    def __init__(self, blacklist):
+        self.blacklist = [logging.Filter(name) for name in blacklist]
+
+    def filter(self, record):
+        return not any(f.filter(record) for f in self.blacklist)
+
+
 logger = None
 # TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
@@ -56,6 +64,8 @@ if C.DEFAULT_LOG_PATH:
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        for handler in logging.root.handlers:
+            handler.addFilter(FilterBlackList(C.DEFAULT_LOG_FILTER))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
@@ -98,7 +108,12 @@ class Display:
         self._set_column_width()
 
     def set_cowsay_info(self):
-        if not C.ANSIBLE_NOCOWS:
+        if C.ANSIBLE_NOCOWS:
+            return
+
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
+        else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
@@ -126,6 +141,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:

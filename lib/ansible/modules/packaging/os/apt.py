@@ -55,6 +55,7 @@ options:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+    aliases: ['install-recommends']
     type: bool
   force:
     description:
@@ -251,7 +252,6 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_url
 
@@ -587,9 +587,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             # to install so they're all done in one shot
             deps_to_install.extend(pkg.missing_deps)
 
-        except Exception:
-            e = get_exception()
-            m.fail_json(msg="Unable to install package: %s" % str(e))
+        except Exception as e:
+            m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
@@ -753,6 +752,12 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
+    if apt_cmd is None:
+        if use_apt_get:
+            apt_cmd = APT_GET_CMD
+        else:
+            m.fail_json(msg="Unable to find APTITUDE in path. Please make sure "
+                            "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
@@ -798,9 +803,8 @@ def download(module, deb):
             f.write(data)
         f.close()
         deb = package
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, e))
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
 
     return deb
 
@@ -836,9 +840,8 @@ def get_cache(module):
     cache = None
     try:
         cache = apt.Cache()
-    except SystemError:
-        e = get_exception()
-        if '/var/lib/apt/lists/' in str(e).lower():
+    except SystemError as e:
+        if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
             retries = 0
             while retries < 2:
@@ -847,7 +850,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
             # try again
             cache = apt.Cache()
         else:
@@ -888,7 +891,7 @@ def main():
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
             module.run_command(['apt-get', 'update'], check_rc=True)
-            module.run_command(['apt-get', 'install', PYTHON_APT, '-y', '-q'], check_rc=True)
+            module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile

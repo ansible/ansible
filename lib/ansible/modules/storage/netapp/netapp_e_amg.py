@@ -99,12 +99,6 @@ EXAMPLES = """
 
 RETURN = """
 msg:
-    description: Successful removal
-    returned: success
-    type: string
-    sample: "Async mirror group removed."
-
-msg:
     description: Successful creation
     returned: success
     type: string

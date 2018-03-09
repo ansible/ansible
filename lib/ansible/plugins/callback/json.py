@@ -8,7 +8,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     callback: json
-    short_description: Ansbile screen output as JSON
+    short_description: Ansible screen output as JSON
     version_added: "2.2"
     description:
         - This callback converts all events into JSON output to stdout
@@ -53,6 +53,9 @@ class CallbackModule(CallbackBase):
         self.results.append(self._new_play(play))
 
     def v2_playbook_on_task_start(self, task, is_conditional):
+        self.results[-1]['tasks'].append(self._new_task(task))
+
+    def v2_playbook_on_handler_task_start(self, task):
         self.results[-1]['tasks'].append(self._new_task(task))
 
     def v2_runner_on_ok(self, result, **kwargs):

@@ -63,7 +63,9 @@ options:
     choices: ['present', 'absent']
     default: present
 author: Mike Mochan(@mmochan)
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 requirements: [ botocore, boto3, json ]
 '''
 
@@ -82,7 +84,7 @@ EXAMPLES = '''
       Project: phoenix
       Description: production DMZ
     ingress: [
-        # rule no, protocol, allow/deny, cidr, icmp_code, icmp_type,
+        # rule no, protocol, allow/deny, cidr, icmp_type, icmp_code,
         #                                             port from, port to
         [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22],
         [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80],

@@ -214,7 +214,7 @@ class Task(Base, Conditional, Taggable, Become):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.replace("with_", "") in lookup_loader:
+            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
             else:
@@ -414,16 +414,17 @@ class Task(Base, Conditional, Taggable, Become):
         Generic logic to get the attribute or parent attribute for a task value.
         '''
 
-        value = None
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
         try:
             value = self._attributes[attr]
             if self._parent and (value is None or extend):
-                if attr != 'when' or getattr(self._parent, 'statically_loaded', True):
+                if getattr(self._parent, 'statically_loaded', True):
                     # vars are always inheritable, other attributes might not be for the partent but still should be for other ancestors
-                    if attr != 'vars' and not getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
-                        parent_value = self._parent._get_parent_attribute(attr, extend=extend, prepend=prepend)
+                    if attr != 'vars' and getattr(self._parent, '_inheritable', True) and hasattr(self._parent, '_get_parent_attribute'):
+                        parent_value = self._parent._get_parent_attribute(attr)
                     else:
-                        parent_value = getattr(self._parent, attr, None)
+                        parent_value = self._parent._attributes.get(attr, None)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
@@ -441,12 +442,6 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             value = C.ANY_ERRORS_FATAL
         return value
-
-    def _get_attr_environment(self):
-        '''
-        Override for the 'tags' getattr fetcher, used from Base.
-        '''
-        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def get_dep_chain(self):
         if self._parent:

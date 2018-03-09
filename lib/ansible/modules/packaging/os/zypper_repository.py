@@ -81,6 +81,7 @@ options:
             - Automatically import the gpg signing key of the new or changed repository.
             - Has an effect only if state is I(present). Has no effect on existing (unchanged) repositories or in combination with I(absent).
             - Implies runrefresh.
+            - Only works with C(.repo) files if `name` is given explicitly.
         required: false
         default: "no"
         choices: ["yes", "no"]
@@ -142,9 +143,12 @@ EXAMPLES = '''
     runrefresh: yes
 '''
 
-REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
-
 from distutils.version import LooseVersion
+
+from ansible.module_utils.basic import AnsibleModule
+
+
+REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
 
 
 def _get_cmd(*args):
@@ -402,8 +406,6 @@ def main():
     else:
         module.fail_json(msg="Zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state, warnings=warnings)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

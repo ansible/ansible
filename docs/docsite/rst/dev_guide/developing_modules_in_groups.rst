@@ -26,7 +26,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
-* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`dev_guide/testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
+* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
   * Starting with Ansible 2.4 all :doc:`../list_of_network_modules` MUST have unit tests.
 
 
@@ -64,7 +64,7 @@ Ansible has a thriving and knowledgeable community of module developers that is 
 On :doc:`../community` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
-* ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNodes IRC network works best for module developers so we can have an interactive dialogue.
+* ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for module developers so we can have an interactive dialogue.
 * IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 
@@ -114,7 +114,7 @@ Over the years we've experimented with different sized module PRs, ranging from 
 * PRs with multiple modules are harder for the creator to ensure all feedback has been applied
 * PRs with many modules take a lot more work to review, and tend to get passed over for easier-to-review PRs.
 
-You can raise up to five PRs at one (5 PRs = 5 new modules) **after** your first PR has been merged. We've found this is a good batch size to keep the review process flowing.
+You can raise up to five PRs at once (5 PRs = 5 new modules) **after** your first PR has been merged. We've found this is a good batch size to keep the review process flowing.
 
 Finally
 ```````

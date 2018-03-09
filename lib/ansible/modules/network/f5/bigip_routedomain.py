@@ -91,12 +91,7 @@ options:
   vlans:
     description:
       - VLANs for the system to use in the route domain
-notes:
-  - Requires the f5-sdk Python package on the host. This is as easy as
-    pip install f5-sdk.
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -184,15 +179,30 @@ except ImportError:
     pass  # Handled via f5_utils.HAS_F5SDK
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.f5_utils import F5ModuleError
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import f5_argument_spec
+
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 PROTOCOLS = [
@@ -526,7 +536,7 @@ class BigIpRouteDomain(object):
 
 
 def main():
-    argument_spec = f5_argument_spec()
+    argument_spec = f5_argument_spec
 
     meta_args = dict(
         name=dict(),
@@ -534,13 +544,20 @@ def main():
         description=dict(),
         strict=dict(choices=STRICTS),
         parent=dict(type='int'),
-        partition=dict(default='Common'),
         vlans=dict(type='list'),
         routing_protocol=dict(type='list'),
         bwc_policy=dict(),
         connection_limit=dict(type='int',),
         flow_eviction_policy=dict(),
-        service_policy=dict()
+        service_policy=dict(),
+        partition=dict(
+            default='Common',
+            fallback=(env_fallback, ['F5_PARTITION'])
+        ),
+        state=dict(
+            default='present',
+            choices=['present', 'absent']
+        )
     )
     argument_spec.update(meta_args)
 

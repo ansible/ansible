@@ -101,43 +101,43 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 # create an user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  account: developers
-  username: johndoe
-  password: S3Cur3
-  last_name: Doe
-  first_name: John
-  email: john.doe@example.com
-  domain: CUSTOMERS
+- local_action:
+    module: cs_user
+    account: developers
+    username: johndoe
+    password: S3Cur3
+    last_name: Doe
+    first_name: John
+    email: john.doe@example.com
+    domain: CUSTOMERS
 
 # Lock an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: locked
+- local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: locked
 
 # Disable an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: disabled
+- local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: disabled
 
 # Enable/unlock an existing user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  username: johndoe
-  domain: CUSTOMERS
-  state: enabled
+- local_action:
+    module: cs_user
+    username: johndoe
+    domain: CUSTOMERS
+    state: enabled
 
 # Remove an user in domain 'CUSTOMERS'
-local_action:
-  module: cs_user
-  name: customer_xy
-  domain: CUSTOMERS
-  state: absent
+- local_action:
+    module: cs_user
+    name: customer_xy
+    domain: CUSTOMERS
+    state: absent
 '''
 
 RETURN = '''
@@ -400,6 +400,13 @@ class AnsibleCloudStackUser(AnsibleCloudStack):
                     if value == user['accounttype']:
                         self.result['account_type'] = key
                         break
+
+            # secretkey has been removed since CloudStack 4.10 from listUsers API
+            if self.module.params.get('keys_registered') and 'apikey' in user and 'secretkey' not in user:
+                user_keys = self.query_api('getUserKeys', id=user['id'])
+                if user_keys:
+                    self.result['user_api_secret'] = user_keys['userkeys'].get('secretkey')
+
         return self.result
 
 

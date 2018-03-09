@@ -62,6 +62,7 @@ options:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -122,8 +123,9 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
 from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import get_capabilities
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
 
@@ -135,7 +137,7 @@ def validate_size(value, module):
             return value
 
 
-def map_obj_to_commands(updates, module):
+def map_obj_to_commands(updates, module, os_version):
     commands = list()
     want, have = updates
     for w in want:
@@ -149,7 +151,10 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent' and w in have:
             if dest == 'host':
-                commands.append('no logging host {0}'.format(name))
+                if '12.' in os_version:
+                    commands.append('no logging {0}'.format(name))
+                else:
+                    commands.append('no logging host {0}'.format(name))
             elif dest:
                 commands.append('no logging {0}'.format(dest))
             else:
@@ -163,20 +168,26 @@ def map_obj_to_commands(updates, module):
                 commands.append('logging facility {0}'.format(facility))
 
             if dest == 'host':
-                commands.append('logging host {0}'.format(name))
+                if '12.' in os_version:
+                    commands.append('logging {0}'.format(name))
+                else:
+                    commands.append('logging host {0}'.format(name))
 
             elif dest == 'on':
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {0}'.format(size))
+                if level and level != 'debugging':
+                    commands.append('logging buffered {0} {1}'.format(size, level))
+                else:
+                    commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {0}'.format(dest)
-                if level:
-                    dest_cmd += ' {0}'.format(level)
-
-                commands.append(dest_cmd)
+                if dest:
+                    dest_cmd = 'logging {0}'.format(dest)
+                    if level:
+                        dest_cmd += ' {0}'.format(level)
+                    commands.append(dest_cmd)
     return commands
 
 
@@ -229,7 +240,11 @@ def parse_level(line, dest):
         level = 'debugging'
 
     else:
-        match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+        if dest == 'buffered':
+            match = re.search(r'logging buffered (?:\d+ )([a-z]+)', line, re.M)
+        else:
+            match = re.search(r'logging {0} (\S+)'.format(dest), line, re.M)
+
         if match:
             if match.group(1) in level_group:
                 level = match.group(1)
@@ -260,6 +275,25 @@ def map_config_to_obj(module):
                     'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
+            elif validate_ip_address(match.group(1)):
+                dest = 'host'
+                obj.append({
+                    'dest': dest,
+                    'name': match.group(1),
+                    'facility': parse_facility(line, dest),
+                    'level': parse_level(line, dest)
+                })
+            else:
+                ip_match = re.search(r'\d+\.\d+\.\d+\.\d+', match.group(1), re.M)
+                if ip_match:
+                    dest = 'host'
+                    obj.append({
+                        'dest': dest,
+                        'name': match.group(1),
+                        'facility': parse_facility(line, dest),
+                        'level': parse_level(line, dest)
+                    })
+
     return obj
 
 
@@ -355,6 +389,9 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True)
 
+    device_info = get_capabilities(module)
+    os_version = device_info['device_info']['network_os_version']
+
     warnings = list()
     check_args(module, warnings)
 
@@ -365,7 +402,7 @@ def main():
     want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands((want, have), module)
+    commands = map_obj_to_commands((want, have), module, os_version)
     result['commands'] = commands
 
     if commands:

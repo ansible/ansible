@@ -150,6 +150,8 @@ notes:
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [psycopg2]
+extends_documentation_fragment:
+  - postgres
 author: "Bernhard Weitzhofer (@b6d)"
 """
 

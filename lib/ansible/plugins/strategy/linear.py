@@ -297,9 +297,7 @@ class StrategyModule(StrategyBase):
                 try:
                     included_files = IncludedFile.process_include_results(
                         host_results,
-                        self._tqm,
                         iterator=iterator,
-                        inventory=self._inventory,
                         loader=self._loader,
                         variable_manager=self._variable_manager
                     )
@@ -326,8 +324,7 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             if included_file._is_role:
-                                new_ir = included_file._task.copy()
-                                new_ir.vars.update(included_file._args)
+                                new_ir = self._copy_included_file(included_file)
 
                                 new_blocks, handler_blocks = new_ir.get_block_list(
                                     play=iterator._play,
@@ -391,9 +388,10 @@ class StrategyModule(StrategyBase):
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
+                    dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
-                        if s.run_state != iterator.ITERATING_RESCUE or \
+                        if s.run_state not in dont_fail_states or \
                            s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY

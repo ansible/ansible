@@ -1,14 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# This file is part of Ansible
 
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -26,8 +24,9 @@ notes:
 options:
   # module definition options
   name:
-    description: The name of the scheduled task without the path.
-    required: true
+    description:
+    - The name of the scheduled task without the path.
+    required: yes
   path:
     description:
     - Task folder in which this task will be stored.
@@ -58,7 +57,7 @@ options:
       path:
         description:
         - The path to the executable for the ExecAction.
-        required: true
+        required: yes
       arguments:
         description:
         - An argument string to supply for the executable.
@@ -96,7 +95,7 @@ options:
         description:
         - The trigger type, this value controls what below options are
           required.
-        required: true
+        required: yes
         choices: [ boot, daily, event, idle, logon, monthlydow, monthly, registration, time, weekly, session_state_change ]
       enabled:
         description:
@@ -193,6 +192,14 @@ options:
         - The interval of weeks to run on, e.g. C(1) means every week while
           C(2) means every other week.
         - Optional when C(type=weekly).
+      repetition:
+        description:
+        - Allows you to define the repetition action of the trigger that defines how often the task is run and how long the repetition pattern is repeated
+          after the task is started.
+        - It takes in the following keys, C(duration), C(interval), C(stop_at_duration_end)
+        - C(duration) is how long the pattern is repeated and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(interval) is the amount of time between earch restart of the task and is written in the ISO 8601 Duration format C(P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+        - C(stop_at_duration_end) is a boolean value that indicates if a running instance of the task is stopped at the end of the repetition pattern.
     version_added: '2.5'
   days_of_week:
     description:
@@ -488,6 +495,20 @@ EXAMPLES = r'''
   win_scheduled_task:
     name: TaskToDisable
     enabled: no
+
+- name: create a task that will be repeated every minute for five minutes
+  win_scheduled_task:
+    name: RepeatedTask
+    description: open command prompt
+    actions:
+    - path: cmd.exe
+      arguments: /c hostname
+    triggers:
+    - type: registration
+      repetition:
+      - interval: PT1M
+        duration: PT5M
+        stop_at_duration_end: yes
 '''
 
 RETURN = r'''

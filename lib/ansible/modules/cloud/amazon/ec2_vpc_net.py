@@ -165,7 +165,8 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, ansible_dict_to_boto3_tag_list, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
+                                      ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, AWSRetry)
 from ansible.module_utils.six import string_types
 
 
@@ -195,10 +196,21 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
 
 def get_vpc(module, connection, vpc_id):
     try:
-        vpc_obj = connection.describe_vpcs(VpcIds=[vpc_id])['Vpcs'][0]
+        vpc_obj = AWSRetry.backoff(
+            delay=1, tries=5,
+            catch_extra_error_codes=['InvalidVpcID.NotFound'],
+        )(connection.describe_vpcs)(VpcIds=[vpc_id])['Vpcs'][0]
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to describe VPCs")
+    try:
         classic_link = connection.describe_vpc_classic_link(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
         vpc_obj['ClassicLinkEnabled'] = classic_link
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
+            vpc_obj['ClassicLinkEnabled'] = False
+        else:
+            module.fail_json_aws(e, msg="Failed to describe VPCs")
+    except botocore.exceptions.BotoCoreError as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
 
     return vpc_obj
@@ -215,7 +227,10 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
         if tags != current_tags:
             if not module.check_mode:
                 tags = ansible_dict_to_boto3_tag_list(tags)
-                connection.create_tags(Resources=[vpc_id], Tags=tags)
+                vpc_obj = AWSRetry.backoff(
+                    delay=1, tries=5,
+                    catch_extra_error_codes=['InvalidVpcID.NotFound'],
+                )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
             return True
         else:
             return False
@@ -347,7 +362,13 @@ def main():
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, "Failed to update enabled dns hostnames attribute")
 
+        try:
+            connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id])
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Unable to wait for VPC {0} to be available.".format(vpc_id))
+
         final_state = camel_dict_to_snake_dict(get_vpc(module, connection, vpc_id))
+        final_state['tags'] = boto3_tag_list_to_ansible_dict(final_state.get('tags', []))
         final_state['id'] = final_state.pop('vpc_id')
 
         module.exit_json(changed=changed, vpc=final_state)

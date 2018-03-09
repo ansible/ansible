@@ -44,7 +44,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.plugins.loader import module_loader
+from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 
@@ -356,7 +356,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _, _ = plugin_docs.get_docstring(in_path)
+                oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -388,7 +388,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = plugin_docs.get_docstring(in_path)
+        oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
         return list(oc['options'].keys())
 
     def run(self):
@@ -416,15 +416,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
         self.loader, self.inventory, self.variable_manager = self._play_prereqs(self.options)
-
-        default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
-        vault_ids = self.options.vault_ids
-        vault_ids = default_vault_ids + vault_ids
-        vault_secrets = self.setup_vault_secrets(self.loader,
-                                                 vault_ids=vault_ids,
-                                                 vault_password_files=self.options.vault_password_files,
-                                                 ask_vault_pass=self.options.ask_vault_pass)
-        self.loader.set_vault_secrets(vault_secrets)
 
         hosts = CLI.get_host_list(self.inventory, self.options.subset, self.pattern)
 

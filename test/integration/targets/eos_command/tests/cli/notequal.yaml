@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/notequal.yaml"
+- debug: msg="START cli/notequal.yaml on connection={{ ansible_connection }}"
 
 - name: test neq operator
   eos_command:
@@ -31,4 +31,4 @@
       - "result.changed == false"
       - "result.stdout is defined"
 
-- debug: msg="END cli/notequal.yaml"
+- debug: msg="END cli/notequal.yaml on connection={{ ansible_connection }}"

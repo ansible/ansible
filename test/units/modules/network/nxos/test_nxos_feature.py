@@ -38,10 +38,15 @@ class TestNxosFeatureModule(TestNxosModule):
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_feature.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_feature.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'network_api': 'cliconf'}
+
     def tearDown(self):
         super(TestNxosFeatureModule, self).tearDown()
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None, device=''):
         def load_from_file(*args, **kwargs):
@@ -64,9 +69,9 @@ class TestNxosFeatureModule(TestNxosModule):
     def test_nxos_feature_enable(self):
         set_module_args(dict(feature='nve', state='enabled'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['feature nv overlay'])
+        self.assertEqual(result['commands'], ['terminal dont-ask', 'feature nv overlay'])
 
     def test_nxos_feature_disable(self):
         set_module_args(dict(feature='ospf', state='disabled'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['no feature ospf'])
+        self.assertEqual(result['commands'], ['terminal dont-ask', 'no feature ospf'])

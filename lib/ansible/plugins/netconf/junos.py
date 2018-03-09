@@ -50,7 +50,7 @@ class Netconf(NetconfBase):
         device_info['network_os'] = 'junos'
         ele = new_ele('get-software-information')
         data = self.execute_rpc(to_xml(ele))
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
+        reply = to_ele(data)
         sw_info = reply.find('.//software-information')
 
         device_info['network_os_version'] = self.get_text(sw_info, 'junos-version')
@@ -63,11 +63,7 @@ class Netconf(NetconfBase):
     def execute_rpc(self, name):
         """RPC to be execute on remote device
            :name: Name of rpc in string format"""
-        try:
-            obj = to_ele(to_bytes(name, errors='surrogate_or_strict'))
-            return self.m.rpc(obj).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
+        return self.rpc(name)
 
     @ensure_connected
     def load_configuration(self, *args, **kwargs):

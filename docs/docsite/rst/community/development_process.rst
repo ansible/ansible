@@ -10,12 +10,76 @@ Road Maps
 
 The Ansible Core team provides a road map for each upcoming release. These road maps can be found `here <http://docs.ansible.com/ansible/devel/roadmap/>`_.
 
+.. Roadmaps are User-oriented.  We should also list the Roadmap Projects and the Blocker Bug
+   Projects here
+
+.. How the actual release schedule, slipping, etc relates to (release_and_maintenance.rst) probably
+   also belongs here somewhere
+
 Pull Requests
 =============
 
 Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general.
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
+
+Backport Pull Request Process
+-----------------------------
+
+After the pull request submitted to Ansible for the ``devel`` branch is
+accepted and merged, the following instructions will help you create a
+pull request to backport the change to a previous stable branch.
+
+.. note::
+
+    These instructions assume that ``stable-2.5`` is the targeted release
+    branch for the backport.
+
+.. note::
+
+    These instructions assume that ``https://github.com/ansible/ansible.git``
+    is configured as a ``git remote`` named ``upstream``. If you do not use
+    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
+
+.. note::
+
+   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+   is configured as a ``git remote`` named ``origin``. If you do not use
+   a ``git remote`` named ``origin``, adjust the instructions accordingly.
+
+#. Prepare your devel, stable, and feature branches:
+
+   ::
+
+       git fetch upstream
+       git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
+
+#. Cherry pick the relevant commit SHA from the devel branch into your feature
+   branch, handling merge conflicts as necessary:
+
+   ::
+
+       git cherry-pick -x [SHA_FROM_DEVEL]
+
+#. Add a changelog entry for the change, and commit it.
+
+#. Push your feature branch to your fork on GitHub:
+
+   ::
+
+       git push origin backport/2.5/[PR_NUMBER_FROM_DEVEL]
+
+#. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
+   against the ``stable-2.5`` branch
+
+.. note::
+
+    The choice to use ``backport/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
+    name for the feature branch is somewhat arbitrary, but conveys meaning
+    about the purpose of that branch. It is not required to use this format,
+    but it can be helpful, especially when making multiple backport PRs for
+    multiple stable branches.
+
 
 Ansibullbot
 ===========

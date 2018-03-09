@@ -45,7 +45,8 @@ options:
       - Facility name for logging.
   dest_level:
     description:
-      - Set logging severity levels. C(alias level).
+      - Set logging severity levels.
+    aliases: ['level']
   facility_level:
     description:
       - Set logging serverity levels for facility based log messages.
@@ -60,6 +61,7 @@ options:
       - State of the logging configuration.
     default: present
     choices: ['present', 'absent']
+extends_documentation_fragment: nxos
 """
 
 EXAMPLES = """

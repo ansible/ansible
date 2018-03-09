@@ -170,6 +170,18 @@ def update_package_db(module, exit):
         return True
 
 
+def query_toplevel(module, name):
+    # /etc/apk/world contains a list of top-level packages separated by ' ' or \n
+    # packages may contain repository (@) or version (=<>~) separator characters or start with negation !
+    regex = re.compile(r'^' + re.escape(name) + r'([@=<>~].+)?$')
+    with open('/etc/apk/world') as f:
+        content = f.read().split()
+        for p in content:
+            if regex.search(p):
+                return True
+    return False
+
+
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -237,7 +249,7 @@ def install_packages(module, names, state):
                 if state == 'latest' and not query_latest(module, dependency):
                     to_upgrade.append(dependency)
         else:
-            if not query_package(module, name):
+            if not query_toplevel(module, name):
                 to_install.append(name)
             elif state == 'latest' and not query_latest(module, name):
                 to_upgrade.append(name)
@@ -277,6 +289,11 @@ def remove_packages(module, names):
         cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     packagelist = parse_for_packages(stdout)
+    # Check to see if packages are still present because of dependencies
+    for name in installed:
+        if query_package(module, name):
+            rc = 1
+            break
     if rc != 0:
         module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
     module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)

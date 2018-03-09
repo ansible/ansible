@@ -27,7 +27,7 @@ requirements:
 options:
     state:
         description:
-            - Create or remove a maintenance window.
+            - Create or remove a maintenance window. Maintenance window to remove is identified by name.
         required: false
         default: present
         choices: [ "present", "absent" ]

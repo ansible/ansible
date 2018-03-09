@@ -75,6 +75,8 @@ EXAMPLES = '''
     origin: 'https://pkg.example.com/site/'
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -204,8 +206,6 @@ def unstringify(val):
     else:
         return val
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

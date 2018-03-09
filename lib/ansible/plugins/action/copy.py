@@ -26,8 +26,8 @@ import os.path
 import stat
 import tempfile
 import traceback
-from itertools import chain
 
+from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -186,12 +186,13 @@ def _walk_dirs(topdir, base_path=None, local_follow=False, trailing_slash_detect
 
 class ActionModule(ActionBase):
 
+    TRANSFERS_FILES = True
+
     def _create_remote_file_args(self, module_args):
         # remove action plugin only keys
         return dict((k, v) for k, v in module_args.items() if k not in ('content', 'decrypt'))
 
-    def _copy_file(self, source_full, source_rel, content, content_tempfile,
-                   dest, task_vars, tmp, delete_remote_tmp):
+    def _copy_file(self, source_full, source_rel, content, content_tempfile, dest, task_vars):
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
         follow = boolean(self._task.args.get('follow', False), strict=False)
         force = boolean(self._task.args.get('force', 'yes'), strict=False)
@@ -206,7 +207,6 @@ class ActionModule(ActionBase):
         except AnsibleFileNotFound as e:
             result['failed'] = True
             result['msg'] = "could not find src=%s, %s" % (source_full, to_text(e))
-            self._remove_tmp_path(tmp)
             return result
 
         # Get the local mode and set if user wanted it preserved
@@ -221,30 +221,23 @@ class ActionModule(ActionBase):
         if self._connection._shell.path_has_trailing_slash(dest):
             dest_file = self._connection._shell.join_path(dest, source_rel)
         else:
-            dest_file = self._connection._shell.join_path(dest)
-
-        # Create a tmp path if missing only if this is not recursive.
-        # If this is recursive we already have a tmp path.
-        if delete_remote_tmp:
-            if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path()
+            dest_file = dest
 
         # Attempt to get remote file info
-        dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
+        dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and dest_status['isdir']:
             # The dest is a directory.
             if content is not None:
                 # If source was defined as content remove the temporary file and fail out.
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
-                self._remove_tmp_path(tmp)
                 result['failed'] = True
                 result['msg'] = "can not use content with a dir as dest"
                 return result
             else:
                 # Append the relative source location to the destination and get remote stats again
                 dest_file = self._connection._shell.join_path(dest, source_rel)
-                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
+                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, checksum=force)
 
         if dest_status['exists'] and not force:
             # remote_file exists so continue to next iteration.
@@ -265,7 +258,7 @@ class ActionModule(ActionBase):
                 return result
 
             # Define a remote directory that we will copy the file to.
-            tmp_src = self._connection._shell.join_path(tmp, 'source')
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')
 
             remote_path = None
 
@@ -280,7 +273,7 @@ class ActionModule(ActionBase):
 
             # fix file permissions when the copy is done as a different user
             if remote_path:
-                self._fixup_perms2((tmp, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
             if raw:
                 # Continue to next iteration if raw is defined.
@@ -298,12 +291,13 @@ class ActionModule(ActionBase):
                     original_basename=source_rel,
                 )
             )
+            if not self._task.args.get('checksum'):
+                new_module_args['checksum'] = local_checksum
+
             if lmode:
                 new_module_args['mode'] = lmode
 
-            module_return = self._execute_module(module_name='copy',
-                                                 module_args=new_module_args, task_vars=task_vars,
-                                                 tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+            module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
 
         else:
             # no need to transfer the file, already correct hash, but still need to call
@@ -312,15 +306,13 @@ class ActionModule(ActionBase):
             self._loader.cleanup_tmp_file(source_full)
 
             if raw:
-                # Continue to next iteration if raw is defined.
-                self._remove_tmp_path(tmp)
                 return None
 
             # Fix for https://github.com/ansible/ansible-modules-core/issues/1568.
             # If checksums match, and follow = True, find out if 'dest' is a link. If so,
             # change it to point to the source of the link.
             if follow:
-                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, tmp=tmp, follow=False)
+                dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
                 if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
                     dest = dest_status_nofollow['lnk_source']
 
@@ -339,9 +331,7 @@ class ActionModule(ActionBase):
                 new_module_args['mode'] = lmode
 
             # Execute the file module.
-            module_return = self._execute_module(module_name='file',
-                                                 module_args=new_module_args, task_vars=task_vars,
-                                                 tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 
         if not module_return.get('checksum'):
             module_return['checksum'] = local_checksum
@@ -379,7 +369,7 @@ class ActionModule(ActionBase):
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
@@ -401,6 +391,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         source = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -426,7 +417,7 @@ class ActionModule(ActionBase):
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
 
-        # If content is defined make a temp file and write the content into it.
+        # If content is defined make a tmp file and write the content into it.
         if content is not None:
             try:
                 # If content comes to us as a dict it should be decoded json.
@@ -493,19 +484,6 @@ class ActionModule(ActionBase):
         # Used to cut down on command calls when not recursive.
         module_executed = False
 
-        # Optimization: Can delete remote_tmp on the first call if we're only
-        # copying a single file.  Otherwise we keep the remote_tmp until it
-        # is no longer needed.
-        delete_remote_tmp = False
-        if sum(len(f) for f in chain(source_files.values())) == 1:
-            # Tell _execute_module to delete the file if there is one file.
-            delete_remote_tmp = True
-
-        # If this is a recursive action create a tmp path that we can share as the _exec_module create is too late.
-        if not delete_remote_tmp:
-            if tmp is None or "-tmp-" not in tmp:
-                tmp = self._make_tmp_path()
-
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
 
@@ -513,7 +491,7 @@ class ActionModule(ActionBase):
         for source_full, source_rel in source_files['files']:
             # copy files over.  This happens first as directories that have
             # a file do not need to be created later
-            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars, tmp, delete_remote_tmp)
+            module_return = self._copy_file(source_full, source_rel, content, content_tempfile, dest, task_vars)
             if module_return is None:
                 continue
 
@@ -539,9 +517,7 @@ class ActionModule(ActionBase):
             new_module_args['state'] = 'directory'
             new_module_args['mode'] = self._task.args.get('directory_mode', None)
 
-            module_return = self._execute_module(module_name='file',
-                                                 module_args=new_module_args, task_vars=task_vars,
-                                                 tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
             changed = changed or module_return.get('changed', False)
 
@@ -553,31 +529,26 @@ class ActionModule(ActionBase):
             new_module_args['state'] = 'link'
             new_module_args['force'] = True
 
-            module_return = self._execute_module(module_name='file',
-                                                 module_args=new_module_args, task_vars=task_vars,
-                                                 tmp=tmp, delete_remote_tmp=delete_remote_tmp)
+            module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
             if module_return.get('failed'):
                 result.update(module_return)
-                if not delete_remote_tmp:
-                    self._remove_tmp_path(tmp)
                 return result
 
             changed = changed or module_return.get('changed', False)
 
-            # the file module returns the file path as 'path', but
-            # the copy module uses 'dest', so add it if it's not there
-            if 'path' in module_return and 'dest' not in module_return:
-                module_return['dest'] = module_return['path']
-
-        # Delete tmp path if we were recursive or if we did not execute a module.
-        if not delete_remote_tmp or (delete_remote_tmp and not module_executed):
-            self._remove_tmp_path(tmp)
-
         if module_executed and len(source_files['files']) == 1:
             result.update(module_return)
+
+            # the file module returns the file path as 'path', but
+            # the copy module uses 'dest', so add it if it's not there
+            if 'path' in result and 'dest' not in result:
+                result['dest'] = result['path']
         else:
             result.update(dict(dest=dest, src=source, changed=changed))
+
+        # Delete tmp path
+        self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

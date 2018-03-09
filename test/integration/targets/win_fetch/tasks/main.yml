@@ -136,7 +136,7 @@
       - "fetch_small_bs_stat.stat.checksum == fetch_small_bs.checksum"
 
 - name: attempt to fetch a non-existent file - do not fail on missing
-  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }}
+  fetch: src="C:/this_file_should_not_exist.txt" dest={{ host_output_dir }} fail_on_missing=no
   register: fetch_missing_nofail
 
 - name: check fetch missing no fail result
@@ -157,6 +157,18 @@
       - "fetch_missing is failed"
       - "fetch_missing.msg"
       - "fetch_missing is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing implicit
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ host_output_dir }}
+  register: fetch_missing_implicit
+  ignore_errors: true
+
+- name: check fetch missing with failure on implicit
+  assert:
+    that:
+      - "fetch_missing_implicit is failed"
+      - "fetch_missing_implicit.msg"
+      - "fetch_missing_implicit is not changed"
 
 - name: attempt to fetch a directory
   fetch: src="C:\\Windows" dest={{ host_output_dir }}

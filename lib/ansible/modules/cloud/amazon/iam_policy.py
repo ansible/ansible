@@ -72,7 +72,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Create a policy with the name of 'Admin' to the group 'administrators'
-tasks:
 - name: Assign a policy called Admin to the administrators group
   iam_policy:
     iam_type: group
@@ -83,7 +82,6 @@ tasks:
 
 # Advanced example, create two new groups and add a READ-ONLY policy to both
 # groups.
-task:
 - name: Create Two Groups, Mario and Luigi
   iam:
     iam_type: group
@@ -104,7 +102,6 @@ task:
   with_items: "{{ new_groups.results }}"
 
 # Create a new S3 policy with prefix per user
-tasks:
 - name: Create S3 policy from template
   iam_policy:
     iam_type: user

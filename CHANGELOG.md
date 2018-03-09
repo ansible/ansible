@@ -1,9 +1,36 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.6"></a>
+
+## 2.6 "Heartbreaker" - ACTIVE DEVELOPMENT
+
+[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html)
+
+### Major Changes
+
+### Deprecations (to be removed in 2.10)
+
+See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
+
+### Minor Changes
+
+* Ansible 2.6 and onwards, `target_id` parameter in `vmware_target_canonical_facts` module is an optional parameter.
+
+#### Removed modules (previously deprecated)
+
+### New Modules
+
+#### Cloud
+- amazon
+  * aws_caller_facts
+
+
 <a id="2.5"></a>
 
-## 2.5 "TBD" - ACTIVE DEVELOPMENT
+## 2.5 "Kashmir" - March 2018 (estimated)
+
+[Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html)
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
@@ -11,14 +38,37 @@ Ansible Changes By Release
 * Added fact namespacing, from now on facts will be available under `ansible_facts` namespace (i.e. `ansible_facts.os_distribution`) w/o the `ansible_` prefix.
   They will continue to be added into the main namespace directly, but now with a configuration toggle to enable this,
   currently on by default, in the future it will be off.
+* Add a configuration file to filter modules that a site administrator wants to exclude from being used.
 
-### Deprecations
+### Deprecations (to be removed in 2.9)
 * Previously deprecated 'hostfile' config settings have been 're-deprecated' as previously code did not warn about deprecated configuration settings.
 * Using Ansible provided Jinja tests as filters is deprecated and will be removed in Ansible 2.9
 * `stat` and `win_stat` have deprecated `get_md5` and the `md5` return value
   and these options will become undocumented in Ansible 2.9 and removed in a
   later version.
 * The `redis_kv` lookup in favor of new `redis` lookup
+* Passing arbitrary parameters that begin with `HEADER_` to the uri module,
+  used for passing http headers, is deprecated.  Use the ``headers`` parameter
+  with a dictionary of header names to value instead.  This will be removed in
+  Ansible-2.9
+* Passing arbitrary parameters to the zfs module to set zfs properties is
+  deprecated.  Use the ``extra_zfs_properties`` parameter with a dictionary of
+  property names to values instead.  This will be removed in Ansible-2.9.
+* Use of the AnsibleModule parameter, check_invalid_arguments, in custom modules
+  is deprecated.  In the future, all parameters will be checked to see whether
+  they are listed in the arg spec and an error raised if they are not listed.
+  This behaviour is the current and future default so most custom modules can
+  simply remove check_invalid_arguments if they set it to the default of True.
+  check_invalid_arguments will be removed in Ansible-2.9.
+* nxos_ip_interface module is deprecated in Ansible 2.5. Use nxos_l3_interface module instead.
+* nxos_portchannel module is deprecated in Ansible 2.5. Use nxos_linkagg module instead.
+* nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
+* ec2_ami_find has been deprecated, use ec2_ami_facts.
+* panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
+* vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
+* Apstra's ``aos_*`` modules are deprecated. See new modules at [ansible-apstra](https://www.ansible.com/ansible-apstra)
+
+See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html) for more information
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -37,45 +87,400 @@ Ansible Changes By Release
   2.9. use `get_checksum: True` with `checksum_algorithm: md5` to return an md5 hash of the file
   under the `checksum` return value.
 * `osx_say` module was renamed into `say`.
-
-#### Deprecated Modules (to be removed in 2.9):
-* ec2_ami_find: replaced by ec2_ami_facts
+* Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
+  The `debug` strategy is still functional, and is now just a trigger to enable this functionality
+* The ANSIBLE_REMOTE_TMP environment variable has been added to supplement (and
+  override) ANSIBLE_REMOTE_TEMP.  This matches with the spelling of the config
+  value. ANSIBLE_REMOTE_TEMP will be deprecated in the future.
+* A few modules were updated to put temporary files in the existing temp dir already created for the module itself, including get_url, assemble, uri and yum.
 
 #### Removed Modules (previously deprecated):
-* accelerate
+* accelerate.
 * boundary_meter: There was no deprecation period for this but the hosted
   service it relied on has gone away so the module has been removed.
-  https://github.com/ansible/ansible/issues/29387
+  [#29387](https://github.com/ansible/ansible/issues/29387)
+* cl_ : cl_interface, cl_interface_policy, cl_bridge, cl_img_install, cl_ports, cl_license, cl_bond. Use `nclu` instead
+* docker, use docker_container and docker_image instead.
+* ec2_vpc.
+* ec2_ami_search, use ec2_ami_facts instead.
+* nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
+* panos_nat_policy: Use panos_nat_rule the old module uses deprecated API calls
 
 ### New Plugins
 
-## Lookups
+#### Lookups
 * aws_ssm: Query AWS ssm data
+* aws_account_attribute: Query AWS account attributes such as EC2-Classic
+    availability
 * config: Lookup Ansible settings
 * openshift: Return info from Openshift installation
 * redis: look up date from Redis DB, deprecates the redis_kv one.
 
-## Callbacks
+#### Callbacks
 * yaml
+
+#### Connections
+* network_cli
+* netconf
+
+While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
+
+#### Filters
+* parse_xml
 
 ### New Modules
 
 #### Cloud
+- amazon
+  * aws_acm_facts
+  * aws_application_scaling_policy
+  * aws_az_facts
+  * aws_batch_compute_environment
+  * aws_batch_job_definition
+  * aws_batch_job_queue
+  * aws_direct_connect_gateway
+  * aws_direct_connect_virtual_interface
+  * aws_elasticbeanstalk_app
+  * aws_kms_facts
+  * aws_region_facts
+  * aws_s3_cors
+  * aws_ses_identity
+  * aws_ssm_parameter_store
+  * aws_waf_condition
+  * aws_waf_rule
+  * aws_waf_web_acl
+  * cloudfront_distribution
+  * cloudfront_invalidation
+  * cloudfront_origin_access_identity
+  * cloudwatchlogs_log_group
+  * cloudwatchlogs_log_group_facts
+  * ec2_ami_facts
+  * ec2_asg_lifecycle_hook
+  * ec2_customer_gateway_facts
+  * ec2_instance
+  * ec2_placement_group
+  * ec2_placement_group_facts
+  * ec2_vpc_egress_igw
+  * ecs_taskdefinition_facts
+  * elasticache_facts
+  * elb_target
+  * iam_role_facts
+  * iam_user
+- azure
+  * azure_rm_containerinstance
+  * azure_rm_containerregistry
+  * azure_rm_image
+  * azure_rm_keyvault
+  * azure_rm_keyvaultkey
+  * azure_rm_keyvaultsecret
+  * azure_rm_mysqldatabase
+  * azure_rm_mysqlserver
+  * azure_rm_postgresqldatabase
+  * azure_rm_postgresqlserver
+  * azure_rm_sqldatabase
+  * azure_rm_sqlserver
+  * azure_rm_sqlserver_facts
+- cloudscale
+  * cloudscale_floating_ip
+- cloudstack
+  * cs_network_offering
+  * cs_service_offering
+  * cs_vpc_offering
+  * cs_vpn_connection
+  * cs_vpn_customer_gateway
+- digital_ocean
+  * digital_ocean_certificate
+  * digital_ocean_floating_ip_facts
+  * digital_ocean_sshkey_facts
+- dimensiondata
+  * dimensiondata_vlan
+- google
+  * gcp_dns_managed_zone
+- misc
+  * terraform
+- oneandone
+  * oneandone_firewall_policy
+  * oneandone_load_balancer
+  * oneandone_monitoring_policy
+  * oneandone_private_network
+  * oneandone_public_ip
+  * oneandone_server
+- openstack
+  * os_keystone_endpoint
+  * os_project_access
+- ovirt
+  * ovirt_api_facts
+  * ovirt_disk_facts
+- spotinst
+  * spotinst_aws_elastigroup
+- vmware
+  * vcenter_folder
+  * vmware_cfg_backup
+  * vmware_datastore_facts
+  * vmware_drs_rule_facts
+  * vmware_guest_file_operation
+  * vmware_guest_powerstate
+  * vmware_guest_snapshot_facts
+  * vmware_host_acceptance
+  * vmware_host_config_facts
+  * vmware_host_config_manager
+  * vmware_host_datastore
+  * vmware_host_dns_facts
+  * vmware_host_facts
+  * vmware_host_firewall_facts
+  * vmware_host_firewall_manager
+  * vmware_host_lockdown
+  * vmware_host_ntp
+  * vmware_host_package_facts
+  * vmware_host_service_facts
+  * vmware_host_service_manager
+  * vmware_host_vmnic_facts
+  * vmware_local_role_manager
+  * vmware_vm_vm_drs_rule
+  * vmware_vmkernel_facts
+- vultr
+  * vr_account_facts
+  * vr_dns_domain
+  * vr_dns_record
+  * vr_firewall_group
+  * vr_firewall_rule
+  * vr_server
+  * vr_ssh_key
+  * vr_startup_script
+  * vr_user
 
-* aws_acm_facts
-* aws_kms_facts
-* aws_ssm_parameter_store
-* digital_ocean_sshkey_facts
-* ec2_ami_facts
-* ec2_placement_group
-* ecs_taskdefinition_facts
-* elasticache_facts
-* iam_role_facts
+#### Clustering
+  * etcd3
+- k8s
+  * k8s_raw
+  * k8s_scale
+- openshift
+  * openshift_raw
+  * openshift_scale
+
+#### Crypto
+  * openssl_dhparam
+
+#### Database
+- influxdb
+  * influxdb_query
+  * influxdb_user
+  * influxdb_write
+
+#### Identity
+- ipa
+  * ipa_dnszone
+  * ipa_service
+  * ipa_subca
+- keycloak
+  * keycloak_client
+  * keycloak_clienttemplate
+
+#### Monitoring
+  * grafana_dashboard
+  * grafana_datasource
+  * grafana_plugin
+  * icinga2_host
+- zabbix
+  * zabbix_proxy
+  * zabbix_template
+
+#### Net Tools
+  * ip_netns
+- nios
+  * nios_dns_view
+  * nios_host_record
+  * nios_network
+  * nios_network_view
+  * nios_zone
+
+#### Network
+- aci
+  * aci_aaa_user
+  * aci_aaa_user_certificate
+  * aci_access_port_to_interface_policy_leaf_profile
+  * aci_aep_to_domain
+  * aci_domain
+  * aci_domain_to_encap_pool
+  * aci_domain_to_vlan_pool
+  * aci_encap_pool
+  * aci_encap_pool_range
+  * aci_fabric_node
+  * aci_firmware_source
+  * aci_interface_policy_fc
+  * aci_interface_policy_leaf_policy_group
+  * aci_interface_policy_leaf_profile
+  * aci_interface_policy_lldp
+  * aci_interface_policy_mcp
+  * aci_interface_policy_port_security
+  * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_static_binding_to_epg
+  * aci_switch_leaf_selector
+  * aci_switch_policy_leaf_profile
+  * aci_switch_policy_vpc_protection_group
+  * aci_vlan_pool
+  * aci_vlan_pool_encap_block
+- avi
+  * avi_api_version
+  * avi_clusterclouddetails
+  * avi_customipamdnsprofile
+  * avi_errorpagebody
+  * avi_errorpageprofile
+  * avi_gslbservice_patch_member
+  * avi_wafpolicy
+  * avi_wafprofile
+- edgeos
+  * edgeos_command
+  * edgeos_config
+  * edgeos_facts
+- enos
+  * enos_command
+  * enos_config
+  * enos_facts
+- eos
+  * eos_interface
+  * eos_l2_interface
+  * eos_l3_interface
+  * eos_linkagg
+  * eos_lldp
+  * eos_static_route
+- f5
+  * bigip_asm_policy
+  * bigip_device_connectivity
+  * bigip_device_group
+  * bigip_device_group_member
+  * bigip_device_httpd
+  * bigip_device_trust
+  * bigip_gtm_server
+  * bigip_iapplx_package
+  * bigip_monitor_https
+  * bigip_monitor_snmp_dca
+  * bigip_monitor_udp
+  * bigip_partition
+  * bigip_policy
+  * bigip_policy_rule
+  * bigip_profile_client_ssl
+  * bigip_remote_syslog
+  * bigip_security_address_list
+  * bigip_security_port_list
+  * bigip_software_update
+  * bigip_ssl_key
+  * bigip_static_route
+  * bigip_traffic_group
+  * bigip_ucs_fetch
+  * bigip_vcmp_guest
+  * bigip_wait
+  * bigiq_regkey_license
+  * bigiq_regkey_pool
+- fortimanager
+  * fmgr_script
+- ios
+  * ios_l2_interface
+  * ios_l3_interface
+  * ios_linkagg
+  * ios_lldp
+  * ios_vlan
+- iosxr
+  * iosxr_netconf
+- ironware
+  * ironware_command
+  * ironware_config
+  * ironware_facts
+- junos
+  * junos_l2_interface
+  * junos_scp
+- netact
+  * netact_cm_command
+- netscaler
+  * netscaler_nitro_request
+- nso
+  * nso_action
+  * nso_config
+  * nso_query
+  * nso_show
+  * nso_verify
+- nxos
+  * nxos_l2_interface
+  * nxos_l3_interface
+  * nxos_linkagg
+  * nxos_lldp
+- onyx
+  * onyx_bgp
+  * onyx_command
+  * onyx_config
+  * onyx_facts
+  * onyx_interface
+  * onyx_l2_interface
+  * onyx_l3_interface
+  * onyx_linkagg
+  * onyx_lldp
+  * onyx_lldp_interface
+  * onyx_magp
+  * onyx_mlag_ipl
+  * onyx_mlag_vip
+  * onyx_ospf
+  * onyx_pfc_interface
+  * onyx_protocol
+  * onyx_vlan
+- panos
+  * panos_dag_tags
+  * panos_match_rule
+  * panos_op
+  * panos_query_rules
+- radware
+  * vdirect_commit
+  * vdirect_runnable
+- vyos
+  * vyos_vlan
+
+#### Notification
+  * logentries_msg
+  * say
+  * snow_record
+
+#### Packaging
+- os
+  * package_facts
+  * rhsm_repository
+
+#### Remote Management
+- manageiq
+  * manageiq_alert_profiles
+  * manageiq_alerts
+  * manageiq_policies
+  * manageiq_tags
+- oneview
+  * oneview_datacenter_facts
+  * oneview_enclosure_facts
+  * oneview_logical_interconnect_group
+  * oneview_logical_interconnect_group_facts
+  * oneview_san_manager_facts
+- ucs
+  * ucs_ip_pool
+  * ucs_lan_connectivity
+  * ucs_mac_pool
+  * ucs_san_connectivity
+  * ucs_vhba_template
+  * ucs_vlans
+  * ucs_vnic_template
+  * ucs_vsans
+  * ucs_wwn_pool
+
+#### System
+  * mksysb
+  * nosh
+  * service_facts
+  * vdo
+
+#### Web Infrastructure
+  * jenkins_job_facts
 
 #### Windows
-
   * win_audit_policy_system
   * win_audit_rule
+  * win_certificate_store
+  * win_disk_facts
+  * win_product_facts
   * win_scheduled_task_stat
   * win_whoami
 
@@ -812,7 +1217,7 @@ Ansible Changes By Release
 
 <a id="2.3.3"></a>
 
-## 2.3.3 "Ramble On" - TBD
+## 2.3.3 "Ramble On" - 2017-12-20
 
 ### Bugfixes
 * Fix alternatives module handlling of non existing options

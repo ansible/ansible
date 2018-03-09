@@ -107,7 +107,8 @@ options:
     description:
       - Specify Maximum number of peers for this neighbor prefix
         Valid values are between 1 and 1000, or 'default', which does
-        not impose the limit.
+        not impose the limit. Note that this parameter is accepted
+        only on neighbors with address/prefix.
     required: false
     default: null
   pwd:
@@ -118,9 +119,9 @@ options:
   pwd_type:
     description:
       - Specify the encryption type the password will use. Valid values
-        are '3des' or 'cisco_type_7' encryption.
+        are '3des' or 'cisco_type_7' encryption or keyword 'default'.
     required: false
-    choices: ['3des', 'cisco_type_7']
+    choices: ['3des', 'cisco_type_7', 'default']
     default: null
   remote_as:
     description:
@@ -170,8 +171,6 @@ options:
         Valid values are 'true', 'false', and 'default', which defaults
         to 'false'. This property can only be configured when the
         neighbor is in 'ip' address format without prefix length.
-        This property and the transport_passive_mode property are
-        mutually exclusive.
     required: false
     choices: ['true','false']
     default: null
@@ -388,11 +387,13 @@ def state_present(module, existing, proposed, candidate):
                     command = '{0} {1}'.format(key, value)
                     commands.append(command)
             elif key == 'timers':
-                command = 'timers {0} {1}'.format(
-                    proposed['timers_keepalive'],
-                    proposed['timers_holdtime'])
-                if command not in commands:
-                    commands.append(command)
+                if (proposed['timers_keepalive'] != PARAM_TO_DEFAULT_KEYMAP.get('timers_keepalive') or
+                        proposed['timers_holdtime'] != PARAM_TO_DEFAULT_KEYMAP.get('timers_holdtime')):
+                    command = 'timers {0} {1}'.format(
+                        proposed['timers_keepalive'],
+                        proposed['timers_holdtime'])
+                    if command not in commands:
+                        commands.append(command)
             else:
                 command = '{0} {1}'.format(key, value)
                 commands.append(command)
@@ -437,7 +438,7 @@ def main():
         low_memory_exempt=dict(required=False, type='bool'),
         maximum_peers=dict(required=False, type='str'),
         pwd=dict(required=False, type='str'),
-        pwd_type=dict(required=False, type='str', choices=['cleartext', '3des', 'cisco_type_7', 'default']),
+        pwd_type=dict(required=False, type='str', choices=['3des', 'cisco_type_7', 'default']),
         remote_as=dict(required=False, type='str'),
         remove_private_as=dict(required=False, type='str', choices=['enable', 'disable', 'all', 'replace-as']),
         shutdown=dict(required=False, type='bool'),
@@ -446,14 +447,13 @@ def main():
         timers_holdtime=dict(required=False, type='str'),
         transport_passive_only=dict(required=False, type='bool'),
         update_source=dict(required=False, type='str'),
-        m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present', required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False)
     )
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=[['timers_holdtime', 'timers_keepalive']],
+        required_together=[['timers_holdtime', 'timers_keepalive'], ['pwd', 'pwd_type']],
         supports_check_mode=True,
     )
 

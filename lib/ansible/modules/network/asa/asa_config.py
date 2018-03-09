@@ -37,7 +37,7 @@ options:
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
@@ -49,7 +49,7 @@ options:
         or configuration template to load.  The path to the source file can
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
-        exclusive with I(lines).
+        exclusive with I(lines), I(parents).
     required: false
     default: null
   before:
@@ -277,7 +277,9 @@ def main():
 
     argument_spec.update(asa_argument_spec)
 
-    mutually_exclusive = [('lines', 'src'), ('defaults', 'passwords')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('parents', 'src'),
+                          ('defaults', 'passwords')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),

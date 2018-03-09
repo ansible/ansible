@@ -596,19 +596,23 @@ EXAMPLES = '''
 #
 
     # instances with tag foo
+- ec2:
     count_tag:
         foo:
 
     # instances with tag foo=bar
+- ec2:
     count_tag:
         foo: bar
 
     # instances with tags foo=bar & baz
+- ec2:
     count_tag:
         foo: bar
         baz:
 
     # instances with tags foo & bar & baz=bang
+- ec2:
     count_tag:
         - foo
         - bar
@@ -688,6 +692,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
             except:
                 pass
 
+        # if not a string type, convert and make sure it's a text string
+        if isinstance(tags, int):
+            tags = to_text(tags)
+
         # if string, we only care that a tag of that name exists
         if isinstance(tags, str):
             filters.update({"tag-key": tags})
@@ -705,6 +713,10 @@ def get_reservations(module, ec2, vpc, tags=None, state=None, zone=None):
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
             filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
+
+        # lets check to see if the filters dict is empty, if so then stop
+        if not filters:
+            module.fail_json(msg="Filters based on tag is empty => tags: %s" % (tags))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -1742,6 +1754,14 @@ def main():
             (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2, vpc)
         else:
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
+
+    # Always return instances in the same order
+    if new_instance_ids:
+        new_instance_ids.sort()
+    if instance_dict_array:
+        instance_dict_array.sort(key=lambda x: x['id'])
+    if tagged_instances:
+        tagged_instances.sort(key=lambda x: x['id'])
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 

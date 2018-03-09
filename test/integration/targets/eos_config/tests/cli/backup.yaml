@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/backup.yaml"
+- debug: msg="START cli/backup.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   eos_config:
@@ -10,13 +10,14 @@
       - interface Ethernet2
     match: none
     provider: "{{ cli }}"
+  become: yes
 
 - name: collect any backup files
   find:
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - name: delete backup files
   file:
@@ -29,6 +30,7 @@
     src: basic/config.j2
     backup: yes
     provider: "{{ cli }}"
+  become: yes
   register: result
 
 - assert:
@@ -41,10 +43,10 @@
     paths: "{{ role_path }}/backup"
     pattern: "{{ inventory_hostname_short }}_config*"
   register: backup_files
-  delegate_to: localhost
+  connection: local
 
 - assert:
     that:
       - "backup_files.files is defined"
 
-- debug: msg="END cli/backup.yaml"
+- debug: msg="END cli/backup.yaml on connection={{ ansible_connection }}"

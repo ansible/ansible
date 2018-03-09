@@ -40,6 +40,7 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
 
         if self._play_context.connection == 'local':
             provider = load_provider(asa_provider_spec, self._task.args)
@@ -56,7 +57,7 @@ class ActionModule(_ActionModule):
             pc.become_pass = provider['auth_pass']
             pc.become_method = 'enable'
 
-            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+            display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = connection.run()
@@ -69,6 +70,6 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         return result

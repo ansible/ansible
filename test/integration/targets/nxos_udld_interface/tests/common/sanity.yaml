@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_udld_interface sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_udld_interface sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: udld_run="true"
 - set_fact: udld_run="false"
@@ -54,6 +56,12 @@
 
   - assert: *true
 
+  - name: "Conf2 Idempotence"
+    nxos_udld_interface: *conf2
+    register: result
+
+  - assert: *false
+
   - name: Remove the config
     nxos_udld_interface: &remove
       interface: "{{ intname }}"
@@ -71,4 +79,4 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_udld_interface sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_udld_interface sanity test"

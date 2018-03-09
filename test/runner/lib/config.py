@@ -193,6 +193,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
         self.platform = args.platform  # type: list [str]
         self.inventory = args.inventory  # type: str
+        self.testcase = args.testcase  # type: str
 
 
 class UnitsConfig(TestConfig):
@@ -204,15 +205,6 @@ class UnitsConfig(TestConfig):
         super(UnitsConfig, self).__init__(args, 'units')
 
         self.collect_only = args.collect_only  # type: bool
-
-
-class CompileConfig(TestConfig):
-    """Configuration for the compile command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CompileConfig, self).__init__(args, 'compile')
 
 
 class CoverageConfig(EnvironmentConfig):

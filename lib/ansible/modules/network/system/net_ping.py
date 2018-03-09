@@ -21,6 +21,8 @@ author: "Jacob McGill (@jmcgill298)"
 short_description: Tests reachability using ping from a network device
 description:
   - Tests reachability using ping from network device to a remote destination.
+  - For Windows targets, use the M(win_ping) module instead.
+  - For targets running Python, use the M(ping) module instead.
 options:
   count:
     description:
@@ -46,36 +48,29 @@ options:
     - The VRF to use for forwarding.
     required: false
     default: default
+notes:
+  - For Windows targets, use the M(win_ping) module instead.
+  - For targets running Python, use the M(ping) module instead.
 '''
 
 
 EXAMPLES = r'''
-- provider:
-    host: "{{ ansible_host }}"
-    username: "{{ username }}"
-    password: "{{ password }}"
-    network_os: "{{ network_os }}"
-
 - name: Test reachability to 10.10.10.10 using default vrf
   net_ping:
-    provider: "{{ provider }}"
     dest: 10.10.10.10
 
 - name: Test reachability to 10.20.20.20 using prod vrf
   net_ping:
-    provider: "{{ provider }}"
     dest: 10.20.20.20
     vrf: prod
 
 - name: Test unreachability to 10.30.30.30 using default vrf
   net_ping:
-    provider: "{{ provider }}"
     dest: 10.30.30.30
     state: absent
 
 - name: Test reachability to 10.40.40.40 using prod vrf and setting count and source
   net_ping:
-    provider: "{{ provider }}"
     dest: 10.40.40.40
     source: loopback0
     vrf: prod

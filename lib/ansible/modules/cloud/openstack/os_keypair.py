@@ -88,14 +88,8 @@ private_key:
     type: string
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _system_state_change(module, keypair):
@@ -123,9 +117,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     name = module.params['name']
     public_key = module.params['public_key']
@@ -134,8 +125,8 @@ def main():
         public_key = open(module.params['public_key_file']).read()
         public_key = public_key.rstrip()
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         keypair = cloud.get_keypair(name)
 
         if module.check_mode:

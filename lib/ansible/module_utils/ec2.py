@@ -106,7 +106,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
@@ -242,7 +242,10 @@ def get_aws_connection_info(module, boto3=False):
                     module.fail_json(msg="boto is required for this module. Please install boto and try again")
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
-                region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                try:
+                    region = botocore.session.Session(profile=profile_name).get_config_variable('region')
+                except botocore.exceptions.ProfileNotFound as e:
+                    pass
             else:
                 module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
 
@@ -370,7 +373,7 @@ def _camel_to_snake(name, reversible=False):
     return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
 
 
-def camel_dict_to_snake_dict(camel_dict, reversible=False):
+def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
     """
     reversible allows two way conversion of a camelized dict
     such that snake_dict_to_camel_dict(camel_dict_to_snake_dict(x)) == x
@@ -378,6 +381,10 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False):
     This is achieved through mapping e.g. HTTPEndpoint to h_t_t_p_endpoint
     where the default would be simply http_endpoint, which gets turned into
     HttpEndpoint if recamelized.
+
+    ignore_list is used to avoid converting a sub-tree of a dict. This is
+    particularly important for tags, where keys are case-sensitive. We convert
+    the 'Tags' key but nothing below.
     """
 
     def value_is_list(camel_list):
@@ -395,9 +402,9 @@ def camel_dict_to_snake_dict(camel_dict, reversible=False):
 
     snake_dict = {}
     for k, v in camel_dict.items():
-        if isinstance(v, dict):
+        if isinstance(v, dict) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
-        elif isinstance(v, list):
+        elif isinstance(v, list) and k not in ignore_list:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
         else:
             snake_dict[_camel_to_snake(k, reversible=reversible)] = v
@@ -442,7 +449,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
@@ -627,7 +634,7 @@ def _hashable_policy(policy, policy_list):
             if isinstance(tupleified, list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
-    elif isinstance(policy, string_types):
+    elif isinstance(policy, string_types) or isinstance(policy, binary_type):
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
@@ -769,8 +776,8 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
-hese may not be able to be used out of the box.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ
+    these may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:

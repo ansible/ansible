@@ -64,6 +64,38 @@ options:
         description:
             - "Boolean indication whether to allow partial registration of a template when C(state) is registered."
         version_added: "2.4"
+    vnic_profile_mappings:
+        description:
+            - "Mapper which maps an external virtual NIC profile to one that exists in the engine when C(state) is registered.
+               vnic_profile is described by the following dictionary:"
+            - "C(source_network_name): The network name of the source network."
+            - "C(source_profile_name): The prfile name related to the source network."
+            - "C(target_profile_id): The id of the target profile id to be mapped to in the engine."
+        version_added: "2.5"
+    cluster_mappings:
+        description:
+            - "Mapper which maps cluster name between Template's OVF and the destination cluster this Template should be registered to,
+               relevant when C(state) is registered.
+               Cluster mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source cluster."
+            - "C(dest_name): The name of the destination cluster."
+        version_added: "2.5"
+    role_mappings:
+        description:
+            - "Mapper which maps role name between Template's OVF and the destination role this Template should be registered to,
+               relevant when C(state) is registered.
+               Role mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source role."
+            - "C(dest_name): The name of the destination role."
+        version_added: "2.5"
+    domain_mappings:
+        description:
+            - "Mapper which maps aaa domain name between Template's OVF and the destination aaa domain this Template should be registered to,
+               relevant when C(state) is registered.
+               The aaa domain mapping is described by the following dictionary:"
+            - "C(source_name): The name of the source aaa domain."
+            - "C(dest_name): The name of the destination aaa domain."
+        version_added: "2.5"
     exclusive:
         description:
             - "When C(state) is I(exported) this parameter indicates if the existing templates with the
@@ -153,6 +185,36 @@ EXAMPLES = '''
   allow_partial_import: "True"
   cluster: mycluster
   id: 1111-1111-1111-1111
+
+# Register template with vnic profile mappings
+- ovirt_templates:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    vnic_profile_mappings:
+      - source_network_name: mynetwork
+        source_profile_name: mynetwork
+        target_profile_id: 3333-3333-3333-3333
+      - source_network_name: mynetwork2
+        source_profile_name: mynetwork2
+        target_profile_id: 4444-4444-4444-4444
+
+# Register template with mapping
+- ovirt_templates:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+    role_mappings:
+      - source_name: Role_A
+        dest_name: Role_B
+    domain_mappings:
+      - source_name: Domain_A
+        dest_name: Domain_B
+    cluster_mappings:
+      - source_name: cluster_A
+        dest_name: cluster_B
 
 # Import image from Glance s a template
 - ovirt_templates:
@@ -246,6 +308,74 @@ class TemplatesModule(BaseModule):
         self._service = self._connection.system_service().templates_service()
 
 
+def _get_role_mappings(module):
+    roleMappings = list()
+
+    for roleMapping in module.params['role_mappings']:
+        roleMappings.append(
+            otypes.RegistrationRoleMapping(
+                from_=otypes.Role(
+                    name=roleMapping['source_name'],
+                ) if roleMapping['source_name'] else None,
+                to=otypes.Role(
+                    name=roleMapping['dest_name'],
+                ) if roleMapping['dest_name'] else None,
+            )
+        )
+    return roleMappings
+
+
+def _get_domain_mappings(module):
+    domainMappings = list()
+
+    for domainMapping in module.params['domain_mappings']:
+        domainMappings.append(
+            otypes.RegistrationDomainMapping(
+                from_=otypes.Domain(
+                    name=domainMapping['source_name'],
+                ) if domainMapping['source_name'] else None,
+                to=otypes.Domain(
+                    name=domainMapping['dest_name'],
+                ) if domainMapping['dest_name'] else None,
+            )
+        )
+    return domainMappings
+
+
+def _get_cluster_mappings(module):
+    clusterMappings = list()
+
+    for clusterMapping in module.params['cluster_mappings']:
+        clusterMappings.append(
+            otypes.RegistrationClusterMapping(
+                from_=otypes.Cluster(
+                    name=clusterMapping['source_name'],
+                ),
+                to=otypes.Cluster(
+                    name=clusterMapping['dest_name'],
+                ),
+            )
+        )
+    return clusterMappings
+
+
+def _get_vnic_profile_mappings(module):
+    vnicProfileMappings = list()
+
+    for vnicProfileMapping in module.params['vnic_profile_mappings']:
+        vnicProfileMappings.append(
+            otypes.VnicProfileMapping(
+                source_network_name=vnicProfileMapping['source_network_name'],
+                source_network_profile_name=vnicProfileMapping['source_profile_name'],
+                target_vnic_profile=otypes.VnicProfile(
+                    id=vnicProfileMapping['target_profile_id'],
+                ) if vnicProfileMapping['target_profile_id'] else None,
+            )
+        )
+
+    return vnicProfileMappings
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -268,6 +398,10 @@ def main():
         image_disk=dict(default=None, aliases=['glance_image_disk_name']),
         template_image_disk_name=dict(default=None),
         seal=dict(type='bool'),
+        vnic_profile_mappings=dict(default=[], type='list'),
+        cluster_mappings=dict(default=[], type='list'),
+        role_mappings=dict(default=[], type='list'),
+        domain_mappings=dict(default=[], type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -388,7 +522,16 @@ def main():
                     allow_partial_import=module.params['allow_partial_import'],
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None
+                    ) if module.params['cluster'] else None,
+                    vnic_profile_mappings=_get_vnic_profile_mappings(module)
+                    if module.params['vnic_profile_mappings'] else None,
+                    registration_configuration=otypes.RegistrationConfiguration(
+                        cluster_mappings=_get_cluster_mappings(module),
+                        role_mappings=_get_role_mappings(module),
+                        domain_mappings=_get_domain_mappings(module),
+                    ) if (module.params['cluster_mappings']
+                          or module.params['role_mappings']
+                          or module.params['domain_mappings']) else None
                 )
 
                 if module.params['wait']:

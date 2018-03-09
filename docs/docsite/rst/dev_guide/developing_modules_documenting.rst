@@ -43,15 +43,14 @@ code.
 
     #!/usr/bin/python
     
-    # Copyright: (c) 2017, Ansible Project
+    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Every file should have a copyright line with the original copyright holder.
-Major additions to the module (for instance, rewrites)  may add additional
-copyright lines. Code from the Ansible community should typically be assigned
-as "Copyright (c) 2017 Ansible Project" which covers all contributors. Any
-legal questions need to review the source control history, so an exhaustive
-copyright header is not necessary.
+Every file should have a copyright line (see `The copyright notice <https://www.gnu.org/licenses/gpl-howto.en.html>`_)
+with the original copyright holder. Major additions to the module (for
+instance, rewrites) may add additional copyright lines. Any legal questions
+need to review the source control history, so an exhaustive copyright header is
+not necessary.
 
 The license declaration should be ONLY one line, not the full GPL prefix. If
 you notice a module with the full prefix, feel free to switch it to the
@@ -202,9 +201,17 @@ The following fields can be used and are all required unless specified otherwise
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 :deprecated:
-  If this module is deprecated, detail when that happened, and what to use instead, e.g.
-  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
-  Ensure `CHANGELOG.md` is updated to reflect this.
+  If a module is deprecated it must be:
+
+  * Mentioned in ``CHANGELOG``
+  * Referenced in the ``porting_guide_x.y.rst``
+  * File should be renamed to start with an ``_``
+  * ``ANSIBLE_METADATA`` must contain ``status: ['deprecated']``
+  * Following values must be set:
+
+  :removed_in: A `string`, such as ``"2.9"``, which represents the version of Ansible this module will replaced with docs only module stub.
+  :why: Optional string that used to detail why this has been removed.
+  :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 :options:
   One per module argument:
 
@@ -382,8 +389,8 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
    The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
-Formatting options
-------------------
+Formatting functions
+--------------------
 
 These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
@@ -400,6 +407,8 @@ Example usage::
     See also M(win_copy) or M(win_template).
     ...
     See U(https://www.ansible.com/tower) for an overview.
+    ...
+    See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 
 
 .. note::
@@ -422,6 +431,9 @@ Examples can be found by searching for ``extends_documentation_fragment`` under 
 Testing documentation
 ---------------------
 
+The simplest way to check if your documentation works is to use ``ansible-doc`` to view it. Any parsing errors will be apparent, and details can be obtained by adding ``-vvv``.
+
+If you are going to submit the module for inclusion in the main Ansible repo you should make sure that it renders correctly as HTML.
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.

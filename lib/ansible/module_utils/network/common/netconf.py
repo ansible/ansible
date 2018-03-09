@@ -25,13 +25,19 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils._text import to_text, to_native
+import sys
+
+from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
 
 try:
-    from lxml.etree import Element, fromstring
+    from lxml.etree import Element, fromstring, XMLSyntaxError
 except ImportError:
     from xml.etree.ElementTree import Element, fromstring
+    if sys.version_info < (2, 7):
+        from xml.parsers.expat import ExpatError as XMLSyntaxError
+    else:
+        from xml.etree.ElementTree import ParseError as XMLSyntaxError
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
 
@@ -61,27 +67,36 @@ class NetconfConnection(Connection):
         response = self._exec_jsonrpc(name, *args, **kwargs)
         if 'error' in response:
             rpc_error = response['error'].get('data')
-            return self.parse_rpc_error(to_native(rpc_error, errors='surrogate_then_replace'))
+            return self.parse_rpc_error(to_bytes(rpc_error, errors='surrogate_then_replace'))
 
-        return fromstring(to_native(response['result'], errors='surrogate_then_replace'))
+        return fromstring(to_bytes(response['result'], errors='surrogate_then_replace'))
 
     def parse_rpc_error(self, rpc_error):
         if self.check_rc:
-            error_root = fromstring(rpc_error)
-            root = Element('root')
-            root.append(error_root)
+            try:
+                error_root = fromstring(rpc_error)
+                root = Element('root')
+                root.append(error_root)
 
-            error_list = root.findall('.//nc:rpc-error', NS_MAP)
-            if not error_list:
-                raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))
-
-            warnings = []
-            for error in error_list:
-                message = error.find('./nc:error-message', NS_MAP).text
-                severity = error.find('./nc:error-severity', NS_MAP).text
-
-                if severity == 'warning' and self.ignore_warning:
-                    warnings.append(message)
-                else:
+                error_list = root.findall('.//nc:rpc-error', NS_MAP)
+                if not error_list:
                     raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))
-            return warnings
+
+                warnings = []
+                for error in error_list:
+                    message_ele = error.find('./nc:error-message', NS_MAP)
+
+                    if message_ele is None:
+                        message_ele = error.find('./nc:error-info', NS_MAP)
+
+                    message = message_ele.text if message_ele is not None else None
+
+                    severity = error.find('./nc:error-severity', NS_MAP).text
+
+                    if severity == 'warning' and self.ignore_warning and message is not None:
+                        warnings.append(message)
+                    else:
+                        raise ConnectionError(to_text(rpc_error, errors='surrogate_then_replace'))
+                return warnings
+            except XMLSyntaxError:
+                raise ConnectionError(rpc_error)

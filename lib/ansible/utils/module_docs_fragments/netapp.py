@@ -40,10 +40,12 @@ options:
       description:
       - This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required.
         For more information, please read the documentation U(https://goo.gl/BRu78Z).
+      aliases: ['user']
   password:
       required: true
       description:
       - Password for the specified user.
+      aliases: ['pass']
 
 requirements:
   - A physical or virtual clustered Data ONTAP system. The modules were developed with Clustered Data ONTAP 8.3

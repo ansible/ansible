@@ -1,0 +1,4 @@
+destructive
+skip/osx
+skip/freebsd
+skip/rhel

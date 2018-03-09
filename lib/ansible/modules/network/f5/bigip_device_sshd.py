@@ -66,12 +66,8 @@ options:
     description:
       - Port that you want the SSH daemon to run on.
 notes:
-  - Requires the f5-sdk Python package on the host This is as easy as pip
-    install f5-sdk.
   - Requires BIG-IP version 12.0.0 or greater
 extends_documentation_fragment: f5
-requirements:
-  - f5-sdk
 author:
   - Tim Rupp (@caphrim007)
 '''
@@ -149,16 +145,37 @@ port:
   sample: 22
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.f5_utils import AnsibleF5Client
-from ansible.module_utils.f5_utils import AnsibleF5Parameters
-from ansible.module_utils.f5_utils import HAS_F5SDK
-from ansible.module_utils.f5_utils import F5ModuleError
+HAS_DEVEL_IMPORTS = False
 
 try:
-    from ansible.module_utils.f5_utils import iControlUnexpectedHTTPError
+    # Sideband repository used for dev
+    from library.module_utils.network.f5.bigip import HAS_F5SDK
+    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.common import AnsibleF5Parameters
+    from library.module_utils.network.f5.common import cleanup_tokens
+    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
+    HAS_DEVEL_IMPORTS = True
 except ImportError:
-    HAS_F5SDK = False
+    # Upstream Ansible
+    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
+    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.common import AnsibleF5Parameters
+    from ansible.module_utils.network.f5.common import cleanup_tokens
+    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import f5_argument_spec
+    try:
+        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
+    except ImportError:
+        HAS_F5SDK = False
 
 
 class Parameters(AnsibleF5Parameters):
@@ -190,16 +207,6 @@ class Parameters(AnsibleF5Parameters):
         result = self._filter_params(result)
         return result
 
-    def api_params(self):
-        result = {}
-        for api_attribute in self.api_attributes:
-            if self.api_map is not None and api_attribute in self.api_map:
-                result[api_attribute] = getattr(self, self.api_map[api_attribute])
-            else:
-                result[api_attribute] = getattr(self, api_attribute)
-        result = self._filter_params(result)
-        return result
-
     @property
     def inactivity_timeout(self):
         if self._values['inactivity_timeout'] is None:
@@ -217,14 +224,17 @@ class Parameters(AnsibleF5Parameters):
         if self._values['allow'] is None:
             return None
         allow = self._values['allow']
-        return list(set([str(x) for x in allow]))
+        result = list(set([str(x) for x in allow]))
+        result = sorted(result)
+        return result
 
 
 class ModuleManager(object):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, *args, **kwargs):
+        self.module = kwargs.get('module', None)
+        self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(self.client.module.params)
+        self.want = Parameters(params=self.module.params)
         self.changes = Parameters()
 
     def _update_changed_options(self):
@@ -236,7 +246,7 @@ class ModuleManager(object):
                 if attr1 != attr2:
                     changed[key] = attr1
         if changed:
-            self.changes = Parameters(changed)
+            self.changes = Parameters(params=changed)
             return True
         return False
 
@@ -256,13 +266,13 @@ class ModuleManager(object):
     def read_current_from_device(self):
         resource = self.client.api.tm.sys.sshd.load()
         result = resource.attrs
-        return Parameters(result)
+        return Parameters(params=result)
 
     def update(self):
         self.have = self.read_current_from_device()
         if not self.should_update():
             return False
-        if self.client.check_mode:
+        if self.module.check_mode:
             return True
         self.update_on_device()
         return True
@@ -287,67 +297,52 @@ class ArgumentSpec(object):
             'quiet', 'verbose'
         ]
         self.supports_check_mode = True
-        self.argument_spec = dict(
+        argument_spec = dict(
             allow=dict(
-                required=False,
-                default=None,
                 type='list'
             ),
             banner=dict(
-                required=False,
-                default=None,
                 choices=self.choices
             ),
-            banner_text=dict(
-                required=False,
-                default=None
-            ),
+            banner_text=dict(),
             inactivity_timeout=dict(
-                required=False,
-                default=None,
                 type='int'
             ),
             log_level=dict(
-                required=False,
-                default=None,
                 choices=self.levels
             ),
             login=dict(
-                required=False,
-                default=None,
                 choices=self.choices
             ),
             port=dict(
-                required=False,
-                default=None,
                 type='int'
-            ),
-            state=dict(
-                default='present',
-                choices=['present']
             )
         )
-        self.f5_product_name = 'bigip'
+        self.argument_spec = {}
+        self.argument_spec.update(f5_argument_spec)
+        self.argument_spec.update(argument_spec)
 
 
 def main():
-    if not HAS_F5SDK:
-        raise F5ModuleError("The python f5-sdk module is required")
-
     spec = ArgumentSpec()
 
-    client = AnsibleF5Client(
+    module = AnsibleModule(
         argument_spec=spec.argument_spec,
-        supports_check_mode=spec.supports_check_mode,
-        f5_product_name=spec.f5_product_name
+        supports_check_mode=spec.supports_check_mode
     )
+    if not HAS_F5SDK:
+        module.fail_json(msg="The python f5-sdk module is required")
 
     try:
-        mm = ModuleManager(client)
+        client = F5Client(**module.params)
+        mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        client.module.exit_json(**results)
-    except F5ModuleError as e:
-        client.module.fail_json(msg=str(e))
+        cleanup_tokens(client)
+        module.exit_json(**results)
+    except F5ModuleError as ex:
+        cleanup_tokens(client)
+        module.fail_json(msg=str(ex))
+
 
 if __name__ == '__main__':
     main()

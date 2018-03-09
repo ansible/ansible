@@ -32,7 +32,7 @@ import time
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import env_fallback, return_values
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
@@ -50,6 +50,7 @@ eos_provider_spec = {
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
     'use_ssl': dict(default=True, type='bool'),
+    'use_proxy': dict(default=True, type='bool'),
     'validate_certs': dict(default=True, type='bool'),
     'timeout': dict(type='int'),
 
@@ -111,19 +112,28 @@ class Cli:
         self._module = module
         self._device_configs = {}
         self._session_support = None
+        self._connection = None
+
+    def _get_connection(self):
+        if self._connection:
+            return self._connection
+        self._connection = Connection(self._module._socket_path)
+
+        return self._connection
 
     @property
     def supports_sessions(self):
         if self._session_support is not None:
             return self._session_support
-        rc, out, err = self.exec_command('show configuration sessions')
-        self._session_support = rc == 0
-        return self._session_support
+        conn = self._get_connection()
 
-    def exec_command(self, command):
-        if isinstance(command, dict):
-            command = self._module.jsonify(command)
-        return exec_command(self._module, command)
+        self._session_support = True
+        try:
+            out = conn.get('show configuration sessions')
+        except:
+            self._session_support = False
+
+        return self._session_support
 
     def get_config(self, flags=None):
         """Retrieves the current config from the device or cache
@@ -137,12 +147,9 @@ class Cli:
         try:
             return self._device_configs[cmd]
         except KeyError:
-            conn = get_connection(self)
-            rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_then_replace')
-            if rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
-            cfg = str(out).strip()
+            conn = self._get_connection()
+            out = conn.get_config(flags=flags)
+            cfg = to_text(out, errors='surrogate_then_replace').strip()
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -150,12 +157,20 @@ class Cli:
         """Run list of commands on remote device and return results
         """
         responses = list()
+        connection = self._get_connection()
 
         for cmd in to_list(commands):
-            rc, out, err = self.exec_command(cmd)
-            out = to_text(out, errors='surrogate_then_replace')
-            if check_rc and rc != 0:
-                self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+
+            out = connection.get(command, prompt, answer)
+            out = to_text(out, errors='surrogate_or_strict')
 
             try:
                 out = self._module.from_json(out)
@@ -163,9 +178,12 @@ class Cli:
                 out = str(out).strip()
 
             responses.append(out)
+
         return responses
 
     def send_config(self, commands):
+        conn = self._get_connection()
+
         multiline = False
         rc = 0
         for command in to_list(commands):
@@ -174,31 +192,24 @@ class Cli:
 
             if command.startswith('banner') or multiline:
                 multiline = True
-                command = self._module.jsonify({'command': command, 'sendonly': True})
             elif command == 'EOF' and multiline:
                 multiline = False
 
-            rc, out, err = self.exec_command(command)
-            if rc != 0:
-                return (rc, out, to_text(err, errors='surrogate_then_replace'))
-
-        return (rc, 'ok', '')
+            conn.get(command, None, None, multiline)
 
     def configure(self, commands):
         """Sends configuration commands to the remote device
         """
         conn = get_connection(self)
 
-        rc, out, err = self.exec_command('configure')
-        if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+        out = conn.get('configure')
 
-        rc, out, err = self.send_config(commands)
-        if rc != 0:
-            self.exec_command('abort')
-            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'))
+        try:
+            self.send_config(commands)
+        except:
+            conn.get('abort')
 
-        self.exec_command('end')
+        conn.get('end')
         return {}
 
     def load_config(self, commands, commit=False, replace=False):
@@ -213,30 +224,28 @@ class Cli:
         if not all((bool(use_session), self.supports_sessions)):
             return self.configure(self, commands)
 
-        conn = get_connection(self)
+        conn = self._get_connection()
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
 
-        rc, out, err = self.exec_command('configure session %s' % session)
-        if rc != 0:
-            self._module.fail_json(msg='unable to enter configuration mode', output=to_text(err, errors='surrogate_then_replace'))
+        out = conn.get('configure session %s' % session)
 
         if replace:
-            self.exec_command('rollback clean-config')
+            out = conn.get('rollback clean-config')
 
-        rc, out, err = self.send_config(commands)
-        if rc != 0:
-            self.exec_command('abort')
-            self._module.fail_json(msg=to_text(err, errors='surrogate_then_replace'), commands=commands)
+        try:
+            self.send_config(commands)
+        except:
+            conn.get('abort')
 
-        rc, out, err = self.exec_command('show session-config diffs')
-        if rc == 0 and out:
+        out = conn.get('show session-config diffs')
+        if out:
             result['diff'] = to_text(out, errors='surrogate_then_replace').strip()
 
         if commit:
-            self.exec_command('commit')
+            conn.get('commit')
         else:
-            self.exec_command('abort')
+            conn.get('abort')
 
         return result
 
@@ -292,10 +301,11 @@ class Eapi:
 
         headers = {'Content-Type': 'application/json-rpc'}
         timeout = self._module.params['timeout']
+        use_proxy = self._module.params['provider']['use_proxy']
 
         response, headers = fetch_url(
             self._module, self._url, data=data, headers=headers,
-            method='POST', timeout=timeout
+            method='POST', timeout=timeout, use_proxy=use_proxy
         )
 
         if headers['status'] != 200:

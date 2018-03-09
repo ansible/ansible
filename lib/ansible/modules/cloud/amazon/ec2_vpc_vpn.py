@@ -15,6 +15,9 @@ description:
   - This module creates, modifies, and deletes VPN connections. Idempotence is achieved by using the filters
     option or specifying the VPN connection identifier.
 version_added: "2.4"
+extends_documentation_fragment:
+ - ec2
+ - aws
 requirements: ['boto3', 'botocore']
 author: "Sloane Hertel (@s-hertel)"
 options:
@@ -51,6 +54,13 @@ options:
       - Indicates whether the VPN connection uses static routes only. Static routes must be used for devices that don't support BGP.
     default: False
     required: no
+  tunnel_options:
+    description:
+      - An optional list object containing no more than two dict members, each of which may contain 'TunnelInsideCidr'
+        and/or 'PreSharedKey' keys with appropriate string values.  AWS defaults will apply in absence of either of
+        the aforementioned keys.
+    required: no
+    version_added: "2.5"
   filters:
     description:
       - An alternative to using vpn_connection_id. If multiple matches are found, vpn_connection_id is required.
@@ -135,6 +145,18 @@ EXAMPLES = """
       New: Tag
     purge_tags: true
     static_only: true
+
+- name: set up VPN with tunnel options utilizing 'TunnelInsideCidr' only
+  ec2_vpc_vpn:
+    state: present
+    filters:
+      vpn: vpn-XXXXXXXX
+    static_only: true
+    tunnel_options:
+      -
+        TunnelInsideCidr: '169.254.100.1/30'
+      -
+        TunnelInsideCidr: '169.254.100.5/30'
 
 - name: add routes and remove any preexisting ones
   ec2_vpc_vpn:
@@ -414,8 +436,22 @@ def find_connection_response(connections=None):
             return connections['VpnConnections'][0]
 
 
-def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type):
+def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_id, connection_type, tunnel_options=None):
     """ Creates a VPN connection """
+
+    options = {'StaticRoutesOnly': static_only}
+
+    if tunnel_options and len(tunnel_options) <= 2:
+        t_opt = []
+        for m in tunnel_options:
+            # See Boto3 docs regarding 'create_vpn_connection'
+            # tunnel options for allowed 'TunnelOptions' keys.
+            if not isinstance(m, dict):
+                raise TypeError("non-dict list member")
+            t_opt.append(m)
+        if t_opt:
+            options['TunnelOptions'] = t_opt
+
     if not (customer_gateway_id and vpn_gateway_id):
         raise VPNConnectionException(msg="No matching connection was found. To create a new connection you must provide "
                                      "both vpn_gateway_id and customer_gateway_id.")
@@ -424,7 +460,7 @@ def create_connection(connection, customer_gateway_id, static_only, vpn_gateway_
                                                Type=connection_type,
                                                CustomerGatewayId=customer_gateway_id,
                                                VpnGatewayId=vpn_gateway_id,
-                                               Options={'StaticRoutesOnly': static_only})
+                                               Options=options)
     except botocore.exceptions.ClientError as e:
         raise VPNConnectionException(msg="Failed to create VPN connection: {0}".format(e.message),
                                      exception=traceback.format_exc(),
@@ -635,7 +671,8 @@ def ensure_present(connection, module_params, check_mode=False):
                                            customer_gateway_id=module_params.get('customer_gateway_id'),
                                            static_only=module_params.get('static_only'),
                                            vpn_gateway_id=module_params.get('vpn_gateway_id'),
-                                           connection_type=module_params.get('connection_type'))
+                                           connection_type=module_params.get('connection_type'),
+                                           tunnel_options=module_params.get('tunnel_options'))
         changes = check_for_update(connection, module_params, vpn_connection['VpnConnectionId'])
         _ = make_changes(connection, vpn_connection['VpnConnectionId'], changes)
 
@@ -673,6 +710,7 @@ def main():
             vpn_gateway_id=dict(type='str'),
             tags=dict(default={}, type='dict'),
             connection_type=dict(default='ipsec.1', type='str'),
+            tunnel_options=dict(type='list', default=[]),
             static_only=dict(default=False, type='bool'),
             customer_gateway_id=dict(type='str'),
             vpn_connection_id=dict(type='str'),

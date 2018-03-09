@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_switchport sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_switchport sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"
@@ -90,7 +92,7 @@
     nxos_switchport: &no_tag
       interface: "{{ intname }}"
       mode: trunk
-      trunk_vlans: 30-4094
+      trunk_vlans: 2-50
       state: absent
       provider: "{{ connection }}"
     register: result
@@ -127,4 +129,4 @@
     nxos_config: *default
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_switchport sanity test"
+- debug: msg="END connection={{ ansible_connection }} nxos_switchport sanity test"

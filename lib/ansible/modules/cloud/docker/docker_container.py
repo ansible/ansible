@@ -42,7 +42,7 @@ options:
     required: false
   cleanup:
     description:
-      - Use with I(detach) to remove the container after successful execution.
+      - Use with I(detach=false) to remove the container after successful execution.
     default: false
     required: false
     version_added: "2.2"
@@ -100,6 +100,12 @@ options:
       - List of custom DNS search domains.
     default: null
     required: false
+  domainname:
+    description:
+      - Container domainname.
+    default: null
+    required: false
+    version_added: "2.5"
   env:
     description:
       - Dictionary of key,value pairs.
@@ -682,12 +688,12 @@ import re
 import shlex
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
@@ -731,6 +737,7 @@ class TaskParameters(DockerBaseClass):
         self.dns_servers = None
         self.dns_opts = None
         self.dns_search_domains = None
+        self.domainname = None
         self.env = None
         self.env_file = None
         self.entrypoint = None
@@ -877,6 +884,7 @@ class TaskParameters(DockerBaseClass):
         '''
         create_params = dict(
             command='command',
+            domainname='domainname',
             hostname='hostname',
             user='user',
             detach='detach',
@@ -886,13 +894,15 @@ class TaskParameters(DockerBaseClass):
             environment='env',
             name='name',
             entrypoint='entrypoint',
-            cpu_shares='cpu_shares',
             mac_address='mac_address',
             labels='labels',
             stop_signal='stop_signal',
-            volume_driver='volume_driver',
             working_dir='working_dir',
         )
+
+        if not HAS_DOCKER_PY_3:
+            create_params['cpu_shares'] = 'cpu_shares'
+            create_params['volume_driver'] = 'volume_driver'
 
         result = dict(
             host_config=self._host_config(),
@@ -982,9 +992,14 @@ class TaskParameters(DockerBaseClass):
             tmpfs='tmpfs'
         )
 
-        if HAS_DOCKER_PY_2:
+        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
             # auto_remove is only supported in docker>=2
             host_config_params['auto_remove'] = 'auto_remove'
+
+        if HAS_DOCKER_PY_3:
+            # cpu_shares and volume_driver moved to create_host_config in > 3
+            host_config_params['cpu_shares'] = 'cpu_shares'
+            host_config_params['volume_driver'] = 'volume_driver'
 
         params = dict()
         for key, value in host_config_params.items():
@@ -1297,6 +1312,7 @@ class Container(DockerBaseClass):
         config_mapping = dict(
             auto_remove=host_config.get('AutoRemove'),
             expected_cmd=config.get('Cmd'),
+            domainname=config.get('Domainname'),
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
@@ -1964,7 +1980,10 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
             if not self.parameters.detach:
-                status = self.client.wait(container_id)
+                if HAS_DOCKER_PY_3:
+                    status = self.client.wait(container_id)['StatusCode']
+                else:
+                    status = self.client.wait(container_id)
                 config = self.client.inspect_container(container_id)
                 logging_driver = config['HostConfig']['LogConfig']['Type']
 
@@ -2060,6 +2079,7 @@ def main():
         dns_servers=dict(type='list'),
         dns_opts=dict(type='list'),
         dns_search_domains=dict(type='list'),
+        domainname=dict(type='str'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
         entrypoint=dict(type='list'),
@@ -2131,8 +2151,8 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg="'auto_remove' is not compatible with docker-py, and requires the docker python module")
+    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)

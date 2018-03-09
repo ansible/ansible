@@ -76,21 +76,21 @@ options:
         default: 'present'
     proxy:
         description:
-            - The name of the Zabbix Proxy to be used
+            - The name of the Zabbix proxy to be used.
         default: None
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
-            - 'Available values are: dns, ip, main, port, type and useip.'
+            - 'Available keys are: I(dns), I(ip), I(main), I(port), I(type), I(useip), and I(bulk).'
             - Please review the interface documentation for more information on the supported properties
             - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
+            - If an interface definition is incomplete, this module will attempt to fill in sensible values.
+            - I(type) can also be C(agent), C(snmp), C(ipmi), or C(jmx) instead of its numerical value.
         default: []
     tls_connect:
         description:
             - Specifies what encryption to use for outgoing connections.
-            - The tls_connect parameter accepts values of 1 to 7
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
-            - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
@@ -105,13 +105,13 @@ options:
         version_added: '2.5'
     tls_psk_identity:
         description:
-            - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
-            - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
+            - Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
     tls_psk:
         description:
+            - PSK value is a hard to guess string of hexadecimal digits.
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
@@ -157,7 +157,7 @@ options:
         version_added: '2.5'
     force:
         description:
-            - Overwrite the host configuration, even if already present
+            - Overwrite the host configuration, even if already present.
         default: 'yes'
         choices: [ 'yes', 'no' ]
         version_added: '2.0'
@@ -716,7 +716,37 @@ def main():
 
     ip = ""
     if interfaces:
+        # ensure interfaces are well-formed
         for interface in interfaces:
+            if 'type' not in interface:
+                module.fail_json(msg="(interface) type needs to be specified for interface '%s'." % interface)
+            interfacetypes = {'agent': 1, 'snmp': 2, 'ipmi': 3, 'jmx': 4}
+            if interface['type'] in interfacetypes.keys():
+                interface['type'] = interfacetypes[interface['type']]
+            if interface['type'] < 1 or interface['type'] > 4:
+                module.fail_json(msg="Interface type can only be 1-4 for interface '%s'." % interface)
+            if 'useip' not in interface:
+                interface['useip'] = 0
+            if 'dns' not in interface:
+                if interface['useip'] == 0:
+                    module.fail_json(msg="dns needs to be set if useip is 0 on interface '%s'." % interface)
+                interface['dns'] = ''
+            if 'ip' not in interface:
+                if interface['useip'] == 1:
+                    module.fail_json(msg="ip needs to be set if useip is 1 on interface '%s'." % interface)
+                interface['ip'] = ''
+            if 'main' not in interface:
+                interface['main'] = 0
+            if 'port' not in interface:
+                if interface['type'] == 1:
+                    interface['port'] = "10050"
+                elif interface['type'] == 2:
+                    interface['port'] = "161"
+                elif interface['type'] == 3:
+                    interface['port'] = "623"
+                elif interface['type'] == 4:
+                    interface['port'] = "12345"
+
             if interface['type'] == 1:
                 ip = interface['ip']
 

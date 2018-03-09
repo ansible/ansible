@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -34,6 +32,7 @@ options:
             - Manage snapshots attached to a specific virtual machine.
         required: True
         choices: ['present', 'absent', 'revert', 'remove_all']
+        default: 'present'
    name:
         description:
             - Name of the VM to work with
@@ -75,6 +74,7 @@ options:
    description:
         description:
         - Define an arbitrary description to attach to snapshot.
+        default: ''
    quiesce:
         description:
             - If set to C(true) and virtual machine is powered on, it will quiesce the
@@ -86,6 +86,8 @@ options:
               this flag is set to C(false).
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    memory_dump:
         description:
             - If set to C(true), memory dump of virtual machine is also included in snapshot.
@@ -94,12 +96,16 @@ options:
               this flag is set to C(false).
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    remove_children:
         description:
             - If set to C(true) and state is set to C(absent), then entire snapshot subtree is set
               for removal.
         required: False
         version_added: "2.4"
+        type: bool
+        default: False
    new_snapshot_name:
         description:
              - Value to rename the existing snapshot to
@@ -241,11 +247,13 @@ class PyVmomiHelper(PyVmomi):
         memory_dump = False
         quiesce = False
         # Check if there is a latest snapshot already present as specified by user
-        snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
-                                                          self.module.params["snapshot_name"])
-        if snap_obj:
-            # Snapshot already exists, do not anything.
-            self.module.exit_json(changed=False, msg="Snapshot named [%(snapshot_name)s] already exists." % self.module.params)
+        if vm.snapshot is not None:
+            snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList,
+                                                              self.module.params["snapshot_name"])
+            if snap_obj:
+                # Snapshot already exists, do not anything.
+                self.module.exit_json(changed=False,
+                                      msg="Snapshot named [%(snapshot_name)s] already exists and is current." % self.module.params)
         # Check if Virtual Machine provides capabilities for Quiesce and Memory Snapshots
         if vm.capability.quiescedSnapshotsSupported:
             quiesce = self.module.params['quiesce']

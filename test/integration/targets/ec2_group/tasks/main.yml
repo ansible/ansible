@@ -162,14 +162,44 @@
            - '"validate the provided access credentials" in result.msg'
 
     # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+    - name: determine if there is a default VPC
+      set_fact:
+        defaultvpc: "{{ lookup('aws_account_attribute',
+                               attribute='default-vpc',
+                               region=aws_region,
+                               aws_access_key=aws_access_key,
+                               aws_secret_key=aws_secret_key,
+                               aws_security_token=security_token) }}"
+      register: default_vpc
+
+    # ============================================================
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "10.232.232.128/26"
+        <<: *aws_connection_info
+        tags:
+          Name: "{{ resource_prefix }}-vpc"
+          Description: "Created by ansible-test"
+      register: vpc_result
+
+    # ============================================================
     - name: test state=absent
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: absent
       register: result
 
@@ -178,10 +208,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -196,10 +223,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}CHANGED'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       ignore_errors: true
       register: result
@@ -215,10 +239,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
       register: result
 
@@ -229,55 +250,158 @@
            - 'result.group_id.startswith("sg-")'
 
     # ============================================================
-    - name: test state=present for ipv6 (expected changed=true)
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: present
-        rules:
-        - proto: "tcp"
-          from_port: 8182
-          to_port: 8182
-          cidr_ipv6: "64:ff9b::/96"
-      register: result
+    - name: tests IPv6 with the default VPC
+      block:
 
-    - name: assert state=present (expected changed=true)
-      assert:
-        that:
-           - 'result.changed'
-           - 'result.group_id.startswith("sg-")'
+        # ============================================================
+        - name: test state=present for ipv6 (expected changed=true)
+          ec2_group:
+            name: '{{ec2_group_name}}'
+            description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
+            state: present
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+          register: result
 
-    # ============================================================
-    - name: test rules_egress state=present for ipv6 (expected changed=true)
-      ec2_group:
-        name: '{{ec2_group_name}}'
-        description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: present
-        rules:
-        - proto: "tcp"
-          from_port: 8182
-          to_port: 8182
-          cidr_ipv6: "64:ff9b::/96"
-        rules_egress:
-        - proto: "tcp"
-          from_port: 8181
-          to_port: 8181
-          cidr_ipv6: "64:ff9b::/96"
-      register: result
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+               - 'result.group_id.startswith("sg-")'
 
-    - name: assert state=present (expected changed=true)
-      assert:
-        that:
-           - 'result.changed'
-           - 'result.group_id.startswith("sg-")'
+        # ============================================================
+        - name: test rules_egress state=present for ipv6 (expected changed=true)
+          ec2_group:
+            name: '{{ec2_group_name}}'
+            description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
+            state: present
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            rules_egress:
+            - proto: "tcp"
+              from_port: 8181
+              to_port: 8181
+              cidr_ipv6: "64:ff9b::/96"
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+               - 'result.group_id.startswith("sg-")'
+
+      when: default_vpc
+
+    - name: test IPv6 with a specified VPC
+      block:
+
+        # ============================================================
+        - name: test state=present (expected changed=true)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+               - 'result.group_id.startswith("sg-")'
+
+        # ============================================================
+        - name: test state=present for ipv6 (expected changed=true)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+               - 'result.group_id.startswith("sg-")'
+
+        # ============================================================
+
+        - name: test state=present for ipv6 (expected changed=true)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert nothing changed
+          assert:
+            that:
+              - 'not result.changed'
+
+        # ============================================================
+        - name: test rules_egress state=present for ipv6 (expected changed=true)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: present
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            rules:
+            - proto: "tcp"
+              from_port: 8182
+              to_port: 8182
+              cidr_ipv6: "64:ff9b::/96"
+            rules_egress:
+            - proto: "tcp"
+              from_port: 8181
+              to_port: 8181
+              cidr_ipv6: "64:ff9b::/96"
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+               - 'result.changed'
+               - 'result.group_id.startswith("sg-")'
+
+        # ============================================================
+
+        - name: test state=absent (expected changed=true)
+          ec2_group:
+            name: '{{ ec2_group_name }}-2'
+            description: '{{ ec2_group_description }}-2'
+            state: absent
+            vpc_id: '{{ vpc_result.vpc.id }}'
+            <<: *aws_connection_info
+          register: result
+
+        - name: assert group was removed
+          assert:
+            that:
+              - 'result.changed'
 
     # ============================================================
     - name: test state=present for ipv4 (expected changed=true)
@@ -285,10 +409,7 @@
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
         ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        state: present
+        <<: *aws_connection_info
         rules:
         - proto: "tcp"
           from_port: 8182
@@ -307,10 +428,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -329,10 +447,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         purge_rules: no
         rules:
@@ -355,21 +470,18 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
           from_port: "8183"
           to_port: "8183"
-          cidr_ipv6: "64:ff9b::/96"
+          cidr_ip: "1.1.1.1/32"
         rules_egress:
         - proto: "tcp"
           from_port: "8184"
           to_port: "8184"
-          cidr_ipv6: "64:ff9b::/96"
+          cidr_ip: "1.1.1.1/32"
       register: result
 
     - name: assert state=present (expected changed=true)
@@ -383,10 +495,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         rules:
         - proto: "tcp"
@@ -397,7 +506,6 @@
         - proto: "tcp"
           from_port: "8186"
           to_port: "8186"
-          cidr_ipv6: "64:ff9b::/96"
           group_id: "{{result.group_id}}"
       register: result
 
@@ -414,10 +522,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         state: present
         # set purge_rules to false so we don't get a false positive from previously added rules
         purge_rules: false
@@ -436,15 +541,112 @@
           - 'result.group_id.startswith("sg-")'
 
     # ============================================================
+
+    - name: test adding a rule with a IPv4 CIDR with host bits set (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      register: result
+
+    - name: assert state=present (expected changed=true)
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+
+    - name: test adding the same rule with a IPv4 CIDR with host bits set (expected changed=false and a warning)
+      ec2_group:
+        name: '{{ec2_group_name}}'
+        description: '{{ec2_group_description}}'
+        <<: *aws_connection_info
+        state: present
+        # set purge_rules to false so we don't get a false positive from previously added rules
+        purge_rules: false
+        rules:
+        - proto: "tcp"
+          ports:
+            - 8195
+          cidr_ip: 10.0.0.1/8
+      register: result
+
+    - name: assert state=present (expected changed=false and a warning)
+      assert:
+        that:
+          # No way to assert for warnings?
+          - 'not result.changed'
+          - 'result.group_id.startswith("sg-")'
+
+    # ============================================================
+    - name: test using the default VPC
+      block:
+
+        - name: test adding a rule with a IPv6 CIDR with host bits set (expected changed=true)
+          ec2_group:
+            name: '{{ec2_group_name}}'
+            description: '{{ec2_group_description}}'
+            ec2_region: '{{ec2_region}}'
+            ec2_access_key: '{{ec2_access_key}}'
+            ec2_secret_key: '{{ec2_secret_key}}'
+            security_token: '{{security_token}}'
+            state: present
+            # set purge_rules to false so we don't get a false positive from previously added rules
+            purge_rules: false
+            rules:
+            - proto: "tcp"
+              ports:
+                - 8196
+              cidr_ipv6: '2001:db00::1/24'
+          register: result
+
+        - name: assert state=present (expected changed=true)
+          assert:
+            that:
+              - 'result.changed'
+              - 'result.group_id.startswith("sg-")'
+
+        # ============================================================
+
+        - name: test adding a rule again with a IPv6 CIDR with host bits set (expected changed=false and a warning)
+          ec2_group:
+            name: '{{ec2_group_name}}'
+            description: '{{ec2_group_description}}'
+            <<: *aws_connection_info
+            state: present
+            # set purge_rules to false so we don't get a false positive from previously added rules
+            purge_rules: false
+            rules:
+            - proto: "tcp"
+              ports:
+                - 8196
+              cidr_ipv6: '2001:db00::1/24'
+          register: result
+
+        - name: assert state=present (expected changed=false and a warning)
+          assert:
+            that:
+              # No way to assert for warnings?
+              - 'not result.changed'
+              - 'result.group_id.startswith("sg-")'
+
+      when: default_vpc
+
+    # ============================================================
     - name: test state=absent (expected changed=true)
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -453,28 +655,11 @@
            - 'result.changed'
            - 'not result.group_id'
 
-    - name: create a VPC
-      ec2_vpc_net:
-        name: "{{ resource_prefix }}-vpc"
-        state: present
-        cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        tags:
-          Name: "{{ resource_prefix }}-vpc"
-          Description: "Created by ansible-test"
-      register: vpc_result
-
     - name: create security group in the VPC
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -497,10 +682,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -526,10 +708,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         purge_rules_egress: false
@@ -555,10 +734,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -582,10 +758,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -607,10 +780,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         state: present
         rules:
@@ -633,10 +803,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         # purge the other rules so assertions work for the subsequent tests for rule descriptions
         purge_rules_egress: true
@@ -679,10 +846,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -720,14 +884,43 @@
 
     # ============================================================
 
+    - name: test creating rule in default vpc with egress rule (expected changed=true)
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        description: '{{ec2_group_description}} default VPC'
+        <<: *aws_connection_info
+        purge_rules_egress: true
+        state: present
+        rules:
+        - proto: "tcp"
+          ports:
+          - 8281
+          cidr_ip: 1.1.1.1/24
+          rule_desc: ipv4 rule desc
+        rules_egress:
+        - proto: "tcp"
+          ports:
+          - 8282
+          cidr_ip: 2.2.2.2/32
+          rule_desc: egress rule desc 2
+      register: result
+
+    - name: assert that rule descriptions were modified (expected changed=true)
+      # Only assert this if rule description is defined as the botocore version may < 1.7.2.
+      # It's still helpful to have these tests run on older versions since it verifies backwards
+      # compatibility with this feature.
+      assert:
+        that:
+          - 'result.changed'
+          - 'result.ip_permissions_egress|length == 1'
+
+    # ============================================================
+
     - name: test that keeping the same rule descriptions (expected changed=false)
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -769,10 +962,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         description: '{{ec2_group_description}}'
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
         vpc_id: '{{ vpc_result.vpc.id }}'
         purge_rules_egress: false
         purge_rules: false
@@ -814,11 +1004,7 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
       register: result
 
     - name: assert state=absent (expected changed=true)
@@ -834,27 +1020,34 @@
       ec2_group:
         name: '{{ec2_group_name}}'
         state: absent
-      environment:
-        EC2_REGION: '{{ec2_region}}'
-        EC2_ACCESS_KEY: '{{ec2_access_key}}'
-        EC2_SECRET_KEY: '{{ec2_secret_key}}'
-        EC2_SECURITY_TOKEN: '{{security_token|default("")}}'
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tidy up security group for IPv6 EC2-Classic tests
+      ec2_group:
+        name: '{{ ec2_group_name }}-2'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
+
+    - name: tidy up default VPC security group
+      ec2_group:
+        name: '{{ec2_group_name}}-default-vpc'
+        state: absent
+        <<: *aws_connection_info
+      ignore_errors: yes
 
     - name: tidy up automatically created SG
       ec2_group:
         name: "{{ resource_prefix }} - Another security group"
         state: absent
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
+      ignore_errors: yes
 
     - name: tidy up VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
         state: absent
         cidr_block: "10.232.232.128/26"
-        ec2_region: '{{ec2_region}}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
+      ignore_errors: yes

@@ -663,7 +663,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if b'ssh' in cmd:
+        if b'ssh' in cmd and sudoable:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -780,6 +780,9 @@ class Connection(ConnectionBase):
                     if self._flags['become_prompt']:
                         display.debug('Sending become_pass in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
+                        # On python3 stdin is a BufferedWriter, and we don't have a guarantee
+                        # that the write will happen without a flush
+                        stdin.flush()
                         self._flags['become_prompt'] = False
                         state += 1
                     elif self._flags['become_success']:
@@ -872,7 +875,7 @@ class Connection(ConnectionBase):
     def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         """Wrapper around _bare_run that retries the connection
         """
-        return self._bare_run(cmd, in_data, sudoable, checkrc)
+        return self._bare_run(cmd, in_data, sudoable=sudoable, checkrc=checkrc)
 
     @_ssh_retry
     def _file_transport_command(self, in_path, out_path, sftp_action):
@@ -933,7 +936,7 @@ class Connection(ConnectionBase):
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data, sudoable=False)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:

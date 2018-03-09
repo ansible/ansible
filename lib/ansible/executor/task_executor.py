@@ -9,6 +9,7 @@ import pty
 import time
 import json
 import subprocess
+import sys
 import traceback
 
 from ansible import constants as C
@@ -16,7 +17,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -33,6 +34,24 @@ except ImportError:
 
 
 __all__ = ['TaskExecutor']
+
+
+def remove_omit(task_args, omit_token):
+    '''
+    Remove args with a value equal to the ``omit_token`` recursively
+    to align with now having suboptions in the argument_spec
+    '''
+    new_args = {}
+
+    for i in iteritems(task_args):
+        if i[1] == omit_token:
+            continue
+        elif isinstance(i[1], dict):
+            new_args[i[0]] = remove_omit(i[1], omit_token)
+        else:
+            new_args[i[0]] = i[1]
+
+    return new_args
 
 
 class TaskExecutor:
@@ -251,13 +270,18 @@ class TaskExecutor:
         task_vars = self._job_vars
 
         loop_var = 'item'
+        index_var = None
         label = None
         loop_pause = 0
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         if self._task.loop_control:
-            # the value may be 'None', so we still need to default it back to 'item'
-            loop_var = self._task.loop_control.loop_var or 'item'
-            label = self._task.loop_control.label or ('{{' + loop_var + '}}')
-            loop_pause = self._task.loop_control.pause or 0
+            # FIXME: move this to the object itself to allow post_validate to take care of templating
+            loop_var = templar.template(self._task.loop_control.loop_var)
+            index_var = templar.template(self._task.loop_control.index_var)
+            loop_pause = templar.template(self._task.loop_control.pause)
+            # the these may be 'None', so we still need to default to something useful
+            # this is tempalted below after an item is assigned
+            label = (self._task.loop_control.label or ('{{' + loop_var + '}}'))
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -269,12 +293,17 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
-        for item in items:
+        for item_index, item in enumerate(items):
             task_vars[loop_var] = item
+            if index_var:
+                task_vars[index_var] = item_index
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                time.sleep(loop_pause)
+                try:
+                    time.sleep(float(loop_pause))
+                except ValueError as e:
+                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
             else:
                 ran_once = True
 
@@ -298,12 +327,13 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            if index_var:
+                res[index_var] = item_index
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             if label is not None:
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
-                res['_ansible_item_label'] = templar.template(label)
+                res['_ansible_item_label'] = templar.template(label, cache=False)
 
             self._rslt_q.put(
                 TaskResult(
@@ -378,7 +408,7 @@ class TaskExecutor:
                     # * lists can be squashed together
                     # * dicts could squash entries that match in all cases except the
                     #   name or pkg field.
-        except:
+        except Exception:
             # Squashing is an optimization.  If it fails for any reason,
             # simply use the unoptimized list of items.
 
@@ -463,7 +493,7 @@ class TaskExecutor:
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
         elif self._task.action == 'include_role':
             include_variables = self._task.args.copy()
-            return dict(include_role=self._task, include_variables=include_variables)
+            return dict(include_variables=include_variables)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         self._task.post_validate(templar=templar)
@@ -486,6 +516,7 @@ class TaskExecutor:
             self._connection._play_context = self._play_context
 
         self._set_connection_options(variables, templar)
+        self._set_shell_options(variables, templar)
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -493,7 +524,7 @@ class TaskExecutor:
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
+            self._task.args = remove_omit(self._task.args, omit_token)
 
         # Read some values from the task, so that we can modify them if need be
         if self._task.until:
@@ -535,7 +566,7 @@ class TaskExecutor:
             # update the local copy of vars with the registered value, if specified,
             # or any facts which may have been generated by the module execution
             if self._task.register:
-                vars_copy[self._task.register] = wrap_var(result.copy())
+                vars_copy[self._task.register] = wrap_var(result)
 
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
@@ -575,9 +606,20 @@ class TaskExecutor:
                 else:
                     result['failed'] = False
 
+            # Make attempts and retries available early to allow their use in changed/failed_when
+            if self._task.until:
+                result['attempts'] = attempt
+
             # set the changed property if it was missing.
             if 'changed' not in result:
                 result['changed'] = False
+
+            # re-update the local copy of vars with the registered value, if specified,
+            # or any facts which may have been generated by the module execution
+            # This gives changed/failed_when access to additional recently modified
+            # attributes of result
+            if self._task.register:
+                vars_copy[self._task.register] = wrap_var(result)
 
             # if we didn't skip this task, use the helpers to evaluate the changed/
             # failed_when properties
@@ -588,7 +630,6 @@ class TaskExecutor:
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
-                result['attempts'] = attempt
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
@@ -694,7 +735,12 @@ class TaskExecutor:
                 except AttributeError:
                     pass
 
-            time_left -= self._task.poll
+                # Little hack to raise the exception if we've exhausted the timeout period
+                time_left -= self._task.poll
+                if time_left <= 0:
+                    raise
+            else:
+                time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
@@ -734,6 +780,7 @@ class TaskExecutor:
         self._play_context.set_options_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
+            self._play_context.timeout = C.PERSISTENT_COMMAND_TIMEOUT
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
             socket_path = self._start_connection()
@@ -764,6 +811,15 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin
         self._connection.set_options(var_options=options)
+        self._set_shell_options(final_vars, templar)
+
+    def _set_shell_options(self, variables, templar):
+        option_vars = C.config.get_plugin_vars('shell', self._connection._shell._load_name)
+        options = {}
+        for k in option_vars:
+            if k in variables:
+                options[k] = templar.template(variables[k])
+        self._connection._shell.set_options(var_options=options)
 
     def _get_action_handler(self, connection, templar):
         '''
@@ -800,7 +856,11 @@ class TaskExecutor:
         Starts the persistent connection
         '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection", to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        python = sys.executable
+        # Assume ansible-connection is in the same dir as sys.argv[0]
+        ansible_connection = os.path.join(os.path.dirname(sys.argv[0]), 'ansible-connection')
+        p = subprocess.Popen([python, ansible_connection, to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
@@ -813,14 +873,18 @@ class TaskExecutor:
         stdin.write(src)
 
         stdin.write(b'\n#END_INIT#\n')
+        stdin.flush()
 
         (stdout, stderr) = p.communicate()
         stdin.close()
 
         if p.returncode == 0:
-            result = json.loads(to_text(stdout))
+            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
         else:
-            result = json.loads(to_text(stderr))
+            try:
+                result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+            except json.decoder.JSONDecodeError:
+                result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:
             for msg in result.get('messages'):
@@ -828,8 +892,9 @@ class TaskExecutor:
 
         if 'error' in result:
             if self._play_context.verbosity > 2:
-                msg = "The full traceback is:\n" + result['exception']
-                display.display(result['exception'], color=C.COLOR_ERROR)
+                if result.get('exception'):
+                    msg = "The full traceback is:\n" + result['exception']
+                    display.display(msg, color=C.COLOR_ERROR)
             raise AnsibleError(result['error'])
 
         return result['socket_path']

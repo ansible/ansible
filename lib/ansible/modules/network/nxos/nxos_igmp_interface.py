@@ -171,11 +171,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     startup_query_interval: 30
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
-
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
@@ -343,9 +339,9 @@ def get_igmp_interface(module, interface):
             igmp['report_llg'] = False
 
         immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
-        if immediate_leave == 'en' or immediate_leave == 'true':
+        if re.search(r'^en|^true|^enabled', immediate_leave):
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis' or immediate_leave == 'false':
+        elif re.search(r'^dis|^false|^disabled', immediate_leave):
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
@@ -534,10 +530,7 @@ def main():
         oif_source=dict(required=False, type='str'),
         restart=dict(type='bool', default=False),
         state=dict(choices=['present', 'absent', 'default'],
-                   default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+                   default='present')
     )
 
     argument_spec.update(nxos_argument_spec)

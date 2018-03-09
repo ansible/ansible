@@ -25,10 +25,8 @@ from lib.executor import (
     command_network_integration,
     command_windows_integration,
     command_units,
-    command_compile,
     command_shell,
     SUPPORTED_PYTHON_VERSIONS,
-    COMPILE_PYTHON_VERSIONS,
     ApplicationWarning,
     Delegate,
     generate_pip_install,
@@ -42,7 +40,6 @@ from lib.config import (
     NetworkIntegrationConfig,
     SanityConfig,
     UnitsConfig,
-    CompileConfig,
     ShellConfig,
 )
 
@@ -58,7 +55,6 @@ from lib.target import (
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
-    walk_compile_targets,
     walk_sanity_targets,
 )
 
@@ -83,6 +79,8 @@ def main():
         args = parse_args()
         config = args.config(args)
         display.verbosity = config.verbosity
+        display.truncate = config.truncate
+        display.redact = config.redact
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
@@ -152,6 +150,18 @@ def parse_args():
     common.add_argument('--debug',
                         action='store_true',
                         help='run ansible commands in debug mode')
+
+    common.add_argument('--truncate',
+                        dest='truncate',
+                        metavar='COLUMNS',
+                        type=int,
+                        default=display.columns,
+                        help='truncate some long output (0=disabled) (default: auto)')
+
+    common.add_argument('--redact',
+                        dest='redact',
+                        action='store_true',
+                        help='redact sensitive values in output')
 
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
@@ -268,6 +278,10 @@ def parse_args():
                                      metavar='PATH',
                                      help='path to inventory used for tests')
 
+    network_integration.add_argument('--testcase',
+                                     metavar='TESTCASE',
+                                     help='limit a test to a specified testcase').completer = complete_network_testcase
+
     windows_integration = subparsers.add_parser('windows-integration',
                                                 parents=[integration],
                                                 help='windows integration tests')
@@ -301,22 +315,6 @@ def parse_args():
                        help='collect tests but do not execute them')
 
     add_extra_docker_options(units, integration=False)
-
-    compiler = subparsers.add_parser('compile',
-                                     parents=[test],
-                                     help='compile tests')
-
-    compiler.set_defaults(func=command_compile,
-                          targets=walk_compile_targets,
-                          config=CompileConfig)
-
-    compiler.add_argument('--python',
-                          metavar='VERSION',
-                          choices=COMPILE_PYTHON_VERSIONS + ('default',),
-                          help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
-
-    add_lint(compiler)
-    add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
                                    parents=[test],
@@ -666,6 +664,31 @@ def complete_network_platform(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_network_testcase(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    testcases = []
+
+    # since testcases are module specific, don't autocomplete if more than one
+    # module is specidied
+    if len(parsed_args.include) != 1:
+        return []
+
+    test_dir = 'test/integration/targets/%s/tests' % parsed_args.include[0]
+    connections = os.listdir(test_dir)
+
+    for conn in connections:
+        if os.path.isdir(os.path.join(test_dir, conn)):
+            for testcase in os.listdir(os.path.join(test_dir, conn)):
+                if testcase.startswith(prefix):
+                    testcases.append(testcase.split('.')[0])
+
+    return testcases
 
 
 def complete_sanity_test(prefix, parsed_args, **_):

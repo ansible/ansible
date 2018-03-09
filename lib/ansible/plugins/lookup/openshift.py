@@ -1,248 +1,197 @@
-# -*- coding: utf-8 -*-
-# (c) 2017, Kenneth D. Evensen <kevensen@redhat.com>
-
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+#  Copyright 2018 Red Hat | Ansible
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = """
     lookup: openshift
+
     version_added: "2.5"
-    short_description: Returns the JSON definition of an object in OpenShift
+
+    short_description: Query the OpenShift API
+
     description:
-        - This lookup plugin provides the ability to query an OpenShift Container
-        - platform cluster for information about objects.  This plugin requires
-        - a valid user or service account token.
+      - Uses the OpenShift Python client to fetch a specific object by name, all matching objects within a
+        namespace, or all matching objects for all namespaces.
+      - Provides access the full range of K8s APIs.
+      - Enables authentication via config file, certificates, password or token.
+
     options:
+      api_version:
+        description:
+        - Use to specify the API version. If I(resource definition) is provided, the I(apiVersion) from the
+          I(resource_definition) will override this option.
+        default: v1
       kind:
         description:
-          - The kind of OpenShift resource to read (e.g. Project, Service, Pod)
-        required: True
-      host:
-        description:
-          - The IP address of the host serving the OpenShift API
-        required: False
-        default: 127.0.0.1
-      port:
-        description:
-          - The port on which to access the OpenShift API
-        required: False
-        default: 8443
-      token:
-        description:
-          - The token to use for authentication against the OpenShift API.
-          - This can be a user or ServiceAccount token.
-        required: True
-      validate_certs:
-        description:
-          - Whether or not to validate the TLS certificate of the API.
-        required: False
-        default: True
-      namespace:
-        description:
-          - The namespace/project where the object resides.
-        required: False
+        - Use to specify an object model. If I(resource definition) is provided, the I(kind) from a
+          I(resource_definition) will override this option.
+        required: true
       resource_name:
         description:
-          - The name of the object to query.
-        required: False
-      pretty:
+        - Fetch a specific object by name. If I(resource definition) is provided, the I(metadata.name) value
+          from the I(resource_definition) will override this option.
+      namespace:
         description:
-          - Whether or not to prettify the output.  This is useful for debugging.
-        required: False
-        default: False
-      labelSelector:
+        - Limit the objects returned to a specific namespace. If I(resource definition) is provided, the
+          I(metadata.namespace) value from the I(resource_definition) will override this option.
+      label_selector:
         description:
-          - Additional labels to include in the query.
-        required: False
-      fieldSelector:
+        - Additional labels to include in the query. Ignored when I(resource_name) is provided.
+      field_selector:
         description:
-          - Specific fields on which to query.
-        required: False
-      resourceVersion:
+        - Specific fields on which to query. Ignored when I(resource_name) is provided.
+      resource_definition:
         description:
-          - Query for a specific resource version.
-        required: False
+        - "Provide a YAML configuration for an object. NOTE: I(kind), I(api_version), I(resource_name), I(namespace),
+          and I(resource_version) will be overwritten by corresponding values found in the provided
+          I(resource_definition)."
+      src:
+        description:
+        - "Provide a path to a file containing a valid YAML definition of an object dated. Mutually
+          exclusive with I(resource_definition). NOTE: I(kind), I(api_version), I(resource_name), and I(namespace)
+          will be overwritten by corresponding values found in the configuration read in from the I(src) file."
+        - Reads from the local file system. To read from the Ansible controller's file system, use the file lookup
+          plugin or template lookup plugin, combined with the from_yaml filter, and pass the result to
+          I(resource_definition). See Examples below.
+      host:
+        description:
+        - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
+      api_key:
+        description:
+        - Token used to authenticate with the API. Can also be specified via K8S_AUTH_API_KEY environment variable.
+      kubeconfig:
+        description:
+        - Path to an existing Kubernetes config file. If not provided, and no other connection
+          options are provided, the openshift client will attempt to load the default
+          configuration file from I(~/.kube/config.json). Can also be specified via K8S_AUTH_KUBECONFIG environment
+          variable.
+      context:
+        description:
+        - The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment
+          variable.
+      username:
+        description:
+        - Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME environment
+          variable.
+      password:
+        description:
+        - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD environment
+          variable.
+      cert_file:
+        description:
+        - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
+          environment variable.
+      key_file:
+        description:
+        - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_HOST environment
+          variable.
+      ssl_ca_cert:
+        description:
+        - Path to a CA certificate used to authenticate with the API. Can also be specified via K8S_AUTH_SSL_CA_CERT
+          environment variable.
+      verify_ssl:
+        description:
+        - Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL
+          environment variable.
+        type: bool
+
+    requirements:
+      - "python >= 2.7"
+      - "openshift == 0.4.1"
+      - "PyYAML >= 3.11"
+
+    notes:
+      - "The OpenShift Python client wraps the K8s Python client, providing full access to
+        all of the APIS and models available on both platforms. For API version details and
+        additional information visit https://github.com/openshift/openshift-restclient-python"
 """
 
 EXAMPLES = """
-- name: Get Project {{ project_name }}
+- name: Fetch a list of projects
   set_fact:
-    project_fact:  "{{ lookup('openshift',
-                       kind='Project',
-                       host=inventory_host,
-                       token=hostvars[inventory_host]['ansible_sa_token'],
-                       resource_name=project_name,
-                       validate_certs=validate_certs) }}"
-- name: Get All Service Accounts in a Project
+    projects: "{{ lookup('openshift', api_version='v1', kind='Project') }}"
+
+- name: Fetch all deployments
   set_fact:
-    service_fact: "{{ lookup('openshift',
-                      kind='ServiceAccount',
-                      host=inventory_host,
-                      token=hostvars[inventory_host]['ansible_sa_token'],
-                      namespace=project_name,
-                      validate_certs=validate_certs) }}"
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing') }}"
+
+- name: Fetch all deployments in a namespace
+  set_fact:
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing') }}"
+
+- name: Fetch a specific deployment by name
+  set_fact:
+    deployments: "{{ lookup('openshift', kind='DeploymentConfig', namespace='testing', resource_name='elastic') }}"
+
+- name: Fetch with label selector
+  set_fact:
+    service: "{{ lookup('openshift', kind='Service', label_selector='app=galaxy') }}"
+
+# Use parameters from a YAML config
+
+- name: Load config from the Ansible controller filesystem
+  set_fact:
+    config: "{{ lookup('file', 'service.yml') | from_yaml }}"
+
+- name: Using the config (loaded from a file in prior task), fetch the latest version of the object
+  set_fact:
+    service: "{{ lookup('openshift', resource_definition=config) }}"
+
+- name: Use a config from the local filesystem
+  set_fact:
+    service: "{{ lookup('openshift', src='service.yml') }}"
 """
 
 RETURN = """
   _list:
     description:
-      - An object definition or list of objects definitions returned from OpenShift.
-    type: dict
+      - One or more object definitions returned from the API.
+    type: complex
+    contains:
+      api_version:
+        description: The versioned schema of this representation of an object.
+        returned: success
+        type: str
+      kind:
+        description: Represents the REST resource this object represents.
+        returned: success
+        type: str
+      metadata:
+        description: Standard object metadata. Includes name, namespace, annotations, labels, etc.
+        returned: success
+        type: complex
+      spec:
+        description: Specific attributes of the object. Will vary based on the I(api_version) and I(kind).
+        returned: success
+        type: complex
+      status:
+        description: Current status details for the object.
+        returned: success
+        type: complex
 """
 
-import json
-from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils import urls
-from ansible.module_utils.six.moves import urllib
-from ansible.module_utils.six.moves import urllib_error
-from ansible.module_utils.six.moves.urllib.parse import urlencode
-from ansible.module_utils._text import to_text
-from ansible.module_utils._text import to_native
-
-
-class OcpQuery(object):
-    def __init__(self, host, port, token, validate_certs):
-        self.apis = ['api', 'oapi']
-        self.token = token
-        self.validate_certs = validate_certs
-        self.host = host
-        self.port = port
-        self.kinds = {}
-        bearer = "Bearer " + self.token
-        self.headers = {"Authorization": bearer}
-        self.build_facts()
-
-    def build_facts(self):
-
-        for api in self.apis:
-            url = "https://{0}:{1}/{2}/v1".format(self.host, self.port, api)
-            try:
-                response = urls.open_url(url=url,
-                                         headers=self.headers,
-                                         validate_certs=self.validate_certs,
-                                         method='get')
-            except urllib_error.HTTPError as error:
-                try:
-                    body = to_native(error.read())
-                except AttributeError:
-                    body = ''
-                raise AnsibleError("OC Query raised exception with code {0} and message {1} against url {2}".format(error.code, body, url))
-
-            for resource in json.loads(to_text(response.read(), errors='surrogate_or_strict'))['resources']:
-                if 'generated' not in resource['name']:
-                    self.kinds[resource['kind']] = \
-                        {'kind': resource['kind'],
-                         'name': resource['name'].split('/')[0],
-                         'namespaced': resource['namespaced'],
-                         'api': api,
-                         'version': 'v1',
-                         'baseurl': url
-                         }
-
-    def url(self, kind=None, namespace=None, resource_name=None, pretty=False, labelSelector=None, fieldSelector=None, resourceVersion=None):
-        first_param = True
-
-        url = [self.kinds[kind]['baseurl']]
-        if self.kinds[kind]['namespaced'] is True:
-            url.append('/namespaces/')
-            if namespace is None:
-                raise AnsibleError('Kind %s requires a namespace.'
-                                   ' None provided' % kind)
-            url.append(namespace)
-
-        url.append('/' + self.kinds[kind]['name'])
-
-        if resource_name is not None:
-            url.append('/' + resource_name)
-
-        if pretty:
-            url.append('?pretty')
-            first_param = False
-
-        if labelSelector is not None:
-            if first_param:
-                url.append('?')
-            else:
-                url.append('&')
-
-            url.append(urlencode({'labelSelector': labelSelector}))
-            first_param = False
-
-        if fieldSelector is not None:
-            if first_param:
-                url.append('?')
-            else:
-                url.append('&')
-
-            url.append(urlencode({'fieldSelector': fieldSelector}))
-            first_param = False
-
-        if resourceVersion is not None:
-            if first_param:
-                url.append('?')
-            else:
-                url.append('&')
-
-            url.append(urlencode({'resourceVersion': resourceVersion}))
-            first_param = False
-
-        return "".join(url)
-
-    def query(self, kind=None, namespace=None, resource_name=None, pretty=False, labelSelector=None, fieldSelector=None, resourceVersion=None):
-        url = self.url(kind=kind,
-                       namespace=namespace,
-                       resource_name=resource_name,
-                       pretty=pretty,
-                       labelSelector=labelSelector,
-                       fieldSelector=fieldSelector,
-                       resourceVersion=resourceVersion)
-
-        try:
-            response = urls.open_url(url=url,
-                                     headers=self.headers,
-                                     validate_certs=self.validate_certs,
-                                     method='get')
-        except urllib_error.HTTPError as error:
-            try:
-                body = to_native(error.read())
-            except AttributeError:
-                body = ''
-            raise AnsibleError("OC Query raised exception with code {0} and message {1} against url {2}".format(error.code, body, url))
-
-        return json.loads(to_text(response.read(), errors='surrogate_or_strict'))
+from ansible.module_utils.k8s.lookup import OpenShiftLookup
 
 
 class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
-
-        host = kwargs.get('host', '127.0.0.1')
-        port = kwargs.get('port', '8443')
-        validate_certs = kwargs.get('validate_certs', True)
-        token = kwargs.get('token', None)
-
-        namespace = kwargs.get('namespace', None)
-        resource_name = kwargs.get('resource_name', None)
-        pretty = kwargs.get('pretty', False)
-        label_selector = kwargs.get('labelSelector', None)
-        field_selector = kwargs.get('fieldSelector', None)
-        resource_version = kwargs.get('resourceVersion', None)
-        resource_kind = kwargs.get('kind', None)
-
-        ocp = OcpQuery(host, port, token, validate_certs)
-
-        search_response = ocp.query(kind=resource_kind,
-                                    namespace=namespace,
-                                    resource_name=resource_name,
-                                    pretty=pretty,
-                                    labelSelector=label_selector,
-                                    fieldSelector=field_selector,
-                                    resourceVersion=resource_version)
-        if search_response is not None and "items" in search_response:
-            search_response['item_list'] = search_response.pop('items')
-
-        values = [search_response]
-
-        return values
+        return OpenShiftLookup().run(terms, variables=variables, **kwargs)

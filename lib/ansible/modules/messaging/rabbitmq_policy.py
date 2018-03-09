@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ.
 description:
-  - Manage the state of a virtual host in RabbitMQ.
+  - Manage the state of a policy in RabbitMQ.
 version_added: "1.5"
 author: "John Dewey (@retr0h)"
 options:
@@ -113,6 +113,8 @@ class RabbitMqPolicy(object):
         policies = self._exec(['list_policies'], True)
 
         for policy in policies:
+            if not policy:
+                continue
             policy_name = policy.split('\t')[1]
             if policy_name == self._name:
                 return True

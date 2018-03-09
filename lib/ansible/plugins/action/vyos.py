@@ -39,6 +39,8 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         socket_path = None
 
         if self._play_context.connection == 'network_cli':
@@ -57,7 +59,7 @@ class ActionModule(_ActionModule):
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
             pc.timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-            display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
+            display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = connection.run()
@@ -68,6 +70,8 @@ class ActionModule(_ActionModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+        else:
+            return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         # make sure we are in the right cli context which should be
         # enable mode and not config module
@@ -81,5 +85,5 @@ class ActionModule(_ActionModule):
             conn.send_command('abort')
             out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
         return result

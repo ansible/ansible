@@ -173,8 +173,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         for deprecated in C.config.DEPRECATED:
             name = deprecated[0]
             why = deprecated[1]['why']
-            if 'alternative' in deprecated[1]:
-                alt = ', use %s instead' % deprecated[1]['alternative']
+            if 'alternatives' in deprecated[1]:
+                alt = ', use %s instead' % deprecated[1]['alternatives']
             else:
                 alt = ''
             ver = deprecated[1]['version']
@@ -320,14 +320,16 @@ class CLI(with_metaclass(ABCMeta, object)):
         becomepass = None
         become_prompt = ''
 
+        become_prompt_method = "BECOME" if C.AGNOSTIC_BECOME_PROMPT else op.become_method.upper()
+
         try:
             if op.ask_pass:
                 sshpass = getpass.getpass(prompt="SSH password: ")
-                become_prompt = "BECOME password[defaults to SSH password]: "
+                become_prompt = "%s password[defaults to SSH password]: " % become_prompt_method
                 if sshpass:
                     sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
             else:
-                become_prompt = "BECOME password: "
+                become_prompt = "%s password: " % become_prompt_method
 
             if op.become_ask_pass:
                 becomepass = getpass.getpass(prompt=become_prompt)
@@ -365,7 +367,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         if self.options.ask_su_pass or self.options.su_user:
             _dep('su')
 
-    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
@@ -374,6 +376,10 @@ class CLI(with_metaclass(ABCMeta, object)):
             # Check for vault related conflicts
             if (op.ask_vault_pass and op.vault_password_files):
                 self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+
+        if vault_rekey_opts:
+            if (op.new_vault_id and op.new_vault_password_file):
+                self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
 
         if runas_opts:
             # Check for privilege escalation conflicts
@@ -450,8 +456,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                               help='the vault identity to use')
 
         if vault_rekey_opts:
-            parser.add_option('--new-vault-password-file', default=[], dest='new_vault_password_files',
-                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_paths, type='string')
+            parser.add_option('--new-vault-password-file', default=None, dest='new_vault_password_file',
+                              help="new vault password file for rekey", action="callback", callback=CLI.unfrack_path, type='string')
             parser.add_option('--new-vault-id', default=None, dest='new_vault_id', type='string',
                               help='the new vault identity to use for rekey')
 

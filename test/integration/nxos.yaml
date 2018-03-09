@@ -107,15 +107,6 @@
 
     - block:
       - include_role:
-          name: nxos_mtu
-        when: "limit_to in ['*', 'nxos_mtu']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'nxos_mtu' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: nxos_system
         when: "limit_to in ['*', 'nxos_system']"
       rescue:
@@ -520,6 +511,15 @@
 
     - block:
       - include_role:
+          name: nxos_pim
+        when: "limit_to in ['*', 'nxos_pim']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_pim' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
           name: nxos_pim_interface
         when: "limit_to in ['*', 'nxos_pim_interface']"
       rescue:
@@ -552,6 +552,42 @@
       rescue:
         - set_fact:
             failed_modules: "{{ failed_modules }} + [ 'nxos_snmp_host' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_l3_interface
+        when: "limit_to in ['*', 'nxos_l3_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_l3_interface' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_linkagg
+        when: "limit_to in ['*', 'nxos_linkagg']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_linkagg' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_lldp
+        when: "limit_to in ['*', 'nxos_lldp']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_lldp' ]"
+            test_failed: true
+
+    - block:
+      - include_role:
+          name: nxos_l2_interface
+        when: "limit_to in ['*', 'nxos_l2_interface']"
+      rescue:
+        - set_fact:
+            failed_modules: "{{ failed_modules }} + [ 'nxos_l2_interface' ]"
             test_failed: true
 
 ###########

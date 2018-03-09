@@ -16,7 +16,10 @@ DOCUMENTATION = r'''
 module: ec2_ami_find
 version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
-deprecated: Deprecated in 2.5. Use M(ec2_ami_facts) instead.
+deprecated:
+  removed_in: "2.9"
+  why: Various AWS modules have been combined and replaced with M(ec2_ami_facts).
+  alternative: Use M(ec2_ami_facts) instead.
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
   - Can search AMIs with different owners
@@ -158,6 +161,8 @@ options:
     choices: ['success', 'fail']
     default: 'success'
     required: false
+extends_documentation_fragment:
+    - aws
 requirements:
   - "python >= 2.6"
   - boto
@@ -198,11 +203,6 @@ ami_id:
     returned: when AMI found
     type: string
     sample: "ami-e9095e8c"
-architecture:
-    description: architecture of image
-    returned: when AMI found
-    type: string
-    sample: "x86_64"
 architecture:
     description: architecture of image
     returned: when AMI found

@@ -1,12 +1,12 @@
 ---
-- debug: msg="START cli/invalid_subset.yaml"
+- debug: msg="START cli/invalid_subset.yaml on connection={{ ansible_connection }}"
 
 
 - name: test invalid subset (foobar)
   ios_facts:
     gather_subset:
       - "foobar"
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
   ignore_errors: true
 
@@ -29,7 +29,7 @@
     gather_subset:
       - "!hardware"
       - "hardware"
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
   ignore_errors: true
 
@@ -45,4 +45,4 @@
 
 
 
-- debug: msg="END cli/invalid_subset.yaml"
+- debug: msg="END cli/invalid_subset.yaml on connection={{ ansible_connection }}"

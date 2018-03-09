@@ -17,6 +17,7 @@ from lib.util import (
     run_command,
     intercept_command,
     remove_tree,
+    display,
 )
 
 from lib.ansible_util import (
@@ -75,23 +76,30 @@ class ImportTest(SanityMultipleVersion):
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
         if not args.explain:
-            os.symlink(os.path.abspath('test/runner/importer.py'), importer_path)
+            os.symlink(os.path.abspath('test/sanity/import/importer.py'), importer_path)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
-        env['PYTHONPATH'] = os.path.abspath('test/runner/import/lib')
+        env['PYTHONPATH'] = os.path.abspath('test/sanity/import/lib')
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
+            run_command(args, generate_pip_install('pip', 'sanity.import', packages=['setuptools']), env=env)
             run_command(args, generate_pip_install('pip', 'sanity.import', packages=['coverage']), env=env)
+            run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'setuptools'], env=env)
             run_command(args, ['pip', 'uninstall', '--disable-pip-version-check', '-y', 'pip'], env=env)
 
-        cmd = ['importer.py'] + paths
+        cmd = ['importer.py']
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         results = []
 
         try:
-            stdout, stderr = intercept_command(args, cmd, target_name=self.name, env=env, capture=True, python_version=python_version, path=env['PATH'])
+            stdout, stderr = intercept_command(args, cmd, data=data, target_name=self.name, env=env, capture=True, python_version=python_version,
+                                               path=env['PATH'])
 
             if stdout or stderr:
                 raise SubprocessError(cmd, stdout=stdout, stderr=stderr)

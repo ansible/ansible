@@ -53,19 +53,36 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
-            cmd = b'show running-config all'
+            cmd = 'show running-config '
+            if not flags:
+                flags = ['all']
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config'
+
+        cmd += ' '.join(to_list(flags))
+        cmd = cmd.strip()
+
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
-            self.send_command(cmd)
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
+            if isinstance(cmd, dict):
+                command = cmd['command']
+                prompt = cmd['prompt']
+                answer = cmd['answer']
+                newline = cmd.get('newline', True)
+            else:
+                command = cmd
+                prompt = None
+                answer = None
+                newline = True
+
+            self.send_command(command, prompt, answer, False, newline)
 
     def get(self, command, prompt=None, answer=None, sendonly=False):
         return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)

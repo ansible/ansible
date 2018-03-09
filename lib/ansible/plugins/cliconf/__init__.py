@@ -25,7 +25,7 @@ from abc import ABCMeta, abstractmethod
 from functools import wraps
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 
 try:
@@ -33,7 +33,6 @@ try:
     HAS_SCP = True
 except ImportError:
     HAS_SCP = False
-
 
 try:
     from __main__ import display
@@ -45,8 +44,8 @@ except ImportError:
 def enable_mode(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        prompt = self.get_prompt()
-        if not str(prompt).strip().endswith('#'):
+        prompt = self._connection.get_prompt()
+        if not to_text(prompt, errors='surrogate_or_strict').strip().endswith('#'):
             raise AnsibleError('operation requires privilege escalation')
         return func(self, *args, **kwargs)
     return wrapped
@@ -94,23 +93,20 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         display.display('closing shell due to command timeout (%s seconds).' % self._connection._play_context.timeout, log_only=True)
         self.close()
 
-    def send_command(self, command, prompt=None, answer=None, sendonly=False):
+    def send_command(self, command, prompt=None, answer=None, sendonly=False, newline=True, prompt_retry_check=False):
         """Executes a cli command and returns the results
         This method will execute the CLI command on the connection and return
         the results to the caller.  The command output will be returned as a
         string
         """
-        kwargs = {'command': to_bytes(command), 'sendonly': sendonly}
+        kwargs = {'command': to_bytes(command), 'sendonly': sendonly,
+                  'newline': newline, 'prompt_retry_check': prompt_retry_check}
         if prompt is not None:
             kwargs['prompt'] = to_bytes(prompt)
         if answer is not None:
             kwargs['answer'] = to_bytes(answer)
 
-        if not signal.getsignal(signal.SIGALRM):
-            signal.signal(signal.SIGALRM, self._alarm_handler)
-        signal.alarm(self._connection._play_context.timeout)
         resp = self._connection.send(**kwargs)
-        signal.alarm(0)
         return resp
 
     def get_base_rpc(self):
@@ -138,7 +134,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def edit_config(self, commands):
+    def edit_config(self, commands=None):
         """Loads the specified commands into the remote device
         This method will load the commands into the remote device.  This
         method will make sure the device is in the proper context before
@@ -153,7 +149,7 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def get(self, command, prompt=None, answer=None, sendonly=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
         """Execute specified command on remote device
         This method will retrieve the specified data and
         return it to the caller as a string.
@@ -184,18 +180,26 @@ class CliconfBase(with_metaclass(ABCMeta, object)):
         "Discard changes in candidate datastore"
         return self._connection.method_not_found("discard_changes is not supported by network_os %s" % self._play_context.network_os)
 
-    def put_file(self, source, destination):
-        """Copies file over scp to remote device"""
-        if not HAS_SCP:
-            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-        ssh = self._connection._connect_uncached()
-        with SCPClient(ssh.get_transport()) as scp:
-            scp.put(source, destination)
+    def copy_file(self, source=None, destination=None, proto='scp'):
+        """Copies file over scp/sftp to remote device"""
+        ssh = self._connection.paramiko_conn._connect_uncached()
+        if proto == 'scp':
+            if not HAS_SCP:
+                self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+            with SCPClient(ssh.get_transport()) as scp:
+                scp.put(source, destination)
+        elif proto == 'sftp':
+            with ssh.open_sftp() as sftp:
+                sftp.put(source, destination)
 
-    def fetch_file(self, source, destination):
-        """Fetch file over scp from remote device"""
-        if not HAS_SCP:
-            self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
-        ssh = self._connection._connect_uncached()
-        with SCPClient(ssh.get_transport()) as scp:
-            scp.get(source, destination)
+    def get_file(self, source=None, destination=None, proto='scp'):
+        """Fetch file over scp/sftp from remote device"""
+        ssh = self._connection.paramiko_conn._connect_uncached()
+        if proto == 'scp':
+            if not HAS_SCP:
+                self._connection.internal_error("Required library scp is not installed.  Please install it using `pip install scp`")
+            with SCPClient(ssh.get_transport()) as scp:
+                scp.get(source, destination)
+        elif proto == 'sftp':
+            with ssh.open_sftp() as sftp:
+                sftp.get(source, destination)

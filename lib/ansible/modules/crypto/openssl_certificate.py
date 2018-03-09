@@ -94,13 +94,19 @@ options:
               If this value is not specified, certificate will stop being valid 10 years from now.
         aliases: [ selfsigned_notAfter ]
 
-    acme_accountkey:
+    acme_accountkey_path:
         description:
             - Path to the accountkey for the C(acme) provider
 
     acme_challenge_path:
         description:
             - Path to the ACME challenge directory that is served on U(http://<HOST>:80/.well-known/acme-challenge/)
+
+    acme_chain:
+        default: True
+        description:
+            - Include the intermediate certificate to the generated certificate
+        version_added: "2.5"
 
     signature_algorithms:
         description:
@@ -112,10 +118,24 @@ options:
             - Key/value pairs that must be present in the issuer name field of the certificate.
               If you need to specify more than one value with the same key, use a list as value.
 
+    issuer_strict:
+        default: False
+        type: bool
+        description:
+            - If set to True, the I(issuer) field must contain only these values.
+        version_added: "2.5"
+
     subject:
         description:
             - Key/value pairs that must be present in the subject name field of the certificate.
               If you need to specify more than one value with the same key, use a list as value.
+
+    subject_strict:
+        default: False
+        type: bool
+        description:
+            - If set to True, the I(subject) field must contain only these values.
+        version_added: "2.5"
 
     has_expired:
         default: False
@@ -205,7 +225,7 @@ EXAMPLES = '''
     path: /etc/ssl/crt/ansible.com.crt
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: acme
-    acme_accountkey: /etc/ssl/private/ansible.com.pem
+    acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
 
 - name: Force (re-)generate a new Let's Encrypt Certificate
@@ -213,11 +233,33 @@ EXAMPLES = '''
     path: /etc/ssl/crt/ansible.com.crt
     csr_path: /etc/ssl/csr/ansible.com.csr
     provider: acme
-    acme_accountkey: /etc/ssl/private/ansible.com.pem
+    acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
     force: True
 
 # Examples for some checks one could use the assertonly provider for:
+
+# How to use the assertonly provider to implement and trigger your own custom certificate generation workflow:
+- name: Check if a certificate is currently still valid, ignoring failures
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  ignore_errors: True
+  register: validity_check
+
+- name: Run custom task(s) to get a new, valid certificate in case the initial check failed
+  command: superspecialSSL recreate /etc/ssl/crt/example.com.crt
+  when: validity_check.failed
+
+- name: Check the new certificate again for validity with the same parameters, this time failing the play if it is still invalid
+  openssl_certificate:
+    path: /etc/ssl/crt/example.com.crt
+    provider: assertonly
+    has_expired: False
+  when: validity_check.failed
+
+# Some other checks that assertonly could be used for:
 - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
@@ -304,7 +346,6 @@ filename:
 
 from random import randint
 import datetime
-import subprocess
 import os
 
 from ansible.module_utils import crypto as crypto_utils
@@ -413,6 +454,7 @@ class SelfSignedCertificate(Certificate):
                 # 10 years. 315360000 is 10 years in seconds.
                 cert.gmtime_adj_notAfter(315360000)
             cert.set_subject(self.csr.get_subject())
+            cert.set_issuer(self.csr.get_subject())
             cert.set_version(self.version - 1)
             cert.set_pubkey(self.csr.get_pubkey())
             cert.add_extensions(self.csr.get_extensions())
@@ -457,12 +499,12 @@ class AssertOnlyCertificate(Certificate):
             self.subject = crypto_utils.parse_name_field(module.params['subject'])
         else:
             self.subject = []
-        self.subject_strict = False
+        self.subject_strict = module.params['subject_strict']
         if module.params['issuer']:
             self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
         else:
             self.issuer = []
-        self.issuer_strict = False
+        self.issuer_strict = module.params['issuer_strict']
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
         self.keyUsage = module.params['keyUsage']
@@ -517,7 +559,6 @@ class AssertOnlyCertificate(Certificate):
                 current_subject = [(OpenSSL._util.lib.OBJ_txt2nid(sub[0]), sub[1]) for sub in cert_subject]
                 if (not self.subject_strict and not all(x in current_subject for x in expected_subject)) or \
                    (self.subject_strict and not set(expected_subject) == set(current_subject)):
-                    diff = [item for item in self.subject if item not in current_subject]
                     self.message.append(
                         'Invalid subject component (got %s, expected all of %s to be present)' % (cert_subject, self.subject)
                     )
@@ -529,7 +570,6 @@ class AssertOnlyCertificate(Certificate):
                 current_issuer = [(OpenSSL._util.lib.OBJ_txt2nid(iss[0]), iss[1]) for iss in cert_issuer]
                 if (not self.issuer_strict and not all(x in current_issuer for x in expected_issuer)) or \
                    (self.issuer_strict and not set(expected_issuer) == set(current_issuer)):
-                    diff = [item for item in self.issuer if item not in current_issuer]
                     self.message.append(
                         'Invalid issuer component (got %s, expected all of %s to be present)' % (cert_issuer, self.issuer)
                     )
@@ -687,6 +727,7 @@ class AcmeCertificate(Certificate):
         super(AcmeCertificate, self).__init__(module)
         self.accountkey_path = module.params['acme_accountkey_path']
         self.challenge_path = module.params['acme_challenge_path']
+        self.use_chain = module.params['acme_chain']
 
     def generate(self, module):
 
@@ -711,15 +752,20 @@ class AcmeCertificate(Certificate):
             )
 
         if not self.check(module, perms_required=False) or self.force:
+            acme_tiny_path = self.module.get_bin_path('acme-tiny', required=True)
+            chain = ''
+            if self.use_chain:
+                chain = '--chain'
+
             try:
-                p = subprocess.Popen([
-                    'acme-tiny',
-                    '--account-key', self.accountkey_path,
-                    '--csr', self.csr_path,
-                    '--acme-dir', self.challenge_path], stdout=subprocess.PIPE)
-                crt = p.communicate()[0]
+                crt = module.run_command("%s %s --account-key %s --csr %s "
+                                         "--acme-dir %s" % (acme_tiny_path, chain,
+                                                            self.accountkey_path,
+                                                            self.csr_path,
+                                                            self.challenge_path),
+                                         check_rc=True)[1]
                 with open(self.path, 'wb') as certfile:
-                    certfile.write(str(crt))
+                    certfile.write(to_bytes(crt))
             except OSError as exc:
                 raise CertificateError(exc)
 
@@ -751,10 +797,12 @@ def main():
 
             # General properties of a certificate
             privatekey_path=dict(type='path'),
-            privatekey_passphrase=dict(type='path', no_log=True),
+            privatekey_passphrase=dict(type='str', no_log=True),
             signature_algorithms=dict(type='list'),
             subject=dict(type='dict'),
+            subject_strict=dict(type='bool', default=False),
             issuer=dict(type='dict'),
+            issuer_strict=dict(type='bool', default=False),
             has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
             keyUsage=dict(type='list', aliases=['key_usage']),
@@ -778,6 +826,7 @@ def main():
             # provider: acme
             acme_accountkey_path=dict(type='path'),
             acme_challenge_path=dict(type='path'),
+            acme_chain=dict(type='bool', default=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

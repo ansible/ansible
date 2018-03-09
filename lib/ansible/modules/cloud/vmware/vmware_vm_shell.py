@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -85,6 +83,7 @@ options:
     vm_shell_args:
         description:
             - The argument to the program.
+        default: " "
     vm_shell_env:
         description:
             - Comma separated list of environment variable, specified in the guest OS notation.

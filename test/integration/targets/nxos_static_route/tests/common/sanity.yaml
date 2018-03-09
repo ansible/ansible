@@ -1,5 +1,7 @@
 ---
-- debug: msg="START TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_static_route sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - block:
   - name: create static route
@@ -45,6 +47,47 @@
 
   - assert: *false
 
+  - name: configure static route(aggregate)
+    nxos_static_route: &conf_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: configure static route aggregate(Idempotence)
+    nxos_static_route: *conf_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  - name: remove static route aggregate
+    nxos_static_route: &remove_agg
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+
+  - name: remove static route aggregate(Idempotence)
+    nxos_static_route: *remove_agg
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
   always:
   - name: remove static route
     nxos_static_route:
@@ -58,4 +101,13 @@
       provider: "{{ connection }}"
     ignore_errors: yes
 
-- debug: msg="END TRANSPORT:{{ connection.transport }} nxos_static_route sanity test"
+  - name: remove static route aggregate
+    nxos_static_route:
+      aggregate:
+        - { prefix: "192.168.22.64/24", next_hop: "3.3.3.3" }
+        - { prefix: "192.168.24.64/24", next_hop: "3.3.3.3" }
+      state: absent
+      provider: "{{ connection }}"
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_static_route sanity test"

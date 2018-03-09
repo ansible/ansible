@@ -114,6 +114,8 @@ notes:
     host where Jenkins runs as it needs direct access to the plugin files.
   - "The C(params) option was removed in Ansible 2.5 due to circumventing Ansible's
     option handling"
+extends_documentation_fragment:
+  - url
 '''
 
 EXAMPLES = '''
@@ -164,16 +166,12 @@ EXAMPLES = '''
 #
 # Example of how to authenticate
 #
-# my_jenkins_params:
-#   url_username: admin
-#
 - name: Install plugin
   jenkins_plugin:
     name: build-pipeline-plugin
-    params: "{{ my_jenkins_params }}"
+    url_username: admin
     url_password: p4ssw0rd
     url: http://localhost:8888
-# Note that url_password **can not** be placed in params as params could end up in a log file
 
 #
 # Example of a Play which handles Jenkins restarts during the state changes
@@ -278,7 +276,6 @@ state:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native
@@ -327,8 +324,7 @@ class JenkinsPlugin(object):
         # Parse the JSON data
         try:
             json_data = json.loads(to_native(r.read()))
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             self.module.fail_json(
                 msg="Cannot parse %s JSON data." % what,
                 details=to_native(e))
@@ -352,8 +348,7 @@ class JenkinsPlugin(object):
 
             if info['status'] != 200:
                 self.module.fail_json(msg=msg_status, details=info['msg'])
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             self.module.fail_json(msg=msg_exception, details=to_native(e))
 
         return response
@@ -502,11 +497,10 @@ class JenkinsPlugin(object):
 
                 try:
                     sha1_old = hashlib.sha1(open(plugin_file, 'rb').read())
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     self.module.fail_json(
                         msg="Cannot calculate SHA1 of the old plugin.",
-                        details=e.message)
+                        details=to_native(e))
 
                 sha1sum_old = base64.b64encode(sha1_old.digest())
 
@@ -569,8 +563,7 @@ class JenkinsPlugin(object):
 
             try:
                 os.close(update_fd)
-            except IOError:
-                e = get_exception()
+            except IOError as e:
                 self.module.fail_json(
                     msg="Cannot close the tmp updates file %s." % updates_file,
                     details=to_native(e))
@@ -578,8 +571,7 @@ class JenkinsPlugin(object):
         # Open the updates file
         try:
             f = open(updates_file)
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(
                 msg="Cannot open temporal updates file.",
                 details=to_native(e))
@@ -590,11 +582,10 @@ class JenkinsPlugin(object):
             if i == 1:
                 try:
                     data = json.loads(line)
-                except Exception:
-                    e = get_exception()
+                except Exception as e:
                     self.module.fail_json(
                         msg="Cannot load JSON data from the tmp updates file.",
-                        details=e.message)
+                        details=to_native(e))
 
                 break
 
@@ -606,11 +597,10 @@ class JenkinsPlugin(object):
             if not os.path.isdir(updates_dir):
                 try:
                     os.makedirs(updates_dir, int('0700', 8))
-                except OSError:
-                    e = get_exception()
+                except OSError as e:
                     self.module.fail_json(
                         msg="Cannot create temporal directory.",
-                        details=e.message)
+                        details=to_native(e))
 
             self.module.atomic_move(updates_file, updates_file_orig)
 
@@ -641,8 +631,7 @@ class JenkinsPlugin(object):
 
         try:
             os.close(tmp_f_fd)
-        except IOError:
-            e = get_exception()
+        except IOError as e:
             self.module.fail_json(
                 msg='Cannot close the temporal plugin file %s.' % tmp_f,
                 details=to_native(e))
@@ -768,8 +757,7 @@ def main():
     # Convert timeout to float
     try:
         module.params['timeout'] = float(module.params['timeout'])
-    except ValueError:
-        e = get_exception()
+    except ValueError as e:
         module.fail_json(
             msg='Cannot convert %s to float.' % module.params['timeout'],
             details=to_native(e))

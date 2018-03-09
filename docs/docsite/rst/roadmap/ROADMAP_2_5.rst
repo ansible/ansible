@@ -1,13 +1,13 @@
-============================
-Ansible Project, 2.5
-============================
-**Core Engine Freeze and Module Freeze: 15 January 2018**
+===========
+Ansible 2.5
+===========
+**Core Engine Freeze and Module Freeze: 22 January 2018**
 
-**Core and Curated Module Freeze: 15 January 2018**
+**Core and Curated Module Freeze: 22 January 2018**
 
-**Community Module Freeze: 31 January 2018**
+**Community Module Freeze: 7 February 2018**
 
-**Release Candidate 1 will be 14 February, 2018**
+**Release Candidate 1 will be 21 February, 2018**
 
 **Target: March 2018**
 
@@ -38,7 +38,6 @@ Engine improvements
 - Normalize temp dir usage across all subsystems
 - Currently ignored keywords do not notify user they were ignored, throw a warning on these.
 - Deprecation version enforcement
-- Force jinja to use native types
 - sysvinit service module
 - Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'
 
@@ -59,7 +58,6 @@ Inventory
 - Convert the following dynamic inventory scripts into plugins:
 
   - ec2
-  - Azure
   - GCE
   - Foreman
 
@@ -90,7 +88,7 @@ PluginLoader
     hardcoded powershell module_utils file.  If we add generic module_utils
     for powershell, we'll need to decide how to organize the code.
 
-Static Loop Keyword 
+Static Loop Keyword
 -------------------
 **(done)**
 
@@ -101,14 +99,14 @@ Static Loop Keyword
 
 Vault
 -----
-- In some cases diff users might want to use the same play with different access levels, 
+- In some cases diff users might want to use the same play with different access levels,
   being able to change vault failure to decrypt to a warning or something else allows for this.
 - Allow vault password files to be vault encrypted
 - Vault secrets client inc new 'keyring' client **(done)**
 
 Role Versioning
 ---------------
-- ansible-galaxy will install roles using name + version 
+- ansible-galaxy will install roles using name + version
 - On role install, If an existing role is found in the 'bare name' handle version
 - removing roles should detect multiple versions and prompt for 'all' or a specific version(s)
 - When referencing a role in a play, ansible-playbook should now also check if version is specified and use that if found
@@ -129,35 +127,24 @@ Runtime Check on Modules for Blacklisting
 
 Windows
 -------
-- Implement gather_subset on Windows facts 
-- Move setup.ps1 guts to module_utils to allow arbitrary modules to call/refresh individual facts.
-- Fix Windows binary module support to work properly with become/env/async in all cases.
+- Implement gather_subset on Windows facts
 - Fix Windows async + become to allow them to work together
-- Solve Windows become/env support for raw/script
-- Implement Windows become flags for controlling various modes
-
+- Implement Windows become flags for controlling various modes **(done)**
   - logontype
   - elevation behavior
-  - Add dict support to become_flags.
-- Fix Windows auto-kinit with threaded workers (or disallow it)
-- Finish C#/Powershell module_utils rewrite, convert core modules to use it.
-- Convert win_updates to action plugin for auto reboot and extra features
-- Spike out support for Windows Nano Server
-- Spike out changing the connection over to PSRP instead of WSMV
+- Convert win_updates to action plugin for auto reboot and extra features **(done)**
+- Spike out changing the connection over to PSRP instead of WSMV **(done- it's possible)**
 - Module updates
 
-  - win_updates
-  
+  - win_updates **(done)**
+
     - Fix win_updates to detect (or request) become
     - Add whitelist/blacklist features to win_updates
-  - win_dsc further improvements
+  - win_dsc further improvements **(done)**
 
 General Cloud
 -------------
 - Make multi-cloud provisioning easier
-
-  - Document multi-instance provisioning with loop directive
-  - Extend async_status to accept a list or build new action to simplify the with_items/register/until:finish patterns.
 - Diff mode will output provisioning task results of ansible-playbook runs
 - Terraform module
 
@@ -167,34 +154,34 @@ AWS
 - Triage existing merges for modules
 - Module work
 
-  - ec2_instance 
+  - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
   - AWS Network Load Balancer support (NLB module, ASG support, etc)
   - rds_instance
 
 Azure
 -----
-- Azure CLI auth
-- Fix Azure module results to have "high-level" output instead of raw REST API dictionary
-- Deprecate Azure automatic storage accounts in azure_rm_virtualmachine
+- Azure CLI auth **(done)**
+- Fix Azure module results to have "high-level" output instead of raw REST API dictionary **(partial, more to come in 2.6)**
+- Deprecate Azure automatic storage accounts in azure_rm_virtualmachine **(breaks on Azure Stack, punted until AS supports managed disks)**
 
 Network Roadmap
 ---------------
-- Refactor common network shared code into package
-- Convert various nxos modules to leverage declarative intent 
-- Refactor various modules to leverage the cliconf plugin
-- Add various missing declarative modules for supported platforms and functions
-- Implement a feature that handles platform differences and feature unavailability.
+- Refactor common network shared code into package **(done)**
+- Convert various nxos modules to leverage declarative intent **(done)**
+- Refactor various modules to leverage the cliconf plugin **(done)**
+- Add various missing declarative modules for supported platforms and functions **(done)**
+- Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
-- Create netconf connection plugin
+- Create netconf connection plugin **(done)**
 - Create netconf fact module
-- Turn network_cli into a usable connection type
-- Implements jsonrpc message passing for ansible-connection
-- Improve logging for ansible-connection
-- Improve stdout output for failures whilst using persistent connection
-- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin
-- Refactor junos modules to use netconf plugin
-- Filters: Add a filter to convert XML response from a network device to JSON object.
+- Turn network_cli into a usable connection type **(done)**
+- Implements jsonrpc message passing for ansible-connection **(done)**
+- Improve logging for ansible-connection **(done)**
+- Improve stdout output for failures whilst using persistent connection **(done)**
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**
+- Refactor junos modules to use netconf plugin **(done)**
+- Filters: Add a filter to convert XML response from a network device to JSON object **(done)**
 
 Documentation
 -------------
@@ -202,16 +189,13 @@ Documentation
 - Document vault-password-client scripts.
 - Network Documentation
 
-  - refactor intro_networking.rst 
-  - Document different authentication options
-  - Create network module index and TOC
-  - Use Case: Getting Started
-  - Use Case: set hostname network documentation
-  - Use Case: _command show version
+  - New landing page (to replace intro_networking) **(done)**
+  - Platform specific guides **(done)**
+  - Walk through: Getting Started **(done)**
+  - Networking and ``become`` **(done)**
+  - Best practice **(done)**
 
 Contributor Quality of Life
 ---------------------------
-- Pester unit test support in ansible-test
-- Finish PSScriptAnalyer integration with ansible-test (for enforcing Powershell style)
-- Add static code analysis to CI for PowerShell.
+- Finish PSScriptAnalyer integration with ansible-test (for enforcing Powershell style) **(done)**
 - Resolve issues requiring skipping of some integration tests on Python 3.

@@ -67,6 +67,37 @@ options:
               C(AzureUSGovernment)), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
         default: AzureCloud
+        version_added: 2.4
+    cert_validation_mode:
+        description:
+            - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but
+              when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing C(ignore). Can also be
+              set via credential file profile or the C(AZURE_CERT_VALIDATION) environment variable.
+        choices: [validate, ignore]
+        default: null
+        version_added: 2.5
+    auth_source:
+        description:
+            - Controls the source of the credentials to use for authentication.
+            - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
+              C(~/.azure/credentials).
+            - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
+            - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
+        choices:
+        - auto
+        - cli
+        - credential_file
+        - env
+        default: auto
+        version_added: 2.5
+    api_profile:
+        description:
+        - Selects an API profile to use when communicating with Azure services. Default value of C(latest) is appropriate for public clouds;
+          future values will allow use with Azure Stack.
+        choices:
+        - latest
+        default: latest
+        version_added: 2.5
 requirements:
     - "python >= 2.7"
     - "azure >= 2.0.0"

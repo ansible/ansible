@@ -1,0 +1,6 @@
+# Not enabled, but can be used with the UCS Platform Emulator or UCS hardware.
+# Example integration_config.yml:
+# ---
+# ucs_hostname: 172.16.143.136
+# ucs_username: admin
+# ucs_password: password

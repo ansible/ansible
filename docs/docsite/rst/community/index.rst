@@ -1,9 +1,6 @@
-*********************
-Community Information
-*********************
-
+***********************
 Ansible Community Guide
-=======================
+***********************
 
 Welcome to the Ansible Community Guide!
 
@@ -13,12 +10,13 @@ To get started, select one of the following topics.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    development_process
    reporting_bugs_and_features
    how_can_I_help
    maintainers
+   release_managers
    communication
    other_tools_and_programs
 

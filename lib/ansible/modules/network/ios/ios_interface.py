@@ -49,9 +49,13 @@ options:
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
+      - This is state check parameter only.
+      - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
@@ -77,6 +81,7 @@ options:
         operationally up and C(down) means present and operationally C(down)
     default: present
     choices: ['present', 'absent', 'up', 'down']
+extends_documentation_fragment: ios
 """
 
 EXAMPLES = """
@@ -183,7 +188,7 @@ def validate_param_values(module, obj, param=None):
 def parse_shutdown(configobj, name):
     cfg = configobj['interface %s' % name]
     cfg = '\n'.join(cfg.children)
-    match = re.search(r'shutdown', cfg, re.M)
+    match = re.search(r'^shutdown', cfg, re.M)
     if match:
         return True
     else:

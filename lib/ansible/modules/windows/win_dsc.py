@@ -1,12 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -28,7 +25,7 @@ options:
     description:
     - The name of the DSC Resource to use.
     - Must be accessible to PowerShell using any of the default paths.
-    required: true
+    required: yes
   module_version:
     description:
     - Can be used to configure the exact version of the DSC resource to be

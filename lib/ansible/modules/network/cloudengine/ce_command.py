@@ -97,8 +97,6 @@ EXAMPLES = """
       transport: cli
 
   tasks:
-
-  tasks:
   - name: "Run display version on remote devices"
     ce_command:
       commands: display version
@@ -250,7 +248,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

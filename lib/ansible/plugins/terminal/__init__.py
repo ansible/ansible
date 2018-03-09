@@ -69,11 +69,7 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
 
         :returns: A byte string of the prompt
         """
-        # do not send '\n' here, exec_cli_command sends '\r' already,
-        # doing so causes double prompts.
-        self._exec_cli_command(b'')
-
-        return self._connection._matched_prompt
+        return self._connection.get_prompt()
 
     def on_open_shell(self):
         """Called after the SSH session is established
