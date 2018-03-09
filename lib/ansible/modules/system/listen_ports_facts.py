@@ -5,6 +5,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
 module: listen_ports_facts
@@ -126,10 +130,6 @@ udp_listen_violations:
       stime: 'Thu Feb  2 13:29:45 2017'
       user: 'root'
 '''
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
 
 import re
 import platform
