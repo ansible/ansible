@@ -1088,6 +1088,42 @@ class PyVmomi(object):
         """
         return find_hostsystem_by_name(self.content, hostname=host_name)
 
+    def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
+        """
+        Function to get all host system managed object
+
+        Args:
+            cluster_name: Name of Cluster
+            esxi_host_name: Name of ESXi server
+
+        Returns: A list of all host system managed objects, else empty list
+
+        """
+        host_obj_list = []
+        if not self.is_vcenter():
+            hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
+            if hosts:
+                host_obj_list.append(hosts[0])
+        else:
+            if cluster_name:
+                cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+                if cluster_obj:
+                    host_obj_list = [host for host in cluster_obj.host]
+                else:
+                    self.module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
+            elif esxi_host_name:
+                if isinstance(esxi_host_name, str):
+                    esxi_host_name = [esxi_host_name]
+
+                for host in esxi_host_name:
+                    esxi_host_obj = self.find_hostsystem_by_name(host_name=host)
+                    if esxi_host_obj:
+                        host_obj_list = [esxi_host_obj]
+                    else:
+                        self.module.fail_json(changed=False, msg="ESXi '%s' not found" % host)
+
+        return host_obj_list
+
     # Network related functions
     @staticmethod
     def find_host_portgroup_by_name(host, portgroup_name):
@@ -1118,35 +1154,18 @@ class PyVmomi(object):
             pgs_list.append(pg)
         return pgs_list
 
-    def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
+    # Datacenter
+    def find_datacenter_by_name(self, datacenter_name):
         """
-        Function to get all host system managed object
+        Function to get datacenter managed object by name
 
         Args:
-            cluster_name: Name of Cluster
-            esxi_host_name: Name of ESXi server
+            datacenter_name: Name of datacenter
 
-        Returns: A list of all host system managed objects, else empty list
+        Returns: datacenter managed object if found else None
 
         """
-        host_obj_list = []
-        if not self.is_vcenter():
-            host_obj_list.append(get_all_objs(self.content, [vim.HostSystem])[0])
-        else:
-            if cluster_name:
-                cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-                if cluster_obj:
-                    host_obj_list = [host for host in cluster_obj.host]
-                else:
-                    self.module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-            elif esxi_host_name:
-                esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-                if esxi_host_obj:
-                    host_obj_list = [esxi_host_obj]
-                else:
-                    self.module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
-
-        return host_obj_list
+        return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
 
     def find_datastore_by_name(self, datastore_name):
         """
@@ -1158,3 +1177,19 @@ class PyVmomi(object):
 
         """
         return find_datastore_by_name(self.content, datastore_name=datastore_name)
+
+    # Datastore cluster
+    def find_datastore_cluster_by_name(self, datastore_cluster_name):
+        """
+        Function to get datastore cluster managed object by name
+        Args:
+            datastore_cluster: Name of datastore cluster
+
+        Returns: Datastore cluster managed object if found else None
+
+        """
+        data_store_clusters = get_all_objs(self.content, [vim.StoragePod])
+        for dsc in data_store_clusters:
+            if dsc.name == datastore_cluster_name:
+                return dsc
+        return None
