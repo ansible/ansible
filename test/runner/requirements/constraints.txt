@@ -15,3 +15,4 @@ pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 
 ntlm-auth >= 1.0.6 # message encryption support
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
+voluptuous >= 0.11.0 # Schema recursion via Self
