@@ -35,7 +35,7 @@ description:
     is able to handle url and content filtering capabilities. The \
     module uses FortiGate REST API internally to configure the device.
 
-version_added: "2.5"
+version_added: "2.6"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
     - Nicolas Thomas (@thomnico)
@@ -76,11 +76,12 @@ options:
             name:
                 description:
                     - Name of URL filter list.
+                required: true
             comment:
                 description:
                     - Optional comments.
                 default: null
-            one-arm-ips-url-filter:
+            one-arm-ips-urlfilter:
                 description:
                     - Enable/disable DNS resolver for one-arm IPS URL filter operation.
                 choices:
@@ -150,6 +151,10 @@ options:
                     web-proxy-profile:
                         description:
                             - Web proxy profile.
+                        required: true
+                    referrer-host
+                        description: 
+                            - Referrer host name.
                         required: true
             state:
                 description:
@@ -386,10 +391,6 @@ def login(data):
     fos.login(host, username, password)
 
 
-def logout():
-    fos.logout()
-
-
 def filter_wf_url_data(json):
     option_list = ['id', 'name', 'comment',
                    'one-arm-ips-urlfilter',
@@ -415,7 +416,7 @@ def filter_wf_content_data(json):
     return dictionary
 
 
-def webfilter_url(data):
+def webfilter_url(data, fos):
     vdom = data['vdom']
     wf_url_data = data['webfilter_url']
     url_data = filter_wf_url_data(wf_url_data)
@@ -433,7 +434,7 @@ def webfilter_url(data):
                           vdom=vdom)
 
 
-def webfilter_content(data):
+def webfilter_content(data, fos):
     vdom = data['vdom']
     wf_content_data = data['webfilter_content']
     content_data = filter_wf_content_data(wf_content_data)
@@ -451,7 +452,7 @@ def webfilter_content(data):
                           vdom=vdom)
 
 
-def fortios_webfilter(data):
+def fortios_webfilter(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -461,7 +462,7 @@ def fortios_webfilter(data):
     methodlist = ['webfilter_url', 'webfilter_content', 'webfilter_profile']
     for method in methodlist:
         if data[method]:
-            resp = eval(method)(data)
+            resp = eval(method)(data, fos)
             break
 
     fos.logout()
@@ -474,8 +475,57 @@ def main():
         "username": {"required": True, "type": "str"},
         "password": {"required": False, "type": "str"},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "webfilter_url": {"required": False, "type": "dict"},
-        "webfilter_content": {"required": False, "type": "dict"}
+        "webfilter_url": {
+            "required": False, "type": "dict",
+            "options": {
+                "state": {"required": True, "type": "str"},
+                "id": {"required": True, "type": "str"},
+                "name": {"required": True, "type": "str"},
+                "comment": {"required": False, "type": "str", "default": ""},
+                "one-arm-ips-urlfilter": {"required": False, "type": "str", "default": "disable",
+                                          "choices": ["enable", "disable"]},
+                "ip-addr-block": {"required": False, "type": "str", "default": "disable",
+                                  "choices": ["enable", "disable"]},
+                "entries": {
+                    "required": False, "type": "list", "default": [],
+                    "options": {
+                        "id": {"required": True, "type": "integer"},
+                        "url": {"required": True, "type": "string"},
+                        "type": {"required": True, "type": "string", "choices": ["simple", "regex", "wildcard"]},
+                        "action": {"required": True, "type": "string",
+                                   "choices": ["exempt", "block", "allow", "monitor"]},
+                        "status": {"required": True, "type": "string", "choices": ["enable", "disable"]},
+                        "exempt": {"required": True, "type": "string",
+                                   "choices": ["av", "web-content", "activex-java-cookie", "dlp", "fortiguard",
+                                               "range-block", "pass", "all"]},
+                        "web-proxy-profile": {"required": True, "type": "string"},
+                        "referrer-host": {"required": True, "type": "string"}
+                    }
+                }
+            }
+        },
+        "webfilter_content": {
+            "required": False, "type": "dict",
+            "options": {
+                "state": {"required": True, "type": "str"},
+                "id": {"required": True, "type": "str"},
+                "name": {"required": True, "type": "str"},
+                "comment": {"required": False, "type": "str", "default":""},
+                "entries": {
+                    "required": False, "type": "list", "default": [],
+                    "options": {
+                        "name": {"required": True, "type": "string"},
+                        "pattern-type": {"required": True, "type": "string", "choices": ["wildcard", "regexp"]},
+                        "status": {"required": True, "type": "string", "choices": ["enable", "disable"]},
+                        "lang": {"required": True, "type": "string",
+                                 "choices": ["western", "simch", "trach", "japanese", "korean", "french", "thai",
+                                             "spanish", "cyrillic"]},
+                        "score": {"required": True, "type": "integer"},
+                        "action": {"required": True, "type": "string", "choices": ["block", "exempt"]},
+                    }
+                }
+            }
+        }
     }
 
     module = AnsibleModule(argument_spec=fields,
@@ -483,12 +533,11 @@ def main():
     try:
         from fortiosapi import FortiOSAPI
     except ImportError:
-        raise ImportError("fortiosapi module is required")
+        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
-    is_error, has_changed, result = fortios_webfilter(module.params)
+    is_error, has_changed, result = fortios_webfilter(module.params, fos)
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)
