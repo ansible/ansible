@@ -3,6 +3,7 @@ import pytest
 from packaging.version import InvalidVersion
 from versionhelper.version_helper import AnsibleVersionMunger
 
+
 @pytest.mark.parametrize('version,revision,output_propname,expected', [
     ('2.5.0dev1', None, 'raw', '2.5.0dev1'),
     ('2.5.0', None, 'raw', '2.5.0'),

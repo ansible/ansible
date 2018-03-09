@@ -5,6 +5,7 @@ import sys
 
 from packaging.version import Version, VERSION_PATTERN
 
+
 class AnsibleVersionMunger(object):
     tag_offsets = dict(
         dev=0,
@@ -52,7 +53,6 @@ class AnsibleVersionMunger(object):
         # it is a pre/dev release, include the tag value with a ~
         return '{base_version}~{tag_value}'.format(base_version=self.base_version, tag_value=tag_value)
 
-
     @property
     def deb_release(self):
         return '1' if self._revision is None else str(self._revision)
@@ -85,7 +85,7 @@ class AnsibleVersionMunger(object):
         if not tag_type:
             if self._revision is None:
                 self._revision = 1
-            return '{revision}'.format(base_version=self.base_version, revision=self._revision)
+            return '{revision}'.format(revision=self._revision)
 
         # cleanse tag value in case it starts with .
         tag_value = tag_value.strip('.')
@@ -101,7 +101,7 @@ class AnsibleVersionMunger(object):
         else:
             pkgrel = self._revision
 
-        return '{pkgrel}.{tag_value}'.format(pkgrel=pkgrel, tag_value=tag_value, base_version=self.base_version)
+        return '{pkgrel}.{tag_value}'.format(pkgrel=pkgrel, tag_value=tag_value)
 
     @property
     def raw(self):
@@ -115,7 +115,8 @@ class AnsibleVersionMunger(object):
     # return the x.y version without any other modifiers present
     @property
     def major_version(self):
-        return re.match('^(\d+.\d+)', self._raw_version).group(1)
+        return re.match(r'^(\d+.\d+)', self._raw_version).group(1)
+
 
 def main():
     parser = argparse.ArgumentParser(description='Extract/transform Ansible versions to various packaging formats')
@@ -160,7 +161,7 @@ def main():
     elif args.rpmrelease:
         print(v.rpm_release)
     elif args.all:
-        props = [name for (name,impl) in vars(AnsibleVersionMunger).items() if isinstance(impl, property)]
+        props = [name for (name, impl) in vars(AnsibleVersionMunger).items() if isinstance(impl, property)]
 
         for propname in props:
             print('{0}: {1}'.format(propname, getattr(v, propname)))
