@@ -1,18 +1,17 @@
 %define name ansible
-%define ansible_version $VERSION
 
 %if 0%{?rhel} == 5
 %define __python2 /usr/bin/python26
 %endif
 
 Name:      %{name}
-Version:   %{ansible_version}
-Release:   1%{?dist}
+Version:   %{rpmversion}
+Release:   %{rpmrelease}
 Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3+
 Group:     Development/Libraries
-Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
+Source:    http://releases.ansible.com/ansible/%{name}-%{upstream_version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %{!?__python2: %global __python2 /usr/bin/python2.6}
 %{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
@@ -90,7 +89,7 @@ on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{upstream_version}
 
 %build
 %{__python2} setup.py build
@@ -131,7 +130,7 @@ rm -rf %{buildroot}
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING CHANGELOG.md
+%doc README.md PKG-INFO COPYING changelogs/CHANGELOG.rst
 %doc %{_mandir}/man1/ansible*
 
 %changelog
