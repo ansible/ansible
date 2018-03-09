@@ -36,6 +36,22 @@
       path: '.'
       provider: "{{ connection }}"
 
+  - name: FAIL compare snapshots
+    nxos_snapshot:
+      action: compare
+      snapshot1: test_snapshot1
+      snapshot2: test_snapshot2
+      compare_option: summary
+      path: '.'
+      provider: "{{ connection }}"
+    register: result
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'result.failed == True'
+        - '"action is compare but all of the following are missing: comparison_results_file" in result.msg'
+
   when: snapshot_run
 
   always:
