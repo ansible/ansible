@@ -155,7 +155,7 @@ authors:
 
 # Regenerate %.1 if %.1.asciidoc or VERSION has been modified more
 # recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
-%.1: %.1.asciidoc VERSION
+%.1: %.1.asciidoc lib/ansible/release.py
 	$(ASCII2MAN)
 
 .PHONY: loc
