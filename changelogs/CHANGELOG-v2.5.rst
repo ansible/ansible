@@ -2,16 +2,89 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
-v2.5.0rc1
+v2.5.0rc2
 =========
 
 Release Summary
 ---------------
 
-| Release Date: 2018-02-22
-| Estimated Final Release: mid-March 2018
+| Release Date: 2018-03-08
+| Estimated Final Release: 2018-03-15
 | `Porting Guide <http://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
+
+Major Changes
+-------------
+
+- Ansible Network improvements
+  
+  * Created new connection plugins ``network_cli`` and ``netconf`` to replace ``connection=local``. ``connection=local`` will continue to work for a number of Ansible releases.
+  * No more ``unable to open shell``. A clear and descriptive message will be displayed in normal ansible-playbook output without needing to enable debug mode
+  * Loads of documentation, see `Ansible for Network Automation Documentation <http://docs.ansible.com/ansible/2.5/network/>`_.
+  * Refactor common network shared code into package under ``module_utils/network/``
+  * Filters: Add a filter to convert XML response from a network device to JSON object.
+  * Loads of bug fixes.
+  * Plus lots more.
+
+
+Bugfixes
+--------
+
+- tower_* modules - fix credentials to work with v1 and v2 of Ansible Tower API
+
+- docker_container, docker_image, docker_network modules - Update to work with Docker SDK 3.1
+
+- edgeos_facts - fix error when there are no commit revisions (https://github.com/ansible/ansible/issues/37123)
+
+- setup.py - Ensure we install ansible-config and ansible-inventory with `pip install -e` (https://github.com/ansible/ansible/pull/37151)
+
+- Fix bytes/text handling in maven_artifact that was causing tracebacks on Python3
+
+- znode - fixed a bug calling the zookeeper API under Python3 https://github.com/ansible/ansible/pull/36999
+
+- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. https://github.com/ansible/ansible/pull/37048
+
+- (network)_vlan / (network)_vrf - decouple config/state check (https://github.com/ansible/ansible/pull/36704)
+
+- nxos_vlan / nxos_linkagg - fixed various issues (https://github.com/ansible/ansible/pull/36711)
+
+- nios - allow ib_spec attrs to be filtered in update (https://github.com/ansible/ansible/pull/36673)
+
+- nso_config / nso_verify - fixed various issues (https://github.com/ansible/ansible/pull/36583)
+
+- cs_sshkeypair - fixed ssh key rename (https://github.com/ansible/ansible/pull/36726)
+
+- cliconf - fixed get_config traceback (https://github.com/ansible/ansible/pull/36682)
+
+- impi_boot - added floppy option (https://github.com/ansible/ansible/pull/36174)
+
+- nso_config - fixed ordering issues (https://github.com/ansible/ansible/pull/36774)
+
+- nxos_facts - fixed ipv6 parsing issues on new nxos releases (https://github.com/ansible/ansible/pull/36796)
+
+- nso_config - fixed dependency sort cycle issue (https://github.com/ansible/ansible/pull/36828)
+
+- ovirt_* - various fixes (https://github.com/ansible/ansible/pull/36828)
+
+- aws_ssm_parameter_store - added no_log to value arg (https://github.com/ansible/ansible/pull/36828)
+
+- openshift_raw - fixed creation of RoleBinding resources (https://github.com/ansible/ansible/pull/36887)
+
+- nxos_interface - fixed multiple issues (https://github.com/ansible/ansible/pull/36827)
+
+- junos_command - fixed Python3 issues (https://github.com/ansible/ansible/pull/36782)
+
+- ios_static_route - fixed idempotence issue (https://github.com/ansible/ansible/pull/35912)
+
+- win_lineinfile - fixed issue where \r and \n as a string was converted to newline (https://github.com/ansible/ansible/pull/35100)
+
+- win_uri - return response info and content on a non 200 message
+
+- win_wait_for - fixed issue when trying to check a localport when the port is not available externally
+
+
+v2.5.0rc1
+=========
 
 Minor Changes
 -------------
