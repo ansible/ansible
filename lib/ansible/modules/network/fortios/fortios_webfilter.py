@@ -62,7 +62,7 @@ options:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
-        default: root
+        default: "root"
     webfilter_url:
         description:
             - Container for a group of url entries that the FortiGate
@@ -153,7 +153,7 @@ options:
                             - Web proxy profile.
                         required: true
                     referrer-host
-                        description: 
+                        description:
                             - Referrer host name.
                         required: true
             state:
@@ -510,7 +510,7 @@ def main():
                 "state": {"required": True, "type": "str"},
                 "id": {"required": True, "type": "str"},
                 "name": {"required": True, "type": "str"},
-                "comment": {"required": False, "type": "str", "default":""},
+                "comment": {"required": False, "type": "str", "default": ""},
                 "entries": {
                     "required": False, "type": "list", "default": [],
                     "options": {
