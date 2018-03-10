@@ -293,7 +293,7 @@ def main():
     else:
         outputs = json.loads(outputs_text)
 
-    module.exit_json(changed=changed, state=state, outputs=outputs, sdtout=out, stderr=err, command=' '.join(command))
+    module.exit_json(changed=changed, state=state, outputs=outputs, stdout=out, stderr=err, command=' '.join(command))
 
 
 if __name__ == '__main__':
