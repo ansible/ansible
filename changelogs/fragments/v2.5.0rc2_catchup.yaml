@@ -15,5 +15,3 @@ bugfixes:
 - nxos_interface - fixed multiple issues (https://github.com/ansible/ansible/pull/36827)
 - junos_command - fixed Python3 issues (https://github.com/ansible/ansible/pull/36782)
 - ios_static_route - fixed idempotence issue (https://github.com/ansible/ansible/pull/35912)
-
-
