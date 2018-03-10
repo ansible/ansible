@@ -6,7 +6,7 @@
 
 Name:      %{name}
 Version:   %{rpmversion}
-Release:   %{rpmrelease}
+Release:   %{rpmrelease}%{?dist}%{?repotag}
 Url:       https://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3+

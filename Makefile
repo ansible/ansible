@@ -105,7 +105,7 @@ endif
 
 RPMVERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --baseversion)
 RPMRELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --rpmrelease)
-RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)"
+RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)$(REPOTAG)"
 
 # MOCK build parameters
 MOCK_BIN ?= mock
@@ -248,7 +248,8 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
 	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --buildsrpm --spec rpm-build/$(NAME).spec --sources rpm-build/ \
     --define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
-	--define "rpmrelease $(RPMRELEASE)"
+	--define "rpmrelease $(RPMRELEASE)" \
+	--define "repotag $(REPOTAG)"
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo rpm-build/*.src.rpm
@@ -259,7 +260,8 @@ mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
 	$(MOCK_BIN) -r $(MOCK_CFG) $(MOCK_ARGS) --resultdir rpm-build/ --bootstrap-chroot --old-chroot --rebuild rpm-build/$(NAME)-*.src.rpm \
     --define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
-	--define "rpmrelease $(RPMRELEASE)"
+	--define "rpmrelease $(RPMRELEASE)" \
+	--define "repotag $(REPOTAG)"
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
@@ -276,6 +278,7 @@ srpm: rpmcommon
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
+	--define "repotag $(REPOTAG)" \
 	-bs rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -296,6 +299,7 @@ rpm: rpmcommon
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
+	--define "repotag $(REPOTAG)" \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
