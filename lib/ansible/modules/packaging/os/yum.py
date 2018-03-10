@@ -639,25 +639,40 @@ def local_envra(path):
                                header[rpm.RPMTAG_ARCH])
 
 
-def set_env_proxy(conf_file, installroot):
-    yumb = yum_base(conf_file, installroot)
-    namepass = ""
-    schem = "http"
-    try:
-        if yumb.conf.proxy:
-            if 'https:' in yumb.conf.proxy:
-                schem = 'https'
-            else:
-                schem = 'http'
-            if yumb.conf.proxy_username:
-                namepass = namepass + yumb.conf.proxy_username
-                if yumb.conf.proxy_password:
-                    namepass = namepass + ":" + yumb.conf.proxy_password
+def set_env_proxy(function):
+    def fetching(spec, module, conf_file, installroot):
+        # setting system proxy environment and saving old, if exists
+        yumb = yum_base(conf_file, installroot)
+        namepass = ""
+        schem = "http"
+        old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
+        try:
+            if yumb.conf.proxy:
+                if 'https' in yumb.conf.proxy:
+                    schem = 'https'
+                else:
+                    schem = 'http'
+                if yumb.conf.proxy_username:
+                    namepass = namepass + yumb.conf.proxy_username
+                    if yumb.conf.proxy_password:
+                        namepass = namepass + ":" + yumb.conf.proxy_password
                 namepass = namepass + '@'
-            os.environ["{0}_proxy".format(schem)] = re.sub(r"({0}://)".format(schem),
-                                                           r"\1" + namepass, yumb.conf.proxy)
-    except AttributeError as ae:
-        raise ae
+                os.environ["{0}_proxy".format(schem)] = re.sub(
+                    r"({0}://)".format(schem), r"\1" + namepass, yumb.conf.proxy
+                )
+        except yum.Errors.YumBaseError as e:
+            module.fail_json(msg="Error setting/accessing proxy: %s" % to_native(e))
+        # getting package with new proxy environment
+        package = fetch_rpm_from_url(spec, module)
+        # revert back to previously system configuration
+        if os.getenv("{0}_proxy".format(schem)):
+            del os.environ["{0}_proxy".format(schem)]
+        if old_proxy_env[0]:
+            os.environ["http_proxy"] = old_proxy_env[0]
+        if old_proxy_env[1]:
+            os.environ["https_proxy"] = old_proxy_env[1]
+        return package
+    return fetching
 
 
 def pkg_to_dict(pkgstr):
@@ -782,8 +797,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                 module.fail_json(**res)
 
             if '://' in spec:
-                set_env_proxy(conf_file, installroot)
-                package = fetch_rpm_from_url(spec, module=module)
+                package_get = set_env_proxy(fetch_rpm_from_url)
+                package = package_get(spec, module, conf_file, installroot)
             else:
                 package = spec
 
@@ -1096,8 +1111,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
             # URL
             elif '://' in spec:
                 # download package so that we can check if it's already installed
-                set_env_proxy(conf_file, installroot)
-                package = fetch_rpm_from_url(spec, module=module)
+                package_get = set_env_proxy(fetch_rpm_from_url)
+                package = package_get(spec, module, conf_file, installroot)
                 envra = local_envra(package)
 
                 if envra is None:
