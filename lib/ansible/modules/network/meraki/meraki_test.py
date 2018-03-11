@@ -117,8 +117,7 @@ def main():
     module.params['follow_redirects'] = 'all'
 
     payload = None
-    
-    create_urls
+
     create_urls = {'organizations', '/organizations'}
     meraki.url_catalog['create'] = create_urls
 
