@@ -450,9 +450,13 @@ class VirtNetwork(object):
     def info(self):
         return self.facts(facts_mode='info')
 
-    def facts(self, facts_mode='facts'):
+    def facts(self, name=None, facts_mode='facts'):
         results = dict()
-        for entry in self.list_nets():
+        if name:
+            entries = [name]
+        else:
+            entries = self.list_nets()
+        for entry in entries:
             results[entry] = dict()
             results[entry]["autostart"] = self.conn.get_autostart(entry)
             results[entry]["persistent"] = self.conn.get_persistent(entry)
@@ -565,7 +569,10 @@ def core(module):
             return VIRT_SUCCESS, res
 
         elif hasattr(v, command):
-            res = getattr(v, command)()
+            if command == 'facts' and name:
+                res = v.facts(name)
+            else:
+                res = getattr(v, command)()
             if not isinstance(res, dict):
                 res = {command: res}
             return VIRT_SUCCESS, res
