@@ -139,7 +139,14 @@ class DynDnsZone(object):
             else:
                 self.module.fail_json(msg="Reached API retries limit.")
 
-            body = response.read()
+            if status_code == 404:
+                return {}
+            else:
+                try:
+                    body = response.read()
+                except Exception as exception:
+                    self.module.fail_json(msg=str(exception) + ", " + str(info))
+
             records = json.loads(body)['data']
 
             for record_path in records:
