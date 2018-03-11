@@ -77,3 +77,6 @@
       allow_creation: no
     ignore_errors: yes
     register: account_not_created_2
+
+  # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
+  when: openssl_version.stdout is version('1.0.0', '>=')
