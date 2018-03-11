@@ -28,7 +28,7 @@ options:
             - Define whether or not the monitor should be running or paused.
         required: true
         default: null
-        choices: [ "started", "paused" ]
+        choices: [ "started", "paused", "new", "reset", "delete"]
         aliases: []
     monitorid:
         description:
@@ -68,12 +68,14 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url
 
-
-API_BASE = "http://api.uptimerobot.com/"
+API_BASE = "https://api.uptimerobot.com/"
 
 API_ACTIONS = dict(
     status='getMonitors?',
-    editMonitor='editMonitor?'
+    editMonitor='editMonitor?',
+    newMonitor='newMonitor?',
+    resetMonitor='resetMonitor?',
+    deleteMonitor='deleteMonitor?'
 )
 
 API_FORMAT = 'json'
@@ -117,6 +119,50 @@ def pauseMonitor(module, params):
     return jsonresult['stat']
 
 
+def newMonitor(module, params):
+    params['monitorStatus'] = 1
+    data = urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['newMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.load(result)
+    req.close()
+    return jsonresult['monitor']['id']
+
+
+def resetMonitor(module, params):
+    params['monitorStatus'] = 1
+    data = urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['deleteMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.load(result)
+    req.close()
+    return jsonresult['stat']
+
+
+def deleteMonitor(module, params):
+    params['monitorStatus'] = 1
+    data = urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['resetMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.load(result)
+    req.close()
+    return jsonresult['stat'], jsonresult['monitor']['id']
+
+
+def editMonitor(module, params):
+    params['monitorStatus'] = 1
+    data = urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.load(result)
+    req.close()
+    return jsonresult['stat']
+
+
 def main():
 
     module = AnsibleModule(
@@ -146,8 +192,16 @@ def main():
 
     if module.params['state'] == 'started':
         monitor_result = startMonitor(module, params)
-    else:
+    elif module.params['state'] == 'pause':
         monitor_result = pauseMonitor(module, params)
+    elif module.params['state'] == 'new':
+        monitor_result = newMonitor(module, params)
+    elif module.params['state'] == 'delete':
+        monitor_result = deleteMonitor(module, params)
+    elif module.params['state'] == 'reset':
+        monitor_result = resetMonitor(module, params)
+    elif module.params['state'] == 'edit':
+        monitor_result = editMonitor(module, params)
 
     module.exit_json(
         msg="success",
