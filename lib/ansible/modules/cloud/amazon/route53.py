@@ -364,7 +364,6 @@ import distutils.version
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
     from boto.route53.status import Status
@@ -435,6 +434,7 @@ def commit(changes, retry_interval, wait, wait_timeout):
         if time.time() >= timeout_time:
             raise TimeoutError()
         return result
+
 
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
@@ -656,7 +656,7 @@ def main():
 
     if not module.check_mode:
         try:
-            result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
+            invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
         except boto.route53.exception.DNSServerError as e:
             txt = e.body.split("<Message>")[1]
             txt = txt.split("</Message>")[0]
