@@ -102,7 +102,8 @@ def main():
     argument_spec.update(
         username=dict(type='str'),
     )
-
+    
+   
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
@@ -116,6 +117,10 @@ def main():
     module.params['follow_redirects'] = 'all'
 
     payload = None
+    
+    create_urls
+    create_urls = {'organizations', '/organizations'}
+    meraki.url_catalog['create'] = create_urls
 
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current

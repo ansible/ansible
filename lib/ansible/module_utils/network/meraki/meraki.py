@@ -88,30 +88,32 @@ class MerakiModule(object):
         self.response = None
         self.status = None
         self.url = None
-        self.url_list = {'org_get_all': '/organizations/',
-                         'org_get_one': '/organizations/replace_org_id',
-                         'org_post': '/organizations/',
-                         'org_put': '/organizations/replace_org_id',
-                         'net_get_all': '/organizations/replace_org_id/networks',
-                         'net_get_one': '/networks/replace_net_id',
-                         'net_post': '/organizations/replace_org_id/networks',
-                         'net_put': '/networks/replace_net_id',
-                         }
+#        self.url_list = {'org_get_all': '/organizations/',
+#                         'org_get_one': '/organizations/replace_org_id',
+#                         'org_post': '/organizations/',
+#                         'org_put': '/organizations/replace_org_id',
+#                         'net_get_all': '/organizations/replace_org_id/networks',
+#                         'net_get_one': '/networks/replace_net_id',
+#                         'net_post': '/organizations/replace_org_id/networks',
+#                         'net_put': '/networks/replace_net_id',
+#                         }
 
         self.get_urls = {'organizations': '/organizations',
                          'networks': '/organizations/replace_org_id/networks',
                          }
 
-        self.get_one_urls = {'organizations': 'organizations/replace_org_id',
-                             'networks': 'neteworks/replace_net_id',
+        self.get_one_urls = {'organizations': '/organizations/replace_org_id',
+                             'networks': 'networks/replace_net_id',
                              }
 
-        self.create_urls = {'organizations': 'organizations/',
-                            }
+#        self.create_urls = dict()
 
+        # Module should add URLs which are required by the module
         self.url_catalog = {'get_all': self.get_urls,
                             'get_one': self.get_one_urls,
-                            'create': self.create_urls,
+                            'create': None,
+                            'delete': None,
+                            'Misc': None,
                             }
 
         if self.module._debug or self.params['output_level'] == 'debug':
