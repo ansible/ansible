@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: dyn_record
 author: Olivier Boukili (@oboukili)"
-version_added: "2.5"
+version_added: "2.6"
 short_description: Manage DNS records on Dyn's managed DNS (a DNS service).
 description:
   - Manage DNS records on Dyn's managed DNS (a DNS service) using Dyn API
@@ -27,19 +27,16 @@ description:
     This module supports ansible check_mode.
 options:
   dyn_customer_name:
-    default: None
     description:
       - Dyn customer name required for API authentication. Can also be passed on
         as the DYN_CUSTOMER_NAME environment variable.
     required: false
   dyn_user_name:
-    default: None
     description:
       - Dyn username required for API authentication. Can also be passed on
         as the DYN_USER_NAME environment variable.
     required: false
   dyn_password:
-    default: None
     description:
       - Dyn password required for API authentication. Can also be passed on
         as the DYN_PASSWORD environment variable.
@@ -57,11 +54,11 @@ options:
         be passed on as the DYN_API_TIMEOUT environment variable.
     required: False
   zone:
-    default: None
     description:
       - Dyn DNS zone to act upon.
     required: true
   force_duplicate:
+    type: bool
     default: False
     description:
       - Force the creation of a "duplicate" record sharing the same node of an existing record for
@@ -69,7 +66,6 @@ options:
         a new TXT record with another rdata.txtdata value). Use with caution.
     required: False
   node:
-    default: None
     description:
       - Local part of the FQDN (e.g. 'www' in 'www.example.org').
     required: True
@@ -80,7 +76,6 @@ options:
         should be supported, except for the ALIAS record type (https://help.dyn.com/rest-resources/).
     required: false
   rdata:
-    default: None
     description:
       - Record data value dictionary that should match the specified record type.
     required: true
@@ -104,6 +99,7 @@ options:
       - Zone publish notes when the 'publish' attribute is set to True.
     required: false
   validate_certs:
+    type: bool
     default: true
     description:
       - Whether to valide TLS certificates during the module execution.
