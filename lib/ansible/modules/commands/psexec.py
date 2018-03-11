@@ -42,7 +42,7 @@ options:
     - Can be omitted to use the default Kerberos principal ticket in the
       local credential cache if the Kerberos library is installed.
     - If I(process_username) is not specified, then the remote process will run
-      under a Network Logon under thie account.
+      under a Network Logon under this account.
   connection_password:
     description:
     - The password for I(connection_user).
@@ -255,15 +255,15 @@ EXAMPLES = r'''
 - name: Use Kerberos authentication for the connection (requires smbprotocol[kerberos])
   psexec:
     hostname: host.domain.local
-    username: user@DOMAIN.LOCAL
+    connection_username: user@DOMAIN.LOCAL
     executable: C:\some\path\to\executable.exe
     arguments: /s
 
 - name: Disable encryption to work with WIndows 7/Server 2008 (R2)
   psexec:
     hostanme: windows-pc
-    username: Administrator
-    password: Password01
+    connection_username: Administrator
+    connection_password: Password01
     encrypt: no
     elevated: yes
     process_username: Administrator
@@ -274,8 +274,8 @@ EXAMPLES = r'''
 - name: Download and run ConfigureRemotingForAnsible.ps1 to setup WinRM
   psexec:
     hostname: windows-pc
-    username: Administrator
-    password: Password01
+    connection_username: Administrator
+    connection_password: Password01
     encrypt: yes
     executable: powershell.exe
     arguments: '-'
