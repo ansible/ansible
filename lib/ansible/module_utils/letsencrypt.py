@@ -208,7 +208,7 @@ class ACMEAccount(object):
                 raise ModuleFailException("failed to create temporary content file: %s" % to_native(err), exception=traceback.format_exc())
             f.close()
 
-        error, self.key_data = self._parse_account_key(self.key)
+        error, self.key_data = self.parse_account_key(self.key)
         if error:
             raise ModuleFailException("error while parsing account key: %s" % error)
         self.jwk = self.key_data['jwk']
@@ -226,7 +226,7 @@ class ACMEAccount(object):
         thumbprint = nopad_b64(hashlib.sha256(accountkey_json.encode('utf8')).digest())
         return "{0}.{1}".format(token, thumbprint)
 
-    def _parse_account_key(self, key):
+    def parse_account_key(self, key):
         '''
         Parses an RSA or Elliptic Curve key file in PEM format and returns a pair
         (error, key_data).
@@ -315,6 +315,39 @@ class ACMEAccount(object):
                 'point_size': point_size,
             }
 
+    def sign_request(self, protected, payload, key_data, key):
+        try:
+            payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
+            protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
+        except Exception as e:
+            raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
+
+        openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(key_data['hash']), "-sign", key]
+        sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
+        dummy, out, dummy = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
+
+        if key_data['type'] == 'ec':
+            dummy, der_out, dummy = self.module.run_command(
+                [self._openssl_bin, "asn1parse", "-inform", "DER"],
+                data=out, binary_data=True)
+            expected_len = 2 * key_data['point_size']
+            sig = re.findall(
+                r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
+                to_text(der_out, errors='surrogate_or_strict'))
+            if len(sig) != 2:
+                raise ModuleFailException(
+                    "failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
+                        to_text(der_out, errors='surrogate_or_strict')))
+            sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
+            sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
+            out = binascii.unhexlify(sig[0]) + binascii.unhexlify(sig[1])
+
+        return {
+            "protected": protected64,
+            "payload": payload64,
+            "signature": nopad_b64(to_bytes(out)),
+        }
+
     def send_signed_request(self, url, payload):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
@@ -328,37 +361,7 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
-            try:
-                payload64 = nopad_b64(self.module.jsonify(payload).encode('utf8'))
-                protected64 = nopad_b64(self.module.jsonify(protected).encode('utf8'))
-            except Exception as e:
-                raise ModuleFailException("Failed to encode payload / headers as JSON: {0}".format(e))
-
-            openssl_sign_cmd = [self._openssl_bin, "dgst", "-{0}".format(self.key_data['hash']), "-sign", self.key]
-            sign_payload = "{0}.{1}".format(protected64, payload64).encode('utf8')
-            dummy, out, dummy = self.module.run_command(openssl_sign_cmd, data=sign_payload, check_rc=True, binary_data=True)
-
-            if self.key_data['type'] == 'ec':
-                dummy, der_out, dummy = self.module.run_command(
-                    [self._openssl_bin, "asn1parse", "-inform", "DER"],
-                    data=out, binary_data=True)
-                expected_len = 2 * self.key_data['point_size']
-                sig = re.findall(
-                    r"prim:\s+INTEGER\s+:([0-9A-F]{1,%s})\n" % expected_len,
-                    to_text(der_out, errors='surrogate_or_strict'))
-                if len(sig) != 2:
-                    raise ModuleFailException(
-                        "failed to generate Elliptic Curve signature; cannot parse DER output: {0}".format(
-                            to_text(der_out, errors='surrogate_or_strict')))
-                sig[0] = (expected_len - len(sig[0])) * '0' + sig[0]
-                sig[1] = (expected_len - len(sig[1])) * '0' + sig[1]
-                out = binascii.unhexlify(sig[0]) + binascii.unhexlify(sig[1])
-
-            data = {
-                "protected": protected64,
-                "payload": payload64,
-                "signature": nopad_b64(to_bytes(out)),
-            }
+            data = self.sign_request(protected, payload, self.key_data, self.key)
             if self.version == 1:
                 data["header"] = self.jws_header
             data = self.module.jsonify(data)

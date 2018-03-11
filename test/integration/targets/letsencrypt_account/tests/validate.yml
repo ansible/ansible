@@ -22,6 +22,12 @@
       - account_modified_idempotent is not changed
       - account_modified_idempotent.account_uri is not none
 
+- name: Validate that the account key was changed
+  assert:
+    that:
+      - account_change_key is changed
+      - account_change_key.account_uri is not none
+
 - name: Validate that the account was deactivated
   assert:
     that:
@@ -34,7 +40,12 @@
       - account_deactivate_idempotent is not changed
       - account_deactivate_idempotent.account_uri is not none
 
-- name: Validate that the account is gone
+- name: Validate that the account is gone (new account key)
   assert:
     that:
       - account_not_created_2 is failed
+
+- name: Validate that the account is gone (old account key)
+  assert:
+    that:
+      - account_not_created_3 is failed

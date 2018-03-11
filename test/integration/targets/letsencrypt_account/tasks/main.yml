@@ -52,9 +52,26 @@
       - mailto:example@example.com
     register: account_modified_idempotent
 
-  - name: Deactivate account
+  - name: Generate new account key
+    command: openssl ecparam -name secp384r1 -genkey -out {{ output_dir }}/accountkey2.pem
+
+  - name: Parse account key (to ease debugging some test failures)
+    command: openssl ec -in {{ output_dir }}/accountkey2.pem -noout -text
+
+  - name: Change account key
     letsencrypt_account:
       account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      new_account_key_src: "{{ output_dir }}/accountkey2.pem"
+      state: changed_key
+      contact:
+      - mailto:example@example.com
+    register: account_change_key
+
+  - name: Deactivate account
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
       state: absent
@@ -62,7 +79,7 @@
 
   - name: Deactivate account (idempotent)
     letsencrypt_account:
-      account_key_src: "{{ output_dir }}/accountkey.pem"
+      account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
       state: absent
@@ -70,13 +87,23 @@
 
   - name: Do not try to create account II
     letsencrypt_account:
-      account_key_src: "{{ output_dir }}/accountkey.pem"
+      account_key_src: "{{ output_dir }}/accountkey2.pem"
       acme_version: 2
       acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
       state: present
       allow_creation: no
     ignore_errors: yes
     register: account_not_created_2
+
+  - name: Do not try to create account III
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      allow_creation: no
+    ignore_errors: yes
+    register: account_not_created_3
 
   # Old 0.9.8 versions have insufficient CLI support for signing with EC keys
   when: openssl_version.stdout is version('1.0.0', '>=')
