@@ -1,0 +1,79 @@
+---
+- block:
+  - debug: var=openssl_version.stdout
+
+  - name: Generate account key
+    command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/accountkey.pem
+
+  - name: Parse account key (to ease debugging some test failures)
+    command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
+
+  - name: Do not try to create account
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      allow_creation: no
+    ignore_errors: yes
+    register: account_not_created
+
+  - name: Create it now
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      allow_creation: yes
+      terms_agreed: yes
+      contact:
+      - mailto:example@example.org
+    register: account_created
+
+  - name: Change email address
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      # allow_creation: no
+      contact:
+      - mailto:example@example.com
+    register: account_modified
+
+  - name: Change email address (idempotent)
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      # allow_creation: no
+      contact:
+      - mailto:example@example.com
+    register: account_modified_idempotent
+
+  - name: Deactivate account
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: absent
+    register: account_deactivate
+
+  - name: Deactivate account (idempotent)
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: absent
+    register: account_deactivate_idempotent
+
+  - name: Do not try to create account II
+    letsencrypt_account:
+      account_key_src: "{{ output_dir }}/accountkey.pem"
+      acme_version: 2
+      acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+      state: present
+      allow_creation: no
+    ignore_errors: yes
+    register: account_not_created_2

@@ -401,12 +401,12 @@ class ACMEAccount(object):
             self.jws_header.pop('jwk')
             self.jws_header['kid'] = self.uri
 
-    def _new_reg(self, contact=None, agreement=None, terms_agreed=False):
+    def _new_reg(self, contact=None, agreement=None, terms_agreed=False, allow_creation=True):
         '''
         Registers a new ACME account. Returns True if the account was
         created and False if it already existed (e.g. it was not newly
         created).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.3
         '''
         contact = [] if contact is None else contact
 
@@ -424,6 +424,8 @@ class ACMEAccount(object):
             new_reg = {
                 'contact': contact
             }
+            if not allow_creation:
+                new_reg['onlyReturnExisting'] = True
             if terms_agreed:
                 new_reg['termsOfServiceAgreed'] = True
             url = self.directory['newAccount']
@@ -432,25 +434,57 @@ class ACMEAccount(object):
         if 'location' in info:
             self.set_account_uri(info['location'])
 
-        if info['status'] in [200, 201]:
+        if info['status'] in ([200, 201] if self.version == 1 else [201]):
             # Account did not exist
             return True
-        elif info['status'] == 409:
+        elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
+            return False
+        elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
+            # Account does not exist (and we didn't try to create it)
             return False
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 
-    def init_account(self, contact, agreement=None, terms_agreed=False):
+    def get_account_data(self):
         '''
-        Create or update an account on the ACME server. As the only way
-        (without knowing an account URI) to test if an account exists
-        is to try and create one with the provided account key, this
-        method will always result in an account being present (except
-        on error situations). If the account already exists, it will
-        update the contact information. Return True in case something
-        changed (account was created, contact info updated).
-        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.3
+        Retrieve account information. Can only be called when the account
+        URI is already known (such as after calling init_account).
+        Return None if the account was deactivated, or a dict otherwise.
+        '''
+        if self.uri is None:
+            raise ModuleFailException("Account URI unknown")
+        data = {}
+        if self.version == 1:
+            data['resource'] = 'reg'
+        result, info = self.send_signed_request(self.uri, data)
+        if info['status'] == 403 and result.get('type') == 'urn:ietf:params:acme:error:unauthorized':
+            return None
+        if info['status'] < 200 or info['status'] >= 300:
+            raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
+        return result
+
+    def init_account(self, contact, agreement=None, terms_agreed=False, allow_creation=True, update_contact=True):
+        '''
+        Create or update an account on the ACME server. For ACME v1,
+        as the only way (without knowing an account URI) to test if an
+        account exists is to try and create one with the provided account
+        key, this method will always result in an account being present
+        (except on error situations). For ACME v2, a new account will
+        only be created if allow_creation is set to True.
+
+        For ACME v2, check_mode is fully respected. For ACME v1, the account
+        might be created if it does not yet exist.
+
+        If the account already exists and if update_contact is set to
+        True, this method will update the contact information.
+
+        Return True in case something changed (account was created, contact
+        info updated) or would be changed (check_mode). The account URI
+        will be stored in self.uri; if it is None, the account does not
+        exist.
+
+        https://tools.ietf.org/html/draft-ietf-acme-acme-10#section-7.3
         '''
 
         new_account = True
@@ -458,15 +492,21 @@ class ACMEAccount(object):
         if self.uri is not None:
             new_account = False
         else:
-            new_account = self._new_reg(contact, agreement=agreement, terms_agreed=terms_agreed)
-        if not new_account:
-            # pre-existing account, get account data...
-            data = {}
-            if self.version == 1:
-                data['resource'] = 'reg'
-            result, info = self.send_signed_request(self.uri, data)
-            if info['status'] < 200 or info['status'] >= 300:
-                raise ModuleFailException("Error getting account data from {2}: {0} {1}".format(info['status'], result, self.uri))
+            new_account = self._new_reg(
+                contact,
+                agreement=agreement,
+                terms_agreed=terms_agreed,
+                allow_creation=allow_creation and not self.module.check_mode
+            )
+            if self.module.check_mode and self.uri is None and allow_creation:
+                return True
+        if not new_account and self.uri and update_contact:
+            result = self.get_account_data()
+            if result is None:
+                if not allow_creation:
+                    self.uri = None
+                    return False
+                raise ModuleFailException("Account is deactivated!")
 
             # ...and check if update is necessary
             do_update = False
@@ -477,9 +517,9 @@ class ACMEAccount(object):
                 do_update = True
 
             if do_update:
-                upd_reg = result
-                upd_reg['contact'] = contact
-                result, dummy = self.send_signed_request(self.uri, upd_reg)
-                self.changed = True
+                if not self.module.check_mode:
+                    upd_reg = result
+                    upd_reg['contact'] = contact
+                    result, dummy = self.send_signed_request(self.uri, upd_reg)
                 changed = True
         return new_account or changed
