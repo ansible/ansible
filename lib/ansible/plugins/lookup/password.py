@@ -218,11 +218,9 @@ def _check_complexity(characters, password):
                 foundCharSpec = True
                 break
 
-        foundAllRequired=foundAllRequired & foundCharSpec
+        foundAllRequired = foundAllRequired & foundCharSpec
 
     return foundAllRequired
-
-
 
 def _random_salt():
     """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
@@ -311,7 +309,7 @@ class LookupModule(LookupBase):
 
                 if plaintext_password is None:
                     raise AnsibleError(
-                        'Unuable to generate password of sufficient complexity in {} tries'.format(COMPLEXITY_RETRIES))
+                        'Unuable to generate password of sufficient complexity in {0} tries'.format(COMPLEXITY_RETRIES))
                 salt = None
                 changed = True
             else:
