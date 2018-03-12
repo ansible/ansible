@@ -208,6 +208,7 @@ options:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
               determines if the public IP address remains permanently associated with the Network Interface. If set
               to 'Dynamic' the public IP address may change any time the VM is rebooted or power cycled.
+              'Disabled' was added in Ansible 2.6.
         choices:
             - Dynamic
             - Static
@@ -1648,11 +1649,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if not subnet_id:
                 self.fail(no_subnets_msg)
 
+        pip = None
         if self.public_ip_allocation_method != 'Disabled':
             self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-            pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
-        else:
-            pip = None
+            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
+            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid)
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
@@ -1671,9 +1672,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
                                                                                      location=group.location,
                                                                                      resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = None if pip is None else self.network_models.PublicIPAddress(id=pip.id,
-                                                                                                                         location=pip.location,
-                                                                                                                         resource_guid=pip.resource_guid)
+        parameters.ip_configurations[0].public_ip_address = pip
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
