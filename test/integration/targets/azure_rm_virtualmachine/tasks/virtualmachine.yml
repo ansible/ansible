@@ -94,7 +94,7 @@
 
 - assert:
       that:
-        - azure_vm.properties.xxx
+        - output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress == None
 
 - name: Create virtual machine
   register: output
