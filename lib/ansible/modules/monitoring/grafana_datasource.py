@@ -429,8 +429,8 @@ def grafana_delete_datasource(module, data):
         else:
             raise GrafanaAPIException('Unable to update the datasource id %s : %s' % (ds['id'], info))
     else:
-        # datasource does not exists : do nothing
-        result = {'msg': "Datasource %s does not exists" % data['name'],
+        # datasource does not exist, do nothing
+        result = {'msg': "Datasource %s does not exist." % data['name'],
                   'changed': False,
                   'id': 0,
                   'name': data['name']}

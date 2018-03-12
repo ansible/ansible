@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exists in Gitlab, it will be created.
+   - When the group does not exist in Gitlab, it will be created.
    - When the group does exists and state=absent, the group will be deleted.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
@@ -209,7 +209,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+            module.exit_json(changed=False, result="Group deleted or does not exist")
         else:
             if group_exists:
                 module.exit_json(changed=False)

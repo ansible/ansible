@@ -56,7 +56,7 @@ notes:
 EXAMPLES = '''
 # Example playbook entries using the ejabberd_user module to manage users state.
 
-- name: create a user if it does not exists
+- name: create a user if it does not exist
   ejabberd_user:
     username: test
     host: server

@@ -439,7 +439,7 @@ class StorageDomainModule(BaseModule):
         # Get data center object of the storage domain:
         dcs_service = self._connection.system_service().data_centers_service()
 
-        # Search the data_center name, if it does not exists, try to search by guid.
+        # Search the data_center name, if it does not exist, try to search by guid.
         dc = search_by_name(dcs_service, dc_name)
         if dc is None:
             dc = get_entity(dcs_service.service(dc_name))
