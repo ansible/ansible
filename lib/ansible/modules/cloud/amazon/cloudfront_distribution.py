@@ -1540,6 +1540,8 @@ class CloudFrontValidationManager(object):
                 forwarded_values = dict()
             existing_config = config.get('forwarded_values', {})
             headers = forwarded_values.get('headers', existing_config.get('headers', {}).get('items'))
+            if headers:
+                headers.sort()
             forwarded_values['headers'] = ansible_list_to_cloudfront_list(headers)
             if 'cookies' not in forwarded_values:
                 forward = existing_config.get('cookies', {}).get('forward', self.__default_cache_behavior_forwarded_values_forward_cookies)
