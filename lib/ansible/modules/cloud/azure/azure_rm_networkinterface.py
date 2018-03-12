@@ -173,62 +173,62 @@ author:
 EXAMPLES = '''
     - name: Create a network interface with minimal parameters
       azure_rm_networkinterface:
-            name: nic001
-            resource_group: Testing
-            virtual_network_name: vnet001
-            subnet_name: subnet001
-            ip_configurations:
-                name: ipconfig1
-                public_ip_address_name: publicip001
-                primary: True
+        name: nic001
+        resource_group: Testing
+        virtual_network_name: vnet001
+        subnet_name: subnet001
+        ip_configurations:
+          - name: ipconfig1
+            public_ip_address_name: publicip001
+            primary: True
 
     - name: Create a network interface with private IP address only (no Public IP)
       azure_rm_networkinterface:
-            name: nic001
-            resource_group: Testing
-            virtual_network_name: vnet001
-            subnet_name: subnet001
-            ip_configurations:
-                name: ipconfig1
-                primary: True
+        name: nic001
+        resource_group: Testing
+        virtual_network_name: vnet001
+        subnet_name: subnet001
+        ip_configurations:
+          - name: ipconfig1
+            primary: True
 
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
       azure_rm_networkinterface:
-            name: nic002
-            resource_group: Testing
-            virtual_network_name: vnet001
-            subnet_name: subnet001
-            os_type: Windows
-            rdp_port: 3399
-            ip_configurations:
-                name: ipconfig1
-                public_ip_address_name: publicip001
-                primary: True
+        name: nic002
+        resource_group: Testing
+        virtual_network_name: vnet001
+        subnet_name: subnet001
+        os_type: Windows
+        rdp_port: 3399
+        ip_configurations:
+          - name: ipconfig1
+            public_ip_address_name: publicip001
+            primary: True
 
     - name: Create a network interface using existing security group and public IP
       azure_rm_networkinterface:
-            name: nic003
-            resource_group: Testing
-            virtual_network_name: vnet001
-            subnet_name: subnet001
-            security_group_name: secgroup001
-            ip_configurations:
-                name: ipconfig1
-                public_ip_address_name: publicip001
-                primary: True
+        name: nic003
+        resource_group: Testing
+        virtual_network_name: vnet001
+        subnet_name: subnet001
+        security_group_name: secgroup001
+        ip_configurations:
+          - name: ipconfig1
+            public_ip_address_name: publicip001
+            primary: True
 
     - name: Create a network with mutilple ip configurations
       azure_rm_networkinterface:
-            name: nic004
-            resource_group: Testing
-            subnet_name: subnet001
-            virtual_network_name: vnet001
-            security_group_name: secgroup001
-            ip_configurations:
-                - name: ipconfig1
-                  public_ip_address_name: publicip001
-                  primary: True
-                - name: ipconfig2
+        name: nic004
+        resource_group: Testing
+        subnet_name: subnet001
+        virtual_network_name: vnet001
+        security_group_name: secgroup001
+        ip_configurations:
+          - name: ipconfig1
+            public_ip_address_name: publicip001
+            primary: True
+          - name: ipconfig2
 
     - name: Delete network interface
       azure_rm_networkinterface:
