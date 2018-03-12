@@ -1006,7 +1006,7 @@ class PyVmomiHelper(PyVmomi):
                                           " a VLAN name under VM network list.")
 
             if 'name' in network and find_obj(self.content, [vim.Network], network['name']) is None:
-                self.module.fail_json(msg="Network '%(name)s' does not exists" % network)
+                self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
             elif 'vlan' in network:
                 dvps = self.cache.get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
                 for dvp in dvps:
@@ -1353,7 +1353,7 @@ class PyVmomiHelper(PyVmomi):
                 ident.guiRunOnce.commandList = self.params['customization']['runonce']
 
         else:
-            # FIXME: We have no clue whether this non-Windows OS is actually Linux, hence it might fail !
+            # FIXME: We have no clue whether this non-Windows OS is actually Linux, hence it might fail!
 
             # For Linux guest OS, use LinuxPrep
             # https://pubs.vmware.com/vi3/sdk/ReferenceGuide/vim.vm.customization.LinuxPrep.html
@@ -1372,7 +1372,7 @@ class PyVmomiHelper(PyVmomi):
         self.customspec.identity = ident
 
     def get_vm_scsi_controller(self, vm_obj):
-        # If vm_obj doesn't exists no SCSI controller to find
+        # If vm_obj doesn't exist there is no SCSI controller to find
         if vm_obj is None:
             return None
 

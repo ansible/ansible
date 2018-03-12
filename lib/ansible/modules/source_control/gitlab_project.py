@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_project
 short_description: Creates/updates/deletes Gitlab Projects
 description:
-   - When the project does not exists in Gitlab, it will be created.
+   - When the project does not exist in Gitlab, it will be created.
    - When the project does exists and state=absent, the project will be deleted.
    - When changes are made to the project, the project will be updated.
 version_added: "2.1"
@@ -397,7 +397,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Project deleted or does not exists")
+            module.exit_json(changed=False, result="Project deleted or does not exist")
         else:
             if project.createOrUpdateProject(project_exists, group_name, import_url, arguments):
                 module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name)

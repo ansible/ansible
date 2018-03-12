@@ -809,15 +809,15 @@ class Interface(object):
                     # delete interface
                     self.delete_interface(self.interface)
                 else:
-                    # interface does not exists
+                    # interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
 
             else:       # default
                 if not self.intf_info:
-                    # error, interface does not exists
+                    # error, interface does not exist
                     self.module.fail_json(
-                        msg='Error: interface does not exists.')
+                        msg='Error: interface does not exist.')
                 else:
                     self.default_interface(self.interface)
 
