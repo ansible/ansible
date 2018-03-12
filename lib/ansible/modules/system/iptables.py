@@ -106,11 +106,15 @@ options:
     description:
       - TCP flags specification.
       - C(tcp_flags) expects a dict with the two keys C(flags) and C(flags_set).
-        - The C(flags) list is the mask, a list of flags you want to examine.
-        - The C(flags_set) list tells which one(s) should be set.
-        If one of the two values is missing, the --tcp-flags option will be ignored.
     default: {}
     version_added: "2.4"
+    suboptions:
+        flags:
+            description:
+                - List of flags you want to examine.
+        flags_set:
+            description:
+                - Flags to be set.
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -373,7 +377,7 @@ def append_param(rule, param, flag, is_list):
 def append_tcp_flags(rule, param, flag):
     if param:
         if 'flags' in param and 'flags_set' in param:
-            rule.extend([flag, param['flags'], param['flags_set']])
+            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 
 def append_match_flag(rule, param, flag, negatable):
@@ -518,7 +522,11 @@ def main():
             destination=dict(type='str'),
             to_destination=dict(type='str'),
             match=dict(type='list', default=[]),
-            tcp_flags=dict(type='dict', default={}),
+            tcp_flags=dict(type='dict', default={},
+                           options=dict(
+                                flags=dict(type='list'),
+                                flags_set=dict(type='list'))
+                           ),
             jump=dict(type='str'),
             log_prefix=dict(type='str'),
             goto=dict(type='str'),
@@ -604,6 +612,7 @@ def main():
                 remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
+
 
 if __name__ == '__main__':
     main()
