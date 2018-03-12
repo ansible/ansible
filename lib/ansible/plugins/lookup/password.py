@@ -222,6 +222,7 @@ def _check_complexity(characters, password):
 
     return foundAllRequired
 
+
 def _random_salt():
     """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
     """
