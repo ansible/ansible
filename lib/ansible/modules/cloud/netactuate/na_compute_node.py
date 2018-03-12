@@ -569,6 +569,9 @@ def main():
 
     auth_token = module.params.get('auth_token')
 
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg="Failed to import module libcloud")
+
     hv_driver = get_driver(Provider.HOSTVIRTUAL)
     conn = hv_driver(auth_token)
 
@@ -587,9 +590,6 @@ def main():
     h_params = {}
 
     # put state into h_params too
-    state = module.params.get('state').lower()
-    if state == 'absent':
-        state = 'terminated'
     h_params['state'] = module.params.get('state').lower()
 
     # get and check the hostname, raises exception if fails
