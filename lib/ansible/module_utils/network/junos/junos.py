@@ -180,9 +180,9 @@ def locked_config(module):
         unlock_configuration(module)
 
 
-def discard_changes(module, exit=False):
+def discard_changes(module):
     conn = get_connection(module)
-    return conn.discard_changes(exit=exit)
+    return conn.discard_changes()
 
 
 def get_diff(module, rollback='0'):
