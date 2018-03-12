@@ -20,7 +20,7 @@ import json
 import collections
 
 import pytest
-from . placebo_fixtures import placeboify, maybe_sleep
+from units.utils.amazon_placebo_fixtures import placeboify, maybe_sleep
 
 from ansible.modules.cloud.amazon import data_pipeline
 from ansible.module_utils._text import to_text
