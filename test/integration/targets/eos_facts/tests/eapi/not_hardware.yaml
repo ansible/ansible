@@ -1,6 +1,11 @@
 ---
 - debug: msg="START eapi/not_hardware_facts.yaml"
 
+- name: Make sure LLDP is running (setup)
+  eos_config:
+    lines: lldp run
+    authorize: yes
+    provider: "{{ eapi }}"
 
 - name: test not hardware
   eos_facts:
@@ -26,5 +31,11 @@
       - "result.ansible_facts.ansible_net_interfaces.Management1.ipv4.masklen > 1" # interfaces
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
+
+- name: Make sure LLDP is running (teardown)
+  eos_config:
+    lines: no lldp run
+    authorize: yes
+    provider: "{{ eapi }}"
 
 - debug: msg="END eapi/not_hardware_facts.yaml"
