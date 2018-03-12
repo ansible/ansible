@@ -37,11 +37,13 @@ options:
         description:
             - Name of the namespace
     interfaces:
+        version_added: 2.6
         required: False
-        default: None
+        default: []
         description:
             - List of interface names that need to be part of the namespace
     operation:
+        version_added: 2.6
         required: False
         choices: ['add', 'remove']
         default: add
@@ -212,7 +214,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, type='str'),
-            interfaces=dict(required=False, default=None, type='list'),
+            interfaces=dict(required=False, default=[], type='list'),
             operation=dict(required=False, default='add', choices=['add', 'remove']),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
         ),
