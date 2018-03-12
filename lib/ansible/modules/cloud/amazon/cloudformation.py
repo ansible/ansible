@@ -33,7 +33,8 @@ options:
     choices: [ "true", "false" ]
   template_parameters:
     description:
-      - a list of hashes of all the template variables for the stack
+      - a list of hashes of all the template variables for the stack. The value can be a string or a dict.
+        Dict can be used to set additional template parameter attributes like UsePreviousValue (see example)
     required: false
     default: {}
   state:
@@ -197,6 +198,24 @@ EXAMPLES = '''
       ClusterSize: 3
     tags:
       Stack: ansible-cloudformation
+
+# Pass a template parameter which uses Cloudformation's UsePreviousValue attribute
+# When use_previous_value is set to True, the given value will be ignored and
+# Cloudformation will use the value from a previously submitted template.
+# If use_previous_value is set to False (default) the given value is used.
+- cloudformation:
+    stack_name: "ansible-cloudformation"
+    state: "present"
+    region: "us-east-1"
+    template: "files/cloudformation-example.json"
+    template_parameters:
+      DBSnapshotIdentifier:
+        use_previous_value: True
+        value: arn:aws:rds:es-east-1:000000000000:snapshot:rds:my-db-snapshot
+      DBName:
+        use_previous_value: True
+    tags:
+      Stack: "ansible-cloudformation"
 
 # Enable termination protection on a stack.
 # If the stack already exists, this will update its termination protection
@@ -586,7 +605,24 @@ def main():
         stack_params['StackPolicyBody'] = open(module.params['stack_policy'], 'r').read()
 
     template_parameters = module.params['template_parameters']
-    stack_params['Parameters'] = [{'ParameterKey': k, 'ParameterValue': str(v)} for k, v in template_parameters.items()]
+
+    stack_params['Parameters'] = []
+    for k, v in template_parameters.items():
+        if isinstance(v, dict):
+            # set parameter based on a dict to allow additional CFN Parameter Attributes
+            param = dict(ParameterKey=k)
+
+            if 'value' in v:
+                param['ParameterValue'] = str(v['value'])
+
+            if 'use_previous_value' in v and bool(v['use_previous_value']):
+                param['UsePreviousValue'] = True
+                param.pop('ParameterValue', None)
+
+            stack_params['Parameters'].append(param)
+        else:
+            # allow default k/v configuration to set a template parameter
+            stack_params['Parameters'].append({'ParameterKey': k, 'ParameterValue': str(v)})
 
     if isinstance(module.params.get('tags'), dict):
         stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
