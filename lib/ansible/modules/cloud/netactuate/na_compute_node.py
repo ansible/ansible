@@ -5,6 +5,9 @@
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -12,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: na_compute_node
-version_added: '2.6.0'
+version_added: "2.6.0"
 short_description: Manage virtual machines on NetActuate infrastructure.
 description:
     - Deploy newly purchaced packages.
@@ -101,15 +104,19 @@ import time
 import os
 import re
 import json
-from libcloud.compute.base import NodeAuthSSHKey
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
 from ansible.module_utils.basic import AnsibleModule
+try:
+    from libcloud.compute.base import NodeAuthSSHKey
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
+    HAS_LIBCLOUD = True
+except Exception:
+    HAS_LIBCLOUD = False
 
 HOSTVIRTUAL_API_KEY_ENV_VAR = "HOSTVIRTUAL_API_KEY"
 
-NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', '[a-zA-Z0-9\-]')
-HOSTNAME_RE = '({0}\.)*{0}$'.format(NAME_RE)
+NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', r'[a-zA-Z0-9\-]')
+HOSTNAME_RE = r'({0}\.)*{0}$'.format(NAME_RE)
 MAX_DEVICES = 100
 
 ALLOWED_STATES = ['building', 'pending', 'running', 'stopping', 'present',
@@ -132,9 +139,9 @@ def _get_valid_hostname(module):
     """
     hostname = module.params.get('hostname')
     if re.match(HOSTNAME_RE, hostname) is None:
-        module.fail_json(msg="Invalid hostname: {}"
+        module.fail_json(msg="Invalid hostname: {0}"
                          .format(module.params.get('hostname')))
-        raise Exception("Invalid hostname: {}".format(hostname))
+        raise Exception("Invalid hostname: {0}".format(hostname))
     return hostname
 
 
@@ -145,8 +152,8 @@ def _get_ssh_auth(module):
         auth = NodeAuthSSHKey(pubkey=key)
         return auth.pubkey
     except Exception as e:
-        module.fail_json(msg="Could not load ssh_public_key for {},"
-                         "Error was: {}"
+        module.fail_json(msg="Could not load ssh_public_key for {0},"
+                         "Error was: {1}"
                          .format(module.params.get('hostname'), str(e)))
 
 
@@ -237,16 +244,14 @@ def _get_node_stub(module=None, hv_conn=None, node_id=None):
     try:
         node_stub = hv_conn.ex_get_node(node_id)
     except Exception as e:
-        module.fail_json(msg="Failed to get node {}"
-                         "with error: {}"
+        module.fail_json(msg="Failed to get node {0} with error: {1}"
                          .format(module.params.get('hostname'), str(e)))
     return node_stub
 
 
 def _wait_for_state(
-            module=None, hv_conn=None, node_id=None,
-            timeout=600, interval=10.0,
-            desired_state=None
+    module=None, hv_conn=None, node_id=None,
+    timeout=600, interval=10.0, desired_state=None
         ):
     """Called after do_build_node to wait to make sure it built OK
     Arguments:
@@ -263,8 +268,8 @@ def _wait_for_state(
             if try_node.state == desired_state:
                 break
         except Exception as e:
-            module.fail_json(msg="Somehow failed to get node {} for checking"
-                             "state. Got error: {}"
+            module.fail_json(msg="Somehow failed to get node {0} for checking"
+                             "state. Got error: {1}"
                              .format(module.params.get('hostname'), str(e)))
         time.sleep(interval)
     return try_node
@@ -307,7 +312,7 @@ def do_build_new_node(module, hv_conn, h_parms):
                     method='POST'
                 ).object
     except Exception as e:
-        module.fail_json(msg="Failed to build node for node {} with: {}"
+        module.fail_json(msg="Failed to build node for node {0} with: {1}"
                          .format(h_parms['hostname'], str(e)))
 
     # get the new version of the node, hopefully showing
@@ -345,7 +350,7 @@ def do_build_absent_node(module, hv_conn, node_stub, h_parms):
                     method='POST'
                 ).object
     except Exception:
-        _msg = "Failed to build node for mbpkgid {}".format(node_stub.id)
+        _msg = "Failed to build node for mbpkgid {0}".format(node_stub.id)
         raise Exception(_msg)
 
     # get the new version of the node, hopefully showing
@@ -382,8 +387,8 @@ def do_build_absent_node(module, hv_conn, node_stub, h_parms):
 #
 ###
 def ensure_node_running(
-            module=None, hv_conn=None,
-            node_stub=None, h_parms=None
+    module=None, hv_conn=None,
+    node_stub=None, h_parms=None
         ):
     """Called when we want to just make sure the node is running"""
     changed = False
@@ -474,11 +479,11 @@ def ensure_node_absent(module=None, hv_conn=None, node_stub=None):
         try:
             deleted = hv_conn.ex_delete_node(node=node)
         except Exception as e:
-            module.fail_json(msg="Failed to call delete node on {},"
-                             "with error: {}"
+            module.fail_json(msg="Failed to call delete node on {0},"
+                             "with error: {1}"
                              .format(module.params.get('hostname'), str(e)))
         if not deleted:
-            module.fail_json(msg="Seems we had trouble deleting the node {}"
+            module.fail_json(msg="Seems we had trouble deleting the node {0}"
                              .format(module.params.get('hostname')))
         else:
             # wait for the node to say it's absent
@@ -516,7 +521,7 @@ def ensure_state(
             desired_state='running',
             module=None,
             hv_conn=None,
-            h_parms={}
+            h_parms=None
         ):
     """Main function call that will check desired state
     and call the appropriate function and handle the respones back to main.
@@ -669,8 +674,8 @@ def main():
                                 desired_state=desired_state, module=module,
                                 hv_conn=hv_conn, h_parms=h_parms))
     except Exception as e:
-        _fail_msg = ("failed to set machine state for node {}"
-                     "to {}. Error was: {}"
+        _fail_msg = ("failed to set machine state for node {0}"
+                     "to {1}. Error was: {2}"
                      .format(h_parms['hostname'], desired_state, str(e)))
         module.fail_json(msg=_fail_msg)
     ###
