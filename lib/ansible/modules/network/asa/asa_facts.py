@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+# Copyright: (c) 2018, Narate Pokasub <narate.pokasub@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -9,7 +15,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: asa_facts
-version_added: "2.4.0"
+version_added: "2.6"
 author: "Narate Pokasub (@npokasub)"
 short_description: Collect facts from remote devices running Cisco ASA
 description:
@@ -35,17 +41,17 @@ options:
 """
 
 EXAMPLES = """
-# Collect all facts from the device
-- asa_facts:
+- name: Collect all facts from the device
+  asa_facts:
     gather_subset: all
 
-# Collect only the config and default facts
-- asa_facts:
+- name: Collect only the config and default facts
+  asa_facts:
     gather_subset:
       - config
 
-# Do not collect hardware facts
-- asa_facts:
+- name: Do not collect hardware facts
+  asa_facts:
     gather_subset:
       - "!hardware"
 """
@@ -104,6 +110,7 @@ from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
+
 class FactsBase(object):
 
     COMMANDS = list()
@@ -118,6 +125,7 @@ class FactsBase(object):
 
     def run(self, cmd):
         return run_commands(self.module, commands=cmd, check_rc=False)
+
 
 class Default(FactsBase):
 
@@ -168,6 +176,7 @@ class Default(FactsBase):
         if match:
             self.facts['stacked_serialnums'] = match
 
+
 class Hardware(FactsBase):
 
     COMMANDS = [
@@ -183,6 +192,7 @@ class Hardware(FactsBase):
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
 
+
 class Config(FactsBase):
 
     COMMANDS = ['show running-config']
@@ -192,6 +202,7 @@ class Config(FactsBase):
         data = self.responses[0]
         if data:
             self.facts['config'] = data
+
 
 class Interfaces(FactsBase):
 
@@ -207,7 +218,7 @@ class Interfaces(FactsBase):
         if data:
             interfaces = self.parse_interfaces(data)
             self.facts['interfaces'] = self.populate_interfaces(interfaces)
- 
+
     def populate_interfaces(self, interfaces):
         facts = dict()
         for key, value in iteritems(interfaces):
@@ -300,7 +311,7 @@ def main():
 
     argument_spec.update(asa_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec, 
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     warnings = list()
