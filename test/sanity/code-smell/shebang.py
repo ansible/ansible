@@ -23,6 +23,10 @@ def main():
         '.ps1': b'#!powershell',
     }
 
+    alternative_shebangs = {
+        '.ps1': b'#!powershell\r',
+    }
+
     skip = set([
         'hacking/cherrypick.py',
     ])
@@ -57,11 +61,16 @@ def main():
             if is_module:
                 ext = os.path.splitext(path)[1]
                 expected_shebang = module_shebangs.get(ext)
+                alternative_shebang = alternative_shebangs.get(ext)
                 expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
 
                 if expected_shebang:
                     if shebang == expected_shebang:
                         continue
+                    if alternative_shebang:
+                        if shebang == alternative_shebang:
+                           continue
+                        print('%s:%d:%d: expected module shebang "%s" or "%s" but found: %s' % (path, 1, 1, expected_shebang, alternative_shebang, shebang))
 
                     print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
                 else:
