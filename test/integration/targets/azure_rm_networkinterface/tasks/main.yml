@@ -146,7 +146,6 @@
 
 - assert:
     that:
-      - not output.state.ip_configuration
       - output.state.ip_configurations | length == 0
 
 - name: Delete the NIC (check mode)
