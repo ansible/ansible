@@ -236,7 +236,7 @@ class OSXDefaults(object):
         # First try to find out the type
         rc, out, err = self.module.run_command(self._base_command() + ["read-type", self.domain, self.key])
 
-        # If RC is 1, the key does not exists
+        # If RC is 1, the key does not exist
         if rc == 1:
             return None
 

@@ -65,7 +65,7 @@
   assert:
     that:
         - "not non_existent_network.changed"
-        - "\"Network 'Non existent VM' does not exists\" in non_existent_network.msg"
+        - "\"Network 'Non existent VM' does not exist\" in non_existent_network.msg"
 
 - name: create new VMs with network and with only IP
   vmware_guest:

@@ -192,7 +192,7 @@ class VMwareLocalRoleManager(PyVmomi):
                                                                       failIfUsed=self.force)
         except vim.fault.NotFound as e:
             self.module.fail_json(msg="Failed to remove a role %s as the user specified role name "
-                                      "does not exists." % self.role_name,
+                                      "does not exist." % self.role_name,
                                   details=e.msg)
         except vim.fault.RemoveFailed as e:
             msg = "Failed to remove a role %s as the user specified role name." % self.role_name

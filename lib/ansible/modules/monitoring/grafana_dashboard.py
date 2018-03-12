@@ -242,8 +242,8 @@ def grafana_delete_dashboard(module, data):
         else:
             raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (data['slug'], info))
     else:
-        # dashboard does not exists : do nothing
-        result = {'msg': "Dashboard %s does not exists" % data['slug'],
+        # dashboard does not exist, do nothing
+        result = {'msg': "Dashboard %s does not exist." % data['slug'],
                   'changed': False,
                   'slug': data['slug']}
 
@@ -274,7 +274,7 @@ def grafana_export_dashboard(module, data):
                   'slug': data['slug'],
                   'changed': True}
     else:
-        result = {'msg': "Dashboard %s does not exists" % data['slug'],
+        result = {'msg': "Dashboard %s does not exist." % data['slug'],
                   'slug': data['slug'],
                   'changed': False}
 

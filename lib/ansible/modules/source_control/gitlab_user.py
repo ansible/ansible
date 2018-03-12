@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_user
 short_description: Creates/updates/deletes Gitlab Users
 description:
-   - When the user does not exists in Gitlab, it will be created.
+   - When the user does not exist in Gitlab, it will be created.
    - When the user does exists and state=absent, the user will be deleted.
    - When changes are made to user, the user will be updated.
 version_added: "2.1"
@@ -352,7 +352,7 @@ def main():
 
     # Check if user exists, if not exists and state = absent, we exit nicely.
     if not user.existsUser(user_username) and state == "absent":
-        module.exit_json(changed=False, result="User already deleted or does not exists")
+        module.exit_json(changed=False, result="User already deleted or does not exist")
     else:
         # User exists,
         if state == "absent":

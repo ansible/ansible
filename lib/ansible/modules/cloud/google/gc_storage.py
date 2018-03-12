@@ -387,7 +387,7 @@ def handle_delete(module, gs, bucket, obj):
             if key_check(module, gs, bucket, obj):
                 module.exit_json(msg="Object has been deleted.", changed=delete_key(module, gs, bucket, obj))
             else:
-                module.exit_json(msg="Object does not exists.", changed=False)
+                module.exit_json(msg="Object does not exist.", changed=False)
         else:
             module.exit_json(msg="Bucket does not exist.", changed=False)
     else:
