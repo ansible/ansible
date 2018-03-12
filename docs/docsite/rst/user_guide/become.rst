@@ -148,8 +148,8 @@ Ways to resolve this include:
 * Use :ref:`pipelining`.  When pipelining is enabled, Ansible doesn't save the
   module to a temporary file on the client.  Instead it pipes the module to
   the remote python interpreter's stdin. Pipelining does not work for
-  python modules involving file transfert (for example: :ref:`copy <copy>`,
-  :ref:`fetch <fetch>`, :ref:`template <template>`), nor for non-python modules.
+  python modules involving file transfer (for example: :ref:`copy <copy>`,
+  :ref:`fetch <fetch>`, :ref:`template <template>`), or for non-python modules.
 
 * (Available in Ansible 2.1) Install POSIX.1e filesystem acl support on the
   managed host.  If the temporary directory on the remote host is mounted with
