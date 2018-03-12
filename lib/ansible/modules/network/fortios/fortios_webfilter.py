@@ -104,7 +104,6 @@ options:
                         description:
                             - Id of URL.
                         required: true
-                        type: integer
                     url:
                         description:
                             - URL to be filtered.
@@ -194,7 +193,7 @@ options:
                         required: true
                     pattern-type:
                         description:
-                            - Banned word pattern type: wildcard pattern or Perl regular expression.
+                            - Banned word pattern type. It can be a wildcard pattern or Perl regular expression.
                         required: true
                         choices:
                             - wildcard
