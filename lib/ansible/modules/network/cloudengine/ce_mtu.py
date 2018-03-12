@@ -472,7 +472,7 @@ class Mtu(object):
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
-            self.module.fail_json(msg='Error: interface does not exists.')
+            self.module.fail_json(msg='Error: interface does not exist.')
 
         # check interface
         if self.mtu and self.intf_info['isL2SwitchPort'] == 'true':

@@ -231,7 +231,7 @@ class VmwareDrs(PyVmomi):
     # Create
     def create(self):
         """
-        Function to create a DRS rule if rule does not exists
+        Function to create a DRS rule if rule does not exist
         """
         rule_obj = self.get_rule_key_by_name(rule_name=self.rule_name)
         if rule_obj is not None:

@@ -60,7 +60,7 @@ EXAMPLES = '''
     name: production
     state: present
 
-- name: tag a resource; creating the tag if it does not exists
+- name: tag a resource; creating the tag if it does not exist
   digital_ocean_tag:
     name: "{{ item }}"
     resource_id: "73333005"
