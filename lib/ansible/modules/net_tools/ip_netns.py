@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ip_netns
-version_added: 2.5
+version_added: 2.6
 author: "Arie Bregman (@bregman-arie)"
 short_description: Manage network namespaces
 requirements: [ ip ]
@@ -37,10 +37,16 @@ options:
         description:
             - Name of the namespace
     interfaces:
-        required: True
+        required: False
         default: None
         description:
             - List of interface names that need to be part of the namespace
+    operation:
+        required: False
+        choices: ['add', 'remove']
+        default: add
+        description:
+            - Whether interfaces should be add/deleted to/from namespace
     state:
         required: True
         choices: [ present, absent ]
