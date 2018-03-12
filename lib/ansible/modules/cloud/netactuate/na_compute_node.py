@@ -8,7 +8,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -44,7 +44,7 @@ options:
   state:
     description:
       - Desired state of the instance.
-    choices: [ present, running, stopped, absent ]
+    choices: [ present, running, stopped, terminated ]
   location:
     description:
       - Name or id of physical location the node should be built in.
@@ -120,7 +120,7 @@ HOSTNAME_RE = r'({0}\.)*{0}$'.format(NAME_RE)
 MAX_DEVICES = 100
 
 ALLOWED_STATES = ['building', 'pending', 'running', 'stopping', 'present',
-                  'rebooting', 'starting', 'absent', 'stopped']
+                  'rebooting', 'starting', 'terminated', 'stopped']
 
 # until the api gets fixed so it's more flexible
 API_ROOT = ''
@@ -243,9 +243,10 @@ def _get_node_stub(module, conn, h_params):
     node_stub = None
     try:
         node_stub = conn.ex_get_node(h_params['mbpkgid'])
-    except Exception as e:
-        module.fail_json(msg="Failed to get node {0} with error: {1}"
-                         .format(h_params['hostname'], str(e)))
+    except Exception:
+        # we don't want to fail from this function
+        # just return the default, None
+        pass
     return node_stub
 
 
@@ -264,10 +265,8 @@ def _wait_for_state(module, conn, h_params, state, timeout=60, interval=10):
             try_node = conn.ex_get_node(h_params['mbpkgid'])
             if try_node.state == state:
                 break
-        except Exception as e:
-            module.fail_json(msg="Somehow failed to get node {0} for checking"
-                             "state. Got error: {1}"
-                             .format(h_params['hostname'], str(e)))
+        except Exception:
+            pass
         time.sleep(interval)
     return try_node
 
@@ -320,7 +319,7 @@ def do_build_new_node(module, conn, h_params):
     return changed, node
 
 
-def do_build_absent_node(module, conn, h_params, node_stub):
+def do_build_terminated_node(module, conn, h_params, node_stub):
     """Build nodes that have been uninstalled
 
     NOTE: leaving here in case I need some code from here...
@@ -367,7 +366,7 @@ def do_build_absent_node(module, conn, h_params, node_stub):
 # Section: ensure_<state> functions
 #
 # all will build a node if it has never been built.
-# the oddest case would be ensure_absent (uninstalled) where the node
+# the oddest case would be ensure_terminated (uninstalled) where the node
 # has never been built. This would require building, which will create the node
 # on disk and then do a terminate call since we don't have a "setup_node"
 # type api call that configures the node, get's it's IP, sets up which dom0 it
@@ -379,15 +378,15 @@ def ensure_node_running(module, conn, h_params, node_stub):
     changed = False
     node = node_stub
     if node.state != 'running':
-        # first build the node if it is in state 'absent'
-        if node.state == 'absent':
-            # do_build_absent_node handles waiting for it to finish
+        # first build the node if it is in state 'terminated'
+        if node.state == 'terminated':
+            # do_build_terminated_node handles waiting for it to finish
             # also note, this call should start it so we don't need to
             # do it again below
-            changed, node = do_build_absent_node(module, conn, h_params, node_stub)
+            changed, node = do_build_terminated_node(module, conn, h_params, node_stub)
         else:
             # node is installed so boot it up.
-            running = conn.connection.ex_start_node(h_params['mbpkgid'])
+            running = conn.ex_start_node(node_stub)
             # if we don't get a positive response we need to bail
             if not running:
                 raise Exception("Seems we had trouble starting the node")
@@ -411,42 +410,36 @@ def ensure_node_stopped(module, conn, h_params, node_stub):
             raise Exception("Seems we had trouble stopping the node")
         else:
             # wait for the node to say it's stopped.
-            node = _wait_for_state(
-                module=module,
-                conn=conn,
-                node_id=node.id,
-                state='stopped',
-                timeout=30,
-                interval=10.0
-            )
+            node = _wait_for_state(module, conn, h_params, 'running',
+                                   timeout=30, interval=10.0)
             changed = True
     return changed, node
 
 
 def ensure_node_present(module, conn, h_params, node_stub):
-    """Called when we want to just make sure that a node is NOT absent
+    """Called when we want to just make sure that a node is NOT terminated
     """
     # default state
     changed = False
     node = node_stub
 
-    # only do anything if the node.state == 'absent'
+    # only do anything if the node.state == 'terminated'
     # default is to leave 'changed' as False and return it and the node.
-    if node.state == 'absent':
+    if node.state == 'terminated':
         # otherwise,,, build the node.
-        changed, node = do_build_absent_node(module, conn, h_params, node_stub)
+        changed, node = do_build_terminated_node(module, conn, h_params, node_stub)
     return changed, node
 
 
-def ensure_node_absent(module, conn, h_params, node_stub):
+def ensure_node_terminated(module, conn, h_params, node_stub):
     """Ensure the node is not installed, uninstall it if it is installed
     """
     # default return values
     changed = False
     node = node_stub
 
-    # uninstall the node if it is not showing up as absent.
-    if node.state != 'absent':
+    # uninstall the node if it is not showing up as terminated.
+    if node.state != 'terminated':
         # uninstall the node
         try:
             deleted = conn.ex_delete_node(node=node)
@@ -458,15 +451,9 @@ def ensure_node_absent(module, conn, h_params, node_stub):
             module.fail_json(msg="Seems we had trouble deleting the node {0}"
                              .format(module.params.get('hostname')))
         else:
-            # wait for the node to say it's absent
-            node = _wait_for_state(
-                module=module,
-                conn=conn,
-                node_id=node.id,
-                state='termindated',
-                timeout=30,
-                interval=10.0
-            )
+            # wait for the node to say it's terminated
+            node = _wait_for_state(module, conn, h_params, 'running',
+                                   timeout=30, interval=10.0)
             changed = True
     return changed, node
 
@@ -507,7 +494,7 @@ def ensure_state(module, conn, h_params):
     # DIE if the node has never been built and we are being asked to uninstall
     # we can't uninstall the OS on a node that isn't even in the DB
     ###
-    if not node_stub and h_params['state'] == 'absent':
+    if not node_stub and h_params['state'] == 'terminated':
         module.fail_json(msg="Cannot uninstall a node that doesn't exist."
                          "Please build the package first,"
                          "then you can uninstall it.")
@@ -540,11 +527,11 @@ def ensure_state(module, conn, h_params):
 
         if h_params['state'] == 'present':
             # ensure that the node is installed, we can determine this by
-            # making sure it is built (not absent)
+            # making sure it is built (not terminated)
             changed, node_stub = ensure_node_present(module, conn, h_params, node_stub)
 
-        if h_params['state'] == 'absent':
-            changed, node_stub = ensure_node_absent(module, conn, h_params, node_stub)
+        if h_params['state'] == 'terminated':
+            changed, node_stub = ensure_node_terminated(module, conn, h_params, node_stub)
 
     # in order to return, we must have a node object and a status (changed) of
     # whether or not state has changed to the desired state
@@ -600,6 +587,9 @@ def main():
     h_params = {}
 
     # put state into h_params too
+    state = module.params.get('state').lower()
+    if state == 'absent':
+        state = 'terminated'
     h_params['state'] = module.params.get('state').lower()
 
     # get and check the hostname, raises exception if fails
