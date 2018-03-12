@@ -30,10 +30,10 @@ DOCUMENTATION = '''
 module: fortios_webfilter
 short_description: Configure webfilter capabilities of FortiGate and FortiOS.
 description:
-    - This module is able to configure a FortiGate or FortiOS by \
-    allowing the user to configure webfilter feature. For now it \
-    is able to handle url and content filtering capabilities. The \
-    module uses FortiGate REST API internally to configure the device.
+    - This module is able to configure a FortiGate or FortiOS by
+      allowing the user to configure webfilter feature. For now it
+      is able to handle url and content filtering capabilities. The
+      module uses FortiGate REST API internally to configure the device.
 
 version_added: "2.6"
 author:
@@ -152,7 +152,7 @@ options:
                         description:
                             - Web proxy profile.
                         required: true
-                    referrer-host
+                    referrer-host:
                         description:
                             - Referrer host name.
                         required: true
