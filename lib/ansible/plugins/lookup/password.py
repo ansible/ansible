@@ -101,6 +101,7 @@ from ansible.utils.path import makedirs_safe
 
 
 DEFAULT_LENGTH = 20
+COMPLEXITY_RETRIES = 25
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
 
 
@@ -205,10 +206,10 @@ def _gen_candidate_chars(characters):
 
 def _check_complexity(characters, password):
     foundAllRequired = True
-    #print("checking password: {}".format(password))
+    # print("checking password: {}".format(password))
     for chars_spec in characters:
         foundCharSpec = False
-        #print("checking {}".format(chars_spec))
+        # print("checking {}".format(chars_spec))
         charsset = to_text(getattr(string, to_native(chars_spec), chars_spec),
                            errors='strict')
 
@@ -301,17 +302,16 @@ class LookupModule(LookupBase):
 
             if content is None or b_path == to_bytes('/dev/null'):
 
-                for attempts in range(10):
+                for attempts in range(COMPLEXITY_RETRIES):
                     plaintext_password = random_password(params['length'], chars)
                     if _check_complexity(params['chars'], plaintext_password):
                         break
                     else:
-                        print("trying again!!!")
                         plaintext_password = None
 
                 if plaintext_password is None:
                     raise AnsibleError(
-                        'Unuable to generate password of sufficient complexity in 10 tries')
+                        'Unuable to generate password of sufficient complexity in {} tries'.format(COMPLEXITY_RETRIES))
                 salt = None
                 changed = True
             else:
