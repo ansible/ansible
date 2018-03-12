@@ -150,7 +150,7 @@ class OnyxVlanModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
-        self._get_os_version()
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         vlan_config = self._get_vlan_config()
         if not vlan_config:

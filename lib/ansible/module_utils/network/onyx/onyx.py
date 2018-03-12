@@ -170,7 +170,7 @@ class BaseOnyxModule(object):
 
     def _get_os_version(self):
         version_data = show_version(self._module)
-        self._os_version = self.get_config_attr(
+        return self.get_config_attr(
             version_data, "Product release")
 
     # pylint: disable=unused-argument
