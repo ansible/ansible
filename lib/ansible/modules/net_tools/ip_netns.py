@@ -33,12 +33,16 @@ description:
     - Create or delete network namespaces using the ip command.
 options:
     name:
-        required: false
+        required: True
         description:
             - Name of the namespace
+    interfaces:
+        required: True
+        default: None
+        description:
+            - List of interface names that need to be part of the namespace
     state:
-        required: false
-        default: "present"
+        required: True
         choices: [ present, absent ]
         description:
             - Whether the namespace should exist
@@ -47,13 +51,30 @@ options:
 EXAMPLES = '''
 # Create a namespace named mario
 - name: Create a namespace named mario
-  namespace:
+  ip_netns:
     name: mario
     state: present
+# Create a namespace name mario and add eth1, eth2 interfaces to it
+- name: Create a namespace named mario and add interfaces
+  ip_netns:
+    name: mario
+    interfaces:
+        - eth1
+        - eth2
+    operation: add
+    state: present
 - name: Delete a namespace named luigi
-  namespace:
+  ip_netns:
     name: luigi
     state: absent
+- name: Create a namespace named mario and remove interfaces
+  ip_netns:
+    name: mario
+    interfaces:
+        - eth1
+        - eth2
+    operation: remove
+    state: present
 '''
 
 RETURN = '''
@@ -61,41 +82,87 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
+import re
 
 class Namespace(object):
-    """Interface to network namespaces. """
+    """ Interface to network namespaces. """
 
     def __init__(self, module):
         self.module = module
         self.name = module.params['name']
+        self.interfaces = module.params['interfaces']
+        self.operation = module.params['operation']
         self.state = module.params['state']
 
+    def get_interfaces(self):
+        ''' Fetch list of interface names present in namespace '''
+        rc, ifconfig, err= self._netns_interface()
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        name = '^\d+:\s(\w+):\s.*'
+	regex = re.compile(name, flags=re.MULTILINE)
+        return  regex.findall(ifconfig.decode())
+
     def _netns(self, command):
-        '''Run ip nents command'''
+        ''' Run ip nents command '''
         return self.module.run_command(['ip', 'netns'] + command)
 
+    def _netns_interface(self, interface=None, op='ls'):
+        ''' List or add or remove interfaces inside namespace '''
+        if op.lower() == 'ls':
+            ''' list interfaces in the namespace '''
+            return self.module.run_command(['ip', 'netns', 'exec', self.name, 'ip', 'a', 's'])
+        elif op.lower() == 'add':
+            ''' Attach interfaces to the namespace '''
+            return self.module.run_command(['ip', 'link', 'set', interface, 'netns', self.name])
+        elif op.lower() == 'remove':
+            ''' Delete interfaces from the namespace '''
+            return self.module.run_command(['ip', 'netns', 'exec', self.name,  'ip', 'link', 'set', interface, 'netns', '1'])
+
     def exists(self):
-        '''Check if the namespace already exists'''
-        rtc, out, err = self._netns(['exec', self.name, 'ls'])
-        if rtc != 0:
+        ''' Check if the namespace already exists '''
+        rc, out, err = self._netns(['ls'])
+        if rc != 0:
             self.module.fail_json(msg=err)
+        return self.name in out.split('\n')
 
     def add(self):
-        '''Create network namespace'''
-        rtc, out, err = self._netns(['add', self.name])
+        ''' Create network namespace '''
+        rc, out, err = self._netns(['add', self.name])
 
-        if rtc != 0:
+        if rc != 0:
             self.module.fail_json(msg=err)
 
+    def op_interfaces(self, operation='add'):
+        ''' Add/Remove interfaces to/from the namespace '''
+        interface_changed = False
+        ns_interfaces = self.get_interfaces()
+        for interface in self.interfaces:
+            if operation == 'add':
+                if interface not in ns_interfaces:
+                    rc, out, err = self._netns_interface(interface, op='add')
+                    if rc != 0:
+                        self.module.fail_json(msg=err)
+                    interface_changed = True
+            elif operation == 'remove':
+                if interface in ns_interfaces:
+                    rc, out, err = self._netns_interface(interface, op='remove')
+                    if rc != 0:
+                        self.module.fail_json(msg=err)
+                    interface_changed = True
+                else:
+                    self.module.fail_json(msg='Interface {0} is not associated with namespace {1}'.format(interface, self.name))
+
+        return interface_changed
+
     def delete(self):
-        '''Delete network namespace'''
-        rtc, out, err = self._netns(['del', self.name])
-        if rtc != 0:
+        ''' Delete network namespace '''
+        rc, out, err = self._netns(['del', self.name])
+        if rc != 0:
             self.module.fail_json(msg=err)
 
     def check(self):
-        '''Run check mode'''
+        ''' Run check mode '''
         changed = False
 
         if self.state == 'present' and self.exists():
@@ -103,14 +170,16 @@ class Namespace(object):
 
         elif self.state == 'absent' and self.exists():
             changed = True
+
         elif self.state == 'present' and not self.exists():
             changed = True
 
         self.module.exit_json(changed=changed)
 
     def run(self):
-        '''Make the necessary changes'''
+        ''' Make the necessary changes '''
         changed = False
+        interface_changed = False
 
         if self.state == 'absent':
             if self.exists():
@@ -120,17 +189,27 @@ class Namespace(object):
             if not self.exists():
                 self.add()
                 changed = True
+            if self.exists() and self.interfaces:
+                if self.operation == 'add':
+                    interface_changed = self.op_interfaces()
+                elif self.operation == 'remove':
+                    interface_changed = self.op_interfaces(operation='remove')
 
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(changed=changed or interface_changed)
 
 
 def main():
-    """Entry point."""
+    """ Entry point. """
     module = AnsibleModule(
-        argument_spec={
-            'name': {'default': None},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-        },
+        argument_spec=dict(
+            name=dict(required=True, type='str'),
+            interfaces=dict(required=False, default=None, type='list'),
+            operation=dict(required=False, default='add', choices=['add', 'remove']),
+            state=dict(required=True, choices=['present', 'absent'], type='str'),
+        ),
+        required_together=(
+            ['interfaces', 'operation']
+        ),
         supports_check_mode=True,
     )
 
