@@ -195,9 +195,10 @@ notes:
 - This module will wait until the end process is finished unless
   I(asynchronous) is C(yes), make sure the process is run as a non-interactive
   command or send the exit command through the I(stdin) parameter.
-- When connecting to a desktop version of Windows like Windows 7 or 10, either
-  UAC needs to be disabled or C(LocalAccountTokenFilterPolicy) set to C(1)
-  U(https://support.microsoft.com/en-us/help/951016/description-of-user-account-control-and-remote-restrictions-in-windows).
+- The I(connection_username) must be a member of the local Administrator group
+  of the Windows host. For non-domain joined hosts, the
+  C(LocalAccountTokenFilterPolicy) should be set to C(1) to ensure this works,
+  see U(https://support.microsoft.com/en-us/help/951016/description-of-user-account-control-and-remote-restrictions-in-windows).
 - For more information on this module and the various host requirements, see
   U(https://github.com/jborean93/pypsexec).
 author:
