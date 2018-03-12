@@ -522,7 +522,7 @@ def main():
             destination=dict(type='str'),
             to_destination=dict(type='str'),
             match=dict(type='list', default=[]),
-            tcp_flags=dict(type='dict', default={},
+            tcp_flags=dict(type='dict',
                            options=dict(
                                 flags=dict(type='list'),
                                 flags_set=dict(type='list'))
