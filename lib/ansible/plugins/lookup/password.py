@@ -203,6 +203,26 @@ def _gen_candidate_chars(characters):
     return chars
 
 
+def _check_complexity(characters, password):
+    foundAllRequired = True
+    #print("checking password: {}".format(password))
+    for chars_spec in characters:
+        foundCharSpec = False
+        #print("checking {}".format(chars_spec))
+        charsset = to_text(getattr(string, to_native(chars_spec), chars_spec),
+                           errors='strict')
+
+        for i in range(len(charsset)):
+            if charsset[i] in password:
+                foundCharSpec = True
+                break
+
+        foundAllRequired=foundAllRequired & foundCharSpec
+
+    return foundAllRequired
+
+
+
 def _random_salt():
     """Return a text string suitable for use as a salt for the hash functions we use to encrypt passwords.
     """
@@ -280,7 +300,18 @@ class LookupModule(LookupBase):
             content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
-                plaintext_password = random_password(params['length'], chars)
+
+                for attempts in range(10):
+                    plaintext_password = random_password(params['length'], chars)
+                    if _check_complexity(params['chars'], plaintext_password):
+                        break
+                    else:
+                        print("trying again!!!")
+                        plaintext_password = None
+
+                if plaintext_password is None:
+                    raise AnsibleError(
+                        'Unuable to generate password of sufficient complexity in 10 tries')
                 salt = None
                 changed = True
             else:
