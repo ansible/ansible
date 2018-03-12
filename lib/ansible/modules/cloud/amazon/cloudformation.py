@@ -203,7 +203,7 @@ EXAMPLES = '''
 # When use_previous_value is set to True, the given value will be ignored and
 # Cloudformation will use the value from a previously submitted template.
 # If use_previous_value is set to False (default) the given value is used.
-  cloudformation:
+- cloudformation:
     stack_name: "ansible-cloudformation"
     state: "present"
     region: "us-east-1"
