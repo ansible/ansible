@@ -107,6 +107,7 @@ Parameters
                 {# default / choices #}
                 <td>
                     <div class="cell-border">
+                        {# Recalculate choices and boolean values #}
                         {% if value.default is defined %}
                             {% if value.default == true %}
                                 {% set _x = value.update({'default': 'yes'}) %}
@@ -117,21 +118,21 @@ Parameters
                         {% if value.type == 'bool' %}
                             {% set _x = value.update({'choices': ['no', 'yes']}) %}
                         {% endif %}
+                        {# Show possible choices and highlight details #}
                         {% if value.choices %}
-                            <ul style="list-style-type: circle"><b>Choices:</b>
-                                {% if value.default not in value.choices %}
-                                    <li type="disc"><div style="color: blue"><b>@{ value.default }@</b>&nbsp;&larr;</div></li>
-                                {% endif %}
+                            <ul><b>Choices:</b>
                                 {% for choice in value.choices %}
-                                    {% if value.default is defined and choice == value.default %}
-                                        <li type="disc"><div style="color: blue"><b>@{ value.default }@</b>&nbsp;&larr;</div></li>
+                                    {% if (value.default is string and choice == value.default) or (value.default is iterable and choice in value.default) %}
+                                        <li type="disc"><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
                                     {% else %}
-                                        <li>@{ choice }@</li>
+                                        <li type="circle">@{ choice | escape }@</li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
-                        {% elif value.default is defined %}
-                            <div style="color: blue">@{ value.default | html_ify }@</div>
+                        {% endif %}
+                        {# Show default value, when multiple choice or no choices #}
+                        {% if value.default is defined and value.default not in value.choices %}
+                            <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
                         {% endif %}
                     </div>
                 </td>
@@ -239,8 +240,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">
-                            </div>
+                            <div class="elbow-placeholder"></div>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -248,7 +248,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                         </div>
                     </div>
                 </td>
-                <td><div class="cell-border">@{ value.returned }@</div></td>
+                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
                 <td>
                     <div class="cell-border">
                         {% if value.description is string %}
@@ -259,10 +259,10 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                             {% endfor %}
                         {% endif %}
                         <br/>
-                        {% if value.sample %}
+                        {% if value.sample is defined and value.sample %}
                             <div style="font-size: smaller"><b>Sample:</b></div>
-{#                            <div style="font-size: smaller; color: blue; word-wrap: break-word; overflow-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div> #}
-                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div>
+                            {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
                         {% endif %}
                     </div>
                 </td>
@@ -313,7 +313,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                         </div>
                     </div>
                 </td>
-                <td><div class="cell-border">@{ value.returned }@</div></td>
+                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
                 <td>
                     <div class="cell-border">
                         {% if value.description is string %}
@@ -324,10 +324,10 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                             {% endfor %}
                         {% endif %}
                         <br/>
-                        {% if value.sample %}
+                        {% if value.sample is defined  and value.sample %}
                             <div style="font-size: smaller"><b>Sample:</b></div>
-{#                            <div style="font-size: smaller; color: blue; word-wrap: break-word; overflow-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div> #}
-                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | html_ify }@</div>
+                            {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
                         {% endif %}
                     </div>
                 </td>

@@ -56,8 +56,8 @@ options:
       C(ObjectInherit).
     - For more information on the choices see MSDN InheritanceFlags enumeration
       at U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx).
-    choices: [ ContainerInherit, None, ObjectInherit ]
-    default: For Leaf File, 'None'; For Directory, 'ContainerInherit, ObjectInherit';
+    - Defaults to C(ContainerInherit, ObjectInherit) for Directories.
+    choices: [ ContainerInherit, ObjectInherit ]
   propagation:
     description:
     - Propagation flag on the ACL rules.
