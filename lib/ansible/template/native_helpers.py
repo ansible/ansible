@@ -19,8 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
 from ast import literal_eval
 from itertools import islice, chain
+import types
+
 from jinja2._compat import text_type
 
 
@@ -45,7 +48,9 @@ def ansible_native_concat(nodes):
         if not isinstance(out, list):  # FIXME is this needed?
             return out
     else:
-        out = u''.join([text_type(v) for v in chain(head, nodes)])
+        if isinstance(nodes, types.GeneratorType):
+            nodes = chain(head, nodes)
+        out = u''.join([text_type(v) for v in nodes])
 
     try:
         return literal_eval(out)
