@@ -232,9 +232,9 @@ EXAMPLES = '''
 
     - name: Delete network interface
       azure_rm_networkinterface:
-            resource_group: Testing
-            name: nic003
-            state: absent
+        resource_group: Testing
+        name: nic003
+        state: absent
 '''
 
 RETURN = '''
