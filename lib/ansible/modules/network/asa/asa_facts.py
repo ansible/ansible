@@ -306,7 +306,7 @@ def main():
     """main entry point for module execution
     """
     argument_spec = dict(
-        gather_subset=dict(default=['!config'], type='list')
+        gather_subset=dict(default='!config', type='list')
     )
 
     argument_spec.update(asa_argument_spec)
