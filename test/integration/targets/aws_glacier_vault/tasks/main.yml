@@ -15,14 +15,20 @@
            - 'result.failed'
            - 'result.msg.startswith("missing required arguments: name")'
 
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
     # ============================================================
     - name: test state=present without tags (expect changed=True)
       aws_glacier_vault:
+        <<: *aws_connection_info
         name: '{{ glacier_vault_name }}'
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: present
       register: result
 
@@ -35,12 +41,9 @@
     # ============================================================
     - name: test state=present with tags (expect changed=True)
       aws_glacier_vault:
+        <<: *aws_connection_info
         name: '{{ glacier_vault_name }}'
         tags: '{{ glacier_vault_tags }}'
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: present
       register: result
 
@@ -53,12 +56,9 @@
     # ============================================================
     - name: test state=present drop tags (expect changed=True)
       aws_glacier_vault:
+        <<: *aws_connection_info
         name: '{{ glacier_vault_name }}'
         tags: {}
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: present
       register: result
 
@@ -71,11 +71,8 @@
     # ============================================================
     - name: test state=absent (expect changed=False)
       aws_glacier_vault:
+        <<: *aws_connection_info
         name: "{{ glacier_vault_name }}"
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: absent
       register: result
 
@@ -89,10 +86,7 @@
     # ============================================================
     - name: test state=absent (expect changed=False)
       aws_glacier_vault:
+        <<: *aws_connection_info
         name: "{{ glacier_vault_name }}"
-        ec2_region: '{{ ec2_region }}'
-        ec2_access_key: '{{ ec2_access_key }}'
-        ec2_secret_key: '{{ ec2_secret_key }}'
-        security_token: '{{ security_token }}'
         state: absent
       ignore_errors: yes

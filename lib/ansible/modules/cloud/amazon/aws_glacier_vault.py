@@ -1,7 +1,8 @@
 #!/usr/bin/python
+# Copyright (c) 2018 Ansible Project
 # Copyright (c) 2018 Loic BLOT <loic.blot@unix-experience.fr>
-# This module is sponsored by E.T.A.I. (www.etai.fr)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# This module is sponsored by E.T.A.I. (www.etai.fr)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -95,14 +96,14 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, HAS_BOTO3, get_aws_connection_info,
+from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
                                       compare_aws_tags, camel_dict_to_snake_dict)
 
 try:
     import botocore
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by imported AnsibleAWSModule
 
 
 class GlacierVaultManager(object):
@@ -115,7 +116,7 @@ class GlacierVaultManager(object):
         vaults = {}
         try:
             vaults = self.connection.list_vaults()
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+        except BotoCoreError as e:
             self.module.fail_json_aws(exception=e, msg="Failed to list vaults")
 
         return vaults["VaultList"]
@@ -133,7 +134,7 @@ class GlacierVaultManager(object):
         if vault is None:
             try:
                 vault = self.connection.create_vault(vaultName=self.name)
-            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+            except BotoCoreError as e:
                 self.module.fail_json_aws(exception=e, msg="Failed to create vault")
             changed = True
 
@@ -142,13 +143,13 @@ class GlacierVaultManager(object):
         vault = self.get_vault(self.name)
 
         # Vault exists, no change to do
-        self.module.exit_json(vault=camel_dict_to_snake_dict(vault), tags=self.list_tags(), changed=changed)
+        self.module.exit_json(tags=self.list_tags(), changed=changed, **camel_dict_to_snake_dict(vault))
 
     def list_tags(self):
         tags = {}
         try:
             tags = self.connection.list_tags_for_vault(vaultName=self.name)
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+        except BotoCoreError as e:
             self.module.fail_json_aws(exception=e, msg="Failed to list vault tags")
 
         if "Tags" not in tags:
@@ -165,15 +166,13 @@ class GlacierVaultManager(object):
         if tags_to_set:
             try:
                 self.connection.add_tags_to_vault(vaultName=self.name, Tags=tags_to_set)
-            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError,
-                    botocore.exceptions.ParamValidationError) as e:
+            except BotoCoreError as e:
                 self.module.fail_json_aws(exception=e, msg="Failed to add vault tags")
             changed |= True
         if tags_to_delete:
             try:
                 self.connection.remove_tags_from_vault(vaultName=self.name, TagKeys=tags_to_delete)
-            except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError,
-                    botocore.exceptions.ParamValidationError) as e:
+            except BotoCoreError as e:
                 self.module.fail_json_aws(exception=e, msg="Failed to remove vault tags")
             changed |= True
         return changed
@@ -187,7 +186,7 @@ class GlacierVaultManager(object):
         tags = self.list_tags()
         try:
             self.connection.delete_vault(vaultName=name)
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ClientError) as e:
+        except BotoCoreError as e:
             self.module.fail_json_aws(exception=e, msg="Failed to delete vault")
 
         self.module.exit_json(changed=True)
@@ -215,9 +214,6 @@ def main():
         endpoint=ec2_url,
         **aws_connect_params
     )
-
-    if connection is None:  # this should never happen
-        module.fail_json(msg='Unknown error, failed to create glacier connection, no information from boto.')
 
     state = module.params.get("state")
 
