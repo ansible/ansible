@@ -286,9 +286,9 @@ owner_id:
   returned: on create/update
 '''
 
-import time
 import json
 import re
+from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
@@ -579,6 +579,27 @@ def fix_port_and_protocol(permission):
     return permission
 
 
+def assemble_permissions_to_revoke(purge_ingress_rule_ids, purge_egress_rule_ids, current_ingress, current_egress):
+    revoke_ingress = []
+    revoke_egress = []
+    for rules_to_purge, revoke_list, current_rules in [(purge_ingress_rule_ids, revoke_ingress, current_ingress),
+                                                       (purge_egress_rule_ids, revoke_egress, current_egress)]:
+        for rule_id in rules_to_purge:
+            rule, grant = current_rules[rule_id]
+            ip_permission = serialize_revoke(grant, rule)
+            revoke_list.append(ip_permission)
+    return revoke_ingress, revoke_egress
+
+
+def remove_old_permissions(client, module, revoke_ingress, revoke_egress, group_id, changed):
+    changed |= bool(revoke_ingress or revoke_egress)
+    if revoke_ingress:
+        revoke(client, module, revoke_ingress, group_id, 'in')
+    if revoke_egress:
+        revoke(client, module, revoke_egress, group_id, 'out')
+    return changed
+
+
 def revoke(client, module, ip_permissions, group_id, rule_type):
     if not module.check_mode:
         try:
@@ -708,6 +729,7 @@ def create_security_group(client, module, name, description, vpc_id):
         # call. We re-read the group for getting an updated object
         # amazon sometimes takes a couple seconds to update the security group so wait till it exists
         while True:
+            sleep(3)
             group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
             if group.get('VpcId') and not group.get('IpPermissionsEgress'):
                 pass
@@ -883,27 +905,26 @@ def main():
             else:
                 present_egress.append(Rule(rule=rule, rule_id=rule_id, ip_permission=rule, ipv4='0.0.0.0/0', ipv6=None))
 
-        # Purge rules before adding any new ones in case the security group is maxed out
-        purge_ingress_rule_ids = [rule_id for rule_id in current_ingress if rule_id not in user_ingress_rule_ids]
+        # Find rules to purge
+        purge_ingress_rule_ids = []
         purge_egress_rule_ids = []
-        for rule_id in current_egress:
-            if rule_id not in user_egress_rule_ids:
-                if rules_egress:
-                    purge_egress_rule_ids.append(rule_id)
-                else:
-                    if not rule_id.endswith('0.0.0.0/0'):
+        if purge_rules:
+            purge_ingress_rule_ids = [rule_id for rule_id in current_ingress if rule_id not in user_ingress_rule_ids]
+        if purge_rules_egress:
+            for rule_id in current_egress:
+                if rule_id not in user_egress_rule_ids:
+                    if rules_egress:
                         purge_egress_rule_ids.append(rule_id)
+                    else:
+                        if not rule_id.endswith('0.0.0.0/0'):
+                            purge_egress_rule_ids.append(rule_id)
+
+        # Assemble ip permissions to remove
+        revoke_ingress, revoke_egress = assemble_permissions_to_revoke(purge_ingress_rule_ids, purge_egress_rule_ids,
+                                                                       current_ingress, current_egress)
 
         # Revoke old rules
-        for rules_to_purge, revoke_permissions, rule_type in [(purge_ingress_rule_ids, [], 'in'), (purge_egress_rule_ids, [], 'out')]:
-            for rule_id in rules_to_purge:
-                current_rules = current_ingress if rule_type == 'in' else current_egress
-                rule, grant = current_rules[rule_id]
-                ip_permission = serialize_revoke(grant, rule)
-                revoke_permissions.append(ip_permission)
-                if (rule_type == 'in' and purge_rules) or (rule_type == 'out' and purge_rules_egress):
-                    changed = True
-                    revoke(client, module, revoke_permissions, group['GroupId'], rule_type)
+        changed = remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'], changed)
 
         # Authorize new rules
         changed = add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'], changed)
@@ -914,7 +935,7 @@ def main():
 
     if group:
         if changed:
-            time.sleep(5)
+            sleep(5)
         security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group)
         security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
