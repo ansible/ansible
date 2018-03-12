@@ -147,7 +147,7 @@
 - assert:
     that:
       - output.state.ip_configurations | length == 1
-      - output.state.ip_configurations[0].public_ip == None
+      - output.state.ip_configurations[0].public_ip_address == None
 
 - name: Delete the NIC (check mode)
   azure_rm_networkinterface:
