@@ -355,7 +355,7 @@ def ensure_tags(connection=None, module=None, resource_id=None, tags=None, purge
             module.fail_json_aws(e, msg="Couldn't delete tags")
     if to_add:
         try:
-            connection.create_tags(Resources=[resource_id], Tags=ansible_dict_to_boto3_tag_list(to_add))
+            AWSRetry.exponential_backoff()(connection.create_tags)(Resources=[resource_id], Tags=ansible_dict_to_boto3_tag_list(to_add))
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't create tags")
 

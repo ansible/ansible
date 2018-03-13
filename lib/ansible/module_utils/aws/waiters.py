@@ -26,7 +26,43 @@ ec2_data = {
                     "state": "retry"
                 },
             ]
-        }
+        },
+        "VpcEndpointExists": {
+            "delay": 10,
+            "maxAttempts": 40,
+            "operation": "DescribeVpcEndpoints",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(VpcEndpoints[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidVpcEndpointId.NotFound",
+                    "state": "retry"
+                }
+            ]
+        },
+        "VpcEndpointDeleted": {
+            "delay": 10,
+            "maxAttempts": 40,
+            "operation": "DescribeVpcEndpoints",
+            "acceptors": [
+                {
+                    "matcher": "error",
+                    "expected": "InvalidVpcEndpointId.NotFound",
+                    "state": "success"
+                },
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(VpcEndpoints[]) > `0`",
+                    "state": "retry"
+                },
+            ]
+        },
     }
 }
 
@@ -37,6 +73,14 @@ def model_for(name):
 
 
 waiters_by_name = {
+    ('EC2', 'vpc_endpoint_exists'): lambda ec2: core_waiter.Waiter(
+        'vpc_endpoint_exists',
+        model_for('VpcEndpointExists'),
+        core_waiter.NormalizedOperationMethod(ec2.describe_vpc_endpoints)),
+    ('EC2', 'vpc_endpoint_deleted'): lambda ec2: core_waiter.Waiter(
+        'vpc_endpoint_deleted',
+        model_for('VpcEndpointDeleted'),
+        core_waiter.NormalizedOperationMethod(ec2.describe_vpc_endpoints)),
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         model_for('RouteTableExists'),

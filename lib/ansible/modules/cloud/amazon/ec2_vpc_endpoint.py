@@ -194,15 +194,18 @@ import time
 import traceback
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError
+    from botocore.exceptions import BotoCoreError, ClientError, WaiterError
 except ImportError:
     pass  # will be picked up by imported HAS_BOTO3
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (get_aws_connection_info, boto3_conn, ec2_argument_spec, HAS_BOTO3,
-                                      camel_dict_to_snake_dict, compare_policies)
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
+from ansible.module_utils.ec2 import (
+    get_aws_connection_info, boto3_conn, ec2_argument_spec,
+    camel_dict_to_snake_dict, compare_policies, AWSRetry
+)
 
 
 def date_handler(obj):
@@ -230,7 +233,7 @@ def wait_for_status(client, module, resource_id, status):
     return status_achieved, resource
 
 
-def get_endpoints(client, module):
+def endpoint_filters(module):
     params = {'Filters': []}
     if module.params.get('vpc_endpoint_id'):
         params['VpcEndpointIds'] = [module.params['vpc_endpoint_id']]
@@ -238,7 +241,12 @@ def get_endpoints(client, module):
         params['Filters'].append({'Name': 'vpc-id', 'Values': [module.params['vpc_id']]})
     if module.params.get('service'):
         params['Filters'].append({'Name': 'service-name', 'Values': [module.params['service']]})
+    return params
 
+
+@AWSRetry.exponential_backoff()
+def get_endpoints(client, module):
+    params = endpoint_filters(module)
     try:
         return json.loads(json.dumps(client.describe_vpc_endpoints(**params), default=date_handler))
     except ClientError as e:
@@ -348,9 +356,14 @@ def create_vpc_endpoint(client, module):
         if token_provided and (request_time > result['creation_timestamp'].replace(tzinfo=None)):
             changed = False
         elif module.params.get('wait'):
-            status_achieved, result = wait_for_status(client, module, result['vpc_endpoint_id'], 'available')
-            if not status_achieved:
-                module.fail_json(msg='Error waiting for vpc endpoint to become available - please check the AWS console')
+            get_waiter(
+                client, 'vpc_endpoint_exists'
+            ).wait(
+                VpcEndpointIds=[result['vpc_endpoint_id']]
+            )
+            result = get_endpoints(client, module)['VpcEndpoints'][0]
+    except WaiterError as e:
+        module.fail_json_aws(e, msg="Error waiting for vpc endpoint to become available - please check the AWS console")
     except ClientError as e:
         if e.response['Error']['Code'] in ["IdempotentParameterMismatch", "RouteAlreadyExists"]:
             module.fail_json_aws(e, msg="To update an endpoint, provide the vpc_endpoint_id to the task")
@@ -359,7 +372,7 @@ def create_vpc_endpoint(client, module):
     except BotoCoreError as e:
         module.fail_json_aws(e, msg="Failed to create endpoint.")
 
-    return changed, result
+    return changed, camel_dict_to_snake_dict(result)
 
 
 def setup_removal(client, module):
@@ -374,9 +387,13 @@ def setup_removal(client, module):
     try:
         result = client.delete_vpc_endpoints(VpcEndpointIds=[module.params['vpc_endpoint_id']])['Unsuccessful']
         if module.params.get('wait'):
-            status_achieved, result = wait_for_status(client, module, module.params['vpc_endpoint_id'], 'deleted')
-            if not status_achieved:
-                module.fail_json(msg='Error waiting for vpc endpoint to delete - please check the AWS console')
+            get_waiter(
+                client, 'vpc_endpoint_deleted'
+            ).wait(
+                **endpoint_filters(module)
+            )
+    except WaiterError as e:
+        module.fail_json_aws(e, msg="Took too long to wait for endpoint {0} to be deleted".format(module.params['vpc_endpoint_id']))
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg="Failed to delete endpoint {0}".format(module.params['vpc_endpoint_id']))
     return changed, result
