@@ -344,6 +344,19 @@ EXAMPLES = '''
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
+
+# Set tcp flags
+- iptables:
+    chain: OUTPUT
+    jump: DROP
+    protocol: tcp
+    tcp_flags:
+      flags: ALL
+      flags_set:
+        - ACK
+        - RST
+        - SYN
+        - FIN
 '''
 
 import re
