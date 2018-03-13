@@ -245,7 +245,7 @@ Or with a prompt instead of the vault password file:
 
 To see the original value, you can use the debug module. Please note if your yaml file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this please make a copy of the file without the ansible_connection variable for this. 
 
-.. code-block:: bash
+.. code-block:: console
 
    cat vyos.yml | grep -v ansible_connection >> vyos_no_connection.yml
 
