@@ -1,6 +1,6 @@
-# (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
-# (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
-# (c) 2017 Ansible Project
+# Copyright (c) 2018, Scott Buchanan <sbuchanan@ri.pn>
+# Copyright (c) 2016, Andrew Zenk <azenk@umn.edu> (lastpass.py used as starting point)
+# Copyright (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -14,7 +14,7 @@ DOCUMENTATION = """
     author:
       -  Scott Buchanan <sbuchanan@ri.pn>
       -  Andrew Zenk <azenk@umn.edu>
-    version_added: "TBD"
+    version_added: "2.6"
     requirements:
       - op (1Password command line utility: https://support.1password.com/command-line/)
       - must have already logged into 1Password using op CLI
