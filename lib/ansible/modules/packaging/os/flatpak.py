@@ -89,7 +89,7 @@ remote:
 
 from ansible.module_utils.basic import AnsibleModule
 import subprocess
-# from urlparse import urlparse
+from urlparse import urlparse
 
 
 def install_flat(module, binary, flat):
@@ -133,8 +133,9 @@ def uninstall_flat(module, binary, flat):
 
 def parse_flat(name):
     if 'http://' in name or 'https://' in name:
-        common_name = name.split('/')[-1].split('.')[0]
-        # common_name = urlparse(name).path.split('/')[-1].split('.')[0]
+        file_name = urlparse(name).path.split('/')[-1]
+        file_name_without_extension = file_name.split('.')[0:-1]
+        common_name = ".".join(file_name_without_extension)
     else:
         common_name = name
 
