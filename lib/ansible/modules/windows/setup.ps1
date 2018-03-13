@@ -44,9 +44,9 @@ Function Get-MachineSid {
 
 $cim_instances = @{}
 
-Function Get-LazyCimInstance([string]$instance_name) {
+Function Get-LazyCimInstance([string]$instance_name, [string]$namespace="Root\CIMV2") {
     if(-not $cim_instances.ContainsKey($instance_name)) {
-        $cim_instances[$instance_name] = $(Get-CimInstance $instance_name)    
+        $cim_instances[$instance_name] = $(Get-CimInstance -Namespace $namespace -ClassName $instance_name)
     }
 
     return $cim_instances[$instance_name]
@@ -229,15 +229,26 @@ if($gather_subset.Contains('facter')) {
 
 if($gather_subset.Contains('interfaces')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
-
     $ActiveNetcfg = @()
     $ActiveNetcfg += $netcfg | where {$_.ipaddress -ne $null}
+
+    $namespaces = Get-LazyCimInstance __Namespace -namespace root
+    if ($namespaces | Where-Object { $_.Name -eq "StandardCimv" }) {
+        $net_adapters = Get-LazyCimInstance MSFT_NetAdapter -namespace Root\StandardCimv2
+        $guid_key = "InterfaceGUID"
+        $name_key = "Name"
+    } else {
+        $net_adapters = Get-LazyCimInstance Win32_NetworkAdapter        
+        $guid_key = "GUID"
+        $name_key = "NetConnectionID"
+    }
 
     $formattednetcfg = @()
     foreach ($adapter in $ActiveNetcfg)
     {
         $thisadapter = @{
             default_gateway = $null
+            connection_name = $null
             dns_domain = $adapter.dnsdomain
             interface_index = $adapter.InterfaceIndex
             interface_name = $adapter.description
@@ -247,6 +258,10 @@ if($gather_subset.Contains('interfaces')) {
         if ($adapter.defaultIPGateway)
         {
             $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
+        }
+        $net_adapter = $net_adapters | Where-Object { $_.$guid_key -eq $adapter.SettingID }
+        if ($net_adapter) {
+            $thisadapter.connection_name = $net_adapter.$name_key
         }
 
         $formattednetcfg += $thisadapter
