@@ -662,12 +662,8 @@ class VaultLib:
             if C.ERROR_ON_VAULT_SECRET:
                 raise
             else:
+                plaintext = vaulttext
                 display.warning('Vault secrets issue: %s' % to_native(e))
-        except AnsibleVaultError as e:
-            if C.ERROR_ON_VAULT_FAIL:
-                raise
-            else:
-                display.warning('Vault decryption failed: %s' % to_native(e))
         return plaintext
 
     def decrypt_and_get_vault_id(self, vaulttext, filename=None):
@@ -681,6 +677,13 @@ class VaultLib:
         :returns: a byte string containing the decrypted data and the vault-id vault-secret that was used
 
         """
+        def vaulted():
+            if filename:
+                vaulted = '(%s)' % to_text(filename)
+            else:
+                vaulted = '"%s"' % to_text(b_vaulttext)
+            return vaulted
+
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
         if self.secrets is None:
@@ -689,11 +692,7 @@ class VaultLib:
             raise AnsibleVaultPasswordError('No valid vault secrets were supplied')
 
         if not is_encrypted(b_vaulttext):
-            if filename:
-                msg = "%s is not a vault encrypted file" % to_native(filename)
-            else:
-                msg = "the data provided is not a valid vault: %s" % to_native(b_vaulttext)
-            raise AnsibleVaultError(msg)
+            raise AnsibleVaultError("The data provided is not a valid vault: %s" % vaulted())
 
         b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
@@ -726,7 +725,7 @@ class VaultLib:
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(filename)))
+                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), vaulted()))
             else:
                 display.vvvvv(u'Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % to_text(vault_id))
 
@@ -740,7 +739,7 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(filename)))
+            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), vaulted()))
 
             try:
                 # secret = self.secrets[vault_secret_id]
@@ -749,35 +748,20 @@ class VaultLib:
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
                     vault_secret_used = vault_secret
-                    file_slug = ''
                     if filename:
-                        file_slug = ' of "%s"' % filename
-                    display.vvvvv(
-                        u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
-                    )
+                        display.vvvvv('Decrypt successful with secret=%s and vault_id=%s for %s' % (to_text(vault_secret), to_text(vault_secret_id), vaulted()))
                     break
             except AnsibleVaultFormatError as exc:
-                msg = u"There was a vault format error"
-                if filename:
-                    msg += u' in %s' % (to_text(filename))
-                msg += u': %s' % exc
-                display.warning(msg)
+                display.warning("There was a vault format error in %s: %s" % (vaulted(), to_native(exc)))
                 raise
             except AnsibleVaultError as e:
-                display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (to_text(vault_secret_id), to_text(filename), e))
+                display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed: %s' %
+                             (to_text(vault_secret_id), vaulted(), to_text(e)))
                 continue
         else:
-            msg = "No matching secrets were found that could decrypt the vault"
-            if filename:
-                msg += " (%s)" % to_native(filename)
-            raise AnsibleVaultPasswordError(msg)
-
+            raise AnsibleVaultPasswordError("No matching secrets were found that could decrypt the vault %s" % vaulted())
         if b_plaintext is None:
-            msg = "Decryption failed"
-            if filename:
-                msg += " on %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
+            raise AnsibleVaultError("Decryption failed on %s" % vaulted())
 
         return b_plaintext, vault_id_used, vault_secret_used
 

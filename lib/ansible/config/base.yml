@@ -1383,14 +1383,6 @@ FACTS_MODULES:
   type: list
   vars:
     - name: ansible_facts_modules
-ERROR_ON_VAULT_FAIL:
-  name: Error on vault decryption failure
-  default: True
-  description: "Toggle to speicfy if 'non-secret' related vault decryption failures are errors or warnings."
-  env: [{name: ANSIBLE_ERROR_ON_VAULT_FAIL}]
-  ini:
-  - {key: error_on_fail, section: vault}
-  type: boolean
 ERROR_ON_VAULT_SECRET:
   name: Error on missing/mismatched vault secrets
   default: True
