@@ -43,7 +43,7 @@ options:
     required: true
     aliases: [ patchfile ]
   state:
-    version_added: "2.5"
+    version_added: "2.6"
     description:
       - Whether the patch should be applied or reverted.
     choices: [ absent, present ]
