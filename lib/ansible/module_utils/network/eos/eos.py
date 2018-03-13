@@ -231,7 +231,12 @@ class Cli:
             pass
 
         if not all((bool(use_session), self.supports_sessions)):
-            return self.configure(self, commands)
+            if commit:
+                return self.configure(self, commands)
+            else:
+                self._module.warn("EOS can not check config without config session")
+                result = {'changed': True}
+                return result
 
         conn = self._get_connection()
         session = 'ansible_%s' % int(time.time())
@@ -407,8 +412,19 @@ class Eapi:
         fallback to using configure() to load the commands.  If that happens,
         there will be no returned diff or session values
         """
-        if not self.supports_sessions:
-            return self.configure(self, config)
+        use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
+        try:
+            use_session = int(use_session)
+        except ValueError:
+            pass
+
+        if not all((bool(use_session), self.supports_sessions)):
+            if commit:
+                return self.configure(self, config)
+            else:
+                self._module.warn("EOS can not check config without config session")
+                result = {'changed': True}
+                return result
 
         session = 'ansible_%s' % int(time.time())
         result = {'session': session}
