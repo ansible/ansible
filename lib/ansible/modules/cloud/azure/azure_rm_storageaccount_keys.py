@@ -64,6 +64,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 class AzureRMStorageAccountKeys(AzureRMModuleBase):
     def __init__(self):
 
@@ -80,7 +81,7 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         self.name = None
 
         super(AzureRMStorageAccountKeys, self).__init__(self.module_arg_spec, supports_tags=False)
-    
+
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
