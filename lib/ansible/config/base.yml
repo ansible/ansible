@@ -1386,7 +1386,7 @@ FACTS_MODULES:
 ERROR_ON_VAULT_SECRET:
   name: Error on missing/mismatched vault secrets
   default: True
-  description: "Toggle to speicfy if vault decryption caused by missing or mismatch secrets to be errors or warnings."
+  description: "Toggle to specify if vault decryption caused by missing or mismatch secrets to be errors or warnings."
   env: [{name: ANSIBLE_ERROR_ON_VAULT_SECRET}]
   ini:
   - {key: error_on_secret, section: vault}
