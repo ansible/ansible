@@ -74,7 +74,7 @@ options:
   interfaces:
     description:
       - List of interfaces to check the VRF has been
-        configured correctly.
+        configured correctly or keyword 'default'.
     version_added: 2.5
   associated_interfaces:
     description:
@@ -98,7 +98,7 @@ options:
     choices: ['present','absent']
   description:
     description:
-      - Description of the VRF.
+      - Description of the VRF or keyword 'default'.
     required: false
     default: null
   delay:
@@ -257,7 +257,7 @@ def map_obj_to_commands(updates, module):
                 commands.append('vrf context {0}'.format(name))
                 for item in args:
                     candidate = w.get(item)
-                    if candidate:
+                    if candidate and candidate != 'default':
                         cmd = item + ' ' + str(candidate)
                         commands.append(cmd)
                 if admin_state == 'up':
@@ -266,7 +266,7 @@ def map_obj_to_commands(updates, module):
                     commands.append('shutdown')
                 commands.append('exit')
 
-                if interfaces:
+                if interfaces and interfaces[0] != 'default':
                     for i in interfaces:
                         commands.append('interface {0}'.format(i))
                         commands.append('no switchport')
@@ -280,7 +280,11 @@ def map_obj_to_commands(updates, module):
 
                 for item in args:
                     candidate = w.get(item)
-                    if candidate and candidate != obj_in_have.get(item):
+                    if candidate == 'default':
+                        if obj_in_have.get(item):
+                            cmd = 'no ' + item + ' ' + obj_in_have.get(item)
+                            commands.append(cmd)
+                    elif candidate and candidate != obj_in_have.get(item):
                         cmd = item + ' ' + str(candidate)
                         commands.append(cmd)
                 if admin_state and admin_state != obj_in_have.get('admin_state'):
@@ -293,7 +297,7 @@ def map_obj_to_commands(updates, module):
                     commands.insert(0, 'vrf context {0}'.format(name))
                     commands.append('exit')
 
-                if interfaces:
+                if interfaces and interfaces[0] != 'default':
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
                             commands.append('vrf context {0}'.format(name))
@@ -313,6 +317,14 @@ def map_obj_to_commands(updates, module):
 
                         superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
                         for i in superfluous_interfaces:
+                            commands.append('vrf context {0}'.format(name))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('no switchport')
+                            commands.append('no vrf member {0}'.format(name))
+                elif interfaces and interfaces[0] == 'default':
+                    if obj_in_have['interfaces']:
+                        for i in obj_in_have['interfaces']:
                             commands.append('vrf context {0}'.format(name))
                             commands.append('exit')
                             commands.append('interface {0}'.format(i))
