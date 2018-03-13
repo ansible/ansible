@@ -244,7 +244,7 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
 
                 expected_tags = boto3_tag_list_to_ansible_dict(tags)
                 filters = [{'Name': 'tag:{0}'.format(key), 'Values': [value]} for key, value in expected_tags.items()]
-                connection.get_waiter('vpc_exists').wait(VpcIds=[vpc_id], Filters=filters)
+                connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id], Filters=filters)
 
             return True
         else:
@@ -263,7 +263,7 @@ def update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
 
             try:
                 filters = [{'Name': 'dhcp-options-id', 'Values': [dhcp_id]}]
-                connection.get_waiter('vpc_exists').wait(VpcIds=[vpc_obj['VpcId']], Filters=filters)
+                connection.get_waiter('vpc_available').wait(VpcIds=[vpc_obj['VpcId']], Filters=filters)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json(msg="Failed to wait for DhcpOptionsId to be updated")
 
