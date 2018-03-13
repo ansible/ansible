@@ -658,6 +658,11 @@ class VaultLib:
         '''
         try:
             plaintext, vault_id, vault_secret = self.decrypt_and_get_vault_id(vaulttext, filename=filename)
+        except AnsibleVaultPasswordError as e:
+            if C.ERROR_ON_VAULT_SECRET:
+                raise
+            else:
+                display.warning('Vault secrets issue: %s' % to_native(e))
         except AnsibleVaultError as e:
             if C.ERROR_ON_VAULT_FAIL:
                 raise
@@ -679,28 +684,28 @@ class VaultLib:
         b_vaulttext = to_bytes(vaulttext, errors='strict', encoding='utf-8')
 
         if self.secrets is None:
-            raise AnsibleVaultError("A vault password must be specified to decrypt data")
+            raise AnsibleVaultPasswordError("No vault password was supplied, one is needed to decrypt the data")
+        elif not self.secrets:
+            raise AnsibleVaultPasswordError('No valid vault secrets were supplied')
 
         if not is_encrypted(b_vaulttext):
-            msg = "input is not vault encrypted data"
             if filename:
-                msg += "%s is not a vault encrypted file" % to_native(filename)
-            raise AnsibleError(msg)
+                msg = "%s is not a vault encrypted file" % to_native(filename)
+            else:
+                msg = "the data provided is not a valid vault: %s" % to_native(b_vaulttext)
+            raise AnsibleVaultError(msg)
 
-        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
-                                                                             filename=filename)
+        b_vaulttext, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # create the cipher object, note that the cipher used for decrypt can
         # be different than the cipher used for encrypt
         if cipher_name in CIPHER_WHITELIST:
             this_cipher = CIPHER_MAPPING[cipher_name]()
         else:
-            raise AnsibleError("{0} cipher could not be found".format(cipher_name))
+            raise AnsibleVaultError("Could not find required {0} cipher for this vault, "
+                                    "you might need to update/upgrade your cryptography libraries".format(cipher_name))
 
         b_plaintext = None
-
-        if not self.secrets:
-            raise AnsibleVaultError('Attempting to decrypt but no vault secrets found')
 
         # WARNING: Currently, the vault id is not required to match the vault id in the vault blob to
         #          decrypt a vault properly. The vault id in the vault blob is not part of the encrypted
@@ -758,21 +763,21 @@ class VaultLib:
                 msg += u': %s' % exc
                 display.warning(msg)
                 raise
-            except AnsibleError as e:
-                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
+            except AnsibleVaultError as e:
+                display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
                              (to_text(vault_secret_id), to_text(filename), e))
                 continue
         else:
-            msg = "Decryption failed (no vault secrets were found that could decrypt)"
+            msg = "No matching secrets were found that could decrypt the vault"
             if filename:
-                msg += " on %s" % to_native(filename)
-            raise AnsibleVaultError(msg)
+                msg += " (%s)" % to_native(filename)
+            raise AnsibleVaultPasswordError(msg)
 
         if b_plaintext is None:
             msg = "Decryption failed"
             if filename:
                 msg += " on %s" % to_native(filename)
-            raise AnsibleError(msg)
+            raise AnsibleVaultError(msg)
 
         return b_plaintext, vault_id_used, vault_secret_used
 

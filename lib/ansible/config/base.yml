@@ -1386,10 +1386,18 @@ FACTS_MODULES:
 ERROR_ON_VAULT_FAIL:
   name: Error on vault decryption failure
   default: True
-  description: "Toggle to speicfy if vault decryption failures are errors or warnings."
+  description: "Toggle to speicfy if 'non-secret' related vault decryption failures are errors or warnings."
   env: [{name: ANSIBLE_ERROR_ON_VAULT_FAIL}]
   ini:
   - {key: error_on_fail, section: vault}
+  type: boolean
+ERROR_ON_VAULT_SECRET:
+  name: Error on missing/mismatched vault secrets
+  default: True
+  description: "Toggle to speicfy if vault decryption caused by missing or mismatch secrets to be errors or warnings."
+  env: [{name: ANSIBLE_ERROR_ON_VAULT_SECRET}]
+  ini:
+  - {key: error_on_secret, section: vault}
   type: boolean
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
