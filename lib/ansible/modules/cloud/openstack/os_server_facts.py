@@ -30,7 +30,7 @@ options:
    server:
      description:
        - restrict results to servers with names or UUID matching
-         this glob expression (e.g., C<web*>).
+         this glob expression (e.g., <web*>).
      required: false
      default: None
    detailed:
@@ -47,7 +47,7 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named C<web*>:
+# Gather facts about all servers named <web*>:
 - os_server_facts:
     cloud: rax-dfw
     server: web*
