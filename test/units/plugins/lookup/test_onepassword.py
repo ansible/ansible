@@ -33,11 +33,6 @@ from ansible.compat.tests.mock import patch
 from ansible.errors import AnsibleError
 from ansible.module_utils import six
 
-try:
-    import jq
-except ImportError:
-    raise SkipTest("test_onepassword.py requires the python module 'jq'")
-
 from ansible.plugins.lookup.onepassword import LookupModule, OnePass, OnePassException
 
 

@@ -16,7 +16,6 @@ DOCUMENTATION = """
       -  Andrew Zenk <azenk@umn.edu>
     version_added: "TBD"
     requirements:
-      - jq (python library: https://pypi.python.org/pypi/jq)
       - op (1Password command line utility: https://support.1password.com/command-line/)
       - must have already logged into 1Password using op CLI
     short_description: fetch data from 1Password
@@ -47,7 +46,7 @@ RETURN = """
     description: field data requested
 """
 
-from jq import jq
+import json
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleError
@@ -75,13 +74,11 @@ class OnePass(object):
             raise OnePassException("Not logged into 1Password: please run 'op signin' first")
 
     def get_field(self, item_id, field, vault=None):
-        escaped_field = field.replace('\\', '\\\\').replace('"', '\\"')
-        parser = '.details.sections[].fields[]? | select(.t=="{0}").v'.format(escaped_field)
         args = ["get", "item", item_id]
         if vault is not None:
             args += ['--vault={0}'.format(vault)]
-        json, dummy = self._run(args)
-        return jq(parser).transform(text=json) if json != '' else ''
+        output, dummy = self._run(args)
+        return self._parse_field(field, output) if output != '' else ''
 
     def _run(self, args, stdin=None, expected_rc=0):
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
@@ -90,6 +87,14 @@ class OnePass(object):
         if rc != expected_rc:
             raise OnePassException(err)
         return out, err
+
+    def _parse_field(self, field_name, data_json):
+        data = json.loads(data_json)
+        for section_data in data['details']['sections']:
+            for field_data in section_data.get('fields', {}):
+                if field_data.get('t') == field_name:
+                    return field_data.get('v', '')
+        return ''
 
 
 class LookupModule(LookupBase):
