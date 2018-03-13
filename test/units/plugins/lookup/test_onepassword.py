@@ -6,7 +6,12 @@ __metaclass__ = type
 
 import json
 import datetime
-from urllib.parse import urlparse
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
+
 from argparse import ArgumentParser
 
 from nose.plugins.skip import SkipTest
