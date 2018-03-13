@@ -1,4 +1,9 @@
 ---
+- name: Add Pester module
+  win_psmodule:
+    name: PowershellModule
+    state: present
+
 - name: Copy test file(s)
   win_copy:
     src: "{{ item }}"
