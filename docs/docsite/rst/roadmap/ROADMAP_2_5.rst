@@ -1,6 +1,6 @@
-============================
-Ansible Project, 2.5
-============================
+===========
+Ansible 2.5
+===========
 **Core Engine Freeze and Module Freeze: 22 January 2018**
 
 **Core and Curated Module Freeze: 22 January 2018**
@@ -38,7 +38,6 @@ Engine improvements
 - Normalize temp dir usage across all subsystems
 - Currently ignored keywords do not notify user they were ignored, throw a warning on these.
 - Deprecation version enforcement
-- Force jinja to use native types
 - sysvinit service module
 - Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'
 
@@ -59,7 +58,6 @@ Inventory
 - Convert the following dynamic inventory scripts into plugins:
 
   - ec2
-  - Azure
   - GCE
   - Foreman
 
@@ -130,34 +128,23 @@ Runtime Check on Modules for Blacklisting
 Windows
 -------
 - Implement gather_subset on Windows facts
-- Move setup.ps1 guts to module_utils to allow arbitrary modules to call/refresh individual facts.
-- Fix Windows binary module support to work properly with become/env/async in all cases.
 - Fix Windows async + become to allow them to work together
-- Solve Windows become/env support for raw/script
-- Implement Windows become flags for controlling various modes
-
+- Implement Windows become flags for controlling various modes **(done)**
   - logontype
   - elevation behavior
-  - Add dict support to become_flags.
-- Fix Windows auto-kinit with threaded workers (or disallow it)
-- Finish C#/Powershell module_utils rewrite, convert core modules to use it.
-- Convert win_updates to action plugin for auto reboot and extra features
-- Spike out support for Windows Nano Server
-- Spike out changing the connection over to PSRP instead of WSMV
+- Convert win_updates to action plugin for auto reboot and extra features **(done)**
+- Spike out changing the connection over to PSRP instead of WSMV **(done- it's possible)**
 - Module updates
 
-  - win_updates
+  - win_updates **(done)**
 
     - Fix win_updates to detect (or request) become
     - Add whitelist/blacklist features to win_updates
-  - win_dsc further improvements
+  - win_dsc further improvements **(done)**
 
 General Cloud
 -------------
 - Make multi-cloud provisioning easier
-
-  - Document multi-instance provisioning with loop directive
-  - Extend async_status to accept a list or build new action to simplify the with_items/register/until:finish patterns.
 - Diff mode will output provisioning task results of ansible-playbook runs
 - Terraform module
 
@@ -174,9 +161,9 @@ AWS
 
 Azure
 -----
-- Azure CLI auth
-- Fix Azure module results to have "high-level" output instead of raw REST API dictionary
-- Deprecate Azure automatic storage accounts in azure_rm_virtualmachine
+- Azure CLI auth **(done)**
+- Fix Azure module results to have "high-level" output instead of raw REST API dictionary **(partial, more to come in 2.6)**
+- Deprecate Azure automatic storage accounts in azure_rm_virtualmachine **(breaks on Azure Stack, punted until AS supports managed disks)**
 
 Network Roadmap
 ---------------
@@ -202,15 +189,13 @@ Documentation
 - Document vault-password-client scripts.
 - Network Documentation
 
-  - New landing page (to replace intro_networking)
-  - Platform specific guides
-  - Walk through: Getting Started
+  - New landing page (to replace intro_networking) **(done)**
+  - Platform specific guides **(done)**
+  - Walk through: Getting Started **(done)**
   - Networking and ``become`` **(done)**
   - Best practice **(done)**
 
 Contributor Quality of Life
 ---------------------------
-- Pester unit test support in ansible-test
-- Finish PSScriptAnalyer integration with ansible-test (for enforcing Powershell style)
-- Add static code analysis to CI for PowerShell.
+- Finish PSScriptAnalyer integration with ansible-test (for enforcing Powershell style) **(done)**
 - Resolve issues requiring skipping of some integration tests on Python 3.

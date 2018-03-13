@@ -69,7 +69,9 @@ EXAMPLES = '''
 '''
 
 import re
-import pipes
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def compare_package(version1, version2):
@@ -102,6 +104,7 @@ def query_package(module, name, depot=None):
     else:
         rc, stdout, stderr = module.run_command(r"%s %s | grep -v \# | grep %s" % (
             cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+
     if rc == 0:
         version = re.sub(r"\s\s+|\t", " ", stdout).strip().split()[1]
     else:
@@ -211,8 +214,6 @@ def main():
 
     module.exit_json(changed=changed, name=name, state=state, msg=msg)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

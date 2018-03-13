@@ -224,7 +224,9 @@ route_table:
 '''
 
 import re
+from time import sleep
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
@@ -647,6 +649,12 @@ def ensure_route_table_present(connection, module):
         if not module.check_mode:
             try:
                 route_table = connection.create_route_table(VpcId=vpc_id)['RouteTable']
+                # try to wait for route table to be present before moving on
+                get_waiter(
+                    connection, 'route_table_exists'
+                ).wait(
+                    RouteTableIds=[route_table['RouteTableId']],
+                )
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Error creating route table")
         else:
@@ -678,6 +686,9 @@ def ensure_route_table_present(connection, module):
                                             purge_subnets=purge_subnets)
         changed = changed or result['changed']
 
+    if changed:
+        # pause to allow route table routes/subnets/associations to be updated before exiting with final state
+        sleep(5)
     module.exit_json(changed=changed, route_table=get_route_table_info(connection, module, route_table))
 
 

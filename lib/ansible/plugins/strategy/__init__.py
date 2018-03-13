@@ -750,6 +750,20 @@ class StrategyBase:
 
         return changed
 
+    def _copy_included_file(self, included_file):
+        '''
+        A proven safe and performant way to create a copy of an included file
+        '''
+        ti_copy = included_file._task.copy(exclude_parent=True)
+        ti_copy._parent = included_file._task._parent
+
+        temp_vars = ti_copy.vars.copy()
+        temp_vars.update(included_file._args)
+
+        ti_copy.vars = temp_vars
+
+        return ti_copy
+
     def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
@@ -763,9 +777,7 @@ class StrategyBase:
             elif not isinstance(data, list):
                 raise AnsibleError("included task files must contain a list of tasks")
 
-            ti_copy = included_file._task.copy()
-            temp_vars = ti_copy.vars.copy()
-            temp_vars.update(included_file._args)
+            ti_copy = self._copy_included_file(included_file)
             # pop tags out of the include args, if they were specified there, and assign
             # them to the include. If the include already had tags specified, we raise an
             # error so that users know not to specify them both ways
@@ -779,8 +791,6 @@ class StrategyBase:
                                              obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
-
-            ti_copy.vars = temp_vars
 
             block_list = load_list_of_blocks(
                 data,

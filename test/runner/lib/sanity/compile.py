@@ -15,6 +15,7 @@ from lib.sanity import (
 from lib.util import (
     SubprocessError,
     run_command,
+    display,
 )
 
 from lib.config import (
@@ -49,10 +50,14 @@ class CompileTest(SanityMultipleVersion):
         if not paths:
             return SanitySkipped(self.name, python_version=python_version)
 
-        cmd = ['python%s' % python_version, 'test/sanity/compile/compile.py'] + paths
+        cmd = ['python%s' % python_version, 'test/sanity/compile/compile.py']
+
+        data = '\n'.join(paths)
+
+        display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = run_command(args, cmd, capture=True)
+            stdout, stderr = run_command(args, cmd, data=data, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout

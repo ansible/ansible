@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: gitlab_project
 short_description: Creates/updates/deletes Gitlab Projects
 description:
-   - When the project does not exists in Gitlab, it will be created.
+   - When the project does not exist in Gitlab, it will be created.
    - When the project does exists and state=absent, the project will be deleted.
    - When changes are made to the project, the project will be updated.
 version_added: "2.1"
@@ -187,10 +187,15 @@ class GitLabProject(object):
 
     def createProject(self, is_user, user_id, import_url, arguments):
         if is_user:
-            return self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
+            result = self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
         else:
             group_id = user_id
-            return self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+            result = self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
+
+        if not result:
+            self._module.fail_json(msg="Failed to create project %r" % arguments['name'])
+
+        return result
 
     def deleteProject(self, group_name, project_name):
         if self.existsGroup(group_name):
@@ -392,7 +397,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Project deleted or does not exists")
+            module.exit_json(changed=False, result="Project deleted or does not exist")
         else:
             if project.createOrUpdateProject(project_exists, group_name, import_url, arguments):
                 module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name)

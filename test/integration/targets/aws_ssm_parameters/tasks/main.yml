@@ -1,0 +1,131 @@
+---
+#
+#  Author: Michael De La Rue
+#  based on aws_lambda test cases
+- block:
+
+    # ============================================================
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+           aws_access_key: "{{ aws_access_key }}"
+           aws_secret_key: "{{ aws_secret_key }}"
+           security_token: "{{ security_token }}"
+           region: "{{ aws_region }}"
+      no_log: yes
+    # ============================================================
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/Hello"
+        description: "This is your first key"
+        value: "World"
+        <<: *aws_connection_info
+
+    - name: Check that parameter was stored correctly
+      assert:
+       that:
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/Hello', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token )}}' == 'World'"
+
+    # ============================================================
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/path/wonvar"
+        description: "This is your first key"
+        value: "won value"
+        <<: *aws_connection_info
+
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/path/toovar"
+        description: "This is your first key"
+        value: "too value"
+        <<: *aws_connection_info
+
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/path/tree/treevar"
+        description: "This is your first key"
+        value: "tree value"
+        <<: *aws_connection_info
+
+    # ============================================================
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/deeppath/wondir/samevar"
+        description: "This is your first key"
+        value: "won value"
+        <<: *aws_connection_info
+
+    - name: Create or update key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/deeppath/toodir/samevar"
+        description: "This is your first key"
+        value: "too value"
+        <<: *aws_connection_info
+
+    # ============================================================
+    - name: debug the lookup
+      debug:
+       msg: "{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/path', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token, bypath=True )}}'"
+
+    - name: Check that parameter path is stored and retrieved
+      assert:
+       that:
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/path', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token, bypath=True, shortnames=true ) | to_json }}' == '{\"toovar\": \"too value\", \"wonvar\": \"won value\"}'"
+
+    # ============================================================
+    - name: Returns empty value in case we don't find a named parameter and default filter works
+      assert:
+       that:
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/Goodbye', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token )}}' == ''"
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/Goodbye', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token ) | default('I_can_has_default', true)}}' == 'I_can_has_default'"
+
+    # ============================================================
+    - name: Handle multiple paths with one that doesn't exist - default to full names.
+      assert:
+       that:
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/path', '/' ~ ssm_key_prefix ~ '/dont_create_this_path_you_will_break_the_ansible_tests', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token, bypath=True ) | to_json }}' in ( '[{\"/' ~ ssm_key_prefix ~ '/path/toovar\": \"too value\", \"/' ~ ssm_key_prefix ~ '/path/wonvar\": \"won value\"}, {}]',  '[{\"/' ~ ssm_key_prefix ~ '/path/wonvar\": \"won value\", \"/' ~ ssm_key_prefix ~ '/path/toovar\": \"too value\"}, {}]' )"
+
+
+    # ============================================================
+    # this may be a bit of a nasty test case;  we should perhaps accept _either_ value that was stored
+    # in the two variables named 'samevar'
+
+    - name: Handle multiple paths with one that doesn't exist - shortnames - including overlap.
+      assert:
+       that:
+        - "'{{lookup('aws_ssm', '/' ~ ssm_key_prefix ~ '/path', '/' ~ ssm_key_prefix ~ '/dont_create_this_path_you_will_break_the_ansible_tests', '/' ~ ssm_key_prefix ~ '/deeppath', region=ec2_region, aws_access_key=ec2_access_key, aws_secret_key=ec2_secret_key, aws_security_token=security_token, bypath=True, shortnames=true, recursive=true ) | to_json }}' == '[{\"toovar\": \"too value\", \"treevar\": \"tree value\", \"wonvar\": \"won value\"}, {}, {\"samevar\": \"won value\"}]'"
+
+
+    # ============================================================
+    - name: Delete key/value pair in aws parameter store
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/Hello"
+        state: absent
+        <<: *aws_connection_info
+
+    # ============================================================
+    - name: Attempt delete key/value pair in aws parameter store again
+      aws_ssm_parameter_store:
+        name: "/{{ssm_key_prefix}}/Hello"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: assert that changed is False since parameter should be deleted
+      assert:
+        that:
+          - result.changed == False
+  always:
+    # ============================================================
+    - name: Delete remaining key/value pairs in aws parameter store
+      aws_ssm_parameter_store:
+        name: "{{item}}"
+        state: absent
+        <<: *aws_connection_info
+      with_items:
+        - "/{{ssm_key_prefix}}/Hello"
+        - "/{{ssm_key_prefix}}/path/wonvar"
+        - "/{{ssm_key_prefix}}/path/toovar"
+        - "/{{ssm_key_prefix}}/path/tree/treevar"
+        - "/{{ssm_key_prefix}}/deeppath/wondir/samevar"

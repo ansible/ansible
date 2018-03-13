@@ -13,6 +13,8 @@ short_description: Sends failure events via email
 description:
 - This callback will report failures via email
 version_added: '2.0'
+author:
+- Dag Wieers (@dagwieers)
 requirements:
 - whitelisting in configuration
 options:
@@ -25,6 +27,13 @@ options:
           key: smtphost
           version_added: '2.5'
     default: localhost
+  mtaport:
+    description: Mail Transfer Agent Port, port at which server SMTP
+    ini:
+        - section: callback_mail
+          key: smtpport
+          version_added: '2.5'
+    default: 25
   to:
     description: Mail recipient
     ini:
@@ -76,6 +85,7 @@ class CallbackModule(CallbackBase):
         self.sender = None
         self.to = 'root'
         self.smtphost = os.getenv('SMTPHOST', 'localhost')
+        self.smtpport = 25
         self.cc = None
         self.bcc = None
 
@@ -86,6 +96,7 @@ class CallbackModule(CallbackBase):
         self.sender = self.get_option('sender')
         self.to = self.get_option('to')
         self.smtphost = self.get_option('mta')
+        self.smtpport = int(self.get_option('mtaport'))
         self.cc = self.get_option('cc')
         self.bcc = self.get_option('bcc')
 
@@ -93,7 +104,7 @@ class CallbackModule(CallbackBase):
         if body is None:
             body = subject
 
-        smtp = smtplib.SMTP(self.smtphost)
+        smtp = smtplib.SMTP(self.smtphost, port=self.smtpport)
 
         b_sender = to_bytes(self.sender)
         b_to = to_bytes(self.to)
@@ -190,10 +201,10 @@ class CallbackModule(CallbackBase):
             body += self.body_blob(result._result['stderr'], 'error output')
         if result._result.get('warnings'):
             for i in range(len(result._result.get('warnings'))):
-                body += self.body_blob(result._result['warnings'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['warnings'][i], 'exception %d' % (i + 1))
         if result._result.get('deprecations'):
             for i in range(len(result._result.get('deprecations'))):
-                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % i + 1)
+                body += self.body_blob(result._result['deprecations'][i], 'exception %d' % (i + 1))
 
         body += 'and a complete dump of the error:\n\n'
         body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))

@@ -149,6 +149,12 @@ options:
               Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
             - C(memory_guaranteed) parameter can't be lower than C(memory) parameter.
             - Default value is set by engine.
+    memory_max:
+        description:
+            - Upper bound of virtual machine memory up to which memory hot-plug can be performed.
+              Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+            - Default value is set by engine.
+        version_added: "2.5"
     cpu_shares:
         description:
             - Set a CPU shares for this Virtual Machine.
@@ -170,7 +176,8 @@ options:
         description:
             - Type of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
-        choices: [ desktop, server ]
+            - I(high_performance) is supported since Ansible 2.5 and oVirt/RHV 4.2.
+        choices: [ desktop, server, high_performance ]
     quota_id:
         description:
             - "Virtual Machine quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
@@ -364,6 +371,12 @@ options:
             - C(nic_name) - Set name to network interface of Virtual Machine.
             - C(nic_on_boot) - If I(True) network interface will be set to start on boot.
         version_added: "2.3"
+    cloud_init_persist:
+        description:
+            - "If I(true) the C(cloud_init) or C(sysprep) parameters will be saved for the virtual machine
+               and won't be virtual machine won't be started as run-once."
+        version_added: "2.5"
+        aliases: [ 'sysprep_persist' ]
     kernel_path:
         description:
             - Path to a kernel image used to boot the virtual machine.
@@ -459,6 +472,74 @@ options:
             - C(storage_domain) - Specifies the target storage domain for
               converted disks. This is required parameter.
         version_added: "2.3"
+    cpu_mode:
+        description:
+            - "CPU mode of the virtual machine. It can be some of the following: I(host_passthrough), I(host_model) or I(custom)."
+            - "For I(host_passthrough) CPU type you need to set C(placement_policy) to I(pinned)."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+        version_added: "2.5"
+    placement_policy:
+        description:
+            - "The configuration of the virtual machine's placement policy."
+            - "Placement policy can be one of the following values:"
+            - "C(migratable) - Allow manual and automatic migration."
+            - "C(pinned) - Do not allow migration."
+            - "C(user_migratable) - Allow manual migration only."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
+        version_added: "2.5"
+    cpu_pinning:
+        description:
+            - "CPU Pinning topology to map virtual machine CPU to host CPU."
+            - "CPU Pinning topology is a list of dictionary which can have following values:"
+            - "C(cpu) - Number of the host CPU."
+            - "C(vcpu) - Number of the virtual machine CPU."
+        version_added: "2.5"
+    soundcard_enabled:
+        description:
+            - "If I(true), the sound card is added to the virtual machine."
+        version_added: "2.5"
+    smartcard_enabled:
+        description:
+            - "If I(true), use smart card authentication."
+        version_added: "2.5"
+    io_threads:
+        description:
+            - "Number of IO threads used by virtual machine. I(0) means IO threading disabled."
+        version_added: "2.5"
+    ballooning_enabled:
+        description:
+            - "If I(true), use memory ballooning."
+            - "Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory
+               based on VM needs in a dynamic way. In this way it's possible to create memory over commitment states."
+        version_added: "2.5"
+    rng_device:
+        description:
+            - "Random number generator (RNG). You can choose of one the following devices I(urandom), I(random) or I(hwrng)."
+            - "In order to select I(hwrng), you must have it enabled on cluster first."
+            - "/dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0"
+        version_added: "2.5"
+    custom_properties:
+        description:
+            - "Properties sent to VDSM to configure various hooks."
+            - "Custom properties is a list of dictionary which can have following values:"
+            - "C(name) - Name of the custom property. For example: I(hugepages), I(vhost), I(sap_agent), etc."
+            - "C(regexp) - Regular expression to set for custom property."
+            - "C(value) - Value to set for custom property."
+        version_added: "2.5"
+    watchdog:
+        description:
+            - "Assign watchdog device for the virtual machine."
+            - "Watchdogs is a dictionary which can have following values:"
+            - "C(model) - Model of the watchdog device. For example: I(i6300esb), I(diag288) or I(null)."
+            - "C(action) - Watchdog action to be performed when watchdog is triggered. For example: I(none), I(reset), I(poweroff), I(pause) or I(dump)."
+        version_added: "2.5"
+    graphical_console:
+        description:
+            - "Assign graphical console to the virtual machine."
+            - "Graphical console is a dictionary which can have following values:"
+            - "C(headless_mode) - If I(true) disable the graphics console for this virtual machine."
+            - "C(protocol) - Graphical protocol, one of I(VNC), I(SPICE), or both."
+        version_added: "2.5"
 notes:
     - If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
       If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -488,6 +569,7 @@ EXAMPLES = '''
     state: present
     name: myvm
     template: rhel7_template
+    cluster: mycluster
 
 - name: Register VM
   ovirt_vms:
@@ -769,6 +851,10 @@ from ansible.module_utils.ovirt import (
 
 class VmsModule(BaseModule):
 
+    def __init__(self, *args, **kwargs):
+        super(VmsModule, self).__init__(*args, **kwargs)
+        self._initialization = None
+
     def __get_template_with_version(self):
         """
         oVirt/RHV in version 4.1 doesn't support search by template+version_number,
@@ -875,10 +961,24 @@ class VmsModule(BaseModule):
                     cores=self.param('cpu_cores'),
                     sockets=self.param('cpu_sockets'),
                     threads=self.param('cpu_threads'),
-                )
-            ) if (
-                any((self.param('cpu_cores'), self.param('cpu_sockets'), self.param('cpu_threads')))
-            ) else None,
+                ) if any((
+                    self.param('cpu_cores'),
+                    self.param('cpu_sockets'),
+                    self.param('cpu_threads')
+                )) else None,
+                cpu_tune=otypes.CpuTune(
+                    vcpu_pins=[
+                        otypes.VcpuPin(vcpu=int(pin['vcpu']), cpu_set=str(pin['cpu'])) for pin in self.param('cpu_pinning')
+                    ],
+                ) if self.param('cpu_pinning') else None,
+                mode=otypes.CpuMode(self.param('cpu_mode')) if self.param('cpu_mode') else None,
+            ) if any((
+                self.param('cpu_cores'),
+                self.param('cpu_sockets'),
+                self.param('cpu_threads'),
+                self.param('cpu_mode'),
+                self.param('cpu_pinning')
+            )) else None,
             cpu_shares=self.param('cpu_shares'),
             os=otypes.OperatingSystem(
                 type=self.param('operating_system'),
@@ -898,7 +998,13 @@ class VmsModule(BaseModule):
             ) if self.param('memory') else None,
             memory_policy=otypes.MemoryPolicy(
                 guaranteed=convert_to_bytes(self.param('memory_guaranteed')),
-            ) if self.param('memory_guaranteed') else None,
+                ballooning=self.param('ballooning_enabled'),
+                max=convert_to_bytes(self.param('memory_max')),
+            ) if any((
+                self.param('memory_guaranteed'),
+                self.param('ballooning_enabled') is not None,
+                self.param('memory_max')
+            )) else None,
             instance_type=otypes.InstanceType(
                 id=get_id_by_name(
                     self._connection.system_service().instance_types_service(),
@@ -917,18 +1023,77 @@ class VmsModule(BaseModule):
                 self.param('serial_policy') is not None or
                 self.param('serial_policy_value') is not None
             ) else None,
+            placement_policy=otypes.VmPlacementPolicy(
+                affinity=otypes.VmAffinity(self.param('placement_policy')),
+                hosts=[
+                    otypes.Host(name=self.param('host')),
+                ] if self.param('host') else None,
+            ) if self.param('placement_policy') else None,
+            soundcard_enabled=self.param('soundcard_enabled'),
+            display=otypes.Display(
+                smartcard_enabled=self.param('smartcard_enabled')
+            ) if self.param('smartcard_enabled') is not None else None,
+            io=otypes.Io(
+                threads=self.param('io_threads'),
+            ) if self.param('io_threads') is not None else None,
+            rng_device=otypes.RngDevice(
+                source=otypes.RngSource(self.param('rng_device')),
+            ) if self.param('rng_device') else None,
+            custom_properties=[
+                otypes.CustomProperty(
+                    name=cp.get('name'),
+                    regexp=cp.get('regexp'),
+                    value=str(cp.get('value')),
+                ) for cp in self.param('custom_properties') if cp
+            ] if self.param('custom_properties') is not None else None,
+            initialization=self.get_initialization() if self.param('cloud_init_persist') else None,
         )
 
     def update_check(self, entity):
+        def check_cpu_pinning():
+            if self.param('cpu_pinning'):
+                current = []
+                if entity.cpu.cpu_tune:
+                    current = [(str(pin.cpu_set), int(pin.vcpu)) for pin in entity.cpu.cpu_tune.vcpu_pins]
+                passed = [(str(pin['cpu']), int(pin['vcpu'])) for pin in self.param('cpu_pinning')]
+                return sorted(current) == sorted(passed)
+            return True
+
+        def check_custom_properties():
+            if self.param('custom_properties'):
+                current = []
+                if entity.custom_properties:
+                    current = [(cp.name, cp.regexp, str(cp.value)) for cp in entity.custom_properties]
+                passed = [(cp.get('name'), cp.get('regexp'), str(cp.get('value'))) for cp in self.param('custom_properties') if cp]
+                return sorted(current) == sorted(passed)
+            return True
+
+        def check_host():
+            if self.param('host') is not None:
+                return self.param('host') in [self._connection.follow_link(host).name for host in getattr(entity.placement_policy, 'hosts', None) or []]
+            return True
+
+        cpu_mode = getattr(entity.cpu, 'mode')
+        vm_display = entity.display
         return (
+            check_cpu_pinning() and
+            check_custom_properties() and
+            check_host() and
+            not self.param('cloud_init_persist') and
             equal(self.param('cluster'), get_link_name(self._connection, entity.cluster)) and equal(convert_to_bytes(self.param('memory')), entity.memory) and
             equal(convert_to_bytes(self.param('memory_guaranteed')), entity.memory_policy.guaranteed) and
+            equal(convert_to_bytes(self.param('memory_max')), entity.memory_policy.max) and
             equal(self.param('cpu_cores'), entity.cpu.topology.cores) and
             equal(self.param('cpu_sockets'), entity.cpu.topology.sockets) and
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
+            equal(self.param('cpu_mode'), str(cpu_mode) if cpu_mode else None) and
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
             equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
+            equal(self.param('soundcard_enabled'), entity.soundcard_enabled) and
+            equal(self.param('smartcard_enabled'), getattr(vm_display, 'smartcard_enabled', False)) and
+            equal(self.param('io_threads'), entity.io.threads) and
+            equal(self.param('ballooning_enabled'), entity.memory_policy.ballooning) and
             equal(self.param('serial_console'), entity.console.enabled) and
             equal(self.param('usb_support'), entity.usb.enabled) and
             equal(self.param('sso'), True if entity.sso.methods else False) and
@@ -940,13 +1105,15 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_shares'), entity.cpu_shares) and
             equal(self.param('delete_protected'), entity.delete_protected) and
             equal(self.param('use_latest_template_version'), entity.use_latest_template_version) and
-            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os, 'devices', [])]) and
+            equal(self.param('boot_devices'), [str(dev) for dev in getattr(entity.os.boot, 'devices', [])]) and
             equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True) and
             equal(self.param('description'), entity.description) and
             equal(self.param('comment'), entity.comment) and
             equal(self.param('timezone'), getattr(entity.time_zone, 'name', None)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
-            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
+            equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
+            equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None) and
+            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None)
         )
 
     def pre_create(self, entity):
@@ -956,12 +1123,15 @@ class VmsModule(BaseModule):
                 self._module.params['template'] = 'Blank'
 
     def post_update(self, entity):
-        self.post_create(entity)
+        self.post_present(entity.id)
 
-    def post_create(self, entity):
+    def post_present(self, entity_id):
         # After creation of the VM, attach disks and NICs:
+        entity = self._service.service(entity_id).get()
         self.changed = self.__attach_disks(entity)
         self.changed = self.__attach_nics(entity)
+        self.changed = self.__attach_watchdog(entity)
+        self.changed = self.__attach_graphical_console(entity)
 
     def pre_remove(self, entity):
         # Forcibly stop the VM, if it's not in DOWN state:
@@ -1107,6 +1277,51 @@ class VmsModule(BaseModule):
                 )
         return True
 
+    def __attach_graphical_console(self, entity):
+        graphical_console = self.param('graphical_console')
+        if not graphical_console:
+            return
+
+        vm_service = self._service.service(entity.id)
+        gcs_service = vm_service.graphics_consoles_service()
+        graphical_consoles = gcs_service.list()
+
+        # Remove all graphical consoles if there are any:
+        if bool(graphical_console.get('headless_mode')):
+            if not self._module.check_mode:
+                for gc in graphical_consoles:
+                    gcs_service.console_service(gc.id).remove()
+            return len(graphical_consoles) > 0
+
+        # If there are not gc add any gc to be added:
+        protocol = graphical_console.get('protocol')
+        if isinstance(protocol, str):
+            protocol = [protocol]
+
+        current_protocols = [str(gc.protocol) for gc in graphical_consoles]
+        if not current_protocols:
+            if not self._module.check_mode:
+                for p in protocol:
+                    gcs_service.add(
+                        otypes.GraphicsConsole(
+                            protocol=otypes.GraphicsType(p),
+                        )
+                    )
+            return True
+
+        # Update consoles:
+        if sorted(protocol) != sorted(current_protocols):
+            if not self._module.check_mode:
+                for gc in graphical_consoles:
+                    gcs_service.console_service(gc.id).remove()
+                for p in protocol:
+                    gcs_service.add(
+                        otypes.GraphicsConsole(
+                            protocol=otypes.GraphicsType(p),
+                        )
+                    )
+            return True
+
     def __attach_disks(self, entity):
         if not self.param('disks'):
             return
@@ -1175,6 +1390,36 @@ class VmsModule(BaseModule):
                 )
             )
 
+    def __attach_watchdog(self, entity):
+        watchdogs_service = self._service.service(entity.id).watchdogs_service()
+        watchdog = self.param('watchdog')
+        if watchdog is not None:
+            current_watchdog = next(iter(watchdogs_service.list()), None)
+            if watchdog.get('model') is None and current_watchdog:
+                watchdogs_service.watchdog_service(current_watchdog.id).remove()
+                return True
+            elif watchdog.get('model') is not None and current_watchdog is None:
+                watchdogs_service.add(
+                    otypes.Watchdog(
+                        model=otypes.WatchdogModel(watchdog.get('model').lower()),
+                        action=otypes.WatchdogAction(watchdog.get('action')),
+                    )
+                )
+                return True
+            elif current_watchdog is not None:
+                if (
+                    str(current_watchdog.model).lower() != watchdog.get('model').lower() or
+                    str(current_watchdog.action).lower() != watchdog.get('action').lower()
+                ):
+                    watchdogs_service.watchdog_service(current_watchdog.id).update(
+                        otypes.Watchdog(
+                            model=otypes.WatchdogModel(watchdog.get('model')),
+                            action=otypes.WatchdogAction(watchdog.get('action')),
+                        )
+                    )
+                    return True
+        return False
+
     def __attach_nics(self, entity):
         # Attach NICs to VM, if specified:
         nics_service = self._service.service(entity.id).nics_service()
@@ -1196,6 +1441,52 @@ class VmsModule(BaseModule):
                         )
                     )
                 self.changed = True
+
+    def get_initialization(self):
+        if self._initialization is not None:
+            return self._initialization
+
+        sysprep = self.param('sysprep')
+        cloud_init = self.param('cloud_init')
+        cloud_init_nics = self.param('cloud_init_nics') or []
+        if cloud_init is not None:
+            cloud_init_nics.append(cloud_init)
+
+        if cloud_init or cloud_init_nics:
+            self._initialization = otypes.Initialization(
+                nic_configurations=[
+                    otypes.NicConfiguration(
+                        boot_protocol=otypes.BootProtocol(
+                            nic.pop('nic_boot_protocol').lower()
+                        ) if nic.get('nic_boot_protocol') else None,
+                        name=nic.pop('nic_name', None),
+                        on_boot=nic.pop('nic_on_boot', None),
+                        ip=otypes.Ip(
+                            address=nic.pop('nic_ip_address', None),
+                            netmask=nic.pop('nic_netmask', None),
+                            gateway=nic.pop('nic_gateway', None),
+                        ) if (
+                            nic.get('nic_gateway') is not None or
+                            nic.get('nic_netmask') is not None or
+                            nic.get('nic_ip_address') is not None
+                        ) else None,
+                    )
+                    for nic in cloud_init_nics
+                    if (
+                        nic.get('nic_gateway') is not None or
+                        nic.get('nic_netmask') is not None or
+                        nic.get('nic_ip_address') is not None or
+                        nic.get('nic_boot_protocol') is not None or
+                        nic.get('nic_on_boot') is not None
+                    )
+                ] if cloud_init_nics else None,
+                **cloud_init
+            )
+        elif sysprep:
+            self._initialization = otypes.Initialization(
+                **sysprep
+            )
+        return self._initialization
 
 
 def _get_role_mappings(module):
@@ -1396,45 +1687,6 @@ def import_vm(module, connection):
     return True
 
 
-def _get_initialization(sysprep, cloud_init, cloud_init_nics):
-    initialization = None
-    if cloud_init or cloud_init_nics:
-        initialization = otypes.Initialization(
-            nic_configurations=[
-                otypes.NicConfiguration(
-                    boot_protocol=otypes.BootProtocol(
-                        nic.pop('nic_boot_protocol').lower()
-                    ) if nic.get('nic_boot_protocol') else None,
-                    name=nic.pop('nic_name', None),
-                    on_boot=nic.pop('nic_on_boot', None),
-                    ip=otypes.Ip(
-                        address=nic.pop('nic_ip_address', None),
-                        netmask=nic.pop('nic_netmask', None),
-                        gateway=nic.pop('nic_gateway', None),
-                    ) if (
-                        nic.get('nic_gateway') is not None or
-                        nic.get('nic_netmask') is not None or
-                        nic.get('nic_ip_address') is not None
-                    ) else None,
-                )
-                for nic in cloud_init_nics
-                if (
-                    nic.get('nic_gateway') is not None or
-                    nic.get('nic_netmask') is not None or
-                    nic.get('nic_ip_address') is not None or
-                    nic.get('nic_boot_protocol') is not None or
-                    nic.get('nic_on_boot') is not None
-                )
-            ] if cloud_init_nics else None,
-            **cloud_init
-        )
-    elif sysprep:
-        initialization = otypes.Initialization(
-            **sysprep
-        )
-    return initialization
-
-
 def control_state(vm, vms_service, module):
     if vm is None:
         return
@@ -1492,24 +1744,13 @@ def main():
         disks=dict(type='list', default=[]),
         memory=dict(type='str'),
         memory_guaranteed=dict(type='str'),
+        memory_max=dict(type='str'),
         cpu_sockets=dict(type='int'),
         cpu_cores=dict(type='int'),
         cpu_shares=dict(type='int'),
         cpu_threads=dict(type='int'),
-        type=dict(type='str', choices=['server', 'desktop']),
-        operating_system=dict(type='str',
-                              choices=[
-                                  'rhel_6_ppc64', 'other', 'freebsd', 'windows_2003x64', 'windows_10',
-                                  'rhel_6x64', 'rhel_4x64', 'windows_2008x64', 'windows_2008R2x64',
-                                  'debian_7', 'windows_2012x64', 'ubuntu_14_04', 'ubuntu_12_04',
-                                  'ubuntu_13_10', 'windows_8x64', 'other_linux_ppc64', 'windows_2003',
-                                  'other_linux', 'windows_10x64', 'windows_2008', 'rhel_3', 'rhel_5',
-                                  'rhel_4', 'other_ppc64', 'sles_11', 'rhel_6', 'windows_xp', 'rhel_7x64',
-                                  'freebsdx64', 'rhel_7_ppc64', 'windows_7', 'rhel_5x64',
-                                  'ubuntu_14_04_ppc64', 'sles_11_ppc64', 'windows_8',
-                                  'windows_2012R2x64', 'windows_2008r2x64', 'ubuntu_13_04',
-                                  'ubuntu_12_10', 'windows_7x64',
-                              ]),
+        type=dict(type='str', choices=['server', 'desktop', 'high_performance']),
+        operating_system=dict(type='str'),
         cd_iso=dict(type='str'),
         boot_devices=dict(type='list'),
         vnic_profile_mappings=dict(default=[], type='list'),
@@ -1534,6 +1775,7 @@ def main():
         nics=dict(type='list', default=[]),
         cloud_init=dict(type='dict'),
         cloud_init_nics=dict(type='list', default=[]),
+        cloud_init_persist=dict(type='bool', default=False, aliases=['sysprep_persist']),
         sysprep=dict(type='dict'),
         host=dict(type='str'),
         clone=dict(type='bool', default=False),
@@ -1550,6 +1792,17 @@ def main():
         vmware=dict(type='dict'),
         xen=dict(type='dict'),
         kvm=dict(type='dict'),
+        cpu_mode=dict(type='str'),
+        placement_policy=dict(type='str'),
+        cpu_pinning=dict(type='list'),
+        soundcard_enabled=dict(type='bool', default=None),
+        smartcard_enabled=dict(type='bool', default=None),
+        io_threads=dict(type='int', default=None),
+        ballooning_enabled=dict(type='bool', default=None),
+        rng_device=dict(type='str'),
+        custom_properties=dict(type='list'),
+        watchdog=dict(type='dict'),
+        graphical_console=dict(type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1576,12 +1829,6 @@ def main():
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
                 vms_module.changed = import_vm(module, connection)
 
-            sysprep = module.params['sysprep']
-            cloud_init = module.params['cloud_init']
-            cloud_init_nics = module.params['cloud_init_nics'] or []
-            if cloud_init is not None:
-                cloud_init_nics.append(cloud_init)
-
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:
             ret = vms_module.create(
@@ -1590,10 +1837,11 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(ret['id'])
 
             # Run the VM if it was just created, else don't run it:
             if state == 'running':
-                initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
+                initialization = vms_module.get_initialization()
                 ret = vms_module.action(
                     action='start',
                     post_action=vms_module._post_start_action,
@@ -1609,8 +1857,8 @@ def main():
                     ),
                     wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     # Start action kwargs:
-                    use_cloud_init=cloud_init is not None or len(cloud_init_nics) > 0,
-                    use_sysprep=sysprep is not None,
+                    use_cloud_init=not module.params.get('cloud_init_persist') and module.params.get('cloud_init') is not None,
+                    use_sysprep=not module.params.get('cloud_init_persist') and module.params.get('sysprep') is not None,
                     vm=otypes.Vm(
                         placement_policy=otypes.VmPlacementPolicy(
                             hosts=[otypes.Host(name=module.params['host'])]
@@ -1630,7 +1878,7 @@ def main():
                         module.params.get('initrd_path') or
                         module.params.get('kernel_path') or
                         module.params.get('host') or
-                        initialization
+                        initialization is not None and not module.params.get('cloud_init_persist')
                     ) else None,
                 )
 
@@ -1644,15 +1892,18 @@ def main():
                         action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
+            ret['changed'] = vms_module.changed
         elif state == 'stopped':
             if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
                 vms_module.changed = import_vm(module, connection)
 
             ret = vms_module.create(
+                entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(ret['id'])
             if module.params['force']:
                 ret = vms_module.action(
                     action='stop',
@@ -1670,10 +1921,12 @@ def main():
                 )
         elif state == 'suspended':
             vms_module.create(
+                entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            vms_module.post_present(ret['id'])
             ret = vms_module.action(
                 action='suspend',
                 pre_action=vms_module._pre_suspend_action,

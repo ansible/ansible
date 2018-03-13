@@ -21,6 +21,7 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
+     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
 options:
   name:
     description:
@@ -43,6 +44,9 @@ options:
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
+      - C(present) and C(installed) will simply ensure that a desired package is installed.
+      - C(latest) will update the specified package if it's not of the latest available version.
+      - C(absent) and C(removed) will remove the specified package.
     choices: [ absent, installed, latest, present, removed ]
     default: present
   enablerepo:
@@ -313,7 +317,7 @@ def ensure_yum_utils(module):
 def fetch_rpm_from_url(spec, module=None):
     # download package so that we can query it
     package_name, _ = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-    package_file = tempfile.NamedTemporaryFile(prefix=package_name, suffix='.rpm', delete=False)
+    package_file = tempfile.NamedTemporaryFile(dir=getattr(module, 'tmpdir', None), prefix=package_name, suffix='.rpm', delete=False)
     module.add_cleanup_file(package_file.name)
     try:
         rsp, info = fetch_url(module, spec)
@@ -344,7 +348,7 @@ def is_group_env_installed(name, conf_file, installroot='/'):
     name_lower = name.lower()
 
     my = yum_base(conf_file, installroot)
-    if yum.__version__ >= '3.4':
+    if yum.__version_info__ >= (3, 4):
         groups_list = my.doGroupLists(return_evgrps=True)
     else:
         groups_list = my.doGroupLists()
@@ -355,7 +359,7 @@ def is_group_env_installed(name, conf_file, installroot='/'):
         if name_lower.endswith(group.name.lower()) or name_lower.endswith(group.groupid.lower()):
             return True
 
-    if yum.__version__ >= '3.4':
+    if yum.__version_info__ >= (3, 4):
         # list of the installed env_groups on the third index
         envs = groups_list[2]
         for env in envs:
@@ -1339,9 +1343,9 @@ def main():
 
     error_msgs = []
     if not HAS_RPM_PYTHON:
-        error_msgs.append('python2 bindings for rpm are needed for this module')
+        error_msgs.append('The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
     if not HAS_YUM_PYTHON:
-        error_msgs.append('python2 yum module is needed for this  module')
+        error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
     if error_msgs:
         module.fail_json(msg='. '.join(error_msgs))

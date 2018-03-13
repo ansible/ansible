@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Author(s): Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -21,7 +22,8 @@ short_description: Manage local roles on an ESXi host
 description:
     - Manage local roles on an ESXi host
 version_added: "2.5"
-author: Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
+author:
+- Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:
     - Tested on ESXi 6.5
     - Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit roles
@@ -37,6 +39,7 @@ options:
         description:
             - The list of privileges that role needs to have.
             - Please see U(https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html)
+        default: []
     state:
         description:
             - Indicate desired state of the role.
@@ -47,6 +50,7 @@ options:
         description:
             - If set to C(False) then prevents the role from being removed if any permissions are using it.
         default: False
+        type: bool
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -188,7 +192,7 @@ class VMwareLocalRoleManager(PyVmomi):
                                                                       failIfUsed=self.force)
         except vim.fault.NotFound as e:
             self.module.fail_json(msg="Failed to remove a role %s as the user specified role name "
-                                      "does not exists." % self.role_name,
+                                      "does not exist." % self.role_name,
                                   details=e.msg)
         except vim.fault.RemoveFailed as e:
             msg = "Failed to remove a role %s as the user specified role name." % self.role_name
@@ -272,6 +276,7 @@ def main():
 
     vmware_local_role_manager = VMwareLocalRoleManager(module)
     vmware_local_role_manager.process_state()
+
 
 if __name__ == '__main__':
     main()

@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Jacob McGill <jmcgill298
+# Copyright: (c) 2017, Jacob McGill (@jmcgill298)
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: present
     tenant: anstest
   register: tenant_present
@@ -94,15 +95,15 @@
   assert:
     that:
       - provide_present_check_mode.changed == true
-      - 'provide_present_check_mode.config == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
+      - 'provide_present_check_mode.sent == {"fvRsProv": {"attributes": {"tnVzBrCPName": "anstest_http"}}}'
       - provide_present.changed == true
-      - provide_present.config == provide_present_check_mode.config
-      - provide_present.existing == []
+      - provide_present.sent == provide_present_check_mode.sent
+      - provide_present.previous == []
       - consume_present.changed == true
-      - consume_present.existing == []
-      - 'consume_present.config == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
+      - consume_present.previous == []
+      - 'consume_present.sent == {"fvRsCons": {"attributes": {"tnVzBrCPName": "anstest_db"}}}'
       - provide_present2.changed == true
-      - provide_present2.existing == []
+      - provide_present2.previous == []
       - missing_param_present.failed == true
       - 'missing_param_present.msg == "state is present but all of the following are missing: ap, contract, epg"'
       - missing_required_present.failed == true
@@ -141,10 +142,10 @@
   assert:
     that:
       - query_provide_contract.changed == false
-      - query_provide_contract.existing != []
+      - query_provide_contract.current != []
       - '"class/fvRsProv.json" in query_provide_contract.url'
       - query_consume_contract.changed == false
-      - query_consume_contract.existing != []
+      - query_consume_contract.current != []
       - '"class/fvRsCons.json" in query_consume_contract.url'
       - query_all.changed == false
       - '"class/fvRsProv.json" in query_all.url'
@@ -175,7 +176,7 @@
     state: absent
   register: provide_absent2
 
-- name: delte consume binding - idempotency works
+- name: delete consume binding - idempotency works
   aci_epg_to_contract:
     <<: *aci_epg_consume_absent
   register: consume_absent_idempotent
@@ -198,14 +199,14 @@
   assert:
     that:
       - consume_absent_check_mode.changed == true
-      - consume_absent_check_mode.existing.0.fvRsCons is defined
+      - consume_absent_check_mode.previous.0.fvRsCons is defined
       - consume_absent.changed == true
-      - consume_absent.existing == consume_absent_check_mode.existing
+      - consume_absent.previous == consume_absent_check_mode.previous
       - provide_absent.changed == true
-      - provide_absent.existing.0.fvRsProv is defined
+      - provide_absent.previous.0.fvRsProv is defined
       - provide_absent2.changed == true
       - consume_absent_idempotent.changed == false
-      - consume_absent_idempotent.existing == []
+      - consume_absent_idempotent.previous == []
       - missing_param_absent.failed == true
       - 'missing_param_absent.msg == "state is absent but all of the following are missing: contract"'
       - missing_required_absent.failed == true

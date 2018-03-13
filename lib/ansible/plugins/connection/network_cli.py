@@ -283,10 +283,10 @@ class Connection(ConnectionBase):
         if self.connected:
             return
 
-        p = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        p.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        p.force_persistence = self.force_persistence
-        ssh = p._connect()
+        self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        self.paramiko_conn.force_persistence = self.force_persistence
+        ssh = self.paramiko_conn._connect()
 
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
@@ -487,6 +487,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 

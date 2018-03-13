@@ -90,6 +90,14 @@ options:
         - env
         default: auto
         version_added: 2.5
+    api_profile:
+        description:
+        - Selects an API profile to use when communicating with Azure services. Default value of C(latest) is appropriate for public clouds;
+          future values will allow use with Azure Stack.
+        choices:
+        - latest
+        default: latest
+        version_added: 2.5
 requirements:
     - "python >= 2.7"
     - "azure >= 2.0.0"

@@ -45,7 +45,7 @@ options:
       required: False
       default: null
     extattrs:
-      descrpition: a dict object that is used to filter on extattrs
+      description: a dict object that is used to filter on extattrs
       required: false
       default: null
 """
@@ -57,7 +57,7 @@ EXAMPLES = """
 
 - name: fetch the default dns view
   set_fact:
-    dns_views: "{{ lookup('nios', 'view', filter={'view': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
+    dns_views: "{{ lookup('nios', 'view', filter={'name': 'default'}, provider={'host': 'nios01', 'username': 'admin', 'password': 'password'}) }}"
 
 # all of the examples below use credentials that are  set using env variables
 # export INFOBLOX_HOST=nios01
@@ -88,7 +88,7 @@ obj_type:
     - The object type specified in the terms argument
   returned: always
   type: complex
-  contains
+  contains:
     obj_field:
       - One or more obj_type fields as specified by return_fields argument or
         the default set of fields as per the object type

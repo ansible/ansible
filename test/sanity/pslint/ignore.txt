@@ -64,9 +64,6 @@ lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_dsc.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_dsc.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_eventlog.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_feature.ps1 PSAvoidUsingCmdletAliases
-lib/ansible/modules/windows/win_feature.ps1 PSAvoidUsingInvokeExpression
-lib/ansible/modules/windows/win_feature.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_file.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_file_version.ps1 PSUseBOMForUnicodeEncodedFile
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
@@ -160,7 +157,6 @@ lib/ansible/modules/windows/win_wakeonlan.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_webpicmd.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_webpicmd.ps1 PSUseOutputTypeCorrectly
-test/integration/targets/uri/files/testserver.ps1 PSPossibleIncorrectComparisonWithNull
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
 test/integration/targets/win_dsc/library/test_win_dsc_iis_info.ps1 PSPossibleIncorrectComparisonWithNull
 test/integration/targets/win_dsc/templates/ANSIBLE_xTestResource.psm1 PSAvoidDefaultValueForMandatoryParameter

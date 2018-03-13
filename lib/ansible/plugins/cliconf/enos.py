@@ -1,20 +1,14 @@
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
 #
-# (c) 2017 Red Hat Inc.
+# GNU General Public License v3.0+
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # Contains CLIConf Plugin methods for ENOS Modules
 # Lenovo Networking
@@ -58,7 +52,7 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running'):
+    def get_config(self, source='running', format='text'):
         if source not in ('running', 'startup'):
             msg = "fetching configuration from %s is not supported"
             return self.invalid_params(msg % source)

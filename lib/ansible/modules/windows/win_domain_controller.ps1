@@ -204,10 +204,15 @@ Try {
                 if ($sysvol_path) {
                     $install_params.SysvolPath = $sysvol_path
                 }
+                if ($read_only) {
+                    # while this is a switch value, if we set on $false site_name is required
+                    # https://github.com/ansible/ansible/issues/35858
+                    $install_params.ReadOnlyReplica = $true
+                }
                 if ($site_name) {
                     $install_params.SiteName = $site_name
                 }
-                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -ReadOnlyReplica:$read_only -Force @install_params
+                $install_result = Install-ADDSDomainController -NoRebootOnCompletion -Force @install_params
 
                 Write-DebugLog "Installation completed, needs reboot..."
             }

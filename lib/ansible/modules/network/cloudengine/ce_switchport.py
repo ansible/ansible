@@ -719,7 +719,7 @@ class SwitchPort(object):
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
-            self.module.fail_json(msg='Error: Interface does not exists.')
+            self.module.fail_json(msg='Error: Interface does not exist.')
 
         if not self.is_l2switchport():
             self.module.fail_json(
@@ -764,7 +764,7 @@ class SwitchPort(object):
 
         self.check_params()
         if not self.intf_info:
-            self.module.fail_json(msg='Error: interface does not exists.')
+            self.module.fail_json(msg='Error: interface does not exist.')
 
         self.get_existing()
         self.get_proposed()

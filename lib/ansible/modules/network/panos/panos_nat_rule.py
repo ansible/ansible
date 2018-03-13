@@ -149,7 +149,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 # import pydevd
 # pydevd.settrace('localhost', port=60374, stdoutToServer=True, stderrToServer=True)
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -374,9 +374,8 @@ def main():
                 match.delete()
                 if commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
 
             module.exit_json(changed=True, msg='Rule \'%s\' successfully deleted.' % rule_name)
         else:
@@ -417,9 +416,8 @@ def main():
                 changed = add_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully added.' % rule_name)
     elif operation == 'update':
         # Search for the rule. Update if found.
@@ -450,9 +448,8 @@ def main():
                 changed = update_rule(rulebase, new_rule)
                 if changed and commit:
                     device.commit(sync=True)
-            except PanXapiError:
-                exc = get_exception()
-                module.fail_json(msg=exc.message)
+            except PanXapiError as exc:
+                module.fail_json(msg=to_native(exc))
             module.exit_json(changed=changed, msg='Rule \'%s\' successfully updated.' % rule_name)
         else:
             module.fail_json(msg='Rule \'%s\' does not exist. Use operation: \'add\' to add it.' % rule_name)

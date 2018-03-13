@@ -13,19 +13,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_bd_subnet
-short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
+short_description: Manage Subnets (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:Subnet) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(gateway) parameter is the root key used to access the Subnet (not name), so the C(gateway)
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
+- More information about the internal APIC class B(fv:Subnet) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   bd:
     description:
@@ -39,8 +39,8 @@ options:
     description:
     - Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
     - The APIC defaults new Subnets to C(no).
-    choices: [ no, yes ]
-    default: no
+    type: bool
+    default: 'no'
   gateway:
     description:
     - The IPv4 or IPv6 gateway address for the Subnet.
@@ -59,8 +59,8 @@ options:
     - Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6).
       can be preferred in the Bridge Domain.
     - The APIC defaults new Subnets to C(no).
-    choices: [ no, yes ]
-    default: no
+    type: bool
+    default: 'no'
   route_profile:
     description:
     - The Route Profile to the associate with the Subnet.
@@ -201,35 +201,135 @@ EXAMPLES = r'''
     mask: 24
 '''
 
-RETURN = r''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 SUBNET_CONTROL_MAPPING = dict(nd_ra='nd', no_gw='no-default-gateway', querier_ip='querier', unspecified='')
 
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, SEQUENCETYPE
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        bd=dict(type='str', aliases=['bd_name']),
+        bd=dict(type='str', aliases=['bd_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        enable_vip=dict(type='str', choices=['no', 'yes']),
-        gateway=dict(type='str', aliases=['gateway_ip']),
-        mask=dict(type='int', aliases=['subnet_mask']),
+        enable_vip=dict(type='bool'),
+        gateway=dict(type='str', aliases=['gateway_ip']),  # Not required for querying all objects
+        mask=dict(type='int', aliases=['subnet_mask']),  # Not required for querying all objects
         subnet_name=dict(type='str', aliases=['name']),
         nd_prefix_policy=dict(type='str'),
-        preferred=dict(type='str', choices=['no', 'yes']),
+        preferred=dict(type='bool'),
         route_profile=dict(type='str'),
         route_profile_l3_out=dict(type='str'),
-        scope=dict(
-            type='list',
-            choices=[['private'], ['public'], ['shared'], ['private', 'shared'], ['shared', 'private'], ['public', 'shared'], ['shared', 'public']],
-        ),
+        scope=dict(type='list', choices=['private', 'public', 'shared']),
         subnet_control=dict(type='str', choices=['nd_ra', 'no_gw', 'querier_ip', 'unspecified']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
@@ -244,8 +344,10 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
-    enable_vip = module.params['enable_vip']
+    enable_vip = aci.boolean(module.params['enable_vip'])
     tenant = module.params['tenant']
     bd = module.params['bd']
     gateway = module.params['gateway']
@@ -257,23 +359,20 @@ def main():
         gateway = '{0}/{1}'.format(gateway, str(mask))
     subnet_name = module.params['subnet_name']
     nd_prefix_policy = module.params['nd_prefix_policy']
-    preferred = module.params['preferred']
+    preferred = aci.boolean(module.params['preferred'])
     route_profile = module.params['route_profile']
     route_profile_l3_out = module.params['route_profile_l3_out']
     scope = module.params['scope']
-    if scope:
-        if len(scope) == 1:
-            scope = scope[0]
-        elif 'public' in scope:
-            scope = 'public,shared'
+    if isinstance(scope, SEQUENCETYPE):
+        if 'private' in scope and 'public' in scope:
+            module.fail_json(msg="Parameter 'scope' cannot be both 'private' and 'public', got: %s" % scope)
         else:
-            scope = 'private,shared'
+            scope = ','.join(sorted(scope))
     state = module.params['state']
     subnet_control = module.params['subnet_control']
     if subnet_control:
         subnet_control = SUBNET_CONTROL_MAPPING[subnet_control]
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
@@ -299,7 +398,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvSubnet',
             class_config=dict(
@@ -317,16 +415,14 @@ def main():
             ],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvSubnet')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

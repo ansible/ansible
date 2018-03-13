@@ -173,6 +173,30 @@ options:
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable ASG metrics collection
+    default: False
+    type: bool
+    version_added: "2.5"
+  metrics_granularity:
+    description:
+      - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
+    default: "1minute"
+    version_added: "2.5"
+  metrics_list:
+    description:
+      - List of autoscaling metrics to collect when enabling metrics_collection
+    default:
+        - 'GroupMinSize'
+        - 'GroupMaxSize'
+        - 'GroupDesiredCapacity'
+        - 'GroupInServiceInstances'
+        - 'GroupPendingInstances'
+        - 'GroupStandbyInstances'
+        - 'GroupTerminatingInstances'
+        - 'GroupTotalInstances'
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -399,6 +423,16 @@ vpc_zone_identifier:
     returned: success
     type: str
     sample: "subnet-a31ef45f"
+metrics_collection:
+    description: List of enabled AutosSalingGroup metrics
+    returned: success
+    type: list
+    sample: [
+        {
+            "Granularity": "1Minute",
+            "Metric": "GroupInServiceInstances"
+        }
+    ]
 '''
 
 import time
@@ -583,6 +617,7 @@ def get_properties(autoscaling_group):
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
+    properties['metrics_collection'] = autoscaling_group.get('EnabledMetrics')
 
     if properties['target_group_arns']:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -807,6 +842,9 @@ def create_autoscaling_group(connection):
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    metrics_collection = module.params.get('metrics_collection')
+    metrics_granularity = module.params.get('metrics_granularity')
+    metrics_list = module.params.get('metrics_list')
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -871,6 +909,8 @@ def create_autoscaling_group(connection):
 
         try:
             create_asg(connection, **ag)
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
 
             all_ag = describe_autoscaling_groups(connection, group_name)
             if len(all_ag) == 0:
@@ -1041,6 +1081,12 @@ def create_autoscaling_group(connection):
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
         try:
             update_asg(connection, **ag)
+
+            if metrics_collection:
+                connection.enable_metrics_collection(AutoScalingGroupName=group_name, Granularity=metrics_granularity, Metrics=metrics_list)
+            else:
+                connection.disable_metrics_collection(AutoScalingGroupName=group_name, Metrics=metrics_list)
+
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json(msg="Failed to update autoscaling group: %s" % to_native(e),
                              exception=traceback.format_exc())
@@ -1145,6 +1191,7 @@ def replace(connection):
     desired_capacity = module.params.get('desired_capacity')
     lc_check = module.params.get('lc_check')
     replace_instances = module.params.get('replace_instances')
+    replace_all_instances = module.params.get('replace_all_instances')
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     if desired_capacity is None:
@@ -1153,6 +1200,10 @@ def replace(connection):
     wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
     props = get_properties(as_group)
     instances = props['instances']
+    if replace_all_instances:
+        # If replacing all instances, then set replace_instances to current set
+        # This allows replace_instances and replace_all_instances to behave same
+        replace_instances = instances
     if replace_instances:
         instances = replace_instances
     # check to see if instances are replaceable if checking launch configs
@@ -1189,7 +1240,7 @@ def replace(connection):
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     update_size(connection, as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
+    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'] + batch_size, 'viable_instances')
     wait_for_elb(connection, group_name)
     wait_for_target_group(connection, group_name)
     as_group = describe_autoscaling_groups(connection, group_name)[0]
@@ -1368,6 +1419,12 @@ def wait_for_new_inst(connection, group_name, wait_timeout, desired_size, prop):
     return props
 
 
+def asg_exists(connection):
+    group_name = module.params.get('name')
+    as_group = describe_autoscaling_groups(connection, group_name)
+    return bool(len(as_group))
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -1401,7 +1458,19 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            metrics_collection=dict(type='bool', default=False),
+            metrics_granularity=dict(type='str', default='1Minute'),
+            metrics_list=dict(type='list', default=[
+                'GroupMinSize',
+                'GroupMaxSize',
+                'GroupDesiredCapacity',
+                'GroupInServiceInstances',
+                'GroupPendingInstances',
+                'GroupStandbyInstances',
+                'GroupTerminatingInstances',
+                'GroupTotalInstances'
+            ])
         ),
     )
 
@@ -1425,13 +1494,16 @@ def main():
                             endpoint=ec2_url,
                             **aws_connect_params)
     changed = create_changed = replace_changed = False
+    exists = asg_exists(connection)
 
     if state == 'present':
         create_changed, asg_properties = create_autoscaling_group(connection)
     elif state == 'absent':
         changed = delete_autoscaling_group(connection)
         module.exit_json(changed=changed)
-    if replace_all_instances or replace_instances:
+
+    # Only replace instances if asg existed at start of call
+    if exists and (replace_all_instances or replace_instances):
         replace_changed, asg_properties = replace(connection)
     if create_changed or replace_changed:
         changed = True

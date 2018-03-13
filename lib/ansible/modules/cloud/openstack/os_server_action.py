@@ -66,7 +66,7 @@ EXAMPLES = '''
 - os_server_action:
       action: pause
       auth:
-        auth_url: https://mycloud.openstack.blueboxgrid.com:5001/v2.0
+        auth_url: https://identity.example.com
         username: admin
         password: admin
         project_name: admin
@@ -74,15 +74,8 @@ EXAMPLES = '''
       timeout: 200
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
-
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 _action_map = {'stop': 'SHUTOFF',
                'start': 'ACTIVE',
@@ -97,7 +90,7 @@ _action_map = {'stop': 'SHUTOFF',
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 
 
-def _wait(timeout, cloud, server, action, module):
+def _wait(timeout, cloud, server, action, module, shade):
     """Wait for the server to reach the desired state for the given action."""
 
     for count in shade._utils._iterate_timeout(
@@ -139,19 +132,16 @@ def main():
     if module._name == 'os_server_actions':
         module.deprecate("The 'os_server_actions' module is being renamed 'os_server_action'", version=2.8)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     action = module.params['action']
     wait = module.params['wait']
     timeout = module.params['timeout']
     image = module.params['image']
 
+    if action in _admin_actions:
+        shade, cloud = openstack_cloud_from_module(module)
+    else:
+        shade, cloud = openstack_cloud_from_module(module)
     try:
-        if action in _admin_actions:
-            cloud = shade.operator_cloud(**module.params)
-        else:
-            cloud = shade.openstack_cloud(**module.params)
         server = cloud.get_server(module.params['server'])
         if not server:
             module.fail_json(msg='Could not find server %s' % server)
@@ -166,7 +156,7 @@ def main():
 
             cloud.nova_client.servers.stop(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
                 module.exit_json(changed=True)
 
         if action == 'start':
@@ -175,7 +165,7 @@ def main():
 
             cloud.nova_client.servers.start(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
                 module.exit_json(changed=True)
 
         if action == 'pause':
@@ -184,7 +174,7 @@ def main():
 
             cloud.nova_client.servers.pause(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
                 module.exit_json(changed=True)
 
         elif action == 'unpause':
@@ -193,7 +183,7 @@ def main():
 
             cloud.nova_client.servers.unpause(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
             module.exit_json(changed=True)
 
         elif action == 'lock':
@@ -212,7 +202,7 @@ def main():
 
             cloud.nova_client.servers.suspend(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
             module.exit_json(changed=True)
 
         elif action == 'resume':
@@ -221,7 +211,7 @@ def main():
 
             cloud.nova_client.servers.resume(server=server.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
             module.exit_json(changed=True)
 
         elif action == 'rebuild':
@@ -233,7 +223,7 @@ def main():
             # rebuild doesn't set a state, just do it
             cloud.nova_client.servers.rebuild(server=server.id, image=image.id)
             if wait:
-                _wait(timeout, cloud, server, action, module)
+                _wait(timeout, cloud, server, action, module, shade)
             module.exit_json(changed=True)
 
     except shade.OpenStackCloudException as e:

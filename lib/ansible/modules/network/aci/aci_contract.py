@@ -13,19 +13,19 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract
-short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
+short_description: Manage contract resources (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
-- More information from the internal APIC class I(vz:BrCP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.4'
 notes:
 - This module does not manage Contract Subjects, see M(aci_contract_subject) to do this.
   Contract Subjects can still be removed using this module.
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+- More information about the internal APIC class B(vz:BrCP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.4'
 options:
   contract:
     description:
@@ -66,22 +66,147 @@ options:
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_contract:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    contract: '{{ contract }}'
-    description: '{{ descr }}'
-    tenant: '{{ tenant }}'
-    scope: '{{ scope }}'
-    priority: '{{ priority }}'
-    target: '{{ target }}'
+- name: Add a new contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    description: Communication between web-servers and database
+    scope: application-profile
+    state: present
+
+- name: Remove an existing contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    state: absent
+
+- name: Query a specific contract
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    state: query
+
+- name: Query all contracts
+  aci_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -109,8 +234,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['tenant', 'contract']],
-            ['state', 'present', ['tenant', 'contract']],
+            ['state', 'absent', ['contract', 'tenant']],
+            ['state', 'present', ['contract', 'tenant']],
         ],
     )
 
@@ -141,7 +266,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='vzBrCP',
             class_config=dict(
@@ -153,16 +277,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzBrCP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

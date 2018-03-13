@@ -39,7 +39,7 @@ options:
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
-        - Required when no C(definition) is provided.
+        - Required when C(definition) is provided.
       required: false
   files:
       description:
@@ -686,7 +686,7 @@ class ContainerManager(DockerBaseClass):
 
         up_options = {
             u'--no-recreate': False,
-            u'--build': True,
+            u'--build': False,
             u'--no-build': False,
             u'--no-deps': False,
             u'--force-recreate': False,

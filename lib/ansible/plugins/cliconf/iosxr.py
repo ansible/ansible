@@ -56,7 +56,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', filter=None):
+    def get_config(self, source='running', format='text', filter=None):
         lookup = {'running': 'running-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
@@ -67,12 +67,27 @@ class Cliconf(CliconfBase):
 
         return self.send_command(cmd)
 
-    def edit_config(self, command):
-        for cmd in chain(to_list(command)):
-            self.send_command(cmd)
+    def edit_config(self, commands=None):
+        for cmd in chain(to_list(commands)):
+            try:
+                if isinstance(cmd, str):
+                    cmd = json.loads(cmd)
+                command = cmd.get('command', None)
+                prompt = cmd.get('prompt', None)
+                answer = cmd.get('answer', None)
+                sendonly = cmd.get('sendonly', False)
+                newline = cmd.get('newline', True)
+            except:
+                command = cmd
+                prompt = None
+                answer = None
+                sendonly = None
+                newline = None
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+            self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
+
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, newline=True):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline)
 
     def commit(self, comment=None):
         if comment:

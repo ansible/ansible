@@ -324,7 +324,7 @@ class Connection(ConnectionBase):
                 key_filename = os.path.expanduser(self._play_context.private_key_file)
 
             ssh.connect(
-                self._play_context.remote_addr,
+                self._play_context.remote_addr.lower(),
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),

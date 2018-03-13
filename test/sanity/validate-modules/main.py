@@ -45,7 +45,7 @@ from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, parse_yaml
+from utils import CaptureStd, compare_unordered_lists, maybe_convert_bool, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1019,6 +1019,15 @@ class ModuleValidator(Validator):
         if not self.analyze_arg_spec:
             return
 
+        if docs is None:
+            docs = {}
+
+        try:
+            add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+        except Exception:
+            # Cannot merge fragments
+            return
+
         try:
             spec, args, kwargs = get_argument_spec(self.path)
         except AnsibleModuleImportError as e:
@@ -1058,13 +1067,46 @@ class ModuleValidator(Validator):
                          'should not be marked as required' % arg)
                 )
 
-        if docs:
-            try:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
-            except Exception:
-                # Cannot merge fragments
-                return
+            if arg in provider_args:
+                # Provider args are being removed from network module top level
+                # don't validate docs<->arg_spec checks below
+                continue
 
+            # TODO: needs to recursively traverse suboptions
+            doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
+            if data.get('type') == 'bool':
+                doc_default = maybe_convert_bool(doc_default)
+            arg_default = data.get('default')
+            if 'default' in data and data.get('type') == 'bool':
+                arg_default = maybe_convert_bool(data['default'])
+            if 'default' in data and arg_default != doc_default:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=324,
+                    msg=('Value for "default" from the argument_spec (%r) for "%s" does not match the '
+                         'documentation (%r)' % (arg_default, arg, doc_default))
+                )
+
+            # TODO: needs to recursively traverse suboptions
+            doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
+            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
+                self.reporter.error(
+                    path=self.object_path,
+                    code=325,
+                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
+                )
+
+            # TODO: needs to recursively traverse suboptions
+            doc_choices = docs.get('options', {}).get(arg, {}).get('choices', [])
+            if not compare_unordered_lists(data.get('choices', []), doc_choices):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=326,
+                    msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
+                         'documentation (%r)' % (data.get('choices', []), arg, doc_choices))
+                )
+
+        if docs:
             file_common_arguments = set()
             for arg, data in FILE_COMMON_ARGUMENTS.items():
                 file_common_arguments.add(arg)
@@ -1235,7 +1277,7 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if 'deprecated' in docs and docs['deprecated'] is not None:
+            if docs and 'deprecated' in docs and docs['deprecated'] is not None:
                 removed_in = docs.get('deprecated')['removed_in']
                 strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
                 end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in

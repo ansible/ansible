@@ -13,20 +13,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_config_snapshot
-short_description: Manage Config Snapshots on Cisco ACI fabrics (config:Snapshot, config:ExportP)
+short_description: Manage Config Snapshots (config:Snapshot, config:ExportP)
 description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
 - 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
+- More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   description:
     description:
@@ -46,7 +46,7 @@ options:
     description:
     - Determines if secure information should be included in the backup.
     - The APIC defaults new Export Policies to C(yes).
-    choices: [ 'no', 'yes' ]
+    type: bool
     default: 'yes'
   max_count:
     description:
@@ -102,7 +102,110 @@ EXAMPLES = r'''
     snapshot: run-2017-08-24T17-20-05
 '''
 
-RETURN = r''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -112,9 +215,9 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        export_policy=dict(type='str', aliases=['name']),
+        export_policy=dict(type='str', aliases=['name']),  # Not required for querying all objects
         format=dict(type='str', choices=['json', 'xml']),
-        include_secure=dict(type='str', choices=['no', 'yes']),
+        include_secure=dict(type='bool'),
         max_count=dict(type='int'),
         snapshot=dict(type='str'),
         state=dict(type='str', choices=['absent', 'present', 'query'], default='present'),
@@ -129,22 +232,22 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     description = module.params['description']
     export_policy = module.params['export_policy']
     file_format = module.params['format']
-    include_secure = module.params['include_secure']
+    include_secure = aci.boolean(module.params['include_secure'])
     max_count = module.params['max_count']
     if max_count is not None:
         if max_count in range(1, 11):
             max_count = str(max_count)
         else:
-            module.fail_json(msg='The "max_count" must be a number between 1 and 10')
+            module.fail_json(msg="Parameter 'max_count' must be a number between 1 and 10")
     snapshot = module.params['snapshot']
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
     state = module.params['state']
-
-    aci = ACIModule(module)
 
     if state == 'present':
         aci.construct_url(
@@ -158,7 +261,6 @@ def main():
 
         aci.get_existing()
 
-        # Filter out module params with null values
         aci.payload(
             aci_class='configExportP',
             class_config=dict(
@@ -209,13 +311,13 @@ def main():
                 ),
             )
 
-            if aci.result['existing']:
+            if aci.existing:
                 aci.get_diff('configSnapshot')
 
                 # Mark Snapshot for Deletion
                 aci.post_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

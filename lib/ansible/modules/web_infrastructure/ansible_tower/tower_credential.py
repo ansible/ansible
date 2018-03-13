@@ -54,7 +54,7 @@ options:
       description:
         - Type of credential being added.
       required: True
-      choices: ["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6", "cloudforms", "gce", "azure", "azure_rm", "openstack"]
+      choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
     host:
       description:
         - Host for this credential.
@@ -165,6 +165,43 @@ except ImportError:
     pass
 
 
+KIND_CHOICES = {
+    'ssh': 'Machine',
+    'vault': 'Ansible Vault',
+    'net': 'Network',
+    'scm': 'Source Control',
+    'aws': 'Amazon Web Services',
+    'vmware': 'VMware vCenter',
+    'satellite6': 'Red Hat Satellite 6',
+    'cloudforms': 'Red Hat CloudForms',
+    'gce': 'Google Compute Engine',
+    'azure_rm': 'Microsoft Azure Resource Manager',
+    'openstack': 'OpenStack',
+    'rhv': 'Red Hat Virtualization',
+    'insights': 'Insights',
+    'tower': 'Ansible Tower',
+}
+
+
+def credential_type_for_v1_kind(params, module):
+    credential_type_res = tower_cli.get_resource('credential_type')
+    kind = params.pop('kind')
+    arguments = {'managed_by_tower': True}
+    if kind == 'ssh':
+        if params.get('vault_password'):
+            arguments['kind'] = 'vault'
+        else:
+            arguments['kind'] = 'ssh'
+    elif kind in ('net', 'scm', 'insights', 'vault'):
+        arguments['kind'] = kind
+    elif kind in KIND_CHOICES:
+        arguments.update(dict(
+            kind='cloud',
+            name=KIND_CHOICES[kind]
+        ))
+    return credential_type_res.get(**arguments)
+
+
 def main():
 
     argument_spec = tower_argument_spec()
@@ -173,8 +210,7 @@ def main():
         user=dict(),
         team=dict(),
         kind=dict(required=True,
-                  choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
-                           "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
+                  choices=KIND_CHOICES.keys()),
         host=dict(),
         username=dict(),
         password=dict(no_log=True),
@@ -213,22 +249,57 @@ def main():
         tower_check_mode(module)
         credential = tower_cli.get_resource('credential')
         try:
-            params = module.params.copy()
+            params = {}
             params['create_on_missing'] = True
+            params['name'] = name
 
             if organization:
                 org_res = tower_cli.get_resource('organization')
                 org = org_res.get(name=organization)
                 params['organization'] = org['id']
 
-            if params['ssh_key_data']:
-                filename = params['ssh_key_data']
+            try:
+                tower_cli.get_resource('credential_type')
+            except (ImportError, AttributeError):
+                # /api/v1/ backwards compat
+                # older versions of tower-cli don't *have* a credential_type
+                # resource
+                params['kind'] = module.params['kind']
+            else:
+                credential_type = credential_type_for_v1_kind(module.params, module)
+                params['credential_type'] = credential_type['id']
+
+            if module.params.get('description'):
+                params['description'] = module.params.get('description')
+
+            if module.params.get('user'):
+                user_res = tower_cli.get_resource('user')
+                user = user_res.get(username=module.params.get('user'))
+                params['user'] = user['id']
+
+            if module.params.get('team'):
+                team_res = tower_cli.get_resource('team')
+                team = team_res.get(name=module.params.get('team'))
+                params['team'] = team['id']
+
+            if module.params.get('ssh_key_data'):
+                filename = module.params.get('ssh_key_data')
                 if not os.path.exists(filename):
                     module.fail_json(msg='file not found: %s' % filename)
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    params['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = f.read()
+
+            for key in ('authorize', 'authorize_password', 'client', 'secret',
+                        'tenant', 'subscription', 'domain', 'become_method',
+                        'become_username', 'become_password', 'vault_password',
+                        'project', 'host', 'username', 'password',
+                        'ssh_key_data', 'ssh_key_unlock'):
+                if 'kind' in params:
+                    params[key] = module.params.get(key)
+                elif module.params.get(key):
+                    params.setdefault('inputs', {})[key] = module.params.get(key)
 
             if state == 'present':
                 result = credential.modify(**params)

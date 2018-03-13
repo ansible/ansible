@@ -167,14 +167,8 @@ security_group_id:
   returned: state == present
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
@@ -297,16 +291,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     security_group = module.params['security_group']
     remote_group = module.params['remote_group']
     changed = False
 
+    shade, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         secgroup = cloud.get_security_group(security_group)
 
         if remote_group:

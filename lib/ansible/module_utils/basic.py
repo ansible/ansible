@@ -47,7 +47,7 @@ PASS_VARS = {
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
-    'tempdir': 'tempdir',
+    'tmpdir': 'tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
 }
@@ -170,7 +170,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -1778,7 +1778,16 @@ class AnsibleModule(object):
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
                 if k in param:
-                    if param[k] not in choices:
+                    # Allow one or more when type='list' param with choices
+                    if isinstance(param[k], list):
+                        diff_list = ", ".join([item for item in param[k] if item not in choices])
+                        if diff_list:
+                            choices_str = ", ".join([to_native(c) for c in choices])
+                            msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                            if self._options_context:
+                                msg += " found in %s" % " -> ".join(self._options_context)
+                            self.fail_json(msg=msg)
+                    elif param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
@@ -2190,7 +2199,7 @@ class AnsibleModule(object):
         except:
             # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
-            for cwd in [self.tempdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
+            for cwd in [self.tmpdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
                     if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
@@ -2502,7 +2511,7 @@ class AnsibleModule(object):
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    error_msg = ('Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
+                    error_msg = ('Failed creating tmp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
                                  'Please use Python2.x or Python3.5 or greater.')
                 finally:
                     if error_msg:
@@ -2522,7 +2531,7 @@ class AnsibleModule(object):
                             try:
                                 shutil.move(b_src, b_tmp_dest_name)
                             except OSError:
-                                # cleanup will happen by 'rm' of tempdir
+                                # cleanup will happen by 'rm' of tmpdir
                                 # copy2 will preserve some metadata
                                 shutil.copy2(b_src, b_tmp_dest_name)
 

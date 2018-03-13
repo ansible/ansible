@@ -630,8 +630,9 @@ strategy_loader = PluginLoader(
 terminal_loader = PluginLoader(
     'TerminalModule',
     'ansible.plugins.terminal',
+    C.DEFAULT_TERMINAL_PLUGIN_PATH,
     'terminal_plugins',
-    'terminal_plugins'
+    required_base_class='TerminalBase'
 )
 
 vars_loader = PluginLoader(
@@ -644,7 +645,7 @@ vars_loader = PluginLoader(
 cliconf_loader = PluginLoader(
     'Cliconf',
     'ansible.plugins.cliconf',
-    'cliconf_plugins',
+    C.DEFAULT_CLICONF_PLUGIN_PATH,
     'cliconf_plugins',
     required_base_class='CliconfBase'
 )
@@ -652,7 +653,7 @@ cliconf_loader = PluginLoader(
 netconf_loader = PluginLoader(
     'Netconf',
     'ansible.plugins.netconf',
-    'netconf_plugins',
+    C.DEFAULT_NETCONF_PLUGIN_PATH,
     'netconf_plugins',
     required_base_class='NetconfBase'
 )

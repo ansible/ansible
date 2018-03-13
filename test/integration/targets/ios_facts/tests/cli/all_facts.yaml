@@ -6,7 +6,7 @@
   ios_facts:
     gather_subset:
       - all
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 

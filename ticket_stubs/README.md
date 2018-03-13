@@ -9,8 +9,4 @@ some carpal tunnel syndrome events as Ansible takes off into stratosphere territ
 These are actually on GitHub so it's easy for people to make these snippets of text even more helpful
 or to correct typos. 
 
-(It's just expected that folks like @mpdehaan and @jimi-c will be pasting these in though, we'd ask
-that others not do this)
-
-If there are questions, email michael@ansible.com!
-
+For how to use these see https://github.com/ansible/ansible/tree/devel/ticket_stubs

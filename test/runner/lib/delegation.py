@@ -366,6 +366,8 @@ def filter_options(args, argv, options, exclude, require):
     options = options.copy()
 
     options['--requirements'] = 0
+    options['--truncate'] = 1
+    options['--redact'] = 0
 
     if isinstance(args, TestConfig):
         options.update({
@@ -414,3 +416,9 @@ def filter_options(args, argv, options, exclude, require):
         if args.metadata_path:
             yield '--metadata'
             yield args.metadata_path
+
+    yield '--truncate'
+    yield '%d' % args.truncate
+
+    if args.redact:
+        yield '--redact'

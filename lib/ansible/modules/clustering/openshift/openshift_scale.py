@@ -35,7 +35,7 @@ extends_documentation_fragment:
 
 requirements:
     - "python >= 2.7"
-    - "openshift >= 0.3"
+    - "openshift == 0.4.3"
     - "PyYAML >= 3.11"
 '''
 
@@ -116,11 +116,11 @@ result:
        type: complex
 '''
 
-from ansible.module_utils.k8s.scale import KubernetesAnsibleScaleModule
+from ansible.module_utils.k8s.scale import OpenShiftAnsibleScaleModule
 
 
 def main():
-    KubernetesAnsibleScaleModule().execute_module()
+    OpenShiftAnsibleScaleModule().execute_module()
 
 
 if __name__ == '__main__':

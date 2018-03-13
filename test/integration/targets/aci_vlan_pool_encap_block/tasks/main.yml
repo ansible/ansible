@@ -30,6 +30,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: present
     pool: anstest
     allocation_mode: static
@@ -53,7 +54,7 @@
   assert:
     that:
       - encap_block_present_check_mode.changed == true
-      - 'encap_block_present_check_mode.config == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
+      - 'encap_block_present_check_mode.sent == {"fvnsEncapBlk": {"attributes": {"allocMode": "inherit", "descr": "Ansible Test", "from": "vlan-20", "name": "anstest", "to": "vlan-40"}}}'
 
 - name: Create vlan pool encap_block - creation works
   aci_vlan_pool_encap_block:
@@ -64,9 +65,9 @@
   assert:
     that:
       - encap_block_present.changed == true
-      - encap_block_present.existing == []
-      - encap_block_present.config == encap_block_present_check_mode.config
-      - encap_block_present.config == encap_block_present.proposed
+      - encap_block_present.previous == []
+      - encap_block_present.sent == encap_block_present_check_mode.sent
+      - encap_block_present.sent == encap_block_present.proposed
 
 - name: Create vlan pool range - idempotency works
   aci_vlan_pool_encap_block:
@@ -77,7 +78,7 @@
   assert:
     that:
       - encap_block_present_idempotent.changed == false
-      - 'encap_block_present_idempotent.existing.0.fvnsEncapBlk.attributes.name == "anstest"'
+      - 'encap_block_present_idempotent.previous.0.fvnsEncapBlk.attributes.name == "anstest"'
 
 - name: Update vlan pool range - update works
   aci_vlan_pool_encap_block:
@@ -90,8 +91,8 @@
   assert:
     that:
       - encap_block_present_update.changed == true
-      - encap_block_present_update.existing != []
-      - encap_block_present_update.config != encap_block_present.config
+      - encap_block_present_update.previous != []
+      - encap_block_present_update.sent != encap_block_present.sent
 
 - name: Create vlan pool range - used for query
   aci_vlan_pool_encap_block: &aci_encap_block_present_2
@@ -105,7 +106,7 @@
   assert:
     that:
       - encap_block_present_2.changed == true
-      - encap_block_present_2.existing == []
+      - encap_block_present_2.previous == []
 
 - name: Invalid encap_block_start - error message works
   aci_vlan_pool_encap_block:
@@ -208,8 +209,8 @@
     that:
       - encap_block_query.changed == false
       - encap_block_query.url.endswith("infra/vlanns-[anstest]-static/from-[vlan-20]-to-[vlan-40].json")
-      - encap_block_query.existing | length == 1
-      - encap_block_query.existing.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query.current | length == 1
+      - encap_block_query.current.0.fvnsEncapBlk.attributes.name == "anstest"
 
 - name: Query vlan pool range - from, to, and name are filtered
   aci_vlan_pool_encap_block: &aci_encap_block_query_filter
@@ -223,9 +224,9 @@
       - encap_block_query_from_to_name.changed == false
       - encap_block_query_from_to_name.url.endswith("class/fvnsEncapBlk.json")
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in encap_block_query_from_to_name.filter_string'
-      - encap_block_query_from_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"
-      - encap_block_query_from_to_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"
-      - encap_block_query_from_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
+      - encap_block_query_from_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 
 - name: Query vlan pool range - from and name are filtered
   aci_vlan_pool_encap_block:
@@ -239,8 +240,8 @@
       - encap_block_query_from_name.changed == false
       - encap_block_query_from_name.url.endswith("class/fvnsEncapBlk.json")
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.name, \"anstest\"))" in encap_block_query_from_name.filter_string'
-      - encap_block_query_from_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"
-      - encap_block_query_from_name.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"
+      - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_from_name.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
 
 - name: Query vlan pool range - to and name are filtered
   aci_vlan_pool_encap_block:
@@ -254,8 +255,8 @@
       - encap_block_query_to_name.changed == false
       - encap_block_query_to_name.url.endswith("class/fvnsEncapBlk.json")
       - '"query-target-filter=and(eq(fvnsEncapBlk.to, \"vlan-40\"),eq(fvnsEncapBlk.name, \"anstest\"))" in encap_block_query_to_name.filter_string'
-      - encap_block_query_to_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"
-      - encap_block_query_to_name.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"
+      - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_to_name.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 
 - name: Query vlan pool range - name is filtered
   aci_vlan_pool_encap_block:
@@ -270,7 +271,7 @@
       - encap_block_query_name.changed == false
       - encap_block_query_name.url.endswith("class/fvnsEncapBlk.json")
       - '"query-target-filter=eq(fvnsEncapBlk.name, \"anstest\")" in encap_block_query_name.filter_string'
-      - encap_block_query_name.existing.0.fvnsEncapBlk.attributes.name == "anstest"
+      - encap_block_query_name.current.0.fvnsEncapBlk.attributes.name == "anstest"
 
 - name: Query vlan pool range - from and to are filtered
   aci_vlan_pool_encap_block:
@@ -284,8 +285,8 @@
       - encap_block_query_from_to.changed == false
       - encap_block_query_from_to.url.endswith("class/fvnsEncapBlk.json")
       - '"query-target-filter=and(eq(fvnsEncapBlk.from, \"vlan-20\"),eq(fvnsEncapBlk.to, \"vlan-40\"))" in encap_block_query_from_to.filter_string'
-      - encap_block_query_from_to.existing.0.fvnsEncapBlk.attributes.from == "vlan-20"
-      - encap_block_query_from_to.existing.0.fvnsEncapBlk.attributes.to == "vlan-40"
+      - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
+      - encap_block_query_from_to.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 
 - name: Query all ranges in a vlan pool
   aci_vlan_pool_encap_block:
@@ -297,9 +298,9 @@
 - name: Query assertions
   assert:
     that:
-      - encap_block_query_pool.existing | length == 1
-      - encap_block_query_pool.existing.0.fvnsVlanInstP.attributes.name == "anstest"
-      - encap_block_query_pool.existing.0.fvnsVlanInstP.children | length > 1
+      - encap_block_query_pool.current | length == 1
+      - encap_block_query_pool.current.0.fvnsVlanInstP.attributes.name == "anstest"
+      - encap_block_query_pool.current.0.fvnsVlanInstP.children | length > 1
       - encap_block_query_pool.url.endswith("infra/vlanns-[anstest]-static.json")
 
 - name: Query all ranges
@@ -313,8 +314,8 @@
   assert:
     that:
       - encap_block_query_all.changed == false
-      - encap_block_query_all.existing | length > 1
-      - encap_block_query_all.existing.0.fvnsEncapBlk is defined
+      - encap_block_query_all.current | length > 1
+      - encap_block_query_all.current.0.fvnsEncapBlk is defined
       - encap_block_query_all.url.endswith("class/fvnsEncapBlk.json")
 
 - name: Delete vlan pool range - deletion works
@@ -328,7 +329,7 @@
     that:
       - delete_range.changed == true
       - delete_range.proposed == {}
-      - delete_range.existing.0.fvnsEncapBlk.attributes.name == "anstest"
+      - delete_range.previous.0.fvnsEncapBlk.attributes.name == "anstest"
 
 - name: Delete vlan pool range - check mode works
   aci_vlan_pool_encap_block: &aci_encap_block_absent
@@ -341,7 +342,7 @@
   assert:
     that:
       - delete_check_mode.changed == true
-      - delete_check_mode.existing != []
+      - delete_check_mode.previous != []
 
 - name: Delete vlan pool range - deletion works
   aci_vlan_pool_encap_block:
@@ -352,7 +353,7 @@
   assert:
     that:
       - delete_encap_block_2.changed == true
-      - delete_encap_block_2.existing == delete_check_mode.existing
+      - delete_encap_block_2.previous == delete_check_mode.previous
 
 - name: Delete vlan pool range again - idempotency works
   aci_vlan_pool_encap_block:
@@ -363,7 +364,7 @@
   assert:
     that:
       - delete_idempotent.changed == false
-      - delete_idempotent.existing == []
+      - delete_idempotent.previous == []
 
 - name: Cleanup vlan pool
   aci_vlan_pool:

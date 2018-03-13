@@ -8,7 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -77,6 +76,7 @@ options:
     - "Use following command to get hostsystem's certificate's thumbprint - "
     - "# openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha1 -noout"
     version_added: 2.5
+    default: ''
 extends_documentation_fragment: vmware.documentation
 '''
 

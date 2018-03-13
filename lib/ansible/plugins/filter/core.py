@@ -55,7 +55,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
-from ansible.vars.hostvars import HostVars
+from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
@@ -67,7 +67,7 @@ class AnsibleJSONEncoder(json.JSONEncoder):
     types like HostVars
     '''
     def default(self, o):
-        if isinstance(o, HostVars):
+        if isinstance(o, (HostVars, HostVarsVars)):
             return dict(o)
         elif isinstance(o, (datetime.date, datetime.datetime)):
             return o.isoformat()
@@ -488,22 +488,6 @@ def flatten(mylist, levels=None):
     return ret
 
 
-def dict_slice(mydict, keys):
-    ''' takes a dictionary and a list of keys and returns a list of values corresponding to those keys, if they exist '''
-
-    if not isinstance(mydict, MutableMapping):
-        raise AnsibleFilterError("The slice filter requires a mapping to operate on, got a %s." % type(mydict))
-
-    if not isinstance(keys, MutableSequence):
-
-        if isinstance(keys, string_types):
-            keys = [keys]
-        else:
-            AnsibleFilterError("The slice filter requires a key or list of keys, got %s instead." % type(keys))
-
-    return [mydict[key] for key in keys if key in mydict]
-
-
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -590,5 +574,4 @@ class FilterModule(object):
             'combine': combine,
             'extract': extract,
             'flatten': flatten,
-            'slice': dict_slice,
         }

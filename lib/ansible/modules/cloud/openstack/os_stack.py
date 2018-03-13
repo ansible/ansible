@@ -158,19 +158,11 @@ stack:
                         'updated_time': null}"
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
-def _create_stack(module, stack, cloud):
+def _create_stack(module, stack, cloud, shade):
     try:
         stack = cloud.create_stack(module.params['name'],
                                    tags=module.params['tag'],
@@ -190,7 +182,7 @@ def _create_stack(module, stack, cloud):
         module.fail_json(msg=str(e))
 
 
-def _update_stack(module, stack, cloud):
+def _update_stack(module, stack, cloud, shade):
     try:
         stack = cloud.update_stack(
             module.params['name'],
@@ -238,15 +230,12 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
+    # stack API introduced in 1.8.0
+    min_version = '1.8.0'
     tag = module.params['tag']
     if tag is not None:
         # stack tag API was introduced in 1.26.0
-        if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.26.0')):
-            module.fail_json(msg='shade 1.26.0 or higher is required for this module')
-    else:
-        # stack API introduced in 1.8.0
-        if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-            module.fail_json(msg='shade 1.8.0 or higher is required for this module')
+        min_version = '1.26.0'
 
     state = module.params['state']
     name = module.params['name']
@@ -256,8 +245,8 @@ def main():
             if not module.params[p]:
                 module.fail_json(msg='%s required with present state' % p)
 
+    shade, cloud = openstack_cloud_from_module(module, min_version='1.26.0')
     try:
-        cloud = shade.openstack_cloud(**module.params)
         stack = cloud.get_stack(name)
 
         if module.check_mode:
@@ -266,9 +255,9 @@ def main():
 
         if state == 'present':
             if not stack:
-                stack = _create_stack(module, stack, cloud)
+                stack = _create_stack(module, stack, cloud, shade)
             else:
-                stack = _update_stack(module, stack, cloud)
+                stack = _update_stack(module, stack, cloud, shade)
             changed = True
             module.exit_json(changed=changed,
                              stack=stack,

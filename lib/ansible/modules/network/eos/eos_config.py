@@ -49,7 +49,7 @@ options:
     default: null
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
@@ -63,6 +63,8 @@ options:
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
         I(parents) arguments. It can be a Jinja2 template as well.
+        src file must have same indentation as a live switch config.
+        Arista EOS device config has 3 spaces indentation.
     required: false
     default: null
     version_added: "2.2"
@@ -115,7 +117,7 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
+        will be removed in Ansible 2.6.
     required: false
     default: false
     type: bool
@@ -162,7 +164,8 @@ options:
         no changes are made, the configuration is still saved to the
         startup config.  This option will always cause the module to
         return changed.
-      - This option is deprecated as of Ansible 2.4, use C(save_when)
+      - This option is deprecated as of Ansible 2.4 and will be removed
+        in Ansible 2.8, use C(save_when) instead.
     required: false
     default: false
     type: bool
@@ -178,10 +181,12 @@ options:
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config
+        startup-config. If the argument is set to I(changed), then the running-config
+        will only be copied to the startup-config if the task has made a change.
+        I(changed) was added in Ansible 2.5.
     required: false
     default: never
-    choices: ['always', 'never', 'modified']
+    choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
   diff_against:
     description:
@@ -279,7 +284,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = NetworkConfig(indent=3)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -298,7 +303,18 @@ def get_running_config(module, config=None):
             if module.params['defaults']:
                 flags.append('all')
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return NetworkConfig(indent=3, contents=contents)
+
+
+def save_config(module, result):
+    result['changed'] = True
+    if not module.check_mode:
+        cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
+        run_commands(module, [cmd])
+    else:
+        module.warn('Skipping command `copy running-config startup-config` '
+                    'due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
 
 
 def main():
@@ -319,7 +335,7 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'session', 'intended', 'running'], default='session'),
         diff_ignore_lines=dict(type='list'),
@@ -328,10 +344,10 @@ def main():
         intended_config=dict(),
 
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.4'),
+        save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.2')
+        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(eos_argument_spec)
@@ -362,7 +378,7 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=2, contents=contents)
+        config = NetworkConfig(indent=3, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
@@ -410,22 +426,20 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
-    if module.params['save_when'] != 'never':
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'modified':
         output = run_commands(module, [{'command': 'show running-config', 'output': 'text'},
                                        {'command': 'show startup-config', 'output': 'text'}])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
 
-        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
-            result['changed'] = True
-            if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
-                run_commands(module, [cmd])
-            else:
-                module.warn('Skipping command `copy running-config startup-config` '
-                            'due to check_mode.  Configuration not copied to '
-                            'non-volatile storage')
+        if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
 
     if module._diff:
         if not running_config:

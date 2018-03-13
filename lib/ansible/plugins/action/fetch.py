@@ -43,8 +43,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         try:
             if self._play_context.check_mode:
@@ -55,7 +54,7 @@ class ActionModule(ActionBase):
             source = self._task.args.get('src', None)
             dest = self._task.args.get('dest', None)
             flat = boolean(self._task.args.get('flat'), strict=False)
-            fail_on_missing = boolean(self._task.args.get('fail_on_missing'), strict=False)
+            fail_on_missing = boolean(self._task.args.get('fail_on_missing', True), strict=False)
             validate_checksum = boolean(self._task.args.get('validate_checksum',
                                                             self._task.args.get('validate_md5', True)),
                                         strict=False)
@@ -93,7 +92,7 @@ class ActionModule(ActionBase):
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
             if remote_checksum in ('1', '2', None):
-                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
+                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"
@@ -214,6 +213,6 @@ class ActionModule(ActionBase):
                 result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
 
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

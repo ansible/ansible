@@ -290,6 +290,7 @@ def gather_vm_facts(content, vm):
         'hw_guest_ha_state': None,
         'hw_is_template': vm.config.template,
         'hw_folder': None,
+        'hw_version': vm.config.version,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
         'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
         'guest_question': vm.summary.runtime.question,
@@ -716,7 +717,7 @@ def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_na
     return None, cluster
 
 
-def set_vm_power_state(content, vm, state, force):
+def set_vm_power_state(content, vm, state, force, timeout=0):
     """
     Set the power status for a VM determined by the current and
     requested states. force is forceful
@@ -764,6 +765,8 @@ def set_vm_power_state(content, vm, state, force):
                     if vm.guest.toolsRunningStatus == 'guestToolsRunning':
                         if expected_state == 'shutdownguest':
                             task = vm.ShutdownGuest()
+                            if timeout > 0:
+                                result.update(wait_for_poweroff(vm, timeout))
                         else:
                             task = vm.RebootGuest()
                         # Set result['changed'] immediately because
@@ -796,6 +799,20 @@ def set_vm_power_state(content, vm, state, force):
     if result['changed']:
         result['instance'] = gather_vm_facts(content, vm)
 
+    return result
+
+
+def wait_for_poweroff(vm, timeout=300):
+    result = dict()
+    interval = 15
+    while timeout > 0:
+        if vm.runtime.powerState.lower() == 'poweredoff':
+            break
+        time.sleep(interval)
+        timeout -= interval
+    else:
+        result['failed'] = True
+        result['msg'] = 'Timeout while waiting for VM power off.'
     return result
 
 
@@ -1071,6 +1088,42 @@ class PyVmomi(object):
         """
         return find_hostsystem_by_name(self.content, hostname=host_name)
 
+    def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
+        """
+        Function to get all host system managed object
+
+        Args:
+            cluster_name: Name of Cluster
+            esxi_host_name: Name of ESXi server
+
+        Returns: A list of all host system managed objects, else empty list
+
+        """
+        host_obj_list = []
+        if not self.is_vcenter():
+            hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
+            if hosts:
+                host_obj_list.append(hosts[0])
+        else:
+            if cluster_name:
+                cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+                if cluster_obj:
+                    host_obj_list = [host for host in cluster_obj.host]
+                else:
+                    self.module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
+            elif esxi_host_name:
+                if isinstance(esxi_host_name, str):
+                    esxi_host_name = [esxi_host_name]
+
+                for host in esxi_host_name:
+                    esxi_host_obj = self.find_hostsystem_by_name(host_name=host)
+                    if esxi_host_obj:
+                        host_obj_list = [esxi_host_obj]
+                    else:
+                        self.module.fail_json(changed=False, msg="ESXi '%s' not found" % host)
+
+        return host_obj_list
+
     # Network related functions
     @staticmethod
     def find_host_portgroup_by_name(host, portgroup_name):
@@ -1087,3 +1140,56 @@ class PyVmomi(object):
             if portgroup.spec.name == portgroup_name:
                 return portgroup
         return False
+
+    def get_all_port_groups_by_host(self, host_system):
+        """
+        Function to get all Port Group by host
+        Args:
+            host_system: Name of Host System
+
+        Returns: List of Port Group Spec
+        """
+        pgs_list = []
+        for pg in host_system.config.network.portgroup:
+            pgs_list.append(pg)
+        return pgs_list
+
+    # Datacenter
+    def find_datacenter_by_name(self, datacenter_name):
+        """
+        Function to get datacenter managed object by name
+
+        Args:
+            datacenter_name: Name of datacenter
+
+        Returns: datacenter managed object if found else None
+
+        """
+        return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
+
+    def find_datastore_by_name(self, datastore_name):
+        """
+        Function to get datastore managed object by name
+        Args:
+            datastore_name: Name of datastore
+
+        Returns: datastore managed object if found else None
+
+        """
+        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+
+    # Datastore cluster
+    def find_datastore_cluster_by_name(self, datastore_cluster_name):
+        """
+        Function to get datastore cluster managed object by name
+        Args:
+            datastore_cluster: Name of datastore cluster
+
+        Returns: Datastore cluster managed object if found else None
+
+        """
+        data_store_clusters = get_all_objs(self.content, [vim.StoragePod])
+        for dsc in data_store_clusters:
+            if dsc.name == datastore_cluster_name:
+                return dsc
+        return None

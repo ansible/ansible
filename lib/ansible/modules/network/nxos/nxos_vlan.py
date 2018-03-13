@@ -49,6 +49,12 @@ options:
     description:
       - List of interfaces that should be associated to the VLAN.
     version_added: "2.5"
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vlan C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vlan interfaces on device it will result in failure.
+    version_added: "2.5"
   vlan_state:
     description:
       - Manage the vlan operational state of the VLAN
@@ -116,10 +122,20 @@ EXAMPLES = '''
     vlan_id: 50
     state: absent
 
-- name: Add interfaces to VLAN
+- name: Add interfaces to VLAN and check intent (config + intent)
   nxos_vlan:
     vlan_id: 100
     interfaces:
+      - Ethernet2/1
+      - Ethernet2/5
+    associated_interfaces:
+      - Ethernet2/1
+      - Ethernet2/5
+
+- name: Check interfaces assigned to VLAN
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
       - Ethernet2/1
       - Ethernet2/5
 
@@ -155,15 +171,19 @@ def search_obj_in_list(vlan_id, lst):
             return o
 
 
-def get_diff(w, have):
-    del w['interfaces']
-    del w['name']
-    for o in have:
-        del o['interfaces']
-        del o['name']
-        if o['vlan_id'] == w['vlan_id']:
-            diff_dict = dict(set(w.items()) - set(o.items()))
-            return diff_dict
+def get_diff(w, obj):
+    c = deepcopy(w)
+    entries = ('interfaces', 'associated_interfaces', 'name', 'delay', 'vlan_range')
+    for key in entries:
+        if key in c:
+            del c[key]
+
+    o = deepcopy(obj)
+    del o['interfaces']
+    del o['name']
+    if o['vlan_id'] == w['vlan_id']:
+        diff_dict = dict(set(c.items()) - set(o.items()))
+        return diff_dict
 
 
 def map_obj_to_commands(updates, module, os_platform):
@@ -251,7 +271,7 @@ def map_obj_to_commands(updates, module, os_platform):
                             commands.append('no switchport access vlan {0}'.format(vlan_id))
 
                 else:
-                    diff = get_diff(w, have)
+                    diff = get_diff(w, obj_in_have)
                     if diff:
                         commands.append('vlan {0}'.format(vlan_id))
                         for key, value in diff.items():
@@ -339,7 +359,8 @@ def map_params_to_obj(module):
             'mapped_vni': str(module.params['mapped_vni']),
             'state': module.params['state'],
             'admin_state': module.params['admin_state'],
-            'mode': module.params['mode']
+            'mode': module.params['mode'],
+            'associated_interfaces': module.params['associated_interfaces']
         })
 
     return obj
@@ -404,7 +425,7 @@ def parse_interfaces(module, vlan):
     interfaces = vlan.get('vlanshowplist-ifidx')
     if interfaces:
         for i in interfaces.split(','):
-            if '-' in i:
+            if 'eth' in i.lower() and '-' in i:
                 int_range = i.split('-')
                 stop = int((int_range)[1])
                 start = int(int_range[0].split('/')[1])
@@ -451,16 +472,26 @@ def map_config_to_obj(module, os_platform):
     return objs
 
 
-def check_declarative_intent_params(want, module, os_platform):
-    if module.params['interfaces']:
-        time.sleep(module.params['delay'])
-        have = map_config_to_obj(module, os_platform)
+def check_declarative_intent_params(want, module, os_platform, result):
 
-        for w in want:
-            for i in w['interfaces']:
-                obj_in_have = search_obj_in_list(w['vlan_id'], have)
-                if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
-                    module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
+    have = None
+    is_delay = False
+
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module, os_platform)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['vlan_id'], have)
+            if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
 
 def main():
@@ -471,6 +502,7 @@ def main():
         vlan_range=dict(required=False),
         name=dict(required=False),
         interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
         vlan_state=dict(choices=['active', 'suspend'], required=False, default='active'),
         mapped_vni=dict(required=False, type='int'),
         delay=dict(default=10, type='int'),
@@ -526,10 +558,11 @@ def main():
             load_config(module, commands)
         result['changed'] = True
 
-    if want and result['changed']:
-        check_declarative_intent_params(want, module, os_platform)
+    if want:
+        check_declarative_intent_params(want, module, os_platform, result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

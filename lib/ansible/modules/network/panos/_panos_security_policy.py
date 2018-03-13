@@ -36,9 +36,9 @@ description:
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 deprecated:
-  removed_in: "2.8"
-  why: Renamed to M(panos_security_rule) in order to align with API calls and UI object references, which also has extra support for PanDevice SDK.
-  alternative: Use M(panos_security_rule) instead.
+    alternative: Use M(panos_security_rule) instead.
+    removed_in: '2.9'
+    why: This module depended on outdated and old SDK. In 2.4 use M(panos_security_rule) instead.
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
     - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
@@ -260,7 +260,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -508,9 +508,8 @@ def main():
         module.fail_json(msg='Rule with the same name but different objects exists.')
     try:
         changed = add_security_rule(device, sec_rule, rule_exist)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     if changed and commit:
         result = _commit(device, devicegroup)

@@ -40,6 +40,7 @@ is to use the output of the --env option with export:
 The following groups are generated from --list:
  - ID    (droplet ID)
  - NAME  (droplet NAME)
+ - digital_ocean
  - image_ID
  - image_NAME
  - distro_NAME  (distribution NAME from image)
@@ -312,7 +313,7 @@ class DigitalOceanInventory(object):
             self.write_to_cache()
 
         if self.args.pretty:
-            print(json.dumps(json_data, sort_keys=True, indent=2))
+            print(json.dumps(json_data, indent=2))
         else:
             print(json.dumps(json_data))
 
@@ -452,7 +453,8 @@ class DigitalOceanInventory(object):
             self.inventory[droplet['name']] = [dest]
 
             # groups that are always present
-            for group in ('region_' + droplet['region']['slug'],
+            for group in ('digital_ocean',
+                          'region_' + droplet['region']['slug'],
                           'image_' + str(droplet['image']['id']),
                           'size_' + droplet['size']['slug'],
                           'distro_' + DigitalOceanInventory.to_safe(droplet['image']['distribution']),
@@ -515,7 +517,7 @@ class DigitalOceanInventory(object):
     def write_to_cache(self):
         """ Writes data in JSON format to a file """
         data = {'data': self.data, 'inventory': self.inventory}
-        json_data = json.dumps(data, sort_keys=True, indent=2)
+        json_data = json.dumps(data, indent=2)
 
         with open(self.cache_filename, 'w') as cache:
             cache.write(json_data)
