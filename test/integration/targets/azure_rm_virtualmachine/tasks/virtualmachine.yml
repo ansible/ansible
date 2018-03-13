@@ -74,9 +74,6 @@
       resource_group: "{{ resource_group }}"
       name: testvmnoip
       vm_size: Standard_A0
-      storage_account: "{{ storage_account }}"
-      storage_container: testvm001
-      storage_blob: testvm001.vhd
       admin_username: adminuser
       admin_password: Password123!
       short_hostname: testvm
@@ -92,13 +89,6 @@
 - assert:
       that:
         - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
-
-- name: Delete VM with no public ip
-  azure_rm_virtualmachine:
-      resource_group: "{{ resource_group }}"
-      name: testvmnoip
-      state: absent
-      vm_size: Standard_A0
 
 - name: Create virtual machine
   register: output
