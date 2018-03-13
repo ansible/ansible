@@ -199,6 +199,7 @@ class Connection(NetworkConnectionBase):
         self._matched_prompt = None
         self._matched_cmd_prompt = None
         self._matched_pattern = None
+        self._first_matched_prompt = None
         self._last_response = None
         self._history = list()
 
@@ -361,7 +362,7 @@ class Connection(NetworkConnectionBase):
             if not data:
                 break
 
-            if signal_handler:
+            if signal_handler and self._first_matched_prompt:
                 display.debug("cli command_timeout extended on new data")
                 signal.alarm(self._play_context.timeout)
 
@@ -482,6 +483,8 @@ class Connection(NetworkConnectionBase):
                         errored_response = response
                         self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
+                        if not self._first_matched_prompt:
+                            self._first_matched_prompt = self._matched_prompt
                         break
 
         if not is_error_message:
@@ -490,6 +493,8 @@ class Connection(NetworkConnectionBase):
                 if match:
                     self._matched_pattern = regex.pattern
                     self._matched_prompt = match.group()
+                    if not self._first_matched_prompt:
+                        self._first_matched_prompt = self._matched_prompt
                     if not errored_response:
                         return True
 
