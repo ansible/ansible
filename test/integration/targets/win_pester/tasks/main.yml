@@ -3,6 +3,13 @@
   win_psmodule:
     name: Pester
     state: present
+  when: ansible_powershell_version >= 5
+
+- name: Add Pester module with Chocolatey
+  win_chocolatey:
+    name: Pester
+    state: present
+  when: ansible_powershell_version < 5
 
 - name: Copy test file(s)
   win_copy:
