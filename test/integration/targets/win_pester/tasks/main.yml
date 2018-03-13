@@ -1,7 +1,7 @@
 ---
 - name: Add Pester module
   win_psmodule:
-    name: PowershellModule
+    name: Pester
     state: present
 
 - name: Copy test file(s)
