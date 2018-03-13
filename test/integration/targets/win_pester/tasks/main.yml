@@ -1,118 +1,102 @@
 ---
-- name: Test out win_pester module
-  hosts: windows
-  vars:
-    local_test_files:
-      - "files/test01.test.ps1"
-      - "files/test02.test.ps1"
-    remote_test_files:
-      - "test01.test.ps1"
-      - "test02.test.ps1"
-    fake_remote_test_file: C:\Pester\fake_test.test.ps1
-    fake_remote_folder: C:\Fake_Pester
-    remote_test_folder: 
-      - C:\Pester\
-      - C:\Pester
+- name: Copy test file(s)
+  win_copy:
+    src: "{{ item }}"
+    dest: "{{ remote_test_folder[0] }}"
+  with_items: "{{local_test_files}}"
 
-  tasks:
-    - name: Copy test file(s)
-      win_copy:
-        src: "{{ item }}"
-        dest: "{{ remote_test_folder[0] }}"
-      with_items: "{{local_test_files}}"
+- name: Run Pester test(s) specifying a fake test file
+  win_pester:
+    src: "{{ fake_remote_test_file }}"
+  register: pester_result
+  ignore_errors: yes
 
-    - name: Run Pester test(s) specifying a fake test file
-      win_pester:
-        src: "{{ fake_remote_test_file }}"
-      register: pester_result
-      ignore_errors: yes
+- name: Assert pester_result
+  assert:
+    that: 
+      - pester_result.failed == true
 
-    - name: Assert pester_result
-      assert:
-        that: 
-          - pester_result.failed == true
+- name: Run Pester test(s) specifying a fake folder
+  win_pester:
+    src: "{{ fake_remote_folder }}"
+  register: pester_result
+  ignore_errors: yes
 
-    - name: Run Pester test(s) specifying a fake folder
-      win_pester:
-        src: "{{ fake_remote_folder }}"
-      register: pester_result
-      ignore_errors: yes
+- name: Assert pester_result
+  assert:
+    that: 
+      - pester_result.failed == true
 
-    - name: Assert pester_result
-      assert:
-        that: 
-          - pester_result.failed == true
+- name: Run Pester test(s) specifying a test file and a higher pester version
+  win_pester:
+    src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+    version: 6.0.0
+  register: pester_result
+  ignore_errors: yes
 
-    - name: Run Pester test(s) specifying a test file and a higher pester version
-      win_pester:
-        src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
-        version: 6.0.0
-      register: pester_result
-      ignore_errors: yes
+- name: Assert pester_result
+  assert:
+    that: 
+      - pester_result.failed == true
 
-    - name: Assert pester_result
-      assert:
-        that: 
-          - pester_result.failed == true
+- name: Run Pester test(s) specifying a test file
+  win_pester:
+    src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+  register: pester_result
 
-    - name: Run Pester test(s) specifying a test file
-      win_pester:
-        src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
-      register: pester_result
+- name: Assert pester_result
+  assert:
+    that: 
+      - pester_result.failed == false
+      - pester_result.pester_result.TotalCount == 1
 
-    - name: Assert pester_result
-      assert:
-        that: 
-          - pester_result.failed == false
-          - pester_result.pester_result.TotalCount == 1
+- name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
+  win_pester:
+    src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+    version: '3.0.0'
+  register: pester_result
 
-    - name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
-      win_pester:
-        src: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
-        version: '3.0.0'
-      register: pester_result
+- name: Assert pester_result
+  assert:
+    that: 
+      - pester_result.failed == false
+      - pester_result.pester_result.TotalCount == 1
 
-    - name: Assert pester_result
-      assert:
-        that: 
-          - pester_result.failed == false
-          - pester_result.pester_result.TotalCount == 1
+- name: Run Pester test(s) located in a folder. Folder path end with '\'
+  win_pester:
+    src: "{{ remote_test_folder[0] }}"
+  register: pester_result
 
-    - name: Run Pester test(s) located in a folder. Folder path end with '\'
-      win_pester:
-        src: "{{ remote_test_folder[0] }}"
-      register: pester_result
+- name: Assert pester_result 
+  assert:
+    that: 
+      - pester_result.failed == false
+      - pester_result.pester_result.TotalCount == 2
 
-    - name: Assert pester_result 
-      assert:
-        that: 
-          - pester_result.failed == false
-          - pester_result.pester_result.TotalCount == 2
+- name: Run Pester test(s) located in a folder. Folder path does not end with '\' 
+  win_pester:
+    src: "{{ remote_test_folder[1] }}"
+  register: pester_result
 
-    - name: Run Pester test(s) located in a folder. Folder path does not end with '\' 
-      win_pester:
-        src: "{{ remote_test_folder[1] }}"
-      register: pester_result
+- name: Assert pester_result 
+  assert:
+    that: 
+      - pester_result.failed == false
+      - pester_result.pester_result.TotalCount == 2
 
-    - name: Assert pester_result 
-      assert:
-        that: 
-          - pester_result.failed == false
-          - pester_result.pester_result.TotalCount == 2
+- name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
+  win_pester:
+    src: "{{ remote_test_folder[0] }}"
+    version: '3.0.0'
+  register: pester_result
 
-    - name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
-      win_pester:
-        src: "{{ remote_test_folder[0] }}"
-        version: '3.0.0'
-      register: pester_result
+- name: Assert pester_result 
+  assert:
+    that: 
+      - pester_result.failed == false
+      - pester_result.pester_result.TotalCount == 2
 
-    - name: Assert pester_result 
-      assert:
-        that: 
-          - pester_result.failed == false
-          - pester_result.pester_result.TotalCount == 2
-
-    - name: Delete test folder
-      win_file:
-        path: "{{ remote_test_folder[0] }}"
-        state: absent
+- name: Delete test folder
+  win_file:
+    path: "{{ remote_test_folder[0] }}"
+    state: absent
