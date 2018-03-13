@@ -1,0 +1,93 @@
+- name: Prepare random number
+  set_fact:
+    rpfx: "{{ 1000 | random }}{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+  run_once: yes
+
+- name: Create SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ rpfx }}"
+    location: eastus
+    admin_username: mylogin
+    admin_password: Testpasswordxyz12!
+- name: Create SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+    name: test-database
+    location: eastus
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+    database_name: test-database
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+    database_name: test-database
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+    database_name: test-database
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Gather facts SQL Database
+  azure_rm_sqldatabase_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+
+- name: Delete instance of SQL Database
+  azure_rm_sqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: "sqlsrv{{ rpfx }}"
+    name: test-database
+    state: absent
+- name: Delete instance of SQL Server
+  azure_rm_sqlserver:
+    resource_group: "{{ resource_group }}"
+    name: "sqlsrv{{ rpfx }}"
+    state: absent
