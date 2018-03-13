@@ -1,4 +1,7 @@
 ---
+- name: Get facts
+  setup:
+
 - name: Add Pester module
   win_psmodule:
     name: Pester
