@@ -243,7 +243,7 @@ Or with a prompt instead of the vault password file:
 
    ansible-playbook -i inventory --vault-id my_user@prompt first_playbook.yml
 
-To see the original value, you can use the debug module. Please note if your yaml file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this please make a copy of the file without the ansible_connection variable for this. 
+To see the original value, you can use the debug module. Please note if your YAML file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this, please make a copy of the file without the ansible_connection variable. 
 
 .. code-block:: console
 
