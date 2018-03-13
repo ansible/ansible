@@ -1,4 +1,9 @@
 #!/usr/bin/python
+#
+# Copyright (c) 2016 Amanvir Mundra, <@amanvirmundra>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -12,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_storageaccount_keys
 
-version_added: "2.5"
+version_added: "2.6"
 
 short_description: Retrieve Azure Storage Account Keys.
 
@@ -30,6 +35,8 @@ options:
             - Name of the Storage Account instance.
         required: true
         default: null
+        aliases:
+            - resource_group_name
 
 extends_documentation_fragment:
     - azure
