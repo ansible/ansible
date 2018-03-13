@@ -180,7 +180,7 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=to_text(e, nonstring='simplerepr'))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
         except Exception as e:
             return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
         finally:
