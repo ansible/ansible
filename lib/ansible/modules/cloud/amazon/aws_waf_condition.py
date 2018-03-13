@@ -468,6 +468,8 @@ class Condition(object):
                                                {'RegexPatternSetId': regex_pattern_set_id},
                                                self.client.delete_regex_pattern_set)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            if e.response['Error']['Code'] == 'WAFNonexistentItemException':
+                return
             self.module.fail_json_aws(e, msg='Could not delete regex pattern')
 
     def get_condition_by_name(self, name):

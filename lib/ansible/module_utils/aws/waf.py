@@ -187,6 +187,7 @@ def get_change_token(client, module):
 def run_func_with_change_token_backoff(client, module, params, func, wait=False):
     params['ChangeToken'] = get_change_token(client, module)
     result = func(**params)
+    wait = True
     if wait:
         get_waiter(
             client, 'change_token_in_sync',
