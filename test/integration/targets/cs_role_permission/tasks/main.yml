@@ -123,52 +123,54 @@
     - roleperm.permission == "allow"
     - roleperm.description == "fakeRolePerm description"
 
-## Not working on Cloudstack 4.9.2
-#- name: test update role permission in check_mode
-#  cs_role_permission:
-#    role: "{{ testRole.id }}"
-#    name: "fakeRolePerm"
-#    permission: deny
-#  register: roleperm
-#  check_mode: yes
-#- name: verify results of update role permission in check mode
-#  assert:
-#    that:
-#    - roleperm is successful
-#    - roleperm is changed
-#    - roleperm.name == "fakeRolePerm"
-#    - roleperm.permission == "allow"
-#    - roleperm.description == "fakeRolePerm description"
-#
-#- name: test update role permission
-#  cs_role_permission:
-#    role: "{{ testRole.id }}"
-#    name: "fakeRolePerm"
-#    permission: deny
-#  register: roleperm
-#- name: verify results of update role permission
-#  assert:
-#    that:
-#    - roleperm is successful
-#    - roleperm is changed
-#    - roleperm.name == "fakeRolePerm"
-#    - roleperm.permission == "deny"
-#    - roleperm.description == "fakeRolePerm description"
-#
-#- name: test update role permission idempotency
-#  cs_role_permission:
-#    role: "{{ testRole.id }}"
-#    name: "fakeRolePerm"
-#    permission: deny
-#  register: roleperm
-#- name: verify results of update role permission idempotency
-#  assert:
-#    that:
-#    - roleperm is successful
-#    - roleperm is not changed
-#    - roleperm.name == "fakeRolePerm"
-#    - roleperm.permission == "deny"
-#    - roleperm.description == "fakeRolePerm description"
+- name: test update role permission in check_mode
+  cs_role_permission:
+    role: "{{ testRole.id }}"
+    name: "fakeRolePerm"
+    permission: deny
+    description: "fakeRolePerm description"
+  register: roleperm
+  check_mode: yes
+- name: verify results of update role permission in check mode
+  assert:
+    that:
+    - roleperm is successful
+    - roleperm is changed
+    - roleperm.name == "fakeRolePerm"
+    - roleperm.permission == "allow"
+    - roleperm.description == "fakeRolePerm description"
+
+- name: test update role permission
+  cs_role_permission:
+    role: "{{ testRole.id }}"
+    name: "fakeRolePerm"
+    permission: deny
+    description: "fakeRolePerm description"
+  register: roleperm
+- name: verify results of update role permission
+  assert:
+    that:
+    - roleperm is successful
+    - roleperm is changed
+    - roleperm.name == "fakeRolePerm"
+    - roleperm.permission == "deny"
+    - roleperm.description == "fakeRolePerm description"
+
+- name: test update role permission idempotency
+  cs_role_permission:
+    role: "{{ testRole.id }}"
+    name: "fakeRolePerm"
+    permission: deny
+    description: "fakeRolePerm description"
+  register: roleperm
+- name: verify results of update role permission idempotency
+  assert:
+    that:
+    - roleperm is successful
+    - roleperm is not changed
+    - roleperm.name == "fakeRolePerm"
+    - roleperm.permission == "deny"
+    - roleperm.description == "fakeRolePerm description"
 
 - name: test create a second role permission
   cs_role_permission:
