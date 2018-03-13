@@ -88,20 +88,10 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
-      custom_data: |
-        #!/bin/sh
-        echo "custom_data was executed" > /tmp/custom_data.txt
 
 - assert:
       that:
         - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
-
-- name: Delete VM with no public ip
-  azure_rm_virtualmachine:
-      resource_group: "{{ resource_group }}"
-      name: testvmnoip
-      state: absent
-      vm_size: Standard_A0
 
 - name: Create virtual machine
   register: output
