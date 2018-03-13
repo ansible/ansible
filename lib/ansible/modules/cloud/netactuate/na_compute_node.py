@@ -2,41 +2,40 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2018, Dennis Durling <djdtahoe@gmail.com>
-# GNU General Public License v3.0+
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+
 DOCUMENTATION = '''
 ---
 module: na_compute_node
-version_added: "2.6.0"
 short_description: Manage virtual machines on NetActuate infrastructure.
 description:
-    - Deploy newly purchaced packages.
-    - Build, destroy, start and stop previously built packages.
+  - Deploy newly purchaced packages.
+  - Build, destroy, start and stop previously built packages.
+version_added: '2.6.0'
 author: "Dennis Durling (@tahoe)"
 options:
   name:
     description:
-      - Hostname of the node.
-      - Required.
+      - Hostname of the node. C(name) can only be a valid hostname.
+      - Either C(name) is required.
   ssh_public_key:
     description:
       - Path to the ssh key that will be used for node authentication.
-      - Required and currently the only method of authentication for the node.
-      - NOTE: At some point we will set up password authentication here.
+      - C(ssh_public_key) is required for host authentication setup.
   operating_system:
     description:
       - Either the ID or full name of the OS to be installed on the node.
-      - Required.
-      - NOTE: to many choices to list here. will provide a method for customers
-        to figure out which one they want.
+      - C(operating_system) is required.
+      - NOTE, to many choices to list here. Will provide a script for customers to list OSes.
   mbpkgid:
     description:
       - The purchased package ID the node is associated with.
@@ -44,6 +43,7 @@ options:
   state:
     description:
       - Desired state of the instance.
+    default: running
     choices: [ present, running, stopped, terminated ]
   location:
     description:
@@ -53,51 +53,42 @@ options:
 '''
 
 EXAMPLES = '''
-# NOTE: State should be defined in a playbook but can also be overridden here
-#       all other values should probably be stated as variables in inventory.
+# example task/main.yml file with hard coded values
 - name: Change state of a package
   hv_compute_node:
-    hostname: "{{ inventory_hostname }}"
-    ssh_public_key: "{{ ssh_public_key }}"
-    operating_system: "{{ operating_system }}"
-    mbpkgid: "{{ mbpkgid }}"
-    state: "{{ running }}"
+    hostname: www.ansible.com
+    ssh_public_key: id_rsa.pub
+    operating_system: Debian 9.0 (PV)
+    mbpkgid: 5551212
+    state: running
   register: hostvirtual_device_result
   delegate_to: localhost
 
 # NOTE: Example inventory file.
-host1.example.com ssh_public_key=keys.pub operating_system='Debian 9.0 x64 PV'\
-mbpkgid=5551212 location='RDU3 - Raleigh, NC'
+all:
+  hosts:
+    host1.example.com ssh_public_key=keys.pub operating_system='Debian 9.0 x64 PV' mbpkgid=5551212 location='RDU3 - Raleigh, NC'
 '''
 
 RETURN = '''
-Standard represenation for a device as returned by various tasks::
-
-    {
-        'id': 'device_id'
-        'hostname': 'device_hostname',
-        'state': 'device_state',
-        'ip_addresses': [
-            {
-                "address": "8.8.8.8",
-                "address_family": 4,
-                "public": true
-            },
-            {
-                "address": "::1",
-                "address_family": 6,
-                "public": true
-            },
-            {
-                "address": "10.100.11.129",
-                "address_family": 4,
-                "public": false
-            }
-        ],
-        "private_ipv4": "10.100.11.129",
-        "public_ipv4": "8.8.8.8",
-        "public_ipv6": "::1",
-    }
+# Standard represenation for a device as returned by various tasks::
+# in YAML format, though it is returned in dictionary format...
+hostname: device_hostname
+id: device_id
+ip_addresses:
+  - address: 8.8.8.8
+    address_family: 4
+    public: true
+  - address: '::1'
+    address_family: 6
+    public: true
+  - address: 10.100.11.129
+    address_family: 4
+    public: true
+private_ipv4: 10.100.11.129
+public_ipv4: 8.8.8.8
+public_ipv6: ::1
+state: device_state
 '''
 
 import time
@@ -139,9 +130,7 @@ def _get_valid_hostname(module):
     """
     hostname = module.params.get('hostname')
     if re.match(HOSTNAME_RE, hostname) is None:
-        module.fail_json(msg="Invalid hostname: {0}"
-                         .format(module.params.get('hostname')))
-        raise Exception("Invalid hostname: {0}".format(hostname))
+        module.fail_json(msg="Invalid hostname: {0}".format(hostname))
     return hostname
 
 
@@ -250,7 +239,7 @@ def _get_node_stub(module, conn, h_params):
     return node_stub
 
 
-def _wait_for_state(module, conn, h_params, state, timeout=60, interval=10):
+def _wait_for_state(module, conn, h_params, state, timeout=600, interval=10):
     """Called after do_build_node to wait to make sure it built OK
     Arguments:
         conn:            object  libcloud connectionCls
@@ -265,8 +254,10 @@ def _wait_for_state(module, conn, h_params, state, timeout=60, interval=10):
             try_node = conn.ex_get_node(h_params['mbpkgid'])
             if try_node.state == state:
                 break
-        except Exception:
-            pass
+        except Exception as e:
+            module.fail_json(
+                msg="Failed to get updated status for {0}"
+                " Error was {1}".format(h_params['hostname'], str(e)))
         time.sleep(interval)
     return try_node
 
@@ -301,6 +292,10 @@ def do_build_new_node(module, conn, h_params):
     }
 
     # do it using the api
+    # this injects a job, which might take a minute
+    # so afterward we need to wait for a few seconds
+    # before we call _wait_for_state because that function
+    # requires the DB object to exist and will fail if it doesn't
     try:
         conn.connection.request(
             API_ROOT + '/cloud/server/build',
@@ -313,8 +308,9 @@ def do_build_new_node(module, conn, h_params):
 
     # get the new version of the node, hopefully showing
     # using wait_for_build_complete defauilt timeout (10 minutes)
-    node = _wait_for_state(module, conn, h_params,
-                           'running', timeout=600, interval=10)
+    # first though, sleep for 10 seconds to help ensure we don't fail
+    time.sleep(10)
+    node = _wait_for_state(module, conn, h_params, 'running')
     changed = True
     return changed, node
 
@@ -342,8 +338,8 @@ def do_build_terminated_node(module, conn, h_params, node_stub):
             method='POST'
         ).object
     except Exception:
-        _msg = "Failed to build node for mbpkgid {0}".format(node_stub.id)
-        raise Exception(_msg)
+        module.fail_json(msg="Failed to build node for mbpkgid {0}"
+                         .format(node_stub.id))
 
     # get the new version of the node, hopefully showing
     # that it's built and all that
@@ -383,18 +379,19 @@ def ensure_node_running(module, conn, h_params, node_stub):
             # do_build_terminated_node handles waiting for it to finish
             # also note, this call should start it so we don't need to
             # do it again below
-            changed, node = do_build_terminated_node(module, conn, h_params, node_stub)
+            changed, node = do_build_terminated_node(module, conn,
+                                                     h_params, node_stub)
         else:
             # node is installed so boot it up.
             running = conn.ex_start_node(node_stub)
             # if we don't get a positive response we need to bail
             if not running:
-                raise Exception("Seems we had trouble starting the node")
+                module.fail_json(msg="Seems we had trouble starting node {0}"
+                                 .format(h_params['hostname']))
             else:
                 # Seems our command executed successfully
                 # so wait for it to come up.
-                node = _wait_for_state(module, conn, h_params, 'running',
-                                       timeout=30, interval=10.0)
+                node = _wait_for_state(module, conn, h_params, 'running')
                 changed = True
     return changed, node
 
@@ -407,11 +404,11 @@ def ensure_node_stopped(module, conn, h_params, node_stub):
     if node.state != 'stopped':
         stopped = conn.ex_stop_node(node_stub)
         if not stopped:
-            raise Exception("Seems we had trouble stopping the node")
+            module.fail_json(msg="Seems we had trouble stopping the node {0}"
+                             .format(h_params['hostname']))
         else:
             # wait for the node to say it's stopped.
-            node = _wait_for_state(module, conn, h_params, 'running',
-                                   timeout=30, interval=10.0)
+            node = _wait_for_state(module, conn, h_params, 'stopped')
             changed = True
     return changed, node
 
@@ -452,8 +449,7 @@ def ensure_node_terminated(module, conn, h_params, node_stub):
                              .format(module.params.get('hostname')))
         else:
             # wait for the node to say it's terminated
-            node = _wait_for_state(module, conn, h_params, 'running',
-                                   timeout=30, interval=10.0)
+            node = _wait_for_state(module, conn, h_params, 'terminated')
             changed = True
     return changed, node
 
@@ -592,18 +588,18 @@ def main():
     # put state into h_params too
     h_params['state'] = module.params.get('state').lower()
 
-    # get and check the hostname, raises exception if fails
+    # get and check the hostname, fail_json on error
     h_params['hostname'] = _get_valid_hostname(module)
 
     # make sure we get the ssh_key
     h_params['ssh_key'] = _get_ssh_auth(module)
 
     # get the image based on the os ID/Name provided
-    # the get_os function call will raise an exception if there is a problem
+    # the get_os function call will fail_json if there is a problem
     h_params['image'] = _get_os(module, avail_oses)
 
     # get the location based on the location ID/Name provided
-    # the get_location function call will raise an exception
+    # the get_location function call will fail_json on exception
     # if there is a problem
     h_params['location'] = _get_location(module, avail_locs)
 
