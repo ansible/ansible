@@ -24,7 +24,7 @@ ec2_data = {
                     "matcher": "error",
                     "expected": "InvalidRouteTableID.NotFound",
                     "state": "retry"
-                }
+                },
             ]
         }
     }
@@ -40,7 +40,9 @@ waiters_by_name = {
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
         model_for('RouteTableExists'),
-        ec2.describe_route_tables)
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_route_tables
+        ))
 }
 
 
