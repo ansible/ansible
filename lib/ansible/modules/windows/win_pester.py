@@ -23,17 +23,17 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_pester
 short_description: Run Pester tests on Windows hosts.
-version_added: "2.5"
+version_added: "2.6"
 description:
      - Run Pester tests on Windows hosts. Test files have to be available on the remote host.
 options:
   src:
     description:
-      - Path to a pester test file or a folder where tests can be found. If the path is a folder, the module will consider all ps1 files as Pester tests.  
+      - Path to a pester test file or a folder where tests can be found. If the path is a folder, the module will consider all ps1 files as Pester tests.
     required: true
   version:
     description:
@@ -43,13 +43,16 @@ author:
     - Erwan Quelin (@erwanquelin)
 '''
 
-RETURN = '''
+RETURN = r'''
 pester_version:
     description: Version of the pester module found on the remote host.
+    returned: always
     type: string
+    sample: False
 pester_result:
-    description: Results of the Pester tests
-    type: json
+    description: Results of the Pester tests.
+    returned: success
+    sample: False
 '''
 
 EXAMPLES = r'''
