@@ -117,7 +117,7 @@
 
   - assert: *false
 
-  - name: Remove partial trunk vlan range 30-4096 are removed
+  - name: Remove partial trunk vlan range 30-4094 are removed
     nxos_switchport: &partial
       interface: "{{ intname }}"
       mode: trunk
@@ -128,7 +128,7 @@
 
   - assert: *true
 
-  - name: Check Idempotence Remove partial trunk vlan range 30-4096 are removed
+  - name: Check Idempotence Remove partial trunk vlan range 30-4094 are removed
     nxos_switchport: *partial
     register: result
 
