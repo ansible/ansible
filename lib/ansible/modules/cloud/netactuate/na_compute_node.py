@@ -20,7 +20,7 @@ short_description: Manage virtual machines on NetActuate infrastructure.
 description:
   - Deploy newly purchaced packages.
   - Build, destroy, start and stop previously built packages.
-version_added: '2.6.0'
+version_added: '2.4.2.0'
 author: "Dennis Durling (@tahoe)"
 options:
   name:
