@@ -27,6 +27,8 @@ description:
     - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and
       deleting both objects and buckets, retrieving objects as files or strings and generating download links.
       This module has a dependency on boto3 and botocore.
+notes:
+   - In 2.4, this module has been renamed from M(s3) into M(aws_s3).
 version_added: "1.1"
 options:
   aws_access_key:
