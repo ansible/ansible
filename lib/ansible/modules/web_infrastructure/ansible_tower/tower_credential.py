@@ -73,6 +73,14 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
+      required: False
+      default: null
+    security_token:
+      description:
+        - STS token for aws type.
+      required: False
+      default: null
+      version_added: "2.6"
     secret:
       description:
         - Secret token for azure_rm type.
@@ -184,6 +192,7 @@ def main():
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
         client=dict(),
+        security_token=dict(),
         secret=dict(),
         tenant=dict(),
         subscription=dict(),
@@ -256,11 +265,12 @@ def main():
                 with open(filename, 'rb') as f:
                     module.params['ssh_key_data'] = f.read()
 
-            for key in ('authorize', 'authorize_password', 'client', 'secret',
-                        'tenant', 'subscription', 'domain', 'become_method',
-                        'become_username', 'become_password', 'vault_password',
-                        'project', 'host', 'username', 'password',
-                        'ssh_key_data', 'ssh_key_unlock'):
+            for key in ('authorize', 'authorize_password', 'client',
+                        'security_token', 'secret', 'tenant', 'subscription',
+                        'domain', 'become_method', 'become_username',
+                        'become_password', 'vault_password', 'project', 'host',
+                        'username', 'password', 'ssh_key_data',
+                        'ssh_key_unlock'):
                 if 'kind' in params:
                     params[key] = module.params.get(key)
                 elif module.params.get(key):
