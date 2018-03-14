@@ -60,7 +60,7 @@ options:
       default: null
     organization:
       description:
-        - Organiation the role acts on.
+        - Organization the role acts on.
       required: False
       default: null
     project:

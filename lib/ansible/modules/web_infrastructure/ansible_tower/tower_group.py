@@ -79,7 +79,7 @@ options:
       default: null
     overwrite:
       description:
-        - Delete child roups and hosts not found in source.
+        - Delete child groups and hosts not found in source.
       required: False
       default: False
     overwrite_vars:
