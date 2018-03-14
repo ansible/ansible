@@ -152,6 +152,7 @@ options:
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of floppy, valid options are C(none), C(client) or C(flp). With C(none) the floppy will be disconnected but present.'
     - ' - C(flp_path) (string): The datastore path to the flp file to use, in the form of C([datastore1] path/to/file.flp). Required if type is set C(flp).'
+    - Please note that floppy configuration is not supported during deploy from template.
     version_added: '2.6'
   resource_pool:
     description:
@@ -305,9 +306,6 @@ EXAMPLES = r'''
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
-    floppy:
-      type: flp
-      flp_path: "[datastore1] boot.flp"
     networks:
     - name: VM Network
       mac: aa:bb:dd:aa:00:14
@@ -938,7 +936,7 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_floppy(self, vm_obj):
         # Configure the VM floppy
-        if "floppy" in self.params and self.params["floppy"]:
+        if self.params.get("floppy", None):
             if "type" not in self.params["floppy"] or self.params["floppy"]["type"] not in ["none", "client", "flp"]:
                 self.module.fail_json(msg="floppy.type is mandatory")
             if self.params["floppy"]["type"] == "flp" and ("flp_path" not in self.params["floppy"] or not self.params["floppy"]["flp_path"]):
@@ -951,7 +949,7 @@ class PyVmomiHelper(PyVmomi):
             floppy_spec = None
             floppy_device = self.get_vm_floppy_device(vm=vm_obj)
             floppy_type = self.params["floppy"]["type"]
-            flp_path = self.params["floppy"]["flp_path"] if "flp_path" in self.params["floppy"] else None
+            flp_path = self.params["floppy"].get("flp_path", None)
             if floppy_device is None:
                 # Creating new floppy
                 sio_device = self.get_vm_sio_device(vm=vm_obj)
