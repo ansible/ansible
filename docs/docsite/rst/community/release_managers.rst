@@ -1,4 +1,4 @@
-.. _release_managers
+.. _release_managers:
 
 
 Release Managers
