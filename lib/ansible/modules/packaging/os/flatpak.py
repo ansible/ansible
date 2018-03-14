@@ -97,6 +97,7 @@ def install_flat(module, binary, repo, flat):
     # those changes
     if installed:
         module.exit_json(changed=False)
+        return 0
     else:
         if module.check_mode:
             module.exit_json(changed=True)
