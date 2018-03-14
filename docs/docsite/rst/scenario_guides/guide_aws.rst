@@ -141,11 +141,11 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames
-in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :doc:`intro_dynamic_inventory`. 
+in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :ref:`dynamic_inventory`. 
 
 This will also dynamically select nodes that were even created outside of Ansible, and allow Ansible to manage them.
 
-See :doc:`intro_dynamic_inventory` for how to use this, then flip back over to this chapter.
+See :ref:`dynamic_inventory` for how to use this, then return to this chapter.
 
 .. _aws_tags_and_groups:
 
@@ -190,7 +190,7 @@ Read :ref:`ansible-pull` for more information on pull-mode playbooks.
 Autoscaling with Ansible Tower
 ``````````````````````````````
 
-:doc:`tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
 a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
 to reconfigure ephemeral nodes.  See the Tower install and product documentation for more details.
 
@@ -241,11 +241,11 @@ documentation for a full list with examples.
 
 .. seealso::
 
-   :doc:`modules`
+   :ref:`all_modules`
        All the documentation for Ansible modules
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_delegation`
+   :ref:`playbooks_delegation`
        Delegation, useful for working with loud balancers, clouds, and locally executed steps.
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

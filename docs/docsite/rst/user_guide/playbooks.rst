@@ -1,3 +1,5 @@
+.. _working_with_playbooks:
+
 Working With Playbooks
 ======================
 

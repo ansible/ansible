@@ -8,10 +8,10 @@ The documentation regarding roles and includes for playbooks have moved. Their n
 
 .. seealso::
 
-   :doc:`galaxy`
+   :ref:`ansible_galaxy`
        How to share roles on galaxy, role management
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :doc:`playbooks_reuse`
+   :ref:`playbooks_reuse`
        Creating reusable Playbooks.
 

@@ -1,3 +1,5 @@
+.. _ansible_galaxy:
+
 Ansible Galaxy
 ++++++++++++++
 
@@ -54,7 +56,7 @@ The following provides an example of using *--roles-path* to install the role in
 
 .. seealso::
 
-   :doc:`intro_configuration`
+   :ref:`intro_configuration`
       All about configuration files
 
 version
@@ -198,7 +200,7 @@ The complex form can also be used as follows:
         version: 775396299f2da1f519f0d8885022ca2d6ee80ee8
         name: composer
 
-When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the ``roles_path``. To understand how dependencies are handled during play execution, see :doc:`playbooks_reuse_roles`.
+When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the ``roles_path``. To understand how dependencies are handled during play execution, see :ref:`playbooks_reuse_roles`.
 
 .. note::
 
@@ -507,7 +509,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
 .. seealso::
 
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        All about ansible roles
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -1,3 +1,5 @@
+.. _playbooks_best_practices:
+
 Best Practices
 ==============
 
@@ -491,15 +493,15 @@ This best practice has no limit on the amount of variable and vault files or the
 
 .. seealso::
 
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic playbook features
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`intro_patterns`
+   :ref:`intro_patterns`
        Learn about how to select hosts
    `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source

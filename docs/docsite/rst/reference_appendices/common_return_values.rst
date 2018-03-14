@@ -90,7 +90,7 @@ This key contains a list of dictionaries that will be presented to the user. Key
 
 .. seealso::
 
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
    `GitHub Core modules directory <https://github.com/ansible/ansible-modules-core/tree/devel>`_
        Browse source of core modules

@@ -1,3 +1,5 @@
+.. _ansible_tower:
+
 Ansible Tower
 =============
 

@@ -1,10 +1,12 @@
+.. _developing_inventory:
+
 Developing Dynamic Inventory Sources
 ====================================
 
 .. contents:: Topics
    :local:
 
-As described in :doc:`../intro_dynamic_inventory`, Ansible can pull inventory information from dynamic sources, including cloud sources. You can also create a new dynamic inventory provider by creating a script or program that can output JSON in the correct format when invoked with the proper arguments. There is no restriction on the language used for creating a dynamic inventory provider.
+As described in :ref:`dynamic_inventory`, Ansible can pull inventory information from dynamic sources, including cloud sources. You can also create a new dynamic inventory provider by creating a script or program that can output JSON in the correct format when invoked with the proper arguments. There is no restriction on the language used for creating a dynamic inventory provider.
 
 .. _inventory_script_conventions:
 

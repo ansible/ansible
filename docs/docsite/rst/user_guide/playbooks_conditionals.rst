@@ -1,3 +1,5 @@
+.. _playbooks_conditionals:
+
 Conditionals
 ============
 
@@ -140,7 +142,7 @@ If using a dict in a loop::
 Loading in Custom Facts
 ```````````````````````
 
-It's also easy to provide your own facts if you want, which is covered in :doc:`dev_guide/developing_modules`.  To run them, just
+It's also easy to provide your own facts if you want, which is covered in :ref:`developing_modules`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
 
@@ -318,7 +320,7 @@ You may check the registered variable's string contents for emptiness::
 Commonly Used Facts
 ```````````````````
 
-The following Facts (see :ref:`_vars_and_facts`) are frequently used in Conditionals - see above for examples.
+The following Facts are frequently used in Conditionals - see above for examples.
 
 .. _ansible_distribution:
 
@@ -381,13 +383,13 @@ Possible values::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
