@@ -145,6 +145,8 @@ Ansible Changes By Release
 * fix required args for nxos_snapshot: https://github.com/ansible/ansible/pull/37232
 * Properly check that nxos_snapshot parameters that are required in certain circumstances are present:
   https://github.com/ansible/ansible/pull/37232
+* Fix error messages to not be inappropriately templated:
+  https://github.com/ansible/ansible/pull/37329
 
 
 <a id="2.4.3"></a>
