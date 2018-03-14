@@ -98,12 +98,12 @@ options:
       default: null
     extra_vars_path:
       description:
-        - Path to the extra_vars yaml file.
+        - Path to the C(extra_vars) yaml file.
       required: False
       default: null
     ask_extra_vars:
       description:
-        - Prompt user for extra_vars on launch.
+        - Prompt user for C(extra_vars) on launch.
       required: False
       default: False
     ask_tags:

@@ -43,7 +43,7 @@ options:
       default: True
     variables:
       description:
-        - Variables to use for the host. Use '@' for a file.
+        - Variables to use for the host. Use C(@) for a file.
     state:
       description:
         - Desired state of the resource.
