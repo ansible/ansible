@@ -61,7 +61,7 @@ Where to get support
 
 Ansible has a thriving and knowledgeable community of module developers that is a great resource for getting your questions answered.
 
-In the :ref:`_ansible_community_guide` you can find how to:
+In the :ref:`ansible_community_guide` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
 * ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for module developers so we can have an interactive dialogue.

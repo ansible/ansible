@@ -271,4 +271,4 @@ NEW In Ansible 2.5
    from ansible.module_utils.network.vyos.vyos import get_config, load_config
 
 
-See the module utilities developer guide see :doc:`dev_guide/developing_module_utilities` for more information.
+See the module utilities developer guide see :ref:`appendix_module_utilities` for more information.

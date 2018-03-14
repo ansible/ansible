@@ -1,3 +1,5 @@
+.. _developing_modules:
+
 Developing Modules
 ==================
 

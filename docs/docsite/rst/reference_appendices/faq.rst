@@ -1,3 +1,5 @@
+.. _ansible_faq:
+
 Frequently Asked Questions
 ==========================
 

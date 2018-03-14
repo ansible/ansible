@@ -55,6 +55,6 @@ When debugging or creating a new issue, you will need information about your VMw
         The issue tracker for the pyVmomi project
     `govc <https://github.com/vmware/govmomi/tree/master/govc>`_
         govc is a vSphere CLI built on top of govmomi
-    :doc:`playbooks`
+    :ref:`working_with_playbooks`
         An introduction to playbooks
 

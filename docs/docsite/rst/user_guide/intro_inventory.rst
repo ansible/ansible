@@ -1,4 +1,6 @@
+.. _intro_inventory:
 .. _inventory:
+
 
 Working with Inventory
 ======================
@@ -11,7 +13,7 @@ which defaults to being saved in the location ``/etc/ansible/hosts``.
 You can specify a different inventory file using the ``-i <path>`` option on the command line.
 
 Not only is this inventory configurable, but you can also use multiple inventory files at the same time and
-pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :doc:`intro_dynamic_inventory`.
+pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has inventory plugins to make this flexible and customizable.
 
 .. _inventoryformat:
@@ -256,7 +258,7 @@ The preferred practice in Ansible is to not store variables in the main inventor
 In addition to storing variables directly in the inventory file, host and group variables can be stored in individual files relative to the inventory file (not directory, it is always the file).
 
 These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json', or no file extension.
-See :doc:`YAMLSyntax` if you are new to YAML.
+See :ref:`yaml_syntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
@@ -467,11 +469,11 @@ Here is an example of how to instantly deploy to created containers::
 
 .. seealso::
 
-   :doc:`intro_dynamic_inventory`
+   :ref:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning Ansible's configuration, deployment, and orchestration language.
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

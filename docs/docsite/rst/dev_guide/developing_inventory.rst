@@ -1,3 +1,5 @@
+.. _developing_inventory:
+
 Developing Dynamic Inventory Sources
 ====================================
 
