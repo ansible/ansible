@@ -412,7 +412,7 @@ def main():
         # wait for associated cidrs to match
         if to_add or to_remove:
             try:
-                connection.get_waiter('vpc_exists').wait(
+                connection.get_waiter('vpc_available').wait(
                     VpcIds=[vpc_id],
                     Filters=[{'Name': 'cidr-block-association.cidr-block', 'Values': expected_cidrs}]
                 )
