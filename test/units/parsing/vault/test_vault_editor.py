@@ -43,6 +43,7 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 3631633031323837340a396530313963373030343933616133393566366137363761373930663833
 3739"""
 
+INVALID_VAULT = 'The data provided is not a valid vault.*'
 
 @pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
                     reason="Skipping cryptography tests because cryptography is not installed")
@@ -248,7 +249,7 @@ class TestVaultEditor(unittest.TestCase):
 
         new_password = 'password2:electricbugaloo'
         self.assertRaisesRegexp(errors.AnsibleError,
-                                'input is not vault encrypted data',
+                                INVALID_VAULT,
                                 ve.rekey_file,
                                 src_file_path, new_password)
 
@@ -272,7 +273,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegexp(errors.AnsibleError,
-                                'input is not vault encrypted data',
+                                INVALID_VAULT,
                                 ve.plaintext,
                                 src_file_path)
 
@@ -410,7 +411,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegexp(errors.AnsibleError,
-                                'input is not vault encrypted data',
+                                INVALID_VAULT,
                                 ve.edit_file,
                                 src_file_path)
 
@@ -433,7 +434,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
         self.assertRaisesRegexp(errors.AnsibleError,
-                                'input is not vault encrypted data',
+                                INVALID_VAULT,
                                 ve.decrypt_file,
                                 src_file_path)
 

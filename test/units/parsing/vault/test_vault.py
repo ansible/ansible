@@ -770,8 +770,8 @@ class TestVaultLib(unittest.TestCase):
         v_none = vault.VaultLib(None)
         # so set secrets None explicitly
         v_none.secrets = None
-        self.assertRaisesRegexp(vault.AnsibleVaultError,
-                                '.*A vault password must be specified to decrypt data.*',
+        self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                'No vault password was supplied.*',
                                 v_none.decrypt,
                                 b_vaulttext)
 
@@ -785,10 +785,7 @@ class TestVaultLib(unittest.TestCase):
         vault_secrets_empty = []
         v_none = vault.VaultLib(vault_secrets_empty)
 
-        self.assertRaisesRegexp(vault.AnsibleVaultError,
-                                '.*Attempting to decrypt but no vault secrets found.*',
-                                v_none.decrypt,
-                                b_vaulttext)
+        self.assertRaises(vault.AnsibleVaultPasswordError, v_none.decrypt, b_vaulttext)
 
     def test_encrypt_decrypt_aes256_multiple_secrets_all_wrong(self):
         plaintext = u'Some text to encrypt in a café'
@@ -798,8 +795,8 @@ class TestVaultLib(unittest.TestCase):
                          ('wrong-password', TextVaultSecret('wrong-password'))]
 
         v_multi = vault.VaultLib(vault_secrets)
-        self.assertRaisesRegexp(errors.AnsibleError,
-                                '.*Decryption failed.*',
+        self.assertRaisesRegexp(vault.AnsibleVaultPasswordError,
+                                'No matching secrets.*',
                                 v_multi.decrypt,
                                 b_vaulttext,
                                 filename='/dev/null/fake/filename')
