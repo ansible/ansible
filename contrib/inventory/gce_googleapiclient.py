@@ -563,6 +563,9 @@ def main(args):
     cache_dir = args['--cache-dir']
     refresh_cache = bool(args['--refresh-cache'])
 
+    # The cache configuration directory might content the '~' home directory
+    cache_dir = os.path.expanduser(cache_dir)
+
     if not project_list and not billing_account_name:
         print("ERROR: You didn't specified any project (parameter: --project) which means you want"
               "all projects. However, to get the list of all projects, we need the billing account"
