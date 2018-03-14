@@ -1,3 +1,6 @@
+.. _installation_guide:
+.. _intro_installation_guide:
+
 Installation Guide
 ==================
 
@@ -85,7 +88,7 @@ default this uses sftp. If that's not available, you can switch to scp in
    By default, Ansible uses Python 2 in order to maintain compatibility with older distributions
    such as RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
+   the 'ansible_python_interpreter' variable in inventory (see :ref:`inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.
@@ -363,7 +366,7 @@ Ansible's own modules.
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :ref:`inventory`)
 other than /etc/ansible/hosts:
 
 .. code-block:: bash
@@ -397,9 +400,9 @@ bugs and feature ideas.
 
 .. seealso::
 
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning ansible's configuration management language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -86,11 +86,11 @@ Please feel free to report any issues or incompatibilities you discover with BSD
 
 .. seealso::
 
-   :doc:`intro_adhoc`
+   :ref:`intro_adhoc`
        Examples of basic commands
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Learning ansible's configuration management language
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        How to write modules
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

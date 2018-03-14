@@ -1,3 +1,5 @@
+.. _playbooks_variables:
+
 Variables
 =========
 
@@ -148,7 +150,7 @@ Hey Wait, A YAML Gotcha
 ```````````````````````
 
 YAML syntax requires that if you start a value with ``{{ foo }}`` you quote the whole line, since it wants to be
-sure you aren't trying to start a YAML dictionary.  This is covered on the :doc:`YAMLSyntax` page.
+sure you aren't trying to start a YAML dictionary.  This is covered on the :ref:`yaml_syntax` documentation.
 
 This won't work::
 
@@ -839,8 +841,6 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
-
 In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
 
  * "role defaults", which lose in priority to everything and are the most easily overridden 
@@ -942,7 +942,7 @@ First off, group variables are powerful.
 
 Site wide defaults should be defined as a ``group_vars/all`` setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
-in things like :doc:`tower` from the UI or API::
+in things like :ref:`ansible_tower` from the UI or API::
 
     ---
     # file: /etc/ansible/group_vars/all

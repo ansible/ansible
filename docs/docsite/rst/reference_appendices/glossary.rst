@@ -65,7 +65,7 @@ when a term comes up on the mailing list.
         A conditional is an expression that evaluates to true or false that
         decides whether a given task is executed on a given machine or not.
         Ansible's conditionals are powered by the 'when' statement, which are
-        discussed in the :doc:`playbook documentation <playbooks>`.
+        discussed in the :ref:`working_with_playbooks`.
 
     Declarative
         An approach to achieving a task that uses a description of the
@@ -489,11 +489,11 @@ when a term comes up on the mailing list.
 
 .. seealso::
 
-   :doc:`faq`
+   :ref:`ansible_faq`
        Frequently asked questions
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

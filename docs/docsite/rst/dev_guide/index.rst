@@ -24,6 +24,6 @@ To get started, select one of the following topics.
    developing_rebasing
    testing
    repomerge
-   ../release_and_maintenance
-   ../committer_guidelines
+   ../reference_appendices/release_and_maintenance
+   ../community/committer_guidelines
    ./style_guide/index

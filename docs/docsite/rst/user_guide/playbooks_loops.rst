@@ -1,3 +1,5 @@
+.. _playbooks_loops:
+
 Loops
 =====
 
@@ -89,10 +91,6 @@ For example, using the 'nested' lookup, you can combine lists::
         append_privs: yes
         password: "foo"
       loop: "{{ lookup('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
-
-
-:doc:`Jinja2 lookups playbooks_lookups`, :doc:`filters playbooks_filters` and :doc:`tests playbooks_tests`
-make for some powerful data generation and manipulation.
 
 .. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
 

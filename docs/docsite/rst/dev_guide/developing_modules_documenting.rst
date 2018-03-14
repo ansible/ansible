@@ -188,7 +188,7 @@ The following fields can be used and are all required unless specified otherwise
 :module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 :short_description:
-  * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
+  * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 :description:

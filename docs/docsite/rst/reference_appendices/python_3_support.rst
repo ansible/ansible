@@ -65,7 +65,7 @@ Testing Python 3 module support
     [py3-hosts:vars]
     ansible_python_interpreter=/usr/bin/python3
 
-See :doc:`intro_inventory` for more information.
+See :ref:`intro_inventory` for more information.
 
 * Run your command or playbook:
 
@@ -75,7 +75,7 @@ See :doc:`intro_inventory` for more information.
     $ ansible-playbook sample-playbook.yml
 
 
-Note that you can also use the :option:`-e` command line option to manually
+Note that you can also use the `-e` command line option to manually
 set the python interpreter when you run a command. For example:
 
 .. code-block:: shell
@@ -92,5 +92,5 @@ report on `Ansible's GitHub project
 the bug report so that the right people look at it.
 
 If you would like to fix the code and submit a pull request on github, you can
-refer to :doc:`dev_guide/developing_python3` for information on how we fix
+refer to :ref:`developing_python3` for information on how we fix
 common Python3 compatibility issues in the Ansible codebase.
