@@ -295,7 +295,7 @@ def create_vpc(connection, module, cidr_block, tenancy):
 def wait_for_vpc_attribute(connection, module, vpc_id, attribute, expected_value):
     start_time = time()
     updated = False
-    while time() < start_time + 30:
+    while time() < start_time + 300:
         current_value = connection.describe_vpc_attribute(
             Attribute=attribute,
             VpcId=vpc_id

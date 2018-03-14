@@ -380,7 +380,7 @@ def main():
             # wait for dhcp option to be accessible
             found_dhcp_opt = False
             start_time = time()
-            while time() < start_time + 30:
+            while time() < start_time + 300:
                 try:
                     found_dhcp_opt = connection.get_all_dhcp_options(dhcp_options_ids=[dhcp_option.id])
                 except EC2ResponseError as e:
