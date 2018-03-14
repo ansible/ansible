@@ -285,6 +285,7 @@ class MavenDownloader:
         if v:
             self.latest_version_found = v[0]
             return v[0]
+
     def find_release_version_available(self, artifact):
         if self.release_version_found:
             return self.release_version_found
