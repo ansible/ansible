@@ -107,7 +107,7 @@ def install_flat(module, binary, repo, flat):
     else:
         if module.check_mode:
             module.exit_json(changed=True)
-            
+
         if 'http://' in flat or 'https://' in flat:
             command = "{0} install -y {1}".format(binary, flat)
         else:
