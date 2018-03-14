@@ -12,8 +12,8 @@ from lib.util import (
     ApplicationError,
     display,
     raw_command,
-    find_pip,
     get_docker_completion,
+    generate_pip_command,
 )
 
 from lib.delegation import (
@@ -112,7 +112,7 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install(find_pip(), 'ansible-test'))
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'ansible-test'))
         import argparse
 
     try:
