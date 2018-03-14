@@ -167,7 +167,8 @@ EXAMPLES = r'''
     name: '{{ item }}'
     state: present
   with_items:
-  - pscx
+  - procexp
+  - putty
   - windirstat
 
 - name: uninstall multiple packages
@@ -175,7 +176,8 @@ EXAMPLES = r'''
     name: '{{ item }}'
     state: absent
   with_items:
-  - pscx
+  - procexp
+  - putty
   - windirstat
 
 - name: Install curl using proxy
