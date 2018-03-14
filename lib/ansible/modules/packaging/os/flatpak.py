@@ -19,7 +19,7 @@ module: flatpak
 short_description: Install and remove flatpaks
 description:
     - The flatpak module allows users to manage installation and removal of flatpaks.
-version_added: '2.4'
+version_added: '2.6'
 author:
 - John Kwiatkoski (@jaykayy)
 requirements:
@@ -87,7 +87,7 @@ remote:
   sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
-from urlparse import urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
 
 
