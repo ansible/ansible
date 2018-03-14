@@ -74,12 +74,22 @@ EXAMPLES = '''
     - hostvirtual_device_result
   delegate_to:
     - localhost
-
-# NOTE: Example inventory file.
-all:
-  hosts:
-    host1.example.com ssh_public_key=keys.pub operating_system='Debian 9.0 x64 PV' mbpkgid=5551212 location='RDU3 - Raleigh, NC'
 '''
+
+RETURN = '''
+---
+hostname: device_hostname
+id: device_id
+ip_addresses:
+  address: 8.8.8.8
+  address_family: 4
+  public: true
+private_ipv4: 10.100.11.129
+public_ipv4: 8.8.8.8
+public_ipv6: ::1
+state: device_state
+-'''
+
 
 import time
 import os
