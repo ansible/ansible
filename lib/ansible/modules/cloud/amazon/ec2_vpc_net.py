@@ -195,6 +195,17 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
     return None
 
 
+@AWSRetry.backoff(delay=3, tries=8, catch_extra_error_codes=['InvalidVpcID.NotFound'])
+def get_classic_link_with_backoff(connection, vpc_id):
+    try:
+        return connection.describe_vpc_classic_link(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
+            return False
+        else:
+            raise
+
+
 def get_vpc(module, connection, vpc_id):
     # wait for vpc to be available
     try:
@@ -210,17 +221,8 @@ def get_vpc(module, connection, vpc_id):
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
     try:
-        classic_link = AWSRetry.backoff(
-            delay=3, tries=8,
-            catch_extra_error_codes=['InvalidVpcID.NotFound'],
-        )(connection.describe_vpc_classic_link)(VpcIds=[vpc_id])['Vpcs'][0].get('ClassicLinkEnabled')
-        vpc_obj['ClassicLinkEnabled'] = classic_link
-    except botocore.exceptions.ClientError as e:
-        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
-            vpc_obj['ClassicLinkEnabled'] = False
-        else:
-            module.fail_json_aws(e, msg="Failed to describe VPCs")
-    except botocore.exceptions.BotoCoreError as e:
+        vpc_obj['ClassicLinkEnabled'] = get_classic_link_with_backoff(connection, vpc_id)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to describe VPCs")
 
     return vpc_obj
