@@ -107,8 +107,11 @@ def install_flat(module, binary, repo, flat):
     else:
         if module.check_mode:
             module.exit_json(changed=True)
-
-        command = "{0} install -y {1} {2}".format(binary, repo, flat)
+            
+        if 'http://' in flat or 'https://' in flat:
+            command = "{0} install -y {1}".format(binary, flat)
+        else:
+            command = "{0} install -y {1} {2}".format(binary, repo, flat)
 
         output = flatpak_command(module, command)
         return 0, output
@@ -144,7 +147,6 @@ def parse_flat(name):
         common_name = ".".join(file_name_without_extension)
     else:
         common_name = name
-
     return common_name
 
 
