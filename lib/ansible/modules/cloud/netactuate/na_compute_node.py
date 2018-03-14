@@ -20,13 +20,22 @@ short_description: Manage virtual machines on NetActuate infrastructure.
 description:
   - Deploy newly purchaced packages.
   - Build, destroy, start and stop previously built packages.
-version_added: '2.4.2.0'
+version_added: "2.6.0"
 author: "Dennis Durling (@tahoe)"
 options:
-  name:
+  auth_token:
+    description:
+      - API Key which should be set in ENV variable HOSTVIRTUAL_API_KEY
+      - C(auth_token) is required.
+  hostname:
     description:
       - Hostname of the node. C(name) can only be a valid hostname.
       - Either C(name) is required.
+  name:
+    description:
+      - Custom display name of the instances.
+      - Host name will be set to C(name) if not specified.
+      - Either C(name) or C(hostname) is required.
   ssh_public_key:
     description:
       - Path to the ssh key that will be used for node authentication.
@@ -49,46 +58,27 @@ options:
     description:
       - Name or id of physical location the node should be built in.
       - Required.
-      - Note: Currently once this is set it cannot be changed from ansible.
+      - Note, Currently once this is set it cannot be changed from ansible.
 '''
 
 EXAMPLES = '''
 # example task/main.yml file with hard coded values
-- name: Change state of a package
+- name:
   hv_compute_node:
-    hostname: www.ansible.com
-    ssh_public_key: id_rsa.pub
-    operating_system: Debian 9.0 (PV)
-    mbpkgid: 5551212
-    state: running
-  register: hostvirtual_device_result
-  delegate_to: localhost
+    - hostname: www.ansible.com
+    - ssh_public_key: id_rsa.pub
+    - operating_system: Debian 9.0 (PV)
+    - mbpkgid: 5551212
+    - state: running
+  register:
+    - hostvirtual_device_result
+  delegate_to:
+    - localhost
 
 # NOTE: Example inventory file.
 all:
   hosts:
     host1.example.com ssh_public_key=keys.pub operating_system='Debian 9.0 x64 PV' mbpkgid=5551212 location='RDU3 - Raleigh, NC'
-'''
-
-RETURN = '''
-# Standard represenation for a device as returned by various tasks::
-# in YAML format, though it is returned in dictionary format...
-hostname: device_hostname
-id: device_id
-ip_addresses:
-  - address: 8.8.8.8
-    address_family: 4
-    public: true
-  - address: '::1'
-    address_family: 6
-    public: true
-  - address: 10.100.11.129
-    address_family: 4
-    public: true
-private_ipv4: 10.100.11.129
-public_ipv4: 8.8.8.8
-public_ipv6: ::1
-state: device_state
 '''
 
 import time
@@ -110,8 +100,7 @@ NAME_RE = '({0}|{0}{1}*{0})'.format('[a-zA-Z0-9]', r'[a-zA-Z0-9\-]')
 HOSTNAME_RE = r'({0}\.)*{0}$'.format(NAME_RE)
 MAX_DEVICES = 100
 
-ALLOWED_STATES = ['building', 'pending', 'running', 'stopping', 'present',
-                  'rebooting', 'starting', 'terminated', 'stopped']
+ALLOWED_STATES = ['running', 'present', 'terminated', 'stopped']
 
 # until the api gets fixed so it's more flexible
 API_ROOT = ''
