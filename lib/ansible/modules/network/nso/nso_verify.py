@@ -116,7 +116,7 @@ class NsoVerify(object):
         violations = []
 
         # build list of values from configured data
-        value_builder = ValueBuilder(self._client)
+        value_builder = ValueBuilder(self._client, 'verify')
         for key, value in self._data.items():
             value_builder.build('', key, value)
 
@@ -146,11 +146,17 @@ class NsoVerify(object):
                 n_value = normalize_value(
                     expected_value.value, value, expected_value.path)
                 if n_value != expected_value.value:
-                    violations.append({
-                        'path': expected_value.path,
-                        'expected-value': expected_value.value,
-                        'value': n_value
-                    })
+                    # if the value comparision fails, try mapping identityref
+                    value_type = value_builder.get_type(expected_value.path)
+                    if value_type is not None and 'identityref' in value_type:
+                        n_value, t_value = self.get_prefix_name(value)
+
+                    if expected_value.value != n_value:
+                        violations.append({
+                            'path': expected_value.path,
+                            'expected-value': expected_value.value,
+                            'value': n_value
+                        })
             else:
                 raise ModuleFailException(
                     'value state {0} not supported at {1}'.format(
