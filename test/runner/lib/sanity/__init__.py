@@ -221,7 +221,11 @@ class SanityCodeSmellTest(SanityTest):
         :type targets: SanityTargets
         :rtype: SanityResult
         """
-        cmd = [self.path]
+        if self.path.endswith('.py'):
+            cmd = [args.python_executable, self.path]
+        else:
+            cmd = [self.path]
+
         env = ansible_environment(args, color=False)
 
         pattern = None

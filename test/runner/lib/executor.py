@@ -45,7 +45,6 @@ from lib.util import (
     make_dirs,
     is_shippable,
     is_binary_file,
-    find_pip,
     find_executable,
     raw_command,
     get_coverage_path,
@@ -151,7 +150,7 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    pip = find_pip(version=args.python_version)
+    pip = args.pip_command
 
     commands = [generate_pip_install(pip, args.command, packages=packages)]
 
@@ -183,7 +182,7 @@ def install_command_requirements(args):
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
     """
     :type args: EnvironmentConfig
-    :type pip: str
+    :type pip: list[str]
     :type commands: list[list[str]]
     :type detect_pip_changes: bool
     :rtype: list[list[str]]
@@ -210,7 +209,7 @@ def run_pip_commands(args, pip, commands, detect_pip_changes=False):
             # AttributeError: 'Requirement' object has no attribute 'project_name'
             # See: https://bugs.launchpad.net/ubuntu/xenial/+source/python-pip/+bug/1626258
             # Upgrading pip works around the issue.
-            run_command(args, [pip, 'install', '--upgrade', 'pip'])
+            run_command(args, pip + ['install', '--upgrade', 'pip'])
             run_command(args, cmd)
 
         after_list = pip_list(args, pip) if detect_pip_changes else None
@@ -224,10 +223,10 @@ def run_pip_commands(args, pip, commands, detect_pip_changes=False):
 def pip_list(args, pip):
     """
     :type args: EnvironmentConfig
-    :type pip: str
+    :type pip: list[str]
     :rtype: str
     """
-    stdout, _ = run_command(args, [pip, 'list'], capture=True)
+    stdout, _ = run_command(args, pip + ['list'], capture=True)
     return stdout
 
 
@@ -238,12 +237,12 @@ def generate_egg_info(args):
     if os.path.isdir('lib/ansible.egg-info'):
         return
 
-    run_command(args, ['python%s' % args.python_version, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
+    run_command(args, [args.python_executable, 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
 def generate_pip_install(pip, command, packages=None):
     """
-    :type pip: str
+    :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
     :rtype: list[str] | None
@@ -262,7 +261,7 @@ def generate_pip_install(pip, command, packages=None):
     if not options:
         return None
 
-    return [pip, 'install', '--disable-pip-version-check', '-c', constraints] + options
+    return pip + ['install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):
