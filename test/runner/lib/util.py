@@ -63,51 +63,6 @@ def remove_file(path):
         os.remove(path)
 
 
-def find_pip(path=None, version=None):
-    """
-    :type path: str | None
-    :type version: str | None
-    :rtype: str
-    """
-    if version:
-        version_info = version.split('.')
-        python_bin = find_executable('python%s' % version, path=path)
-    else:
-        version_info = sys.version_info
-        python_bin = sys.executable
-
-    choices = (
-        'pip%s' % '.'.join(str(i) for i in version_info[:2]),
-        'pip%s' % version_info[0],
-        'pip',
-    )
-
-    pip = None
-
-    for choice in choices:
-        pip = find_executable(choice, required=False, path=path)
-
-        if pip:
-            break
-
-    if not pip:
-        raise ApplicationError('Required program not found: %s' % ', '.join(choices))
-
-    with open(pip) as pip_fd:
-        shebang = pip_fd.readline().strip()
-
-    if not shebang.startswith('#!') or ' ' in shebang:
-        raise ApplicationError('Unexpected shebang in "%s": %s' % (pip, shebang))
-
-    our_python = os.path.realpath(python_bin)
-    pip_python = os.path.realpath(shebang[2:])
-
-    if our_python != pip_python and not filecmp.cmp(our_python, pip_python, False):
-        raise ApplicationError('Current interpreter "%s" does not match "%s" interpreter "%s".' % (our_python, pip, pip_python))
-
-    return pip
-
-
 def find_executable(executable, cwd=None, path=None, required=True):
     """
     :type executable: str
@@ -160,6 +115,30 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
+def find_python(version, path=None):
+    """
+    :type version: str
+    :type path: str | None
+    :rtype: str
+    """
+    version_info = tuple(int(n) for n in version.split('.'))
+
+    if not path and version_info == sys.version_info[:len(version_info)]:
+        python_bin = sys.executable
+    else:
+        python_bin = find_executable('python%s' % version, path=path)
+
+    return python_bin
+
+
+def generate_pip_command(python):
+    """
+    :type python: str
+    :rtype: list[str]
+    """
+    return [python, '-m', 'pip.__main__']
+
+
 def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
     """
     :type args: TestConfig
@@ -180,7 +159,7 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     inject_path = get_coverage_path(args)
     config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
-    interpreter = find_executable('python%s' % version, path=path)
+    interpreter = find_python(version, path)
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 

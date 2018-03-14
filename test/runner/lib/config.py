@@ -9,6 +9,8 @@ from lib.util import (
     CommonConfig,
     is_shippable,
     docker_qualify_image,
+    find_python,
+    generate_pip_command,
 )
 
 from lib.metadata import (
@@ -66,6 +68,20 @@ class EnvironmentConfig(CommonConfig):
 
         if self.delegate:
             self.requirements = True
+
+    @property
+    def python_executable(self):
+        """
+        :rtype: str
+        """
+        return find_python(self.python_version)
+
+    @property
+    def pip_command(self):
+        """
+        :rtype: list[str]
+        """
+        return generate_pip_command(self.python_executable)
 
 
 class TestConfig(EnvironmentConfig):
