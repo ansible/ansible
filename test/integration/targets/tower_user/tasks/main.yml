@@ -1,0 +1,46 @@
+- name: Create a User
+  tower_user:
+    first_name: Joe
+    last_name: User
+    username: joe
+    password: secret
+    email: joe@example.org
+    state: present
+
+- name: Delete a User
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
+
+- name: Create an Auditor
+  tower_user:
+    first_name: Joe
+    last_name: Auditor
+    username: joe
+    password: secret
+    email: joe@example.org
+    state: present
+    auditor: true
+
+- name: Delete a Auditor
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
+
+- name: Create a Superuser
+  tower_user:
+    first_name: Joe
+    last_name: Super
+    username: joe
+    password: secret
+    email: joe@example.org
+    state: present
+    superuser: true
+
+- name: Delete a Superuser
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
