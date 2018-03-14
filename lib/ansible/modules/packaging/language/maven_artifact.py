@@ -274,6 +274,7 @@ class MavenDownloader:
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
         self.latest_version_found = None
+        self.release_version_found = None
 
     def find_latest_version_available(self, artifact):
         if self.latest_version_found:
@@ -284,10 +285,21 @@ class MavenDownloader:
         if v:
             self.latest_version_found = v[0]
             return v[0]
+    def find_release_version_available(self, artifact):
+        if self.release_version_found:
+            return self.release_version_found
+        path = "/%s/maven-metadata.xml" % (artifact.path(False))
+        xml = self._request(self.base + path, "Failed to download maven-metadata.xml", etree.parse)
+        v = xml.xpath("/metadata/versioning/release/text()")
+        if v:
+            self.release_version_found = v[0]
+            return v[0]
 
     def find_uri_for_artifact(self, artifact):
         if artifact.version == "latest":
             artifact.version = self.find_latest_version_available(artifact)
+        elif artifact.version == "release":
+            artifact.version = self.find_release_version_available(artifact)
 
         if artifact.is_snapshot():
             path = "/%s/maven-metadata.xml" % (artifact.path())
