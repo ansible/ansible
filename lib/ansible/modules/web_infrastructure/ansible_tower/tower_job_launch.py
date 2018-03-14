@@ -25,7 +25,7 @@ description:
 options:
     job_template:
       description:
-        - Name of the job_template to use.
+        - Name of the job template to use.
       required: True
     job_explanation:
       description:
