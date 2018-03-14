@@ -54,14 +54,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-key1:
-    description: Key1 for azure storage account
+keys:
+    description: Dictionary of Keys associated with the Storage Account
     returned: always
-    type: str
-key2:
-    description: Key2 for azure storage account
-    returned: always
-    type: str
+    type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -81,9 +77,8 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         )
         self.results = dict(
             changed=False,
-            key1=None,
-            key2=None
-        )
+            keys = dict()
+            )
         self.resource_group = None
         self.name = None
 
@@ -99,8 +94,11 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         except CloudError:
             pass
 
-        self.results['Key1'] = account_keys.keys[0].value
-        self.results['Key2'] = account_keys.keys[1].value
+        keys = dict()
+        for key in account_keys.keys:
+            keys[key.key_name] = key.value
+
+        self.results['keys'] = keys
 
         return self.results
 
