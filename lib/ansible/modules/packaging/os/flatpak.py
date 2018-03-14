@@ -49,6 +49,7 @@ options:
     description:
     - The repository to install the flatpak from
     default: flathub
+    required: false
 
 '''
 
