@@ -316,7 +316,7 @@ def normalize_interface(name):
     def _get_number(name):
         digits = ''
         for char in name:
-            if char.isdigit() or char == '/' or char == '.':
+            if char.isdigit() or char in '/.':
                 digits += char
         return digits
 
