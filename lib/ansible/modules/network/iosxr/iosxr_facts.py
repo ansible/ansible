@@ -25,6 +25,9 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: iosxr
+notes:
+  - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
 options:
   gather_subset:
     description:

@@ -26,6 +26,7 @@ description:
 extends_documentation_fragment: iosxr
 notes:
   - Tested against IOS XRv 6.1.2
+  - This module does not support netconf connection
   - Avoid service disrupting changes (viz. Management IP) from config replace.
   - Do not use C(end) in the replace config file.
 options:
