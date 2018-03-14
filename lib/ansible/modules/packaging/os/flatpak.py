@@ -45,6 +45,11 @@ options:
     - Set to C(absent) will remove the flatpak and/or I(remote).
     choices: [ absent, present ]
     default: present
+  repo:
+    description:
+    - The repository to install the flatpak from
+    default: flathub
+
 '''
 
 EXAMPLES = r'''
@@ -102,7 +107,7 @@ def install_flat(module, binary, repo, flat):
         if module.check_mode:
             module.exit_json(changed=True)
 
-        command = "{} install -y {} {}".format(binary, repo, flat)
+        command = "{0} install -y {1} {2}".format(binary, repo, flat)
 
         output = flatpak_command(module, command)
         return 0, output
@@ -121,12 +126,12 @@ def uninstall_flat(module, binary, flat):
         if module.check_mode:
             module.exit_json(changed=True)
 
-    command = "{} list --app".format(binary)
+    command = "{0} list --app".format(binary)
     result = module.run_command(command.split())
     for row in result[1].split('\n'):
         if parse_flat(flat) in row:
             installed_flat_name = row.split(' ')[0]
-    command = "{} uninstall {}".format(binary, installed_flat_name)
+    command = "{0} uninstall {1}".format(binary, installed_flat_name)
     output = flatpak_command(module, command)
     return 0, output
 
@@ -143,7 +148,7 @@ def parse_flat(name):
 
 
 def is_present_flat(module, binary, name):
-    command = "{} list --app".format(binary)
+    command = "{0} list --app".format(binary)
     flat = parse_flat(name).lower()
     output = flatpak_command(module, command)
     if flat in output.lower():
