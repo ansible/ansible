@@ -22,7 +22,7 @@ Hosts and Groups
 The inventory file can be in one of many formats, depending on the inventory plugins you have.
 For this example, the format for ``/etc/ansible/hosts`` is an INI-like (one of Ansible's defaults) and looks like this:
 
-.. code-block:: ini
+.. code-block:: guess
 
     mail.example.com
 
@@ -65,7 +65,7 @@ Ports listed in your SSH config file won't be used with the `paramiko` connectio
 
 To make things explicit, it is suggested that you set them if things are not running on the default port:
 
-.. code-block:: ini
+.. code-block:: guess
 
     badwolf.example.com:5309
 
@@ -74,7 +74,7 @@ You can also describe hosts via variables:
 
 In INI:
 
-.. code-block:: ini
+.. code-block:: guess
 
     jumper ansible_port=5555 ansible_host=192.0.2.50
 
@@ -98,24 +98,21 @@ Generally speaking, this is not the best way to define variables that describe y
 
 If you are adding a lot of hosts following similar patterns, you can do this rather than listing each hostname:
 
-.. code-block:: ini
+.. code-block:: guess
 
     [webservers]
     www[01:50].example.com
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges:
 
-.. code-block:: ini
+.. code-block:: guess
 
     [databases]
     db-[a:f].example.com
 
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
-
 You can also select the connection type and user on a per host basis:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [targets]
 
@@ -132,7 +129,7 @@ Host Variables
 
 As described above, it is easy to assign variables to hosts that will be used later in playbooks:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
@@ -147,7 +144,7 @@ Variables can also be applied to an entire group at once:
 
 The INI way:
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1
@@ -180,7 +177,7 @@ It is also possible to make groups of groups using the ``:children`` suffix in I
 You can apply variables using ``:vars`` or ``vars:``:
 
 
-.. code-block:: ini
+.. code-block:: guess
 
    [atlanta]
    host1
@@ -339,9 +336,6 @@ Host connection:
 
 ansible_connection
     Connection type to the host. This can be the name of any of ansible's connection plugins. SSH protocol types are ``smart``, ``ssh`` or ``paramiko``.  The default is smart. Non-SSH based types are described in the next section.
-
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 General for all connections:
 

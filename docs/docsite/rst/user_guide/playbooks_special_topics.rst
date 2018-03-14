@@ -9,7 +9,6 @@ and adopt these only if they seem relevant or useful to your environment.
    :maxdepth: 1
 
    become
-   playbooks_acceleration
    playbooks_async
    playbooks_checkmode
    playbooks_debugger
@@ -17,10 +16,10 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_environment
    playbooks_error_handling
    playbooks_advanced_syntax
-   plugins
+   ../plugins/plugins
    playbooks_prompts
    playbooks_tags
    playbooks_vault
    playbooks_startnstep
-   playbooks_keywords
+   ../reference_appendices/playbooks_keywords
    playbooks_lookups

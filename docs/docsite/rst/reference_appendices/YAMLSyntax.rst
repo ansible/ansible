@@ -1,3 +1,6 @@
+.. _yaml_syntax:
+
+
 YAML Syntax
 ===========
 
