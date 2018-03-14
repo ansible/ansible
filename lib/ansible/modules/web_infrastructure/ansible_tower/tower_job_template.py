@@ -98,7 +98,7 @@ options:
       default: null
     extra_vars_path:
       description:
-        - Path to the C(extra_vars) yaml file.
+        - Path to the C(extra_vars) YAML file.
       required: False
       default: null
     ask_extra_vars:

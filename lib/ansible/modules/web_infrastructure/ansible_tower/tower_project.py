@@ -35,13 +35,13 @@ options:
       default: null
     scm_type:
       description:
-        - Type of scm resource.
+        - Type of SCM resource.
       required: False
       default: "manual"
       choices: ["manual", "git", "hg", "svn"]
     scm_url:
       description:
-        - URL of scm resource.
+        - URL of SCM resource.
       required: False
       default: null
     local_path:
@@ -51,12 +51,12 @@ options:
       default: null
     scm_branch:
       description:
-        - The branch to use for the scm resource.
+        - The branch to use for the SCM resource.
       required: False
       default: null
     scm_credential:
       description:
-        - Name of the credential to use with this scm resource.
+        - Name of the credential to use with this SCM resource.
       required: False
       default: null
     scm_clean:
