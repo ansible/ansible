@@ -57,7 +57,7 @@ class ValidateModulesTest(SanitySingleVersion):
             return SanitySkipped(self.name)
 
         cmd = [
-            'python%s' % args.python_version,
+            args.python_executable,
             'test/sanity/validate-modules/validate-modules',
             '--format', 'json',
             '--arg-spec',

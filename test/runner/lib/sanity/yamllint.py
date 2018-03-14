@@ -65,7 +65,7 @@ class YamllintTest(SanitySingleVersion):
         :rtype: list[SanityMessage]
         """
         cmd = [
-            'python%s' % args.python_version,
+            args.python_executable,
             'test/sanity/yamllint/yamllinter.py',
         ]
 
