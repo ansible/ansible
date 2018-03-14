@@ -77,7 +77,7 @@ as push updates to all of the servers::
 
 .. note::
 
-   If you're not familiar with terms like playbooks and plays, you should review :doc:`playbooks`.
+   If you're not familiar with terms like playbooks and plays, you should review :ref:`working_with_playbooks`.
 
 In this playbook we have 5 plays. The first one targets ``all`` hosts and applies the ``common`` role to all of the hosts. 
 This is for site-wide things like yum repository configuration, firewall configuration, and anything else that needs to apply to all of the servers.
@@ -100,7 +100,7 @@ your roles is up to you and your application, but most sites will have one or mo
 all systems, and then a series of application-specific roles that install and configure particular parts of the site.
 
 Roles can have variables and dependencies, and you can pass in parameters to roles to modify their behavior. 
-You can read more about roles in the :doc:`playbooks_reuse_roles` section.
+You can read more about roles in the :ref:`playbooks_reuse_roles` section.
 
 .. _lamp_group_variables:
 
@@ -185,7 +185,7 @@ This loops over all of the hosts in the group called ``monitoring``, and adds an
 each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
 You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you 
-can read more about Ansible variables in general in the :doc:`playbooks_variables` section.
+can read more about Ansible variables in general in the :ref:`playbooks_variables` section.
 
 .. _lamp_rolling_upgrade:
 
@@ -269,9 +269,9 @@ Again, if you were using a Netscaler or F5 or Elastic Load Balancer, you would j
 Managing Other Load Balancers
 `````````````````````````````
 
-In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. As we have mentioned, Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the :doc:`modules` documentation for more information.
+In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. As we have mentioned, Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the :ref:`working_with_modules` documentation for more information.
 
-For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :doc:`playbooks_delegation` section.  Should you develop anything interesting for some hardware where there is not a core module, it might make for a good module for core inclusion!
+For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :ref:`playbooks_delegation` section.  Should you develop anything interesting for some hardware where there is not a core module, it might make for a good module for core inclusion!
 
 .. _lamp_end_to_end:
 
@@ -282,7 +282,7 @@ Now that you have an automated way to deploy updates to your application, how do
 
 Depending on your environment, you might be deploying continuously to a test environment, running an integration test battery against that environment, and then deploying automatically into production.  Or you could keep it simple and just use the rolling-update for on-demand deployment into test or production specifically.  This is all up to you.
 
-For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using :doc:`tower`, the ``tower-cli`` or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
+For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using :ref:`ansible_tower`, the ``tower-cli`` or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
 
 This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous delivery to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
 
@@ -290,11 +290,11 @@ This should give you a good idea of how to structure a multi-tier application wi
 
    `lamp_haproxy example <https://github.com/ansible/ansible-examples/tree/master/lamp_haproxy>`_
        The lamp_haproxy example discussed here.
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        An introduction to playbook roles
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        An introduction to Ansible variables
    `Ansible.com: Continuous Delivery <https://www.ansible.com/ansible-continuous-delivery>`_
        An introduction to Continuous Delivery with Ansible

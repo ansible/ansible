@@ -1,3 +1,5 @@
+.. _working_with_modules:
+
 Working With Modules
 ====================
 

@@ -1,3 +1,5 @@
+.. _release_and_maintenance:
+
 Release and maintenance
 =======================
 
@@ -14,7 +16,7 @@ This cycle can be extended in order to allow for larger changes to be properly
 implemented and tested before a new release is made available.
 
 Ansible has a graduated support structure that extends to three major releases.
-For more information, read about the `development and stable version maintenance workflow`_ or see
+For more information, read about the :ref: `_development_and_stable_versiona_maintenance_workflow` or see
 the chart in :ref:`schedule` for the degrees to which current releases are supported.
 
 .. note:: Support for three major releases began with Ansible-2.4. Ansible-2.3 and older versions
@@ -65,6 +67,7 @@ devel             `2.5`_ (unreleased, trunk)   In development
 .. _support_life:
 .. _methods:
 
+.. _development_and_stable_versiona_maintenance_workflow:
 
 Development and stable version maintenance workflow
 ```````````````````````````````````````````````````
@@ -132,11 +135,11 @@ be delayed in order to allow the new release to be shipped as soon as possible.
 
 .. seealso::
 
-   :doc:`committer_guidelines`
+   :ref:`community_committer_guidelines`
        Guidelines for Ansible core contributors and maintainers
-   :doc:`test_strategies`
+   :ref:`testing_strategies`
        Testing strategies
-   :doc:`community`
+   :ref:`ansible_community_guide`
        Community information and contributing
    `Ansible Changelog <https://github.com/ansible/ansible/blob/devel/CHANGELOG.md>`_
        Documentation of the improvements for each version of Ansible

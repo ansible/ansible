@@ -18,7 +18,7 @@ actually manage the GitHub permissions.
 Change Branch Permissions for Release
 -------------------------------------
 
-When we make releases we make people go through a :doc:`release_manager` to push commits to that
+When we make releases we make people go through a :ref:`release_managers` to push commits to that
 branch.  The GitHub admins are responsible for setting the branch so only the Release Manager can
 commit to the branch when the release process reaches that stage and later opening the branch once
 the release has been made.  The Release manager will let the GitHub Admin know when this needs to be

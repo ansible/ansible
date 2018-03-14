@@ -1,3 +1,5 @@
+.. _playbooks_delegation:
+
 Delegation, Rolling Updates, and Local Actions
 ==============================================
 
