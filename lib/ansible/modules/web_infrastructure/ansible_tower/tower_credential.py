@@ -263,7 +263,7 @@ def main():
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = f.read().decode('utf-8')
 
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',
