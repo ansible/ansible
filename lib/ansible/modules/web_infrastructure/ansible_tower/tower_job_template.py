@@ -128,7 +128,7 @@ options:
       default: False
     become_enabled:
       description:
-        - Should become_enabled.
+        - Activate privilege escalation.
       required: False
       default: False
     state:
