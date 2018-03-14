@@ -45,6 +45,7 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 
 INVALID_VAULT = 'The data provided is not a valid vault.*'
 
+
 @pytest.mark.skipif(not vault.HAS_CRYPTOGRAPHY,
                     reason="Skipping cryptography tests because cryptography is not installed")
 class TestVaultEditor(unittest.TestCase):
