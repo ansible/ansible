@@ -1,3 +1,5 @@
+.. _ansible_faq:
+
 Frequently Asked Questions
 ==========================
 
@@ -22,8 +24,6 @@ How do I handle different machines needing different user accounts or ports to l
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Setting inventory variables in the inventory file is the easiest way.
-
-.. include:: ../rst_common/ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports:
 

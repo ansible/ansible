@@ -1,3 +1,5 @@
+.. _testing_strategies:
+
 Testing Strategies
 ==================
 
@@ -142,7 +144,7 @@ a subset of the QA battery against remote nodes.   This is what the next section
 Integrating Testing With Rolling Updates
 ````````````````````````````````````````
 
-If you have read into :doc:`playbooks_delegation` it may quickly become apparent that the rolling update pattern can be extended, and you
+If you have read into :ref:`playbooks_delegation` it may quickly become apparent that the rolling update pattern can be extended, and you
 can use the success or failure of the playbook run to decide whether to add a machine into a load balancer or not. 
 
 This is the great culmination of embedded tests::
@@ -260,11 +262,11 @@ system.
 
 .. seealso::
 
-   :doc:`modules`
+   :ref:`all_modules`
        All the documentation for Ansible modules
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_delegation`
+   :ref:`playbooks_delegation`
        Delegation, useful for working with load balancers, clouds, and locally executed steps.
    `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

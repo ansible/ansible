@@ -1,3 +1,5 @@
+.. _playbooks_reuse_roles:
+
 Roles
 =====
 
@@ -298,7 +300,7 @@ Embedding Modules and Plugins In Roles
 
 This is an advanced topic that should not be relevant for most users.
 
-If you write a custom module (see :doc:`dev_guide/developing_modules`) or a plugin (see :doc:`dev_guide/developing_plugins`), you may wish to distribute it as part of a role.
+If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you may wish to distribute it as part of a role.
 Generally speaking, Ansible as a project is very interested in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
 
 A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
@@ -345,7 +347,7 @@ Ansible will search for roles in the following way:
 - A ``roles/`` directory, relative to the playbook file.
 - By default, in ``/etc/ansible/roles``
 
-In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
+In Ansible 1.4 and later you can configure an additional roles_path to search for roles.  Use this to check all of your common roles out to one location, and share them easily between multiple playbook projects.  See :ref:`intro_configuration` for details about how to set this up in ansible.cfg.
 
 Ansible Galaxy
 ``````````````
@@ -358,23 +360,23 @@ Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 
-   :doc:`galaxy`
+   :ref:`ansible_galaxy`
        How to share roles on galaxy, role management
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks`
+   :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditionals in playbooks
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Loops in playbooks
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the GitHub project source

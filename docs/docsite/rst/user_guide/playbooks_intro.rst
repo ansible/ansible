@@ -34,7 +34,7 @@ index after you're done with this section.
 Playbook Language Example
 `````````````````````````
 
-Playbooks are expressed in YAML format (see :doc:`YAMLSyntax`) and have a minimum of syntax, which intentionally
+Playbooks are expressed in YAML format (see :ref:`yaml_syntax`) and have a minimum of syntax, which intentionally
 tries to not be a programming language or script, but rather a model of a configuration or a process.
 
 Each playbook is composed of one or more 'plays' in a list.
@@ -525,17 +525,15 @@ can do this::
 
 .. seealso::
 
-   :doc:`YAMLSyntax`
+   :ref:`yaml_syntax`
        Learn about YAML syntax
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
-   :doc:`index`
-       Hop back to the documentation index for a lot of special topics about playbooks
-   :doc:`modules`
+   :ref:`all_modules`
        Learn about available modules
-   :doc:`dev_guide/developing_modules`
+   :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`intro_patterns`
+   :ref:`intro_patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete end-to-end playbook examples

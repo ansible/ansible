@@ -1,3 +1,5 @@
+.. _intro_configuration:
+
 *******************
 Configuring Ansible
 *******************
@@ -29,9 +31,9 @@ default settings in Ansible.
 
 An `example file is available on Github <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_.
 
-For more details and a full listing of available configurations go to :ref:`configuration_settings`. Starting with Ansible version 2.4, you can use the :doc:`ansible-config` command line utility to list your available options and inspect the current values.
+For more details and a full listing of available configurations go to :ref:`configuration_settings`. Starting with Ansible version 2.4, you can use the :ref:`ansible-config` command line utility to list your available options and inspect the current values.
 
-For in-depth details, see :doc:`_config`.
+For in-depth details, see :ref:`config`.
 
 
 Environmental configuration
