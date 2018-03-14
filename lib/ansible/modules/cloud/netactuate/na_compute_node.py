@@ -88,7 +88,7 @@ private_ipv4: 10.100.11.129
 public_ipv4: 8.8.8.8
 public_ipv6: ::1
 state: device_state
--'''
+'''
 
 
 import time
