@@ -78,7 +78,8 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         self.results = dict(
             changed=False,
             keys = dict()
-            )
+        )
+
         self.resource_group = None
         self.name = None
 
