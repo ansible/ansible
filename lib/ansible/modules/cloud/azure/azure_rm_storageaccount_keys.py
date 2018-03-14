@@ -82,7 +82,7 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
 
-        super(AzureRMStorageAccountKeys, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMStorageAccountKeys, self).__init__(derived_arg_spec=self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
