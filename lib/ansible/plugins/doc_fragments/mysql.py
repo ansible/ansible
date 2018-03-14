@@ -19,9 +19,8 @@ options:
     type: str
   login_host:
     description:
-      - Host running the database.
+      - Host running the database. Default values taken by mysqlclient (localhost or from e.g. ~/my.cnf)
     type: str
-    default: localhost
   login_port:
     description:
       - Port of the MySQL server. Requires I(login_host) be defined as other than localhost if login_port is used.

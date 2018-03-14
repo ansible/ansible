@@ -53,8 +53,9 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if module.params['login_unix_socket']:
         config['unix_socket'] = module.params['login_unix_socket']
     else:
-        config['host'] = module.params['login_host']
         config['port'] = module.params['login_port']
+    if module.params['login_host'] is not None:
+        config['host'] = module.params['login_host']
 
     if os.path.exists(config_file):
         config['read_default_file'] = config_file
