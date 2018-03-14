@@ -78,16 +78,36 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-hostname: device_hostname
-id: device_id
+id:
+  description: Device UUID.
+  returned: success
+  type: string
+  sample: 5551212
+hostname:
+  description: Device FQDN
+  returned: success
+  type: string
+  sample: a.b.com
 ip_addresses:
-  address: 8.8.8.8
-  address_family: 4
-  public: true
-private_ipv4: 10.100.11.129
-public_ipv4: 8.8.8.8
-public_ipv6: ::1
-state: device_state
+  description: Dictionary of configured IP addresses.
+  returned: success
+  type: dict
+  sample: '[ { "address": "8.8.8.8", "address_family": "4", "public": "true" } ]'
+private_ipv4:
+  description: Private IPv4 Address
+  returned: success
+  type: string
+  sample: 10.100.11.129
+public_ipv6:
+  description: Public IPv6 Address
+  returned: success
+  type: string
+  sample: ::1
+state:
+  description: Device state
+  returned: success
+  type: string
+  sample: running
 '''
 
 
