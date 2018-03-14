@@ -1,3 +1,5 @@
+.. _developing_modules:
+
 Developing Modules
 ==================
 
@@ -16,7 +18,7 @@ return information to ansible by printing a JSON string to stdout before
 exiting.  They take arguments in one of several ways which we'll go into
 as we work through this tutorial.
 
-See :doc:`../modules` for a list of existing modules.
+See :ref:`all_modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
@@ -31,7 +33,7 @@ develop a module. Ask the following questions:
 
 1. Does a similar module already exist?
 
-There are a lot of existing modules available, you should check out the list of existing modules at :doc:`../modules`
+There are a lot of existing modules available, you should check out the list of existing modules at :ref:`modules`
 
 2. Has someone already worked on a similar Pull Request?
 
@@ -93,7 +95,7 @@ The following topics will discuss how to develop and work with modules:
 
 .. seealso::
 
-   :doc:`../modules`
+   :ref:`all_modules`
        Learn about available modules
    :doc:`developing_plugins`
        Learn about developing plugins

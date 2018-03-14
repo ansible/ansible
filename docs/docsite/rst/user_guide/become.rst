@@ -1,3 +1,5 @@
+.. _become:
+
 **********************************
 Understanding Privilege Escalation
 **********************************
@@ -145,7 +147,7 @@ a potential danger.
 
 Ways to resolve this include:
 
-* Use :ref:`pipelining`.  When pipelining is enabled, Ansible doesn't save the
+* Use `pipelining`.  When pipelining is enabled, Ansible doesn't save the
   module to a temporary file on the client.  Instead it pipes the module to
   the remote python interpreter's stdin.  Pipelining does not work for
   non-python modules.
@@ -278,7 +280,6 @@ If a password is required to enter enable mode this can be specified by doing on
 
    As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
 
-For more information about ``network_cli`` see :ref:`network-cli`.
 
 .. _become-network-auth-and-auth-password:
 
@@ -300,7 +301,7 @@ For network platforms that do not currently support ``connection: network_cli`` 
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-Note that over time more platforms will move to support ``become``. Check the :doc:`list_of_network_modules` for details.
+Note that over time more platforms will move to support ``become``. Check the :ref:`network_modules` for details.
 
 .. _become-windows:
 

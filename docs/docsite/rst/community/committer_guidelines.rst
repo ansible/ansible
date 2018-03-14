@@ -1,3 +1,5 @@
+.. _community_committer_guidelines:
+
 Committers Guidelines (for people with commit rights to Ansible on GitHub)
 ``````````````````````````````````````````````````````````````````````````
 
