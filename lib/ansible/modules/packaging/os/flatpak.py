@@ -87,12 +87,11 @@ remote:
   sample: https://sdk.gnome.org/gnome-apps.flatpakrepo
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-import subprocess
 from urlparse import urlparse
+from ansible.module_utils.basic import AnsibleModule
 
 
-def install_flat(module, binary, flat):
+def install_flat(module, binary, repo, flat):
     installed = is_present_flat(module, binary, flat)
     # Check if any changes would be made but don't actually make
     # those changes
@@ -102,7 +101,7 @@ def install_flat(module, binary, flat):
         if module.check_mode:
             module.exit_json(changed=True)
 
-        command = "{} install -y --from {}".format(binary, flat)
+        command = "{} install -y {} {}".format(binary, repo, flat)
 
         output = flatpak_command(module, command)
         return 0, output
@@ -161,6 +160,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
+            repo=dict(type='str', default='flathub'),
             state=dict(type='str', default='present',
                        choices=['absent', 'present']),
             executable=dict(type='path'),  # No default on purpose
@@ -170,6 +170,7 @@ def main():
 
     name = module.params['name']
     state = module.params['state']
+    repo = module.params['repo']
     executable = module.params['executable']
 
     # We want to know if the user provided it or not, so we set default here
@@ -183,7 +184,7 @@ def main():
         module.warn("Executable '%s' is not found on the system." % executable)
 
     if state == 'present':
-        result = install_flat(module, binary, name)
+        result = install_flat(module, binary, repo, name)
     elif state == 'absent':
         result = uninstall_flat(module, binary, name)
     module.exit_json(changed=True, msg=result[1])
