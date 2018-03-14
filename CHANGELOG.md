@@ -93,6 +93,8 @@ Ansible Changes By Release
 * Fix credentials for Ansible Tower modules to work with v1 and v2 of the API
   (https://github.com/ansible/ansible/pull/36587)
   (https://github.com/ansible/ansible/pull/36662)
+* Fix error messages to not be inappropriately templated:
+  https://github.com/ansible/ansible/pull/37329
 
 
 <a id="2.4.3"></a>
