@@ -219,6 +219,7 @@ options:
       - fluentd
       - awslogs
       - splunk
+      - gcplogs
     default: null
     required: false
   log_options:
@@ -2098,7 +2099,7 @@ def main():
         labels=dict(type='dict'),
         links=dict(type='list'),
         log_driver=dict(type='str',
-                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'],
+                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk', 'gcplogs'],
                         default=None),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
