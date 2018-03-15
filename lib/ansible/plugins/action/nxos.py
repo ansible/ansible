@@ -43,10 +43,11 @@ class ActionModule(_ActionModule):
 
         socket_path = None
 
-        if self._task.args.get('provider', {}).get('transport') == 'nxapi' and self._task.action == 'nxos_nxapi':
+        if self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi' \
+                and self._task.action == 'nxos_nxapi':
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (self._task.action)}
 
-        if self._play_context.connection == 'network_cli':
+        if self._play_context.connection in ('network_cli', 'netapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
