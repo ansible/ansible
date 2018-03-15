@@ -49,23 +49,16 @@ options:
   vrf:
     description:
       - VRF for static route.
-    required: false
     default: default
   tag:
     description:
       - Route tag value (numeric).
-    required: false
-    default: null
   route_name:
     description:
       - Name of the route. Used with the name parameter on the CLI.
-    required: false
-    default: null
   pref:
     description:
       - Preference or administrative difference of route (range 1-255).
-    required: false
-    default: null
     aliases:
       - admin_distance
   aggregate:

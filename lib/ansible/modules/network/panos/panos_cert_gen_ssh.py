@@ -37,36 +37,29 @@ options:
         description:
             - IP address (or hostname) of PAN-OS device being configured.
         required: true
-        default: null
     key_filename:
         description:
             - Location of the filename that is used for the auth. Either I(key_filename) or I(password) is required.
         required: true
-        default: null
     password:
         description:
             - Password credentials to use for auth. Either I(key_filename) or I(password) is required.
         required: true
-        default: null
     cert_friendly_name:
         description:
             - Human friendly certificate name (not CN but just a friendly name).
         required: true
-        default: null
     cert_cn:
         description:
             - Certificate CN (common name) embedded in the certificate signature.
         required: true
-        default: null
     signed_by:
         description:
             - Undersigning authority (CA) that MUST already be presents on the device.
         required: true
-        default: null
     rsa_nbits:
         description:
             - Number of bits used by the RSA algorithm for the certificate generation.
-        required: false
         default: "2048"
 '''
 

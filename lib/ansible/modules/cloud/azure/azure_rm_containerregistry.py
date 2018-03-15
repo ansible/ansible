@@ -27,7 +27,6 @@ options:
     name:
         description:
             - Name of the Container Registry.
-        default: null
         required: true
     state:
         description:
@@ -43,7 +42,8 @@ options:
     admin_user_enabled:
         description:
             - If enabled, you can use the registry name as username and admin user access key as password to docker login to your container registry.
-        default: false
+        type: bool
+        default: no
     sku:
         description:
             - Specifies the SKU to use. Currently can be either Basic, Standard or Premium.

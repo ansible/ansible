@@ -26,27 +26,21 @@ options:
   host:
     description:
       - Tiller's server host
-    required: false
     default: "localhost"
   port:
     description:
       - Tiller's server port
-    required: false
     default: 44134
   namespace:
     description:
       - Kubernetes namespace where the chart should be installed
-    required: false
     default: "default"
   name:
     description:
       - Release name to manage
-    required: false
-    default: null
   state:
     description:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
-    required: false
     choices: ['absent', 'purged', 'present']
     default: "present"
   chart:
@@ -58,18 +52,16 @@ options:
         source:
           type: repo
           location: https://kubernetes-charts.storage.googleapis.com
-    required: false
     default: {}
   values:
     description:
       - A map of value options for the chart.
-    required: false
     default: {}
   disable_hooks:
     description:
       - Whether to disable hooks during the uninstall process
-    required: false
-    default: false
+    type: bool
+    default: 'no'
 '''
 
 RETURN = ''' # '''

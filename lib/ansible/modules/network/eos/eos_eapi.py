@@ -47,16 +47,14 @@ options:
         when the value is set to False, the HTTP protocol is disabled.
         By default, when eAPI is first configured, the HTTP protocol is
         disabled.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_http']
   http_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 80
   https:
     description:
@@ -66,16 +64,14 @@ options:
         when the value is set to False, the HTTPS protocol is disabled.
         By default, when eAPI is first configured, the HTTPS protocol is
         enabled.
-    required: false
-    default: yes
-    choices: ['yes', 'no']
+    type: bool
+    default: 'yes'
     aliases: ['enable_https']
   https_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 443
   local_http:
     description:
@@ -85,16 +81,14 @@ options:
         is enabled and restricted to connections from localhost only.  When
         the value is set to False, the HTTP local protocol is disabled.
       - Note is value is independent of the C(http) argument
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_local_http']
   local_http_port:
     description:
       - Configures the HTTP port that will listen for connections when
         the HTTP transport protocol is enabled.  This argument accepts
         integer values in the valid range of 1 to 65535.
-    required: false
     default: 8080
   socket:
     description:
@@ -104,9 +98,8 @@ options:
         requests.  When the value is set to False, the UDS will not be
         available to handle requests.  By default when eAPI is first
         configured, the UDS is disabled.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases: ['enable_socket']
   vrf:
     description:
@@ -114,7 +107,6 @@ options:
         in the specified VRF.  By default, eAPI transports will listen
         for connections in the global table.  This value requires the
         VRF to already be created otherwise the task will fail.
-    required: false
     default: default
     version_added: "2.2"
   config:
@@ -126,8 +118,6 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: nul
     version_added: "2.2"
   state:
     description:
@@ -135,7 +125,6 @@ options:
         on the remote device.  When this argument is set to C(started),
         eAPI is enabled to receive requests and when this argument is
         C(stopped), eAPI is disabled and will not receive requests.
-    required: false
     default: started
     choices: ['started', 'stopped']
 """

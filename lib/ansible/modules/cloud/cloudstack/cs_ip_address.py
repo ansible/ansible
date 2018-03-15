@@ -55,8 +55,8 @@ options:
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: yes
     type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

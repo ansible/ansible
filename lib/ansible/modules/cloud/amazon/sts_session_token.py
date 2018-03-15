@@ -25,18 +25,12 @@ options:
       - The duration, in seconds, of the session token.
         See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters
         for acceptable and default values.
-    required: false
-    default: null
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the GetSessionToken call.
-    required: false
-    default: null
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the user requires MFA.
-    required: false
-    default: null
 notes:
   - In order to use the session token in a following playbook task you must pass the I(access_key), I(access_secret) and I(access_token).
 extends_documentation_fragment:

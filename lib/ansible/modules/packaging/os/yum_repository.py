@@ -26,15 +26,12 @@ description:
 
 options:
   async:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - If set to C(yes) Yum will download packages and metadata from this
         repo in parallel, if possible.
+    type: bool
+    default: 'yes'
   bandwidth:
-    required: false
-    default: 0
     description:
       - Maximum available network bandwidth in bytes/second. Used with the
         I(throttle) option.
@@ -42,9 +39,8 @@ options:
         throttling will be disabled. If I(throttle) is expressed as a data rate
         (bytes/sec) then this option is ignored. Default is C(0) (no bandwidth
         throttling).
+    default: 0
   baseurl:
-    required: false
-    default: null
     description:
       - URL to the directory where the yum repository's 'repodata' directory
         lives.
@@ -52,56 +48,46 @@ options:
       - This, the I(metalink) or I(mirrorlist) parameters are required if I(state) is set to
         C(present).
   cost:
-    required: false
-    default: 1000
     description:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
+    default: 1000
   deltarpm_metadata_percentage:
-    required: false
-    default: 100
     description:
       - When the relative size of deltarpm metadata vs pkgs is larger than
         this, deltarpm metadata is not downloaded from the repo. Note that you
         can give values over C(100), so C(200) means that the metadata is
         required to be half the size of the packages. Use C(0) to turn off
         this check, and always download metadata.
+    default: 100
   deltarpm_percentage:
-    required: false
-    default: 75
     description:
       - When the relative size of delta vs pkg is larger than this, delta is
         not used. Use C(0) to turn off delta rpm processing. Local repositories
         (with file:// I(baseurl)) have delta rpms turned off by default.
+    default: 75
   description:
-    required: false
-    default: null
     description:
       - A human readable string describing the repository.
       - This parameter is only required if I(state) is set to C(present).
   enabled:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - This tells yum whether or not use this repository.
-  enablegroups:
-    required: false
-    choices: ['yes', 'no']
+    type: bool
     default: 'yes'
+  enablegroups:
     description:
       - Determines whether yum will allow the use of package groups for this
         repository.
+    type: bool
+    default: 'yes'
   exclude:
-    required: false
-    default: null
     description:
       - List of packages to exclude from updates or installs. This should be a
         space separated list. Shell globs using wildcards (eg. C(*) and C(?))
         are allowed.
       - The list can also be a regular YAML array.
   failovermethod:
-    required: false
     choices: [roundrobin, priority]
     default: roundrobin
     description:
@@ -111,33 +97,22 @@ options:
       - C(priority) starts from the first I(baseurl) listed and reads through
         them sequentially.
   file:
-    required: false
-    default: null
     description:
       - File name without the C(.repo) extension to save the repo in. Defaults
         to the value of I(name).
   gpgcakey:
-    required: false
-    default: null
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
   gpgcheck:
-    required: false
-    choices: ['yes', 'no']
-    default: null
     description:
       - Tells yum whether or not it should perform a GPG signature check on
         packages.
+    type: bool
   gpgkey:
-    required: false
-    default: null
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
       - It can also be a list of multiple URLs.
   http_caching:
-    required: false
-    choices: [all, packages, none]
-    default: all
     description:
       - Determines how upstream HTTP caches are instructed to handle any HTTP
         downloads that Yum does.
@@ -145,17 +120,15 @@ options:
       - C(packages) means that only RPM package downloads should be cached (but
          not repository metadata downloads).
       - C(none) means that no HTTP downloads should be cached.
+    choices: [all, packages, none]
+    default: all
   include:
-    required: false
-    default: null
     description:
       - Include external configuration file. Both, local path and URL is
         supported. Configuration file will be inserted at the position of the
         I(include=) line. Included files may contain further include lines.
         Yum will abort with an error if an inclusion loop is detected.
   includepkgs:
-    required: false
-    default: null
     description:
       - List of packages you want to only use from a repository. This should be
         a space separated list. Shell globs using wildcards (eg. C(*) and C(?))
@@ -163,38 +136,31 @@ options:
         here.
       - The list can also be a regular YAML array.
   ip_resolve:
-    required: false
-    choices: [4, 6, IPv4, IPv6, whatever]
-    default: whatever
     description:
       - Determines how yum resolves host names.
       - C(4) or C(IPv4) - resolve to IPv4 addresses only.
       - C(6) or C(IPv6) - resolve to IPv6 addresses only.
+    choices: [4, 6, IPv4, IPv6, whatever]
+    default: whatever
   keepalive:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - This tells yum whether or not HTTP/1.1 keepalive should be used with
         this repository. This can improve transfer speeds by using one
         connection when downloading multiple files from a repository.
+    type: bool
+    default: 'no'
   keepcache:
-    required: false
-    choices: ['0', '1']
-    default: '1'
     description:
       - Either C(1) or C(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
+    choices: ['0', '1']
+    default: '1'
   metadata_expire:
-    required: false
-    default: 21600
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
+    default: 21600
   metadata_expire_filter:
-    required: false
-    choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
-    default: 'read-only:present'
     description:
       - Filter the I(metadata_expire) time, allowing a trade of speed for
         accuracy if a command doesn't require it. Each yum command can specify
@@ -212,9 +178,9 @@ options:
         other commands which will require the latest metadata. Eg.
         I(yum check-update).
       - Note that this option does not override "yum clean expire-cache".
+    choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
+    default: 'read-only:present'
   metalink:
-    required: false
-    default: null
     description:
       - Specifies a URL to a metalink file for the repomd.xml, a list of
         mirrors for the entire repository are generated by converting the
@@ -222,96 +188,75 @@ options:
       - This, the I(baseurl) or I(mirrorlist) parameters are required if I(state) is set to
         C(present).
   mirrorlist:
-    required: false
-    default: null
     description:
       - Specifies a URL to a file containing a list of baseurls.
       - This, the I(baseurl) or I(metalink) parameters are required if I(state) is set to
         C(present).
   mirrorlist_expire:
-    required: false
-    default: 21600
     description:
       - Time (in seconds) after which the mirrorlist locally cached will
         expire.
       - Default value is 6 hours.
+    default: 21600
   name:
-    required: true
     description:
       - Unique repository ID.
       - This parameter is only required if I(state) is set to C(present) or
         C(absent).
+    required: true
   password:
-    required: false
-    default: null
     description:
       - Password to use with the username for basic authentication.
   priority:
-    required: false
-    default: 99
     description:
       - Enforce ordered protection of repositories. The value is an integer
         from 1 to 99.
       - This option only works if the YUM Priorities plugin is installed.
+    default: 99
   protect:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - Protect packages from updates from other repositories.
+    type: bool
+    default: 'no'
   proxy:
-    required: false
-    default: null
     description:
       - URL to the proxy server that yum should use. Set to C(_none_) to
         disable the global proxy setting.
   proxy_password:
-    required: false
-    default: null
     description:
       - Username to use for proxy.
   proxy_username:
-    required: false
-    default: null
     description:
       - Password for this proxy.
   repo_gpgcheck:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - This tells yum whether or not it should perform a GPG signature check
         on the repodata from this repository.
+    type: bool
+    default: 'no'
   reposdir:
-    required: false
-    default: /etc/yum.repos.d
     description:
       - Directory where the C(.repo) files will be stored.
+    default: /etc/yum.repos.d
   retries:
-    required: false
-    default: 10
     description:
       - Set the number of times any attempt to retrieve a file should retry
         before returning an error. Setting this to C(0) makes yum try forever.
+    default: 10
   s3_enabled:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - Enables support for S3 repositories.
       - This option only works if the YUM S3 plugin is installed.
-  skip_if_unavailable:
-    required: false
-    choices: ['yes', 'no']
+    type: bool
     default: 'no'
+  skip_if_unavailable:
     description:
       - If set to C(yes) yum will continue running if this repository cannot be
         contacted for any reason. This should be set carefully as all repos are
         consulted for any given command.
-  ssl_check_cert_permissions:
-    required: false
-    choices: ['yes', 'no']
+    type: bool
     default: 'no'
+  ssl_check_cert_permissions:
     description:
       - Whether yum should check the permissions on the paths for the
         certificates on the repository (both remote and local).
@@ -319,58 +264,46 @@ options:
         I(skip_if_unavailable) to be C(yes). This is most useful for non-root
         processes which use yum on repos that have client cert files which are
         readable only by root.
+    type: bool
+    default: 'no'
   sslcacert:
-    required: false
-    default: null
     description:
       - Path to the directory containing the databases of the certificate
         authorities yum should use to verify SSL certificates.
   sslclientcert:
-    required: false
-    default: null
     description:
       - Path to the SSL client certificate yum should use to connect to
         repos/remote sites.
   sslclientkey:
-    required: false
-    default: null
     description:
       - Path to the SSL client key yum should use to connect to repos/remote
         sites.
   sslverify:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - Defines whether yum should verify SSL certificates/hosts at all.
+    type: bool
+    default: 'yes'
   state:
-    required: false
-    choices: [absent, present]
-    default: present
     description:
       - State of the repo file.
+    choices: [absent, present]
+    default: present
   throttle:
-    required: false
-    default: null
     description:
       - Enable bandwidth throttling for downloads.
       - This option can be expressed as a absolute data rate in bytes/sec. An
         SI prefix (k, M or G) may be appended to the bandwidth value.
   timeout:
-    required: false
-    default: 30
     description:
       - Number of seconds to wait for a connection before timing out.
+    default: 30
   ui_repoid_vars:
-    required: false
-    default: releasever basearch
     description:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the I(baseurl)/etc. Variables are appended
         in the order listed (and found).
+    default: releasever basearch
   username:
-    required: false
-    default: null
     description:
       - Username to use for basic authentication to a repo or really any url.
 

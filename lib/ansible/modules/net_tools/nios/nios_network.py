@@ -29,7 +29,6 @@ options:
       - Specifies the network to add or remove from the system.  The value
         should use CIDR notation.
     required: true
-    default: null
     aliases:
       - name
       - cidr
@@ -45,55 +44,42 @@ options:
         the configured network instance.  This argument accepts a list
         of values (see suboptions).  When configuring suboptions at
         least one of C(name) or C(num) must be specified.
-    required: false
-    default: null
     suboptions:
       name:
         description:
           - The name of the DHCP option to configure
-        required: false
-        default: null
       num:
         description:
           - The number of the DHCP option to configure
-        required: false
       value:
         description:
           - The value of the DHCP option specified by C(name)
         required: true
-        default: null
       use_option:
         description:
           - Only applies to a subset of options (see NIOS API documentation)
-        required: false
         type: bool
-        default: true
+        default: 'yes'
       vendor_class:
         description:
           - The name of the space this DHCP option is associated to
-        required: false
         default: DHCP
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
         instance of the object.  This argument accepts a set of key / value
         pairs for configuration.
-    required: false
-    default: null
   comment:
     description:
       - Configures a text string comment to be associated with the instance
         of this object.  The provided text string will be configured on the
         object instance.
-    required: false
-    default: null
   state:
     description:
       - Configures the intended state of the instance of the object on
         the NIOS server.  When this value is set to C(present), the object
         is configured on the device and when this value is set to C(absent)
         the value is removed (if necessary) from the device.
-    required: false
     default: present
     choices:
       - present

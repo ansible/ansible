@@ -46,8 +46,6 @@ options:
     description:
       - A list of name servers to use with the device. Mutually exclusive with
         I(domain_search)
-    required: false
-    default: null
     aliases: ['name_server']
   domain_search:
     description:
