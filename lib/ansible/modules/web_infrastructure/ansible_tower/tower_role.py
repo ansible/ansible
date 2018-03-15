@@ -50,7 +50,7 @@ options:
       default: null
     job_template:
       description:
-        - The job_template the role acts on.
+        - The job template the role acts on.
       required: False
       default: null
     credential:
@@ -60,7 +60,7 @@ options:
       default: null
     organization:
       description:
-        - Organiation the role acts on.
+        - Organization the role acts on.
       required: False
       default: null
     project:

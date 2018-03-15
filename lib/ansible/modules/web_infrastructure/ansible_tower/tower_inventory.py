@@ -38,7 +38,7 @@ options:
       required: True
     variables:
       description:
-        - Inventory variables. Use '@' to get from file.
+        - Inventory variables. Use C(@) to get from file.
       required: False
       default: null
     state:

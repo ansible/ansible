@@ -80,12 +80,12 @@ options:
         - Unlock password for ssh_key. Use ASK for prompting.
     authorize:
       description:
-        - Should use authroize for net type.
+        - Should use authorize for net type.
       required: False
       default: False
     authorize_password:
       description:
-        - Password for net credentials that require authroize.
+        - Password for net credentials that require authorize.
       required: False
       default: null
     client:
