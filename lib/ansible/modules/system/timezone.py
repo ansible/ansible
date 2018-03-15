@@ -344,7 +344,7 @@ class NosystemdTimezone(Timezone):
             self.regexps['name'] = re.compile(r'^([^\s]+)', re.MULTILINE)
             self.tzline_format = '%s\n'
         else:
-            # RHEL/CentOS
+            # RHEL/CentOS/SUSE
             if self.module.get_bin_path('tzdata-update') is not None:
                 self.update_timezone = [self.module.get_bin_path('tzdata-update', required=True)]
                 self.allow_no_file['name'] = True
@@ -353,8 +353,19 @@ class NosystemdTimezone(Timezone):
             #   self.allow_no_file['name'] = False <- this is default behavior
             self.conf_files['name'] = '/etc/sysconfig/clock'
             self.conf_files['hwclock'] = '/etc/sysconfig/clock'
-            self.regexps['name'] = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
-            self.tzline_format = 'ZONE="%s"\n'
+            # The key for timezone might be `ZONE` or `TIMEZONE`
+            # (the former is used in RHEL/CentOS and the latter is used in SUSE linux).
+            # So check the content of /etc/sysconfig/clock and decide which key to use.
+            with open(self.conf_files['name'], mode='r') as f:
+                sysconfig_clock = f.read()
+            if re.search(r'^TIMEZONE\s*=', sysconfig_clock, re.MULTILINE):
+                # For SUSE
+                self.regexps['name'] = re.compile(r'^TIMEZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
+                self.tzline_format = 'TIMEZONE="%s"\n'
+            else:
+                # For RHEL/CentOS
+                self.regexps['name'] = re.compile(r'^ZONE\s*=\s*"?([^"\s]+)"?', re.MULTILINE)
+                self.tzline_format = 'ZONE="%s"\n'
 
     def _allow_ioerror(self, err, key):
         # In some cases, even if the target file does not exist,
