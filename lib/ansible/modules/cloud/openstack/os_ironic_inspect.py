@@ -28,33 +28,23 @@ options:
     mac:
       description:
         - unique mac address that is used to attempt to identify the host.
-      required: false
-      default: None
     uuid:
       description:
         - globally unique identifier (UUID) to identify the host.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to identify the host in Ironic.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the endpoint URL for the Ironic API.
           Use with "auth" and "auth_type" settings set to None.
-      required: false
-      default: None
     timeout:
       description:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
-      required: false
       default: 1200
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
 requirements: ["shade"]
 '''

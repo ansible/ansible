@@ -29,18 +29,12 @@ options:
   ip:
     description:
      - Public IP address of the Floating IP. Used to remove an IP
-    required: false
-    default: None
   region:
     description:
      - The region that the Floating IP is reserved to.
-    required: false
-    default: None
   droplet_id:
     description:
      - The Droplet that the Floating IP has been assigned to.
-    required: false
-    default: None
   oauth_token:
     description:
      - DigitalOcean OAuth token.

@@ -42,13 +42,9 @@ options:
    description:
      description:
         - Description of the recordset
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -57,7 +53,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

@@ -42,68 +42,54 @@ options:
     version:
         description:
             - The maven version coordinate
-        required: false
         default: latest
     classifier:
         description:
             - The maven classifier coordinate
-        required: false
-        default: null
     extension:
         description:
             - The maven type/extension coordinate
-        required: false
         default: jar
     repository_url:
         description:
             - The URL of the Maven Repository to download from.
             - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
-        required: false
         default: http://repo1.maven.org/maven2
     username:
         description:
             - The username to authenticate as to the Maven Repository. Use AWS secret key of the repository is hosted on S3
-        required: false
-        default: null
         aliases: [ "aws_secret_key" ]
     password:
         description:
             - The password to authenticate with to the Maven Repository. Use AWS secret access key of the repository is hosted on S3
-        required: false
-        default: null
         aliases: [ "aws_secret_access_key" ]
     dest:
         description:
             - The path where the artifact should be written to
             - If file mode or ownerships are specified and destination path already exists, they affect the downloaded file
         required: true
-        default: false
     state:
         description:
             - The desired state of the artifact
-        required: true
         default: present
         choices: [present,absent]
     timeout:
         description:
             - Specifies a timeout in seconds for the connection attempt
-        required: false
         default: 10
         version_added: "2.3"
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
         version_added: "1.9.3"
     keep_name:
         description:
             - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
             - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
-        required: false
+        type: bool
         default: 'no'
-        choices: ['yes', 'no']
         version_added: "2.4"
 extends_documentation_fragment:
     - files

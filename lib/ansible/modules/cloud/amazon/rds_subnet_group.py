@@ -24,26 +24,17 @@ options:
       - Specifies whether the subnet should be present or absent.
     required: true
     default: present
-    aliases: []
     choices: [ 'present' , 'absent' ]
   name:
     description:
       - Database subnet group identifier.
     required: true
-    default: null
-    aliases: []
   description:
     description:
       - Database subnet group description. Only set when a new group is added.
-    required: false
-    default: null
-    aliases: []
   subnets:
     description:
       - List of subnet IDs that make up the database subnet group.
-    required: false
-    default: null
-    aliases: []
 author: "Scott Anderson (@tastychutney)"
 extends_documentation_fragment:
     - aws

@@ -57,35 +57,26 @@ options:
     description:
       - This is an overloaded vlan first argument. Usage of this argument can be found is the User Guide referenced above.
     required: true
-    default: null
     choices: [access-map, dot1q, filter, <1-3999> VLAN ID 1-3999 or range]
   vlanArg2:
     description:
       - This is an overloaded vlan second argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [VLAN Access Map name,egress-only,name, flood,state, ip]
   vlanArg3:
     description:
       - This is an overloaded vlan third argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [action, match, statistics, enter VLAN id or range of vlan, ascii name for the VLAN, ipv4 or ipv6, active or suspend, fast-leave,
     last-member-query-interval, mrouter, querier, querier-timeout, query-interval, query-max-response-time, report-suppression,
     robustness-variable, startup-query-count, startup-query-interval, static-group]
   vlanArg4:
     description:
       - This is an overloaded vlan fourth argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [drop or forward or redirect, ip or mac,Interval in seconds,ethernet, port-aggregation, Querier IP address,
     Querier Timeout in seconds, Query Interval in seconds, Query Max Response Time in seconds,  Robustness Variable value,
     Number of queries sent at startup, Query Interval at startup]
   vlanArg5:
     description:
       - This is an overloaded vlan fifth argument. Usage of this argument can be found is the User Guide referenced above.
-    required: false
-    default: null
     choices: [access-list name, Slot/chassis number, Port Aggregation Number]
 
 '''

@@ -26,19 +26,17 @@ options:
     description:
       - The name of the vhost to manage
     required: true
-    default: null
     aliases: [vhost]
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   tracing:
     description:
       - Enable/disable tracing for a vhost
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     aliases: [trace]
   state:
     description:

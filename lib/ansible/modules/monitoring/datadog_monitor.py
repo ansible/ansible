@@ -36,20 +36,14 @@ options:
         choices: ['present', 'absent', 'mute', 'unmute']
     tags:
         description: ["A list of tags to associate with your monitor when creating or updating. This can help you categorize and filter monitors."]
-        required: false
-        default: None
         version_added: "2.2"
     type:
         description:
             - "The type of the monitor."
             - The 'event alert'is available starting at Ansible 2.1
-        required: false
-        default: null
         choices: ['metric alert', 'service check', 'event alert']
     query:
         description: ["The monitor query to notify on with syntax varying depending on what type of monitor you are creating."]
-        required: false
-        default: null
     name:
         description: ["The name of the alert."]
         required: true
@@ -57,16 +51,13 @@ options:
         description:
             - A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same
               '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
-        required: false
-        default: null
     silenced:
         description: ["Dictionary of scopes to timestamps or None. Each scope will be muted until the given POSIX timestamp or forever if the value is None. "]
-        required: false
         default: ""
     notify_no_data:
         description: ["A boolean indicating whether this monitor will notify when data stops reporting.."]
-        required: false
-        default: False
+        type: bool
+        default: 'no'
     no_data_timeframe:
         description:
             - The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric
@@ -75,52 +66,39 @@ options:
         default: 2x timeframe for metric, 2 minutes for service
     timeout_h:
         description: ["The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state."]
-        required: false
-        default: null
     renotify_interval:
         description:
             - The number of minutes after the last notification before a monitor will re-notify on the current status. It will only re-notify if it's
               not resolved.
-        required: false
-        default: null
     escalation_message:
         description:
             - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
               is None
-        required: false
-        default: null
     notify_audit:
         description: ["A boolean indicating whether tagged users will be notified on changes to this monitor."]
-        required: false
-        default: False
+        type: bool
+        default: 'no'
     thresholds:
         description:
             - A dictionary of thresholds by status. This option is only available for service checks and metric alerts. Because each of them can have
               multiple thresholds, we don't define them directly in the query."]
-        required: false
         default: {'ok': 1, 'critical': 1, 'warning': 1}
     locked:
         description: ["A boolean indicating whether changes to this monitor should be restricted to the creator or admins."]
-        required: false
-        default: False
+        type: bool
+        default: 'no'
         version_added: "2.2"
     require_full_window:
         description:
             - A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for
               sparse metrics, otherwise some evaluations will be skipped.
-        required: false
-        default: null
         version_added: "2.3"
     new_host_delay:
         description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
         This gives the host time to fully initialize."]
-        required: false
-        default: null
         version_added: "2.4"
     id:
         description: ["The id of the alert. If set, will be used instead of the name to locate the alert."]
-        required: false
-        default: null
         version_added: "2.3"
 '''
 

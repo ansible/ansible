@@ -32,9 +32,6 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html) for possible filters.
-    required: false
-    default: null
-
 extends_documentation_fragment:
     - aws
     - ec2

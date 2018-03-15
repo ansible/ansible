@@ -128,8 +128,6 @@ options:
     data_disks:
         description:
             - Describes list of data disks.
-        required: false
-        default: null
         version_added: "2.4"
         suboptions:
             lun:

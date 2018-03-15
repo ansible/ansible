@@ -39,7 +39,6 @@ options:
     - The APIC defaults new Subject to Filter bindings to C(none).
     choices: [ log, none ]
     aliases: [ directive ]
-    default: none
   subject:
     description:
     - The name of the Contract Subject.

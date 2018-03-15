@@ -41,7 +41,6 @@ options:
     state:
         description:
             - Whether the database should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -54,8 +53,6 @@ options:
     password:
         description:
             - The password for the new database user.
-        required: false
-        default: None
 
     login_name:
         description:

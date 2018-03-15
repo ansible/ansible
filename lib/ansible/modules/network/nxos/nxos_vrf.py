@@ -53,23 +53,18 @@ options:
   admin_state:
     description:
       - Administrative state of the VRF.
-    required: false
     default: up
     choices: ['up','down']
   vni:
     description:
       - Specify virtual network identifier. Valid values are Integer
         or keyword 'default'.
-    required: false
-    default: null
     version_added: "2.2"
   rd:
     description:
       - VPN Route Distinguisher (RD). Valid values are a string in
         one of the route-distinguisher formats (ASN2:NN, ASN4:NN, or
         IPV4:NN); the keyword 'auto', or the keyword 'default'.
-    required: false
-    default: null
     version_added: "2.2"
   interfaces:
     description:
@@ -88,19 +83,17 @@ options:
   purge:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
     version_added: 2.5
   state:
     description:
       - Manages desired state of the resource.
-    required: false
     default: present
     choices: ['present','absent']
   description:
     description:
-      - Description of the VRF.
-    required: false
-    default: null
+      - Description of the VRF or keyword 'default'.
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote

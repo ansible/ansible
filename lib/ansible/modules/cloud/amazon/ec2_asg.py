@@ -32,7 +32,6 @@ options:
   state:
     description:
       - register or deregister the instance
-    required: false
     choices: ['present', 'absent']
     default: present
   name:
@@ -42,7 +41,6 @@ options:
   load_balancers:
     description:
       - List of ELB names to use for the group. Use for classic load balancers.
-    required: false
   target_group_arns:
     description:
       - List of target group ARNs to use for the group. Use for application load balancers.
@@ -50,7 +48,6 @@ options:
   availability_zones:
     description:
       - List of availability zone names in which to create the group.  Defaults to all the availability zones in the region if vpc_zone_identifier is not set.
-    required: false
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
@@ -59,27 +56,21 @@ options:
   min_size:
     description:
       - Minimum number of instances in group, if unspecified then the current group value will be used.
-    required: false
   max_size:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
-    required: false
   placement_group:
     description:
       - Physical location of your cluster placement group created in Amazon EC2.
-    required: false
     version_added: "2.3"
-    default: None
   desired_capacity:
     description:
       - Desired number of instances in group, if unspecified then the current group value will be used.
-    required: false
   replace_all_instances:
     description:
       - In a rolling fashion, replace all instances with an old launch configuration with one from the current launch configuration.
-    required: false
     version_added: "1.8"
-    default: False
+    default: 'no'
   replace_batch_size:
     description:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
@@ -90,25 +81,18 @@ options:
     description:
       - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch
         configuration.
-    required: false
     version_added: "1.8"
-    default: None
   lc_check:
     description:
       - Check to make sure instances that are being replaced with replace_instances do not already have the current launch_config.
-    required: false
     version_added: "1.8"
-    default: True
+    default: 'yes'
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
-    required: false
-    default: None
   tags:
     description:
       - A list of tags to add to the Auto Scale Group. Optional key is 'propagate_at_launch', which defaults to true.
-    required: false
-    default: None
     version_added: "1.7"
   health_check_period:
     description:
@@ -126,7 +110,6 @@ options:
   default_cooldown:
     description:
       - The number of seconds after a scaling activity completes before another can begin.
-    required: false
     default: 300 seconds
     version_added: "2.0"
   wait_timeout:
@@ -139,22 +122,18 @@ options:
       - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all
         instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
-    default: yes
-    required: False
+    default: 'yes'
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
         - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the
           current termination policies are maintained.
-    required: false
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
   notification_topic:
     description:
       - A SNS topic ARN to send auto scaling notifications to.
-    default: None
-    required: false
     version_added: "2.2"
   notification_types:
     description:
@@ -169,10 +148,33 @@ options:
   suspend_processes:
     description:
       - A list of scaling processes to suspend.
-    required: False
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable ASG metrics collection
+    type: bool
+    default: 'no'
+    version_added: "2.5"
+  metrics_granularity:
+    description:
+      - When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
+    default: "1minute"
+    version_added: "2.5"
+  metrics_list:
+    description:
+      - List of autoscaling metrics to collect when enabling metrics_collection
+    default:
+        - 'GroupMinSize'
+        - 'GroupMaxSize'
+        - 'GroupDesiredCapacity'
+        - 'GroupInServiceInstances'
+        - 'GroupPendingInstances'
+        - 'GroupStandbyInstances'
+        - 'GroupTerminatingInstances'
+        - 'GroupTotalInstances'
+    version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2

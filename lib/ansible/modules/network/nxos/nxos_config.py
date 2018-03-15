@@ -42,8 +42,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -51,8 +49,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -61,8 +57,6 @@ options:
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
         I(parents) arguments.
-    required: false
-    default: null
     version_added: "2.2"
   replace_src:
     description:
@@ -73,8 +67,6 @@ options:
         I(src) arguments. This argument is supported on Nexus 9K device.
         Use I(nxos_file_copy) module to copy the flat file to remote device and
         then use the path with this argument.
-    required: false
-    default: null
     version_added: "2.5"
   before:
     description:
@@ -83,16 +75,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -103,7 +91,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -114,7 +101,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct. I(replace config) is supported only on Nexus 9K device.
-    required: false
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -126,9 +112,8 @@ options:
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
         will be removed in a future release.
-    required: false
-    default: false
     type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -136,9 +121,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
@@ -149,8 +133,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -160,9 +142,8 @@ options:
         the command used to collect the running-config is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save:
     description:
@@ -173,9 +154,8 @@ options:
         startup config.  This option will always cause the module to
         return changed.
       - This option is deprecated as of Ansible 2.4, use C(save_when)
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save_when:
     description:
@@ -189,7 +169,6 @@ options:
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
         startup-config
-    required: false
     default: never
     choices: ['always', 'never', 'modified']
     version_added: "2.4"
@@ -205,7 +184,6 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
-    required: false
     default: startup
     choices: ['startup', 'intended', 'running']
     version_added: "2.4"
@@ -215,7 +193,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
     version_added: "2.4"
   intended_config:
     description:
@@ -226,7 +203,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
     version_added: "2.4"
 """
 

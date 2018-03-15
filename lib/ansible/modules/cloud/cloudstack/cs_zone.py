@@ -39,73 +39,49 @@ options:
   id:
     description:
       - uuid of the existing zone.
-    default: null
-    required: false
   state:
     description:
       - State of the zone.
-    required: false
     default: 'present'
     choices: [ 'present', 'enabled', 'disabled', 'absent' ]
   domain:
     description:
       - Domain the zone is related to.
       - Zone is a public zone if not set.
-    required: false
-    default: null
   network_domain:
     description:
       - Network domain for the zone.
-    required: false
-    default: null
   network_type:
     description:
       - Network type of the zone.
-    required: false
     default: basic
     choices: [ 'basic', 'advanced' ]
   dns1:
     description:
       - First DNS for the zone.
       - Required if C(state=present)
-    required: false
-    default: null
   dns2:
     description:
       - Second DNS for the zone.
-    required: false
-    default: null
   internal_dns1:
     description:
       - First internal DNS for the zone.
       - If not set C(dns1) will be used on C(state=present).
-    required: false
-    default: null
   internal_dns2:
     description:
       - Second internal DNS for the zone.
-    required: false
-    default: null
   dns1_ipv6:
     description:
       - First DNS for IPv6 for the zone.
-    required: false
-    default: null
   dns2_ipv6:
     description:
       - Second DNS for IPv6 for the zone.
-    required: false
-    default: null
   guest_cidr_address:
     description:
       - Guest CIDR address for the zone.
-    required: false
-    default: null
   dhcp_provider:
     description:
       - DHCP provider for the Zone.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
