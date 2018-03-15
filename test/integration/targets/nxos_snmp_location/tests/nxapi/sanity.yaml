@@ -1,4 +1,0 @@
----
-- set_fact: connection="{{ nxapi }}"
-
-- import_tasks: "{{ role_path }}/tests/common/sanity.yaml"
