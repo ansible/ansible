@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: tower_job_template
 author: "Wayne Witzel III (@wwitzel3)"
-version_added: "2.3"
+version_added: "2.6"
 short_description: create, update, or destroy Ansible Tower job_template.
 description:
     - Create, update, or destroy Ansible Tower job templates. See
@@ -60,6 +60,12 @@ options:
         - Cloud_credential to use for the job_template.
       required: False
       default: null
+    vault_credential:
+      description:
+        - Vault_credential to use for the job_template.
+      required: False
+      default: null
+      version_added: 2.6
     network_credential:
       description:
         - The network_credential to use for the job_template.
@@ -200,6 +206,7 @@ def update_resources(module, p):
         'machine_credential': 'name',
         'network_credential': 'name',
         'cloud_credential': 'name',
+        'vault_credential': 'name',
     }
     for k, v in identity_map.items():
         try:
@@ -223,6 +230,7 @@ def main():
         playbook=dict(required=True),
         machine_credential=dict(),
         cloud_credential=dict(),
+        vault_credential=dict(),
         network_credential=dict(),
         forks=dict(type='int'),
         limit=dict(),
