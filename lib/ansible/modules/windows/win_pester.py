@@ -48,10 +48,11 @@ pester_version:
     description: Version of the pester module found on the remote host.
     returned: always
     type: string
-    sample: False
+    sample: 4.3.1
 pester_result:
     description: Results of the Pester tests.
     returned: success
+    type: list
     sample: False
 '''
 
