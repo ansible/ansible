@@ -7,15 +7,12 @@
 # as a reference and starting point.
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -105,6 +102,21 @@ options:
         default: 'no'
         choices: ['yes', 'no']
         version_added: "2.4"
+    verify_checksum:
+        description:
+            - If C(never), the md5 checksum will never be downloaded and verified.
+            - If C(download), the md5 checksum will be downloaded and verified only after artifact download. This is the default.
+            - If C(change), the md5 checksum will be downloaded and verified if the destination already exist,
+              to verify if they are identical. This was the behaviour before 2.6. Since it downloads the md5 before (maybe)
+              downloading the artifact, and since some repository software, when acting as a proxy/cache, return a 404 error
+              if the artifact has not been cached yet, it may fail unexpectedly.
+              If you still need it, you should consider using C(always) instead - if you deal with a checksum, it is better to
+              use it to verify integrity after download.
+            - C(always) combines C(download) and C(change).
+        required: false
+        default: 'download'
+        choices: ['never', 'download', 'change', 'always']
+        version_added: "2.6"
 extends_documentation_fragment:
     - files
 '''
@@ -176,7 +188,6 @@ def split_pre_existing_dir(dirname):
     '''
     Return the first pre-existing directory and a list of the new directories that will be created.
     '''
-
     head, tail = os.path.split(dirname)
     b_head = to_bytes(head, errors='surrogate_or_strict')
     if not os.path.exists(b_head):
@@ -191,7 +202,6 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     '''
     Walk the new directories list and make sure that permissions are as we would expect
     '''
-
     if new_directory_list:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
@@ -338,30 +348,36 @@ class MavenDownloader:
         else:
             return f(response)
 
-    def download(self, artifact, filename=None):
+    def download(self, artifact, verify_download, filename=None):
         filename = artifact.get_filename(filename)
         if not artifact.version or artifact.version == "latest":
             artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
                                 artifact.classifier, artifact.extension)
-
         url = self.find_uri_for_artifact(artifact)
-        result = True
-        if not self.verify_md5(filename, url + ".md5"):
-            response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
-            if response:
-                f = open(filename, 'wb')
+        error = None
+        response = self._request(url, "Failed to download artifact " + str(artifact), lambda r: r)
+        if response:
+            f = open(filename, 'wb')
+            self._write_chunks(response, f, report_hook=self.chunk_report)
+            f.close()
+            with open(filename, 'wb') as f:
                 self._write_chunks(response, f, report_hook=self.chunk_report)
-                f.close()
+
+            if verify_download and not self.verify_md5(filename, url + ".md5"):
+                # if verify_change was set, the previous file would be deleted
+                os.remove(filename)
+                error = "Checksum verification failed"
             else:
-                result = False
-        return result
+                error = None
+        else:
+            error = "Error downloading artifact " + str(artifact)
+        return error
 
     def chunk_report(self, bytes_so_far, chunk_size, total_size):
         percent = float(bytes_so_far) / total_size
         percent = round(percent * 100, 2)
         sys.stdout.write("Downloaded %d of %d bytes (%0.2f%%)\r" %
                          (bytes_so_far, total_size, percent))
-
         if bytes_so_far >= total_size:
             sys.stdout.write('\n')
 
@@ -401,7 +417,6 @@ class MavenDownloader:
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
             group_id=dict(default=None),
@@ -417,6 +432,7 @@ def main():
             dest=dict(type="path", default=None),
             validate_certs=dict(required=False, default=True, type='bool'),
             keep_name=dict(required=False, default=False, type='bool'),
+            verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always']),
         ),
         add_file_common_args=True
     )
@@ -445,8 +461,10 @@ def main():
     dest = module.params["dest"]
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     keep_name = module.params["keep_name"]
+    verify_checksum = module.params["verify_checksum"]
+    verify_download = verify_checksum in ['download', 'always']
+    verify_change = verify_checksum in ['change', 'always']
 
-    # downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
     downloader = MavenDownloader(module, repository_url)
 
     try:
@@ -481,15 +499,16 @@ def main():
             dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
-    if os.path.lexists(b_dest) and downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5'):
+    if os.path.lexists(b_dest) and ((not verify_change) or downloader.verify_md5(dest, downloader.find_uri_for_artifact(artifact) + '.md5')):
         prev_state = "present"
 
     if prev_state == "absent":
         try:
-            if downloader.download(artifact, b_dest):
+            download_error = downloader.download(artifact, verify_download, b_dest)
+            if download_error is None:
                 changed = True
             else:
-                module.fail_json(msg="Unable to download the artifact")
+                module.fail_json(msg="Cannot download the artifact to destination: " + download_error)
         except ValueError as e:
             module.fail_json(msg=e.args[0])
 
@@ -501,7 +520,6 @@ def main():
                          extension=extension, repository_url=repository_url, changed=changed)
     else:
         module.exit_json(state=state, dest=dest, changed=changed)
-
 
 if __name__ == '__main__':
     main()
