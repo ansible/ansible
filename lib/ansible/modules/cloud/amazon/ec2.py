@@ -144,6 +144,13 @@ options:
     required: False
     default: 1
     aliases: []
+  min_success_percentage:
+    version_added: "2.4"
+    description:
+      - minimum percentage of instances successfully launched without failing
+    required: False
+    default: 100
+    aliases: []
   monitoring:
     version_added: "1.1"
     description:
@@ -629,6 +636,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
 from ansible.module_utils.six import string_types
+import math
 
 try:
     import boto.ec2
@@ -910,8 +918,12 @@ def await_spot_requests(module, ec2, spot_requests, count):
     Returns:
         list of instance ID's created by the spot request(s)
     """
+    sleep_time = 5
     spot_wait_timeout = int(module.params.get('spot_wait_timeout'))
     wait_complete = time.time() + spot_wait_timeout
+
+    min_success_percentage = int(module.params.get('min_success_percentage'))
+    min_count = int(math.floor(count * (min_success_percentage / 100.0)))
 
     spot_req_inst_ids = dict()
     while time.time() < wait_complete:
@@ -945,13 +957,18 @@ def await_spot_requests(module, ec2, spot_requests, count):
                         # do nothing, since the user likely did this on purpose
                         pass
                     else:
+                        # TODO: verify how this reflects partial satisfaction
                         spot_msg = "Spot instance request %s was closed by AWS with the status %s and fault %s:%s"
                         module.fail_json(msg=spot_msg % (sir.id, sir.status.code, sir.fault.code, sir.fault.message))
 
-        if len(spot_req_inst_ids) < count:
-            time.sleep(5)
-        else:
+        if len(spot_req_inst_ids) == count:
             return list(spot_req_inst_ids.values())
+
+        if (time.time() + sleep_time) < wait_complete:
+            if len(spot_req_inst_ids) >= min_count:
+                return list(spot_req_inst_ids.values())
+        time.sleep(sleep_time)
+
     module.fail_json(msg="wait for spot requests timeout on %s" % time.asctime())
 
 
@@ -1039,6 +1056,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         count = override_count
     else:
         count = module.params.get('count')
+    min_success_percentage = module.params.get('min_success_percentage')
     monitoring = module.params.get('monitoring')
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
@@ -1097,6 +1115,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     # Lookup any instances that much our run id.
 
     running_instances = []
+    # TODO: verify how this counter affects flow with partial satisfaction
     count_remaining = int(count)
 
     if id is not None:
@@ -1665,6 +1684,7 @@ def main():
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=300),
             spot_wait_timeout=dict(default=600),
+            min_success_percentage=dict(type='int', default=100),
             placement_group=dict(),
             user_data=dict(),
             instance_tags=dict(type='dict'),
@@ -1693,6 +1713,7 @@ def main():
             ['exact_count', 'count'],
             ['exact_count', 'state'],
             ['exact_count', 'instance_ids'],
+            ['exact_count', 'min_success_percentage'],
             ['network_interfaces', 'assign_public_ip'],
             ['network_interfaces', 'group'],
             ['network_interfaces', 'group_id'],
