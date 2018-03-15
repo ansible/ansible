@@ -1,0 +1,22 @@
+- name: Create a Group
+  tower_group:
+    name: Some Group
+    inventory: Demo Inventory
+    state: present
+    source: ec2
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Group
+  tower_group:
+    name: Some Group
+    inventory: Demo Inventory
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
