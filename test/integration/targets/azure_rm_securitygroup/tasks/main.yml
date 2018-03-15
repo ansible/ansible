@@ -94,6 +94,7 @@
           testing: testing
           delete: never
           baz: bar
+      append_tags: false
   register: output
 
 - assert:
