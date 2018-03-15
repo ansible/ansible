@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: tower_job_template
 author: "Wayne Witzel III (@wwitzel3)"
-version_added: "2.3"
+version_added: "2.6"
 short_description: create, update, or destroy Ansible Tower job_template.
 description:
     - Create, update, or destroy Ansible Tower job templates. See
@@ -65,6 +65,7 @@ options:
         - Vault_credential to use for the job_template.
       required: False
       default: null
+      version_added: 2.6
     network_credential:
       description:
         - The network_credential to use for the job_template.
