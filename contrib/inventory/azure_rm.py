@@ -339,7 +339,8 @@ class AzureRM(object):
              self.credentials.get('password') is not None and \
              self.credentials.get('client_id') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(self._authority,
+            self.azure_credentials = self.acquire_token_with_username_password(
+                                                      self._authority,
                                                       self._resource,
                                                       self.credeitnals['ad_user'],
                                                       self.credentials['password'],
@@ -431,7 +432,6 @@ class AzureRM(object):
         return None
 
     def acquire_token_with_username_password(self, authority, resource, username, password, client_id):
-        # not adfs, normal username password authentication
         context = AuthenticationContext(authority)
         token_response = context.acquire_token_with_username_password(resource, username, password, client_id)
 
