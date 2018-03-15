@@ -1,0 +1,20 @@
+- name: Create a Project
+  tower_project:
+    name: my-project
+    organization: Default
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Project
+  tower_project:
+    name: my-project
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

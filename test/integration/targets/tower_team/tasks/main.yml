@@ -15,9 +15,19 @@
   tower_team:
     name: Test Team
     organization: Default
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Tower team
   tower_team:
     name: Test Team
     organization: Default
     state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

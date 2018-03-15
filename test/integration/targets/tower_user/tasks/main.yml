@@ -6,12 +6,22 @@
     password: secret
     email: joe@example.org
     state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a User
   tower_user:
     username: joe
     email: joe@example.org
     state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create an Auditor
   tower_user:
@@ -22,12 +32,22 @@
     email: joe@example.org
     state: present
     auditor: true
+  register: result
 
-- name: Delete a Auditor
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an Auditor
   tower_user:
     username: joe
     email: joe@example.org
     state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a Superuser
   tower_user:
@@ -38,9 +58,19 @@
     email: joe@example.org
     state: present
     superuser: true
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Superuser
   tower_user:
     username: joe
     email: joe@example.org
     state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

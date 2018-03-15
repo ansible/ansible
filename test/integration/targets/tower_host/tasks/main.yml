@@ -1,0 +1,21 @@
+- name: Create a Host
+  tower_host:
+    name: "some-host"
+    inventory: "Demo Inventory"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a Host
+  tower_host:
+    name: "some-host"
+    inventory: "Demo Inventory"
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"

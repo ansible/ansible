@@ -12,6 +12,11 @@
     user: admin
     state: present
     kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a User-specific credential
   tower_credential:
@@ -20,6 +25,11 @@
     user: admin
     state: absent
     kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid SSH credential
   tower_credential:
@@ -35,6 +45,11 @@
     become_password: supersecret
     ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
     ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create an invalid SSH credential (passphrase required)
   tower_credential:
@@ -49,7 +64,7 @@
 
 - assert:
     that:
-      - "result.failed == true"
+      - "result is failed"
       - "'must be set when SSH key is encrypted' in result.module_stderr"
 
 - name: Create an invalid SSH credential (ssh_key_data file is missing)
@@ -65,7 +80,7 @@
 
 - assert:
     that:
-      - "result.failed == true"
+      - "result is failed"
       - "'file not found' in result.msg"
 
 - name: Create an invalid SSH credential (ssh_key_data is a directory)
@@ -81,7 +96,7 @@
 
 - assert:
     that:
-      - "result.failed == true"
+      - "result is failed"
       - "'attempted to read contents of directory' in result.msg"
 
 - name: Create an invalid SSH credential (Organization not found)
@@ -96,7 +111,7 @@
 
 - assert:
     that:
-      - "result.failed == true"
+      - "result is failed"
       - "'The requested object could not be found' in result.module_stderr"
 
 - name: Delete an SSH credential
@@ -105,6 +120,11 @@
     organization: Default
     state: absent
     kind: ssh
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Vault credential
   tower_credential:
@@ -114,6 +134,11 @@
     kind: vault
     description: An example Vault credential
     vault_password: secret-vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Vault credential w/ kind=ssh (deprecated)
   tower_credential:
@@ -123,6 +148,11 @@
     kind: ssh
     description: An example Vault credential
     vault_password: secret-vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Vault credential
   tower_credential:
@@ -130,6 +160,11 @@
     organization: Default
     state: absent
     kind: vault
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Network credential
   tower_credential:
@@ -141,6 +176,11 @@
     password: secret
     authorize: true
     authorize_password: authorize-me
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Network credential
   tower_credential:
@@ -148,6 +188,11 @@
     organization: Default
     state: absent
     kind: net
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid SCM credential
   tower_credential:
@@ -159,6 +204,11 @@
     password: secret
     ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
     ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an SCM credential
   tower_credential:
@@ -166,6 +216,11 @@
     organization: Default
     state: absent
     kind: scm
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid AWS credential
   tower_credential:
@@ -176,6 +231,11 @@
     username: joe
     password: secret
     security_token: aws-token
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an AWS credential
   tower_credential:
@@ -183,6 +243,11 @@
     organization: Default
     state: absent
     kind: aws
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid VMWare credential
   tower_credential:
@@ -193,6 +258,11 @@
     host: https://example.org
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an VMWare credential
   tower_credential:
@@ -200,6 +270,11 @@
     organization: Default
     state: absent
     kind: vmware
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Satellite6 credential
   tower_credential:
@@ -210,6 +285,11 @@
     host: https://example.org
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Satellite6 credential
   tower_credential:
@@ -217,6 +297,11 @@
     organization: Default
     state: absent
     kind: satellite6
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid CloudForms credential
   tower_credential:
@@ -227,6 +312,11 @@
     host: https://example.org
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a CloudForms credential
   tower_credential:
@@ -234,6 +324,11 @@
     organization: Default
     state: absent
     kind: cloudforms
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid GCE credential
   tower_credential:
@@ -244,6 +339,11 @@
     username: joe
     project: ABC123
     ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a GCE credential
   tower_credential:
@@ -251,6 +351,11 @@
     organization: Default
     state: absent
     kind: gce
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid AzureRM credential
   tower_credential:
@@ -261,6 +366,11 @@
     username: joe
     password: secret
     subscription: some-subscription
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid AzureRM credential with a tenant
   tower_credential:
@@ -272,6 +382,11 @@
     secret: some-secret
     tenant: some-tenant
     subscription: some-subscription
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an AzureRM credential
   tower_credential:
@@ -279,6 +394,11 @@
     organization: Default
     state: absent
     kind: azure_rm
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid OpenStack credential
   tower_credential:
@@ -291,6 +411,11 @@
     password: secret
     project: tenant123
     domain: some-domain
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a OpenStack credential
   tower_credential:
@@ -298,6 +423,11 @@
     organization: Default
     state: absent
     kind: openstack
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid RHV credential
   tower_credential:
@@ -308,6 +438,11 @@
     host: https://example.org
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an RHV credential
   tower_credential:
@@ -315,6 +450,11 @@
     organization: Default
     state: absent
     kind: rhv
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Insights credential
   tower_credential:
@@ -324,6 +464,11 @@
     kind: insights
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete an Insights credential
   tower_credential:
@@ -331,6 +476,11 @@
     organization: Default
     state: absent
     kind: insights
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Create a valid Tower-to-Tower credential
   tower_credential:
@@ -341,6 +491,11 @@
     host: https://tower.example.org
     username: joe
     password: secret
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
 
 - name: Delete a Tower-to-Tower credential
   tower_credential:
@@ -348,3 +503,8 @@
     organization: Default
     state: absent
     kind: tower
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
