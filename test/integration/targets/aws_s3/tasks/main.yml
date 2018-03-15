@@ -2,7 +2,7 @@
 # tasks file for test_s3
 # ============================================================
 - name: generate random name for the bucket name
-  command: bash -c 'echo ansible_test_$RANDOM'
+  command: bash -c 'echo ansible-test-$RANDOM'
   register: bucket
 # ============================================================
 # ============================================================
