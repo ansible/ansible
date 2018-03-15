@@ -297,7 +297,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                                    ' '.join(missing_parameters))
 
         # Sanitize data dictionary
-        for k, v in data.items():
+        for k, v in data.deepcopy().items():
 
             # Remove items not relevant to the create server call
             if k in ('api_token', 'api_timeout', 'uuid', 'state'):
