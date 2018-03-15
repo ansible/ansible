@@ -127,7 +127,7 @@ EXAMPLES = '''
     path: /opt/data/moosefs
     src: mfsmount
     fstype: fuse
-    opts: "mfsmaster=moosefs001.github.org,mfssubfolder=/dfs,_netdev"
+    opts: "mfsmaster=moosefs001.example.com,mfssubfolder=/dfs,_netdev"
     state: mounted
 '''
 
