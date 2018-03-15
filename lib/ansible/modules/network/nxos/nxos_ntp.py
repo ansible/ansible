@@ -25,47 +25,32 @@ options:
     server:
         description:
             - Network address of NTP server.
-        required: false
-        default: null
     peer:
         description:
             - Network address of NTP peer.
-        required: false
-        default: null
     key_id:
         description:
             - Authentication key identifier to use with
               given NTP server or peer.
-        required: false
-        default: null
     prefer:
         description:
             - Makes given NTP server or peer the preferred
               NTP server or peer for the device.
-        required: false
-        default: null
         choices: ['enabled', 'disabled']
     vrf_name:
         description:
             - Makes the device communicate with the given
               NTP server or peer over a specific VRF.
-        required: false
-        default: null
     source_addr:
         description:
             - Local source address from which NTP messages are sent.
-        required: false
-        default: null
     source_int:
         description:
             - Local source interface from which NTP messages are sent.
               Must be fully qualified interface name.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

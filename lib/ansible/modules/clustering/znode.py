@@ -30,28 +30,21 @@ options:
     value:
         description:
             - The value assigned to the znode.
-        default: None
-        required: false
     op:
         description:
             - An operation to perform. Mutually exclusive with state.
-        default: None
-        required: false
     state:
         description:
             - The state to enforce. Mutually exclusive with op.
-        default: None
-        required: false
     timeout:
         description:
             - The amount of time to wait for a node to appear.
         default: 300
-        required: false
     recursive:
         description:
             - Recursively delete node and all its children.
-        default: False
-        required: false
+        type: bool
+        default: 'no'
         version_added: "2.1"
 requirements:
     - kazoo >= 2.1

@@ -29,13 +29,9 @@ options:
    description:
      description:
         - Group description
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the group in if the cloud supports domains.
-     required: false
-     default: None
      version_added: "2.3"
    state:
      description:
@@ -45,7 +41,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

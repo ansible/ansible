@@ -40,62 +40,46 @@ options:
     description:
       - Account the user will be created under.
       - Required on C(state=present).
-    required: false
-    default: null
   password:
     description:
       - Password of the user to be created.
       - Required on C(state=present).
       - Only considered on creation and will not be updated if user exists.
-    required: false
-    default: null
   first_name:
     description:
       - First name of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   last_name:
     description:
       - Last name of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   email:
     description:
       - Email of the user.
       - Required on C(state=present).
-    required: false
-    default: null
   timezone:
     description:
       - Timezone of the user.
-    required: false
-    default: null
   keys_registered:
     description:
       - If API keys of the user should be generated.
       - "Note: Keys can not be removed by the API again."
-    required: false
-    default: null
     version_added: "2.4"
   domain:
     description:
       - Domain the user is related to.
-    required: false
     default: 'ROOT'
   state:
     description:
       - State of the user.
       - C(unlocked) is an alias for C(enabled).
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

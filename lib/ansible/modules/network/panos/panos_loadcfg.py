@@ -41,18 +41,15 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     file:
         description:
             - configuration file to load
-        required: false
-        default: None
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

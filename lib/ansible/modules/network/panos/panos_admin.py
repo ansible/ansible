@@ -47,12 +47,10 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     admin_username:
         description:
             - username for admin user
-        required: false
         default: "admin"
     admin_password:
         description:
@@ -61,13 +59,11 @@ options:
     role:
         description:
             - role for admin user
-        required: false
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

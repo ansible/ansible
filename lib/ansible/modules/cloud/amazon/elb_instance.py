@@ -36,34 +36,27 @@ options:
   ec2_elbs:
     description:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
-    required: false
-    default: None
   enable_availability_zone:
     description:
       - Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already
         been enabled. If set to no, the task will fail if the availability zone is not enabled on the ELB.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait:
     description:
       - Wait for instance registration or deregistration to complete successfully before returning.
-    required: false
-    default: yes
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'yes'
     version_added: "1.5"
   wait_timeout:
     description:
       - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs.
         If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
-    required: false
     default: 0
     version_added: "1.6"
 extends_documentation_fragment:

@@ -33,9 +33,7 @@ options:
   hosted_zone_id:
     description:
       - The Hosted Zone ID of the DNS zone to modify
-    required: false
     version_added: "2.0"
-    default: null
   record:
     description:
       - The full DNS record to create or delete
@@ -43,7 +41,6 @@ options:
   ttl:
     description:
       - The TTL to give the new record
-    required: false
     default: 3600 (one hour)
   type:
     description:
@@ -53,53 +50,43 @@ options:
   alias:
     description:
       - Indicates if this is an alias record.
-    required: false
     version_added: "1.9"
-    default: False
-    choices: [ 'True', 'False' ]
+    type: bool
+    default: 'no'
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
-    required: false
     version_added: "1.9"
-    default: null
   alias_evaluate_target_health:
     description:
       - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
-    required: false
+    type: bool
+    default: no
     version_added: "2.1"
-    default: false
   value:
     description:
       - The new value when creating a DNS record.  YAML lists or multiple comma-spaced values are allowed for non-alias records.
       - When deleting a record all values for the record must be specified or Route53 will not delete it.
-    required: false
-    default: null
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
-    required: false
-    default: null
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
         domain names, the default of 500 seconds may be too long.
-    required: false
     default: 500
   private_zone:
     description:
-      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones.
+      - If set to C(yes), the private zone matching the requested name within the domain will be used if there are both public and private zones.
         The default is to use the public zone.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "1.9"
   identifier:
     description:
       - Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier
         that differentiates among multiple resource record sets that have the
         same combination of DNS name and type.
-    required: false
-    default: null
     version_added: "2.0"
   weight:
     description:
@@ -107,8 +94,6 @@ options:
         have the same combination of DNS name and type, a value that
         determines what portion of traffic for the current resource record set
         is routed to the associated location.
-    required: false
-    default: null
     version_added: "2.0"
   region:
     description:
@@ -116,39 +101,30 @@ options:
         that have the same combination of DNS name and type, a value that
         determines which region this should be associated with for the
         latency-based routing
-    required: false
-    default: null
     version_added: "2.0"
   health_check:
     description:
       - Health check to associate with this record
-    required: false
-    default: null
     version_added: "2.0"
   failover:
     description:
       - Failover resource record sets only. Whether this is the primary or
         secondary resource record set. Allowed values are PRIMARY and SECONDARY
-    required: false
-    default: null
     version_added: "2.0"
   vpc_id:
     description:
       - "When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC."
       - This allows you to have multiple private hosted zones, all with the same name, attached to different VPCs.
-    required: false
-    default: null
     version_added: "2.0"
   wait:
     description:
       - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.1"
   wait_timeout:
     description:
       - How long to wait for the changes to be replicated, in seconds.
-    required: false
     default: 300
     version_added: "2.1"
 author:

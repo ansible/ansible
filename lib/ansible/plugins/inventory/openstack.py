@@ -22,8 +22,8 @@ DOCUMENTATION = '''
     options:
         show_all:
             description: toggles showing all vms vs only those with a working IP
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         inventory_hostname:
             description: |
                 What to register as the inventory hostname.
@@ -46,16 +46,16 @@ DOCUMENTATION = '''
                 neutron and can be expensive for people with many hosts.
                 (Note, the default value of this is opposite from the default
                 old openstack.py inventory script's option expand_hostvars)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         private:
             description: |
                 Use the private interface of each server, if it has one, as
                 the host's IP in the inventory. This can be useful if you are
                 running ansible inside a server in the cloud and would rather
                 communicate to your servers over the private network.
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         only_clouds:
             description: |
                 List of clouds from clouds.yaml to use, instead of using
@@ -70,8 +70,8 @@ DOCUMENTATION = '''
                 it can from as many clouds as it can contact. (Note, the
                 default value of this is opposite from the old openstack.py
                 inventory script's option fail_on_errors)
-            type: boolean
-            default: False
+            type: bool
+            default: 'no'
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -80,7 +80,6 @@ DOCUMENTATION = '''
                 /etc/ansible/openstack.yml to the regular locations documented
                 at https://docs.openstack.org/os-client-config/latest/user/configuration.html#config-files
             type: string
-            default: None
         compose:
             description: Create vars from jinja2 expressions.
             type: dictionary

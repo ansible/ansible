@@ -33,23 +33,15 @@ options:
     user:
       description:
         - User that should own this credential.
-      required: False
-      default: null
     team:
       description:
         - Team that should own this credential.
-      required: False
-      default: null
     project:
       description:
         - Project that should for this credential.
-      required: False
-      default: null
     organization:
       description:
         - Organization that should own the credential.
-      required: False
-      default: null
     kind:
       description:
         - Type of credential being added.
@@ -58,86 +50,59 @@ options:
     host:
       description:
         - Host for this credential.
-      required: False
-      default: null
     username:
       description:
         - Username for this credential. access_key for AWS.
-      required: False
-      default: null
     password:
       description:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
-      required: False
-      default: null
     ssh_key_data:
       description:
         - Path to SSH private key.
-      required: False
-      default: null
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
     authorize:
       description:
         - Should use authorize for net type.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     authorize_password:
       description:
         - Password for net credentials that require authorize.
-      required: False
-      default: null
     client:
       description:
         - Client or application ID for azure_rm type.
-      required: False
-      default: null
     secret:
       description:
         - Secret token for azure_rm type.
-      required: False
-      default: null
     subscription:
       description:
         - Subscription ID for azure_rm type.
-      required: False
-      default: null
     tenant:
       description:
         - Tenant ID for azure_rm type.
-      required: False
-      default: null
     domain:
       description:
         - Domain for openstack type.
-      required: False
-      default: null
     become_method:
       description:
         - Become method to Use for privledge escalation.
-      required: False
       choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
-      default: "None"
     become_username:
       description:
         - Become username. Use ASK for prompting.
-      required: False
-      default: null
     become_password:
       description:
         - Become password. Use ASK for prompting.
-      required: False
-      default: null
     vault_password:
       description:
         - Valut password. Use ASK for prompting.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 

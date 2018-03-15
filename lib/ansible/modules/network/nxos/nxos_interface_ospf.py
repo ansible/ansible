@@ -55,67 +55,47 @@ options:
   cost:
     description:
       - The cost associated with this cisco_interface_ospf instance.
-    required: false
-    default: null
   hello_interval:
     description:
       - Time between sending successive hello packets.
         Valid values are an integer or the keyword 'default'.
-    required: false
-    default: null
   dead_interval:
     description:
       - Time interval an ospf neighbor waits for a hello
         packet before tearing down adjacencies. Valid values are an
         integer or the keyword 'default'.
-    required: false
-    default: null
   passive_interface:
     description:
       - Setting to true will prevent this interface from receiving
-        HELLO packets. Valid values are 'true' and 'false'.
-    required: false
-    choices: ['true','false']
-    default: null
+        HELLO packets.
+    type: bool
   message_digest:
     description:
       - Enables or disables the usage of message digest authentication.
-        Valid values are 'true' and 'false'.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   message_digest_key_id:
     description:
       - Md5 authentication key-id associated with the ospf instance.
         If this is present, message_digest_encryption_type,
         message_digest_algorithm_type and message_digest_password are
         mandatory. Valid value is an integer and 'default'.
-    required: false
-    default: null
   message_digest_algorithm_type:
     description:
       - Algorithm used for authentication among neighboring routers
         within an area. Valid values are 'md5' and 'default'.
-    required: false
     choices: ['md5', 'default']
-    default: null
   message_digest_encryption_type:
     description:
       - Specifies the scheme used for encrypting message_digest_password.
         Valid values are '3des' or 'cisco_type_7' encryption or 'default'.
-    required: false
     choices: ['cisco_type_7','3des', 'default']
-    default: null
   message_digest_password:
     description:
       - Specifies the message_digest password. Valid value is a string.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''

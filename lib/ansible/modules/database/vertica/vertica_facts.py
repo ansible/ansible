@@ -24,28 +24,21 @@ options:
   cluster:
     description:
       - Name of the cluster running the schema.
-    required: false
     default: localhost
   port:
     description:
       Database port to connect to.
-    required: false
     default: 5433
   db:
     description:
       - Name of the database running the schema.
-    required: false
-    default: null
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.

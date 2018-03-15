@@ -18,10 +18,8 @@ description:
 options:
   service:
     description: 'The service to filter ranges by. Options: EC2, S3, CLOUDFRONT, CODEbUILD, ROUTE53, ROUTE53_HEALTHCHECKS'
-    default: null
   region:
     description: 'The AWS region to narrow the ranges to. Examples: us-east-1, eu-west-2, ap-southeast-1'
-    default: null
 """
 
 EXAMPLES = """

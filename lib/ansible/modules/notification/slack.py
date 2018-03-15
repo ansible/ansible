@@ -30,8 +30,6 @@ options:
       - Slack (sub)domain for your environment without protocol. (i.e.
         C(example.slack.com)) In 1.8 and beyond, this is deprecated and may
         be ignored.  See token documentation for information.
-    required: false
-    default: None
   token:
     description:
       - Slack integration token.  This authenticates you to the slack service.
@@ -54,32 +52,23 @@ options:
       - Message to send. Note that the module does not handle escaping characters.
         Plain-text angle brackets and ampersands should be converted to HTML entities (e.g. & to &amp;) before sending.
         See Slack's documentation (U(https://api.slack.com/docs/message-formatting)) for more.
-    required: false
-    default: None
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
-    required: false
-    default: None
   username:
     description:
       - This is the sender of the message.
-    required: false
     default: "Ansible"
   icon_url:
     description:
       - Url for the message sender's icon (default C(https://www.ansible.com/favicon.ico))
-    required: false
   icon_emoji:
     description:
       - Emoji for the message sender. See Slack documentation for options.
         (if I(icon_emoji) is set, I(icon_url) will not be used)
-    required: false
-    default: None
   link_names:
     description:
       - Automatically create links for channels and usernames in I(msg).
-    required: false
     default: 1
     choices:
       - 1
@@ -87,8 +76,6 @@ options:
   parse:
     description:
       - Setting for the message parser at Slack
-    required: false
-    default: None
     choices:
       - 'full'
       - 'none'
@@ -96,16 +83,12 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices:
-      - 'yes'
-      - 'no'
   color:
     version_added: "2.0"
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
-    required: false
     default: 'normal'
     choices:
       - 'normal'
@@ -116,8 +99,6 @@ options:
     description:
       - Define a list of attachments. This list mirrors the Slack JSON API.
       - For more information, see also in the (U(https://api.slack.com/docs/attachments)).
-    required: false
-    default: None
 """
 
 EXAMPLES = """

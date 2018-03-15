@@ -28,7 +28,6 @@ options:
       description:
         - Indicate desired state of the resource
       choices: ['present', 'absent']
-      required: false
       default: present
     name:
       description:
@@ -37,38 +36,28 @@ options:
     tag:
       description:
         - Tag for the stack that should be created, name could be char and digit, no space
-      required: false
-      default: None
       version_added: "2.5"
     template:
       description:
         - Path of the template file to use for the stack creation
-      required: false
-      default: None
     environment:
       description:
         - List of environment files that should be used for the stack creation
-      required: false
-      default: None
     parameters:
       description:
         - Dictionary of parameters for the stack creation
-      required: false
-      default: None
     rollback:
       description:
         - Rollback stack creation
-      required: false
-      default: false
+      type: bool
+      default: 'yes'
     timeout:
       description:
         - Maximum number of seconds to wait for the stack creation
-      required: false
       default: 3600
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 requirements:
     - "python >= 2.6"
     - "shade"

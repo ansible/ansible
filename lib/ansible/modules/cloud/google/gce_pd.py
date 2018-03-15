@@ -26,105 +26,70 @@ options:
   detach_only:
     description:
       - do not destroy the disk, merely detach it from an instance
-    required: false
-    default: "no"
-    choices: ["yes", "no"]
-    aliases: []
+    type: bool
+    default: 'no'
   instance_name:
     description:
       - instance name if you wish to attach or detach the disk
-    required: false
-    default: null
-    aliases: []
   mode:
     description:
       - GCE mount mode of disk, READ_ONLY (default) or READ_WRITE
-    required: false
     default: "READ_ONLY"
     choices: ["READ_WRITE", "READ_ONLY"]
-    aliases: []
   name:
     description:
       - name of the disk
     required: true
-    default: null
-    aliases: []
   size_gb:
     description:
       - whole integer size of disk (in GB) to create, default is 10 GB
-    required: false
     default: 10
-    aliases: []
   image:
     description:
       - the source image to use for the disk
-    required: false
-    default: null
-    aliases: []
     version_added: "1.7"
   snapshot:
     description:
       - the source snapshot to use for the disk
-    required: false
-    default: null
-    aliases: []
     version_added: "1.7"
   state:
     description:
       - desired state of the persistent disk
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
-    aliases: []
   zone:
     description:
       - zone in which to create the disk
-    required: false
     default: "us-central1-b"
-    aliases: []
   service_account_email:
     version_added: "1.6"
     description:
       - service account email
-    required: false
-    default: null
-    aliases: []
   pem_file:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
-    aliases: []
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    required: false
-    default: null
-    aliases: []
   project_id:
     version_added: "1.6"
     description:
       - your GCE project ID
-    required: false
-    default: null
-    aliases: []
   disk_type:
     version_added: "1.9"
     description:
       - type of disk provisioned
-    required: false
     default: "pd-standard"
     choices: ["pd-standard", "pd-ssd"]
-    aliases: []
   delete_on_termination:
     version_added: "2.3"
     description:
-      - If yes, deletes the volume when instance is terminated
-    default: no
-    choices: ["yes", "no"]
+      - If C(yes), deletes the volume when instance is terminated
+    type: bool
+    default: 'no'
 
 requirements:
     - "python >= 2.6"

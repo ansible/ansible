@@ -83,8 +83,6 @@ options:
       - Number of seconds to sleep between checks, before 2.3 this was hardcoded to 1 second.
   msg:
     version_added: "2.4"
-    required: false
-    default: null
     description:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:

@@ -50,7 +50,6 @@ options:
       - The port number to use when making API calls to the CVP node. This
         will default to the default port for the specified protocol. Port 80
         for http and port 443 for https.
-    default: None
   protocol:
     description:
       - The protocol to use when making API calls to CVP. CVP defaults to https
@@ -89,7 +88,6 @@ options:
         specified does not support this the module will exit out with no
         changes. If a template is specified that requires a port vlan but no
         port vlan is specified the module will exit out with no changes.
-    default: None
   template:
     description:
       - A path to a Jinja formatted template file that contains the
@@ -116,9 +114,8 @@ options:
         change, execute it and wait for the task to complete. If the option
         is False then the task will remain in the Pending state in CVP for
         a network administrator to review and execute.
-    default: False
     type: bool
-notes:
+    default: 'no'
 requirements: [Jinja2, cvprac >= 0.7.0]
 '''
 

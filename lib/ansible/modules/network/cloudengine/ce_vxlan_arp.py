@@ -32,67 +32,46 @@ options:
     evn_bgp:
         description:
             - Enables EVN BGP.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     evn_source_ip:
         description:
             - Specifies the source address of an EVN BGP peer.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     evn_peer_ip:
         description:
             - Specifies the IP address of an EVN BGP peer.
               The value is in dotted decimal notation.
-        required: false
-        default: null
     evn_server:
         description:
             - Configures the local device as the router reflector (RR) on the EVN network.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     evn_reflect_client:
         description:
             - Configures the local device as the route reflector (RR) and its peer as the client.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     vbdif_name:
         description:
             -  Full name of VBDIF interface, i.e. Vbdif100.
-        required: false
-        default: null
     arp_collect_host:
         description:
             - Enables EVN BGP or BGP EVPN to collect host information.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     host_collect_protocol:
         description:
             - Enables EVN BGP or BGP EVPN to advertise host information.
-        required: false
         choices: ['bgp','none']
-        default: null
     bridge_domain_id:
         description:
             - Specifies a BD(bridge domain) ID.
               The value is an integer ranging from 1 to 16777215.
-        required: false
-        default: null
     arp_suppress:
         description:
             - Enables ARP broadcast suppression in a BD.
-        required: false
         choices: ['enable', 'disable']
-        default: null
     state:
         description:
             - Determines whether the config should be present or not
               on the device.
-        required: false
         default: present
         choices: ['present', 'absent']
 """

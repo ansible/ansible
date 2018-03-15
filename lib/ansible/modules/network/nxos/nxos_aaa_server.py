@@ -52,38 +52,27 @@ options:
     global_key:
         description:
             - Global AAA shared secret.
-        required: false
-        default: null
     encrypt_type:
         description:
             - The state of encryption applied to the entered global key.
               O clear text, 7 encrypted. Type-6 encryption is not supported.
-        required: false
-        default: null
         choices: ['0', '7']
     deadtime:
         description:
             - Duration for which a non-reachable AAA server is skipped,
               in minutes. Range is 1-1440. Device default is 0.
-        required: false
-        default: null
     server_timeout:
         description:
             - Global AAA server timeout period, in seconds. Range is 1-60.
               Device default is 5.
-        required: false
-        default: null
     directed_request:
         description:
             - Enables direct authentication requests to AAA server.
               Device default is disabled.
-        required: false
-        default: null
         choices: ['enabled', 'disabled']
     state:
         description:
             - Manage the state of the resource.
-        required: true
         default: present
         choices: ['present','default']
 '''

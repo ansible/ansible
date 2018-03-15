@@ -49,7 +49,6 @@ options:
     username:
         description:
             - Username credentials to use for authentication.
-        required: false
         default: "admin"
     password:
         description:
@@ -61,53 +60,33 @@ options:
     application:
         description:
             - Name of the application or application group to be queried.
-        required: false
-        default: None
     source_zone:
         description:
             - Name of the source security zone to be queried.
-        required: false
-        default: None
     source_ip:
         description:
             - The source IP address to be queried.
-        required: false
-        default: None
     source_port:
         description:
             - The source port to be queried.
-        required: false
-        default: None
     destination_zone:
         description:
             - Name of the destination security zone to be queried.
-        required: false
-        default: None
     destination_ip:
         description:
             - The destination IP address to be queried.
-        required: false
-        default: None
     destination_port:
         description:
             - The destination port to be queried.
-        required: false
-        default: None
     protocol:
         description:
             - The protocol used to be queried.  Must be either I(tcp) or I(udp).
-        required: false
-        default: None
     tag_name:
         description:
             - Name of the rule tag to be queried.
-        required: false
-        default: None
     devicegroup:
         description:
             - The Panorama device group in which to conduct the query.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''

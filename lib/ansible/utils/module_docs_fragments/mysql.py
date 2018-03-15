@@ -25,55 +25,39 @@ options:
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database.
-    required: false
     default: localhost
   login_port:
     description:
       - Port of the MySQL server. Requires I(login_host) be defined as other then localhost if login_port is used.
-    required: false
     default: 3306
   login_unix_socket:
     description:
       - The path to a Unix domain socket for local connections.
-    required: false
-    default: null
   connect_timeout:
     description:
       - The connection timeout when connecting to the MySQL server.
-    required: false
     default: 30
     version_added: "2.1"
   config_file:
     description:
       - Specify a config file from which user and password are to be read.
-    required: false
     default: '~/.my.cnf'
     version_added: "2.0"
   ssl_ca:
-    required: false
-    default: null
     version_added: "2.0"
     description:
       - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
   ssl_cert:
-    required: false
-    default: null
     version_added: "2.0"
     description:
       - The path to a client public key certificate.
   ssl_key:
-    required: false
-    default: null
     version_added: "2.0"
     description:
       - The path to the client private key.

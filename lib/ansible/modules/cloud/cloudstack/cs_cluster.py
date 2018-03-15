@@ -40,102 +40,67 @@ options:
     description:
       - Name of the zone in which the cluster belongs to.
       - If not set, default zone is used.
-    required: false
-    default: null
   pod:
     description:
       - Name of the pod in which the cluster belongs to.
-    required: false
-    default: null
   cluster_type:
     description:
       - Type of the cluster.
       - Required if C(state=present)
-    required: false
-    default: null
     choices: [ 'CloudManaged', 'ExternalManaged' ]
   hypervisor:
     description:
       - Name the hypervisor to be used.
       - Required if C(state=present).
-    required: false
-    default: none
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
   url:
     description:
       - URL for the cluster
-    required: false
-    default: null
   username:
     description:
       - Username for the cluster.
-    required: false
-    default: null
   password:
     description:
       - Password for the cluster.
-    required: false
-    default: null
   guest_vswitch_name:
     description:
       - Name of virtual switch used for guest traffic in the cluster.
       - This would override zone wide traffic label setting.
-    required: false
-    default: null
   guest_vswitch_type:
     description:
       - Type of virtual switch used for guest traffic in the cluster.
       - Allowed values are, vmwaresvs (for VMware standard vSwitch) and vmwaredvs (for VMware distributed vSwitch)
-    required: false
-    default: null
     choices: [ 'vmwaresvs', 'vmwaredvs' ]
   public_vswitch_name:
     description:
       - Name of virtual switch used for public traffic in the cluster.
       - This would override zone wide traffic label setting.
-    required: false
-    default: null
   public_vswitch_type:
     description:
       - Type of virtual switch used for public traffic in the cluster.
       - Allowed values are, vmwaresvs (for VMware standard vSwitch) and vmwaredvs (for VMware distributed vSwitch)
-    required: false
-    default: null
     choices: [ 'vmwaresvs', 'vmwaredvs' ]
   vms_ip_address:
     description:
       - IP address of the VSM associated with this cluster.
-    required: false
-    default: null
   vms_username:
     description:
       - Username for the VSM associated with this cluster.
-    required: false
-    default: null
   vms_password:
     description:
       - Password for the VSM associated with this cluster.
-    required: false
-    default: null
   ovm3_cluster:
     description:
       - Ovm3 native OCFS2 clustering enabled for cluster.
-    required: false
-    default: null
   ovm3_pool:
     description:
       - Ovm3 native pooling enabled for cluster.
-    required: false
-    default: null
   ovm3_vip:
     description:
       - Ovm3 vip to use for pool (and cluster).
-    required: false
-    default: null
   state:
     description:
       - State of the cluster.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent', 'disabled', 'enabled' ]
 extends_documentation_fragment: cloudstack

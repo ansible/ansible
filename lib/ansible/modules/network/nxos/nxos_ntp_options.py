@@ -44,25 +44,18 @@ options:
     master:
         description:
             - Sets whether the device is an authoritative NTP server.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     stratum:
         description:
             - If C(master=true), an optional stratum can be supplied (1-15).
               The device default is 8.
-        required: false
-        default: null
     logging:
         description:
             - Sets whether NTP logging is enabled on the device.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

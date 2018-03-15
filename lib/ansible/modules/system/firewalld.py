@@ -24,36 +24,25 @@ options:
   service:
     description:
       - "Name of a service to add/remove to/from firewalld - service must be listed in output of firewall-cmd --get-services."
-    required: false
-    default: null
   port:
     description:
       - "Name of a port or port range to add/remove to/from firewalld. Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges."
-    required: false
-    default: null
   rich_rule:
     description:
       - "Rich rule to add/remove to/from firewalld."
-    required: false
-    default: null
   source:
     description:
       - 'The source/network you would like to add/remove to/from firewalld'
-    required: false
-    default: null
     version_added: "2.0"
   interface:
     description:
       - 'The interface you would like to add/remove to/from a zone in firewalld'
-    required: false
-    default: null
     version_added: "2.1"
   zone:
     description:
       - >
         The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices
         can be extended based on per-system configs, listed here are "out of the box" defaults).
-    required: false
     default: system-default(public)
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
@@ -61,13 +50,11 @@ options:
       - >
         Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
         operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
-    required: false
-    default: null
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "1.9"
   state:
     description:
@@ -80,13 +67,10 @@ options:
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent."
-    required: false
     default: 0
   masquerade:
     description:
       - 'The masquerade setting you would like to enable/disable to/from zones within firewalld'
-    required: false
-    default: null
     version_added: "2.1"
 notes:
   - Not tested on any Debian based system.

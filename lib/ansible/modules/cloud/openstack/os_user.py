@@ -32,10 +32,7 @@ options:
    password:
      description:
         - Password for the user
-     required: false
-     default: None
    update_password:
-     required: false
      default: always
      choices: ['always', 'on_create']
      version_added: "2.3"
@@ -45,8 +42,6 @@ options:
    email:
      description:
         - Email address for the user
-     required: false
-     default: None
    description:
      description:
         - Description about the user
@@ -54,18 +49,14 @@ options:
    default_project:
      description:
         - Project name or ID that the user should be associated with by default
-     required: false
-     default: None
    domain:
      description:
         - Domain to create the user in if the cloud supports domains
-     required: false
-     default: None
    enabled:
      description:
         - Is the user enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -74,7 +65,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

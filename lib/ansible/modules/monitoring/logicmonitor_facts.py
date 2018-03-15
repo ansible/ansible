@@ -29,49 +29,39 @@ options:
         description:
             - The LogicMonitor object you wish to manage.
         required: true
-        default: null
         choices: ['host', 'hostgroup']
     company:
         description:
             - The LogicMonitor account company name. If you would log in to your account at "superheroes.logicmonitor.com" you would use "superheroes".
         required: true
-        default: null
     user:
         description:
             - A LogicMonitor user name. The module will authenticate and perform actions on behalf of this user.
         required: true
-        default: null
     password:
         description:
             - The password for the chosen LogicMonitor User.
             - If an md5 hash is used, the digest flag must be set to true.
         required: true
-        default: null
     collector:
         description:
             - The fully qualified domain name of a collector in your LogicMonitor account.
             - This is optional for querying a LogicMonitor host when a displayname is specified.
             - This is required for querying a LogicMonitor host when a displayname is not specified.
-        required: false
-        default: null
     hostname:
         description:
             - The hostname of a host in your LogicMonitor account, or the desired hostname of a device to add into monitoring.
             - Required for managing hosts (target=host).
-        required: false
         default: 'hostname -f'
     displayname:
         description:
             - The display name of a host in your LogicMonitor account or the desired display name of a device to add into monitoring.
-        required: false
         default: 'hostname -f'
     fullpath:
         description:
             - The fullpath of the hostgroup object you would like to manage.
             - Recommend running on a single ansible host.
             - Required for management of LogicMonitor host groups (target=hostgroup).
-        required: false
-        default: null
 ...
 '''
 

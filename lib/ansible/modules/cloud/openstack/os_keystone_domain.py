@@ -32,13 +32,11 @@ options:
    description:
      description:
         - Description of the domain
-     required: false
-     default: None
    enabled:
      description:
         - Is the domain enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -47,7 +45,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

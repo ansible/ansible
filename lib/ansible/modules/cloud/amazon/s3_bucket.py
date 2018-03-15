@@ -30,23 +30,18 @@ options:
   force:
     description:
       - When trying to delete a bucket, delete all keys in the bucket first (an s3 bucket must be empty for a successful deletion)
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
+    default: 'no'
   name:
     description:
       - Name of the s3 bucket
     required: true
-    default: null
   policy:
     description:
       - The JSON policy as a string.
-    required: false
-    default: null
   s3_url:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc. Otherwise assumes AWS
-    default: null
     aliases: [ S3_URL ]
   ceph:
     description:
@@ -57,9 +52,8 @@ options:
     description:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost
         of the request and the data download from the bucket.
-    required: false
-    default: no
-    choices: [ 'yes', 'no' ]
+    type: bool
+    default: 'no'
   state:
     description:
       - Create or remove the s3 bucket
@@ -69,14 +63,10 @@ options:
   tags:
     description:
       - tags dict to apply to bucket
-    required: false
-    default: null
   versioning:
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
-    required: false
-    default: null
-    choices: [ 'yes', 'no' ]
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2

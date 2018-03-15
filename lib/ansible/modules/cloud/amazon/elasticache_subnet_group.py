@@ -32,13 +32,9 @@ options:
   description:
     description:
       - Elasticache subnet group description. Only set when a new group is added.
-    required: false
-    default: null
   subnets:
     description:
       - List of subnet IDs that make up the Elasticache subnet group.
-    required: false
-    default: null
 author: "Tim Mahoney (@timmahoney)"
 extends_documentation_fragment:
     - aws

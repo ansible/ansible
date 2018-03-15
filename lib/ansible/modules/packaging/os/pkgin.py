@@ -41,48 +41,40 @@ options:
         description:
             - Name of package to install/remove;
             - multiple names may be given, separated by commas
-        required: false
-        default: null
     state:
         description:
             - Intended state of the package
         choices: [ 'present', 'absent' ]
-        required: false
         default: present
     update_cache:
         description:
           - Update repository database. Can be run with other steps or on it's own.
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
     upgrade:
         description:
           - Upgrade main packages to their newer versions
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
     full_upgrade:
         description:
           - Upgrade all packages to their newer versions
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
     clean:
         description:
           - Clean packages cache
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
     force:
         description:
           - Force package reinstall
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         version_added: "2.1"
 '''
 

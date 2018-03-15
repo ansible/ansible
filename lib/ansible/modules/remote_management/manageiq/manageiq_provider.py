@@ -28,7 +28,6 @@ options:
   state:
     description:
       - absent - provider should not exist, present - provider should be present.
-    required: False
     choices: ['absent', 'present']
     default: 'present'
   name:
@@ -40,169 +39,111 @@ options:
     choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director', 'OpenStack', 'GCE']
   zone:
     description: The ManageIQ zone name that will manage the provider.
-    required: false
     default: 'default'
   provider_region:
     description: The provider region name to connect to (e.g. AWS region for Amazon).
-    required: false
-    default: null
   host_default_vnc_port_start:
-    required: false
-    default: null
     description: The first port in the host VNC range. defaults to None.
     version_added: "2.5"
   host_default_vnc_port_end:
-    required: false
-    default: null
     description: The last port in the host VNC range. defaults to None.
     version_added: "2.5"
   subscription:
-    required: false
-    default: null
     description: Microsoft Azure subscription ID. defaults to None.
     version_added: "2.5"
   project:
-    required: false
-    default: null
     description: Google Compute Engine Project ID. defaults to None.
     version_added: "2.5"
   azure_tenant_id:
-    required: false
-    default: null
     description: Tenant ID. defaults to None.
     version_added: "2.5"
     aliases: [ keystone_v3_domain_id ]
   tenant_mapping_enabled:
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     description: Whether to enable mapping of existing tenants. defaults to False.
     version_added: "2.5"
   api_version:
-    required: false
-    default: null
     description: The OpenStack Keystone API version. defaults to None.
     choices: ['v2', 'v3']
     version_added: "2.5"
 
   provider:
-    required: false
     description: Default endpoint connection information, required if state is true.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        type: bool
+        default: 'yes'
       security_protocol:
-        required: false
-        default: None
-        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
+        choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
   metrics:
-    required: false
     description: Metrics endpoint connection information.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        type: bool
+        default: 'yes'
       security_protocol:
-        required: false
-        default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation','non-ssl']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
       path:
-        required: false
-        default: ovirt_engine_history
         description: Database name for oVirt metrics. Defaults to ovirt_engine_history.
+        default: ovirt_engine_history
 
   alerts:
-    required: false
     description: Alerts endpoint connection information.
-    default: null
     suboptions:
       hostname:
         description: The provider's api hostname.
         required: true
       port:
         description: The provider's api port.
-        required: false
       userid:
-        required: false
-        default: null
         description: Provider's api endpoint authentication userid. defaults to None.
       password:
-        required: false
-        default: null
         description: Provider's api endpoint authentication password. defaults to None.
       auth_key:
-        required: false
-        default: null
         description: Provider's api endpoint authentication bearer token. defaults to None.
       verify_ssl:
-        required: false
-        default: true
         description: Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+        default: true
       security_protocol:
-        required: false
-        default: None
         choices: ['ssl-with-validation','ssl-with-validation-custom-ca','ssl-without-validation']
         description: How SSL certificates should be used for HTTPS requests. defaults to None.
       certificate_authority:
-        required: false
-        default: null
         description: The CA bundle string with custom certificates. defaults to None.
 
   ssh_keypair:
-    required: false
     description: SSH key pair used for SSH connections to all hosts in this provider.
-    default: null
     version_added: "2.5"
     suboptions:
       hostname:
@@ -210,10 +151,8 @@ options:
         required: true
       userid:
         description: SSH username.
-        required: false
       auth_key:
         description: SSH private key.
-        required: false
 '''
 
 EXAMPLES = '''

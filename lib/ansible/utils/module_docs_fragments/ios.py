@@ -33,8 +33,8 @@ options:
         attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   auth_pass:
     description:
       - B(Deprecated)
@@ -45,7 +45,6 @@ options:
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    default: none
   provider:
     description:
       - B(Deprecated)
@@ -53,7 +52,6 @@ options:
       - For more information please see the L(IOS Platform Options guide, ../network/user_guide/platform_ios.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -77,7 +75,6 @@ options:
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
@@ -98,15 +95,14 @@ options:
             attempt to execute all commands in non-privileged mode. If the value
             is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-        default: no
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
       auth_pass:
         description:
           - Specifies the password to use if required to enter privileged mode
             on the remote device.  If I(authorize) is false, then this argument
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-        default: none
 notes:
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
   - For more information on using Ansible to manage Cisco devices see the `Cisco integration page <https://www.ansible.com/integrations/networks/cisco>`_.

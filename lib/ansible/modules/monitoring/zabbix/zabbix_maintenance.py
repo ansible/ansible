@@ -28,7 +28,6 @@ options:
     state:
         description:
             - Create or remove a maintenance window. Maintenance window to remove is identified by name.
-        required: false
         default: present
         choices: [ "present", "absent" ]
     host_names:
@@ -38,8 +37,6 @@ options:
               C(host_name) is an alias for C(host_names).
               B(Required) option when C(state) is I(present)
               and no C(host_groups) specified.
-        required: false
-        default: null
         aliases: [ "host_name" ]
     host_groups:
         description:
@@ -48,13 +45,10 @@ options:
               C(host_group) is an alias for C(host_groups).
               B(Required) option when C(state) is I(present)
               and no C(host_names) specified.
-        required: false
-        default: null
         aliases: [ "host_group" ]
     minutes:
         description:
             - Length of maintenance window in minutes.
-        required: false
         default: 10
     name:
         description:
@@ -68,8 +62,8 @@ options:
     collect_data:
         description:
             - Type of maintenance. With data collection, or without.
-        required: false
-        default: "true"
+        type: bool
+        default: 'yes'
 
 extends_documentation_fragment:
     - zabbix

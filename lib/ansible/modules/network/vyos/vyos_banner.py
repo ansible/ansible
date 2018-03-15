@@ -41,14 +41,12 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['pre-login', 'post-login']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current

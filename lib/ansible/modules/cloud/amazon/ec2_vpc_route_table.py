@@ -38,11 +38,11 @@ options:
     choices: [ 'tag', 'id' ]
   propagating_vgw_ids:
     description: Enable route propagation from virtual gateways specified by ID.
-    default: None
   purge_routes:
     version_added: "2.3"
     description: Purge existing routes that are not found in routes.
-    default: 'true'
+    type: bool
+    default: 'yes'
   purge_subnets:
     version_added: "2.3"
     description: Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied.
@@ -50,7 +50,8 @@ options:
   purge_tags:
     version_added: "2.5"
     description: Purge existing tags that are not found in route table
-    default: 'false'
+    type: bool
+    default: 'no'
   route_table_id:
     description: The ID of the route table to update or delete.
   routes:
@@ -59,7 +60,6 @@ options:
         'instance_id', 'interface_id', or 'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
-    default: None
   state:
     description: Create or destroy the VPC route table
     default: present

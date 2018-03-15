@@ -25,52 +25,38 @@ options:
     description:
       - image string to use for the instance (default will follow latest
         stable debian image)
-    required: false
     default: "debian-8"
   image_family:
     description:
       - image family from which to select the image.  The most recent
         non-deprecated image in the family will be used.
-    required: false
-    default: null
     version_added: "2.4"
   external_projects:
     description:
       - A list of other projects (accessible with the provisioning credentials)
         to be searched for the image.
-    required: false
-    default: null
     version_added: "2.4"
   instance_names:
     description:
       - a comma-separated list of instance names to create or destroy
-    required: false
-    default: null
   machine_type:
     description:
       - machine type to use for the instance, use 'n1-standard-1' by default
-    required: false
     default: "n1-standard-1"
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
-    required: false
-    default: null
   service_account_email:
     version_added: "1.5.1"
     description:
       - service account email
-    required: false
-    default: null
   service_account_permissions:
     version_added: "2.0"
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
-    default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
@@ -82,69 +68,53 @@ options:
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     version_added: "1.5.1"
     description:
       - your GCE project ID
-    required: false
-    default: null
   name:
     description:
       - either a name of a single instance or when used with 'num_instances',
         the base name of a cluster of nodes
-    required: false
     aliases: ['base_name']
   num_instances:
     description:
       - can be used with 'name', specifies
         the number of nodes to provision using 'name'
         as a base name
-    required: false
     version_added: "2.3"
   network:
     description:
       - name of the network, 'default' will be used if not specified
-    required: false
     default: "default"
   subnetwork:
     description:
       - name of the subnetwork in which the instance should be created
-    required: false
-    default: null
     version_added: "2.2"
   persistent_boot_disk:
     description:
       - if set, create the instance with a persistent boot disk
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   disks:
     description:
       - a list of persistent disks to attach to the instance; a string value
         gives the name of the disk; alternatively, a dictionary value can
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
-    required: false
-    default: null
     version_added: "1.7"
   state:
     description:
       - desired state of the resource
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted", "started", "stopped", "terminated"]
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
-    required: false
-    default: null
   zone:
     description:
       - the GCE zone to use. The list of available zones is at U(https://cloud.google.com/compute/docs/regions-zones/regions-zones#available).
@@ -153,33 +123,31 @@ options:
   ip_forward:
     version_added: "1.9"
     description:
-      - set to true if the instance can forward ip packets (useful for
+      - set to C(yes) if the instance can forward ip packets (useful for
         gateways)
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   external_ip:
     version_added: "1.9"
     description:
       - type of external ip, ephemeral by default; alternatively, a fixed gce ip or ip name can be given. Specify 'none' if no external ip is desired.
-    required: false
     default: "ephemeral"
   disk_auto_delete:
     version_added: "1.9"
     description:
       - if set boot disk will be removed after instance destruction
-    required: false
-    default: "true"
+    type: bool
+    default: 'yes'
   preemptible:
     version_added: "2.1"
     description:
-      - if set to true, instances will be preemptible and time-limited.
+      - if set to C(yes), instances will be preemptible and time-limited.
         (requires libcloud >= 0.20.0)
-    required: false
-    default: "false"
+    type: bool
+    default: 'no'
   disk_size:
     description:
       - The size of the boot disk created for this instance (in GB)
-    required: false
     default: 10
     version_added: "2.3"
 

@@ -27,42 +27,30 @@ options:
       - The name will be taken as group name when it ends with a colon I(:)
       - Group support is only available in Ansible version 1.6 or later.
     required: true
-    default: null
   config:
     description:
       - The supervisor configuration file path
-    required: false
-    default: null
     version_added: "1.3"
   server_url:
     description:
       - URL on which supervisord server is listening
-    required: false
-    default: null
     version_added: "1.3"
   username:
     description:
       - username to use for authentication
-    required: false
-    default: null
     version_added: "1.3"
   password:
     description:
       - password to use for authentication
-    required: false
-    default: null
     version_added: "1.3"
   state:
     description:
       - The desired state of program/group.
     required: true
-    default: null
     choices: [ "present", "started", "stopped", "restarted", "absent" ]
   supervisorctl_path:
     description:
       - path to supervisorctl executable
-    required: false
-    default: null
     version_added: "1.4"
 notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.

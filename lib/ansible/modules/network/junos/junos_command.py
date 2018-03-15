@@ -33,15 +33,11 @@ options:
         is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of I(retries) has been exceeded.
-    required: false
-    default: null
   rpcs:
     description:
       - The C(rpcs) argument accepts a list of RPCs to be executed
         over a netconf session and the results from the RPC execution
         is return to the playbook via the modules results dictionary.
-    required: false
-    default: null
     version_added: "2.3"
   wait_for:
     description:
@@ -50,8 +46,6 @@ options:
         the task to wait for a particular conditional to be true
         before moving forward.   If the conditional is not true
         by the configured retries, the task fails.  See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -62,7 +56,6 @@ options:
         then all conditionals in the I(wait_for) must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -72,7 +65,6 @@ options:
         before it is considered failed.  The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
-    required: false
     default: 10
   interval:
     description:
@@ -80,7 +72,6 @@ options:
         of the command.  If the command does not pass the specified
         conditional, the interval indicates how to long to wait before
         trying the command again.
-    required: false
     default: 1
   display:
     description:
@@ -90,7 +81,6 @@ options:
         display is C(xml) and for I(commands) argument default display
         is C(text). Value C(set) is applicable only for fetching configuration
         from device.
-    required: false
     default: depends on input argument I(rpcs) or I(commands)
     aliases: ['format', 'output']
     choices: ['text', 'json', 'xml', 'set']

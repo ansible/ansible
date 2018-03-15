@@ -41,7 +41,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
         with the remote device
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:

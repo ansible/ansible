@@ -46,7 +46,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
         configured, then the default netconf plugin will be used.
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:
@@ -88,14 +87,14 @@ options:
         timeout seconds, an error is generated.
     default: 120
   host_key_auto_add:
-    type: boolean
+    type: bool
     description:
       - By default, Ansible will prompt the user before adding SSH keys to the
         known hosts file.  Enabling this option, unknown host keys will
         automatically be added to the known hosts file.
       - Be sure to fully understand the security implications of enabling this
         option on production systems as it could create a security vulnerability.
-    default: False
+    default: 'no'
     ini:
       section: paramiko_connection
       key: host_key_auto_add

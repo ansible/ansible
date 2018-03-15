@@ -50,7 +50,6 @@ options:
     evpn:
         description:
             - Create or delete an EVPN instance for a VXLAN in BD view.
-        required: false
         choices: ['enable','disable']
         default: 'enable'
     route_distinguisher:
@@ -69,14 +68,10 @@ options:
             - 5) 32-bit IP address:2-byte user-defined number. For example, 192.168.122.15:1. An IP address ranges from
               0.0.0.0 to 255.255.255.255, and a user-defined number is an integer ranging from 0 to 65535.
             - 6) 'auto' specifies the RD that is automatically generated.
-        required: false
-        default: null
     vpn_target_both:
         description:
             - Add VPN targets to both the import and export VPN target lists of a BD EVPN instance.
               The format is the same as route_distinguisher.
-        required: false
-        default: null
     vpn_target_import:
         description:
             - Add VPN targets to the import VPN target list of a BD EVPN instance.
@@ -86,12 +81,9 @@ options:
         description:
             - Add VPN targets to the export VPN target list of a BD EVPN instance.
               The format is the same as route_distinguisher.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         choices: ['present','absent']
         default: 'present'
 '''

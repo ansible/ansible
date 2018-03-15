@@ -28,29 +28,24 @@ options:
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
     required: true
-    default: null
   key:
     description:
       - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
         The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT")
-    required: false
-    default: null
   path:
     description:
       - The known_hosts file to edit
-    required: no
     default: "(homedir)+/.ssh/known_hosts"
   hash_host:
     description:
       - Hash the hostname in the known_hosts file
-    required: no
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   state:
     description:
       - I(present) to add the host key, I(absent) to remove it.
     choices: [ "present", "absent" ]
-    required: no
     default: present
 requirements: [ ]
 author: "Matthew Vernon (@mcv21)"

@@ -28,16 +28,10 @@ options:
     required: true
   metadata:
     description: Metadata dict.
-    required: false
-    default: None
   availability_zone:
     description: Availability zone to create aggregate into.
-    required: false
-    default: None
   hosts:
     description: List of hosts to set for an aggregate.
-    required: false
-    default: None
   state:
     description: Should the resource be present or absent.
     choices: [present, absent]

@@ -42,22 +42,15 @@ options:
     interface:
         description:
             - Full name of interface, i.e. Ethernet1/1.
-        required: false
-        default: null
     mtu:
         description:
             - MTU for a specific interface. Must be an even number between 576 and 9216.
-        required: false
-        default: null
     sysmtu:
         description:
             - System jumbo MTU. Must be an even number between 576 and 9216.
-        required: false
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

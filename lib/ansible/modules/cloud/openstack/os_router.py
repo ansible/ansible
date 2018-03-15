@@ -36,24 +36,20 @@ options:
    admin_state_up:
      description:
         - Desired admin state of the created or existing router.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    enable_snat:
      description:
         - Enable Source NAT (SNAT) attribute.
-     required: false
-     default: true
+     type: bool
+     default: 'yes'
    network:
      description:
         - Unique name or ID of the external gateway network.
         - required I(interfaces) or I(enable_snat) are provided.
-     required: false
-     default: None
    project:
      description:
         - Unique name or ID of the project.
-     required: false
-     default: None
      version_added: "2.2"
    external_fixed_ips:
      description:
@@ -61,8 +57,6 @@ options:
           is a dictionary with the subnet name or ID (subnet) and the IP
           address to assign on the subnet (ip). If no IP is specified,
           one is automatically assigned from that subnet.
-     required: false
-     default: None
    interfaces:
      description:
         - List of subnets to attach to the router internal interface. Default
@@ -75,13 +69,9 @@ options:
           User defined portip is often required when a multiple router need
           to be connected to a single subnet for which the default gateway has
           been already used.
-
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements: ["shade"]
 '''
 

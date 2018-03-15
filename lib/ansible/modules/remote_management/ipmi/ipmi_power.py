@@ -28,7 +28,6 @@ options:
   port:
     description:
       - Remote RMCP port.
-    required: false
     default: 623
   user:
     description:
@@ -38,7 +37,6 @@ options:
     description:
       - Password to connect to the BMC.
     required: true
-    default: null
   state:
     description:
       - Whether to ensure that the machine in desired state.
@@ -52,7 +50,6 @@ options:
   timeout:
     description:
       - Maximum number of seconds before interrupt request.
-    required: false
     default: 300
 requirements:
   - "python >= 2.6"

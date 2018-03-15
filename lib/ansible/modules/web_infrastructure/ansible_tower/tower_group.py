@@ -30,8 +30,6 @@ options:
     description:
       description:
         - The description to use for the group.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the group should be made a member of.
@@ -39,63 +37,44 @@ options:
     variables:
       description:
         - Variables to use for the group, use C(@) for a file.
-      required: False
-      default: null
     credential:
       description:
         - Credential to use for the group.
-      required: False
-      default: null
     source:
       description:
         - The source to use for this group.
-      required: False
-      default: null,
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
     source_regions:
       description:
         - Regions for cloud provider.
-      required: False
-      default: null
     source_vars:
       description:
         - Override variables from source with variables from this field.
-      required: False
-      default: null
     instance_filters:
       description:
         - Comma-separated list of filter expressions for matching hosts.
-      required: False
-      default: null
     group_by:
       description:
         - Limit groups automatically created from inventory source.
-      required: False
-      default: null
     source_script:
       description:
         - Inventory script to be used when group type is C(custom).
-      required: False
-      default: null
     overwrite:
       description:
         - Delete child groups and hosts not found in source.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     overwrite_vars:
       description:
         - Override vars in child groups and hosts with those from external source.
-      required: False
-      default: null
     update_on_launch:
       description:
         - Refresh inventory data from its source each time a job is run.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

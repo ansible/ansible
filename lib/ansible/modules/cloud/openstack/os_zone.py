@@ -31,26 +31,18 @@ options:
      description:
         - Zone type
      choices: [primary, secondary]
-     default: None
    email:
      description:
         - Email of the zone owner (only applies if zone_type is primary)
-     required: false
    description:
      description:
         - Zone description
-     required: false
-     default: None
    ttl:
      description:
         -  TTL (Time To Live) value in seconds
-     required: false
-     default: None
    masters:
      description:
         - Master nameservers (only applies if zone_type is secondary)
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -59,7 +51,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

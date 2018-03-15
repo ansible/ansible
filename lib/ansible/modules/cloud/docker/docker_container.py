@@ -28,185 +28,137 @@ options:
   auto_remove:
     description:
       - enable auto-removal of the container on daemon side when the container's process exits
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.4"
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
-    default: null
-    required: false
   capabilities:
     description:
       - List of capabilities to add to the container.
-    default: null
-    required: false
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   command:
     description:
       - Command to execute when the container starts.
         A command may be either a string or a list.
         Prior to version 2.4, strings were split on commas.
-    default: null
-    required: false
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
     default: 0
-    required: false
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
     default: 0
-    required: false
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
-    default: null
-    required: false
   cpuset_mems:
     description:
       - Memory nodes (MEMs) in which to allow execution C(0-3) or C(0,1)
-    default: null
-    required: false
   cpu_shares:
     description:
       - CPU shares (relative weight).
-    default: null
-    required: false
   detach:
     description:
       - Enable detached mode to leave the container running in background.
         If disabled, the task will reflect the status of the container run (failed if the command failed).
-    default: true
-    required: false
   devices:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
-    default: null
-    required: false
   dns_servers:
     description:
       - List of custom DNS servers.
-    default: null
-    required: false
   dns_search_domains:
     description:
       - List of custom DNS search domains.
-    default: null
-    required: false
   domainname:
     description:
       - Container domainname.
-    default: null
-    required: false
     version_added: "2.5"
   env:
     description:
       - Dictionary of key,value pairs.
-    default: null
-    required: false
   env_file:
     version_added: "2.2"
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
       - Requires docker-py >= 1.4.0.
-    default: null
-    required: false
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
-    default: null
-    required: false
   etc_hosts:
     description:
       - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
         Each host name will be added to the container's /etc/hosts file.
-    default: null
-    required: false
   exposed_ports:
     description:
       - List of additional container ports which informs Docker that the container
         listens on the specified network ports at runtime.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
         need to be exposed again.
-    default: null
-    required: false
     aliases:
       - exposed
   force_kill:
     description:
       - Use the kill command when stopping a running container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
-    default: null
-    required: false
   hostname:
     description:
       - Container hostname.
-    default: null
-    required: false
   ignore_image:
     description:
       - When C(state) is I(present) or I(started) the module compares the configuration of an existing
         container to requested configuration. The evaluation includes the image version. If
         the image version in the registry does not match the container, the container will be
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
-    default: false
-    required: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
-    default: null
-    required: false
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   ipc_mode:
     description:
       - Set the IPC mode for the container. Can be one of 'container:<name|id>' to reuse another
         container's IPC namespace or 'host' to use the host's IPC namespace within the container.
-    default: null
-    required: false
   keep_volumes:
     description:
       - Retain volumes associated with a removed container.
-    default: true
-    required: false
+    type: bool
+    default: 'yes'
   kill_signal:
     description:
       - Override default signal used to kill a running container.
-    default: null
-    required: false
   kernel_memory:
     description:
       - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g. Minimum is 4M."
     default: 0
-    required: false
   labels:
      description:
        - Dictionary of key value pairs.
-     default: null
-     required: false
   links:
     description:
       - List of name aliases for linked containers in the format C(container_name:alias)
-    default: null
-    required: false
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
@@ -219,42 +171,32 @@ options:
       - fluentd
       - awslogs
       - splunk
-    default: null
-    required: false
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
-    required: false
-    default: null
   mac_address:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
-    default: null
-    required: false
   memory:
     description:
       - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
-    required: false
   memory_reservation:
     description:
       - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
-    required: false
   memory_swap:
     description:
       - Total memory limit (memory + swap, format:<number>[<unit>]).
         Number is a positive integer. Unit can be one of b, k, m, or g.
     default: 0
-    required: false
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
     default: 0
-    required: false
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -268,13 +210,9 @@ options:
       - container:<name|id>
       - host
       - none
-    default: null
-    required: false
   userns_mode:
      description:
        - User namespace to use
-     default: null
-     required: false
      version_added: "2.5"
   networks:
      description:
@@ -284,35 +222,30 @@ options:
        - If included, C(links) or C(aliases) are lists.
        - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
-     default: null
-     required: false
      version_added: "2.2"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   oom_score_adj:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
-    required: false
     version_added: "2.2"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   pid_mode:
     description:
       - Set the PID namespace mode for the container. Currently only supports 'host'.
-    default: null
-    required: false
   privileged:
     description:
       - Give extended privileges to the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   published_ports:
     description:
       - List of ports to publish from the container to the host.
@@ -329,35 +262,33 @@ options:
         value encountered in the list of C(networks) is the one that will be used.
     aliases:
       - ports
-    required: false
-    default: null
   pull:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   purge_networks:
     description:
        - Remove the container from ALL networks not included in C(networks) parameter.
        - Any default networks such as I(bridge), if not found in C(networks), will be removed as well.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   read_only:
     description:
       - Mount the container's root file system as read-only.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   restart_policy:
     description:
       - Container restart policy. Place quotes around I(no) option.
@@ -367,24 +298,18 @@ options:
       - on-failure
       - unless-stopped
     default: on-failure
-    required: false
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.
     default: 0
-    required: false
   shm_size:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
         Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
       - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
-    default: null
-    required: false
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
-    default: null
-    required: false
   state:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
@@ -406,7 +331,6 @@ options:
         with a removed container.'
       - 'I(stopped) - Asserts that the container is first I(present), and then if the container is running moves it to a stopped
         state. Use force_kill to kill a container rather than stopping it.'
-    required: false
     default: started
     choices:
       - absent
@@ -416,51 +340,37 @@ options:
   stop_signal:
     description:
       - Override default signal used to stop the container.
-    default: null
-    required: false
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
-    required: false
-    default: null
   trust_image_content:
     description:
-      - If true, skip image verification.
-    default: false
-    required: false
+      - If C(yes), skip image verification.
+    type: bool
+    default: 'no'
   tmpfs:
     description:
       - Mount a tmpfs directory
-    default: null
-    required: false
     version_added: 2.4
   tty:
     description:
       - Allocate a pseudo-TTY.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
-    default: null
-    required: false
   sysctls:
     description:
       - Dictionary of key,value pairs.
-    default: null
-    required: false
     version_added: 2.4
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
       - "Can be [ user | user:group | uid | uid:gid | user:gid | uid:group ]"
-    default: null
-    required: false
   uts:
     description:
       - Set the UTS namespace mode for the container.
-    default: null
-    required: false
   volumes:
     description:
       - List of volumes to mount within the container.
@@ -468,23 +378,15 @@ options:
       - You can specify a read mode for the mount with either C(ro) or C(rw).
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
-    default: null
-    required: false
   volume_driver:
     description:
       - The container volume driver.
-    default: none
-    required: false
   volumes_from:
     description:
       - List of container names or Ids to get volumes from.
-    default: null
-    required: false
   working_dir:
     description:
       - Path to the working directory.
-    default: null
-    required: false
     version_added: "2.4"
 extends_documentation_fragment:
     - docker

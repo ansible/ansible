@@ -26,14 +26,12 @@ options:
         description:
             - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
               group that contains resources.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     location:
         description:
             - Azure location for the resource group. Required when creating a new resource group. Cannot
               be changed once resource group is created.
-        required: false
-        default: null
     name:
         description:
             - Name of the resource group.
@@ -47,7 +45,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 extends_documentation_fragment:
     - azure
     - azure_tags

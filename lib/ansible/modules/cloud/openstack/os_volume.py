@@ -26,8 +26,6 @@ options:
      description:
         - Size of volume in GB. This parameter is required when the
           I(state) parameter is 'present'.
-     required: false
-     default: None
    display_name:
      description:
         - Name of volume
@@ -35,28 +33,18 @@ options:
    display_description:
      description:
        - String describing the volume
-     required: false
-     default: None
    volume_type:
      description:
        - Volume type for volume
-     required: false
-     default: None
    image:
      description:
        - Image name or id for boot from volume
-     required: false
-     default: None
    snapshot_id:
      description:
        - Volume snapshot id to create from
-     required: false
-     default: None
    volume:
      description:
        - Volume name or id to create from
-     required: false
-     default: None
      version_added: "2.3"
    state:
      description:
@@ -66,12 +54,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
    scheduler_hints:
      description:
        - Scheduler hints passed to volume API in form of dict
-     required: false
-     default: None
      version_added: "2.4"
 requirements:
      - "python >= 2.6"
