@@ -42,12 +42,12 @@ class ActionModule(_ActionModule):
         del tmp  # tmp no longer has any effect
 
         socket_path = None
-        cli_only = ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
+        force_cli = self._task.action in ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
 
         if self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
-            if self._task.action in cli_only or (provider['transport'] == 'cli'):
+            if force_cli or provider['transport'] == 'cli':
                 pc.connection = 'network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
             elif provider['transport'] == 'netconf':
@@ -75,7 +75,7 @@ class ActionModule(_ActionModule):
 
             task_vars['ansible_socket'] = socket_path
         elif self._play_context.connection in ('netconf', 'network_cli'):
-            if self._task.action in cli_only and self._play_context.connection != 'network_cli':
+            if force_cli and self._play_context.connection != 'network_cli':
                 return {'failed': True, 'msg': 'Connection type %s is not valid for module %s' %
                         (self._play_context.connection, self._task.action)}
             provider = self._task.args.get('provider', {})
