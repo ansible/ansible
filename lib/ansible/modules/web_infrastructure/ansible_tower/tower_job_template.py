@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: tower_job_template
 author: "Wayne Witzel III (@wwitzel3)"
 version_added: "2.3"
-short_description: create, update, or destroy Ansible Tower job_template.
+short_description: create, update, or destroy Ansible Tower job template.
 description:
     - Create, update, or destroy Ansible Tower job templates. See
       U(https://www.ansible.com/tower) for an overview.
@@ -29,40 +29,40 @@ options:
       required: True
     description:
       description:
-        - Description to use for the job_template.
+        - Description to use for the job template.
       required: False
       default: null
     job_type:
       description:
-        - The job_type to use for the job_template.
+        - The job_type to use for the job template.
       required: True
       choices: ["run", "check", "scan"]
     inventory:
       description:
-        - Inventory to use for the job_template.
+        - Inventory to use for the job template.
       required: False
       default: null
     project:
       description:
-        - Project to use for the job_template.
+        - Project to use for the job template.
       required: True
     playbook:
       description:
-        - Playbook to use for the job_template.
+        - Playbook to use for the job template.
       required: True
     machine_credential:
       description:
-        - Machine_credential to use for the job_template.
+        - Machine_credential to use for the job template.
       required: False
       default: null
     cloud_credential:
       description:
-        - Cloud_credential to use for the job_template.
+        - Cloud_credential to use for the job template.
       required: False
       default: null
     network_credential:
       description:
-        - The network_credential to use for the job_template.
+        - The network_credential to use for the job template.
       required: False
       default: null
     forks:
@@ -83,12 +83,12 @@ options:
       default: null
     job_tags:
       description:
-        - The job_tags to use for the job_template.
+        - The job_tags to use for the job template.
       required: False
       default: null
     skip_tags:
       description:
-        - The skip_tags to use for the job_template.
+        - The skip_tags to use for the job template.
       required: False
       default: null
     host_config_key:
@@ -98,12 +98,12 @@ options:
       default: null
     extra_vars_path:
       description:
-        - Path to the extra_vars yaml file.
+        - Path to the C(extra_vars) YAML file.
       required: False
       default: null
     ask_extra_vars:
       description:
-        - Prompt user for extra_vars on launch.
+        - Prompt user for C(extra_vars) on launch.
       required: False
       default: False
     ask_tags:
@@ -128,7 +128,7 @@ options:
       default: False
     become_enabled:
       description:
-        - Should become_enabled.
+        - Activate privilege escalation.
       required: False
       default: False
     state:

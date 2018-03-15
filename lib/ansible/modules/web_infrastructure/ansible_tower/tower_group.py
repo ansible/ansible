@@ -38,7 +38,7 @@ options:
       required: True
     variables:
       description:
-        - Variables to use for the group, use '@' for a file.
+        - Variables to use for the group, use C(@) for a file.
       required: False
       default: null
     credential:
@@ -74,12 +74,12 @@ options:
       default: null
     source_script:
       description:
-        - Inventory script to be used when group type is "custom".
+        - Inventory script to be used when group type is C(custom).
       required: False
       default: null
     overwrite:
       description:
-        - Delete child roups and hosts not found in source.
+        - Delete child groups and hosts not found in source.
       required: False
       default: False
     overwrite_vars:
