@@ -36,6 +36,9 @@ options:
 requirements:
   - boto3
   - botocore
+extends_documentation_fragment:
+  - aws
+  - ec2
 notes:
   - An assessment run is considered `started` when a run with the same
     assessment template that is not in state
@@ -153,7 +156,10 @@ user_attributes_for_findings:
   sample: [{"key": "run_no", "value": 12345}, {"key": "env", "value": "dev"}]
 '''
 
-from botocore.exceptions import ClientError, ValidationError
+try:
+    from botocore.exceptions import ClientError, ValidationError
+except ImportError:
+    pass  # Handled AnsibleAWSModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
