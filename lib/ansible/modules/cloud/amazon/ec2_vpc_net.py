@@ -244,6 +244,7 @@ def update_vpc_tags(connection, module, vpc_id, tags, name):
                     catch_extra_error_codes=['InvalidVpcID.NotFound'],
                 )(connection.create_tags)(Resources=[vpc_id], Tags=tags)
 
+                # Wait for tags to be updated
                 expected_tags = boto3_tag_list_to_ansible_dict(tags)
                 filters = [{'Name': 'tag:{0}'.format(key), 'Values': [value]} for key, value in expected_tags.items()]
                 connection.get_waiter('vpc_available').wait(VpcIds=[vpc_id], Filters=filters)
@@ -264,6 +265,7 @@ def update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
                 module.fail_json_aws(e, msg="Failed to associate DhcpOptionsId {0}".format(dhcp_id))
 
             try:
+                # Wait for DhcpOptionsId to be updated
                 filters = [{'Name': 'dhcp-options-id', 'Values': [dhcp_id]}]
                 connection.get_waiter('vpc_available').wait(VpcIds=[vpc_obj['VpcId']], Filters=filters)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
