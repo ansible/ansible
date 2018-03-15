@@ -73,6 +73,9 @@ notes:
 requirements:
   - boto3
   - botocore
+extends_documentation_fragment:
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -175,7 +178,10 @@ user_attributes_for_findings:
 '''
 
 import re
-from botocore.exceptions import ClientError, ValidationError
+try:
+    from botocore.exceptions import ClientError, ValidationError
+except ImportError:
+    pass  # Handled AnsibleAWSModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
