@@ -60,6 +60,8 @@ options:
   force:
     description:
       - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes)'
+      - "This option will disable checking both the packages' signatures and the certificates of the
+        web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
       - '**This is a destructive operation with the potential to destroy your system, and it should almost never be used.**
          Please also see C(man apt-get) for more information.'
