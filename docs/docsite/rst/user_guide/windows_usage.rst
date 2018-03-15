@@ -373,8 +373,8 @@ standard:
 
 The YAML specification considers the following `escape sequences <http://www.yaml.org/spec/current.html#id2517668>`_:
 
-* ``\0``, ``\``, ``"``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``
-  and ``\v`` -- Single character escape
+* ``\0``, ``\\``, ``\"``, ``\_``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``,
+  ``\v``, ``\L``, ``\N`` and ``\P`` -- Single character escape
 
 * ``<TAB>``, ``<SPACE>``, ``<NBSP>``, ``<LNSP>``, ``<PSP>`` -- Special
   characters
