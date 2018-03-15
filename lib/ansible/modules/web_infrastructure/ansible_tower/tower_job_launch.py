@@ -25,7 +25,7 @@ description:
 options:
     job_template:
       description:
-        - Name of the job_template to use.
+        - Name of the job template to use.
       required: True
     job_explanation:
       description:
@@ -46,11 +46,11 @@ options:
       default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Prepend '@' if a file.
+        - Extra_vars to use for the job_template. Prepend C(@) if a file.
       default: null
     limit:
       description:
-        - Limit to use for the job_template.
+        - Limit to use for the I(job_template).
       default: null
     tags:
       description:
