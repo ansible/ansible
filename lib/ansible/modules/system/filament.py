@@ -52,4 +52,4 @@ message:
     description: The output message that the sample module generates
 """
 
-hello = world
+hello = 'world'
