@@ -206,7 +206,7 @@ def _ensure_dnf(module):
                                  "Please install `{0}` package.".format(package))
 
 
-def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/', releasever):
+def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/', releasever=None):
     """Configure the dnf Base object."""
     conf = base.conf
 
