@@ -1259,6 +1259,7 @@ def main():
                 vms_module.changed = import_vm(module, connection)
 
             ret = vms_module.create(
+                entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
@@ -1280,6 +1281,7 @@ def main():
                 )
         elif state == 'suspended':
             vms_module.create(
+                entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
