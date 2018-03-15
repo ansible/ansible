@@ -1,6 +1,9 @@
 :source: @{ source }@
 
 .. _@{ module }@:
+{% for alias in aliases %}
+.. _@{ alias }@:
+{% endfor %}
 
 {% if short_description %}
 {%   set title = module + ' - ' + short_description|convert_symbols_to_format %}
