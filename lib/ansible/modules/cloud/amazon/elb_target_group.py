@@ -151,20 +151,20 @@ EXAMPLES = '''
 
 # Create a target group with targets
 - elb_target_group:
-  name: mytargetgroup
-  protocol: http
-  port: 81
-  vpc_id: vpc-01234567
-  health_check_path: /
-  successful_response_codes: "200,250-260"
-  targets:
-    - Id: i-01234567
-      Port: 80
-    - Id: i-98765432
-      Port: 80
-  state: present
-  wait_timeout: 200
-  wait: True
+    name: mytargetgroup
+    protocol: http
+    port: 81
+    vpc_id: vpc-01234567
+    health_check_path: /
+    successful_response_codes: "200,250-260"
+    targets:
+      - Id: i-01234567
+        Port: 80
+      - Id: i-98765432
+        Port: 80
+    state: present
+    wait_timeout: 200
+    wait: True
 '''
 
 RETURN = '''
