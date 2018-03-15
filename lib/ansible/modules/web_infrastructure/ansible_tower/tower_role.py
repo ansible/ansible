@@ -147,11 +147,12 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     role_type = module.params.pop('role')
-    state = module.params.get('state')
+    state = module.params.pop('state')
 
     json_output = {'role': role_type, 'state': state}
 
     tower_auth = tower_auth_config(module)
+    module.params.pop('tower_verify_ssl', None)
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         role = tower_cli.get_resource('role')
