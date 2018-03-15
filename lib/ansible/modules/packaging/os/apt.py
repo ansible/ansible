@@ -70,6 +70,7 @@ options:
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
+      - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
     type: bool
     default: 'no'
     version_added: "2.1"
