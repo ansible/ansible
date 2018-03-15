@@ -95,7 +95,7 @@ Parameters
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
+                            <div class="elbow-placeholder"/>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -107,7 +107,7 @@ Parameters
                 {# default / choices #}
                 <td>
                     <div class="cell-border">
-                        {# Recalculate choices and boolean values #}
+                        {# Turn boolean values in 'yes' and 'no' values #}
                         {% if value.default is defined %}
                             {% if value.default == true %}
                                 {% set _x = value.update({'default': 'yes'}) %}
@@ -122,10 +122,16 @@ Parameters
                         {% if value.choices %}
                             <ul><b>Choices:</b>
                                 {% for choice in value.choices %}
-                                    {% if (value.default is string and choice == value.default) or (value.default is iterable and choice in value.default) %}
-                                        <li type="disc"><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
+                                    {# Turn boolean values in 'yes' and 'no' values #}
+                                    {% if choice == true %}
+                                        {% set choice = 'yes' %}
+                                    {% elif choice == false %}
+                                        {% set choice = 'no' %}
+                                    {% endif %}
+                                    {% if (value.default is string and value.default == choice) or (value.default is iterable and value.default is not string and choice in value.default) %}
+                                        <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
                                     {% else %}
-                                        <li type="circle">@{ choice | escape }@</li>
+                                        <li>@{ choice | escape }@</li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
@@ -240,7 +246,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
+                            <div class="elbow-placeholder"/>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -304,8 +310,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">&nbsp;</div>
-                            </div>
+                            <div class="elbow-placeholder"/>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -324,9 +329,9 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                             {% endfor %}
                         {% endif %}
                         <br/>
-                        {% if value.sample is defined  and value.sample %}
+                        {% if value.sample is defined and value.sample %}
                             <div style="font-size: smaller"><b>Sample:</b></div>
-                            {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                            {# TODO: The sample should be escaped, using |escape or |htmlify, but both mess things up beyond repair with dicts #}
                             <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
                         {% endif %}
                     </div>
