@@ -205,6 +205,7 @@ class TowerConfig(object):
         :rtype: dict[str, str]
         """
         env = dict(
+            TOWER_VERSION=self.version,
             TOWER_HOST=self.host,
             TOWER_USERNAME=self.username,
             TOWER_PASSWORD=self.password,
@@ -230,6 +231,11 @@ class TowerConfig(object):
 
         values = dict((k, parser.get('general', k)) for k in keys)
         config = TowerConfig(values)
+
+        missing = [k for k in keys if not values.get(k)]
+
+        if missing:
+            raise ApplicationError('Missing or empty Tower configuration value(s): %s' % ', '.join(missing))
 
         return config
 
