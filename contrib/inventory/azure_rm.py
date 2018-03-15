@@ -337,7 +337,7 @@ class AzureRM(object):
 
         elif self.credentials.get('ad_user') is not None and \
              self.credentials.get('password') is not None and \
-             self.credentials.get('client_id') is not None:                
+             self.credentials.get('client_id') is not None:
 
                 self.azure_credentials = self.acquire_token_with_username_password(self._authority,
                                                       self._resource,
@@ -347,7 +347,7 @@ class AzureRM(object):
 
         else:
             self.fail("Failed to authenticate with provided credentials. Some attributes were missing. "
-                      "Credentials must include client_id, secret and tenant or ad_user and password " 
+                      "Credentials must include client_id, secret and tenant or ad_user and password "
                       "or ad_user and password and and client_id and authority(optional) for ADFS.")
 
     def log(self, msg):
