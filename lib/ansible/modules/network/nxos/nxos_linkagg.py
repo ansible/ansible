@@ -39,8 +39,8 @@ options:
   mode:
     description:
       - Mode for the link aggregation group.
-    default: on
-    choices: ['active','passive','on']
+    choices: [ active, 'on', passive ]
+    default: 'on'
   min_links:
     description:
       - Minimum number of ports required up
@@ -53,6 +53,7 @@ options:
       - When true it forces link aggregation group members to match what
         is declared in the members param. This can be used to remove members.
     type: bool
+    default: 'no'
   aggregate:
     description: List of link aggregation definitions.
   state:

@@ -69,7 +69,7 @@ options:
   native:
     description:
     - Designates the VLAN as a native VLAN.
-    type: bool
+    choices: ['yes', 'no']
     default: 'no'
 requirements:
 - ucsmsdk

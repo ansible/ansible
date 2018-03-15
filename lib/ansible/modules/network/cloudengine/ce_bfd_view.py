@@ -80,6 +80,7 @@ options:
             - Determines whether the config should be present or not on the device.
         default: present
         choices: ['present', 'absent']
+extends_documentation_fragment: ce
 """
 
 EXAMPLES = '''

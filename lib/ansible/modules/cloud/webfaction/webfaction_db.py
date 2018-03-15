@@ -67,7 +67,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        default: 'no'
+        default: false
 '''
 
 EXAMPLES = '''

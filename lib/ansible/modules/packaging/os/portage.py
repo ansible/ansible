@@ -153,9 +153,8 @@ options:
     description:
       - Redirect all build output to logs alone, and do not display it
       - on stdout (--quiet-build)
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: 2.6
 
   quietfail:
@@ -163,9 +162,8 @@ options:
       - Suppresses display of the build log on stdout (--quiet-fail)
       - Only the die message and the path of the build log will be
       - displayed on stdout.
-    required: false
-    default: False
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: 2.6
 
 requirements: [ gentoolkit ]

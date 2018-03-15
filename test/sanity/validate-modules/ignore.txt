@@ -304,14 +304,11 @@ lib/ansible/modules/cloud/centurylink/clc_group.py E325
 lib/ansible/modules/cloud/centurylink/clc_group.py E326
 lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py E326
 lib/ansible/modules/cloud/cloudscale/cloudscale_server.py E325
-lib/ansible/modules/cloud/cloudstack/cs_account.py E325
-lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py E325
 lib/ansible/modules/cloud/cloudstack/cs_cluster.py E326
 lib/ansible/modules/cloud/cloudstack/cs_domain.py E325
 lib/ansible/modules/cloud/cloudstack/cs_host.py E326
 lib/ansible/modules/cloud/cloudstack/cs_instance.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance.py E326
-lib/ansible/modules/cloud/cloudstack/cs_instance_nic.py E325
 lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py E325
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E323
 lib/ansible/modules/cloud/cloudstack/cs_iso.py E325
@@ -321,7 +318,6 @@ lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py E325
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E322
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E324
 lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py E325
-lib/ansible/modules/cloud/cloudstack/cs_network_acl.py E325
 lib/ansible/modules/cloud/cloudstack/cs_network_acl_rule.py E324
 lib/ansible/modules/cloud/cloudstack/cs_network_acl_rule.py E326
 lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E322
@@ -329,13 +325,11 @@ lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E325
 lib/ansible/modules/cloud/cloudstack/cs_network_offering.py E326
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py E325
 lib/ansible/modules/cloud/cloudstack/cs_project.py E322
-lib/ansible/modules/cloud/cloudstack/cs_project.py E325
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py E325
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E322
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E323
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E325
 lib/ansible/modules/cloud/cloudstack/cs_service_offering.py E326
-lib/ansible/modules/cloud/cloudstack/cs_staticnat.py E325
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E325
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E326
@@ -445,7 +439,6 @@ lib/ansible/modules/cloud/lxd/lxd_container.py E324
 lib/ansible/modules/cloud/lxd/lxd_container.py E325
 lib/ansible/modules/cloud/lxd/lxd_profile.py E324
 lib/ansible/modules/cloud/misc/helm.py E324
-lib/ansible/modules/cloud/misc/helm.py E325
 lib/ansible/modules/cloud/misc/ovirt.py E322
 lib/ansible/modules/cloud/misc/ovirt.py E326
 lib/ansible/modules/cloud/misc/proxmox.py E324
@@ -509,7 +502,6 @@ lib/ansible/modules/cloud/openstack/os_subnet.py E324
 lib/ansible/modules/cloud/openstack/os_subnet.py E326
 lib/ansible/modules/cloud/openstack/os_subnets_facts.py E322
 lib/ansible/modules/cloud/openstack/os_subnets_facts.py E323
-lib/ansible/modules/cloud/openstack/os_user_facts.py E324
 lib/ansible/modules/cloud/openstack/os_volume.py E322
 lib/ansible/modules/cloud/openstack/os_zone.py E326
 lib/ansible/modules/cloud/ovirt/ovirt_affinity_group.py E324
@@ -1017,10 +1009,6 @@ lib/ansible/modules/network/aos/_aos_device.py E324
 lib/ansible/modules/network/aos/_aos_device.py E325
 lib/ansible/modules/network/aos/_aos_device.py E326
 lib/ansible/modules/network/aos/_aos_login.py E324
-lib/ansible/modules/network/asa/asa_acl.py E325
-lib/ansible/modules/network/asa/asa_acl.py E326
-lib/ansible/modules/network/asa/asa_config.py E325
-lib/ansible/modules/network/asa/asa_config.py E326
 lib/ansible/modules/network/bigswitch/bcf_switch.py E325
 lib/ansible/modules/network/bigswitch/bcf_switch.py E326
 lib/ansible/modules/network/bigswitch/bigmon_chain.py E325
@@ -1135,8 +1123,6 @@ lib/ansible/modules/network/cumulus/nclu.py E325
 lib/ansible/modules/network/edgeos/edgeos_facts.py E324
 lib/ansible/modules/network/enos/enos_command.py E323
 lib/ansible/modules/network/enos/enos_config.py E323
-lib/ansible/modules/network/enos/enos_config.py E325
-lib/ansible/modules/network/enos/enos_config.py E326
 lib/ansible/modules/network/enos/enos_facts.py E323
 lib/ansible/modules/network/enos/enos_facts.py E324
 lib/ansible/modules/network/eos/eos_facts.py E324
@@ -1224,7 +1210,6 @@ lib/ansible/modules/network/ios/ios_logging.py E324
 lib/ansible/modules/network/ios/ios_vlan.py E325
 lib/ansible/modules/network/ios/ios_vrf.py E325
 lib/ansible/modules/network/iosxr/iosxr_command.py E322
-lib/ansible/modules/network/iosxr/iosxr_config.py E325
 lib/ansible/modules/network/iosxr/iosxr_facts.py E324
 lib/ansible/modules/network/iosxr/iosxr_logging.py E324
 lib/ansible/modules/network/iosxr/iosxr_logging.py E326
@@ -1336,7 +1321,6 @@ lib/ansible/modules/network/nxos/nxos_igmp_interface.py E326
 lib/ansible/modules/network/nxos/nxos_igmp_snooping.py E325
 lib/ansible/modules/network/nxos/nxos_lldp.py E326
 lib/ansible/modules/network/nxos/nxos_logging.py E325
-lib/ansible/modules/network/nxos/nxos_ntp_auth.py E324
 lib/ansible/modules/network/nxos/nxos_ntp_options.py E324
 lib/ansible/modules/network/nxos/nxos_nxapi.py E325
 lib/ansible/modules/network/nxos/nxos_nxapi.py E326
@@ -1744,4 +1728,3 @@ lib/ansible/modules/web_infrastructure/jenkins_plugin.py E324
 lib/ansible/modules/web_infrastructure/jira.py E322
 lib/ansible/modules/web_infrastructure/jira.py E324
 lib/ansible/modules/web_infrastructure/jira.py E325
-lib/ansible/modules/web_infrastructure/taiga_issue.py E324

@@ -45,7 +45,7 @@ options:
         description:
             - Define what snapshot action the module would perform.
         required: true
-        choices: ['create','add','compare','delete']
+        choices: [ add, compare, create, delete, delete_all ]
     snapshot_name:
         description:
             - Snapshot name, to be used when C(action=create)
