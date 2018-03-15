@@ -340,7 +340,7 @@ class AzureRM(object):
              self.credentials.get('client_id') is not None:                
 
                 self.azure_credentials = self.acquire_token_with_username_password(self._authority,
-                                                      self._resource
+                                                      self._resource,
                                                       self.credeitnals['ad_user'],
                                                       self.credentials['password'],
                                                       self.credentials['client_id'])
