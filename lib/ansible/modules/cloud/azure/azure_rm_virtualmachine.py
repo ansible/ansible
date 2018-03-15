@@ -702,6 +702,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.data_disks = None
         self.plan = None
 
+        self.compute_models = None
+        self.network_models = None
+        self.storage_models = None
+
         self.results = dict(
             changed=False,
             actions=[],
@@ -731,6 +735,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         vm_dict = None
         image_reference = None
         custom_image = False
+
+        self.compute_models = self.compute_client.virtual_machines.models
+        self.network_models = self.network_client.network_interfaces.models
+        self.storage_models = self.storage_client.operations.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:

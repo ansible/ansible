@@ -177,6 +177,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
+        self.storage_models = self.storage_client.storage_accounts.models
+
         for key in self.storage_models.SkuName:
             self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 

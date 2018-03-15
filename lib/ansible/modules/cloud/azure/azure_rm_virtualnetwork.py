@@ -194,6 +194,8 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         self.dns_servers = None
         self.purge_dns_servers = None
 
+        self.network_models = None
+
         self.results = dict(
             changed=False,
             state=dict()
@@ -208,6 +210,8 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.network_models = self.network_client.virtual_networks.models
 
         self.results['check_mode'] = self.check_mode
 

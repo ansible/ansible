@@ -34,7 +34,7 @@ AZURE_COMMON_ARGS = dict(
     password=dict(type='str', no_log=True),
     cloud_environment=dict(type='str'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
-    api_profile=dict(type='str', default='latest')
+    api_profile=dict(type='str', default='latest', choices=['latest', '2017-03-09-profile'])
     # debug=dict(type='bool', default=False),
 )
 
@@ -56,7 +56,7 @@ AZURE_API_PROFILES = {
     'latest': {
         'ContainerInstanceManagementClient': '2018-02-01-preview',
         'ComputeManagementClient': dict(
-            default_api_version='2017-12-01',
+            default_api_version='2017-03-30',
             resource_skus='2017-09-01',
             disks='2017-03-30',
             snapshots='2017-03-30',
@@ -864,22 +864,15 @@ class AzureRMModuleBase(object):
         self.log('Getting storage client...')
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._storage_client
-
-    @property
-    def storage_models(self):
-        self.log('Getting storage models...')
-        return StorageManagementClient.models("2017-10-01")
 
     @property
     def network_client(self):
         self.log('Getting network client')
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-06-01')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._network_client
 
     @property
@@ -892,28 +885,16 @@ class AzureRMModuleBase(object):
         self.log('Getting resource manager client')
         if not self._resource_client:
             self._resource_client = self.get_mgmt_svc_client(ResourceManagementClient,
-                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                             api_version='2017-05-10')
+                                                             base_url=self._cloud_environment.endpoints.resource_manager)
         return self._resource_client
-
-    @property
-    def rm_models(self):
-        self.log("Getting resource manager models")
-        return ResourceManagementClient.models("2017-05-10")
 
     @property
     def compute_client(self):
         self.log('Getting compute client')
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
-                                                            base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-03-30')
+                                                            base_url=self._cloud_environment.endpoints.resource_manager)
         return self._compute_client
-
-    @property
-    def compute_models(self):
-        self.log("Getting compute models")
-        return ComputeManagementClient.models("2017-03-30")
 
     @property
     def dns_client(self):

@@ -178,7 +178,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase, HAS_AZURE
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.dns.models import Zone, RecordSet, ARecord, AaaaRecord, MxRecord, NsRecord, PtrRecord, SrvRecord, TxtRecord, CnameRecord, SoaRecord
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -216,18 +215,6 @@ RECORD_ARGSPECS = dict(
     # FUTURE: ensure all record types are supported (see https://github.com/Azure/azure-sdk-for-python/tree/master/azure-mgmt-dns/azure/mgmt/dns/models)
 )
 
-RECORDSET_VALUE_MAP = dict(
-    A=dict(attrname='arecords', classobj=ARecord, is_list=True),
-    AAAA=dict(attrname='aaaa_records', classobj=AaaaRecord, is_list=True),
-    CNAME=dict(attrname='cname_record', classobj=CnameRecord, is_list=False),
-    MX=dict(attrname='mx_records', classobj=MxRecord, is_list=True),
-    NS=dict(attrname='ns_records', classobj=NsRecord, is_list=True),
-    PTR=dict(attrname='ptr_records', classobj=PtrRecord, is_list=True),
-    SRV=dict(attrname='srv_records', classobj=SrvRecord, is_list=True),
-    TXT=dict(attrname='txt_records', classobj=TxtRecord, is_list=True),
-    # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
-) if HAS_AZURE else {}
-
 
 class AzureRMRecordSet(AzureRMModuleBase):
 
@@ -255,8 +242,22 @@ class AzureRMRecordSet(AzureRMModuleBase):
             changed=False
         )
 
+        self.models = self.dns_client.record_sets.models
+
         # first-pass arg validation so we can get the record type- skip exec_module
         super(AzureRMRecordSet, self).__init__(self.module_arg_spec, required_if=required_if, supports_check_mode=True, skip_exec=True)
+
+        RECORDSET_VALUE_MAP = dict(
+            A=dict(attrname='arecords', classobj=self.models.ARecord, is_list=True),
+            AAAA=dict(attrname='aaaa_records', classobj=self.models.AaaaRecord, is_list=True),
+            CNAME=dict(attrname='cname_record', classobj=self.models.CnameRecord, is_list=False),
+            MX=dict(attrname='mx_records', classobj=self.models.MxRecord, is_list=True),
+            NS=dict(attrname='ns_records', classobj=self.models.NsRecord, is_list=True),
+            PTR=dict(attrname='ptr_records', classobj=self.models.PtrRecord, is_list=True),
+            SRV=dict(attrname='srv_records', classobj=self.models.SrvRecord, is_list=True),
+            TXT=dict(attrname='txt_records', classobj=self.models.TxtRecord, is_list=True),
+            # FUTURE: add missing record types from https://github.com/Azure/azure-sdk-for-python/blob/master/azure-mgmt-dns/azure/mgmt/dns/models/record_set.py
+        ) if HAS_AZURE else {}
 
         # look up the right subspec and metadata
         record_subspec = RECORD_ARGSPECS.get(self.module.params['record_type'])
@@ -333,7 +334,7 @@ class AzureRMRecordSet(AzureRMModuleBase):
 
                 record_set_args[self.record_type_metadata['attrname']] = records_to_create_or_update
 
-                record_set = RecordSet(**record_set_args)
+                record_set = self.models.RecordSet(**record_set_args)
 
                 rsout = self.dns_client.record_sets.create_or_update(self.resource_group, self.zone_name, self.relative_name, self.record_type, record_set)
 

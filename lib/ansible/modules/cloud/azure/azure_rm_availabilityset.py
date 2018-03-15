@@ -112,6 +112,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from azure.mgmt.compute import ComputeManagementClient
 except ImportError:
     # This is handled in azure_rm_common
     pass
@@ -184,6 +185,9 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         self.state = None
         self.warning = False
 
+        self.client = None
+        self.models = None
+
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMAvailabilitySet, self).__init__(derived_arg_spec=self.module_arg_spec,
@@ -195,6 +199,10 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.client = self.get_mgmt_svc_client(ComputeManagementClient,
+                                               base_url=self._cloud_environment.endpoints.resource_manager)
+        self.models = self.client.availability_sets.models
 
         resource_group = None
         response = None
@@ -257,17 +265,17 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         '''
         self.log("Creating availabilityset {0}".format(self.name))
         try:
-            params_sku = self.compute_models.Sku(
+            params_sku = self.models.Sku(
                 name=self.sku
             )
-            params = self.compute_models.AvailabilitySet(
+            params = self.models.AvailabilitySet(
                 location=self.location,
                 tags=self.tags,
                 platform_update_domain_count=self.platform_update_domain_count,
                 platform_fault_domain_count=self.platform_fault_domain_count,
                 sku=params_sku
             )
-            response = self.compute_client.availability_sets.create_or_update(self.resource_group, self.name, params)
+            response = self.client.availability_sets.create_or_update(self.resource_group, self.name, params)
         except CloudError as e:
             self.log('Error attempting to create the availability set.')
             self.fail("Error creating the availability set: {0}".format(str(e)))
@@ -281,7 +289,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         '''
         self.log("Deleting availabilityset {0}".format(self.name))
         try:
-            response = self.compute_client.availability_sets.delete(self.resource_group, self.name)
+            response = self.client.availability_sets.delete(self.resource_group, self.name)
         except CloudError as e:
             self.log('Error attempting to delete the availability set.')
             self.fail("Error deleting the availability set: {0}".format(str(e)))
@@ -296,7 +304,7 @@ class AzureRMAvailabilitySet(AzureRMModuleBase):
         self.log("Checking if the availabilityset {0} is present".format(self.name))
         found = False
         try:
-            response = self.compute_client.availability_sets.get(self.resource_group, self.name)
+            response = self.client.availability_sets.get(self.resource_group, self.name)
             found = True
         except CloudError as e:
             self.log('Did not find the Availability set.')

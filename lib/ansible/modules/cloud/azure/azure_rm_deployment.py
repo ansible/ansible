@@ -379,8 +379,6 @@ except ImportError as exc:
 try:
     from itertools import chain
     from azure.common.exceptions import CloudError
-    from azure.mgmt.resource.resources import ResourceManagementClient
-    from azure.mgmt.network import NetworkManagementClient
 
 except ImportError:
     # This is handled in azure_rm_common
@@ -423,6 +421,8 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         self.wait_for_deployment_polling_period = None
         self.tags = None
 
+        self.rm_models = None
+
         self.results = dict(
             deployment=dict(),
             changed=False,
@@ -437,6 +437,8 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
+
+        self.rm_models = self.rm_client.resources.models
 
         if self.state == 'present':
             deployment = self.deploy_template()

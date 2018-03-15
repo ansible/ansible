@@ -539,6 +539,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
         self.client = None  # type: azure.mgmt.network.NetworkManagementClient
         self.nsg_models = None  # type: azure.mgmt.network.models
 
+        self.network_models = None
+
         self.results = dict(
             changed=False,
             state=dict()
@@ -559,6 +561,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
 
         changed = False
         results = dict()
+
+        self.network_models = self.network_client.network_security_groups.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:

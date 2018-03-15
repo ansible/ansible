@@ -208,6 +208,8 @@ class AzureRMVMExtension(AzureRMModuleBase):
         self.protected_settings = None
         self.state = None
 
+        self.compute_models = None
+
         self.results = dict(changed=False, state=dict())
 
         super(AzureRMVMExtension, self).__init__(derived_arg_spec=self.module_arg_spec,
@@ -223,6 +225,8 @@ class AzureRMVMExtension(AzureRMModuleBase):
         resource_group = None
         response = None
         to_be_updated = False
+
+        self.compute_models = self.compute_client.virtual_machine_extensions.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:

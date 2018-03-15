@@ -160,6 +160,8 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         self.allocation_method = None
         self.domain_name = None
 
+        self.network_models = None
+
         self.results = dict(
             changed=False,
             state=dict()
@@ -176,6 +178,8 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
         results = dict()
         changed = False
         pip = None
+
+        self.network_models = self.network_client.public_ip_addresses.models
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
