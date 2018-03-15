@@ -61,25 +61,39 @@ If (-not (Test-Path -Path $src)) {
     Fail-Json -obj $result -message "Cannot find file or directory: '$src' as it does not exist"
 }
 
+#Prepare Invoke-Pester parameters depending of the Pester's version.
+#Invoke-Pester should not ouptut 
+If ($result.pester_version -ge "4.0.0") {
+    $Parameters = @{
+        "show" = "none"
+        "PassThru" = $True
+    }
+} else {
+    $Parameters = @{
+        "quiet" = $True
+        "PassThru" = $True
+    }
+}
+
 # Run Pester tests
 If (Test-Path -Path $src -PathType Leaf) {
     Try {
         # Run Pester tests with a specific file
         If (-not $check_mode) {
-            $Pester_result = Invoke-Pester $src -PassThru
+            $Pester_result = Invoke-Pester $src @Parameters
         } else {
             $Pester_result = "Run pester test in the file: $src"
         }
     }
     Catch {
-        Fail-Json -obj $result -message $_.Exception.Message
+        Fail-Json -obj $result -message $_.Exception
     }
 } else {
     $files = Get-ChildItem -Path $src | Where-Object {$_.extension -eq ".ps1"}
     Try {
         # Run Pester tests against all the .ps1 file in the local folder
         If (-not $check_mode) {
-            $Pester_result = Invoke-Pester -Script $files.FullName -PassThru
+            $Pester_result = Invoke-Pester -Script $files.FullName @Parameters
         } else {
             $Pester_result = "Run pester test(s) who are in the folder: $src"
         } 
