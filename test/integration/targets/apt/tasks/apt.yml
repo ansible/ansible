@@ -162,6 +162,29 @@
         - "not apt_result.changed"
         - "apt_result.failed"
 
+# https://github.com/ansible/ansible/issues/23155
+- name: create a repo file
+  copy:
+    dest: /etc/apt/sources.list.d/non-existing.list
+    content: deb http://ppa.launchpad.net/non-existing trusty main
+
+- name: test for sane error message
+  apt:
+    update_cache: yes
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify sane error message
+  assert:
+    that:
+      - "'E:Failed to fetch' in apt_result['msg']"
+      - "'403' in apt_result['msg']"
+
+- name: Clean up
+  file:
+    name: /etc/apt/sources.list.d/non-existing.list
+    state: absent
+
 - name: autoclean during install
   apt: pkg=hello state=present autoclean=yes
 
