@@ -74,6 +74,12 @@ options:
     type: bool
     default: 'no'
     version_added: '2.4'
+  lstrip_blocks:
+    description:
+      - If this is set to True leading spaces and tabs are stripped from the start of a line to a block.
+    type: bool
+    default: 'no'
+    version_added: '2.6'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
