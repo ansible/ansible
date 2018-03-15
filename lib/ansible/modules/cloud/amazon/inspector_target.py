@@ -32,6 +32,9 @@ options:
     description:
       - Tags of the EC2 instances to be added to the assessment target.
       - Required if C(state=present).
+extends_documentation_fragment:
+  - aws
+  - ec2
 requirements:
   - boto3
   - botocore
@@ -93,7 +96,10 @@ updated_at:
   sample: "2018-01-29T13:48:51.958000+00:00"
 '''
 
-from botocore.exceptions import ClientError, ValidationError
+try:
+    from botocore.exceptions import ClientError, ValidationError
+except ImportError:
+    pass  # Handled AnsibleAWSModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
