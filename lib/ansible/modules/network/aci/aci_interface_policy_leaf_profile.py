@@ -14,12 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_leaf_profile
-short_description: Manage Fabric interface policy leaf profiles on Cisco ACI fabrics (infra:AccPortP)
+short_description: Manage fabric interface policy leaf profiles (infra:AccPortP)
 description:
-- Manage Fabric interface policy leaf profiles on Cisco ACI fabrics.
+- Manage fabric interface policy leaf profiles on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(infra:AccPortP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:AccPortP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

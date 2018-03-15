@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_ep_retention_policy
-short_description: Manage End Point (EP) retention protocol policies on Cisco ACI fabrics (fv:EpRetPol)
+short_description: Manage End Point (EP) retention protocol policies (fv:EpRetPol)
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information from the internal APIC class I(fv:EpRetPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(fv:EpRetPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'

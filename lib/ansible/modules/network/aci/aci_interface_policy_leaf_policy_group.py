@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_leaf_policy_group
-short_description: Add Fabric Interface Policy Leaf Policy Groups on Cisco ACI fabrics.
+short_description: Manage fabric interface policy leaf policy groups (infra:AccBndlGrp, infra:AccPortGrp)
 description:
-- Add Fabric Interface Policy Leaf Policy Groups on Cisco ACI fabrics.
+- Manage fabric interface policy leaf policy groups on Cisco ACI fabrics.
 notes:
 - When using the module please select the appropriate link_aggregation_type (lag_type).
   C(link) for Port Channel(PC), C(node) for Virtual Port Channel(VPC) and C(leaf) for Leaf Access Port Policy Group.
-- More information from the internal APIC class I(infra:AccBndlGrp), I(infra:AccPortGrp) at
-  U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information about the internal APIC classes B(infra:AccBndlGrp) and B(infra:AccPortGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_aep_to_domain
-short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics (infra:RsDomP)
+short_description: Bind AEPs to Physical or Virtual Domains (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
 notes:
 - The C(aep) and C(domain) parameters should exist before using this module.
   The M(aci_aep) and M(aci_domain) can be used for these.
-- More information from the internal APIC class I(infra:RsDomP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:RsDomP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

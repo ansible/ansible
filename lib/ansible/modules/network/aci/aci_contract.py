@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract
-short_description: Manage contract resources on Cisco ACI fabrics (vz:BrCP)
+short_description: Manage contract resources (vz:BrCP)
 description:
 - Manage Contract resources on Cisco ACI fabrics.
 notes:
@@ -21,8 +21,8 @@ notes:
   Contract Subjects can still be removed using this module.
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information from the internal APIC class I(vz:BrCP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(vz:BrCP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'

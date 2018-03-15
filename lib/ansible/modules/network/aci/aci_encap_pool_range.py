@@ -13,13 +13,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_encap_pool_range
-short_description: Manage encap ranges assigned to pools on Cisco ACI fabrics (fvns:EncapBlk, fvns:VsanEncapBlk)
+short_description: Manage encap ranges assigned to pools (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
 notes:
 - The C(pool) must exist in order to add or delete a range.
-- More information from the internal APIC class I(fvns:EncapBlk) and I(fvns:VsanEncapBlk) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'

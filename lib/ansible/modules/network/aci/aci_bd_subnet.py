@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_bd_subnet
-short_description: Manage Subnets on Cisco ACI fabrics (fv:Subnet)
+short_description: Manage Subnets (fv:Subnet)
 description:
 - Manage Subnets on Cisco ACI fabrics.
 notes:
@@ -21,8 +21,8 @@ notes:
   is required when the state is C(absent) or C(present).
 - The C(tenant) and C(bd) used must exist before using this module in your playbook.
   The M(aci_tenant) module and M(aci_bd) can be used for these.
-- More information from the internal APIC class I(fv:Subnet) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(fv:Subnet) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

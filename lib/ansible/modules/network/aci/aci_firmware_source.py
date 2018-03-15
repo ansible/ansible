@@ -14,15 +14,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_firmware_source
-short_description: Manage firmware image sources on Cisco ACI fabrics (firmware:OSource)
+short_description: Manage firmware image sources (firmware:OSource)
 description:
 - Manage firmware image sources on Cisco ACI fabrics.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
 notes:
-- More information from the internal APIC class I(firmware:OSource) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(firmware:OSource) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   source:
     description:

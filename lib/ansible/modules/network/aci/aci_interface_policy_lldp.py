@@ -13,12 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_lldp
-short_description: Manage LLDP interface policies on Cisco ACI fabrics (lldp:IfPol)
+short_description: Manage LLDP interface policies (lldp:IfPol)
 description:
 - Manage LLDP interface policies on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class I(lldp:IfPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(lldp:IfPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -41,7 +41,6 @@ options:
   transmit_state:
     description:
     - Enable or Disable Transmit state.
-    required: false
     choices: [ disabled, enabled ]
     default: enabled
   state:

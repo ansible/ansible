@@ -13,15 +13,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_l2
-short_description: Manage Layer 2 interface policies on Cisco ACI fabrics (l2:IfPol)
+short_description: Manage Layer 2 interface policies (l2:IfPol)
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
 notes:
-- More information from the internal APIC class I(l2:IfPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(l2:IfPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 options:
   l2_policy:
     description:
