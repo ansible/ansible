@@ -30,8 +30,6 @@ options:
     description:
       description:
         - Description to use for the job template.
-      required: False
-      default: null
     job_type:
       description:
         - The job_type to use for the job template.
@@ -40,8 +38,6 @@ options:
     inventory:
       description:
         - Inventory to use for the job template.
-      required: False
-      default: null
     project:
       description:
         - Project to use for the job template.
@@ -53,88 +49,67 @@ options:
     machine_credential:
       description:
         - Machine_credential to use for the job template.
-      required: False
-      default: null
     cloud_credential:
       description:
         - Cloud_credential to use for the job template.
-      required: False
-      default: null
     network_credential:
       description:
         - The network_credential to use for the job template.
-      required: False
-      default: null
     forks:
       description:
         - The number of parallel or simultaneous processes to use while executing the playbook.
-      required: False
-      default: null
     limit:
       description:
         - A host pattern to further constrain the list of hosts managed or affected by the playbook
-      required: False
-      default: null
     verbosity:
       description:
         - Control the output level Ansible produces as the playbook runs.
-      required: False
       choices: ["verbose", "debug"]
-      default: null
     job_tags:
       description:
         - The job_tags to use for the job template.
-      required: False
-      default: null
     skip_tags:
       description:
         - The skip_tags to use for the job template.
-      required: False
-      default: null
     host_config_key:
       description:
         - Allow provisioning callbacks using this host config key.
-      required: False
-      default: null
     extra_vars_path:
       description:
         - Path to the C(extra_vars) YAML file.
-      required: False
-      default: null
     ask_extra_vars:
       description:
         - Prompt user for C(extra_vars) on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_tags:
       description:
         - Prompt user for job tags on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_job_type:
       description:
         - Prompt user for job type on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_inventory:
       description:
         - Propmt user for inventory on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_credential:
       description:
         - Prompt user for credential on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     become_enabled:
       description:
         - Activate privilege escalation.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

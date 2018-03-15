@@ -26,37 +26,28 @@ options:
   dest:
     description:
       - Path to the interfaces file
-    required: false
     default: /etc/network/interfaces
   iface:
     description:
       - Name of the interface, required for value changes or option remove
-    required: false
-    default: null
   option:
     description:
       - Name of the option, required for value changes or option remove
-    required: false
-    default: null
   value:
     description:
       - If I(option) is not presented for the I(interface) and I(state) is C(present) option will be added.
         If I(option) already exists and is not C(pre-up), C(up), C(post-up) or C(down), it's value will be updated.
         C(pre-up), C(up), C(post-up) and C(down) options can't be updated, only adding new options, removing existing
         ones or cleaning the whole option set are supported
-    required: false
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   state:
     description:
       - If set to C(absent) the option or section will be removed if present instead of created.
-    required: false
     default: "present"
     choices: [ "present", "absent" ]
 

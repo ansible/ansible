@@ -21,11 +21,9 @@ options:
   cdb_id:
     description:
       - The databases server UUID
-    default: null
   name:
     description:
       - Name to give to the database
-    default: null
   character_set:
     description:
       - Set of symbols and encodings

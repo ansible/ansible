@@ -43,7 +43,6 @@ options:
     version:
         description:
             - SNMP version.
-        required: false
         default: v2c
         choices: ['v2c', 'v3']
     v3:
@@ -53,38 +52,26 @@ options:
     community:
         description:
             - Community string or v3 username.
-        required: false
-        default: null
     udp:
         description:
             - UDP port number (0-65535).
-        required: false
-        default: null
     snmp_type:
         description:
             - type of message to send to host.
-        required: false
         default: trap
         choices: ['trap', 'inform']
     vrf:
         description:
             - VRF to use to source traffic to source.
-        required: false
-        default: null
     vrf_filter:
         description:
             - Name of VRF to filter.
-        required: false
-        default: null
     src_intf:
         description:
             - Source interface.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: true
         default: present
         choices: ['present','absent']
 '''

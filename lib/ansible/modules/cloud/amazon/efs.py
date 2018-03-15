@@ -27,53 +27,42 @@ options:
         description:
             - A boolean value that, if true, creates an encrypted file system. This can not be modfied after the file
               system is created.
-        required: false
-        default: false
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
         version_added: 2.5
     kms_key_id:
         description:
             - The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only
               required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for
               Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias or Key Alias ARN.
-        required: false
         version_added: 2.5
     purge_tags:
         description:
             - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter
               is not set then tags will not be modified.
-        required: false
-        default: yes
-        choices: [ 'yes', 'no' ]
+        type: bool
+        default: 'yes'
         version_added: 2.5
     state:
         description:
             - Allows to create, search and destroy Amazon EFS file system
-        required: false
         default: 'present'
         choices: ['present', 'absent']
     name:
         description:
             - Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
-        required: false
-        default: None
     id:
         description:
             - ID of Amazon EFS. Either name or ID required for delete.
-        required: false
-        default: None
     performance_mode:
         description:
             - File system's performance mode to use. Only takes effect during creation.
-        required: false
         default: 'general_purpose'
         choices: ['general_purpose', 'max_io']
     tags:
         description:
             - "List of tags of Amazon EFS. Should be defined as dictionary
               In case of 'present' state with list of tags and existing EFS (matched by 'name'), tags of EFS will be replaced with provided data."
-        required: false
-        default: None
     targets:
         description:
             - "List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes:
@@ -81,19 +70,15 @@ options:
                    - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
                    - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified
                This data may be modified for existing EFS using state 'present' and new list of mount targets."
-        required: false
-        default: None
     wait:
         description:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')
                In case of 'absent' state should wait for EFS 'deleted' life cycle state"
-        required: false
-        default: "no"
-        choices: ["yes", "no"]
+        type: bool
+        default: 'no'
     wait_timeout:
         description:
             - How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
-        required: false
         default: 0
 extends_documentation_fragment:
     - aws

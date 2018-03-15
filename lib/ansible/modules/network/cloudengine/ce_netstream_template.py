@@ -33,7 +33,6 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent']
     type:
@@ -45,32 +44,22 @@ options:
         description:
             - Configure the name of netstream record.
               The value is a string of 1 to 32 case-insensitive characters.
-        required: false
-        default: null
     match:
         description:
             - Configure flexible flow statistics template keywords.
-        required: false
-        default: null
         choices: ['destination-address', 'destination-port', 'tos', 'protocol', 'source-address', 'source-port']
     collect_counter:
         description:
             - Configure the number of packets and bytes that are included in the flexible flow statistics sent to NSC.
-        required: false
-        default: null
         choices: ['bytes', 'packets']
     collect_interface:
         description:
             - Configure the input or output interface that are included in the flexible flow statistics sent to NSC.
-        required: false
-        default: null
         choices: ['input', 'output']
     description:
         description:
             - Configure the description of netstream record.
               The value is a string of 1 to 80 case-insensitive characters.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''

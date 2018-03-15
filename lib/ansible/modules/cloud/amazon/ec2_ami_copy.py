@@ -39,41 +39,30 @@ options:
   name:
     description:
       - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
-    required: false
     default: "default"
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
-    required: false
-    default: null
     version_added: "2.2"
   kms_key_id:
     description:
       - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
-    required: false
-    default: null
     version_added: "2.2"
   wait:
     description:
       - Wait for the copied AMI to be in state 'available' before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - How long before wait gives up, in seconds. (As of 2.3 this option is deprecated. See boto3 Waiters)
-    required: false
     default: 1200
   tags:
     description:
       - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
 author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws

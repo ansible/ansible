@@ -15,7 +15,6 @@ options:
     project:
         description:
             - The Google Cloud Platform project to use.
-        default: null
     auth_kind:
         description:
             - The type of credential used.

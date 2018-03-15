@@ -30,8 +30,6 @@ options:
     description:
       description:
         - The description to use for the inventory.
-      required: False
-      default: null
     organization:
       description:
         - Organization the inventory belongs to.
@@ -39,12 +37,9 @@ options:
     variables:
       description:
         - Inventory variables. Use C(@) to get from file.
-      required: False
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

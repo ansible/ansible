@@ -66,7 +66,6 @@ options:
     - Password for the user account.
     - It is ignored for creating snmp users, but is required for creating non-snmp users.
     - For an existing user, this value will be used as the new password.
-    default: None
 
   role_name:
     description:

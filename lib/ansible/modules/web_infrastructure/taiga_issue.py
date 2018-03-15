@@ -26,7 +26,6 @@ options:
   taiga_host:
     description:
       - The hostname of the Taiga instance.
-    required: False
     default: https://api.taiga.io
   project:
     description:
@@ -43,42 +42,33 @@ options:
   priority:
     description:
       - The issue priority. Must exist previously.
-    required: False
     default: Normal
   status:
     description:
       - The issue status. Must exist previously.
-    required: False
     default: New
   severity:
     description:
       - The issue severity. Must exist previously.
-    required: False
     default: Normal
   description:
     description:
       - The issue description.
-    required: False
     default: ""
   attachment:
     description:
       - Path to a file to be attached to the issue.
-    required: False
-    default: None
   attachment_description:
     description:
       - A string describing the file to be attached to the issue.
-    required: False
     default: ""
   tags:
     description:
       - A lists of tags to be assigned to the issue.
-    required: False
     default: []
   state:
     description:
       - Whether the issue should be present or not.
-    required: False
     choices: ["present", "absent"]
     default: present
 author: Alejandro Guirao (@lekum)

@@ -30,13 +30,11 @@ options:
    description:
      description:
         - Description of the service
-     required: false
-     default: None
    enabled:
      description:
         - Is the service enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    service_type:
      description:
         - The type of service
@@ -49,7 +47,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

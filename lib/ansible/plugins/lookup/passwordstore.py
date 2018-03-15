@@ -23,21 +23,20 @@ DOCUMENTATION = """
         default: '~/.password-store'
       directory:
         description: directory of the password store
-        default: null
         env:
           - name: PASSWORD_STORE_DIR
       create:
         description: flag to create the password
-        type: boolean
-        default: False
+        type: bool
+        default: 'no'
       overwrite:
         description: flag to overwrite the password
-        type: boolean
-        default: False
+        type: bool
+        default: 'no'
       returnall:
         description: flag to return all the contents of the password store
-        type: boolean
-        default: False
+        type: bool
+        default: 'no'
       subkey:
         description: subkey to return
         default: password

@@ -36,7 +36,6 @@ options:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -46,8 +45,8 @@ options:
   active:
     description:
       - Specifies whether or not the configuration is active or deactivated
-    default: True
-    choices: [True, False]
+    type: bool
+    default: 'yes'
 requirements:
   - ncclient (>=v0.5.2)
 notes:

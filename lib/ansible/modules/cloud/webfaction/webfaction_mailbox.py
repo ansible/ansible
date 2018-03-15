@@ -39,12 +39,10 @@ options:
         description:
             - The password for the mailbox
         required: true
-        default: null
 
     state:
         description:
             - Whether the mailbox should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 

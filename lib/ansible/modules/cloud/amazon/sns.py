@@ -29,7 +29,6 @@ options:
   subject:
     description:
       - Subject line for email delivery.
-    required: false
   topic:
     description:
       - The topic you want to publish to.
@@ -37,46 +36,34 @@ options:
   email:
     description:
       - Message to send to email-only subscription
-    required: false
   sqs:
     description:
       - Message to send to SQS-only subscription
-    required: false
   sms:
     description:
       - Message to send to SMS-only subscription
-    required: false
   http:
     description:
       - Message to send to HTTP-only subscription
-    required: false
   https:
     description:
       - Message to send to HTTPS-only subscription
-    required: false
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: None
     aliases: ['ec2_secret_key', 'secret_key']
   aws_access_key:
     description:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
     aliases: ['ec2_access_key', 'access_key']
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
     aliases: ['aws_region', 'ec2_region']
   message_attributes:
     description:
       - Dictionary of message attributes. These are optional structured data entries to be sent along to the endpoint.
       - This is in AWS's distinct Name/Type/Value format; see example below.
-    required: false
-    default: None
   message_structure:
     description:
       - The payload format to use for the message.

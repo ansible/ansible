@@ -47,32 +47,26 @@ options:
         description:
             - MD5 String.
         required: true
-        default: null
     auth_type:
         description:
             - Whether the given md5string is in cleartext or
               has been encrypted. If in cleartext, the device
               will encrypt it before storing it.
-        required: false
         default: text
         choices: ['text', 'encrypt']
     trusted_key:
         description:
             - Whether the given key is required to be supplied by a time source
               for the device to synchronize to the time source.
-        required: false
-        default: false
-        choices: ['true', 'false']
+        choices: [ 'false', 'true' ]
+        default: 'false'
     authentication:
         description:
             - Turns NTP authentication on or off.
-        required: false
-        default: null
         choices: ['on', 'off']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

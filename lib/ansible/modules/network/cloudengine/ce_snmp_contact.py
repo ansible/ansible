@@ -34,11 +34,9 @@ options:
         description:
             - Contact information.
         required: true
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

@@ -32,28 +32,21 @@ options:
   db:
     description:
         - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
         - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
         - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
         - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
         - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.

@@ -25,59 +25,41 @@ options:
     description:
       - API key.
     required: true
-    default: null
   event:
     description:
       - The type of event to send, either annotation or deploy
     choices: ['annotation', 'deploy']
-    required: false
-    default: null
   revision_id:
     description:
       - The revision of the code that was deployed. Required for deploy events
-    required: false
-    default: null
   deployed_by:
     description:
       - The person or robot responsible for deploying the code
-    required: false
     default: "Ansible"
   deployed_to:
     description:
       - "The environment code was deployed to. (ie: development, staging, production)"
-    required: false
-    default: null
   repository:
     description:
       - The repository (or project) deployed
-    required: false
-    default: null
   msg:
     description:
       - The contents of the annotation message, in plain text.  Limited to 256 characters. Required for annotation.
-    required: false
-    default: null
   annotated_by:
     description:
       - The person or robot who the annotation should be attributed to.
-    required: false
     default: "Ansible"
   level:
     description:
       - one of INFO/WARN/ERROR, defaults to INFO if not supplied.  May affect display.
     choices: ['INFO', 'WARN', 'ERROR']
-    required: false
     default: 'INFO'
   instance_id:
     description:
       - id of an EC2 instance that this event should be attached to, which will limit the contexts where this event is shown
-    required: false
-    default: null
   event_epoch:
     description:
       - "Unix timestamp of where the event should appear in the timeline, defaults to now. Be careful with this."
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

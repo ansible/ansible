@@ -31,108 +31,76 @@ options:
   httphealthcheck_name:
     description:
       - the name identifier for the HTTP health check
-    required: false
-    default: null
   httphealthcheck_port:
     description:
       - the TCP port to use for HTTP health checking
-    required: false
     default: 80
   httphealthcheck_path:
     description:
       - the url path to use for HTTP health checking
-    required: false
     default: "/"
   httphealthcheck_interval:
     description:
       - the duration in seconds between each health check request
-    required: false
     default: 5
   httphealthcheck_timeout:
     description:
       - the timeout in seconds before a request is considered a failed check
-    required: false
     default: 5
   httphealthcheck_unhealthy_count:
     description:
       - number of consecutive failed checks before marking a node unhealthy
-    required: false
     default: 2
   httphealthcheck_healthy_count:
     description:
       - number of consecutive successful checks before marking a node healthy
-    required: false
     default: 2
   httphealthcheck_host:
     description:
       - host header to pass through on HTTP check requests
-    required: false
-    default: null
   name:
     description:
       - name of the load-balancer resource
-    required: false
-    default: null
   protocol:
     description:
       - the protocol used for the load-balancer packet forwarding, tcp or udp
-    required: false
     default: "tcp"
     choices: ['tcp', 'udp']
   region:
     description:
       - the GCE region where the load-balancer is defined
-    required: false
   external_ip:
     description:
       - the external static IPv4 (or auto-assigned) address for the LB
-    required: false
-    default: null
   port_range:
     description:
       - the port (range) to forward, e.g. 80 or 8000-8888 defaults to all ports
-    required: false
-    default: null
   members:
     description:
       - a list of zone/nodename pairs, e.g ['us-central1-a/www-a', ...]
-    required: false
     aliases: ['nodes']
   state:
     description:
       - desired state of the LB
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
-    aliases: []
-    required: false
   service_account_email:
     version_added: "1.6"
     description:
       - service account email
-    required: false
-    default: null
-    aliases: []
   pem_file:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
-    aliases: []
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    default: null
-    required: false
   project_id:
     version_added: "1.6"
     description:
       - your GCE project ID
-    required: false
-    default: null
-    aliases: []
 
 requirements:
     - "python >= 2.6"

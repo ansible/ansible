@@ -28,20 +28,15 @@ options:
     port:
         description:
             - Unique name or ID of a port.
-        required: false
-        default: null
     filters:
         description:
             - A dictionary of meta data to use for further filtering. Elements
               of this dictionary will be matched against the returned port
               dictionaries. Matching is currently limited to strings within
               the port dictionary, or strings within nested dictionaries.
-        required: false
-        default: null
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 extends_documentation_fragment: openstack
 '''
 

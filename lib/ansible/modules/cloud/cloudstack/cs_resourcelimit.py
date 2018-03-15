@@ -53,24 +53,17 @@ options:
     description:
       - Maximum number of the resource.
       - Default is unlimited C(-1).
-    required: false
     default: -1
     aliases: [ 'max' ]
   domain:
     description:
       - Domain the resource is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the resource is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the resource is related to.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 

@@ -28,19 +28,14 @@ options:
     description:
       - Name that has to be given to the key pair
     required: true
-    default: None
   public_key:
     description:
       - The public key that would be uploaded to nova and injected into VMs
         upon creation.
-    required: false
-    default: None
   public_key_file:
     description:
       - Path to local file containing ssh public key. Mutually exclusive
         with public_key.
-    required: false
-    default: None
   state:
     description:
       - Should the resource be present or absent.
@@ -49,8 +44,6 @@ options:
   availability_zone:
     description:
       - Ignored. Present for backwards compatibility
-    required: false
-requirements: []
 '''
 
 EXAMPLES = '''

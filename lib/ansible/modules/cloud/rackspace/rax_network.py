@@ -29,11 +29,9 @@ options:
   label:
     description:
      - Label (name) to give the network
-    default: null
   cidr:
     description:
      - cidr of the network being created
-    default: null
 author:
     - "Christopher H. Laco (@claco)"
     - "Jesse Keating (@j2sol)"

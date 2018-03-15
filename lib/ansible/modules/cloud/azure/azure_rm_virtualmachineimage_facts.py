@@ -29,8 +29,6 @@ options:
     name:
         description:
             - Only show results for a specific security group.
-        default: null
-        required: false
     location:
         description:
             - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a
@@ -39,23 +37,15 @@ options:
     publisher:
         description:
             - Name of an image publisher. List image offerings associated with a particular publisher.
-        default: null
-        required: false
     offer:
         description:
             - Name of an image offering. Combine with sku to see a list of available image versions.
-        default: null
-        required: false
     sku:
         description:
             - Image offering SKU. Combine with offer to see a list of available versions.
-        default: null
-        required: false
     version:
         description:
             - Specific version number of an image.
-        default: null
-        required: false
 
 extends_documentation_fragment:
     - azure

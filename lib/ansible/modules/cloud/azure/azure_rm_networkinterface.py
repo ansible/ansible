@@ -50,7 +50,6 @@ options:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     virtual_network_name:
         description:
             - Name or id of an existing virtual network with which the network interface will be associated. Required
@@ -65,7 +64,6 @@ options:
         aliases:
             - subnet
         required: true
-        default: null
     os_type:
         description:
             - Determines any rules to be added to a default security group. When creating a network interface, if no
@@ -95,7 +93,8 @@ options:
             - (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP
               address will be created. Set to false, if you do not want a public IP address automatically created.
             - This option will be deprecated in 2.9, use I(ip_configurations) instead.
-        default: true
+        type: bool
+        default: 'yes'
     public_ip_address_name:
         description:
             - (Deprecate) Name of an existing public IP address object to associate with the security group.
@@ -103,7 +102,6 @@ options:
         aliases:
             - public_ip_address
             - public_ip_name
-        default: null
     public_ip_allocation_method:
         description:
             - (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created. The allocation
@@ -146,7 +144,8 @@ options:
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
-                default: False
+                type: bool
+                default: 'no'
         version_added: 2.5
     security_group_name:
         description:
@@ -154,13 +153,11 @@ options:
               default security group will be created.
         aliases:
             - security_group
-        default: null
     open_ports:
         description:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
-        default: null
 extends_documentation_fragment:
     - azure
     - azure_tags

@@ -29,13 +29,9 @@ options:
     name:
         description:
             - Limit results to a specific resource group.
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure

@@ -30,39 +30,34 @@ options:
    network:
      description:
         - The name or ID of a neutron external network or a nova pool name.
-     required: false
    floating_ip_address:
      description:
         - A floating IP address to attach or to detach. Required only if I(state)
           is absent. When I(state) is present can be used to specify a IP address
           to attach.
-     required: false
    reuse:
      description:
         - When I(state) is present, and I(floating_ip_address) is not present,
           this parameter can be used to specify whether we should try to reuse
           a floating IP address already allocated to the project.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    fixed_address:
      description:
         - To which fixed IP of server the floating IP address should be
           attached to.
-     required: false
    nat_destination:
      description:
         - The name or id of a neutron private network that the fixed IP to
           attach floating IP is on
-     required: false
-     default: None
      aliases: ["fixed_network", "internal_network"]
      version_added: "2.3"
    wait:
      description:
         - When attaching a floating IP address, specify whether we should
           wait for it to appear as attached.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    timeout:
      description:
         - Time to wait for an IP address to appear as attached. See wait.
@@ -72,19 +67,17 @@ options:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
-     required: false
      default: present
    purge:
      description:
         - When I(state) is absent, indicates whether or not to delete the floating
           IP completely, or only detach it from the server. Default is to detach only.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.1"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements: ["shade"]
 '''
 

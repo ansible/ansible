@@ -26,36 +26,28 @@ options:
     description:
         - present to ensure resource is created.
         - absent to remove resource
-    required: false
     default: present
     choices: [ "present", "absent"]
   name:
     description:
         - name of the vgw to be created or deleted
-    required: false
   type:
     description:
         - type of the virtual gateway to be created
-    required: false
     choices: [ "ipsec.1" ]
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
-    required: false
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
-    required: false
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
-    required: false
     default: 320
   tags:
     description:
         - dictionary of resource tags
-    required: false
-    default: null
     aliases: [ "resource_tags" ]
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:

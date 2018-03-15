@@ -34,8 +34,8 @@ options:
         attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   auth_pass:
     description:
       - B(Deprecated)
@@ -47,7 +47,6 @@ options:
         on the remote device.  If I(authorize) is false, then this argument
         does nothing. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    default: none
   provider:
     description:
       - B(Deprecated)
@@ -56,7 +55,6 @@ options:
       - For more information please see the L(EOS Platform Options guide, ../network/user_guide/platform_eos.html).
       - HORIZONTALLINE
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -84,7 +82,6 @@ options:
             the remote device.  This is a common argument used for either I(cli)
             or I(eapi) transports. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-        default: null
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
@@ -104,15 +101,14 @@ options:
             attempt to execute all commands in non-privileged mode. If the value
             is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-        default: no
-        choices: ['yes', 'no']
+        type: bool
+        default: 'no'
       auth_pass:
         description:
           - Specifies the password to use if required to enter privileged mode
             on the remote device.  If I(authorize) is false, then this argument
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-        default: none
       transport:
         description:
           - Configures the transport connection to use when connecting to the
@@ -127,19 +123,19 @@ options:
           - Configures the I(transport) to use SSL if set to true only when the
             C(transport=eapi).  If the transport
             argument is not eapi, this value is ignored.
-        default: yes
-        choices: ['yes', 'no']
+        type: bool
+        default: 'yes'
       validate_certs:
         description:
           - If C(no), SSL certificates will not be validated. This should only be used
             on personally controlled sites using self-signed certificates.  If the transport
             argument is not eapi, this value is ignored.
-        choices: ['yes', 'no']
+        type: bool
       use_proxy:
         description:
           - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
         version_added: "2.5"
 
 notes:

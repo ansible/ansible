@@ -40,25 +40,19 @@ options:
     description:
       - ID of the role.
       - If provided, C(id) is used as key.
-    required: false
-    default: null
     aliases: [ 'uuid' ]
   role_type:
     description:
       - Type of the role.
       - Only considered for creation.
-    required: false
     default: User
     choices: [ 'User', 'DomainAdmin', 'ResourceAdmin', 'Admin' ]
   description:
     description:
       - Description of the role.
-    required: false
-    default: null
   state:
     description:
       - State of the role.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack

@@ -28,39 +28,25 @@ options:
         description:
             - Active Directory username. Use when authenticating with an Active Directory user rather than service
               principal.
-        required: false
-        default: null
     password:
         description:
             - Active Directory user password. Use when authenticating with an Active Directory user rather than service
               principal.
-        required: false
-        default: null
     profile:
         description:
             - Security profile found in ~/.azure/credentials file.
-        required: false
-        default: null
     subscription_id:
         description:
             - Your Azure subscription Id.
-        required: false
-        default: null
     client_id:
         description:
             - Azure client ID. Use when authenticating with a Service Principal.
-        required: false
-        default: null
     secret:
         description:
             - Azure client secret. Use when authenticating with a Service Principal.
-        required: false
-        default: null
     tenant:
         description:
             - Azure tenant ID. Use when authenticating with a Service Principal.
-        required: false
-        default: null
     cloud_environment:
         description:
             - For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, C(AzureChinaCloud),
@@ -74,7 +60,6 @@ options:
               when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing C(ignore). Can also be
               set via credential file profile or the C(AZURE_CERT_VALIDATION) environment variable.
         choices: [validate, ignore]
-        default: null
         version_added: 2.5
     auth_source:
         description:

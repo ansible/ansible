@@ -34,31 +34,25 @@ options:
             - Name of port to manage on the bridge
     tag:
         version_added: 2.2
-        required: false
         description:
             - VLAN tag for this port. Must be a value between
               0 and 4095.
     state:
-        required: false
         default: "present"
         choices: [ present, absent ]
         description:
             - Whether the port should exist
     timeout:
-        required: false
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
     external_ids:
         version_added: 2.0
-        required: false
         default: {}
         description:
             - Dictionary of external_ids applied to a port.
     set:
         version_added: 2.0
-        required: false
-        default: None
         description:
             - Set a single property on a port.
 '''

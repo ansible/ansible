@@ -30,8 +30,6 @@ options:
     description:
       description:
         - The description to use for the host.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the host should be made a member of.
@@ -39,17 +37,16 @@ options:
     enabled:
       description:
         - If the host should be enabled.
-      required: False
-      default: True
+      type: bool
+      default: 'yes'
     variables:
       description:
         - Variables to use for the host. Use C(@) for a file.
     state:
       description:
         - Desired state of the resource.
-      required: False
-      default: "present"
       choices: ["present", "absent"]
+      default: "present"
 extends_documentation_fragment: tower
 '''
 

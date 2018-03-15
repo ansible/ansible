@@ -30,8 +30,6 @@ options:
         in the device run-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   src:
     description:
@@ -40,8 +38,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -49,16 +45,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -67,7 +59,6 @@ options:
         If match is set to I(none), the module will not attempt to
         compare the source configuration with the running
         configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'none']
   backup:
@@ -77,9 +68,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
   running_config:
     description:
       - The module, by default, will connect to the remote device and
@@ -89,17 +79,14 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
     aliases: ['config']
   save:
     description:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
     type: bool
+    default: 'no'
   diff_against:
     description:
       - When using the C(ansible-playbook --diff) command line argument
@@ -110,7 +97,6 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
-    required: false
     choices: ['intended', 'running']
   diff_ignore_lines:
     description:
@@ -118,7 +104,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
   intended_config:
     description:
       - The C(intended_config) provides the master configuration that
@@ -128,7 +113,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
 """
 
 EXAMPLES = """

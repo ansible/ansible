@@ -49,43 +49,31 @@ options:
   role_priority:
     description:
       - Role priority for device. Remember lower is better.
-    required: false
-    default: null
   system_priority:
     description:
       - System priority device.  Remember they must match between peers.
-    required: false
-    default: null
   pkl_src:
     description:
       - Source IP address used for peer keepalive link
-    required: false
-    default: null
   pkl_dest:
     description:
       - Destination (remote) IP address used for peer keepalive link
-    required: false
-    default: null
   pkl_vrf:
     description:
       - VRF used for peer keepalive link
-    required: false
     default: management
   peer_gw:
     description:
       - Enables/Disables peer gateway
-    required: false
-    choices: ['true','false']
+    type: bool
   auto_recovery:
     description:
       - Enables/Disables auto recovery
-    required: false
-    choices: ['true','false']
+    type: bool
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
-    required: false
-    default: null
+    type: bool
   state:
     description:
       - Manages desired state of the resource

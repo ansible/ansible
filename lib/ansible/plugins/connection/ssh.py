@@ -150,7 +150,6 @@ DOCUMENTATION = '''
             - name: ansible_ssh_private_key_file
 
       control_path:
-        default: null
         description:
           - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
           - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
@@ -170,12 +169,12 @@ DOCUMENTATION = '''
           - section: ssh_connection
             key: control_path_dir
       sftp_batch_mode:
-        default: True
+        default: 'yes'
         description: 'TODO: write it'
         env: [{name: ANSIBLE_SFTP_BATCH_MODE}]
         ini:
         - {key: sftp_batch_mode, section: ssh_connection}
-        type: boolean
+        type: bool
       scp_if_ssh:
         default: smart
         description:
@@ -187,12 +186,12 @@ DOCUMENTATION = '''
         - {key: scp_if_ssh, section: ssh_connection}
       use_tty:
         version_added: '2.5'
-        default: True
+        default: 'yes'
         description: add -tt to ssh commands to force tty allocation
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
         - {key: usetty, section: ssh_connection}
-        type: boolean
+        type: bool
         yaml: {key: connection.usetty}
 '''
 

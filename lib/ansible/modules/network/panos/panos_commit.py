@@ -42,23 +42,19 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     interval:
         description:
             - interval for checking commit job
-        required: false
         default: 0.5
     timeout:
         description:
             - timeout for commit job
-        required: false
-        default: None
     sync:
         description:
             - if commit should be synchronous
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

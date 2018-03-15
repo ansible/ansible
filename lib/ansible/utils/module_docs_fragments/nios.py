@@ -25,7 +25,6 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     suboptions:
       host:
         description:
@@ -46,20 +45,18 @@ options:
             the remote instance of NIOS.
           - Value can also be specified using C(INFOBLOX_PASSWORD) environment
             variable.
-        default: null
       ssl_verify:
         description:
           - Boolean value to enable or disable verifying SSL certificates
           - Value can also be specified using C(INFOBLOX_SSL_VERIFY) environment
             variable.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
       http_request_timeout:
         description:
           - The amount of time before to wait before receiving a response
           - Value can also be specified using C(INFOBLOX_HTTP_REQUEST_TIMEOUT) environment
             variable.
-        required: false
         default: 10
       max_retries:
         description:
@@ -67,14 +64,12 @@ options:
             is declared usable
           - Value can also be specified using C(INFOBLOX_MAX_RETRIES) environment
             variable.
-        required: false
         default: 3
       wapi_version:
         description:
           - Specifies the version of WAPI to use
           - Value can also be specified using C(INFOBLOX_WAP_VERSION) environment
             variable.
-        required: false
         default: 1.4
       max_results:
         description:
@@ -83,7 +78,6 @@ options:
             number of returned objects would exceed the setting.
           - Value can also be specified using C(INFOBLOX_MAX_RESULTS) environment
             variable.
-        required: false
         default: 1000
 notes:
   - "This module must be run locally, which can be achieved by specifying C(connection: local)."

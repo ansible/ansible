@@ -25,29 +25,21 @@ options:
     tower_host:
       description:
         - URL to your Tower instance.
-      required: False
-      default: null
     tower_username:
         description:
           - Username for your Tower instance.
-        required: False
-        default: null
     tower_password:
         description:
           - Password for your Tower instance.
-        required: False
-        default: null
     tower_verify_ssl:
         description:
           - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
             This should only be used on personally controlled sites using self-signed certificates.
-        required: False
-        default: True
+        type: bool
+        default: 'yes'
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
-      required: False
-      default: null
 
 
 requirements:

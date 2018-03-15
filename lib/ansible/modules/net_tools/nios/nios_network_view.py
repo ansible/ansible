@@ -36,22 +36,17 @@ options:
       - Allows for the configuration of Extensible Attributes on the
         instance of the object.  This argument accepts a set of key / value
         pairs for configuration.
-    required: false
-    default: null
   comment:
     description:
       - Configures a text string comment to be associated with the instance
         of this object.  The provided text string will be configured on the
         object instance.
-    required: false
-    default: null
   state:
     description:
       - Configures the intended state of the instance of the object on
         the NIOS server.  When this value is set to C(present), the object
         is configured on the device and when this value is set to C(absent)
         the value is removed (if necessary) from the device.
-    required: false
     default: present
     choices:
       - present

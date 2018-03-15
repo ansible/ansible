@@ -43,29 +43,20 @@ options:
   account:
     description:
       - Ensure the value for corresponding account.
-    required: false
-    default: null
   domain:
     description:
       - Domain the account is related to.
       - Only considered if C(account) is used.
-    required: false
     default: ROOT
   zone:
     description:
       - Ensure the value for corresponding zone.
-    required: false
-    default: null
   storage:
     description:
       - Ensure the value for corresponding storage pool.
-    required: false
-    default: null
   cluster:
     description:
       - Ensure the value for corresponding cluster.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 

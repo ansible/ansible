@@ -35,8 +35,6 @@ options:
    name:
      description:
        - A flavor name. Cannot be used with I(ram) or I(vcpus) or I(ephemeral).
-     required: false
-     default: None
    ram:
      description:
        - "A string used for filtering flavors based on the amount of RAM
@@ -51,31 +49,28 @@ options:
          prefix the amount of RAM with one of these acceptable range values:
          '<', '>', '<=', '>='. These values represent less than, greater than,
          less than or equal to, and greater than or equal to, respectively."
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    vcpus:
      description:
        - A string used for filtering flavors based on the number of virtual
          CPUs desired. Format is the same as the I(ram) parameter.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    limit:
      description:
        - Limits the number of flavors returned. All matching flavors are
          returned by default.
-     required: false
-     default: None
    ephemeral:
      description:
        - A string used for filtering flavors based on the amount of ephemeral
          storage. Format is the same as the I(ram) parameter
-     required: false
-     default: false
+     type: bool
+     default: 'no'
      version_added: "2.3"
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 extends_documentation_fragment: openstack
 '''
 

@@ -25,7 +25,6 @@ options:
   puppetmaster:
     description:
       - The hostname of the puppetmaster to contact.
-    default: None
   modulepath:
     description:
       - Path to an alternate location for puppet modules.

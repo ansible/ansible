@@ -41,8 +41,6 @@ options:
     custom_data:
         description:
             - Data which is made available to the virtual machine and used by e.g., cloud-init.
-        default: null
-        required: false
         version_added: "2.5"
     state:
         description:
@@ -66,7 +64,6 @@ options:
     restarted:
         description:
             - Use with state 'present' to restart a running VM.
-        default: false
     location:
         description:
             - Valid Azure location. Defaults to location of the resource group.
@@ -115,7 +112,6 @@ options:
     availability_set:
         description:
             - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
-        default: null
         version_added: "2.5"
     storage_account_name:
         description:
@@ -159,8 +155,6 @@ options:
     data_disks:
         description:
             - Describes list of data disks.
-        required: false
-        default: null
         version_added: "2.4"
         suboptions:
             lun:

@@ -50,13 +50,12 @@ options:
         on personally controlled sites using self-signed certificates.
         You can omit this option if the environment variable
         C(F5_VALIDATE_CERTS) is set.
-    default: yes
     type: bool
+    default: 'yes'
     version_added: 2.0
   provider:
     description:
       - A dict object containing connection details.
-    default: null
     version_added: 2.5
     suboptions:
       password:
@@ -88,8 +87,8 @@ options:
             on personally controlled sites using self-signed certificates.
             You can omit this option if the environment variable
             C(F5_VALIDATE_CERTS) is set.
-        default: yes
         type: bool
+        default: 'yes'
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
