@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
-        trim_blocks = self._task.args.get('trim_blocks', None)
+        trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
 
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
@@ -108,8 +108,7 @@ class ActionModule(ActionBase):
                     self._templar.environment.variable_start_string = variable_start_string
                 if variable_end_string is not None:
                     self._templar.environment.variable_end_string = variable_end_string
-                if trim_blocks is not None:
-                    self._templar.environment.trim_blocks = bool(trim_blocks)
+                self._templar.environment.trim_blocks = trim_blocks
 
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
