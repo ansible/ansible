@@ -35,7 +35,6 @@ AZURE_COMMON_ARGS = dict(
     cloud_environment=dict(type='str'),
     cert_validation_mode=dict(type='str', choices=['validate', 'ignore']),
     api_profile=dict(type='str', default='latest')
-    # msi_endpoint=dict(type='str')
     # debug=dict(type='bool', default=False),
 )
 
@@ -501,8 +500,9 @@ class AzureRMModuleBase(object):
                 subscription_client = SubscriptionClient(credentials)
                 subscription = next(subscription_client.subscriptions.list())
                 subscription_id = str(subscription.subscription_id)
-            except CLIError as exc:
-                self.fail("Failed to get MSI token. {0}".format(str(exc)))
+            except Exception as exc:
+                self.fail("Failed to get MSI token: {0}. "
+                          "Please check whether your machine enabled MSI or grant access to any subscription.".format(str(exc)))
         return {
             'credentials': credentials,
             'subscription_id': subscription_id

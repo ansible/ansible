@@ -85,6 +85,7 @@ options:
             - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
             - When set to C(msi), the host machine must be an azure resource which enabled MSI extension. You also need to set the C(subscription_id)
               or C(AZURE_SUBSCRIPTION_ID) environment variable to identify the subscription id if your MSI is granted more than one subscriptions.
+            - The C(msi) was added in Ansible 2.6.
         choices:
         - auto
         - cli
