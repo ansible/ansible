@@ -204,6 +204,7 @@ options:
       - Pass in a path to a file with environment variable (FOO=BAR).
         If a key value is present in both explicitly presented (i.e. as 'env')
         and in the environment file, the explicit value will override.
+        The file must be located on the target system.
         Requires docker-py >= 1.4.0.
     version_added: "2.1"
   dns:
