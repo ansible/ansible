@@ -88,8 +88,37 @@
 
   - assert: *false
 
-  - name: Ensure these VLANs are not being tagged on the trunk
+  - name: Remove full trunk vlan range 2-50
     ios_l2_interface: &no_tag
+      name: "{{ test_interface }}"
+      mode: trunk
+      trunk_vlans: 2-50
+      state: absent
+      provider: "{{ cli }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Remove full trunk vlan range 2-50
+    ios_l2_interface: *no_tag
+    register: result
+
+  - assert: *false
+
+  - name: Reconfigure interface trunk port and ensure 2-50 are being tagged
+    ios_l2_interface: *tag
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Reconfigure interface trunk port and ensure 2-50 are being tagged
+    ios_l2_interface: *tag
+    register: result
+
+  - assert: *false
+
+  - name: Remove partial trunk vlan range 30-4094 are removed
+    ios_l2_interface: &partial
       name: "{{ test_interface }}"
       mode: trunk
       trunk_vlans: 30-4094
@@ -99,8 +128,8 @@
 
   - assert: *true
 
-  - name: "no tag vlan Idempotence"
-    ios_l2_interface: *no_tag
+  - name: Check Idempotence Remove partial trunk vlan range 30-4094 are removed
+    ios_l2_interface: *partial
     register: result
 
   - assert: *false
