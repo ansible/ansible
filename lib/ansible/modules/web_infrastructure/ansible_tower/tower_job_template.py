@@ -52,6 +52,10 @@ options:
     cloud_credential:
       description:
         - Cloud_credential to use for the job template.
+    vault_credential:
+      description:
+        - Vault_credential to use for the job_template.
+      version_added: 2.6
     network_credential:
       description:
         - The network_credential to use for the job template.
@@ -175,6 +179,7 @@ def update_resources(module, p):
         'machine_credential': 'name',
         'network_credential': 'name',
         'cloud_credential': 'name',
+        'vault_credential': 'name',
     }
     for k, v in identity_map.items():
         try:
@@ -198,6 +203,7 @@ def main():
         playbook=dict(required=True),
         machine_credential=dict(),
         cloud_credential=dict(),
+        vault_credential=dict(),
         network_credential=dict(),
         forks=dict(type='int'),
         limit=dict(),
