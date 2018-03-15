@@ -994,7 +994,7 @@ def build_run_instance_spec(params, ec2=None):
 
     # IAM profile
     if params.get('instance_role'):
-        spec['IamInstanceProfile'] = dict(Arn=determine_iam_role(params.get('iam_profile')))
+        spec['IamInstanceProfile'] = dict(Arn=determine_iam_role(params.get('instance_role')))
 
     spec['InstanceType'] = params['instance_type']
     return spec
@@ -1267,11 +1267,10 @@ def pretty_instance(i):
     return instance
 
 
-def determine_iam_role(name_or_arn, iam):
+def determine_iam_role(name_or_arn):
     if re.match(r'^arn:aws:iam::\d+:instance-profile/[\w+=/,.@-]+$', name_or_arn):
         return name_or_arn
-    if iam is None:
-        iam = module.client('iam')
+    iam = module.client('iam')
     try:
         role = iam.get_instance_profile(InstanceProfileName=name_or_arn)
         return role['InstanceProfile']['Arn']
