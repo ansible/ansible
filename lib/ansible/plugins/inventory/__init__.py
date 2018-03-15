@@ -164,7 +164,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.templar = Templar(loader=loader)
 
     def verify_file(self, path):
-        ''' Verify if file is usable by this plugin, base does minimal accessability check
+        ''' Verify if file is usable by this plugin, base does minimal accessibility check
             :arg path: a string that was passed as an inventory source,
                  it normally is a path to a config file, but this is not a requirement,
                  it can also be parsed itself as the inventory data to process.
@@ -291,7 +291,7 @@ class Constructable(object):
                 self.inventory.set_variable(host, varname, composite)
 
     def _add_host_to_composed_groups(self, groups, variables, host, strict=False):
-        ''' helper to create complex groups for plugins based on jinaj2 conditionals, hosts that meet the conditional are added to group'''
+        ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
             self.templar.set_available_variables(variables)
