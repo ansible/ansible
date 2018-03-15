@@ -37,68 +37,54 @@ requirements:
   - python-ldap
 options:
   bind_dn:
-    required: false
-    default: null
     description:
       - A DN to bind with. If this is omitted, we'll try a SASL bind with
         the EXTERNAL mechanism. If this is blank, we'll use an anonymous
         bind.
   bind_pw:
-    required: false
-    default: null
     description:
       - The password to use with I(bind_dn).
   dn:
-    required: true
     description:
       - The DN of the entry to add or remove.
+    required: true
   attributes:
-    required: false
-    default: null
     description:
       - If I(state=present), attributes necessary to create an entry. Existing
         entries are never modified. To assert specific attribute values on an
         existing entry, use M(ldap_attr) module instead.
   objectClass:
-    required: false
-    default: null
     description:
       - If I(state=present), value or list of values to use when creating
         the entry. It can either be a string or an actual list of
         strings.
   params:
-    required: false
-    default: null
     description:
       - List of options which allows to overwrite any of the task or the
         I(attributes) options. To remove an option, set the value of the option
         to C(null).
   server_uri:
-    required: false
-    default: ldapi:///
     description:
       - A URI to the LDAP server. The default value lets the underlying
         LDAP client library look for a UNIX domain socket in its default
         location.
+    default: ldapi:///
   start_tls:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - If true, we'll use the START_TLS LDAP extension.
+    type: bool
+    default: 'no'
   state:
-    required: false
-    choices: [present, absent]
-    default: present
     description:
       - The target state of the entry.
+    choices: [present, absent]
+    default: present
   validate_certs:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - If C(no), SSL certificates will not be validated. This should only be
         used on sites using self-signed certificates.
+    type: bool
+    default: 'yes'
     version_added: "2.4"
 """
 

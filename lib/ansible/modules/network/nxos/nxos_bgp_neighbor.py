@@ -44,7 +44,6 @@ options:
     description:
       - Name of the VRF. The name 'default' is a valid VRF representing
         the global bgp.
-    required: false
     default: default
   neighbor:
     description:
@@ -54,82 +53,58 @@ options:
   description:
     description:
       - Description of the neighbor.
-    required: false
-    default: null
   connected_check:
     description:
       - Configure whether or not to check for directly connected peer.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   capability_negotiation:
     description:
       - Configure whether or not to negotiate capability with
         this neighbor.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   dynamic_capability:
     description:
       - Configure whether or not to enable dynamic capability.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   ebgp_multihop:
     description:
       - Specify multihop TTL for a remote peer. Valid values are
         integers between 2 and 255, or keyword 'default' to disable
         this property.
-    required: false
-    default: null
   local_as:
     description:
       - Specify the local-as number for the eBGP neighbor.
         Valid values are String or Integer in ASPLAIN or ASDOT notation,
         or 'default', which means not to configure it.
-    required: false
-    default: null
   log_neighbor_changes:
     description:
       - Specify whether or not to enable log messages for neighbor
         up/down event.
-    required: false
     choices: ['enable', 'disable', 'inherit']
-    default: null
   low_memory_exempt:
     description:
       - Specify whether or not to shut down this neighbor under
         memory pressure.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   maximum_peers:
     description:
       - Specify Maximum number of peers for this neighbor prefix
         Valid values are between 1 and 1000, or 'default', which does
         not impose the limit. Note that this parameter is accepted
         only on neighbors with address/prefix.
-    required: false
-    default: null
   pwd:
     description:
       - Specify the password for neighbor. Valid value is string.
-    required: false
-    default: null
   pwd_type:
     description:
       - Specify the encryption type the password will use. Valid values
         are '3des' or 'cisco_type_7' encryption or keyword 'default'.
-    required: false
     choices: ['3des', 'cisco_type_7', 'default']
-    default: null
   remote_as:
     description:
       - Specify Autonomous System Number of the neighbor.
         Valid values are String or Integer in ASPLAIN or ASDOT notation,
         or 'default', which means not to configure it.
-    required: false
-    default: null
   remove_private_as:
     description:
       - Specify the config to remove private AS number from outbound
@@ -137,53 +112,38 @@ options:
         'disable' to disable this config, 'all' to remove all
         private AS number, or 'replace-as', to replace the private
         AS number.
-    required: false
     choices: ['enable', 'disable', 'all', 'replace-as']
-    default: null
   shutdown:
     description:
       - Configure to administratively shutdown this neighbor.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   suppress_4_byte_as:
     description:
       - Configure to suppress 4-byte AS Capability.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   timers_keepalive:
     description:
       - Specify keepalive timer value. Valid values are integers
         between 0 and 3600 in terms of seconds, or 'default',
         which is 60.
-    required: false
-    default: null
   timers_holdtime:
     description:
       - Specify holdtime timer value. Valid values are integers between
         0 and 3600 in terms of seconds, or 'default', which is 180.
-    required: false
-    default: null
   transport_passive_only:
     description:
       - Specify whether or not to only allow passive connection setup.
         Valid values are 'true', 'false', and 'default', which defaults
         to 'false'. This property can only be configured when the
         neighbor is in 'ip' address format without prefix length.
-    required: false
-    choices: ['true','false']
-    default: null
+    type: bool
   update_source:
     description:
       - Specify source interface of BGP session and updates.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''

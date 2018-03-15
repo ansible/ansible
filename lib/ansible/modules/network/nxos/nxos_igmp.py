@@ -43,26 +43,19 @@ options:
         description:
             - Removes routes when the IGMP process is restarted. By default,
               routes are not flushed.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     enforce_rtr_alert:
         description:
             - Enables or disables the enforce router alert option check for
               IGMPv2 and IGMPv3 packets.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     restart:
         description:
             - Restarts the igmp process (using an exec config command).
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''

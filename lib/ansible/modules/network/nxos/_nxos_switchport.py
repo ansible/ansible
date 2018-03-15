@@ -47,45 +47,32 @@ options:
   interface:
     description:
       - Full name of the interface, i.e. Ethernet1/1.
-    required: true
-    default: null
   mode:
     description:
       - Mode for the Layer 2 port.
-    required: false
-    default: null
     choices: ['access','trunk']
   access_vlan:
     description:
       - If C(mode=access), used as the access VLAN ID.
-    required: false
-    default: null
   native_vlan:
     description:
       - If C(mode=trunk), used as the trunk native VLAN ID.
-    required: false
-    default: null
   trunk_vlans:
     description:
       - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
         from the trunk.
     aliases:
       - trunk_add_vlans
-    required: false
-    default: null
   state:
     description:
       - Manage the state of the resource.
-    required: false
     default:  present
     choices: ['present','absent', 'unconfigured']
   trunk_allowed_vlans:
     description:
       - if C(mode=trunk), these are the only VLANs that will be
         configured on the trunk, i.e. "2-10,15".
-    required: false
     version_added: 2.2
-    default: null
 '''
 
 EXAMPLES = '''

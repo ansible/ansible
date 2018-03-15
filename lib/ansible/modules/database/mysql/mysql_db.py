@@ -28,40 +28,33 @@ options:
       - name=all May only be provided if I(state) is C(dump) or C(import).
       - if name=all Works like --all-databases option for mysqldump (Added in 2.0)
     required: true
-    default: null
     aliases: [ db ]
   state:
     description:
       - The database state
-    required: false
     default: present
     choices: [ "present", "absent", "dump", "import" ]
   collation:
     description:
       - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
-    required: false
-    default: null
   encoding:
     description:
       - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci)
-    required: false
-    default: null
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz (Added in 2.0) compressed files are supported.
-    required: false
   single_transaction:
     description:
       - Execute the dump in a single transaction
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.1"
   quick:
     description:
       - Option used for dumping large tables
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     version_added: "2.1"
 author: "Ansible Core Team"
 requirements:

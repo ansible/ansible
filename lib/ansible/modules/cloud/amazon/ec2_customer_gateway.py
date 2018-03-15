@@ -37,8 +37,6 @@ options:
   bgp_asn:
     description:
       - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when state=present.
-    required: false
-    default: null
   ip_address:
     description:
       - Internet-routable IP address for customers gateway, must be a static address.
@@ -56,7 +54,6 @@ options:
   state:
     description:
       - Create or terminate the Customer Gateway.
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:

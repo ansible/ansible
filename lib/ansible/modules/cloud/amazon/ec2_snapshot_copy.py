@@ -28,29 +28,22 @@ options:
   description:
     description:
       - An optional human-readable string describing purpose of the new Snapshot.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination Snapshot should be encrypted.
-    required: false
-    default: False
+    type: bool
+    default: 'no'
   kms_key_id:
     description:
       - KMS key id used to encrypt snapshot. If not specified, defaults to EBS Customer Master Key (CMK) for that account.
-    required: false
-    default: null
   wait:
     description:
       - Wait for the copied Snapshot to be in 'Available' state before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   tags:
     description:
       - A hash/dictionary of tags to add to the new Snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
 author: "Deepak Kothandan <deepak.kdy@gmail.com>"
 extends_documentation_fragment:
     - aws

@@ -26,13 +26,11 @@ options:
   add_export_distributor:
     description:
       - Whether or not to add the export distributor to new C(rpm) repositories.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   feed:
     description:
       - Upstream feed URL to receive updates from.
-    required: false
-    default: null
   force_basic_auth:
     description:
       - httplib2, the library used by the M(uri) module only sends
@@ -40,15 +38,12 @@ options:
         request with a 401 status. Since some basic auth services do not
         properly send a 401, logins will fail. This option forces the sending of
         the Basic authentication header upon initial request.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
   importer_ssl_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
         This can be the file content or the path to the file.
-    required: false
-    default: null
   importer_ssl_client_cert:
     description:
       - Certificate used as the client certificate when synchronizing the
@@ -57,15 +52,11 @@ options:
         certificate. The specified file may be the certificate itself or a
         single file containing both the certificate and private key. This can be
         the file content or the path to the file.
-    required: false
-    default: null
   importer_ssl_client_key:
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
         the file content or the path to the file.
-    required: false
-    default: null
   name:
     description:
       - Name of the repo to add or remove. This correlates to repo-id in Pulp.
@@ -74,18 +65,13 @@ options:
     description:
       - Proxy url setting for the pulp repository importer. This is in the
         format scheme://host.
-    required: false
-    default: null
   proxy_port:
     description:
       - Proxy port setting for the pulp repository importer.
-    required: false
-    default: null
   publish_distributor:
     description:
       - Distributor to use when state is C(publish). The default is to
         publish all distributors.
-    required: false
   pulp_host:
     description:
       - URL of the pulp server to connect to.
@@ -94,7 +80,6 @@ options:
     description:
       - Relative URL for the local repository.
     required: true
-    default: null
   repo_type:
     description:
       - Repo plugin type to use (i.e. C(rpm), C(docker)).
@@ -102,19 +87,18 @@ options:
   serve_http:
     description:
       - Make the repo available over HTTP.
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   serve_https:
     description:
       - Make the repo available over HTTPS.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
   state:
     description:
       - The repo state. A state of C(sync) will queue a sync of the repo.
         This is asynchronous but not delayed like a scheduled sync. A state of
         C(publish) will use the repository's distributor to publish the content.
-    required: false
     default: present
     choices: [ "present", "absent", "sync", "publish" ]
   url_password:
@@ -122,24 +106,20 @@ options:
       - The password for use in HTTP basic authentication to the pulp API.
         If the I(url_username) parameter is not specified, the I(url_password)
         parameter will not be used.
-    required: false
   url_username:
     description:
       - The username for use in HTTP basic authentication to the pulp API.
-    required: false
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be
         used on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: [ "yes", "no" ]
   wait_for_completion:
     description:
       - Wait for asynchronous tasks to complete before returning.
-    required: false
+    type: bool
     default: 'no'
-    choices: [ "yes", "no" ]
 notes:
   - This module can currently only create distributors and importers on rpm
     repositories. Contributions to support other repo types are welcome.

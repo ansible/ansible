@@ -24,7 +24,6 @@ options:
   name:
     description:
       - Name of the databases server instance
-    default: null
   flavor:
     description:
       - flavor to use for the instance 1 to 6 (i.e. 512MB to 16GB)
@@ -53,8 +52,8 @@ options:
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

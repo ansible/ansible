@@ -39,7 +39,6 @@ options:
   cidr:
     description:
       - CIDR of the rule.
-    required: false
     default: '0.0.0.0/0'
   rule_position:
     description:
@@ -50,39 +49,28 @@ options:
     description:
       - Protocol of the rule
     choices: [ tcp, udp, icmp, all, by_number ]
-    required: false
     default: tcp
   protocol_number:
     description:
       - Protocol number from 1 to 256 required if C(protocol=by_number).
-    required: false
-    default: null
   start_port:
     description:
       - Start port for this rule.
       - Considered if C(protocol=tcp) or C(protocol=udp).
-    required: false
-    default: null
     aliases: [ port ]
   end_port:
     description:
       - End port for this rule.
       - Considered if C(protocol=tcp) or C(protocol=udp).
       - If not specified, equal C(start_port).
-    required: false
-    default: null
   icmp_type:
     description:
       - Type of the icmp message being sent.
       - Considered if C(protocol=icmp).
-    required: false
-    default: null
   icmp_code:
     description:
       - Error code for this icmp message.
       - Considered if C(protocol=icmp).
-    required: false
-    default: null
   vpc:
     description:
       - VPC the network ACL is related to.
@@ -90,14 +78,12 @@ options:
   traffic_type:
     description:
       - Traffic type of the rule.
-    required: false
     choices: [ ingress, egress ]
     default: ingress
     aliases: [ type ]
   action_policy:
     description:
       - Action policy of the rule.
-    required: false
     choices: [ allow, deny ]
     default: ingress
     aliases: [ action ]
@@ -105,41 +91,30 @@ options:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "If you want to delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases: [ tag ]
   domain:
     description:
       - Domain the VPC is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the VPC is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the VPC is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the VPC related to.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the network ACL rule.
-    required: false
     default: present
     choices: [ present, absent ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 

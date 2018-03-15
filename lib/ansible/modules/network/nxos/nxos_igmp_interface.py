@@ -56,77 +56,56 @@ options:
     version:
         description:
             - IGMP version. It can be 2 or 3.
-        required: false
-        default: null
         choices: ['2', '3']
     startup_query_interval:
         description:
             - Query interval used when the IGMP process starts up.
               The range is from 1 to 18000. The default is 31.
-        required: false
-        default: null
     startup_query_count:
         description:
             - Query count used when the IGMP process starts up.
               The range is from 1 to 10. The default is 2.
-        required: false
-        default: null
     robustness:
         description:
             - Sets the robustness variable. Values can range from 1 to 7.
               The default is 2.
-        required: false
-        default: null
     querier_timeout:
         description:
             - Sets the querier timeout that the software uses when deciding
               to take over as the querier. Values can range from 1 to 65535
               seconds. The default is 255 seconds.
-        required: false
-        default: null
     query_mrt:
         description:
             - Sets the response time advertised in IGMP queries.
               Values can range from 1 to 25 seconds. The default is 10 seconds.
-        required: false
-        default: null
     query_interval:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
               The default is 125 seconds.
-        required: false
-        default: null
     last_member_qrt:
         description:
             - Sets the query interval waited after sending membership reports
               before the software deletes the group state. Values can range
               from 1 to 25 seconds. The default is 1 second.
-        required: false
-        default: null
     last_member_query_count:
         description:
             - Sets the number of times that the software sends an IGMP query
               in response to a host leave message.
               Values can range from 1 to 5. The default is 2.
-        required: false
-        default: null
     group_timeout:
         description:
             - Sets the group membership timeout for IGMPv2.
               Values can range from 3 to 65,535 seconds.
               The default is 260 seconds.
-        required: false
-        default: null
     report_llg:
         description:
             - Configures report-link-local-groups.
               Enables sending reports for groups in 224.0.0.0/24.
               Reports are always sent for nonlink local groups.
               By default, reports are not sent for link local groups.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     immediate_leave:
         description:
             - Enables the device to remove the group entry from the multicast
@@ -135,34 +114,24 @@ options:
               IGMPv2 group memberships on a given IGMP interface because the
               device does not send group-specific queries.
               The default is disabled.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     oif_routemap:
         description:
             - Configure a routemap for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_prefix:
         description:
             - Configure a prefix for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_source:
         description:
             - Configure a source for static outgoing interface (OIF).
-        required: false
-        default: null
     restart:
         description:
             - Restart IGMP.
-        required: false
-        choices: ['true', 'false']
-        default: null
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''

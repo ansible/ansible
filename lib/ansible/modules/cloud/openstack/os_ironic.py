@@ -33,30 +33,21 @@ options:
         - globally unique identifier (UUID) to be given to the resource. Will
           be auto-generated if not specified, and name is specified.
         - Definition of a UUID will always take precedence to a name value.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to be given to the resource.
-      required: false
-      default: None
     driver:
       description:
         - The name of the Ironic Driver to use with this node.
       required: true
-      default: None
     chassis_uuid:
       description:
         - Associate the node with a pre-defined chassis.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the
           endpoint URL for the Ironic API.  Use with "auth" and "auth_type"
           settings set to None.
-      required: false
-      default: None
     driver_info:
       description:
         - Information for this server's driver. Will vary based on which
@@ -109,12 +100,11 @@ options:
           field.  As of Kilo, by default, passwords are always masked to API
           requests, which means the logic as a result always attempts to
           re-assert the password field.
-      required: false
-      default: false
+      type: bool
+      default: 'no'
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
 requirements: ["shade", "jsonpatch"]
 '''

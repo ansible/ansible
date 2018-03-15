@@ -37,47 +37,42 @@ options:
     path:
         description:
             - "':' separated list of paths to search for 'brew' executable."
-        required: false
         default: '/usr/local/bin'
     state:
         description:
             - state of the cask
         choices: [ 'present', 'absent', 'upgraded' ]
-        required: false
         default: present
     update_homebrew:
         description:
             - update homebrew itself first. Note that C(brew cask update) is
               a synonym for C(brew update).
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
+        type: bool
+        default: 'no'
         aliases: ['update-brew']
         version_added: "2.2"
     install_options:
         description:
             - options flags to install a package
-        required: false
-        default: null
         aliases: ['options']
         version_added: "2.2"
     accept_external_apps:
         description:
             - allow external apps
-        required: false
-        default: False
+        type: bool
+        default: 'no'
         version_added: "2.5.0"
     upgrade_all:
         description:
             - upgrade all casks (mutually exclusive with `upgrade`)
-        required: False
-        default: False
+        type: bool
+        default: 'no'
         version_added: "2.5.0"
     upgrade:
         description:
             - upgrade all casks (mutually exclusive with `upgrade_all`)
-        required: False
-        default: False
+        type: bool
+        default: 'no'
         version_added: "2.5.0"
 '''
 EXAMPLES = '''

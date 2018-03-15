@@ -36,9 +36,7 @@ options:
             - multiple names can be given, separated by commas
             - special value '*' in conjunction with states C(latest) or
               C(rebuild) will update or rebuild the whole system respectively
-        required: false
         aliases: ["spell"]
-        default: null
 
     state:
         description:
@@ -47,7 +45,6 @@ options:
             - state C(latest) always triggers C(update_cache=yes)
             - state C(rebuild) implies cast of all specified spells, not only
               those existed before
-        required: false
         choices: ["present", "latest", "absent", "cast", "dispelled", "rebuild"]
         default: "present"
 
@@ -60,31 +57,25 @@ options:
               contains more than one spell
             - providers must be supplied in the form recognized by Sorcery, e.g.
               'openssl(SSL)'
-        required: false
-        default: null
 
     update:
         description:
             - Whether or not to update sorcery scripts at the very first stage
-        required: false
-        choices: ["yes", "no"]
-        default: "no"
+        type: bool
+        default: 'no'
 
     update_cache:
         description:
             - Whether or not to update grimoire collection before casting spells
-        required: false
+        type: bool
+        default: 'no'
         aliases: ["update_codex"]
-        choices: ["yes", "no"]
-        default: "no"
 
     cache_valid_time:
         description:
             - Time in seconds to invalidate grimoire collection on update
             - especially useful for SCM and rsync grimoires
             - makes sense only in pair with C(update_cache)
-        required: false
-        default: null
 '''
 
 

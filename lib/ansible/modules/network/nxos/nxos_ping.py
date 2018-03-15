@@ -43,18 +43,13 @@ options:
     count:
         description:
             - Number of packets to send.
-        required: false
         default: 2
     source:
         description:
             - Source IP Address.
-        required: false
-        default: null
     vrf:
         description:
             - Outgoing VRF.
-        required: false
-        default: null
     state:
         description:
             - Determines if the expected result is success or fail.

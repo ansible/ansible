@@ -48,40 +48,27 @@ options:
     key:
         description:
             - Shared secret for the specified host.
-        required: false
-        default: null
     encrypt_type:
         description:
             - The state of encryption applied to the entered key.
               O for clear text, 7 for encrypted. Type-6 encryption is
               not supported.
-        required: false
-        default: null
         choices: ['0', '7']
     host_timeout:
         description:
             - Timeout period for specified host, in seconds. Range is 1-60.
-        required: false
-        default: null
     auth_port:
         description:
             - Alternate UDP port for RADIUS authentication.
-        required: false
-        default: null
     acct_port:
         description:
             - Alternate UDP port for RADIUS accounting.
-        required: false
-        default: null
     tacacs_port:
         description:
             - Alternate TCP port TACACS Server.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

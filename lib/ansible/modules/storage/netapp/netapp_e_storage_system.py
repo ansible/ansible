@@ -20,52 +20,48 @@ description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
 options:
   api_username:
-    required: true
     description:
     - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
     required: true
+  api_password:
     description:
     - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
     required: true
+  api_url:
     description:
     - The url to the SANtricity WebServices Proxy or embedded REST API.
+    required: true
   validate_certs:
-    required: false
-    default: true
     description:
     - Should https certificates be validated?
+    type: bool
+    default: 'yes'
   ssid:
-    required: true
     description:
     - The ID of the array to manage. This value must be unique for each array.
-  state:
     required: true
+  state:
     description:
     - Whether the specified array should be configured on the Web Services Proxy or not.
+    required: true
     choices: ['present', 'absent']
   controller_addresses:
-    required: true
     description:
     - The list addresses for the out-of-band management adapter or the agent host. Mutually exclusive of array_wwn parameter.
+    required: true
   array_wwn:
-    required: false
     description:
     - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of
       controller_addresses parameter.
   array_password:
-    required: false
     description:
     - The management password of the array to manage, if set.
   enable_trace:
-    required: false
-    default: false
     description:
     - Enable trace logging for SYMbol calls to the storage system.
+    type: bool
+    default: 'no'
   meta_tags:
-    required: false
-    default: None
     description:
     - Optional meta tags to associate to this storage system
 author: Kevin Hulquest (@hulquest)

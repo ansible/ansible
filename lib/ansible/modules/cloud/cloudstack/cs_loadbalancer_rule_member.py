@@ -43,8 +43,6 @@ options:
     description:
       - Public IP address from where the network traffic will be load balanced from.
       - Only needed to find the rule if C(name) is not unique.
-    required: false
-    default: null
     aliases: [ 'public_ip' ]
   vms:
     description:
@@ -54,30 +52,21 @@ options:
   state:
     description:
       - Should the VMs be present or absent from the rule.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   project:
     description:
       - Name of the project the firewall rule is related to.
-    required: false
-    default: null
   domain:
     description:
       - Domain the rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the rule is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the rule should be located.
       - If not set, default zone is used.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 

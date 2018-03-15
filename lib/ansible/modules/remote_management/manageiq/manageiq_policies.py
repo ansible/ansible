@@ -32,15 +32,12 @@ options:
       - absent - policy_profiles should not exist,
       - present - policy_profiles should exist,
       - list - list current policy_profiles and policies.
-    required: False
     choices: ['absent', 'present', 'list']
     default: 'present'
   policy_profiles:
     description:
       - list of dictionaries, each includes the policy_profile 'name' key.
       - required if state is present or absent.
-    required: false
-    default: null
   resource_type:
     description:
       - the type of the resource to which the profile should be [un]assigned
@@ -48,12 +45,10 @@ options:
     choices: ['provider', 'host', 'vm', 'blueprint', 'category', 'cluster',
         'data store', 'group', 'resource pool', 'service', 'service template',
         'template', 'tenant', 'user']
-    default: null
   resource_name:
     description:
       - the name of the resource to which the profile should be [un]assigned
     required: true
-    default: null
 '''
 
 EXAMPLES = '''

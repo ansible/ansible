@@ -32,20 +32,16 @@ options:
    description:
      description:
         - Description for the project
-     required: false
-     default: None
    domain_id:
      description:
         - Domain id to create the project in if the cloud supports domains.
           The domain_id parameter requires shade >= 1.8.0
-     required: false
-     default: None
      aliases: ['domain']
    enabled:
      description:
         - Is the project enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -54,7 +50,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

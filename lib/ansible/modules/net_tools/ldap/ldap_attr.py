@@ -43,42 +43,33 @@ requirements:
   - python-ldap
 options:
   bind_dn:
-    required: false
-    default: null
     description:
       - A DN to bind with. If this is omitted, we'll try a SASL bind with
         the EXTERNAL mechanism. If this is blank, we'll use an anonymous
         bind.
   bind_pw:
-    required: false
-    default: null
     description:
       - The password to use with I(bind_dn).
   dn:
-    required: true
     description:
       - The DN of the entry to modify.
-  name:
     required: true
+  name:
     description:
       - The name of the attribute to modify.
+    required: true
   server_uri:
-    required: false
-    default: ldapi:///
     description:
       - A URI to the LDAP server. The default value lets the underlying
         LDAP client library look for a UNIX domain socket in its default
         location.
+    default: ldapi:///
   start_tls:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
     description:
       - If true, we'll use the START_TLS LDAP extension.
+    type: bool
+    default: 'no'
   state:
-    required: false
-    choices: [present, absent, exact]
-    default: present
     description:
       - The state of the attribute values. If C(present), all given
         values will be added if they're missing. If C(absent), all given
@@ -86,19 +77,20 @@ options:
         will be forced to exactly those provided and no others. If
         I(state=exact) and I(value) is empty, all values for this
         attribute will be removed.
+    choices: [present, absent, exact]
+    default: present
   values:
-    required: true
     description:
       - The value(s) to add or remove. This can be a string or a list of
         strings. The complex argument format is required in order to pass
         a list of strings (see examples).
+    required: true
   validate_certs:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
     description:
       - If C(no), SSL certificates will not be validated. This should only be
         used on sites using self-signed certificates.
+    type: bool
+    default: 'yes'
     version_added: "2.4"
 """
 

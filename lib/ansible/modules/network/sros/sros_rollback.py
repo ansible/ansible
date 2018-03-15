@@ -30,31 +30,23 @@ options:
       - The I(rollback_location) specifies the location and filename
         of the rollback checkpoint files.   This argument supports any
         valid local or remote URL as specified in SR OS
-    required: false
-    default: null
   remote_max_checkpoints:
     description:
       - The I(remote_max_checkpoints) argument configures the maximum
         number of rollback files that can be transferred and saved to
         a remote location.  Valid values for this argument are in the
         range of 1 to 50
-    required: false
-    default: null
   local_max_checkpoints:
     description:
       - The I(local_max_checkpoints) argument configures the maximum
         number of rollback files that can be saved on the devices local
         compact flash.  Valid values for this argument are in the range
         of 1 to 50
-    required: false
-    default: null
   rescue_location:
     description:
       - The I(rescue_location) specifies the location of the
         rescue file.  This argument supports any valid local
         or remote URL as specified in SR OS
-    required: false
-    default: null
   state:
     description:
       - The I(state) argument specifies the state of the configuration
@@ -63,7 +55,6 @@ options:
         devices active configuration.  When the state value is set to
         C(false) the configuration values are removed from the devices
         active configuration.
-    required: false
     default: present
     choices: ['present', 'absent']
 """

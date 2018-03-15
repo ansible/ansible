@@ -26,13 +26,9 @@ options:
   target:
     description:
       - The target to run
-    required: false
-    default: none
   params:
     description:
       - Any extra parameters to pass to make
-    required: false
-    default: none
   chdir:
     description:
       - cd into this directory before running make
@@ -40,8 +36,6 @@ options:
   file:
     description:
       - Use file as a Makefile
-    required: false
-    default: none
     version_added: 2.5
 '''
 

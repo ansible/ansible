@@ -34,28 +34,25 @@ options:
   tasks_from:
     description:
       - File to load from a role's C(tasks/) directory.
-    required: False
     default: main
   vars_from:
     description:
       - File to load from a role's C(vars/) directory.
-    required: False
     default: main
   defaults_from:
     description:
       - File to load from a role's C(defaults/) directory.
-    required: False
     default: main
   allow_duplicates:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
-    required: False
-    default: True
+    type: bool
+    default: 'yes'
   private:
     description:
-      - If C(True) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
+      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
         play.
-    default: None
+    type: bool
 notes:
   - Handlers are made available to the whole play.
 '''

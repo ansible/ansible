@@ -43,23 +43,17 @@ options:
     username:
         description:
             - Username for device authentication.
-        required: false
         default: "admin"
     category:
         description:
             - Category of file uploaded. The default is software.
-        required: false
         default: software
     file:
         description:
             - Location of the file to import into device.
-        required: false
-        default: None
     url:
         description:
             - URL of the file that will be imported to device.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''

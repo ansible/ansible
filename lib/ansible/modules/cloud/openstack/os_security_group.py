@@ -31,8 +31,6 @@ options:
    description:
      description:
         - Long description of the purpose of the security group
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -41,7 +39,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''

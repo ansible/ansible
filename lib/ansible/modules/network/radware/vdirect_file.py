@@ -45,44 +45,35 @@ options:
     description:
      - vDirect server username, may be set as VDIRECT_USER environment variable.
     required: true
-    default: None
   vdirect_password:
     description:
      - vDirect server password, may be set as VDIRECT_PASSWORD environment variable.
     required: true
-    default: None
   vdirect_secondary_ip:
     description:
      - Secondary vDirect server IP address, may be set as VDIRECT_SECONDARY_IP environment variable.
-    required: false
-    default: None
   vdirect_wait:
     description:
      - Wait for async operation to complete, may be set as VDIRECT_WAIT environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_https_port:
     description:
      - vDirect server HTTPS port number, may be set as VDIRECT_HTTPS_PORT environment variable.
-    required: false
     default: 2189
   vdirect_http_port:
     description:
      - vDirect server HTTP port number, may be set as VDIRECT_HTTP_PORT environment variable.
-    required: false
     default: 2188
   vdirect_timeout:
     description:
      - Amount of time to wait for async operation completion [seconds],
      - may be set as VDIRECT_TIMEOUT environment variable.
-    required: false
     default: 60
   vdirect_use_ssl:
     description:
      - If C(no), an HTTP connection will be used instead of the default HTTPS connection,
      - may be set as VDIRECT_HTTPS or VDIRECT_USE_SSL environment variable.
-    required: false
     type: bool
     default: 'yes'
   vdirect_validate_certs:
@@ -90,7 +81,6 @@ options:
      - If C(no), SSL certificates will not be validated,
      - may be set as VDIRECT_VALIDATE_CERTS or VDIRECT_VERIFY environment variable.
      - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-    required: false
     type: bool
     default: 'yes'
   file_name:

@@ -51,76 +51,53 @@ options:
   handler:
     description:
       - The function within your code that Lambda calls to begin execution
-    default: null
   zip_file:
     description:
       - A .zip file containing your deployment package
       - If C(state=present) then either zip_file or s3_bucket must be present.
-    required: false
-    default: null
     aliases: [ 'src' ]
   s3_bucket:
     description:
       - Amazon S3 bucket name where the .zip file containing your deployment package is stored
       - If C(state=present) then either zip_file or s3_bucket must be present.
       - s3_bucket and s3_key are required together
-    required: false
-    default: null
   s3_key:
     description:
       - The Amazon S3 object (the deployment package) key name you want to upload
       - s3_bucket and s3_key are required together
-    required: false
-    default: null
   s3_object_version:
     description:
       - The Amazon S3 object (the deployment package) version you want to upload.
-    required: false
-    default: null
   description:
     description:
       - A short, user-defined function description. Lambda does not use this value. Assign a meaningful description as you see fit.
-    required: false
-    default: null
   timeout:
     description:
       - The function execution time at which Lambda should terminate the function.
-    required: false
     default: 3
   memory_size:
     description:
       - The amount of memory, in MB, your Lambda function is given
-    required: false
     default: 128
   vpc_subnet_ids:
     description:
       - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
         the function in a VPC.
-    required: false
-    default: None
   vpc_security_group_ids:
     description:
       - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
-    required: false
-    default: None
   environment_variables:
     description:
       - A dictionary of environment variables the Lambda function is given.
-    required: false
-    default: None
     aliases: [ 'environment' ]
     version_added: "2.3"
   dead_letter_arn:
     description:
       - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
-    required: false
-    default: None
     version_added: "2.3"
   tags:
     description:
       - tag dict to apply to the function (requires botocore 1.5.40 or above)
-    required: false
-    default: None
     version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'

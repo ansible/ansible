@@ -28,26 +28,18 @@ options:
     description:
       - Path to the local script file followed by optional arguments. There is no parameter actually named 'free form'; see the examples!
     required: true
-    default: null
-    aliases: []
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
-    required: no
-    default: null
     version_added: "1.5"
   removes:
     description:
       - a filename, when it does not exist, this step will B(not) be run.
-    required: no
-    default: null
     version_added: "1.5"
   chdir:
     description:
       - cd into this directory on the remote node before running the script
     version_added: "2.4"
-    required: false
-    default: null
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all

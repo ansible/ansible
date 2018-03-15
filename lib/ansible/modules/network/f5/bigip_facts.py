@@ -36,15 +36,12 @@ options:
     description:
       - BIG-IP session support; may be useful to avoid concurrency
         issues in certain circumstances.
-    required: false
-    default: true
-    choices: []
-    aliases: []
+    type: bool
+    default: 'yes'
   include:
     description:
       - Fact category or list of categories to collect
     required: true
-    default: null
     choices:
       - address_class
       - certificate
@@ -65,15 +62,10 @@ options:
       - virtual_address
       - virtual_server
       - vlan
-    aliases: []
   filter:
     description:
       - Shell-style glob matching string used to filter fact keys. Not
         applicable for software, provision, and system_info fact categories.
-    required: false
-    default: null
-    choices: []
-    aliases: []
 extends_documentation_fragment: f5
 '''
 

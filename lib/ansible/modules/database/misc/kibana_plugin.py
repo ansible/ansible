@@ -31,42 +31,33 @@ options:
     state:
         description:
             - Desired state of a plugin.
-        required: False
         choices: ["present", "absent"]
         default: present
     url:
         description:
             - Set exact URL to download the plugin from.
               For local file, prefix its absolute path with file://
-        required: False
-        default: None
     timeout:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
-        required: False
         default: 1m
     plugin_bin:
         description:
             - Location of the plugin binary
-        required: False
         default: /opt/kibana/bin/kibana
     plugin_dir:
         description:
             - Your configured plugin directory specified in Kibana
-        required: False
         default: /opt/kibana/installedPlugins/
     version:
         description:
             - Version of the plugin to be installed.
               If plugin exists with previous version, it will NOT be updated if C(force) is not set to yes
-        required: False
-        default: None
     force:
         description:
             - Delete and re-install the plugin. Can be useful for plugins update
-        required: False
-        choices: ["yes", "no"]
-        default: no
+        type: bool
+        default: 'no'
 '''
 
 EXAMPLES = '''

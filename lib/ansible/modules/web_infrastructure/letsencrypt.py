@@ -104,8 +104,8 @@ options:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
       - This option will only be used when C(acme_version) is not 1.
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.5"
   challenge:
     description: The challenge to be performed.
@@ -157,8 +157,8 @@ options:
       - Whether calls to the ACME directory will validate TLS certificates.
       - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
         for example when testing against a local Pebble server.
-    default: yes
     type: bool
+    default: 'yes'
     version_added: 2.5
   deactivate_authzs:
     description:
@@ -168,8 +168,8 @@ options:
          for a certain amount of time, and can be used to issue certificates
          without having to re-authenticate the domain. This can be a security
          concern. "
-    default: no
     type: bool
+    default: 'no'
     version_added: 2.6
   force:
     description:
@@ -177,8 +177,8 @@ options:
         existing certificate is still valid.
       - This is especially helpful when having an updated CSR e.g. with
         additional domains for which a new certificate is desired.
-    default: no
     type: bool
+    default: 'no'
     version_added: 2.6
 '''
 

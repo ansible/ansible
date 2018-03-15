@@ -41,14 +41,14 @@ options:
   infinite:
     description:
     - Set True if the volume is an Infinite Volume.
-    choices: ['True', 'False']
-    default: 'False'
+    type: bool
+    default: 'no'
 
   online:
     description:
     - Whether the specified volume is online, or not.
-    choices: ['True', 'False']
-    default: 'True'
+    type: bool
+    default: 'yes'
 
   aggregate_name:
     description:
@@ -68,7 +68,6 @@ options:
     description:
     - Name of the vserver to use.
     required: true
-    default: None
 
 '''
 
