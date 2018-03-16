@@ -15,8 +15,10 @@ module: win_pester
 short_description: Run Pester tests on Windows hosts
 version_added: "2.6"
 description:
-     - Run Pester tests on Windows hosts.
-     - Test files have to be available on the remote host.
+  - Run Pester tests on Windows hosts.
+  - Test files have to be available on the remote host.
+requirements:
+  - The Pester module should be present on the remote host.
 options:
   path:
     description:

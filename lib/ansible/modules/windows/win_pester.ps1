@@ -75,7 +75,7 @@ If ($result.pester_version -ge "4.0.0") {
 }
 
 # Run Pester tests
-If (Test-Path -Path $path -PathType Leaf) {
+If (Test-Path -LiteralPath $path -PathType Leaf) {
     if ($check_mode) {
         $result.output = "Run pester test in the file: $path"
     } else {
