@@ -1,0 +1,15 @@
+- name: Launch a Job Template
+  tower_job_launch:
+    job_template: "Demo Job Template"
+    inventory: "Demo Inventory"
+    credential: "Demo Credential"
+  register: job
+
+- assert:
+    that:
+      - "job is changed"
+      - "job.status == 'pending'"
+
+- name: Cancel the job
+  tower_job_cancel:
+    job_id: "{{ job.id }}"

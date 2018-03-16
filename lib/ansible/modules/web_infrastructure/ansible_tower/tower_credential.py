@@ -73,6 +73,14 @@ options:
     client:
       description:
         - Client or application ID for azure_rm type.
+      required: False
+      default: null
+    security_token:
+      description:
+        - STS token for aws type.
+      required: False
+      default: null
+      version_added: "2.6"
     secret:
       description:
         - Secret token for azure_rm type.
@@ -119,6 +127,7 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
 
 try:
@@ -184,6 +193,7 @@ def main():
         authorize=dict(type='bool', default=False),
         authorize_password=dict(no_log=True),
         client=dict(),
+        security_token=dict(),
         secret=dict(),
         tenant=dict(),
         subscription=dict(),
@@ -254,13 +264,14 @@ def main():
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = f.read()
+                    module.params['ssh_key_data'] = to_text(f.read())
 
-            for key in ('authorize', 'authorize_password', 'client', 'secret',
-                        'tenant', 'subscription', 'domain', 'become_method',
-                        'become_username', 'become_password', 'vault_password',
-                        'project', 'host', 'username', 'password',
-                        'ssh_key_data', 'ssh_key_unlock'):
+            for key in ('authorize', 'authorize_password', 'client',
+                        'security_token', 'secret', 'tenant', 'subscription',
+                        'domain', 'become_method', 'become_username',
+                        'become_password', 'vault_password', 'project', 'host',
+                        'username', 'password', 'ssh_key_data',
+                        'ssh_key_unlock'):
                 if 'kind' in params:
                     params[key] = module.params.get(key)
                 elif module.params.get(key):
