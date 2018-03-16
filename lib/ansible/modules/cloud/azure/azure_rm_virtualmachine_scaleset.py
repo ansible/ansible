@@ -457,8 +457,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         if not self.virtual_network_resource_group:
             self.virtual_network_resource_group = self.resource_group
 
-        if not self.network_security_group_resource_group:
-            self.network_security_group_resource_group = self.resource_group
+        self.network_security_group_resource_group = self.network_security_group_resource_group \
+            if self.network_security_group_resource_group else self.resource_group
 
         changed = False
         results = dict()
@@ -619,9 +619,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                     managed_disk = self.compute_models.VirtualMachineScaleSetManagedDiskParameters(storage_account_type=self.managed_disk_type)
 
-                    network_security_group = None
-                    if self.network_security_group:
-                        network_security_group = self.get_network_security_group(self.network_security_group)
+                    self.network_security_group = self.get_network_security_group(
+                        self.network_security_group_resource_group, self.network_security_group) \
+                        if self.network_security_group else None
 
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         self.location,
@@ -664,7 +664,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                             )
                                         ],
                                         enable_accelerated_networking=self.enable_accelerated_networking,
-                                        network_security_group=network_security_group
+                                        network_security_group=self.network_security_group
                                     )
                                 ]
                             )
@@ -875,9 +875,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 return True
         return False
 
-    def get_network_security_group(self, name):
+    def get_network_security_group(self, resource_group, name):
         try:
-            nsg = self.network_client.network_security_groups.get(self.network_security_group_resource_group, name)
+            nsg = self.network_client.network_security_groups.get(resource_group, name)
             return nsg
         except CloudError as exc:
             self.fail("Error fetching network security group {0} - {1}".format(name, str(exc)))
