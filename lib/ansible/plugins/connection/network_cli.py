@@ -369,8 +369,11 @@ class Connection(ConnectionBase):
                 self._ssh_shell.close()
                 self._ssh_shell = None
                 display.debug("cli session is now closed")
+
+                self.paramiko_conn.close()
+                self.paramiko_conn = None
+                display.debug("ssh connection has been closed successfully")
             self._connected = False
-            display.debug("ssh connection has been closed successfully")
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''
