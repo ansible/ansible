@@ -14,13 +14,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_interface_selector_to_switch_policy_leaf_profile
-short_description: Associates an Interface Selector Profile to a Switch Policy Leaf Profile (infra:RsAccPortP)
+short_description: Bind interface selector profiles to switch policy leaf profiles (infra:RsAccPortP)
 description:
-- Associates an Interface Profile (Selector) to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+- Bind interface selector profiles to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
 - This module requires an existing leaf profile, the module M(aci_switch_policy_leaf_profile) can be used for this.
-- More information from the internal APIC class I(infra:RsAccPortP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:RsAccPortP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

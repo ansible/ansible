@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_static_binding_to_epg
-short_description: Bind static paths to EPGs on Cisco ACI fabrics (fv:RsPathAtt)
+short_description: Bind static paths to EPGs (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
 notes:
 - The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
-- More information from the internal APIC classes I(fv:RsPathAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(fv:RsPathAtt) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -103,7 +103,7 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Deploy Static Path for EPG
+- name: Deploy Static Path binding for given EPG
   aci_static_binding_to_epg:
     host: apic
     username: admin
@@ -119,6 +119,34 @@ EXAMPLES = r'''
     leafs: 101
     interface: '1/7'
     state: present
+
+- name: Remove Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: absent
+
+- name: Get specific Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: query
 '''
 
 RETURN = r'''

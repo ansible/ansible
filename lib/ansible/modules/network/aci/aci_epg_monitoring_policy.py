@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_monitoring_policy
-short_description: Manage monitoring policies on Cisco ACI fabrics (mon:EPGPol)
+short_description: Manage monitoring policies (mon:EPGPol)
 description:
 - Manage monitoring policies on Cisco ACI fabrics.
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information from the internal APIC class I(mon:EPGPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(mon:EPGPol) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'

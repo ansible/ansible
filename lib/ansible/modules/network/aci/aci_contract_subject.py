@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract_subject
-short_description: Manage initial Contract Subjects on Cisco ACI fabrics (vz:Subj)
+short_description: Manage initial Contract Subjects (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
 notes:
 - The C(tenant) and C(contract) used must exist before using this module in your playbook.
 - The M(aci_tenant) and M(aci_contract) modules can be used for this.
-- More information from the internal APIC class I(vz:Subj) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(vz:Subj) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'

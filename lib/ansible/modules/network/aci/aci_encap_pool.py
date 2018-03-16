@@ -13,13 +13,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_encap_pool
-short_description: Manage encap pools on Cisco ACI fabrics (fvns:VlanInstP, fvns:VxlanInstP, fvns:VsanInstP)
+short_description: Manage encap pools (fvns:VlanInstP, fvns:VxlanInstP, fvns:VsanInstP)
 description:
 - Manage vlan, vxlan, and vsan pools on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class
-  I(fvns:VlanInstP), I(fvns:VxlanInstP), and I(fvns:VsanInstP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(fvns:VlanInstP), B(fvns:VxlanInstP) and B(fvns:VsanInstP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'

@@ -14,12 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_fabric_node
-short_description: Add a new Fabric Node Member on Cisco ACI fabrics (fabric:NodeIdentP)
+short_description: Manage Fabric Node Members (fabric:NodeIdentP)
 description:
-- Add a new Fabric Node Member on Cisco ACI fabrics.
+- Manage Fabric Node Members on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class
-  I(fabric:NodeIdentP) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information about the internal APIC class B(fabric:NodeIdentP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -57,18 +57,31 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Adding new Fabric Node Member (Spine)
+- name: Add fabric node
   aci_fabric_node:
     host: apic
-    username: someusername
-    password: somepassword
-    pod_id: 5
-    serial: someserial123
-    node_id: 112
-    switch: someswitchname
-    description: somedescription
-    role: spine
+    username: admin
+    password: SomeSecretPassword
+    serial: FDO2031124L
+    node_id: 1011
+    switch: fab4-sw1011
     state: present
+
+- name: Remove fabric node
+  aci_fabric_node:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    serial: FDO2031124L
+    node_id: 1011
+    state: absent
+
+- name: Query fabric nodes
+  aci_fabric_node:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
 RETURN = r'''

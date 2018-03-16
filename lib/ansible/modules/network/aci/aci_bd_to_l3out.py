@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_bd_to_l3out
-short_description: Bind Bridge Domain to L3 Out on Cisco ACI fabrics (fv:RsBDToOut)
+short_description: Bind Bridge Domain to L3 Out (fv:RsBDToOut)
 description:
 - Bind Bridge Domain to L3 Out on Cisco ACI fabrics.
 notes:
 - The C(bd) and C(l3out) parameters should exist before using this module.
   The M(aci_bd) and M(aci_l3out) can be used for these.
-- More information from the internal APIC class I(fv:RsBDToOut) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(fv:RsBDToOut) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_config_snapshot
-short_description: Manage Config Snapshots on Cisco ACI fabrics (config:Snapshot, config:ExportP)
+short_description: Manage Config Snapshots (config:Snapshot, config:ExportP)
 description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
@@ -22,8 +22,8 @@ notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
 - 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
-- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'

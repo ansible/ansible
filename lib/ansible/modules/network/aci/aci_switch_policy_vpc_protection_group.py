@@ -14,12 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_switch_policy_vpc_protection_group
-short_description: Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics (fabric:ExplicitGEp, fabric:NodePEp).
+short_description: Manage switch policy explicit vPC protection groups (fabric:ExplicitGEp, fabric:NodePEp).
 description:
-- Create switch policy Explicit vPC Protection Group on Cisco ACI fabrics.
+- Manage switch policy explicit vPC protection groups on Cisco ACI fabrics.
 notes:
-- More information from the internal APIC class
-  I(fabric:ExplicitGEp) and I(fabric:NodePEp) at U(https://developer.cisco.com/site/aci/docs/apis/apic-mim-ref/).
+- More information about the internal APIC classes B(fabric:ExplicitGEp) and B(fabric:NodePEp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -56,16 +56,15 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add Explicit vPC Protection Group
+- name: Add vPC Protection Group
   aci_switch_policy_vpc_protection_group:
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: protectiongroupname
+    protection_group: leafPair101-vpcGrp
     protection_group_id: 6
-    vpc_domain_policy: vpcdomainpolicyname
-    switch_1_id: 3811
-    switch_2_id: 3812
+    switch_1_id: 1011
+    switch_2_id: 1012
     state: present
 
 - name: Remove Explicit vPC Protection Group
@@ -73,8 +72,23 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    protection_group: protectiongroupname
+    protection_group: leafPair101-vpcGrp
     state: absent
+
+- name: Query vPC Protection Groups
+  aci_switch_policy_vpc_protection_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+
+- name: Query our vPC Protection Group
+  aci_switch_policy_vpc_protection_group:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    protection_group: leafPair101-vpcGrp
+    state: query
 '''
 
 RETURN = r'''

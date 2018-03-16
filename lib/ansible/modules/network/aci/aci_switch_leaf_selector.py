@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_switch_leaf_selector
-short_description: Add a leaf Selector with Node Block Range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics
+short_description: Bind leaf selectors to switch policy leaf profiles (infra:LeafS, infra:NodeBlk, infra:RsAccNodePGrep)
 description:
-- Add a leaf Selector with Node Block range and Policy Group to a Switch Policy Leaf Profile on Cisco ACI fabrics.
+- Bind leaf selectors (with node block range and policy group) to switch policy leaf profiles on Cisco ACI fabrics.
 notes:
 - This module is to be used with M(aci_switch_policy_leaf_profile)
   One first creates a leaf profile (infra:NodeP) and then creates an associated selector (infra:LeafS),
-- More information from the internal APIC class I(infra:LeafS), I(infra:NodeBlk), I(infra:RsAccNodePGrp) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC classes B(infra:LeafS), B(infra:NodeBlk) and B(infra:RsAccNodePGrp) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'

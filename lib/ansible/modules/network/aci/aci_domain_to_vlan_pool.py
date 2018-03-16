@@ -14,14 +14,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_domain_to_vlan_pool
-short_description: Bind Domain to VLAN Pools on Cisco ACI fabrics (infra:RsVlanNs)
+short_description: Bind Domain to VLAN Pools (infra:RsVlanNs)
 description:
 - Bind Domain to VLAN Pools on Cisco ACI fabrics.
 notes:
 - The C(domain) and C(vlan_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_vlan_pool) can be used for these.
-- More information from the internal APIC class I(infra:RsVlanNs) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(infra:RsVlanNs) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg
-short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
+short_description: Manage End Point Groups (EPG) objects (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
-- More information from the internal APIC class I(fv:AEPg) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(fv:AEPg) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Swetha Chunduri (@schunduri)
 version_added: '2.4'
@@ -38,7 +38,7 @@ options:
     description:
     - Name of the end point group.
     required: yes
-    aliases: [ name, epg_name ]
+    aliases: [ epg_name, name ]
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
@@ -116,7 +116,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     tenant: production
     app_profile: intranet
     epg: web_epg
@@ -144,7 +144,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     epg: web_epg
     state: query
 
@@ -153,7 +153,7 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     ap: ticketing
     state: query
 '''
@@ -270,7 +270,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
+        epg=dict(type='str', aliases=['epg_name', 'name']),  # Not required for querying all objects
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
         ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects

@@ -16,12 +16,12 @@ DOCUMENTATION = r'''
 module: aci_aaa_user_certificate
 short_description: Manage AAA user certificates (aaa:UserCert)
 description:
-- Manage AAA user certificates.
+- Manage AAA user certificates on Cisco ACI fabrics.
 notes:
 - The C(aaa_user) must exist before using this module in your playbook.
   The M(aci_aaa_user) module can be used for this.
-- More information from the internal APIC class I(aaa:UserCert) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(aaa:UserCert) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'

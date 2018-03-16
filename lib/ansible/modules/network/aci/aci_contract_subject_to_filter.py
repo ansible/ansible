@@ -13,14 +13,14 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_contract_subject_to_filter
-short_description: Bind Contract Subjects to Filters on Cisco ACI fabrics (vz:RsSubjFiltAtt)
+short_description: Bind Contract Subjects to Filters (vz:RsSubjFiltAtt)
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
 notes:
 - The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
 - The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
-- More information from the internal APIC class I(vz:RsSubjFiltAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- More information about the internal APIC class B(vz:RsSubjFiltAtt) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -39,7 +39,6 @@ options:
     - The APIC defaults new Subject to Filter bindings to C(none).
     choices: [ log, none ]
     aliases: [ directive ]
-    default: none
   subject:
     description:
     - The name of the Contract Subject.
@@ -60,7 +59,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new contract subject to filer binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -72,7 +71,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Remove an existing contract subject to filter binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -84,7 +83,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Query a specific contract subject to filter binding
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
@@ -95,7 +94,7 @@ EXAMPLES = r'''
     state: query
 
 - name: Query all contract subject to filter bindings
-  aci_subject_filter_binding:
+  aci_contract_subject_to_filter:
     host: apic
     username: admin
     password: SomeSecretPassword
