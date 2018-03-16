@@ -55,6 +55,7 @@ options:
         description:
           - The name of the grid secondary server
   ns_group:
+    version_added: "2.6"
     description:
       - Configures the name server group for this zone. Name server group is
         mutually exclusive with grid primary and grid secondaries.
@@ -166,10 +167,10 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
-			   mutually_exclusive=[
-			   	['ns_group', 'grid_primary'],
-				['ns_group', 'grid_secondaries']
-		  	   ])
+                           mutually_exclusive=[
+                               ['ns_group', 'grid_primary'],
+                               ['ns_group', 'grid_secondaries']
+                           ])
 
     wapi = WapiModule(module)
     result = wapi.run('zone_auth', ib_spec)
