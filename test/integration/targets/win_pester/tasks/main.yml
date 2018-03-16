@@ -45,7 +45,7 @@
 - name: Run Pester test(s) specifying a test file and a higher pester version
   win_pester:
     path: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
-    version: 6.0.0
+    minimum_version: 6.0.0
   register: result
   ignore_errors: yes
 
@@ -68,7 +68,7 @@
 - name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
   win_pester:
     path: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
-    version: '3.0.0'
+    minimum_version: 3.0.0
   register: result
 
 - name: Assert result
@@ -102,7 +102,7 @@
 - name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
   win_pester:
     path: "{{ remote_test_folder[0] }}"
-    version: '3.0.0'
+    minimum_version: 3.0.0
   register: result
 
 - name: Assert result 
