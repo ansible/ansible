@@ -12,7 +12,7 @@
 
 - name: Populate directory
   copy:
-    content: "{{ansible_disribution_version}}\n"
+    content: "{{ansible_distribution_version}}\n"
     dest: "/{{dnfroot.stdout}}/etc/dnf/vars/releasever"
 
 - name: attempt releasever to the installroot
