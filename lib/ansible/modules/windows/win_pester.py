@@ -15,12 +15,12 @@ module: win_pester
 short_description: Run Pester tests on Windows hosts
 version_added: "2.6"
 description:
-     - Run Pester tests on Windows hosts. 
+     - Run Pester tests on Windows hosts.
      - Test files have to be available on the remote host.
 options:
   path:
     description:
-      - Path to a pester test file or a folder where tests can be found. 
+      - Path to a pester test file or a folder where tests can be found.
       - If the path is a folder, the module will consider all ps1 files as Pester tests.
     required: true
   version:
@@ -57,7 +57,8 @@ EXAMPLES = r'''
   win_pester:
     path: C:\Pester
 
-# Run pesters tests files that are present in the specified folder and ensure that the pester module version available is greater or equal to the version parameter.
+# Run pesters tests files that are present in the specified folder
+# ensure that the pester module version available is greater or equal to the version parameter.
 - name: Run the pester test present in a folder and check the Pester module version.
   win_pester:
     path: C:\Pester\test01.test.ps1
