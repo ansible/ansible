@@ -1,0 +1,20 @@
+- name: Launch a Job Template
+  tower_job_launch:
+    job_template: "Demo Job Template"
+    inventory: "Demo Inventory"
+    credential: "Demo Credential"
+  register: job
+
+- assert:
+    that:
+      - "job is changed"
+      - "job.status == 'pending'"
+
+- name: List jobs w/ a matching primary key
+  tower_job_list:
+    query: {"id": "{{ job.id }}"}
+  register: matching_jobs
+
+- assert:
+    that:
+      - "{{ matching_jobs.count }} == 1"
