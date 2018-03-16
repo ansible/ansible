@@ -1,0 +1,3 @@
+bugfixes:
+- terraform - fixed typo in module result stdout value (https://github.com/ansible/ansible/pull/37253)
+- setup - ensure that `ansible_lo` is properly nested under ansible_facts (https://github.com/ansible/ansible/pull/37360)

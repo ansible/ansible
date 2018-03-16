@@ -2,16 +2,31 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
-v2.5.0rc2
+v2.5.0rc3
 =========
 
 Release Summary
 ---------------
 
-| Release Date: 2018-03-08
-| Estimated Final Release: 2018-03-15
+| Release Date: 2018-03-15
+| Estimated Final Release: 2018-03-22
 | `Porting Guide <http://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
+
+Bugfixes
+--------
+
+- Connection error messages may contain characters that jinja2 would interpret as a template.  Wrap the error string so this doesn't happen (https://github.com/ansible/ansible/pull/37329)
+
+- Fix onyx_linkagg module writing debugging information to a tempfile on the remote machine (https://github.com/ansible/ansible/pull/37308)
+
+- terraform - fixed typo in module result stdout value (https://github.com/ansible/ansible/pull/37253)
+
+- setup - ensure that `ansible_lo` is properly nested under ansible_facts (https://github.com/ansible/ansible/pull/37360)
+
+
+v2.5.0rc2
+=========
 
 Major Changes
 -------------
@@ -156,12 +171,6 @@ Bugfixes
 
 v2.5.0b2
 ========
-
-Release Summary
----------------
-
-| Release Date: 2018-02-15
-
 
 Major Changes
 -------------
