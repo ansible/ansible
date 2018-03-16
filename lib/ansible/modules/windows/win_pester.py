@@ -57,16 +57,37 @@ pester_result:
 '''
 
 EXAMPLES = r'''
-# run the pester test provided in the src parameter.
-- win_pester:
-    src: C:\Pester\test01.test.ps1
+# Playbook example"
+- name: Get facts
+  setup:
 
-# run all test present in the folder provided in the src parameter.
-- win_pester:
-    src: C:\Pester\
+- name: Add Pester module with win_psmodule if PowerShell version is greater than 5.
+  win_psmodule:
+    name: Pester
+    state: present
+  when: ansible_powershell_version >= 5
 
-# run the pester test provided in the src parameter, ensure that the pester module version available is greater or equal to the version parameter.
-- win_pester:
-    src: C:\Pester\test01.test.ps1
+- name: Add Pester module with Chocolatey if PowerShell version is less than 5.
+  win_chocolatey:
+    name: Pester
+    state: present
+  when: ansible_powershell_version < 5
+
+- name: Copy test file(s).
+  win_copy:
+    src: ".\test01.test.ps1"
+    dest: "C:\Pester\test01.test.ps1"
+
+- name: run the pester test provided in the src parameter. 
+  win_pester:
+    src: "C:\Pester"  
+
+- name: run all test present in the folder provided in the src parameter.
+  win_pester:
+    src: "C:\Pester\"
+
+- name: run the pester test provided in the src parameter, ensure that the pester module version available is greater or equal to the version parameter.
+  win_pester:
+    src: "C:\Pester\test01.test.ps1"
     version: 4.1.0
 '''

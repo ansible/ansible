@@ -3,6 +3,8 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# Author: Erwan Quelin (mail:erwan.quelin@gmail.com - GitHub: @equelin - Twitter: @erwanquelin)
+
 #Requires -Module Ansible.ModuleUtils.Legacy
 
 $ErrorActionPreference = 'Stop'
@@ -40,7 +42,7 @@ If (-not (Get-Module -Name $Module -ErrorAction SilentlyContinue)) {
     If (Get-Module -Name $Module -ListAvailable -ErrorAction SilentlyContinue) {
         Import-Module $Module
     } else {
-        Fail-Json -obj $result -message "Cannot find module: $Module"
+        Fail-Json -obj $result -message "Cannot find module: $Module. Check if pester is installed, and if it is not, install using win_psmodule or win_chocolatey."
     }
 }
 
