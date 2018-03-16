@@ -13,4 +13,4 @@
 - name: Wait for the Job to finish
   tower_job_wait:
     job_id: "{{ job.id }}"
-    timeout: 15
+    timeout: 60
