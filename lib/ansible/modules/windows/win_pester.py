@@ -75,19 +75,19 @@ EXAMPLES = r'''
 
 - name: Copy test file(s).
   win_copy:
-    src: ".\test01.test.ps1"
-    dest: "C:\Pester\test01.test.ps1"
+    src: ".\\test01.test.ps1"
+    dest: "C:\\Pester\\test01.test.ps1"
 
-- name: run the pester test provided in the src parameter. 
+- name: run the pester test provided in the src parameter.
   win_pester:
-    src: "C:\Pester"  
+    src: "C:\\Pester"
 
 - name: run all test present in the folder provided in the src parameter.
   win_pester:
-    src: "C:\Pester\"
+    src: "C:\\Pester\\"
 
 - name: run the pester test provided in the src parameter, ensure that the pester module version available is greater or equal to the version parameter.
   win_pester:
-    src: "C:\Pester\test01.test.ps1"
+    src: "C:\\Pester\\test01.test.ps1"
     version: 4.1.0
 '''
