@@ -18,7 +18,7 @@ description:
   - Run Pester tests on Windows hosts.
   - Test files have to be available on the remote host.
 requirements:
-  - The Pester module should be present on the remote host.
+  - Pester
 options:
   path:
     description:
