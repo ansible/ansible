@@ -44,8 +44,6 @@ options:
     description:
       - Name or path of an interpreter to invoke the script with
     version_added: "2.6"
-    required: false
-    default: null
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
   - The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. pseudo-ttys do not have a stderr channel and all
