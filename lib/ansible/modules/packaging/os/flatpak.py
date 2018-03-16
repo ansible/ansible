@@ -72,7 +72,8 @@ EXAMPLES = r'''
 - name: Remove the gedit package
   flatpak:
     name: org.gnome.gedit
-    state: absent
+    state: present
+    repo: flathub
 '''
 
 RETURN = r'''
