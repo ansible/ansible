@@ -127,6 +127,7 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.ansible_tower import tower_argument_spec, tower_auth_config, tower_check_mode, HAS_TOWER_CLI
 
 try:
@@ -263,7 +264,7 @@ def main():
                 if os.path.isdir(filename):
                     module.fail_json(msg='attempted to read contents of directory: %s' % filename)
                 with open(filename, 'rb') as f:
-                    module.params['ssh_key_data'] = f.read().decode('utf-8')
+                    module.params['ssh_key_data'] = to_text(f.read())
 
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',
