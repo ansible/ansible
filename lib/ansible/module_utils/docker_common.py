@@ -59,7 +59,7 @@ except ImportError as exc:
 DEFAULT_DOCKER_HOST = 'unix://var/run/docker.sock'
 DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
-MIN_DOCKER_VERSION = "1.7.0"
+MIN_DOCKER_VERSION = "1.8.0"
 
 DOCKER_COMMON_ARGS = dict(
     docker_host=dict(type='str', aliases=['docker_url']),
