@@ -87,6 +87,10 @@ def update_resources(module, p):
     by name using their unique field (identity)
     '''
     params = p.copy()
+    for key in p:
+        if key.startswith('tower_'):
+            params.pop(key)
+    params.pop('state', None)
     identity_map = {
         'user': 'username',
         'team': 'name',
