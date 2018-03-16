@@ -79,8 +79,8 @@ class ActionModule(ActionBase):
             parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
             source = parts[0]
 
-            # Support interpreter paths and files with spaces in the name.
-            interpreter = to_native(self._task.args.get('interpreter', ''), errors='surrogate_or_strict')
+            # Support executable paths and files with spaces in the name.
+            executable = to_native(self._task.args.get('executable', ''), errors='surrogate_or_strict')
 
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
@@ -113,8 +113,8 @@ class ActionModule(ActionBase):
                 env_dict = dict()
                 env_string = self._compute_environment_string(env_dict)
 
-                if interpreter:
-                    script_cmd = ' '.join([env_string, interpreter, target_command])
+                if executable:
+                    script_cmd = ' '.join([env_string, executable, target_command])
                 else:
                     script_cmd = ' '.join([env_string, target_command])
 

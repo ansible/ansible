@@ -40,9 +40,9 @@ options:
     description:
       - cd into this directory on the remote node before running the script
     version_added: "2.4"
-  interpreter:
+  executable:
     description:
-      - Name or path of an interpreter to invoke the script with
+      - Name or path of a executable to invoke the script with
     version_added: "2.6"
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
@@ -71,13 +71,13 @@ EXAMPLES = '''
   args:
     removes: /the/removed/file.txt
 
-# Run a script using an interpreter in a non-system path
+# Run a script using a executable in a non-system path
 - script: /some/local/script
   args:
-    interpreter: /some/remote/interpreter
+    executable: /some/remote/executable
 
-# Run a script using an interpreter in a system path
+# Run a script using a executable in a system path
 - script: /some/local/script.py
   args:
-    interpreter: python3
+    executable: python3
 '''
