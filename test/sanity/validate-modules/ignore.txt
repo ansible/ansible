@@ -178,7 +178,6 @@ lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E322
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E325
 lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py E326
 lib/ansible/modules/cloud/cloudstack/cs_template.py E324
-lib/ansible/modules/cloud/cloudstack/cs_template.py E325
 lib/ansible/modules/cloud/cloudstack/cs_template.py E326
 lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py E325
 lib/ansible/modules/cloud/cloudstack/cs_volume.py E322
