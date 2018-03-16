@@ -135,7 +135,7 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-The following modules will be removed in Ansible 2.9. Please update update your playbooks accordingly.
+The following modules will be removed in Ansible 2.9. Please update your playbooks accordingly.
 
 * Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
 * :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
