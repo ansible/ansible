@@ -48,7 +48,7 @@ lib/ansible/modules/cloud/azure/azure_rm_postgresqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_publicipaddress.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver.py E322
 lib/ansible/modules/cloud/azure/azure_rm_sqlserver_facts.py E322
-lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E321
+lib/ansible/modules/cloud/azure/azure_rm_storageaccount.py E322
 lib/ansible/modules/cloud/azure/azure_rm_storageblob.py E323
 lib/ansible/modules/cloud/azure/azure_rm_subnet.py E322
 lib/ansible/modules/cloud/azure/azure_rm_virtualmachine.py E322
@@ -165,6 +165,11 @@ lib/ansible/modules/cloud/vmware/vsphere_copy.py E322
 lib/ansible/modules/cloud/vultr/vr_dns_domain.py E323
 lib/ansible/modules/cloud/vultr/vr_firewall_rule.py E323
 lib/ansible/modules/cloud/vultr/vr_user.py E322
+lib/ansible/modules/cloud/webfaction/webfaction_app.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_db.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_domain.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_mailbox.py E321
+lib/ansible/modules/cloud/webfaction/webfaction_site.py E321
 lib/ansible/modules/clustering/consul.py E322
 lib/ansible/modules/clustering/consul_kv.py E322
 lib/ansible/modules/clustering/consul_session.py E322
@@ -421,7 +426,7 @@ lib/ansible/modules/storage/zfs/zfs_facts.py E323
 lib/ansible/modules/storage/zfs/zpool_facts.py E323
 lib/ansible/modules/system/authorized_key.py E322
 lib/ansible/modules/system/capabilities.py E322
-lib/ansible/modules/system/firewalld.py E321
+lib/ansible/modules/system/firewalld.py E322
 lib/ansible/modules/system/gluster_volume.py E322
 lib/ansible/modules/system/make.py E317
 lib/ansible/modules/system/open_iscsi.py E322
