@@ -285,7 +285,7 @@ def dict_merge(base, other):
                 item = other.get(key)
                 if item is not None:
                     try:
-                        combined[key] = list(set(chain(value, item)))
+                        combined[key] = list(chain(value, item))
                     except TypeError:
                         value.extend([i for i in item if i not in value])
                         combined[key] = value
