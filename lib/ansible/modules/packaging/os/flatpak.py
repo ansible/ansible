@@ -69,11 +69,17 @@ EXAMPLES = r'''
     name: org.gnome.gedit
     state: absent
 
-- name: Remove the gedit package
+- name: Install the gedit package from flathub
   flatpak:
     name: org.gnome.gedit
     state: present
     repo: flathub
+
+- name: Install a flatpack stored in another repo
+  flatpak:
+    name: org.test.myapp
+    state: present
+    repo: myrepository
 '''
 
 RETURN = r'''
