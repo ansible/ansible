@@ -1,0 +1,39 @@
+- name: Create a User
+  tower_user:
+    first_name: Joe
+    last_name: User
+    username: joe
+    password: "{{ 65535 | random | to_uuid }}"
+    email: joe@example.org
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Add Joe to the update role of the default Project
+  tower_role:
+    user: joe
+    role: update
+    project: Demo Project
+    state: "{{ item }}"
+  register: result
+  with_items:
+    - "present"
+    - "absent"
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete a User
+  tower_user:
+    username: joe
+    email: joe@example.org
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
