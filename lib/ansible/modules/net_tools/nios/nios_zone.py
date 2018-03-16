@@ -47,7 +47,6 @@ options:
       name:
         description:
           - The name of the grid primary server
-        required: true
   grid_secondaries:
     description:
       - Configures the grid secondary servers for this zone.
@@ -55,7 +54,10 @@ options:
       name:
         description:
           - The name of the grid secondary server
-        required: true
+  ns_group:
+    description:
+      - Configures the name server group for this zone. Name server group is
+        mutually exclusive with grid primary and grid secondaries.
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -79,9 +81,25 @@ options:
 '''
 
 EXAMPLES = '''
-- name: configure a zone on the system
+- name: configure a zone on the system using grid primary and secondaries
   nios_zone:
     name: ansible.com
+    grid_primary:
+      - name: gridprimary.grid.com
+    grid_secondaries:
+      - name: gridsecondary1.grid.com
+      - name: gridsecondary2.grid.com
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+
+- name: configure a zone on the system using a name server group
+  nios_zone:
+    name: ansible.com
+    ns_group: examplensg
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -132,6 +150,7 @@ def main():
 
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
         grid_secondaries=dict(type='list', elements='dict', options=grid_spec),
+        ns_group=dict(),
 
         extattrs=dict(type='dict'),
         comment=dict()
@@ -146,7 +165,11 @@ def main():
     argument_spec.update(WapiModule.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+			   mutually_exclusive=[
+			   	['ns_group', 'grid_primary'],
+				['ns_group', 'grid_secondaries']
+		  	   ])
 
     wapi = WapiModule(module)
     result = wapi.run('zone_auth', ib_spec)
