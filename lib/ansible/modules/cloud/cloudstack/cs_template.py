@@ -99,6 +99,14 @@ options:
       - The filter C(all) was added in 2.6.
     default: self
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
+  template_find_options:
+    description:
+      - Options to find a template uniquely.
+      - More than one allowed.
+    choices: [ display_text, checksum, cross_zones ]
+    version_added: 2.6
+    aliases: [ template_find_option ]
+    default: []
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new template.
@@ -177,12 +185,25 @@ EXAMPLES = '''
     cross_zones: yes
     os_type: Debian GNU/Linux 7(64-bit)
 
-- name: create a template from a stopped virtual machine's volume
+- name: Create a template from a stopped virtual machine's volume
   local_action:
     module: cs_template
-    name: debian-base-template
-    vm: debian-base-vm
-    os_type: Debian GNU/Linux 7(64-bit)
+    name: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+    vm: debian-9-base-vm
+    os_type: Debian GNU/Linux 9 (64-bit)
+    zone: tokio-ix
+    password_enabled: yes
+    is_public: yes
+
+# Note: Use template_find_option(s) when a template name is not unique
+- name: Create a template from a stopped virtual machine's volume
+  local_action:
+    module: cs_template
+    name: Debian 9 (64-bit)
+    display_text: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+    template_find_option: display_text
+    vm: debian-9-base-vm
+    os_type: Debian GNU/Linux 9 (64-bit)
     zone: tokio-ix
     password_enabled: yes
     is_public: yes
@@ -190,10 +211,9 @@ EXAMPLES = '''
 - name: create a template from a virtual machine's root volume snapshot
   local_action:
     module: cs_template
-    name: debian-base-template
-    vm: debian-base-vm
+    name: Debian 9 (64-bit) Snapshot ROOT-233_2015061509114
     snapshot: ROOT-233_2015061509114
-    os_type: Debian GNU/Linux 7(64-bit)
+    os_type: Debian GNU/Linux 9 (64-bit)
     zone: tokio-ix
     password_enabled: yes
     is_public: yes
@@ -528,6 +548,20 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
         return template
 
+    def _check_template_find_options(self, template, param_name, internal_name=None):
+        if not internal_name:
+            internal_name = param_name
+
+        if param_name in self.module.params.get('template_find_options'):
+            param_value = self.module.params.get(param_name)
+
+            if not param_value:
+                self.fail_json(msg="The param template_find_options has %s but param was not provided." % param_name)
+
+            if template[internal_name] != param_value:
+                return True
+        return False
+
     def get_template(self):
         args = {
             'name': self.module.params.get('name'),
@@ -545,17 +579,23 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
         templates = self.query_api('listTemplates', **args)
         if templates:
-            checksum = self.module.params.get('checksum')
-            display_text = self.module.params.get('display_text')
 
             for tmpl in templates['template']:
-                if tmpl['crossZones'] != cross_zones:
+                if not self._check_template_find_options(
+                        template=tmpl,
+                        param_name='cross_zones',
+                        internal_name='crossZones'):
                     continue
 
-                if checksum and 'checksum' in tmpl and tmpl['checksum'] != checksum:
+                if not self._check_template_find_options(
+                        template=tmpl,
+                        param_name='checksum'):
                     continue
 
-                if display_text and tmpl['displaytext'] != display_text:
+                if not self._check_template_find_options(
+                        template=tmpl,
+                        param_name='display_text',
+                        internal_name='displaytext'):
                     continue
 
                 if not template_found:
@@ -564,7 +604,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 elif tmpl['id'] == template_found['id']:
                     continue
                 else:
-                    self.fail_json(msg="Multiple templates found matching provided params. Please specifiy more precisely.")
+                    self.fail_json(msg="Multiple templates found matching provided params. Please use template_find_options.")
 
         return template_found
 
@@ -626,6 +666,7 @@ def main():
         is_routing=dict(type='bool'),
         checksum=dict(),
         template_filter=dict(default='self', choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
+        template_find_options=dict(type='list', choices=['display_text', 'checksum', 'cross_zones'], aliases=['template_find_option'], default=[]),
         hypervisor=dict(choices=CS_HYPERVISORS),
         requires_hvm=dict(type='bool', default=False),
         password_enabled=dict(type='bool', default=False),
