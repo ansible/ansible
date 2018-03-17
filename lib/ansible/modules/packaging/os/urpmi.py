@@ -166,6 +166,7 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
 
         installed = True
 <<<<<<< HEAD
+<<<<<<< HEAD
         for packages in pkgspec:
             if not query_package_provides(module, package, root):
                 installed = False
@@ -174,6 +175,11 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
             if not query_package_provides(module, package):
                 module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
 >>>>>>> - make urpmi module compatible with other packaging modules when using a packages list
+=======
+        for package in pkgspec:
+            if not query_package_provides(module, package):
+                module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
+>>>>>>> db1678031bdcc215202489d70ee6071e1de31c89
 
         if rc:
             module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
