@@ -911,9 +911,7 @@ lib/ansible/modules/monitoring/datadog_event.py E324
 lib/ansible/modules/monitoring/datadog_monitor.py E324
 lib/ansible/modules/monitoring/datadog_monitor.py E325
 lib/ansible/modules/monitoring/datadog_monitor.py E326
-lib/ansible/modules/monitoring/grafana_dashboard.py E325
 lib/ansible/modules/monitoring/grafana_datasource.py E324
-lib/ansible/modules/monitoring/grafana_datasource.py E325
 lib/ansible/modules/monitoring/icinga2_host.py E322
 lib/ansible/modules/monitoring/icinga2_host.py E324
 lib/ansible/modules/monitoring/logentries.py E322
