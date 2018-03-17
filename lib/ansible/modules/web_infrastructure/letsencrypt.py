@@ -1293,7 +1293,7 @@ def main():
             terms_agreed=dict(required=False, default=False, type='bool'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
-            data=dict(required=False, no_log=True, default=None, type='dict'),
+            data=dict(required=False, default=None, type='dict'),
             dest=dict(aliases=['cert'], type='path'),
             fullchain_dest=dict(aliases=['fullchain'], type='path'),
             chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
