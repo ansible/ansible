@@ -100,6 +100,7 @@ options:
     description:
       - If C(yes) it allows  erasing  of  installed  packages to resolve dependencies.
     required: false
+    type: bool
     default: "no"
     choices: [ "yes", "no" ]
     version_added: "2.6"
