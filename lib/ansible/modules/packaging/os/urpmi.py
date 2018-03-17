@@ -112,7 +112,7 @@ def query_package_provides(module, name, root):
 
 
 def update_package_db(module):
-    cmd = "urpmi.update -a -q"
+    cmd = "/usr/sbin/urpmi.update -a -q"
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
