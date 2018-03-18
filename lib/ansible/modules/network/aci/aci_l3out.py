@@ -45,11 +45,13 @@ options:
     - Name of the external L3 domain being associated with the L3Out.
     required: yes
     aliases: [ ext_routed_domain_name, routed_domain ]
-  target_dscp:
+  dscp:
     description:
-    - Target DSCP value.
+    - The target Differentiated Service (DSCP) value.
+    choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
     default: unspecified
-  enforceRtctrl:
+    aliases: [ target ]
+  route_control:
     description:
     - Route Control enforcement direction.
     choices: [ 'export,import', 'export' ]
@@ -57,7 +59,7 @@ options:
     aliases: [ route_control_enforcement ]
   l3protocol:
     description:
-    - Route Control enforcement direction.
+    - Routing protocol for the L3Out
     choices: [ static, bgp, ospf ]
     default: static
   description:
@@ -88,9 +90,9 @@ EXAMPLES = r'''
     tenant: production
     name: prod_l3out
     description: L3Out for Production tenant
-    ext_routed_domain_name: l3dom_prod
+    domain: l3dom_prod
     vrf: prod
-    l3protocol: ospf,bgp
+    l3protocol: ospf
 
 '''
 
@@ -211,10 +213,13 @@ def main():
                     'ext_routed_domain_name', 'routed_domain']),
         vrf=dict(type='str', aliases=['vrf_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
-        description=dict(type='str', default='', aliases=['descr']),
-        enforceRtctrl=dict(type='str', default='export', choices=[
+        description=dict(type='str', aliases=['descr']),
+        route_control=dict(type='str', default='export', choices=[
                            'export,import', 'export'], aliases=['route_control_enforcement']),
-        target_dscp=dict(type='str', default='unspecified'),
+        dscp=dict(type='str',
+                  choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
+                           'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
+                  aliases=['target']),
         l3protocol=dict(type='str', default='static',
                         choices=['static', 'bgp', 'ospf']),
         state=dict(type='str', default='present', choices=[
@@ -238,9 +243,9 @@ def main():
 
     l3out = module.params['l3out']
     domain = module.params['domain']
-    dscp = module.params['target_dscp']
+    dscp = module.params['dscp']
     description = module.params['description']
-    enforceRtctrl = module.params['enforceRtctrl']
+    enforceRtctrl = module.params['route_control']
     vrf = module.params['vrf']
     l3protocol = module.params['l3protocol']
     state = module.params['state']
