@@ -52,7 +52,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
         num_cmd_elems  200                           Maximum number of commands to queue to driver True
         """
 
-        iscsi_facts = ""
+        iscsi_facts = {}
         iscsi_facts['iscsi_iqn'] = ""
         if sys.platform.startswith('linux') or sys.platform.startswith('sunos'):
             for line in get_file_content('/etc/iscsi/initiatorname.iscsi', '').splitlines():
