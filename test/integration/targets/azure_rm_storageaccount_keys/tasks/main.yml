@@ -1,0 +1,25 @@
+ - name: Create storage account name
+   set_fact:
+       storage_account: "{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+
+ - name: Create new storage account
+   azure_rm_storageaccount:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ storage_account }}"
+       account_type: Standard_LRS
+
+ - name: Get storage account keys
+   azure_rm_storageaccount_keys:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ storage_account }}"
+   register: output
+
+  - name: Assert that the result has Keys 
+    assert: 
+        that: output['keys'] | length > 0
+
+ - name: Delete acccount
+   azure_rm_storageaccount:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ storage_account }}"
+       state: absent
