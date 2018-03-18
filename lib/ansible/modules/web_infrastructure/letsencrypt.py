@@ -128,6 +128,11 @@ options:
       - "The data to validate ongoing challenges."
       - "The value that must be used here will be provided by a previous use
          of this module."
+      - "I(Note): the C(data) option was marked as C(no_log) up to
+         Ansible 2.5. From Ansible 2.6 on, it is no longer marked this way
+         as it causes error messages to be come unusable, and C(data) does
+         not contain any information which can be used without having
+         access to the account key or which are not public anyway."
   dest:
     description:
       - "The destination file for the certificate."
