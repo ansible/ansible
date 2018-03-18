@@ -14,9 +14,9 @@
        name: "{{ storage_account }}"
    register: output
 
-  - name: Assert that the result has Keys 
-    assert: 
-        that: output['keys'] | length > 0
+ - name: Assert that the result has Keys
+   assert:
+       that: output['keys'] | length > 0
 
  - name: Delete acccount
    azure_rm_storageaccount:
