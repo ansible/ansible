@@ -219,7 +219,7 @@ def main():
             module.exit_json(changed=False, msg="")
 
     if not module.check_mode:
-        new_value_quoted = "'" + new_value + "'"
+        new_value_quoted = "'" + new_value.replace("'", "'\"'\"'") + "'"
         (rc, out, err) = module.run_command(' '.join(args + [new_value_quoted]), cwd=dir)
         if err:
             module.fail_json(rc=rc, msg=err, cmd=' '.join(args + [new_value_quoted]))
