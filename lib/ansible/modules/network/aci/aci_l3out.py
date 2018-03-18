@@ -83,7 +83,7 @@ extends_documentation_fragment: aci
 
 EXAMPLES = r'''
 - name: Add a new L3Out
-  aci_epg:
+  aci_l3out:
     host: apic
     username: admin
     password: SomeSecretPassword
