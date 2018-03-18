@@ -33,8 +33,8 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         buf = {
-            "host" : host,
-            "status" : caption
+            "host": host,
+            "status": caption
         }
 
         if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
