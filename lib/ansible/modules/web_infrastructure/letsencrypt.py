@@ -128,6 +128,11 @@ options:
       - "The data to validate ongoing challenges."
       - "The value that must be used here will be provided by a previous use
          of this module."
+      - "I(Note): the C(data) option was marked as C(no_log) up to
+         Ansible 2.5. From Ansible 2.6 on, it is no longer marked this way
+         as it causes error messages to be come unusable, and C(data) does
+         not contain any information which can be used without having
+         access to the account key or which are not public anyway."
   dest:
     description:
       - "The destination file for the certificate."
@@ -1293,7 +1298,7 @@ def main():
             terms_agreed=dict(required=False, default=False, type='bool'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
-            data=dict(required=False, no_log=True, default=None, type='dict'),
+            data=dict(required=False, default=None, type='dict'),
             dest=dict(aliases=['cert'], type='path'),
             fullchain_dest=dict(aliases=['fullchain'], type='path'),
             chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
