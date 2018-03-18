@@ -23,7 +23,7 @@ notes:
   L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
 author:
 - Rostyslav Davydenko (@rost-d)
-version_added: '2.5'
+version_added: '2.6'
 options:
   tenant:
     description:
