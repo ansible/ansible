@@ -24,12 +24,7 @@ import getpass
 from base64 import b64encode
 from datetime import datetime
 
-try:
-    import httplib
-except ImportError:
-    # Python 3
-    import http.client as httplib
-
+from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
 DOCUMENTATION = '''
@@ -42,11 +37,21 @@ DOCUMENTATION = '''
     requirements:
       - whitelisting in configuration
     options:
-      grafana_host:
-        description: Grafana server address and port
+      grafana_url:
+        description: Grafana annotations api URL
         env:
-          - name: GRAFANA_HOST
-        default: 127.0.0.1:3000
+          - name: GRAFANA_URL
+        default: http://127.0.0.1:3000/api/annotations
+      grafana_validate_certs:
+        description: (bool) validate the SSL certificate of the Grafana server. (For HTTPS url)
+        env:
+          - name: GRAFANA_VALIDATE_CERT
+        default: True
+      http_agent:
+        description: The HTTP 'User-agent' value to set in HTTP requets.
+        env:
+          - name: HTTP_AGENT
+        default: 'Ansible (grafana_annotations callback)'
       api_key:
         description: Grafana API key, allowing to authenticate when posting on the HTTP API.
                      If not provided, grafana_login and grafana_password will
@@ -106,6 +111,14 @@ Result:
 def to_millis(dt):
     return int(dt.strftime('%s')) * 1000
 
+def str2bool(string):
+    if string in [True, 'True', 'true', '1', 'yes']:
+        return True
+    elif string in [False, 'False', 'false', '0', 'no']:
+        return True
+    else:
+        raise Exception("Unsupported value '%s' as boolean" % string)
+
 
 class CallbackModule(CallbackBase):
     """
@@ -124,27 +137,27 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
-        self.grafana_host = os.getenv('GRAFANA_HOST', '127.0.0.1:3000')
-        self.secure = int(os.getenv('GRAFANA_SECURE', 0))
-        if self.secure not in [0, 1]:
-            self.secure = 0
         api_key = os.getenv('GRAFANA_API_KEY', None)
-        grafana_user = os.getenv('GRAFANA_USER', None)
-        grafana_password = os.getenv('GRAFANA_PASSWORD', '')
+        self.grafana_url = os.getenv('GRAFANA_URL', 'http://127.0.0.1:3000/api/annotations')
+        self.grafana_validate_certs = str2bool(os.getenv('GRAFANA_VALIDATE_CERT', True))
+        self.http_agent = os.getenv('HTTP_AGENT', 'Ansible (grafana_annotations callback)')
+        self.grafana_user = os.getenv('GRAFANA_USER', None)
+        self.grafana_password = os.getenv('GRAFANA_PASSWORD', None)
         self.dashboard_id = os.getenv('GRAFANA_DASHBOARD_ID', None)
         self.panel_id = os.getenv('GRAFANA_PANEL_ID', None)
+        self.force_basic_auth = False
+
+        self.headers = {'Content-Type': 'application/json'}
 
         if api_key:
-            authorization = "Bearer %s" % api_key
-        elif grafana_user is not None:
-            authorization = "Basic %s" % b64encode("%s:%s" % (grafana_user, grafana_password))
+            self.headers['Authorization'] = "Bearer %s" % api_key
+        elif self.grafana_user is not None and self.grafana_password is not None:
+            self.force_basic_auth = True
         else:
             self.disabled = True
             self._display.warning("Authentcation required, please set GRAFANA_API_KEY or GRAFANA_USER/GRAFANA_PASSWORD")
             return
 
-        self.headers = {'Content-Type': 'application/json',
-                        'Authorization': authorization}
         self.errors = 0
         self.hostname = socket.gethostname()
         self.username = getpass.getuser()
@@ -211,11 +224,10 @@ class CallbackModule(CallbackBase):
         self._send_annotation(json.dumps(data))
 
     def _send_annotation(self, annotation):
-        if int(self.secure) == 1:
-            self.http = httplib.HTTPSConnection(self.grafana_host)
-        else:
-            self.http = httplib.HTTPConnection(self.grafana_host)
-        self.http.request("POST", "/api/annotations", annotation, self.headers)
-        response = self.http.getresponse()
-        if response.status != 200:
-            self._display.warning("Grafana server responded with HTTP %d" % response.status)
+        try:
+            response = open_url(self.grafana_url, data=annotation, headers=self.headers,
+                                method="POST", validate_certs=self.grafana_validate_certs,
+                                url_username=self.grafana_user, url_password=self.grafana_password,
+                                http_agent=self.http_agent, force_basic_auth=self.force_basic_auth)
+        except Exception as e:
+            self._display.warning('Could not submit message to Grafana: %s' % str(e))
