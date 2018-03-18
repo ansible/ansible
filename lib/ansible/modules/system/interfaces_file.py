@@ -141,6 +141,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def lineDict(line):
@@ -320,8 +321,8 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
 def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd, 'w')
-    f.writelines(lines)
+    f = os.fdopen(tmpfd, 'wb')
+    f.writelines(to_bytes(lines, errors='surrogate_or_strict'))
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 
