@@ -63,7 +63,7 @@ options:
         default: "package"
         version_added: "2.0"
     extra_args_precommand:
-       version_added: "2.5"
+       version_added: "2.6"
        required: false
        description:
          - Add additional global target options to C(zypper).
