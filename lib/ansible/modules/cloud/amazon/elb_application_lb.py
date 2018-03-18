@@ -101,6 +101,13 @@ options:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
     required: false
+  wait:
+    description:
+      - Wait for the load balancer to have a state of 'active' before completing. A status check is 
+        performed every 15 seconds until a successful state is reached. An error is returned after 40 failed checks.
+    required: false
+    default: no
+    choices: [ 'yes', 'no' ]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -350,11 +357,6 @@ from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_
 from ansible.module_utils.aws.elbv2 import ApplicationLoadBalancer, ELBListeners, ELBListener, ELBListenerRules, ELBListenerRule
 from ansible.module_utils.aws.elb_utils import get_elb_listener_rules
 
-try:
-    import boto3
-except ImportError:
-    HAS_BOTO3 = False
-
 
 def create_or_update_elb(elb_obj):
     """Create ELB or modify main attributes. json_exit here"""
@@ -485,7 +487,17 @@ def main():
             access_logs_s3_prefix=dict(type='str'),
             deletion_protection=dict(type='bool'),
             idle_timeout=dict(type='int'),
-            listeners=dict(type='list'),
+            listeners=dict(type='list',
+                           elements='dict',
+                           options=dict(
+                               Protocol=dict(type='list', required=True),
+                               Port=dict(type='int', required=True),
+                               SslPolicy=dict(type='str'),
+                               Certificates=dict(type='list'),
+                               DefaultActions=dict(type='list', required=True),
+                               Rules=dict(type='dict')
+                           )
+                           ),
             name=dict(required=True, type='str'),
             purge_listeners=dict(default=True, type='bool'),
             purge_tags=dict(default=True, type='bool'),
@@ -494,8 +506,7 @@ def main():
             scheme=dict(default='internet-facing', choices=['internet-facing', 'internal']),
             state=dict(choices=['present', 'absent'], type='str'),
             tags=dict(default={}, type='dict'),
-            wait_timeout=dict(type='int'),
-            wait=dict(type='bool')
+            wait=dict(default=False, type='bool')
         )
     )
 
@@ -513,31 +524,12 @@ def main():
     if listeners is not None:
         for listener in listeners:
             for key in listener.keys():
-                if key not in ['Protocol', 'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules']:
-                    module.fail_json(msg="listeners parameter contains invalid dict keys. Should be one of 'Protocol', "
-                                         "'Port', 'SslPolicy', 'Certificates', 'DefaultActions', 'Rules'.")
-                # Make sure Port is always an integer
-                elif key == 'Port':
-                    listener[key] = int(listener[key])
-
                 if key == 'Protocol' and listener[key] == 'HTTPS':
                     if 'SslPolicy' not in listener.keys():
                         module.fail_json(msg="'SslPolicy' is a required listener dict key when Protocol = HTTPS")
 
                     if 'Certificates' not in listener.keys():
                         module.fail_json(msg="'SslPolicy' is a required listener dict key when Protocol = HTTPS")
-
-            if 'DefaultActions' not in listener.keys():
-                module.fail_json(msg="'DefaultActions' is a required listener dict key")
-
-            if 'Protocol' not in listener.keys():
-                module.fail_json(msg="'Protocol' is a required listener dict key")
-
-            if 'Port' not in listener.keys():
-                module.fail_json(msg="'Port' is a required listener dict key")
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 

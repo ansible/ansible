@@ -4,7 +4,7 @@
 
 # Ansible imports
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names, \
-    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_policies as compare_dicts
 from ansible.module_utils.aws.elb_utils import get_elb, get_elb_listener, convert_tg_name_to_arn
 
 # Non-ansible imports
@@ -32,7 +32,7 @@ class ElasticLoadBalancerV2(object):
         self.deletion_protection = module.params.get("deletion_protection")
         self.wait = module.params.get("wait")
 
-        if module.params.get("tags"):
+        if module.params.get("tags") is not None:
             self.tags = ansible_dict_to_boto3_tag_list(module.params.get("tags"))
         else:
             self.tags = None
@@ -45,25 +45,19 @@ class ElasticLoadBalancerV2(object):
         else:
             self.elb_attributes = None
 
-    def wait_for_status(self, elb_name, status):
-        polling_increment_secs = 15
-        max_retries = self.module.params.get('wait_timeout') // polling_increment_secs
-        status_achieved = False
+    def wait_for_status(self, elb_arn):
+        """
+        Wait for load balancer to reach 'active' status
 
-        for x in range(0, max_retries):
-            try:
-                response = get_elb(self.connection, self.module, elb_name)
-                if response['State']['Code'] == status:
-                    status_achieved = True
-                    break
-                else:
-                    time.sleep(polling_increment_secs)
-            except (BotoCoreError, ClientError) as e:
-                self.module.fail_json_aws(e, msg=str(e))
+        :param elb_arn: The load balancer ARN
+        :return:
+        """
 
-        result = response
-
-        return status_achieved, result
+        try:
+            waiter = self.connection.get_waiter('load_balancer_available')
+            waiter.wait(LoadBalancerArns=[elb_arn])
+        except (BotoCoreError, ClientError) as e:
+            self.module.fail_json_aws(e)
 
     def get_elb_attributes(self):
         """
@@ -76,7 +70,7 @@ class ElasticLoadBalancerV2(object):
             elb_attributes = boto3_tag_list_to_ansible_dict(self.connection.describe_load_balancer_attributes(
                                                             LoadBalancerArn=self.elb['LoadBalancerArn'])['Attributes'])
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         # Replace '.' with '_' in attribute key names to make it more Ansibley
         return dict((k.replace('.', '_'), v) for k, v in elb_attributes.items())
@@ -98,7 +92,7 @@ class ElasticLoadBalancerV2(object):
         try:
             return self.connection.describe_tags(ResourceArns=[self.elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
     def delete_tags(self, tags_to_delete):
         """
@@ -110,7 +104,7 @@ class ElasticLoadBalancerV2(object):
         try:
             self.connection.remove_tags(ResourceArns=[self.elb['LoadBalancerArn']], TagKeys=tags_to_delete)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -124,7 +118,7 @@ class ElasticLoadBalancerV2(object):
         try:
             self.connection.add_tags(ResourceArns=[self.elb['LoadBalancerArn']], Tags=self.tags)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -137,7 +131,7 @@ class ElasticLoadBalancerV2(object):
         try:
             self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -179,7 +173,7 @@ class ElasticLoadBalancerV2(object):
         try:
             self.connection.set_subnets(LoadBalancerArn=self.elb['LoadBalancerArn'], Subnets=self.subnets)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -213,7 +207,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             except ValueError as e:
                 self.module.fail_json(msg=str(e), exception=traceback.format_exc())
             except (BotoCoreError, ClientError) as e:
-                self.module.fail_json_aws(e, msg=str(e))
+                self.module.fail_json_aws(e)
         else:
             self.security_groups = module.params.get('security_groups')
         self.access_logs_enabled = module.params.get("access_logs_enabled")
@@ -238,7 +232,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
-        if self.tags is not None:
+        if self.tags:
             params['Tags'] = self.tags
 
         try:
@@ -246,10 +240,10 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
             self.changed = True
             self.new_load_balancer = True
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         if self.wait:
-            status_achieved, new_elb = self.wait_for_status('active', self.name)
+            self.wait_for_status(self.elb['LoadBalancerArn'])
 
     def modify_elb_attributes(self):
         """
@@ -282,7 +276,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
                     self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
-                self.module.fail_json_aws(e, msg=str(e))
+                self.module.fail_json_aws(e)
 
     def compare_security_groups(self):
         """
@@ -305,7 +299,7 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         try:
             self.connection.set_security_groups(LoadBalancerArn=self.elb['LoadBalancerArn'], SecurityGroups=self.security_groups)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -323,7 +317,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
         self.connection_ec2 = connection_ec2
 
-        # Ansible module parameters specific to ALBs
+        # Ansible module parameters specific to NLBs
         self.type = 'network'
 
     def create_elb(self):
@@ -349,10 +343,10 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
             self.changed = True
             self.new_load_balancer = True
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         if self.wait:
-            status_achieved, new_elb = self.wait_for_status('active', self.name)
+            self.wait_for_status(self.elb['LoadBalancerArn'])
 
     def modify_elb_attributes(self):
         """
@@ -375,7 +369,7 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
                 if self.new_load_balancer:
                     self.connection.delete_load_balancer(LoadBalancerArn=self.elb['LoadBalancerArn'])
-                self.module.fail_json_aws(e, msg=str(e))
+                self.module.fail_json_aws(e)
 
 
 class ELBListeners(object):
@@ -409,7 +403,7 @@ class ELBListeners(object):
             listener_paginator = self.connection.get_paginator('describe_listeners')
             return (listener_paginator.paginate(LoadBalancerArn=self.elb_arn).build_full_result())['Listeners']
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
     def _ensure_listeners_default_action_has_arn(self, listeners):
         """
@@ -534,7 +528,7 @@ class ELBListener(object):
                 self.listener.pop('Rules')
             self.connection.create_listener(LoadBalancerArn=self.elb_arn, **self.listener)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
     def modify(self):
 
@@ -544,14 +538,14 @@ class ELBListener(object):
                 self.listener.pop('Rules')
             self.connection.modify_listener(**self.listener)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
     def delete(self):
 
         try:
             self.connection.delete_listener(ListenerArn=self.listener)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
 
 class ELBListenerRules(object):
@@ -598,7 +592,7 @@ class ELBListenerRules(object):
         try:
             return self.connection.describe_rules(ListenerArn=self.current_listener['ListenerArn'])['Rules']
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
     def _compare_condition(self, current_conditions, condition):
         """
@@ -703,7 +697,7 @@ class ELBListenerRule(object):
             self.rule['Priority'] = int(self.rule['Priority'])
             self.connection.create_rule(**self.rule)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -718,7 +712,7 @@ class ELBListenerRule(object):
             del self.rule['Priority']
             self.connection.modify_rule(**self.rule)
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
 
@@ -732,6 +726,6 @@ class ELBListenerRule(object):
         try:
             self.connection.delete_rule(RuleArn=self.rule['RuleArn'])
         except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg=str(e))
+            self.module.fail_json_aws(e)
 
         self.changed = True
