@@ -17,7 +17,7 @@ module: filament
 
 short_description: This is my sample module
 
-version_added: "2.4"
+version_added: "2.6"
 
 description:
     - "This is my longer description explaining my sample module"
