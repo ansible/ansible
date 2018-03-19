@@ -37,7 +37,8 @@ description:
   - This module provides support for verifying Cisco NSO configuration is in
     compliance with specified values.
 requirements:
-  - Cisco NSO version 4.4.3 or higher.
+  - Cisco NSO version 3.4.12 or higher, 4.2.7 or higher,
+    4.3.8 or higher, 4.4.3 or higher, 4.5 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   data:
@@ -99,6 +100,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class NsoVerify(object):
+    REQUIRED_VERSIONS = [
+        (4, 5),
+        (4, 4, 3),
+        (4, 3, 8),
+        (4, 2, 7),
+        (3, 4, 12)
+    ]
+
     def __init__(self, client, data):
         self._client = client
         self._data = data
@@ -165,7 +174,7 @@ def main():
     client = connect(p)
     nso_verify = NsoVerify(client, p['data'])
     try:
-        verify_version(client)
+        verify_version(client, NsoVerify.REQUIRED_VERSIONS)
 
         violations = nso_verify.main()
         client.logout()
