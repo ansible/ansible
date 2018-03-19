@@ -543,14 +543,16 @@ def get_network_command(existing, key, value):
                 command = '{0} {1}'.format(key, inet[0])
             elif len(inet) == 2:
                 command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
-            commands.append(command)
+            if command:
+                commands.append(command)
     for enet in existing_networks:
         if enet not in value:
             if len(enet) == 1:
                 command = 'no {0} {1}'.format(key, enet[0])
             elif len(enet) == 2:
                 command = 'no {0} {1} route-map {2}'.format(key, enet[0], enet[1])
-            commands.append(command)
+            if command:
+                commands.append(command)
     return commands
 
 
@@ -568,7 +570,8 @@ def get_inject_map_command(existing, key, value):
                 command = ('inject-map {0} exist-map {1} '
                            'copy-attributes'.format(maps[0],
                                                     maps[1]))
-            commands.append(command)
+            if command:
+                commands.append(command)
     for emaps in existing_maps:
         if emaps not in value:
             if len(emaps) == 2:
@@ -578,7 +581,8 @@ def get_inject_map_command(existing, key, value):
                 command = ('no inject-map {0} exist-map {1} '
                            'copy-attributes'.format(emaps[0],
                                                     emaps[1]))
-            commands.append(command)
+            if command:
+                commands.append(command)
     return commands
 
 
