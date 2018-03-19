@@ -625,10 +625,7 @@ def connect(params):
     return client
 
 
-def verify_version(client, required_versions=None):
-    if required_versions is None:
-        required_versions = [(4, 5), (4, 4, 3)]
-
+def verify_version(client, required_versions):
     version_str = client.get_system_setting('version')
     if not verify_version_str(version_str, required_versions):
         supported_versions = ', '.join(
