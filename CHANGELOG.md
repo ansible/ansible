@@ -108,6 +108,10 @@ Ansible Changes By Release
 * Fix powershell plugin to handle special chars in environment keys as well as
   int and bool values
   (https://github.com/ansible/ansible/pull/37215)
+* Fix error messages to not be inappropriately templated:
+  https://github.com/ansible/ansible/pull/37329
+* Fix Python 3 error in the openssl_certificate module:
+  https://github.com/ansible/ansible/pull/35143
 
 
 <a id="2.4.3"></a>
