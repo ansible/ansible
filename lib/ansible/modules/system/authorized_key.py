@@ -82,13 +82,13 @@ author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-- name: Set authorized key took from file
+- name: Set authorized key taken from file
   authorized_key:
     user: charlie
     state: present
     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-- name: Set authorized key took from url
+- name: Set authorized keys taken from url
   authorized_key:
     user: charlie
     state: present
@@ -125,7 +125,7 @@ EXAMPLES = '''
     key: https://github.com/user.keys
     validate_certs: False
 
-- name: Set authorized key, removing all the authorized key already set
+- name: Set authorized key, removing all the authorized keys already set
   authorized_key:
     user: root
     key: '{{ item }}'
