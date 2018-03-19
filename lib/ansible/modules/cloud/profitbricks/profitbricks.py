@@ -22,8 +22,8 @@ options:
   auto_increment:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
-    default: yes
-    choices: ["yes", "no"]
+    type: bool
+    default: true
   name:
     description:
       - The name of the virtual machine.
@@ -48,7 +48,7 @@ options:
     required: false
     default: None
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.5"
+    version_added: "2.6"
   datacenter:
     description:
       - The datacenter to provision this virtual machine.
@@ -77,7 +77,7 @@ options:
     required: false
     default: AUTO
     choices: [ "AUTO", "ZONE_1", "ZONE_2" ]
-    version_added: "2.5"
+    version_added: "2.6"
   volume_size:
     description:
       - The size in GB of the boot volume.
@@ -107,6 +107,7 @@ options:
   assign_public_ip:
     description:
       - This will assign the machine to the public LAN. If no LAN exists with public Internet access it is created.
+    type: bool
     required: false
     default: false
   lan:
@@ -117,15 +118,16 @@ options:
   nat:
     description:
       - Boolean value indicating if the private IP address has outbound access to the public Internet.
+    type: bool
     required: false
     default: false
-    version_added: "2.5"
+    version_added: "2.6"
   api_url:
     description:
       - The ProfitBricks API base URL.
     required: false
     default: None
-    version_added: "2.5"
+    version_added: "2.6"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -141,9 +143,9 @@ options:
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
+    type: bool
     required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
+    default: true
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
@@ -151,9 +153,9 @@ options:
   remove_boot_volume:
     description:
       - remove the bootVolume of the virtual machine you're destroying.
+    type: bool
     required: false
-    default: "yes"
-    choices: ["yes", "no"]
+    default: true
   state:
     description:
       - Indicate desired state of the resource

@@ -39,7 +39,7 @@ options:
       - The ProfitBricks API base URL.
     required: false
     default: None
-    version_added: "2.5"
+    version_added: "2.6"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -55,9 +55,9 @@ options:
   wait:
     description:
       - wait for the datacenter to be created before returning
-    required: false
-    default: "yes"
     type: bool
+    required: false
+    default: true
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

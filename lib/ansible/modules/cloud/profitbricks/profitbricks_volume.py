@@ -69,7 +69,7 @@ options:
     required: false
     default: None
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
-    version_added: "2.5"
+    version_added: "2.6"
   count:
     description:
       - The number of volumes you wish to create.
@@ -78,8 +78,8 @@ options:
   auto_increment:
     description:
       - Whether or not to increment a single number in the name for created virtual machines.
-    default: yes
     type: bool
+    default: true
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to remove instances.
@@ -89,7 +89,7 @@ options:
       - The ProfitBricks API base URL.
     required: false
     default: None
-    version_added: "2.5"
+    version_added: "2.6"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -105,9 +105,9 @@ options:
   wait:
     description:
       - wait for the datacenter to be created before returning
-    required: false
-    default: "yes"
     type: bool
+    required: false
+    default: true
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
