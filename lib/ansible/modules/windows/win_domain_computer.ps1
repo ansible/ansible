@@ -25,7 +25,7 @@ If (-not $sam_account_name.EndsWith("$")) {
   Fail-Json -obj $result "sam_account_name must end in $"
 }
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
-$description = Get-AnsibleParam -obj $params -name "description" -default "" -resultobj $result
+$description = Get-AnsibleParam -obj $params -name "description" -default ""
 $state = Get-AnsibleParam -obj $params -name "state" -ValidateSet "present","absent" -default "present"
 If ($state -eq "present") {
   $dns_hostname = Get-AnsibleParam -obj $params -name "dns_hostname" -failifempty $true -resultobj $result
