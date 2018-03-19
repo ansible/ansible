@@ -44,6 +44,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     by putting/getting files and executing commands based on the current
     action in use.
     '''
+    INVALID_ARGS = tuple()
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -92,6 +93,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
+
+        for arg in self.INVALID_ARGS:
+            if arg in self._task.args:
+                raise AnsibleError("Invalid argument %s passed" % arg)
 
         if self._connection._shell.tmpdir is None and self._early_needs_tmp_path():
             self._make_tmp_path()
