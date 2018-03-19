@@ -61,8 +61,11 @@ RETURN = """
 original_message:
     description: The original name param that was passed in
     type: str
+    returned: regardless
 message:
     description: The output message that the sample module generates
+    type: str
+    returned: regardless
 """
 
 hello = 'world'
