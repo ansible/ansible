@@ -857,7 +857,7 @@ def get_cache(module):
             # try again
             cache = apt.Cache()
         else:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=to_native(e))
     return cache
 
 
