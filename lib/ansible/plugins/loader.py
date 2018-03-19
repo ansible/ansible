@@ -347,9 +347,6 @@ class PluginLoader:
 
     def _update_object(self, obj, name, path):
 
-        # load plugin config data
-        self._load_config_defs(name, path)
-
         # set extra info on the module, in case we want it later
         setattr(obj, '_original_path', path)
         setattr(obj, '_load_name', name)
@@ -392,6 +389,10 @@ class PluginLoader:
                     # fully implement the defined interface.
                     return None
                 raise
+
+        # load plugin config data
+        if not found_in_cache:
+            self._load_config_defs(name, path)
 
         self._update_object(obj, name, path)
         return obj
@@ -465,6 +466,10 @@ class PluginLoader:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
+
+            # load plugin config data
+            if not found_in_cache:
+                self._load_config_defs(name, path)
 
             self._update_object(obj, name, path)
             yield obj
