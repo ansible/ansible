@@ -32,7 +32,7 @@ options:
     default: 'no'
   create_timeout:
     description:
-      - The amount of time that can pass before the stack status becomes CREATE_FAILED
+      - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
     required: false
     default: null
     version_added: "2.6"
