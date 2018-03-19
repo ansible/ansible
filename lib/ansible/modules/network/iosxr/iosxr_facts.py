@@ -122,7 +122,6 @@ from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_co
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
-
 class FactsBase(object):
 
     def __init__(self):
@@ -136,12 +135,12 @@ class FactsBase(object):
 class Default(FactsBase):
 
     def commands(self):
-        return(['show version brief'])
+        return(['show version | utility head -n 20'])
 
     def populate(self, results):
-        self.facts['version'] = self.parse_version(results['show version brief'])
-        self.facts['image'] = self.parse_image(results['show version brief'])
-        self.facts['hostname'] = self.parse_hostname(results['show version brief'])
+        self.facts['version'] = self.parse_version(results['show version | utility head -n 20'])
+        self.facts['image'] = self.parse_image(results['show version | utility head -n 20'])
+        self.facts['hostname'] = self.parse_hostname(results['show version | utility head -n 20'])
 
     def parse_version(self, data):
         match = re.search(r'Version (\S+)$', data, re.M)
