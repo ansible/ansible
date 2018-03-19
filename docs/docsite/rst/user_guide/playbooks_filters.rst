@@ -919,10 +919,10 @@ This will result in::
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
-    # get total amount of seconds between two dates, default date format is %Y-%m-%d %H:%M:%S but you can pass your own one
+    # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2015-12-25"|to_datetime('%Y-%m-%d'))).total_seconds()  }}
     
-    # get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
+    # Get remaining seconds after delta has been calculated. NOTE: This does NOT convert years, days, hours, etc to seconds. For that, use total_seconds()
     {{ (("2016-08-14 20:00:12"|to_datetime) - ("2016-08-14 18:00:00"|to_datetime)).seconds  }}
     # This expression evaluates to "12" and not "132". Delta is 2 hours, 12 seconds
     
