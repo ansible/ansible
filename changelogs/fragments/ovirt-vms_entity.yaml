@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix traceback when creating or stopping ovirt vms (https://github.com/ansible/ansible/pull/37249)
