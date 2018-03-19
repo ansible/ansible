@@ -36,7 +36,8 @@ except NameError:
 nso_argument_spec = dict(
     url=dict(required=True),
     username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), required=True),
-    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True)
+    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True),
+    timeout=dict(default=300, type=int)
 )
 
 
@@ -66,8 +67,9 @@ class NsoException(Exception):
 
 
 class JsonRpc(object):
-    def __init__(self, url):
+    def __init__(self, url, timeout):
         self._url = url
+        self._timeout = timeout
 
         self._id = 0
         self._trans = {}
@@ -219,7 +221,8 @@ class JsonRpc(object):
 
         data = json.dumps(payload)
         resp = open_url(
-            self._url, method='POST', data=data, headers=self._headers)
+            self._url, timeout=self._timeout,
+            method='POST', data=data, headers=self._headers)
         if resp.code != 200:
             raise NsoException(
                 'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
@@ -620,7 +623,7 @@ class ValueBuilder(object):
 
 
 def connect(params):
-    client = JsonRpc(params['url'])
+    client = JsonRpc(params['url'], params['timeout'])
     client.login(params['username'], params['password'])
     return client
 
