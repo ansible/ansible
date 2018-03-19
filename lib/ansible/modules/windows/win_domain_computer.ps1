@@ -52,10 +52,11 @@ If ($state -eq "present") {
 # ------------------------------------------------------------------------------
 Function Get-InitialState($desired_state) {
   # Test computer exists
-  $computer = Get-ADComputer `
+  $computer = Try {
+    Get-ADComputer `
       -Identity $desired_state.name `
-      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass `
-      -ErrorAction SilentlyContinue
+      -Properties DistinguishedName,DNSHostName,Enabled,Name,SamAccountName,Description,ObjectClass
+  } Catch { $null }
   If ($computer) {
       $initial_state = @{
         name = $computer.Name
