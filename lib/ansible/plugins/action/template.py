@@ -56,6 +56,18 @@ class ActionModule(ActionBase):
         trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
         lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
 
+        # Option `lstrip_blocks' was added in Jinja2 version 2.7.
+        if lstrip_blocks:
+            try:
+                import jinja2.defaults
+            except ImportError:
+                raise AnsibleError('Unable to import Jinja2 defaults for determing Jinja2 features.')
+
+            try:
+                jinja2.defaults.LSTRIP_BLOCKS
+            except AttributeError:
+                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
+
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
 

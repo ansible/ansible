@@ -77,6 +77,7 @@ options:
   lstrip_blocks:
     description:
       - If this is set to True leading spaces and tabs are stripped from the start of a line to a block.
+        Setting this option to True requires Jinja2 version >=2.7.
     type: bool
     default: 'no'
     version_added: '2.6'
