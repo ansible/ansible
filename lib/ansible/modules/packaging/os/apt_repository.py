@@ -503,6 +503,9 @@ def main():
         else:
             module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
 
+    if not repo:
+        module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
+
     if isinstance(distro, aptsources_distro.Distribution):
         sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
     else:
