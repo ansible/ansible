@@ -823,6 +823,17 @@ class Request:
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
+
+        >>> from ansible.module_utils.urls import Request
+        >>> r = Request()
+        >>> r.open('GET', 'http://httpbin.org/cookies/set?k1=v1').read()
+        '{\n  "cookies": {\n    "k1": "v1"\n  }\n}\n'
+        >>> r = Request(url_username='user', url_password='passwd')
+        >>> r.open('GET', 'http://httpbin.org/basic-auth/user/passwd').read()
+        '{\n  "authenticated": true, \n  "user": "user"\n}\n'
+        >>> r = Request(headers=dict(foo='bar'))
+        >>> r.open('GET', 'http://httpbin.org/get', headers=dict(baz='qux')).read()
+
         """
 
         self.headers = headers or {}
