@@ -75,6 +75,7 @@ class JsonRpc(object):
         self._trans = {}
         self._headers = {'Content-Type': 'application/json'}
         self._conn = None
+        self._system_settings = {}
 
     def login(self, user, passwd):
         payload = {
@@ -89,9 +90,11 @@ class JsonRpc(object):
         self._call(payload)
 
     def get_system_setting(self, setting):
-        payload = {'method': 'get_system_setting', 'params': {'operation': setting}}
-        resp, resp_json = self._call(payload)
-        return resp_json['result']
+        if setting not in self._system_settings:
+            payload = {'method': 'get_system_setting', 'params': {'operation': setting}}
+            resp, resp_json = self._call(payload)
+            self._system_settings[setting] = resp_json['result']
+        return self._system_settings[setting]
 
     def new_trans(self, **kwargs):
         payload = {'method': 'new_trans', 'params': kwargs}
@@ -195,10 +198,15 @@ class JsonRpc(object):
         if params is None:
             params = {}
 
+        if is_version(self, [(4, 5), (4, 4, 3)]):
+            result_format = 'json'
+        else:
+            result_format = 'normal'
+
         payload = {
             'method': 'run_action',
             'params': {
-                'format': 'normal',
+                'format': result_format,
                 'path': path,
                 'params': params
             }
@@ -209,7 +217,16 @@ class JsonRpc(object):
             payload['params']['th'] = th
             resp, resp_json = self._call(payload)
 
-        return resp_json['result']
+        if result_format == 'normal':
+            # this only works for one-level results, list entries,
+            # containers etc will have / in their name.
+            result = {}
+            for info in resp_json['result']:
+                result[info['name']] = info['value']
+        else:
+            result = resp_json['result']
+
+        return result
 
     def _call(self, payload):
         self._id += 1
