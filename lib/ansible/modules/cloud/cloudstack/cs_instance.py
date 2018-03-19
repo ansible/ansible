@@ -55,7 +55,7 @@ options:
       - The memory allocated to the instance, used with custom service offerings
   template:
     description:
-      - Name or id of the template to be used for creating the new instance.
+      - Name, display text or id of the template to be used for creating the new instance.
       - Required when using C(state=present).
       - Mutually exclusive with C(ISO) option.
   iso:
@@ -67,8 +67,9 @@ options:
     description:
       - Name of the filter used to search for the template or iso.
       - Used for params C(iso) or C(template) on C(state=present).
+      - The filter C(all) was added in 2.6.
     default: executable
-    choices: [ featured, self, selfexecutable, sharedexecutable, executable, community ]
+    choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
     aliases: [ iso_filter ]
     version_added: '2.1'
   hypervisor:
@@ -303,7 +304,13 @@ template:
   description: Name of template the instance was deployed with.
   returned: success
   type: string
-  sample: Debian-8-64bit
+  sample: Linux Debian 9 64-bit
+template_display_text:
+  description: Display text of template the instance was deployed with.
+  returned: success
+  type: string
+  sample: Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
+  version_added: 2.6
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
@@ -371,6 +378,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'serviceofferingname': 'service_offering',
             'isoname': 'iso',
             'templatename': 'template',
+            'templatedisplaytext': 'template_display_text',
             'keypair': 'ssh_key',
         }
         self.instance = None
@@ -878,8 +886,11 @@ def main():
         memory=dict(type='int'),
         template=dict(),
         iso=dict(),
-        template_filter=dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable',
-                                                                                    'community']),
+        template_filter=dict(
+            default="executable",
+            aliases=['iso_filter'],
+            choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']
+        ),
         networks=dict(type='list', aliases=['network']),
         ip_to_networks=dict(type='list', aliases=['ip_to_network']),
         ip_address=dict(defaul=None),
