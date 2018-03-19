@@ -103,7 +103,7 @@ Function Set-ConstructedState($initial_state, $desired_state) {
             -Confirm:$False `
             -WhatIf:$check_mode
     } Catch {
-      Fail-Json -obj $result -msg "Failed to move the AD object $($desired_state.name): $($_.Exception.Message)"`
+      Fail-Json -obj $result -msg "Failed to move the AD object $($desired_state.name) to $($desired_state.ou) OU: $($_.Exception.Message)"
     }
   }
   $result.changed = $true
