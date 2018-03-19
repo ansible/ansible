@@ -398,7 +398,8 @@ when a term comes up on the mailing list.
         default is to address the batch size all at once, so this is something
         that you must opt-in to.  OS configuration (such as making sure config
         files are correct) does not typically have to use the rolling update
-        model, but can do so if desired.
+        model, but can do so if desired. This option permit also to ignore
+        unreachable nodes in the group of machines.
 
     Serial
         .. seealso::

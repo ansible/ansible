@@ -111,6 +111,32 @@ You can also mix and match the values::
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
 
+You can also ignore unreachable node to go ahead with your job, suppose for example you have 6 nodes and you
+want to divide it in groups of 2, an example of serialization option should be::
+
+    ---
+
+    - hosts: webservers
+      serial: [[2, 1], 2, 2]
+
+
+In this case, the first group represented by the list [2, 1] has a value of 1 (True) regarding the question
+"Do you want to ignroe unreachable?". For others groups the implicit answer to the question is 0 (False).
+At this point if one or both machines in the first group of 2 are unreachable, ansible go ahead with the
+second group and does not stop the play. If in the second group one machine is unreachable, ansible does not
+stop (this is the default behavoir also in old versions of ansible). If in the second group both machines
+are unreachable, ansible stop the play.
+
+.. note::
+   Valid value are only 0 and 1, False and True, other values will be ignored and 0 will be used. Example::
+
+   ---
+
+    - hosts: webservers
+      serial: [[2, 1], [2,0], 2, [4, False], [3, True], [2, "False"]]
+
+
+Last value will result as [2, 0] because "False" in this case is a string and not a boolean.
 
 .. _maximum_failure_percentage:
 
@@ -132,6 +158,7 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 
      The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
      when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+     Unreachables machine are always not considered as failed if you use max_fail_percentage.
 
 .. _delegation:
 

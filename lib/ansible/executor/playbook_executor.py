@@ -158,11 +158,11 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        batches = self._get_serialized_batches(play)
+                        batches, ignores = self._get_serialized_batches(new_play)
                         if len(batches) == 0:
                             self._tqm.send_callback('v2_playbook_on_play_start', play)
                             self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                        for batch in batches:
+                        for batch, ignore in zip(batches, ignores):
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
@@ -176,9 +176,13 @@ class PlaybookExecutor:
                             # check the number of failures here, to see if they're above the maximum
                             # failure percentage allowed, or if any errors are fatal. If either of those
                             # conditions are met, we break out, otherwise we only break out if the entire
-                            # batch failed
-                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
-                                (previously_failed + previously_unreachable)
+                            # batch failed. If ignore value is 1 we do not count unreachable hosts as failed.
+                            # We have an ignore value for every hosts group.
+                            if ignore == 1:
+                                failed_hosts_count = len(self._tqm._failed_hosts) - previously_failed
+                            else:
+                                failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
+                                                        (previously_failed + previously_unreachable)
 
                             if len(batch) == failed_hosts_count:
                                 break_play = True
@@ -249,22 +253,29 @@ class PlaybookExecutor:
 
     def _get_serialized_batches(self, play):
         '''
-        Returns a list of hosts, subdivided into batches based on
-        the serial size specified in the play.
+        Returns a list of hosts subdivided into batches based on the serial size specified in the play
+        and a list of 0 and 1 values, used to ignore or not unreachable hosts during the play.
         '''
 
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
         all_hosts_len = len(all_hosts)
 
+        # Extract serial batch list
+        serial_batch_list = [i[0] if isinstance(i, list) else i for i in play.serial]
+
+        # ignore_unreachable_list contains 0,1 value, if 0, host unreachable are counted as failed, othewise
+        # are not counted as failed. If a value is not 0 or 1, we pass 0 as standard
+        ignore_unreachable_list = [i[1] if isinstance(i, list) and i[1] == 1 else 0 for i in play.serial]
+
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
-        serial_batch_list = play.serial
         if len(serial_batch_list) == 0:
             serial_batch_list = [-1]
 
         cur_item = 0
         serialized_batches = []
+        ignore_unreachable = []
 
         while len(all_hosts) > 0:
             # get the serial value from current item in the list
@@ -275,6 +286,7 @@ class PlaybookExecutor:
             # to the current serial item size
             if serial <= 0:
                 serialized_batches.append(all_hosts)
+                ignore_unreachable.append(0)
                 break
             else:
                 play_hosts = []
@@ -283,6 +295,7 @@ class PlaybookExecutor:
                         play_hosts.append(all_hosts.pop(0))
 
                 serialized_batches.append(play_hosts)
+                ignore_unreachable.append(ignore_unreachable_list[cur_item])
 
             # increment the current batch list item number, and if we've hit
             # the end keep using the last element until we've consumed all of
@@ -291,7 +304,7 @@ class PlaybookExecutor:
             if cur_item > len(serial_batch_list) - 1:
                 cur_item = len(serial_batch_list) - 1
 
-        return serialized_batches
+        return serialized_batches, ignore_unreachable
 
     def _generate_retry_inventory(self, retry_path, replay_hosts):
         '''

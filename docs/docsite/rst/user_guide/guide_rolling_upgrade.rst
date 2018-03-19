@@ -237,6 +237,23 @@ Here is the next part of the update play::
    - The ``serial`` keyword forces the play to be executed in 'batches'. Each batch counts as a full play with a subselection of hosts.
      This has some consequences on play behavior. For example, if all hosts in a batch fails, the play fails, which in turn fails the entire run. You should consider this when combining with ``max_fail_percentage``.
 
+To prevent that unreachable are counted as failed and stop the play, you can ignore unreachable nodes. You need to use a list of list. Suppose for example that you have 6 nodes and you
+want to divide it in groups of 2, an example of serialization option should be::
+
+    ---
+
+    - hosts: webservers
+      serial: [[2, 1], 2, 2]
+
+
+In this case, the first group represented by the list [2, 1] has a value of 1 (True) regarding the question
+"Do you want to ignroe unreachable?". For others groups the implicit answer to the question is 0 (False).
+At this point if one or both machines in the first group of 2 are unreachable, ansible go ahead with the
+second group and does not stop the play. If in the second group one machine is unreachable, ansible does not
+stop (this is the default behavoir also in old versions of ansible). If in the second group both machines
+are unreachable, ansible stop the play. Valid value are only 0 and 1, False and True, other values will be
+ignored and 0 will be used.
+
 The ``pre_tasks`` keyword just lets you list tasks to run before the roles are called. This will make more sense in a minute. If you look at the names of these tasks, you can see that we are disabling Nagios alerts and then removing the webserver that we are currently updating from the HAProxy load balancing pool.
 
 The ``delegate_to`` and ``loop`` arguments, used together, cause Ansible to loop over each monitoring server and load balancer, and perform that operation (delegate that operation) on the monitoring or load balancing server, "on behalf" of the webserver. In programming terms, the outer loop is the list of web servers, and the inner loop is the list of monitoring servers.
