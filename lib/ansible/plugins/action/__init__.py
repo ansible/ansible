@@ -44,7 +44,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     by putting/getting files and executing commands based on the current
     action in use.
     '''
-    INVALID_ARGS = tuple()
+    # Arguments that might be valid for underlying modules, but not for the action that calls them
+    INVALID_ARGS = frozenset([])
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -94,6 +95,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         elif self._task.async_val and self._play_context.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
+        # Error if arg valid for module, but invalid for action, is passed
         for arg in self.INVALID_ARGS:
             if arg in self._task.args:
                 raise AnsibleError("Invalid argument %s passed" % arg)

@@ -33,7 +33,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
     DEFAULT_NEWLINE_SEQUENCE = "\n"
-    INVALID_ARGS = ('remote_src',)
+    INVALID_ARGS = frozenset(['remote_src'])
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
