@@ -227,14 +227,11 @@ def _collect_facts(resource):
     """Transfrom cluster information to dict."""
     facts = {
         'identifier': resource['ClusterIdentifier'],
-        'create_time': resource['ClusterCreateTime'],
         'status': resource['ClusterStatus'],
         'username': resource['MasterUsername'],
         'db_name': resource['DBName'],
-        'availability_zone': resource['AvailabilityZone'],
         'maintenance_window': resource['PreferredMaintenanceWindow'],
-        'url': resource['Endpoint']['Address'],
-        'port': resource['Endpoint']['Port']
+
     }
 
     for node in resource['ClusterNodes']:
@@ -242,6 +239,14 @@ def _collect_facts(resource):
             facts['private_ip_address'] = node['PrivateIPAddress']
             facts['public_ip_address'] = node['PublicIPAddress']
             break
+
+    # Some parameters are not ready instantly if you don't wait for available
+    # cluster status
+    if resource['ClusterStatus'] != "creating":
+        facts['create_time'] = resource['ClusterCreateTime']
+        facts['url'] = resource['Endpoint']['Address']
+        facts['port'] = resource['Endpoint']['Port']
+        facts['availability_zone'] = resource['AvailabilityZone']
 
     return facts
 
@@ -260,7 +265,7 @@ def create_cluster(module, redshift):
     node_type = module.params.get('node_type')
     username = module.params.get('username')
     password = module.params.get('password')
-    db_name = module.params.get('db_name')
+    d_b_name = module.params.get('db_name')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
@@ -280,6 +285,9 @@ def create_cluster(module, redshift):
             if module.params.get(p) is not None:
                 params[p] = module.params.get(p)
 
+    if d_b_name:
+        params[d_b_name] = d_b_name
+
     try:
         redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
         changed = False
@@ -289,7 +297,6 @@ def create_cluster(module, redshift):
                                     NodeType=node_type,
                                     MasterUsername=username,
                                     MasterUserPassword=password,
-                                    DBName=db_name,
                                     **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
@@ -448,8 +455,8 @@ def main():
                                 'dw2.8xlarge'], required=False),
         username=dict(required=False),
         password=dict(no_log=True, required=False),
-        db_name=dict(require=False),
-        cluster_type=dict(choices=['multi-node', 'single-node', ], default='single-node'),
+        db_name=dict(require=False, type='str'),
+        cluster_type=dict(choices=['multi-node', 'single-node'], default='single-node'),
         cluster_security_groups=dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
         skip_final_cluster_snapshot=dict(aliases=['skip_final_snapshot'], type='bool', default=False),
@@ -473,7 +480,10 @@ def main():
     ))
 
     required_if = [
-        ('command', 'delete', ['skip_final_cluster_snapshot'])
+        ('command', 'delete', ['skip_final_cluster_snapshot']),
+        ('command', 'create', ['node_type',
+                               'username',
+                               'password'])
     ]
 
     module = AnsibleAWSModule(
@@ -481,12 +491,12 @@ def main():
         required_if=required_if
     )
 
-    # can't use module basic
     command = module.params.get('command')
     skip_final_cluster_snapshot = module.params.get('skip_final_cluster_snapshot')
     final_cluster_snapshot_identifier = module.params.get('final_cluster_snapshot_identifier')
+    # can't use module basic required_if check for this case
     if command == 'delete' and skip_final_cluster_snapshot is False and final_cluster_snapshot_identifier is None:
-        module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if final_cluster_snapshot_identifier is False")
+        module.fail_json(msg="Need to specifiy final_cluster_snapshot_identifier if skip_final_cluster_snapshot is False")
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
