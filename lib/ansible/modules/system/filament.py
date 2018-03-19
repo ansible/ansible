@@ -9,7 +9,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 ---
-module: my_sample_module
+module: filament
 
 short_description: This is my sample module
 
