@@ -114,6 +114,9 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/pull/35143
 * Fix traceback when creating or stopping ovirt vms
   (https://github.com/ansible/ansible/pull/37249)
+* Connection error messages may contain characters that jinja2 would
+  interpret as a template.  Wrap the error string so this doesn't happen
+  (https://github.com/ansible/ansible/pull/37329)
 
 
 <a id="2.4.3"></a>
