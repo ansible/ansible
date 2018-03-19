@@ -88,8 +88,12 @@ class KubernetesLookup(object):
         self.kind = to_snake(self.kind)
         self.helper = self.get_helper(self.api_version, self.kind)
 
+        auth_args = ('host', 'api_key', 'kubeconfig', 'context', 'username', 'password',
+                     'cert_file', 'key_file', 'ssl_ca_cert', 'verify_ssl')
+
         for arg in AUTH_ARG_SPEC:
-            self.connection[arg] = kwargs.get(arg)
+            if arg in auth_args and kwargs.get(arg) is not None:
+                self.connection[arg] = kwargs.get(arg)
 
         try:
             self.helper.set_client_config(**self.connection)
