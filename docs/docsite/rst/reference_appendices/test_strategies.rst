@@ -216,6 +216,23 @@ the pool.
 In the event of a problem, fix the few servers that fail using Ansible's automatically generated 
 retry file to repeat the deploy on just those servers.
 
+You can also ignore unreachable node to go ahead with your job, suppose for example you have 6 nodes and you
+want to dived it in groups of 2, an example of serialization option should be::
+
+    ---
+
+    - hosts: webservers
+      serial: [[2, 1], 2, 2]
+
+
+In this case, the first group represented by the list [2, 1] has a value of 1 (True) regarding the question
+"Do you want to ignroe unreachable?". For others groups the implicit answer to the question is 0 (False).
+At this point if one or both machines in the first group of 2 are unreachable, ansible go ahead with the
+second group and does not stop the job. If in the second group one machine is unreachable, ansible does not
+stop (this is the default behavoir also in old versions of ansible). If in the second group both machines
+are unreachable, ansible stop the job.
+
+
 Achieving Continuous Deployment
 ```````````````````````````````
 
