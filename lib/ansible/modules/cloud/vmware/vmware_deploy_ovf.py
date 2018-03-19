@@ -91,7 +91,7 @@ options:
         type: bool
 requirements:
     - pyvmomi
-version_added: 2.5.0
+version_added: "2.6"
 extends_documentation_fragment: vmware.documentation
 '''
 
