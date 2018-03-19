@@ -38,7 +38,7 @@ options:
     description:
       - The ProfitBricks API base URL.
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   username:
     description:

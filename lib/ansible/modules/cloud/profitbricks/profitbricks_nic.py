@@ -34,38 +34,38 @@ options:
     description:
       - The LAN to place the NIC on. You can pass a LAN that doesn't exist and it will be created. Required on create.
     required: true
-    default: None
+    default: none
   nat:
     description:
       - Boolean value indicating if the private IP address has outbound access to the public internet.
     type: bool
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   dhcp:
     description:
       - Boolean value indicating if the NIC is using DHCP or not.
     type: bool
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   firewall_active:
     description:
       - Boolean value indicating if the firewall is active.
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   ips:
     description:
       - A list of IPs to be assigned to the NIC.
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   api_url:
     description:
       - The ProfitBricks API base URL.
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   username:
     description:

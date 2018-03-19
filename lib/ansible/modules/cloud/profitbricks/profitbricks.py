@@ -46,7 +46,7 @@ options:
     description:
       - The storage availability zone assigned to the volume.
     required: false
-    default: None
+    default: none
     choices: [ "AUTO", "ZONE_1", "ZONE_2", "ZONE_3" ]
     version_added: "2.6"
   datacenter:
@@ -126,7 +126,7 @@ options:
     description:
       - The ProfitBricks API base URL.
     required: false
-    default: None
+    default: none
     version_added: "2.6"
   username:
     description:
