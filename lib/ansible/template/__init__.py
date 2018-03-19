@@ -290,7 +290,8 @@ class Templar:
             self.environment.block_end_string,
             self.environment.variable_end_string
         ))
-        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
+        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
+                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     def _get_filters(self, builtin_filters):
         '''
