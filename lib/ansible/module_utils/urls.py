@@ -859,7 +859,7 @@ class Request:
 
         if headers is None:
             headers = {}
-        headers = dict(**self.headers, **headers)
+        headers = dict(self.headers, **headers)
 
         use_proxy = self._fallback(use_proxy, self.use_proxy)
         force = self._fallback(force, self.force)
