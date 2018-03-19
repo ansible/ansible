@@ -30,6 +30,12 @@ options:
       - If a stacks fails to form, rollback will remove the stack
     type: bool
     default: 'no'
+  create_timeout:
+    description:
+      - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
+    required: false
+    default: null
+    version_added: "2.6"
   template_parameters:
     description:
       - A list of hashes of all the template variables for the stack. The value can be a string or a dict.
@@ -207,6 +213,15 @@ EXAMPLES = '''
     template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
     termination_protection: yes
 
+# Configure TimeoutInMinutes before the stack status becomes CREATE_FAILED
+# In this case, if disable_rollback is not set or is set to false, the stack will be rolled back.
+- name: enable termination protection during stack creation
+  cloudformation:
+    stack_name: my_stack
+    state: present
+    template_url: https://s3.amazonaws.com/my-bucket/cloudformation.template
+    create_timeout: 5
+
 '''
 
 RETURN = '''
@@ -301,9 +316,11 @@ def create_stack(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template', 'template_body' or 'template_url' is required when the stack does not exist.")
 
-    # 'disablerollback' and 'EnableTerminationProtection' only
-    # apply on creation, not update.
+    # 'DisableRollback', 'TimeoutInMinutes' and 'EnableTerminationProtection'
+    # only apply on creation, not update.
     stack_params['DisableRollback'] = module.params['disable_rollback']
+    if module.params.get('create_timeout') is not None:
+        stack_params['TimeoutInMinutes'] = module.params['create_timeout']
     if module.params.get('termination_protection') is not None:
         if boto_supports_termination_protection(cfn):
             stack_params['EnableTerminationProtection'] = bool(module.params.get('termination_protection'))
@@ -542,6 +559,7 @@ def main():
         notification_arns=dict(default=None, required=False),
         stack_policy=dict(default=None, required=False),
         disable_rollback=dict(default=False, type='bool'),
+        create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
         template_body=dict(default=None, require=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
