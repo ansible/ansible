@@ -30,7 +30,7 @@ import time
 
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -245,7 +245,8 @@ class PullCLI(CLI):
                 display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
-        elif self.options.ifchanged and '"changed": true' not in out:
+        # FIXME: this check is fragile, we should find better way to do change detection
+        elif self.options.ifchanged and '"changed": true' not in to_text(out):
             display.display("Repository has not changed, quitting.")
             return 0
 
