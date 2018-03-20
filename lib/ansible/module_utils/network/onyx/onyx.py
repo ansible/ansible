@@ -140,18 +140,24 @@ def get_interfaces_config(module, interface_type, flags=None, json_fmt=True):
     return show_cmd(module, cmd, json_fmt)
 
 
+def show_version(module):
+    return show_cmd(module, "show version")
+
+
 def get_bgp_summary(module):
     cmd = "show running-config protocol bgp"
     return show_cmd(module, cmd, json_fmt=False, fail_on_error=False)
 
 
 class BaseOnyxModule(object):
+    ONYX_API_VERSION = "3.6.6000"
 
     def __init__(self):
         self._module = None
         self._commands = list()
         self._current_config = None
         self._required_config = None
+        self._os_version = None
 
     def init_module(self):
         pass
@@ -161,6 +167,11 @@ class BaseOnyxModule(object):
 
     def get_required_config(self):
         pass
+
+    def _get_os_version(self):
+        version_data = show_version(self._module)
+        return self.get_config_attr(
+            version_data, "Product release")
 
     # pylint: disable=unused-argument
     def check_declarative_intent_params(self, result):
