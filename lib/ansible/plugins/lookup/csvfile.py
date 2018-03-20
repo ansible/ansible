@@ -53,6 +53,7 @@ from collections import MutableSequence
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
@@ -66,8 +67,10 @@ class CSVRecoder:
     def __iter__(self):
         return self
 
-    def next(self):
-        return self.reader.next().encode("utf-8")
+    def __next__(self):
+        return next(self.reader).encode("utf-8")
+
+    next = __next__   # For Python 2
 
 
 class CSVReader:
@@ -77,12 +80,18 @@ class CSVReader:
     """
 
     def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwds):
-        f = CSVRecoder(f, encoding)
+        if PY2:
+            f = CSVRecoder(f, encoding)
+        else:
+            f = codecs.getreader(encoding)(f)
+
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
-        row = self.reader.next()
+    def __next__(self):
+        row = next(self.reader)
         return [to_text(s) for s in row]
+
+    next = __next__  # For Python 2
 
     def __iter__(self):
         return self
@@ -93,8 +102,8 @@ class LookupModule(LookupBase):
     def read_csv(self, filename, key, delimiter, encoding='utf-8', dflt=None, col=1):
 
         try:
-            f = open(filename, 'r')
-            creader = CSVReader(f, delimiter=to_bytes(delimiter), encoding=encoding)
+            f = open(filename, 'rb')
+            creader = CSVReader(f, delimiter=to_native(delimiter), encoding=encoding)
 
             for row in creader:
                 if row[0] == key:
