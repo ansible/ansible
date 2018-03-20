@@ -66,8 +66,10 @@ class CSVRecoder:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         return self.reader.next().encode("utf-8")
+
+    next = __next__
 
 
 class CSVReader:
