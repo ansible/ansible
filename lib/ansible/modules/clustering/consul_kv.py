@@ -122,6 +122,8 @@ EXAMPLES = '''
     state: acquire
 '''
 
+from ansible.module_utils._text import to_text
+
 try:
     import consul
     from requests.exceptions import ConnectionError
@@ -132,8 +134,25 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 
 
-# Note: `python-consul==0.7.2` kv `put` utf-8 encodes data - it cannot be configured
-_ENCODING = "utf-8"
+def _has_value_changed(consul_client, key, target_value):
+    """
+    Uses the given Consul client to determine if the value associated to the given key is different to the given target
+    value.
+    :param consul_client: Consul connected client
+    :param key: key in Consul
+    :param target_value: value to be associated to the key
+    :return: tuple where the first element is the value of the "X-Consul-Index" header and the second is `True` if the
+    value has changed (i.e. the stored value is not the target value)
+    """
+    index, existing = consul_client.kv.get(key)
+    if not existing:
+        return index, True
+    try:
+        changed = to_text(existing['Value'], errors='surrogate_or_strict') != target_value
+        return index, changed
+    except UnicodeError:
+        # Existing value was not decodable but all values we set are valid utf-8
+        return index, True
 
 
 def execute(module):
@@ -161,9 +180,8 @@ def lock(module, state):
             msg='%s of lock for %s requested but no session supplied' %
             (state, key))
 
-    index, existing = consul_api.kv.get(key)
+    index, changed = _has_value_changed(consul_api, key, value)
 
-    changed = not existing or (existing and existing['Value'].decode(_ENCODING) != value)
     if changed and not module.check_mode:
         if state == 'acquire':
             changed = consul_api.kv.put(key, value,
@@ -188,14 +206,14 @@ def add_value(module):
     key = module.params.get('key')
     value = module.params.get('value')
 
-    index, existing = consul_api.kv.get(key)
+    index, changed = _has_value_changed(consul_api, key, value)
 
-    changed = not existing or (existing and existing['Value'].decode(_ENCODING) != value)
     if changed and not module.check_mode:
         changed = consul_api.kv.put(key, value,
                                     cas=module.params.get('cas'),
                                     flags=module.params.get('flags'))
 
+    stored = None
     if module.params.get('retrieve'):
         index, stored = consul_api.kv.get(key)
 
