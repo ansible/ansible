@@ -117,7 +117,8 @@ Ansible Changes By Release
 * Connection error messages may contain characters that jinja2 would
   interpret as a template.  Wrap the error string so this doesn't happen
   (https://github.com/ansible/ansible/pull/37329)
-
+* Fix python3 compatibility bug in wait_for_connection
+  (https://github.com/ansible/ansible/pull/37646)
 
 <a id="2.4.3"></a>
 
