@@ -368,6 +368,7 @@ def cli_run_commands(module, commands):
         '--connect',
         '--user=%s' % module.params['url_username'],
         '--password=%s' % module.params['url_password'],
+        '--controller=%s:%s' % (module.params['hostname'], module.params['port']),
         '--commands=%s' % ','.join(commands)
     ])
 
