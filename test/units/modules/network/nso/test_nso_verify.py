@@ -51,6 +51,7 @@ class TestNsoVerify(nso_module.TestNsoModule):
     def test_nso_verify_violation(self, open_url_mock):
         devices_schema = nso_module.load_fixture('devices_schema.json')
         device_schema = nso_module.load_fixture('device_schema.json')
+        description_schema = nso_module.load_fixture('description_schema.json')
 
         calls = [
             MockResponse('login', {}, 200, '{}', {'set-cookie': 'id'}),
@@ -61,6 +62,7 @@ class TestNsoVerify(nso_module.TestNsoModule):
             MockResponse('get_schema', {'path': '/ncs:devices/device'}, 200, '{"result": %s}' % (json.dumps(device_schema, ))),
             MockResponse('exists', {'path': '/ncs:devices/device{ce0}'}, 200, '{"result": {"exists": true}}'),
             MockResponse('get_value', {'path': '/ncs:devices/device{ce0}/description'}, 200, '{"result": {"value": "In Violation"}}'),
+            MockResponse('get_schema', {'path': '/ncs:devices/device/description'}, 200, '{"result": %s}' % (json.dumps(description_schema, ))),
             MockResponse('logout', {}, 200, '{"result": {}}'),
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: nso_module.mock_call(calls, *args, **kwargs)

@@ -61,6 +61,10 @@ class MockResponse(object):
 
 
 def mock_call(calls, url, timeout, data=None, headers=None, method=None):
+    if len(calls) == 0:
+        raise ValueError('no call mock for method {0}({1})'.format(
+            url, data))
+
     result = calls[0]
     del calls[0]
 
@@ -99,6 +103,8 @@ class TestNsoModule(unittest.TestCase):
             self.assertEqual(result['changed'], changed, result)
 
         for key, value in kwargs.items():
+            if key not in result:
+                self.fail("{0} not in result {1}".format(key, result))
             self.assertEqual(value, result[key])
 
         return result
