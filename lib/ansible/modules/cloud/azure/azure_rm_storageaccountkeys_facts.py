@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_storageaccount_keys
+module: azure_rm_storageaccountkeys_facts
 
 version_added: "2.6"
 
@@ -48,7 +48,7 @@ author:
 
 EXAMPLES = '''
 - name: Get Storage account keys
-  azure_rm_storageaccount_keys:
+  azure_rm_storageaccountkeys_facts:
     resource_group: resource_group
     name: name
 '''
@@ -68,7 +68,7 @@ except ImportError:
     pass
 
 
-class AzureRMStorageAccountKeys(AzureRMModuleBase):
+class AzureRMStorageAccountKeysFacts(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
@@ -83,7 +83,7 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
 
-        super(AzureRMStorageAccountKeys, self).__init__(derived_arg_spec=self.module_arg_spec, supports_tags=False)
+        super(AzureRMStorageAccountKeysFacts, self).__init__(derived_arg_spec=self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -105,7 +105,7 @@ class AzureRMStorageAccountKeys(AzureRMModuleBase):
 
 
 def main():
-    AzureRMStorageAccountKeys()
+    AzureRMStorageAccountKeysFacts()
 
 
 if __name__ == '__main__':

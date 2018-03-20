@@ -9,7 +9,7 @@
        account_type: Standard_LRS
 
  - name: Get storage account keys
-   azure_rm_storageaccount_keys:
+   azure_rm_storageaccountkeys_facts:
        resource_group: "{{ resource_group }}" 
        name: "{{ storage_account }}"
    register: output
