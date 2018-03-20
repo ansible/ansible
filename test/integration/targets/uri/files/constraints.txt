@@ -1,0 +1,1 @@
+cryptography < 2.2 ; python_version < "2.7" # cryptography 2.2+ requires python 2.7+
