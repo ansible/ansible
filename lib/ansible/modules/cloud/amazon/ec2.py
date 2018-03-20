@@ -616,15 +616,15 @@ EXAMPLES = '''
 
 '''
 
-import traceback
 import time
+import traceback
 from ast import literal_eval
-from ansible.module_utils.six import get_function_code, string_types
-from ansible.module_utils._text import to_text
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
-from distutils.version import LooseVersion
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import get_function_code, string_types
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import boto.ec2
@@ -1099,7 +1099,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'user_data': user_data}
+                      'user_data': to_bytes(user_data, errors='surrogate_or_strict')}
 
             if ebs_optimized:
                 params['ebs_optimized'] = ebs_optimized
