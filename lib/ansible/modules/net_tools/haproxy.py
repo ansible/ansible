@@ -253,12 +253,15 @@ class HAProxy(object):
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
         self.client.sendall(to_bytes('%s\n' % cmd))
-        result = ''
-        buf = ''
+
+        result = b''
+        buf = b''
         buf = self.client.recv(RECV_SIZE)
         while buf:
-            result += to_text(buf)
+            result += buf
             buf = self.client.recv(RECV_SIZE)
+        result = to_text(result, errors='surrogate_or_strict')
+
         if capture_output:
             self.capture_command_output(cmd, result.strip())
         self.client.close()
