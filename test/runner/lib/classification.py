@@ -247,7 +247,7 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('bin/'):
-            return minimal
+            return all_tests(self.args)  # broad impact, run all tests
 
         if path.startswith('contrib/'):
             return {
