@@ -54,11 +54,12 @@ class ActionModule(ActionBase):
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
             except Exception as e:
+                error = e  # PY3 compatibility to store exception for use outside of this block
                 if what_desc:
                     display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
                 time.sleep(sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, error))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
