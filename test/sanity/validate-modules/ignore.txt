@@ -389,10 +389,10 @@ lib/ansible/modules/cloud/profitbricks/profitbricks.py E324
 lib/ansible/modules/cloud/profitbricks/profitbricks.py E326
 lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py E326
 lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py E324
+lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py E325
 lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py E326
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume.py E322
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume.py E326
-lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py E326
 lib/ansible/modules/cloud/pubnub/pubnub_blocks.py E324
 lib/ansible/modules/cloud/pubnub/pubnub_blocks.py E325
 lib/ansible/modules/cloud/rackspace/rax.py E322
