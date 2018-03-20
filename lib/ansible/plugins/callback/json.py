@@ -15,9 +15,25 @@ DOCUMENTATION = '''
     type: stdout
     requirements:
       - Set as stdout in config
+    options:
+      show_custom_stats:
+        version_added: "2.6"
+        name: Show custom stats
+        description: 'This adds the custom stats set via the set_stats plugin to the play recap'
+        default: False
+        env:
+          - name: ANSIBLE_SHOW_CUSTOM_STATS
+        ini:
+          - key: show_custom_stats
+            section: defaults
+        type: bool
 '''
 
 import json
+
+from functools import partial
+
+from ansible.inventory.host import Host
 
 from ansible.plugins.callback import CallbackBase
 
@@ -34,7 +50,7 @@ class CallbackModule(CallbackBase):
     def _new_play(self, play):
         return {
             'play': {
-                'name': play.name,
+                'name': play.get_name(),
                 'id': str(play._uuid)
             },
             'tasks': []
@@ -43,7 +59,7 @@ class CallbackModule(CallbackBase):
     def _new_task(self, task):
         return {
             'task': {
-                'name': task.name,
+                'name': task.get_name(),
                 'id': str(task._uuid)
             },
             'hosts': {}
@@ -58,9 +74,10 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self.results[-1]['tasks'].append(self._new_task(task))
 
-    def v2_runner_on_ok(self, result, **kwargs):
-        host = result._host
-        self.results[-1]['tasks'][-1]['hosts'][host.name] = result._result
+    def _convert_host_to_name(self, key):
+        if isinstance(key, (Host,)):
+            return key.get_name()
+        return key
 
     def v2_playbook_on_stats(self, stats):
         """Display info about playbook statistics"""
@@ -72,13 +89,37 @@ class CallbackModule(CallbackBase):
             s = stats.summarize(h)
             summary[h] = s
 
+        custom_stats = {}
+        if self.get_option('show_custom_stats') and stats.custom:
+            custom_stats.update(dict((self._convert_host_to_name(k), v) for k, v in stats.custom.items()))
+            custom_stats.pop('_run', None)
+
         output = {
             'plays': self.results,
-            'stats': summary
+            'stats': summary,
+            'custom_stats': custom_stats,
         }
 
         self._display.display(json.dumps(output, indent=4, sort_keys=True))
 
-    v2_runner_on_failed = v2_runner_on_ok
-    v2_runner_on_unreachable = v2_runner_on_ok
-    v2_runner_on_skipped = v2_runner_on_ok
+    def _record_task_result(self, on_info, result, **kwargs):
+        """This function is used as a partial to add failed/skipped info in a single method"""
+        host = result._host
+        task = result._task
+        task_result = result._result.copy()
+        task_result.update(on_info)
+        task_result['action'] = task.action
+        self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
+
+    def __getattribute__(self, name):
+        """Return ``_record_task_result`` partial with a dict containing skipped/failed if necessary"""
+        if name not in ('v2_runner_on_ok', 'v2_runner_on_failed', 'v2_runner_on_unreachable', 'v2_runner_on_skipped'):
+            return object.__getattribute__(self, name)
+
+        on = name.rsplit('_', 1)[1]
+
+        on_info = {}
+        if on in ('failed', 'skipped'):
+            on_info[on] = True
+
+        return partial(self._record_task_result, on_info)
