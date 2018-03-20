@@ -44,13 +44,15 @@ class PluginLoader:
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
+    def __init__(self, class_name, package, config, subdir,
+                 aliases=None, required_base_class=None, plugin_type_name=None):
         aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
         self.base_class = required_base_class
         self.package = package
         self.subdir = subdir
+        self.plugin_type_name = plugin_type_name
 
         # FIXME: remove alias dict in favor of alias by symlink?
         self.aliases = aliases
@@ -538,6 +540,7 @@ fragment_loader = PluginLoader(
     'ansible.utils.module_docs_fragments',
     os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
     '',
+    plugin_type_name='module_docs_fragments',
 )
 
 
@@ -547,6 +550,7 @@ action_loader = PluginLoader(
     C.DEFAULT_ACTION_PLUGIN_PATH,
     'action_plugins',
     required_base_class='ActionBase',
+    plugin_type_name='action',
 )
 
 cache_loader = PluginLoader(
@@ -554,6 +558,7 @@ cache_loader = PluginLoader(
     'ansible.plugins.cache',
     C.DEFAULT_CACHE_PLUGIN_PATH,
     'cache_plugins',
+    plugin_type_name='cache',
 )
 
 callback_loader = PluginLoader(
@@ -561,6 +566,7 @@ callback_loader = PluginLoader(
     'ansible.plugins.callback',
     C.DEFAULT_CALLBACK_PLUGIN_PATH,
     'callback_plugins',
+    plugin_type_name='callback',
 )
 
 connection_loader = PluginLoader(
@@ -570,6 +576,7 @@ connection_loader = PluginLoader(
     'connection_plugins',
     aliases={'paramiko': 'paramiko_ssh'},
     required_base_class='ConnectionBase',
+    plugin_type_name='connection',
 )
 
 shell_loader = PluginLoader(
@@ -577,6 +584,7 @@ shell_loader = PluginLoader(
     'ansible.plugins.shell',
     'shell_plugins',
     'shell_plugins',
+    plugin_type_name='shell',
 )
 
 module_loader = PluginLoader(
@@ -584,6 +592,7 @@ module_loader = PluginLoader(
     'ansible.modules',
     C.DEFAULT_MODULE_PATH,
     'library',
+    plugin_type_name='module'
 )
 
 module_utils_loader = PluginLoader(
@@ -591,6 +600,7 @@ module_utils_loader = PluginLoader(
     'ansible.module_utils',
     C.DEFAULT_MODULE_UTILS_PATH,
     'module_utils',
+    plugin_type_name='module_utils',
 )
 
 # NB: dedicated loader is currently necessary because PS module_utils expects "with subdir" lookup where
@@ -600,6 +610,8 @@ ps_module_utils_loader = PluginLoader(
     'ansible.module_utils',
     C.DEFAULT_MODULE_UTILS_PATH,
     'module_utils',
+    # FIXME: better name? module_utils_loader and ps_module_utils_loader are the same
+    plugin_type_name='ps_module_utils',
 )
 
 lookup_loader = PluginLoader(
@@ -608,6 +620,7 @@ lookup_loader = PluginLoader(
     C.DEFAULT_LOOKUP_PLUGIN_PATH,
     'lookup_plugins',
     required_base_class='LookupBase',
+    plugin_type_name='lookup',
 )
 
 filter_loader = PluginLoader(
@@ -615,13 +628,15 @@ filter_loader = PluginLoader(
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
+    plugin_type_name='filter',
 )
 
 test_loader = PluginLoader(
     'TestModule',
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
-    'test_plugins'
+    'test_plugins',
+    plugin_type_name='test',
 )
 
 strategy_loader = PluginLoader(
@@ -630,6 +645,7 @@ strategy_loader = PluginLoader(
     C.DEFAULT_STRATEGY_PLUGIN_PATH,
     'strategy_plugins',
     required_base_class='StrategyBase',
+    plugin_type_name='strategy',
 )
 
 terminal_loader = PluginLoader(
@@ -637,7 +653,8 @@ terminal_loader = PluginLoader(
     'ansible.plugins.terminal',
     C.DEFAULT_TERMINAL_PLUGIN_PATH,
     'terminal_plugins',
-    required_base_class='TerminalBase'
+    required_base_class='TerminalBase',
+    plugin_type_name='terminal',
 )
 
 vars_loader = PluginLoader(
@@ -645,6 +662,7 @@ vars_loader = PluginLoader(
     'ansible.plugins.vars',
     C.DEFAULT_VARS_PLUGIN_PATH,
     'vars_plugins',
+    plugin_type_name='vars',
 )
 
 cliconf_loader = PluginLoader(
@@ -652,7 +670,8 @@ cliconf_loader = PluginLoader(
     'ansible.plugins.cliconf',
     C.DEFAULT_CLICONF_PLUGIN_PATH,
     'cliconf_plugins',
-    required_base_class='CliconfBase'
+    required_base_class='CliconfBase',
+    plugin_type_name='cliconf',
 )
 
 netconf_loader = PluginLoader(
@@ -660,12 +679,14 @@ netconf_loader = PluginLoader(
     'ansible.plugins.netconf',
     C.DEFAULT_NETCONF_PLUGIN_PATH,
     'netconf_plugins',
-    required_base_class='NetconfBase'
+    required_base_class='NetconfBase',
+    plugin_type_name='netconf',
 )
 
 inventory_loader = PluginLoader(
     'InventoryModule',
     'ansible.plugins.inventory',
     C.DEFAULT_INVENTORY_PLUGIN_PATH,
-    'inventory_plugins'
+    'inventory_plugins',
+    plugin_type_name='inventory',
 )

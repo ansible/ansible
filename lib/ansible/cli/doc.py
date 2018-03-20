@@ -30,6 +30,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, \
     vars_loader, connection_loader, strategy_loader, inventory_loader, shell_loader, fragment_loader
+from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 try:
@@ -47,11 +48,22 @@ class DocCLI(CLI):
 
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
+    # TODO: ? This could be setup in plugin loader as well...
+    # FIXME: could also just filter out the illogical ones like module_docs_fragments in case someone
+    #        does document other plugin types
+    UNDOCUMENTED_PLUGIN_TYPES = ('action', 'cliconf', 'filter', 'module_docs_fragments',
+                                 'module_utils', 'netconf',
+                                 'ps_module_utils', 'terminal', 'test')
 
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
+
+        all_plugin_loaders = dict(get_all_plugin_loaders())
+        self.plugin_type_loaders = dict([(x.plugin_type_name, x) for x in all_plugin_loaders.values()
+                                         if x.plugin_type_name not in self.UNDOCUMENTED_PLUGIN_TYPES])
+        self.plugin_types = sorted(self.plugin_type_loaders.keys())
 
     def parse(self):
 
@@ -71,8 +83,8 @@ class DocCLI(CLI):
         self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
                                help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
-                               help='Choose which plugin type (defaults to "module")\n plugin types: (cache, callback, connection, inventory, lookup, module, shell, strategy, vars)',
-                               choices=['cache', 'callback', 'connection', 'inventory', 'lookup', 'module', 'shell', 'strategy', 'vars'])
+                               help='Choose which plugin type (defaults to "module")\n plugin types: %s' % ', '.join(self.plugin_types),
+                               choices=self.plugin_types)
 
         super(DocCLI, self).parse()
 
@@ -87,25 +99,9 @@ class DocCLI(CLI):
 
         plugin_type = self.options.type
 
-        # choose plugin type
-        if plugin_type == 'cache':
-            loader = cache_loader
-        elif plugin_type == 'callback':
-            loader = callback_loader
-        elif plugin_type == 'connection':
-            loader = connection_loader
-        elif plugin_type == 'lookup':
-            loader = lookup_loader
-        elif plugin_type == 'strategy':
-            loader = strategy_loader
-        elif plugin_type == 'vars':
-            loader = vars_loader
-        elif plugin_type == 'inventory':
-            loader = inventory_loader
-        elif plugin_type == 'shell':
-            loader = shell_loader
-        else:
-            loader = module_loader
+        loader = self.plugin_type_loaders.get(plugin_type, None)
+        if loader is None:
+            raise AnsibleOptionsError("Invalid plugin_type. Valid plugin types are: %s" % self.plugin_types)
 
         # add to plugin path from command line
         if self.options.module_path:
