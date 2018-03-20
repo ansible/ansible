@@ -38,3 +38,21 @@
     name: foo
     state: absent
     allow_unauthenticated: yes
+
+# https://github.com/ansible/ansible/issues/19102
+- name: Install foo package version 1.0.1 using wildcards
+  apt:
+    name: foo=1.*.1*
+    allow_unauthenticated: yes
+  register: apt_result
+
+- name: Check install with dpkg
+  shell: dpkg-query -l foo
+  register: dpkg_result
+
+- name: Check if install was successful
+  assert:
+    that:
+      - "apt_result is success"
+      - "dpkg_result is success"
+      - "'1.0.1' in dpkg_result.stdout"
