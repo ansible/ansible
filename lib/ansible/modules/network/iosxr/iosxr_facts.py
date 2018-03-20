@@ -122,6 +122,7 @@ from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, run_co
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
+
 class FactsBase(object):
 
     def __init__(self):
