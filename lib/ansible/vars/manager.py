@@ -241,6 +241,7 @@ class VariableManager:
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():
+
                         data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
                 return data
 
@@ -248,6 +249,7 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for plugin in vars_loader.all():
+
                     for path in basedirs:
                         data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
                 return data
