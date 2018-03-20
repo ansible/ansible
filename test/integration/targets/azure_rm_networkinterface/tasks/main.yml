@@ -142,7 +142,7 @@
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
       ip_configurations:
-          name: ipconfig1
+        - name: ipconfig1
           primary: True
   register: output
 
