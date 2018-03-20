@@ -642,31 +642,29 @@ def local_envra(path):
 def set_env_proxy(function):
     def fetching(spec, module, conf_file, installroot):
         # setting system proxy environment and saving old, if exists
-        yumb = yum_base(conf_file, installroot)
+        my = yum_base(conf_file, installroot)
         namepass = ""
-        schem = "http"
+        scheme = "http"
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
-            if yumb.conf.proxy:
-                if 'https' in yumb.conf.proxy:
-                    schem = 'https'
-                else:
-                    schem = 'http'
-                if yumb.conf.proxy_username:
-                    namepass = namepass + yumb.conf.proxy_username
-                    if yumb.conf.proxy_password:
-                        namepass = namepass + ":" + yumb.conf.proxy_password
+            if my.conf.proxy:
+                if my.conf.proxy.startswith('https'):
+                    scheme = 'https'
+                if my.conf.proxy_username:
+                    namepass = namepass + my.conf.proxy_username
+                    if my.conf.proxy_password:
+                        namepass = namepass + ":" + my.conf.proxy_password
                 namepass = namepass + '@'
-                os.environ["{0}_proxy".format(schem)] = re.sub(
-                    r"({0}://)".format(schem), r"\1" + namepass, yumb.conf.proxy
+                os.environ["{0}_proxy".format(scheme)] = re.sub(
+                    r"({0}://)".format(scheme), r"\1" + namepass, my.conf.proxy
                 )
         except yum.Errors.YumBaseError as e:
             module.fail_json(msg="Error setting/accessing proxy: %s" % to_native(e))
         # getting package with new proxy environment
         package = fetch_rpm_from_url(spec, module)
         # revert back to previously system configuration
-        if os.getenv("{0}_proxy".format(schem)):
-            del os.environ["{0}_proxy".format(schem)]
+        if os.getenv("{0}_proxy".format(scheme)):
+            del os.environ["{0}_proxy".format(scheme)]
         if old_proxy_env[0]:
             os.environ["http_proxy"] = old_proxy_env[0]
         if old_proxy_env[1]:
