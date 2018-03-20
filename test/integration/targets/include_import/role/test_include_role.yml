@@ -47,11 +47,17 @@
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
-      register: loop_test
       with_items:
         - role1
         - role3
         - role2
+
+    - name: Assert that roles run with_items
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+          - _role2_result.msg == 'In role2'
+          - _role3_result.msg == 'In role3'
 
     - name: Test including a task file from a role
       include_role:
