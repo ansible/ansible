@@ -9,7 +9,7 @@ test_target="${TARGET:-all}"
 test_ansible_dir="${TEST_ANSIBLE_DIR:-/root/ansible}"
 test_python3="${PYTHON3:-}"
 
-http_image="${HTTP_IMAGE:-ansible/ansible:httptester}"
+http_image="${HTTP_IMAGE:-ansible/ansible@sha256:00f26e1d1909315ab1038751fc9397dd3cf7655604ba3b68fccda754c8630e50}" # httptester
 
 # Keep the docker containers after tests complete.
 # The default behavior is to always remove the containers.
