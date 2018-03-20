@@ -165,7 +165,7 @@ def main():
         category=dict(default='software'),
         file=dict(),
         url=dict(),
-        validate_ssl=dict(type='bool', default=False),
+        validate_ssl=dict(type='bool', default=True),
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['file', 'url']])
     if not HAS_LIB:
