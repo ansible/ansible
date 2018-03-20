@@ -134,19 +134,20 @@
       - not output.state.ip_configuration
       - output.state.ip_configurations | length == 2
 
-- name: No IP configurations at all
+- name: IP configuration without public IP
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
       name: testnic001
       security_group: testnic001
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
-      public_ip: no
+      ip_configurations:
+          name: ipconfig1
+          primary: True
   register: output
 
 - assert:
     that:
-      - output.state.ip_configurations | length == 1
       - output.state.ip_configurations[0].public_ip_address == None
 
 - name: Delete the NIC (check mode)
