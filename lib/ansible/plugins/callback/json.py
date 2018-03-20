@@ -33,7 +33,6 @@ import json
 
 from functools import partial
 
-from ansible import constants as C
 from ansible.inventory.host import Host
 
 from ansible.plugins.callback import CallbackBase
