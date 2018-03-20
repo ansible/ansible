@@ -140,12 +140,27 @@ class OnyxPfcInterfaceModule(BaseOnyxModule):
 
     def load_current_config(self):
         # called in base class in run function
+        self._os_version = self._get_os_version()
         self._current_config = dict()
         pfc_config = self._get_pfc_config()
         if not pfc_config:
             return
-        if 'Table 2' in pfc_config:
-            pfc_config = pfc_config['Table 2']
+        stage = 0
+        if self._os_version >= self.ONYX_API_VERSION:
+            if len(pfc_config) >= 3:
+                pfc_config = pfc_config[2]
+                stage = 1
+            else:
+                pfc_config = dict()
+                stage = 2
+        else:
+            stage = 3
+            if 'Table 2' in pfc_config:
+                pfc_config = pfc_config['Table 2']
+                stage = 4
+        with open('/tmp/pfc', 'w') as fp:
+            fp.write(str(pfc_config))
+            fp.write('\n%s\n' % self._os_version)
         for if_name, if_pfc_data in iteritems(pfc_config):
             match = self.PFC_IF_REGEX.match(if_name)
             if not match:
