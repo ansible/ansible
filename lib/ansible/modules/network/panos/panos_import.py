@@ -50,9 +50,7 @@ options:
     category:
         description:
             - Category of file uploaded. The default is software.
-
             - See API > Import section of the API reference for category options.
-        required: false
         default: software
     file:
         description:
@@ -60,7 +58,6 @@ options:
     url:
         description:
             - URL of the file that will be imported to device.
-        required: false
         default: None
     validate_ssl:
         description:
