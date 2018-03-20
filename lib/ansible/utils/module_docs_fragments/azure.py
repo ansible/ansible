@@ -79,8 +79,6 @@ options:
         description:
         - Selects an API profile to use when communicating with Azure services. Default value of C(latest) is appropriate for public clouds;
           future values will allow use with Azure Stack.
-        choices:
-        - latest
         default: latest
         version_added: 2.5
 requirements:
