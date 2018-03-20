@@ -29,7 +29,7 @@ import os
 import re
 import sys
 import warnings
-from collections import defaultdict, Sequence
+from collections import defaultdict
 from distutils.version import LooseVersion
 from pprint import PrettyPrinter
 
@@ -130,12 +130,6 @@ def rst_xline(width, char="="):
     ''' return a restructured text line of a given length '''
 
     return char * width
-
-
-# NOTE: The existing Jinja2 'sequence' tests matches strings and dictionaries
-def test_list(value):
-    ''' Return true if objects is a list or tupple '''
-    return isinstance(value, Sequence)
 
 
 def write_data(text, output_dir, outputname, module=None):
@@ -310,9 +304,6 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
-
-        env.tests['list'] = test_list
-
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
         if plugin_type == 'module':
