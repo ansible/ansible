@@ -1,0 +1,2 @@
+bugfixes:
+- ec2 - Fix ec2 user_data parameter to properly convert to base64 on python3 (https://github.com/ansible/ansible/pull/37628)
