@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - ansible-pull - fixed a bug checking for changes when we've pulled from the git repository on python3 https://github.com/ansible/ansible/issues/36962
