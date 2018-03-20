@@ -137,7 +137,7 @@
 - name: IP configuration without public IP
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
-      name: testnic001
+      name: testnic001noip
       security_group: testnic001
       virtual_network: "{{ vn.state.id }}"
       subnet: testnic001
