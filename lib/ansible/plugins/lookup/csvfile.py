@@ -70,7 +70,8 @@ class CSVRecoder:
     def __next__(self):
         return next(self.reader).encode("utf-8")
 
-    next = __next__   # For Python-2
+    next = __next__   # For Python 2
+
 
 class CSVReader:
     """
