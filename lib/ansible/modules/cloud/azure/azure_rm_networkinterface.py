@@ -538,7 +538,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         name = ip_config.get('public_ip_address_name')
 
         if not (self.public_ip and name):
-            return None;
+            return None
 
         pip = self.get_public_ip_address(name)
         if not pip:
