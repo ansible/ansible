@@ -1,0 +1,2 @@
+bugfixes:
+- include_role - Fix parameter templating (https://github.com/ansible/ansible/pull/36372)
