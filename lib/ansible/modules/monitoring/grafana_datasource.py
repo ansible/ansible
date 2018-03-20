@@ -93,10 +93,10 @@ options:
       - The TLS CA certificate for self signed certificates.
       - Only used when C(tls_client_cert) and C(tls_client_key) are set.
   tls_skip_verify:
-    required: false
     description:
       - Skip the TLS datasource certificate verification.
     type: bool
+    default: False
     version_added: 2.6
   is_default:
     description:
