@@ -39,7 +39,7 @@ options:
     default: filesystem
     description:
       - Whether the application should be deployed through the HTTP management API or filesystem
-    version_added: 2.4
+    version_added: 2.6
   state:
     required: false
     choices: [ deployed, undeployed, present, absent ]
@@ -48,31 +48,33 @@ options:
       - Whether the application should be deployed or undeployed. Present and absent have been deprecated.
   url_username:
     required: false
+    default: admin
     description:
       - Username for JBoss management user
-    version_added: 2.4
+    version_added: 2.6
   url_password:
     required: false
+    default: admin
     description:
       - Password for JBoss management user
-    version_added: 2.4
+    version_added: 2.6
   hostname:
     required: false
     default: localhost
     description:
       - Hostname of JBoss instance running HTTP management API
-    version_added: 2.4
+    version_added: 2.6
   port:
     required: false
     default: 9990
     description:
       - Port binding for HTTP management API
-    version_added: 2.4
+    version_added: 2.6
   cli_path:
     required: false
     description:
       - Path to jboss-cli.sh
-    version_added: 2.4
+    version_added: 2.6
 notes:
   - "The filesystem deployment strategy requires the deployment scanner to be enabled."
   - "The http deployment strategy requires the requests package to be installed on each host."
@@ -233,9 +235,7 @@ def http_deploy(module, deployed):
 
         resp, info = fetch_url(module, 'http://%s:%s/management' % (module.params['hostname'], module.params['port']), data=data, headers=headers)
 
-        try:
-            assert info['status'] == 200
-        except AssertionError:
+        if info['status'] != 200:
             module.fail_json(msg=info)
 
         resp_json = json.loads(resp.read())
@@ -272,9 +272,7 @@ def http_deploy(module, deployed):
             auth=auth
         )
 
-        try:
-            assert resp.status_code == 200
-        except AssertionError:
+        if resp.status_code != 200:
             module.fail_json(msg=resp.text)
 
         resp_json = resp.json()
@@ -295,9 +293,7 @@ def http_deploy(module, deployed):
             auth=auth
         )
 
-        try:
-            assert resp.status_code == 200
-        except AssertionError:
+        if resp.status_code != 200:
             module.fail_json(msg=resp.text)
 
         return True
