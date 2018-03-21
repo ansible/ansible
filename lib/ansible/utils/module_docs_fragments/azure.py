@@ -68,19 +68,22 @@ options:
               C(~/.azure/credentials).
             - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
             - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
+            - When set to C(msi), the host machine must be an azure resource with an enabled MSI extension. C(subscription_id) or the
+              environment variable C(AZURE_SUBSCRIPTION_ID) can be used to identify the subscription ID if the resource is granted
+              access to more than one subscription, otherwise the first subscription is chosen.
+            - The C(msi) was added in Ansible 2.6.
         choices:
         - auto
         - cli
         - credential_file
         - env
+        - msi
         default: auto
         version_added: 2.5
     api_profile:
         description:
         - Selects an API profile to use when communicating with Azure services. Default value of C(latest) is appropriate for public clouds;
           future values will allow use with Azure Stack.
-        choices:
-        - latest
         default: latest
         version_added: 2.5
 requirements:

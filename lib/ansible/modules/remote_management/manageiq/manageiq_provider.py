@@ -27,8 +27,8 @@ description:
 options:
   state:
     description:
-      - absent - provider should not exist, present - provider should be present.
-    choices: ['absent', 'present']
+      - absent - provider should not exist, present - provider should be present, refresh - provider will be refreshed
+    choices: ['absent', 'present', 'refresh']
     default: 'present'
   name:
     description: The provider's name.
@@ -771,12 +771,28 @@ class ManageIQProvider(object):
             changed=True,
             msg="successfully created the provider %s: %s" % (name, result['results']))
 
+    def refresh(self, provider, name):
+        """ Trigger provider refresh.
+
+        Returns:
+            a short message describing the operation executed.
+        """
+        try:
+            url = '%s/providers/%s' % (self.api_url, provider['id'])
+            result = self.client.post(url, action='refresh')
+        except Exception as e:
+            self.module.fail_json(msg="failed to refresh provider %s: %s" % (name, str(e)))
+
+        return dict(
+            changed=True,
+            msg="refreshing provider %s" % name)
+
 
 def main():
     zone_id = None
     endpoints = []
     argument_spec = dict(
-        state=dict(choices=['absent', 'present'], default='present'),
+        state=dict(choices=['absent', 'present', 'refresh'], default='present'),
         name=dict(required=True),
         zone=dict(default='default'),
         provider_region=dict(),
@@ -797,7 +813,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_if=[
-            ('state', 'present', ['provider'])],
+            ('state', 'present', ['provider']),
+            ('state', 'refresh', ['name'])],
         required_together=[
             ['host_default_vnc_port_start', 'host_default_vnc_port_end']
         ],
@@ -868,6 +885,15 @@ def main():
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
                                                          host_default_vnc_port_start, host_default_vnc_port_end,
                                                          subscription, project, uid_ems, tenant_mapping_enabled, api_version)
+
+    # refresh provider (trigger sync)
+    if state == "refresh":
+        if provider:
+            res_args = manageiq_provider.refresh(provider, name)
+        else:
+            res_args = dict(
+                changed=False,
+                msg="provider %s: does not exist in manageiq" % (name))
 
     module.exit_json(**res_args)
 
