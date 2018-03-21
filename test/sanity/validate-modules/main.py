@@ -1085,7 +1085,8 @@ class ModuleValidator(Validator):
             arg_default = None
             if 'default' in data and not is_empty(data['default']):
                 try:
-                    arg_default = _type_checker(data['default'])
+                    with CaptureStd():
+                        arg_default = _type_checker(data['default'])
                 except (Exception, SystemExit):
                     self.reporter.error(
                         path=self.object_path,
@@ -1142,7 +1143,8 @@ class ModuleValidator(Validator):
                          'with type %r defined in the argument_spec' % (docs.get('options', {}).get(arg, {}).get('choices', []), data.get('type', 'str')))
                 )
                 continue
-            arg_choices = [_type_checker(c) for c in data.get('choices', [])]
+            with CaptureStd():
+                arg_choices = [_type_checker(c) for c in data.get('choices', [])]
             if not compare_unordered_lists(arg_choices, doc_choices):
                 self.reporter.error(
                     path=self.object_path,
