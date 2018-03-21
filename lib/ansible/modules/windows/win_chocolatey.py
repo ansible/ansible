@@ -111,6 +111,13 @@ options:
       - See notes in C(proxy_username) when dealing with double quotes in a
         password.
     version_added: '2.4'
+  allow_prerelease:
+    description:
+      - Allow install of prerelease packages.
+      - If state C(state) is C(latest) the highest prerelease package will be installed.
+    type: bool
+    default: 'no'
+    version_added: '2.6'
 notes:
 - Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
   is considered to be a floating-point number and depending on the locale could
