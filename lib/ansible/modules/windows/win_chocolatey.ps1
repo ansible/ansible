@@ -30,13 +30,14 @@ $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
 $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
 $ignorechecksums = Get-AnsibleParam -obj $params -name "ignore_checksums" -type "bool" -default $false
 $ignoredependencies = Get-AnsibleParam -obj $params -name "ignore_dependencies" -type "bool" -default $false
+$allowprerelease = Get-AnsibleParam -obj $params -name "allow_prerelease" -type "bool" -default $false
 $skipscripts = Get-AnsibleParam -obj $params -name "skip_scripts" -type "bool" -default $false
 $proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
 $proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
 $proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str" -failifempty ($proxy_username -ne $null)
 
 $result = @{
-    changed = $false
+    changed = $false 
 }
 
 if ($upgrade)
@@ -194,6 +195,7 @@ Function Choco-Upgrade
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
         [bool] $allowdowngrade,
+        [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password
@@ -261,6 +263,11 @@ Function Choco-Upgrade
         $options += "--allow-downgrade"
     }
 
+    if ($allowprerelease)
+    {
+        $options += "--prerelease"
+    }
+
     if ($proxy_url)
     {
         $options += "--proxy=`"'$proxy_url'`""
@@ -326,6 +333,7 @@ Function Choco-Install
         [bool] $ignorechecksums,
         [bool] $ignoredependencies,
         [bool] $allowdowngrade,
+        [bool] $allowprerelease,
         [string] $proxy_url,
         [string] $proxy_username,
         [string] $proxy_password
@@ -340,7 +348,8 @@ Function Choco-Install
                 -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
                 -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
                 -allowdowngrade $allowdowngrade -proxy_url $proxy_url `
-                -proxy_username $proxy_username -proxy_password $proxy_password
+                -proxy_username $proxy_username -proxy_password $proxy_password `
+                -allowprerelease $allowprerelease
             return
         }
         elseif (-not $force)
@@ -384,6 +393,11 @@ Function Choco-Install
     if ($allowemptychecksums)
     {
         $options += "--allow-empty-checksums"
+    }
+
+    if ($allowprerelease)
+    {
+        $options += "--prerelease"
     }
 
     if ($ignorechecksums)
@@ -529,7 +543,8 @@ if ($state -in ("downgrade", "latest", "present", "reinstalled")) {
         -packageparams $packageparams -allowemptychecksums $allowemptychecksums `
         -ignorechecksums $ignorechecksums -ignoredependencies $ignoredependencies `
         -allowdowngrade ($state -eq "downgrade") -proxy_url $proxy_url `
-        -proxy_username $proxy_username -proxy_password $proxy_password
+        -proxy_username $proxy_username -proxy_password $proxy_password `
+        -allowprerelease $allowprerelease
 }
 
 Exit-Json -obj $result
