@@ -76,6 +76,7 @@ class PluginLoader:
 
         self._extra_dirs = []
         self._searched_paths = set()
+        self._matched = []
 
     def __setstate__(self, data):
         '''
@@ -233,6 +234,7 @@ class PluginLoader:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._paths = None
+                self._matched = []
                 display.debug('Added %s to loader search path' % (directory))
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
@@ -418,18 +420,18 @@ class PluginLoader:
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
 
-        all_matches = []
         found_in_cache = True
 
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+        if not self._matched:
+            for i in self._get_paths():
+                self._matched.extend(glob.glob(os.path.join(i, "*.py")))
 
         if self.unique_file:
             # first found wins, so the list indicates the precedence
-            pathlist = sorted(all_matches, key=os.path.basename)
+            pathlist = sorted(self._matched, key=os.path.basename)
         else:
             # since we load all files 'last loaded' wins in this case so we reverse the list to maintain precedence
-            pathlist = reversed(all_matches)
+            pathlist = reversed(self._matched)
 
         for path in pathlist:
 
