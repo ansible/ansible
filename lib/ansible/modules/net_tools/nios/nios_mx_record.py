@@ -99,7 +99,7 @@ EXAMPLES = '''
   connection: local
 
 - name: remove an MX record from the system
-  nios_a_record:
+  nios_mx_record:
     name: ansible.com
     mx: mailhost.ansible.com
     preference: 0
