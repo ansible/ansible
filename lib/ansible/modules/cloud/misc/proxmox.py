@@ -100,6 +100,10 @@ options:
       - specifies whether a VM will be started during system bootup
     type: bool
     default: 'no'
+  startup:
+    description:
+      - startup and shutdown behavior
+    version_added: "2.5"
   storage:
     description:
       - target storage
@@ -239,6 +243,18 @@ EXAMPLES = '''
     hostname: example.org
     ostemplate: local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
     cores: 2
+
+# Create new container with minimal options defining startup order
+- proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    startup: 'order=1'
 
 # Start container
 - proxmox:
@@ -430,6 +446,7 @@ def main():
             mounts=dict(type='dict'),
             ip_address=dict(),
             onboot=dict(type='bool', default='no'),
+            startup=dict(),
             storage=dict(default='local'),
             cpuunits=dict(type='int', default=1024),
             nameserver=dict(),
@@ -514,6 +531,7 @@ def main():
                             mounts=module.params['mounts'],
                             ip_address=module.params['ip_address'],
                             onboot=int(module.params['onboot']),
+                            startup=module.params['startup'],
                             cpuunits=module.params['cpuunits'],
                             nameserver=module.params['nameserver'],
                             searchdomain=module.params['searchdomain'],
