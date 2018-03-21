@@ -6,7 +6,7 @@
   azure_rm_deployment:
     resource_group: "{{ resource_group }}"
     location: "eastus"
-    template: "{{ lookup('url', 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json', split_lines=False) }}"
+    template: "{{ lookup('url', 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-storage-account-create/azuredeploy.parameters.json', split_lines=False) }}"
     deployment_name: "{{ dns_label }}"
     parameters:
       storageAccountType:
