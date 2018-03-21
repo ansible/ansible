@@ -144,7 +144,6 @@ lib/ansible/modules/windows/win_shortcut.ps1 PSPossibleIncorrectComparisonWithNu
 lib/ansible/modules/windows/win_stat.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_stat.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_stat.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_tempfile.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_unzip.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_unzip.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_updates.ps1 PSPossibleIncorrectComparisonWithNull
