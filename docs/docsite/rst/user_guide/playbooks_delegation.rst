@@ -240,6 +240,9 @@ As alwayw with delegation, the action will be executed on the delegated host, bu
      If it's crucial that the task is run only once regardless of "serial" mode, use
      :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
 
+.. note::
+    Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
+
 .. _local_playbooks:
 
 Local Playbooks
