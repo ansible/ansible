@@ -71,7 +71,6 @@ options:
   cores:
     description:
       - Specify number of cores per socket.
-    default: 1
     version_added: 2.4
   cpus:
     description:
@@ -438,7 +437,7 @@ def main():
             hostname=dict(),
             ostemplate=dict(),
             disk=dict(type='str', default='3'),
-            cores=dict(type='int', default=1),
+            cores=dict(type='int'),
             cpus=dict(type='int', default=1),
             memory=dict(type='int', default=512),
             swap=dict(type='int', default=0),
