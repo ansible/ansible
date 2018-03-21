@@ -107,7 +107,7 @@ options:
   cpuunits:
     description:
       - CPU weight for a VM
-    default: 1000
+    default: 1024
   nameserver:
     description:
       - sets DNS server IP address for a container
@@ -431,7 +431,7 @@ def main():
             ip_address=dict(),
             onboot=dict(type='bool', default='no'),
             storage=dict(default='local'),
-            cpuunits=dict(type='int', default=1000),
+            cpuunits=dict(type='int', default=1024),
             nameserver=dict(),
             searchdomain=dict(),
             timeout=dict(type='int', default=30),
