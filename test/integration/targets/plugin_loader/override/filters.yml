@@ -5,11 +5,11 @@
       assert:
          that:
              - a|flag == 'flagged'
-             - a|flatten != [1,2,3,4,5]
+             - a|flatten != [1 , 2, 3, 4, 5]
              - a|flatten == "flagged"
              - a|ternary('yes', 'no') == 'yes'
       vars:
         a:
          - 1
          - 2
-         - [3,4,5]
+         - [ 3, 4, 5]
