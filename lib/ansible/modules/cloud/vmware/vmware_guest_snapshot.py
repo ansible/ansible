@@ -270,6 +270,7 @@ class PyVmomiHelper(PyVmomi):
             self.module.fail_json(msg="Failed to take snapshot due to VMware Licence: %s" % to_native(exc.msg))
         except Exception as exc:
             self.module.fail_json(msg="Failed to create snapshot of VM %s due to %s" % (self.module.params['name'], to_native(exc)))
+        self.wait_for_task(task)
         return task
 
     def rename_snapshot(self, vm):
