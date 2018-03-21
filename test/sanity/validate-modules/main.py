@@ -45,7 +45,7 @@ from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, compare_unordered_lists, maybe_convert_bool, parse_yaml
+from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1042,6 +1042,9 @@ class ModuleValidator(Validator):
             )
             return
 
+        # Use this to access type checkers later
+        module = NoArgsAnsibleModule({})
+
         provider_args = set()
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
@@ -1072,14 +1075,32 @@ class ModuleValidator(Validator):
                 # don't validate docs<->arg_spec checks below
                 continue
 
+            _type = data.get('type', 'str')
+            if callable(_type):
+                _type_checker = _type
+            else:
+                _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+
             # TODO: needs to recursively traverse suboptions
-            doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
-            if data.get('type') == 'bool':
-                doc_default = maybe_convert_bool(doc_default)
-            arg_default = data.get('default')
-            if 'default' in data and data.get('type') == 'bool':
-                arg_default = maybe_convert_bool(data['default'])
-            if 'default' in data and arg_default != doc_default:
+            arg_default = None
+            if 'default' in data and data['default']:
+                arg_default = _type_checker(data['default'])
+            try:
+                doc_default = None
+                doc_options_arg = docs.get('options', {}).get(arg, {})
+                if 'default' in doc_options_arg and doc_options_arg['default']:
+                    with CaptureStd():
+                        doc_default = _type_checker(doc_options_arg['default'])
+            except (Exception, SystemExit):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=327,
+                    msg=('Default value from the documentation (%r) is not compatible '
+                         'with type %r defined in the argument_spec' % (doc_options_arg.get('default'), data.get('type', 'str')))
+                )
+                continue
+
+            if arg_default != doc_default:
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
@@ -1097,13 +1118,24 @@ class ModuleValidator(Validator):
                 )
 
             # TODO: needs to recursively traverse suboptions
-            doc_choices = docs.get('options', {}).get(arg, {}).get('choices', [])
-            if not compare_unordered_lists(data.get('choices', []), doc_choices):
+            try:
+                with CaptureStd():
+                    doc_choices = [_type_checker(c) for c in docs.get('options', {}).get(arg, {}).get('choices', [])]
+            except (Exception, SystemExit):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=328,
+                    msg=('Choices value from the documentation (%r) is not compatible '
+                         'with type %r defined in the argument_spec' % (docs.get('options', {}).get(arg, {}).get('choices', []), data.get('type', 'str')))
+                )
+                continue
+            arg_choices = [_type_checker(c) for c in data.get('choices', [])]
+            if not compare_unordered_lists(arg_choices, doc_choices):
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
                     msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (data.get('choices', []), arg, doc_choices))
+                         'documentation (%r)' % (arg_choices, arg, doc_choices))
                 )
 
         if docs:

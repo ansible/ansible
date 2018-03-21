@@ -54,8 +54,9 @@ def add_mocks(filename):
         p = m.start()
         p.side_effect = AnsibleModuleCallError('AnsibleModuleCallError')
     mocks.append(
-        mock.patch('ansible.module_utils.basic._load_params').start()
+        mock.patch('ansible.module_utils.basic._load_params')
     )
+    mocks[-1].start()
 
     yield module_mock
 
