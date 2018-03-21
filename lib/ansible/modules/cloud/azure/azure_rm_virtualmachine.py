@@ -26,8 +26,9 @@ description:
     - Create, update, stop and start a virtual machine. Provide an existing storage account and network interface or
       allow the module to create these for you. If you choose not to provide a network interface, the resource group
       must contain a virtual network with at least one subnet.
-    - Currently requires an image found in the Azure Marketplace. Use azure_rm_virtualmachineimage_facts module
-      to discover the publisher, offer, sku and version of a particular image.
+    - Before Ansible 2.5, this required an image found in the Azure Marketplace which can be discovered with
+      M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
+      examples for more details.
 
 options:
     resource_group:
