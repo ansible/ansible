@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
+# (c) 2017, 2018 Genome Research Ltd.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -28,7 +29,8 @@ requirements:
   - requests
 version_added: "2.0"
 author:
-- Steve Gargan (@sgargan)
+  - Steve Gargan (@sgargan)
+  - Colin Nolan (@colin-nolan)
 options:
     state:
         description:
