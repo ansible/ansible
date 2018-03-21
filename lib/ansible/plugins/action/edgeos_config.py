@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Peter Sprygada <psprygada@ansible.com>
+# Copyright 2018 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -24,10 +24,9 @@ import re
 import time
 import glob
 
-from ansible.plugins.action.vyos import ActionModule as _ActionModule
+from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
-from ansible.utils.vars import merge_hash
 
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
