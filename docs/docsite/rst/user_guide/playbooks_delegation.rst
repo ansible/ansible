@@ -218,7 +218,7 @@ This can be achieved by configuring "run_once" on a task::
 
         # ...
 
-This directive forces the task to attempt execution on the first host in the current batch and then applies all resutls and facts to all the hosts in the same batch.
+This directive forces the task to attempt execution on the first host in the current batch and then applies all results and facts to all the hosts in the same batch.
 
 This approach is similar to applying a conditional to a task such as::
 
