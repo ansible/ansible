@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Afterburn <http://github.com/afterburn>
