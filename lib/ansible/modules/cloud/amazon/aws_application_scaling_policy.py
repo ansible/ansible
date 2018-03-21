@@ -22,6 +22,7 @@ description:
 version_added: "2.5"
 author:
     - Gustavo Maia(@gurumaia)
+    - Chen Leibovich(@chenl87)
 requirements: [ json, botocore, boto3 ]
 options:
     policy_name:
@@ -253,19 +254,13 @@ creation_time:
 
 import traceback
 
-try:
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import _camel_to_snake, camel_dict_to_snake_dict, ec2_argument_spec
 
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported HAS_BOTO3
+    pass  # handled by AnsibleAWSModule
 
 
 # Merge the results of the scalable target creation and policy deletion/creation
@@ -474,17 +469,8 @@ def main():
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
-
-    if not HAS_BOTO3:
-        module.fail_json_aws(msg='boto3 is required.')
-
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        if not region:
-            module.fail_json_aws(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
-        connection = boto3_conn(module, conn_type='client', resource='application-autoscaling', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.ProfileNotFound as e:
-        module.fail_json_aws(e, msg="AWS profile not found")
+    
+    connection = module.client('application-autoscaling')
 
     if module.params.get("state") == 'present':
         # A scalable target must be registered prior to creating a scaling policy
