@@ -157,43 +157,43 @@ def waf_model(name):
 waiters_by_name = {
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
-        model_for('RouteTableExists'),
+        ec2_model('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
         )),
     ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
         'subnet_exists',
-        model_for('SubnetExists'),
+        ec2_model('SubnetExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_has_map_public'): lambda ec2: core_waiter.Waiter(
         'subnet_has_map_public',
-        model_for('SubnetHasMapPublic'),
+        ec2_model('SubnetHasMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_no_map_public'): lambda ec2: core_waiter.Waiter(
         'subnet_no_map_public',
-        model_for('SubnetNoMapPublic'),
+        ec2_model('SubnetNoMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_has_assign_ipv6'): lambda ec2: core_waiter.Waiter(
         'subnet_has_assign_ipv6',
-        model_for('SubnetHasAssignIpv6'),
+        ec2_model('SubnetHasAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_no_assign_ipv6'): lambda ec2: core_waiter.Waiter(
         'subnet_no_assign_ipv6',
-        model_for('SubnetNoAssignIpv6'),
+        ec2_model('SubnetNoAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_deleted'): lambda ec2: core_waiter.Waiter(
         'subnet_deleted',
-        model_for('SubnetDeleted'),
+        ec2_model('SubnetDeleted'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
