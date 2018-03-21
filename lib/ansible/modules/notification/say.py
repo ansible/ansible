@@ -23,7 +23,7 @@ description:
 notes:
    - In 2.5, this module has been renamed from M(osx_say) into M(say).
    - If you like this module, you may also be interested in the osx_say callback plugin.
-   - A list of available voices, with language, can be found by running `say -v ?` on a OSX computer.
+   - A list of available voices, with language, can be found by running `say -v ?` on a OSX host and `espeak --voices` on a Linux host.
 options:
   msg:
     description:
