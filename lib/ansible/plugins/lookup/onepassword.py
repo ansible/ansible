@@ -53,11 +53,6 @@ from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 
-class OnePassException(AnsibleError):
-
-    pass
-
-
 class OnePass(object):
 
     def __init__(self, path='op'):
@@ -71,7 +66,7 @@ class OnePass(object):
         try:
             self._run(["get", "account"])
         except:
-            raise OnePassException("Not logged into 1Password: please run 'op signin' first")
+            raise AnsibleError("Not logged into 1Password: please run 'op signin' first")
 
     def get_field(self, item_id, field, vault=None):
         args = ["get", "item", item_id]
@@ -85,7 +80,7 @@ class OnePass(object):
         out, err = p.communicate(stdin)
         rc = p.wait()
         if rc != expected_rc:
-            raise OnePassException(err)
+            raise AnsibleError(err)
         return out, err
 
     def _parse_field(self, field_name, data_json):

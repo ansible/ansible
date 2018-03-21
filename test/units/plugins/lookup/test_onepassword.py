@@ -22,7 +22,7 @@ from ansible.compat.tests.mock import patch
 from ansible.errors import AnsibleError
 from ansible.module_utils import six
 
-from ansible.plugins.lookup.onepassword import LookupModule, OnePass, OnePassException
+from ansible.plugins.lookup.onepassword import LookupModule, OnePass
 
 
 # Intentionally excludes metadata leaf nodes that would exist in real output if not relevant.
@@ -134,7 +134,7 @@ class MockOnePass(OnePass):
 
         def mock_exit(output='', error='', rc=0):
             if rc != expected_rc:
-                raise OnePassException(error)
+                raise AnsibleError(error)
             if error != '':
                 now = datetime.date.today()
                 error = '[LOG] {0} (ERROR) {1}'.format(now.strftime('%Y/%m/%d %H:$M:$S'), error)
@@ -159,7 +159,7 @@ class MockOnePass(OnePass):
                 # Since we don't actually ever use this output, don't bother mocking output.
                 return mock_exit()
 
-        raise OnePassException('Unsupported command string passed to OnePass mock: {0}'.format(args))
+        raise AnsibleError('Unsupported command string passed to OnePass mock: {0}'.format(args))
 
 
 class LoggedOutMockOnePass(MockOnePass):
@@ -187,12 +187,12 @@ class TestOnePass(unittest.TestCase):
 
     def test_onepassword_logged_out(self):
         op = LoggedOutMockOnePass()
-        with self.assertRaises(OnePassException):
+        with self.assertRaises(AnsibleError):
             op.assert_logged_in()
 
     def test_onepassword_timed_out(self):
         op = TimedOutMockOnePass()
-        with self.assertRaises(OnePassException):
+        with self.assertRaises(AnsibleError):
             op.assert_logged_in()
 
     def test_onepassword_get(self):
