@@ -117,7 +117,7 @@ class MockOnePass(OnePass):
             if key in match_fields:
                 return entry['output']
 
-    def _run(self, args, stdin=None, expected_rc=0):
+    def _run(self, args, expected_rc=0):
         parser = ArgumentParser()
 
         command_parser = parser.add_subparsers(dest='command')

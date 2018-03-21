@@ -75,9 +75,9 @@ class OnePass(object):
         output, dummy = self._run(args)
         return self._parse_field(field, output) if output != '' else ''
 
-    def _run(self, args, stdin=None, expected_rc=0):
+    def _run(self, args, expected_rc=0):
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        out, err = p.communicate(stdin)
+        out, err = p.communicate()
         rc = p.wait()
         if rc != expected_rc:
             raise AnsibleError(err)
