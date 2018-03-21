@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: inspector_target
+module: aws_inspector_target
 short_description: Create, Update and Delete Amazon Inspector Assessment
                    Targets
 description: Creates, updates, or deletes Amazon Inspector Assessment Targets
@@ -42,20 +42,20 @@ requirements:
 
 EXAMPLES = '''
 - name: Create my_target Assessment Target
-  inspector_target:
+  aws_inspector_target:
     name: my_target
     tags:
       role: scan_target
 
 - name: Update Existing my_target Assessment Target with Additional Tags
-  inspector_target:
+  aws_inspector_target:
     name: my_target
     tags:
       env: dev
       role: scan_target
 
 - name: Delete my_target Assessment Target
-  inspector_target:
+  aws_inspector_target:
     name: my_target
     state: absent
 '''
@@ -87,8 +87,7 @@ tags:
                assessment target.
   returned: success
   type: list
-  sample: [{"key": "role", "value": "scan_target"},
-           {"key": "env", "value": "dev"}]
+  sample: {"role": "scan_target", "env": "dev"}
 updated_at:
   description: The time at which the assessment target was last updated.
   returned: success
@@ -96,20 +95,23 @@ updated_at:
   sample: "2018-01-29T13:48:51.958000+00:00"
 '''
 
-try:
-    from botocore.exceptions import ClientError, ValidationError
-except ImportError:
-    pass  # Handled AnsibleAWSModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
-    boto3_conn,
+    HAS_BOTO3,
+    ansible_dict_to_boto3_tag_list,
+    boto3_tag_list_to_ansible_dict,
     camel_dict_to_snake_dict,
-    get_aws_connection_info,
+    compare_aws_tags,
 )
 
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
-@AWSRetry.backoff()
+
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -125,30 +127,16 @@ def main():
         required_if=required_if,
     )
 
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 and botocore are required for this module')
+
     name = module.params.get('name')
     state = module.params.get('state').lower()
     tags = module.params.get('tags')
     if tags:
-        tags = [{'key': key, 'value': value} for key, value in tags.items()]
+        tags = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-        module,
-        boto3=True,
-    )
-
-    if not region:
-        module.fail_json(msg='region must be specified')
-
-    try:
-        client = boto3_conn(
-            module, conn_type='client',
-            resource='inspector',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_kwargs
-        )
-    except (ClientError, ValidationError) as e:
-        module.fail_json_aws(e, msg="trying to connect to AWS")
+    client = module.client('inspector')
 
     try:
         existing_target_arn = client.list_assessment_targets(
@@ -167,14 +155,25 @@ def main():
         ).get('resourceGroups')[0].get('tags')
 
         target_exists = True
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to retrieve targets")
     except IndexError:
         target_exists = False
 
     if state == 'present' and target_exists:
-        if sorted(tags) == sorted(existing_resource_group_tags):
-            existing_target.update({'tags': existing_resource_group_tags})
+        ansible_dict_tags = boto3_tag_list_to_ansible_dict(tags)
+        ansible_dict_existing_tags = boto3_tag_list_to_ansible_dict(
+            existing_resource_group_tags
+        )
+        tags_to_add, tags_to_remove = compare_aws_tags(
+            ansible_dict_tags,
+            ansible_dict_existing_tags
+        )
+        if not (tags_to_add or tags_to_remove):
+            existing_target.update({'tags': ansible_dict_existing_tags})
             module.exit_json(changed=False, **existing_target)
         else:
             try:
@@ -185,7 +184,7 @@ def main():
                 client.update_assessment_target(
                     assessmentTargetArn=existing_target_arn,
                     assessmentTargetName=name,
-                    resourceGroupArn=updated_resource_group_arn
+                    resourceGroupArn=updated_resource_group_arn,
                 )
 
                 updated_target = camel_dict_to_snake_dict(
@@ -194,9 +193,12 @@ def main():
                     ).get('assessmentTargets')[0]
                 )
 
-                updated_target.update({'tags': tags})
+                updated_target.update({'tags': ansible_dict_tags})
                 module.exit_json(changed=True, **updated_target),
-            except (ClientError, ValidationError) as e:
+            except (
+                botocore.exceptions.BotoCoreError,
+                botocore.exceptions.ClientError,
+            ) as e:
                 module.fail_json_aws(e, msg="trying to update target")
 
     elif state == 'present' and not target_exists:
@@ -216,9 +218,12 @@ def main():
                 ).get('assessmentTargets')[0]
             )
 
-            new_target.update({'tags': tags})
+            new_target.update({'tags': boto3_tag_list_to_ansible_dict(tags)})
             module.exit_json(changed=True, **new_target)
-        except (ClientError, ValidationError) as e:
+        except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+        ) as e:
             module.fail_json_aws(e, msg="trying to create target")
 
     elif state == 'absent' and target_exists:
@@ -227,7 +232,10 @@ def main():
                 assessmentTargetArn=existing_target_arn,
             )
             module.exit_json(changed=True)
-        except (ClientError, ValidationError) as e:
+        except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+        ) as e:
             module.fail_json_aws(e, msg="trying to delete target")
 
     elif state == 'absent' and not target_exists:
