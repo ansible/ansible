@@ -23,6 +23,7 @@ import json
 
 from itertools import chain
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
@@ -52,9 +53,9 @@ class Cliconf(CliconfBase):
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)
 
-        cmd = b'show %s ' % lookup[source]
+        cmd = 'show %s ' % lookup[source]
         if format and format is not 'text':
-            cmd += b'| %s ' % format
+            cmd += '| %s ' % format
 
         cmd += ' '.join(to_list(flags))
         cmd = cmd.strip()
