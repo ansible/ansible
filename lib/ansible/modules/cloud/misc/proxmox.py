@@ -102,7 +102,7 @@ options:
   startup:
     description:
       - startup and shutdown behavior
-    version_added: "2.5"
+    version_added: "2.6"
   storage:
     description:
       - target storage
