@@ -45,7 +45,7 @@ from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, parse_yaml
+from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1083,20 +1083,33 @@ class ModuleValidator(Validator):
 
             # TODO: needs to recursively traverse suboptions
             arg_default = None
-            if 'default' in data and data['default']:
-                arg_default = _type_checker(data['default'])
+            if 'default' in data and not is_empty(data['default']):
+                try:
+                    arg_default = _type_checker(data['default'])
+                except (Exception, SystemExit):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=329,
+                        msg=('Default value from the argument_spec (%r) is not compatible '
+                             'with type %r' % (data['default'], _type))
+                    )
+                    continue
+            elif data.get('default') is None and _type == 'bool' and 'options' not in data:
+                arg_default = False
             try:
                 doc_default = None
                 doc_options_arg = docs.get('options', {}).get(arg, {})
-                if 'default' in doc_options_arg and doc_options_arg['default']:
+                if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
+                elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
+                    doc_default = False
             except (Exception, SystemExit):
                 self.reporter.error(
                     path=self.object_path,
                     code=327,
                     msg=('Default value from the documentation (%r) is not compatible '
-                         'with type %r defined in the argument_spec' % (doc_options_arg.get('default'), data.get('type', 'str')))
+                         'with type %r defined in the argument_spec' % (doc_options_arg.get('default'), _type))
                 )
                 continue
 

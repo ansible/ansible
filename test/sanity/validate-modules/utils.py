@@ -118,6 +118,13 @@ def parse_yaml(value, lineno, module, name, load_all=False):
     return data, errors, traces
 
 
+def is_empty(value):
+    """Evaluate null like values excluding False"""
+    if value is False:
+        return False
+    return not bool(value)
+
+
 def compare_unordered_lists(a, b):
     """Safe list comparisons
 
