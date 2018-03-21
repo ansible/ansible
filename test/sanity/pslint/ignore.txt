@@ -22,7 +22,6 @@ lib/ansible/modules/windows/win_chocolatey.ps1 PSUseDeclaredVarsMoreThanAssignme
 lib/ansible/modules/windows/win_chocolatey.ps1 PSUseOutputTypeCorrectly
 lib/ansible/modules/windows/win_copy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_copy.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_defrag.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidGlobalVars
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_dns_client.ps1 PSAvoidUsingWMICmdlet
