@@ -222,6 +222,35 @@
 - assert:
       that: azure_publicipaddresses | length == 0
 
+- name: Create virtual machine without public ip address
+  register: output
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvmnoip
+      vm_size: Standard_A0
+      admin_username: adminuser
+      admin_password: Password123!
+      short_hostname: testvm
+      os_type: Linux
+      public_ip_allocation_method: Disabled
+      availability_set: "avbs{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      image:
+        offer: UbuntuServer
+        publisher: Canonical
+        sku: 16.04-LTS
+        version: latest
+
+- assert:
+      that:
+        - not 'publicIPAddress' in output.ansible_facts.azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties
+
+- name: Delete VM with no public ip
+  azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      name: testvmnoip
+      state: absent
+      vm_size: Standard_A0
+
 # TODO: Until we have a module to create/delete images this is the best tests
 # I can do
 - name: assert error thrown with invalid image dict
