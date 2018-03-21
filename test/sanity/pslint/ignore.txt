@@ -153,7 +153,6 @@ lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_user.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_wait_for.ps1 PSPossibleIncorrectComparisonWithNull
-lib/ansible/modules/windows/win_wakeonlan.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_webpicmd.ps1 PSPossibleIncorrectComparisonWithNull
 lib/ansible/modules/windows/win_webpicmd.ps1 PSUseOutputTypeCorrectly
