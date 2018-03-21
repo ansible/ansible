@@ -424,7 +424,14 @@ class PluginLoader:
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
-        for path in sorted(all_matches, key=os.path.basename):
+        if self.unique_file:
+            # first found wins, so the list indicates the precedence
+            pathlist = sorted(all_matches, key=os.path.basename)
+        else:
+            # since we load all files 'last loaded' wins in this case so we reverse the list to maintain precedence
+            pathlist = reversed(all_matches)
+
+        for path in pathlist:
 
             if self.unique_file:
                 name = os.path.basename(os.path.splitext(path)[0])
