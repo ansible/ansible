@@ -51,9 +51,7 @@ class DocCLI(CLI):
     # TODO: ? This could be setup in plugin loader as well...
     # FIXME: could also just filter out the illogical ones like module_docs_fragments in case someone
     #        does document other plugin types
-    UNDOCUMENTED_PLUGIN_TYPES = ('action', 'cliconf', 'filter', 'module_docs_fragments',
-                                 'module_utils', 'netconf',
-                                 'ps_module_utils', 'terminal', 'test')
+    UNDOCUMENTED_PLUGIN_TYPES = ('action', 'module_docs_fragments')
 
     def __init__(self, args):
 
