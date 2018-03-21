@@ -469,7 +469,7 @@ def main():
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
-    
+
     connection = module.client('application-autoscaling')
 
     if module.params.get("state") == 'present':
