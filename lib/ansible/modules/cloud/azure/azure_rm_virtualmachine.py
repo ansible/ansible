@@ -208,7 +208,7 @@ options:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
               determines if the public IP address remains permanently associated with the Network Interface. If set
               to 'Dynamic' the public IP address may change any time the VM is rebooted or power cycled.
-              'Disabled' was added in Ansible 2.6.
+            - The C(Disabled) choice was added in Ansible 2.6.
         choices:
             - Dynamic
             - Static
