@@ -30,7 +30,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-        default: "admin"
     dns_server_primary:
         description:
             - address of primary DNS server

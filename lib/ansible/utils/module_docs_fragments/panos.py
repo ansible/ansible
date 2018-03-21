@@ -23,4 +23,3 @@ options:
             - username for authentication
         default: "admin"
 '''
-

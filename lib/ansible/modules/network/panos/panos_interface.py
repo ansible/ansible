@@ -37,7 +37,6 @@ requirements:
 notes:
     - Checkmode is not supported.
 options:
-        required: true
     if_name:
         description:
             - Name of the interface to configure.
