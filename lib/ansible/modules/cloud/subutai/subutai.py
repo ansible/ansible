@@ -8,17 +8,14 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.0',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: subutai
-short_description:
-    - Subutai container module. This modules manage all life cicle of subutai containers.
+short_description: Subutai container module. This modules manage all life cicle of subutai containers.
 description:
     - Subutai is a daemon written in Golang whose main task is to receive commands from the Subutai Social
       management server and execute them on Resource Hosts.
@@ -59,7 +56,7 @@ options:
         will have different "entrance" address.
 
     default: 'present'
-    choices: [ 'tunnel', 'vxlan', 'map', 'p2p' ]
+    choices: [ 'tunnel', 'map', 'vxlan', 'p2p', 'proxy' ]
   state:
     description:
       - Indicates the desired container state are installed.
@@ -68,6 +65,7 @@ options:
   check:
     description:
       - Check for updates without installation.
+    type: bool
   source:
     description:
       - Set the source for promoting.
@@ -83,9 +81,11 @@ options:
   globalFlag:
     description:
       - There are two types of channels - local, which is created from destination address to host and global from destination to Subutai Helper node.
+    type: bool
   protocol:
     description:
       - Specifies required protocol for mapping and might be http, https, tcp or udp.
+    choices: [ 'http', 'https', 'tcp', 'udp' ]
   internal:
     description:
       - Peer's internal socket that should be exposed. Format should be <ip>/<port>
@@ -103,6 +103,7 @@ options:
   map_policy:
     description:
       - Balancing methods (round-robin by default, least_time, hash, ip_hash).
+    choices: [ 'round-robin', 'least_time', 'hash', 'ip_hash' ]
   sslbackend :
     description:
       - SSL backend in https upstream.
@@ -136,6 +137,7 @@ options:
   proxy_policy:
     description:
       - Set load balance policy (rr|lb|hash).
+    choices: [ 'lb', 'rr', 'hash' ]
   file:
     description:
       - Pem certificate file.
@@ -147,19 +149,19 @@ author:
 EXAMPLES = '''
 
 - name: run subutai import nginx
-    subutai:
+  subutai:
     name: nginx
     state: present
     become: true
 
 - name: run subutai destroy nginx
-    subutai:
+  subutai:
     name: nginx
     state: absent
     become: true
 
 - name: upgrade nginx
-    subutai:
+  subutai:
     name: nginx
     state: latest
     become: true
@@ -203,14 +205,14 @@ EXAMPLES = '''
     ipaddr: 10.10.0.20:22
 
 - name: map container's 172.16.31.3 port 3306 to the random port on RH
-    subutai:
+  subutai:
     network: map
     state: present
     protocol: tcp
     internal: 172.16.31.3:3306
 
 - name: add 172.16.31.4:3306 to the same group
-    subutai:
+  subutai:
     network: map
     state: present
     protocol: tcp
@@ -218,7 +220,7 @@ EXAMPLES = '''
     external: 46558
 
 - name: remove container 172.16.31.3 from mapping
-    subutai:
+  subutai:
     network: map
     state: absent
     protocol: tcp
@@ -226,7 +228,7 @@ EXAMPLES = '''
     external: 46558
 
 - name: map 172.16.25.12:80 to RH's 8080 with domain name example.com
-    subutai:
+  subutai:
     network: map
     state: present
     protocol: http
@@ -235,7 +237,7 @@ EXAMPLES = '''
     domain: example.com
 
 - name: add container to existing example.com domain
-    subutai:
+  subutai:
     network: map
     state: present
     protocol: http
@@ -244,73 +246,73 @@ EXAMPLES = '''
     domain: example.com
 
 - name: adding subutai vxlan tunnel
-    subutai:
-        network: vxlan
-        state: present
-        vxlan: vxlan1
-        remoteip: 10.220.22.2
-        vlan: 100
-        vni: 12345
+  subutai:
+    network: vxlan
+    state: present
+    vxlan: vxlan1
+    remoteip: 10.220.22.2
+    vlan: 100
+    vni: 12345
 
 - name: removing subutai vxlan tunnel
-    subutai:
-        network: vxlan
-        state: absent
-        vxlan: vxlan1
+  subutai:
+    network: vxlan
+    state: absent
+    vxlan: vxlan1
 
 - name: create p2p instance
-    subutai:
-        network: p2p
-        state: present
-        interface: p2p-net1
-        hash: swarm-12345678-abcd-1234-efgh-123456789012
-        key: 0123456789qwertyu0123456789zxcvbn
-        ttl: 1476870551
-        localPeepIPAddr: 10.220.22.1
-        portrange: 0-65535
+  subutai:
+    network: p2p
+    state: present
+    interface: p2p-net1
+    hash: swarm-12345678-abcd-1234-efgh-123456789012
+    key: 0123456789qwertyu0123456789zxcvbn
+    ttl: 1476870551
+    localPeepIPAddr: 10.220.22.1
+    portrange: 0-65535
 
 - name: update p2p instance
-    subutai:
-        network: p2p
-        state: present
-        interface: p2p-net1
-        hash: swarm-12345678-abcd-1234-efgh-123456789012
-        key: 0123456789qwertyu0123456789zxcvbn
-        ttl: 1476870551
+  subutai:
+    network: p2p
+    state: present
+    interface: p2p-net1
+    hash: swarm-12345678-abcd-1234-efgh-123456789012
+    key: 0123456789qwertyu0123456789zxcvbn
+    ttl: 1476870551
 
 - name: delete p2p instance
-    subutai:
-        network: p2p
-        state: absent
-        hash: swarm-12345678-abcd-1234-efgh-123456789012
+  subutai:
+    network: p2p
+    state: absent
+    hash: swarm-12345678-abcd-1234-efgh-123456789012
 
 - name: add domain example.com to 100 vlan
-    subutai:
-        network: proxy
-        state: present
-        vlan: 100
-        domain: example.com
+  subutai:
+    network: proxy
+    state: present
+    vlan: 100
+    domain: example.com
 
 - name: add domain example.com to 100 vlan
-    subutai:
-        network: proxy
-        state: present
-        vlan: 100
-        host: 10.10.0.20
+  subutai:
+    network: proxy
+    state: present
+    vlan: 100
+    host: 10.10.0.20
 
 - name: delete domain example.com
-    subutai:
-        conetwork: proxy
-        state: absent
-        vlan: 100
-        domain: example.com
+  subutai:
+    conetwork: proxy
+    state: absent
+    vlan: 100
+    domain: example.com
 
 - name: delete host 10.10.0.20
-    subutai:
-        conetwork: proxy
-        state: absent
-        vlan: 100
-        host: 10.10.0.20
+  subutai:
+    conetwork: proxy
+    state: absent
+    vlan: 100
+    host: 10.10.0.20
 '''
 
 RETURN = '''
