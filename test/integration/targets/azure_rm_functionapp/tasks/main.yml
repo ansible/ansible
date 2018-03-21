@@ -1,19 +1,14 @@
-- name: Prepare random number
-  set_fact:
-    rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-  run_once: yes
-
 - name: create storage account for function apps
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: azfunccistor4{{ rpfx }}
+    name: azfunccistor4{{ resource_prefix }}
     account_type: Standard_LRS
 
 - name: create basic function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
-    storage_account: azfunccistor4{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
+    storage_account: azfunccistor4{{ resource_prefix }}
   register: output
 
 - name: assert the function was created
@@ -23,19 +18,19 @@
 - name: list facts for function
   azure_rm_functionapp_facts:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
   register: results
 
 - name: assert the facts were retrieved
   assert:
     that:
     - results.ansible_facts.azure_functionapps|length == 1
-    - results.ansible_facts.azure_functionapps[0].name == 'azfuncci{{ rpfx }}'
+    - results.ansible_facts.azure_functionapps[0].name == 'azfuncci{{ resource_prefix }}'
 
 - name: delete basic function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
     state: absent
   register: output
 
@@ -46,8 +41,8 @@
 - name: create a function with app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
-    storage_account: azfunccistor4{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
+    storage_account: azfunccistor4{{ resource_prefix }}
     app_settings:
       hello: world
       things: more stuff
@@ -60,8 +55,8 @@
 - name: change app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
-    storage_account: azfunccistor4{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
+    storage_account: azfunccistor4{{ resource_prefix }}
     app_settings:
       hello: world
       things: more stuff
@@ -75,7 +70,7 @@
 - name: delete the function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: azfuncci{{ rpfx }}
+    name: azfuncci{{ resource_prefix }}
     state: absent
   register: output
 
@@ -86,5 +81,5 @@
 - name: delete storage account
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: azfunccistor4{{ rpfx }}
+    name: azfunccistor4{{ resource_prefix }}
     state: absent
