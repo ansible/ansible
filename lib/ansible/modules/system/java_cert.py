@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: java_cert
-version_added: '2.3'
+version_added: '2.4'
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
   - This is a wrapper module around keytool. Which can be used to import/remove
@@ -32,6 +32,11 @@ options:
   cert_alias:
     description:
       - Imported certificate alias.
+  trust_cacert:
+    description:
+      - Trust imported cert as CAcert
+    default: False 
+    version_added: "2.6"
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
@@ -77,7 +82,6 @@ EXAMPLES = '''
     keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
     keystore_pass: changeit
     state: present
-
 - name: Remove certificate with given alias from a keystore
   java_cert:
     cert_url: google.com
@@ -85,7 +89,15 @@ EXAMPLES = '''
     keystore_pass: changeit
     executable: /usr/lib/jvm/jre7/bin/keytool
     state: absent
-
+- name: Import trusted CA from SSL certificate
+  java_cert:
+    cert_path: /opt/certs/rootca.crt
+    keystore_path: /tmp/cacerts
+    keystore_pass: changeit
+    keystore_create: yes
+    state: present
+    cert_alias: LE_RootCA
+    trust_cacert: True
 - name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
   java_cert:
     cert_url: google.com
@@ -93,7 +105,6 @@ EXAMPLES = '''
     keystore_pass: changeit
     keystore_create: yes
     state: present
-
 - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
   java_cert:
     pkcs12_path: "/tmp/importkeystore.p12"
@@ -110,13 +121,11 @@ msg:
   returned: success
   type: string
   sample: "Module require existing keystore at keystore_path '/tmp/test/cacerts'"
-
 rc:
   description: Keytool command execution return value
   returned: success
   type: int
   sample: "0"
-
 cmd:
   description: Executed command to get action done
   returned: success
@@ -142,7 +151,7 @@ def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
     return False
 
 
-def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias):
+def import_cert_url(module, executable, url, port, keystore_path, keystore_pass, alias, trust_cacert):
     ''' Import certificate from URL into keystore located at keystore_path '''
     import re
 
@@ -169,6 +178,8 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -alias '%s'") % (executable, keystore_path,
                                                     keystore_pass, alias)
+    if trust_cacert:
+        import_cmd = import_cmd + " -trustcacerts"
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -190,14 +201,18 @@ def import_cert_url(module, executable, url, port, keystore_path, keystore_pass,
                                 error=import_err)
 
 
-def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias):
+def import_cert_path(module, executable, path, keystore_path, keystore_pass, alias, trust_cacert):
     ''' Import certificate from path into keystore located on
         keystore_path as alias '''
+
     import_cmd = ("%s -importcert -noprompt -keystore '%s' "
                   "-storepass '%s' -file '%s' -alias '%s'") % (executable,
                                                                keystore_path,
                                                                keystore_pass,
                                                                path, alias)
+
+    if trust_cacert:
+        import_cmd = import_cmd + " -trustcacerts"
 
     if module.check_mode:
         module.exit_json(changed=True)
@@ -287,6 +302,7 @@ def main():
         cert_port=dict(type='int', default='443'),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
+        trust_cacert=dict(type='bool', default=False),
         keystore_create=dict(type='bool', default=False),
         executable=dict(type='str', default='keytool'),
         state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -311,6 +327,7 @@ def main():
     pkcs12_alias = module.params.get('pkcs12_alias', '1')
 
     cert_alias = module.params.get('cert_alias') or url
+    trust_cacert = module.params.get('trust_cacert')
 
     keystore_path = module.params.get('keystore_path')
     keystore_pass = module.params.get('keystore_pass')
@@ -343,11 +360,11 @@ def main():
 
             if path:
                 import_cert_path(module, executable, path, keystore_path,
-                                 keystore_pass, cert_alias)
+                                 keystore_pass, cert_alias, trust_cacert)
 
             if url:
                 import_cert_url(module, executable, url, port, keystore_path,
-                                keystore_pass, cert_alias)
+                                keystore_pass, cert_alias, trust_cacert)
 
     module.exit_json(changed=False)
 
