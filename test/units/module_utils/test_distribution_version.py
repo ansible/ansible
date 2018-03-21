@@ -378,6 +378,34 @@ BUG_REPORT_URL="http://bugs.debian.org/"
         }
     },
     {
+        'name': "SteamOS 2.0",
+        'input': {
+            '/etc/os-release': """PRETTY_NAME="SteamOS GNU/Linux 2.0 (brewmaster)"
+NAME="SteamOS GNU/Linux"
+VERSION_ID="2"
+VERSION="2 (brewmaster)"
+ID=steamos
+ID_LIKE=debian
+HOME_URL="http://www.steampowered.com/"
+SUPPORT_URL="http://support.steampowered.com/"
+BUG_REPORT_URL="http://support.steampowered.com/"
+""",
+            '/etc/lsb-release': """DISTRIB_ID=SteamOS
+DISTRIB_RELEASE=2.0
+DISTRIB_CODENAME=brewmaster
+DISTRIB_DESCRIPTION="SteamOS 2.0"
+"""
+        },
+        'platform.dist': ('Steamos', '2.0', 'brewmaster'),
+        'result': {
+            'distribution': u'SteamOS',
+            'distribution_major_version': u'2',
+            'distribution_release': u'brewmaster',
+            "os_family": "Debian",
+            'distribution_version': u'2.0'
+        }
+    },
+    {
         "platform.dist": [
             "Ubuntu",
             "16.04",
