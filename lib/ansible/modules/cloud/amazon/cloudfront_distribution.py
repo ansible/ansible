@@ -1405,10 +1405,10 @@ class CloudFrontValidationManager(object):
                 all_origins[origin['domain_name']] = origin
                 new_domains.append(origin['domain_name'])
             if purge_origins:
-                for domain in all_origins:
+                for domain in list(all_origins.keys()):
                     if domain not in new_domains:
                         del(all_origins[domain])
-            return ansible_list_to_cloudfront_list(all_origins.values())
+            return ansible_list_to_cloudfront_list(list(all_origins.values()))
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating distribution origins")
 
@@ -1488,7 +1488,7 @@ class CloudFrontValidationManager(object):
             if purge_cache_behaviors:
                 for target_origin_id in set(all_cache_behaviors.keys()) - set([cb['path_pattern'] for cb in cache_behaviors]):
                     del(all_cache_behaviors[target_origin_id])
-            return ansible_list_to_cloudfront_list(all_cache_behaviors.values())
+            return ansible_list_to_cloudfront_list(list(all_cache_behaviors.values()))
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating distribution cache behaviors")
 
@@ -1540,6 +1540,8 @@ class CloudFrontValidationManager(object):
                 forwarded_values = dict()
             existing_config = config.get('forwarded_values', {})
             headers = forwarded_values.get('headers', existing_config.get('headers', {}).get('items'))
+            if headers:
+                headers.sort()
             forwarded_values['headers'] = ansible_list_to_cloudfront_list(headers)
             if 'cookies' not in forwarded_values:
                 forward = existing_config.get('cookies', {}).get('forward', self.__default_cache_behavior_forwarded_values_forward_cookies)
