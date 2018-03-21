@@ -441,6 +441,55 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
+    assume_text = set([
+        '.cfg',
+        '.conf',
+        '.crt',
+        '.css',
+        '.html',
+        '.ini',
+        '.j2',
+        '.js',
+        '.json',
+        '.md',
+        '.pem',
+        '.ps1',
+        '.psm1',
+        '.py',
+        '.rst',
+        '.sh',
+        '.txt',
+        '.xml',
+        '.yaml',
+        '.yml',
+    ])
+
+    assume_binary = set([
+        '.bin',
+        '.eot',
+        '.gz',
+        '.ico',
+        '.iso',
+        '.jpg',
+        '.otf',
+        '.p12',
+        '.png',
+        '.pyc',
+        '.rpm',
+        '.ttf',
+        '.woff',
+        '.woff2',
+        '.zip',
+    ])
+
+    ext = os.path.splitext(path)[1]
+
+    if ext in assume_text:
+        return False
+
+    if ext in assume_binary:
+        return True
+
     with open(path, 'rb') as path_fd:
         return b'\0' in path_fd.read(1024)
 
