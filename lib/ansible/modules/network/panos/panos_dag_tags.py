@@ -39,21 +39,9 @@ notes:
     - Checkmode is not supported.
     - Panorama is not supported.
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
     api_key:
         description:
             - API key that can be used instead of I(username)/I(password) credentials.
-    username:
-        description:
-            - username for authentication
-        default: "admin"
     description:
         description:
             - The purpose / objective of the static Address Group
@@ -74,6 +62,7 @@ options:
     ip_to_register:
         description:
             - IP that will be registered with the given tag names.
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''

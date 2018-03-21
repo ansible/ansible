@@ -37,17 +37,6 @@ requirements:
 notes:
     - Checkmode is not supported.
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device being configured.
-        required: true
-    username:
-        description:
-            - Username credentials to use for auth.
-        default: "admin"
-    password:
-        description:
-            - Password credentials to use for auth.
         required: true
     if_name:
         description:
@@ -66,6 +55,7 @@ options:
         description:
             - Commit if changed
         default: true
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
