@@ -6,8 +6,8 @@
 
 
 class ModuleDocFragment(object):
-  # Standard files for documentation fragment
-  DOCUMENTATION = '''
+    # Standard files for documentation fragment
+    DOCUMENTATION = '''
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 - Some of the options are likely only used for developers within Meraki
