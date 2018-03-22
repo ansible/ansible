@@ -2134,6 +2134,7 @@ def main():
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
+            result['instance'] = tmp_result['instance']
         else:
             # This should not happen
             raise AssertionError()
