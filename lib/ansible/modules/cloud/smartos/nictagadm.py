@@ -29,16 +29,20 @@ options:
             - Specifies the I(mac) address to attach the nic tag to when not using an (I)etherstub. I(mac) and I(etherstub) are mutually exclusive.
         required: false
     etherstub:
+        default: False
         description:
             - Specifies that the nic tag will be attached to a created I(etherstub). I(etherstub) is mutually exclusive with both I(mtu), and mac.
         required: false
+        type: bool
     mtu:
         description:
             - Specifies the size of the I(mtu) of the desired nic tag. I(mtu) and I(etherstub) are mutually exclusive.
         required: false
     force:
+        default: False
         description:
             - When I(state) is absent set this switch will use the C(-f) parameter and delete the nic tag regardless of existing VMs.
+        type: bool
     state:
         choices: [ "present", "absent" ]
         default: "present"
