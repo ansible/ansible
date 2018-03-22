@@ -93,6 +93,7 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
+
 def main():
 
     # define the available arguments/parameters that a user can pass to
@@ -102,8 +103,7 @@ def main():
     argument_spec.update(
         username=dict(type='str'),
     )
-    
-   
+
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
@@ -131,7 +131,6 @@ def main():
     # part where your module will do what it needs to do)
 
     meraki.function = 'organizations'
-
 
     if meraki.params['state'] == 'query':
         meraki.result['response'] = meraki.get_orgs()
