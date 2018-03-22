@@ -73,5 +73,5 @@ import q
 foo = q/'bar'
 q/foo
 
-q.d()
-import epdb; epdb.serve()#; epdb.st()
+#q.d()
+#import epdb; epdb.serve()#; epdb.st()
