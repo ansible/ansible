@@ -1,7 +1,9 @@
+---
 - debug: msg="START iosxr cli/common_utils.yaml on connection={{ ansible_connection }}"
 
-# Add minimal testcase to check args are passed correctly to
-# implementation module and module run is successful.
+# Functions used by iosxr: conditional, remove_default_spec
+
+# hit conditional() and remove_default_spec()
 - name: Check intent arguments
   iosxr_interface:
     name: GigabitEthernet0/0/0/1

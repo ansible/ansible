@@ -52,8 +52,7 @@
     commands: ['no ipv4 access-list test']
     match: none
 
-# diffs
-
+# diff exact, strict, line
 - name: setup
   iosxr_config:
     commands:
