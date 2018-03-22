@@ -975,14 +975,14 @@ def main():
                 pass
         changeset[camel(realm_param)] = new_param_value
 
-    # Whether creating or updating a client, take the before-state and merge the changeset into it
+    # Whether creating or updating a realm, take the before-state and merge the changeset into it
     updated_realm = before_realm.copy()
     updated_realm.update(changeset)
 
     result['proposed'] = changeset
     result['existing'] = before_realm
 
-    # If the client does not exist yet, before_client is still empty
+    # If the realm does not exist yet, before_realm is still empty
     if before_realm == dict():
         if state == 'absent':
             # do nothing and exit
@@ -1019,10 +1019,11 @@ def main():
             # update existing realm
             result['changed'] = True
             if module.check_mode:
-                # We can only compare the current client with the proposed updates we have
+                # We can only compare the current realm with the proposed updates we have
                 if module._diff:
                     result['diff'] = dict(before=before_realm,
                                           after=updated_realm)
+                result['changed'] = (before_realm != updated_realm)
 
                 module.exit_json(**result)
             kc.update_realm(updated_realm, realm=realm)
@@ -1042,7 +1043,7 @@ def main():
             result['msg'] = 'Realm %s has been updated.' % realm
             module.exit_json(**result)
         else:
-            # Delete existing client
+            # Delete existing realm
             result['changed'] = True
             if module._diff:
                 result['diff']['before'] = before_realm

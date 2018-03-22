@@ -368,7 +368,7 @@ class KeycloakAPI(object):
                                       % (realm, str(e)))
 
     def create_realm(self, realmrep):
-        """ Create a client in keycloak
+        """ Create a realm in keycloak
         :param realmrep: Realm representation for realm to be created
         :param realm: Realm name for realm to be created
         :return: HTTPResponse object on success
