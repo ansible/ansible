@@ -300,15 +300,14 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in self._filter_loader.all()]
-
         self._filters = dict()
-        for fp in plugins:
-            self._filters.update(fp.filters())
 
         # TODO: Remove registering tests as filters in 2.9
         for name, func in self._get_tests().items():
             self._filters[name] = tests_as_filters_warning(name, func)
+
+        for fp in self._filter_loader.all():
+            self._filters.update(fp.filters())
 
         return self._filters.copy()
 
@@ -320,10 +319,8 @@ class Templar:
         if self._tests is not None:
             return self._tests.copy()
 
-        plugins = [x for x in self._test_loader.all()]
-
         self._tests = dict()
-        for fp in plugins:
+        for fp in self._test_loader.all():
             self._tests.update(fp.tests())
 
         return self._tests.copy()
