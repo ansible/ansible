@@ -153,7 +153,7 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.log('List all Azure Kubernetes Services')
 
         try:
-            response = self.containerservice_client.managed_clusters.list()
+            response = self.containerservice_client.managed_clusters.list(self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
 
