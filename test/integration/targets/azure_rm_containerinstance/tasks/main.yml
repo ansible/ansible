@@ -13,10 +13,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
   register: output
 
 - name: Assert the container instance is well created
@@ -40,10 +36,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
-      - name: mycontainer2
-        image: httpd
-        memory: 1.5
   register: output
 
 - name: Assert the container instance is well created
@@ -66,7 +58,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     force_update: yes
   register: output
 
@@ -91,7 +82,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     state: absent
   register: output
 
@@ -115,7 +105,6 @@
         memory: 1.5
         ports:
           - 80
-          - 81
     state: absent
   register: output
 
