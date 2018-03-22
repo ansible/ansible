@@ -37,12 +37,13 @@ from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
+
 def meraki_argument_spec():
     return dict(auth_key=dict(type='str', no_log=True, fallback=(env_fallback, ['MERAKI_KEY'])),
                 host=dict(type='str', default='api.meraki.com'),
                 name=dict(type='str'),
                 username=dict(type='str'),
-                state=dict(type='str', choices=['present', 'absent', 'query',], required=True),
+                state=dict(type='str', choices=['present', 'absent', 'query'], required=True),
                 use_proxy=dict(type='bool', default=True),
                 use_ssl=dict(type='bool', default=True),
                 validate_certs=dict(type='bool', default=True),
@@ -51,7 +52,8 @@ def meraki_argument_spec():
                 org_name=dict(type='str'),
                 org_id=dict(type='str'),
                 net_name=dict(type='str'),
-    )
+                )
+
 
 class MerakiModule(object):
 
@@ -119,18 +121,17 @@ class MerakiModule(object):
         if self.module._debug or self.params['output_level'] == 'debug':
             self.module.warn('Enable debug output because ANSIBLE_DEBUG was set or output_level is set to debug.')
 
-
         # TODO: This needs to be tested
-        self.module.required_if=[('state', 'present', ['name']),
-                                 ('state', 'absent', ['name']),
-                           ]
+        self.module.required_if = [('state', 'present', ['name']),
+                                   ('state', 'absent', ['name']),
+                                   ]
 
         # Validate whether parameters are compatible
         if self.params['state'] == 'absent':
             if self.params['org_name'] or self.params['org_id']:
                 module.fail_json('State cannot be absent if specifying org_name or org_id.')
 
-        self.modifiable_methods=['POST', 'PUT', 'DELETE']
+        self.modifiable_methods = ['POST', 'PUT', 'DELETE']
 
     def define_protocol(self):
         ''' Set protocol based on use_ssl parameters '''
@@ -243,7 +244,7 @@ class MerakiModule(object):
             self.fail_json(msg="Multiple organizations found with the name {0}".format(org_name))
 
     def get_org_id(self, org_name):
-        ''' Returns an organization id based on organization name, only if unique 
+        ''' Returns an organization id based on organization name, only if unique
             If org_id is specified, return that instead of a lookup
         '''
         if self.params['org_id'] is not None:
@@ -282,7 +283,6 @@ class MerakiModule(object):
     def delete_object(self, payload):
         delete_path = self.construct_path('delete')
         return self.response_json(self.request('DELETE', delete_path, payload=payload))
-
 
     def request(self, method, path, payload=None):
         ''' Generic HTTP method for Meraki requests '''
