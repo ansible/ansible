@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 # (c) 2015, Steve Gargan <steve.gargan@gmail.com>
+# (c) 2017, 2018 Genome Research Ltd.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -28,7 +29,8 @@ requirements:
   - requests
 version_added: "2.0"
 author:
-- Steve Gargan (@sgargan)
+  - Steve Gargan (@sgargan)
+  - Colin Nolan (@colin-nolan)
 options:
     state:
         description:
@@ -122,6 +124,8 @@ EXAMPLES = '''
     state: acquire
 '''
 
+from ansible.module_utils._text import to_text
+
 try:
     import consul
     from requests.exceptions import ConnectionError
@@ -130,6 +134,27 @@ except ImportError:
     python_consul_installed = False
 
 from ansible.module_utils.basic import AnsibleModule
+
+
+def _has_value_changed(consul_client, key, target_value):
+    """
+    Uses the given Consul client to determine if the value associated to the given key is different to the given target
+    value.
+    :param consul_client: Consul connected client
+    :param key: key in Consul
+    :param target_value: value to be associated to the key
+    :return: tuple where the first element is the value of the "X-Consul-Index" header and the second is `True` if the
+    value has changed (i.e. the stored value is not the target value)
+    """
+    index, existing = consul_client.kv.get(key)
+    if not existing:
+        return index, True
+    try:
+        changed = to_text(existing['Value'], errors='surrogate_or_strict') != target_value
+        return index, changed
+    except UnicodeError:
+        # Existing value was not decodable but all values we set are valid utf-8
+        return index, True
 
 
 def execute(module):
@@ -157,9 +182,8 @@ def lock(module, state):
             msg='%s of lock for %s requested but no session supplied' %
             (state, key))
 
-    index, existing = consul_api.kv.get(key)
+    index, changed = _has_value_changed(consul_api, key, value)
 
-    changed = not existing or (existing and existing['Value'] != value)
     if changed and not module.check_mode:
         if state == 'acquire':
             changed = consul_api.kv.put(key, value,
@@ -184,14 +208,14 @@ def add_value(module):
     key = module.params.get('key')
     value = module.params.get('value')
 
-    index, existing = consul_api.kv.get(key)
+    index, changed = _has_value_changed(consul_api, key, value)
 
-    changed = not existing or (existing and existing['Value'] != value)
     if changed and not module.check_mode:
         changed = consul_api.kv.put(key, value,
                                     cas=module.params.get('cas'),
                                     flags=module.params.get('flags'))
 
+    stored = None
     if module.params.get('retrieve'):
         index, stored = consul_api.kv.get(key)
 
