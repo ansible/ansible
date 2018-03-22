@@ -4,11 +4,12 @@
     organization: Default
     kind: scm
 
-- name: Create an SCM Credential
+- name: Create an Vault Credential
   tower_credential:
     name: Vault Credential for JT
     organization: Default
     kind: vault
+    vault_password: test_password123456
 
 - name: Create a Demo Project
   tower_project:
