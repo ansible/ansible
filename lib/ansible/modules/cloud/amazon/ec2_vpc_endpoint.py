@@ -291,7 +291,7 @@ def modify_endpoint(client, module, endpoint, new_policy, current_policy, new_en
     modification_params = {'VpcEndpointId': module.params['vpc_endpoint_id']}
     if new_policy is not None and compare_policies(current_policy, new_policy):
         changed = True
-        modification_params['PolicyDocument'] = new_policy
+        modification_params['PolicyDocument'] = json.dumps(new_policy)
     if new_endpoint_rt_ids:
         changed = True
         modification_params['AddRouteTableIds'] = list(new_endpoint_rt_ids)
@@ -323,10 +323,7 @@ def get_policy(client, module):
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-    if policy is None:
-        return policy
-
-    return json.dumps(policy)
+    return policy
 
 
 def create_vpc_endpoint(client, module):

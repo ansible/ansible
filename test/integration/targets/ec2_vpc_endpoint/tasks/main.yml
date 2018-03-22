@@ -242,7 +242,7 @@
         purge_route_tables: False
         route_table_ids: []
         policy:
-          Version: 2008-10-17
+          Version: "2008-10-17"
           Statement:
             - Effect: "Deny"
               Principal: "*"
