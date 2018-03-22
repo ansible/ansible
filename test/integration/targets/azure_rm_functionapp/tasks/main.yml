@@ -1,18 +1,18 @@
 - name: Fix resource prefix
   set_fact:
-    resource_prefix: "{{ resource_prefix | replace('-','x') }}"
+    fixed_resource_prefix: "{{ resource_prefix | replace('-','x') }}"
 
 - name: create storage account for function apps
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: sa{{ resource_prefix }}
+    name: sa{{ fixed_resource_prefix }}
     account_type: Standard_LRS
 
 - name: create basic function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
-    storage_account: sa{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
+    storage_account: sa{{ fixed_resource_prefix }}
   register: output
 
 - name: assert the function was created
@@ -22,19 +22,19 @@
 - name: list facts for function
   azure_rm_functionapp_facts:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
   register: results
 
 - name: assert the facts were retrieved
   assert:
     that:
     - results.ansible_facts.azure_functionapps|length == 1
-    - results.ansible_facts.azure_functionapps[0].name == 'af{{ resource_prefix }}'
+    - results.ansible_facts.azure_functionapps[0].name == 'af{{ fixed_resource_prefix }}'
 
 - name: delete basic function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
     state: absent
   register: output
 
@@ -45,8 +45,8 @@
 - name: create a function with app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
-    storage_account: sa{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
+    storage_account: sa{{ fixed_resource_prefix }}
     app_settings:
       hello: world
       things: more stuff
@@ -59,8 +59,8 @@
 - name: change app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
-    storage_account: sa{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
+    storage_account: sa{{ fixed_resource_prefix }}
     app_settings:
       hello: world
       things: more stuff
@@ -74,7 +74,7 @@
 - name: delete the function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ resource_prefix }}
+    name: af{{ fixed_resource_prefix }}
     state: absent
   register: output
 
@@ -85,5 +85,5 @@
 - name: delete storage account
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: sa{{ resource_prefix }}
+    name: sa{{ fixed_resource_prefix }}
     state: absent
