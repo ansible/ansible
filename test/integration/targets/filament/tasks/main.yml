@@ -1,0 +1,7 @@
+- name: run filament
+  filament:
+    name: hi there
+    new: hello
+  register: filament_result
+- name: check output has foo=bar
+  assert: filament_result.foo == bar
