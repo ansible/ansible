@@ -1,0 +1,2 @@
+bugfixes:
+- Fix bytes/text handling in vagrant dynamic inventory https://github.com/ansible/ansible/pull/37631
