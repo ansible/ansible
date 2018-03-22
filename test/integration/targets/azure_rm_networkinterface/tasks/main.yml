@@ -28,6 +28,24 @@
     that:
       - output.changed
 
+- name: Create NIC using virtual_network_resource_group parameter
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001rg
+      virtual_network: testnic001
+      virtual_network_resource_group: "{{ resource_group_secondary }}"
+      subnet: testnic001
+      public_ip_name: testnic001
+      public_ip_allocation_method: Static
+      security_group: testnic001
+  register: output
+
+- name: Delete NIC
+  azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: testnic001rg
+      state: absent
+  
 - name: Create NIC
   azure_rm_networkinterface:
       resource_group: "{{ resource_group }}"
