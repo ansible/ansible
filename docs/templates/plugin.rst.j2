@@ -95,7 +95,7 @@ Parameters
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder"></div>
+                            <div class="elbow-placeholder">&nbsp;</div>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -240,7 +240,7 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder"></div>
+                            <div class="elbow-placeholder">&nbsp;</div>
                         {% endfor %}
                         <div class="elbow-key">
                             <b>@{ key }@</b>
@@ -304,7 +304,7 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td>
                     <div class="outer-elbow-container">
                         {% for i in range(1, loop.depth) %}
-                            <div class="elbow-placeholder">
+                            <div class="elbow-placeholder">&nbsp;</div>
                             </div>
                         {% endfor %}
                         <div class="elbow-key">
