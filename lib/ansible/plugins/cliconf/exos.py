@@ -28,6 +28,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase
 
+
 class Cliconf(CliconfBase):
 
     def get_device_info(self):

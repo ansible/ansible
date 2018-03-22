@@ -33,6 +33,7 @@ from ansible.module_utils.connection import Connection
 
 _DEVICE_CONFIGS = {}
 
+
 def get_connection(module):
     if hasattr(module, '_exos_connection'):
         return module._exos_connection
@@ -57,8 +58,10 @@ def get_capabilities(module):
 
     return module._exos_capabilities
 
+
 def check_args(module, warnings):
     pass
+
 
 def get_config(module, flags=None):
     global _DEVICE_CONFIGS
@@ -71,6 +74,7 @@ def get_config(module, flags=None):
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS = cfg
         return cfg
+
 
 def run_commands(module, commands, check_rc=True):
     responses = list()

@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,6 +32,8 @@ description:
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
+  - This module does not support running configuration commands.
+    Please use M(exos_config) to configure EXOS devices.
 extends_documentation_fragment: exos
 notes:
   - If a command sent to the device requires answering a prompt, it is possible
@@ -164,10 +167,11 @@ def parse_commands(module, warnings):
             )
             commands.remove(item)
         elif command_split and command_split.group(1) not in ('check', 'clear', 'debug', 'history',
-                    'ls', 'mrinfo', 'mtrace', 'nslookup', 'ping', 'rtlookup', 'show', 'traceroute'):
+                                                              'ls', 'mrinfo', 'mtrace', 'nslookup',
+                                                              'ping', 'rtlookup', 'show', 'traceroute'):
             module.fail_json(
                 msg='some commands were not recognized. exos_command can only run read-only'
-                    'commands. If you want to run config commands, please use exos_config instead'
+                    'commands. For configuration commands, please use exos_config instead'
             )
     return commands
 
