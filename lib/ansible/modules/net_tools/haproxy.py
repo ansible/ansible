@@ -202,6 +202,7 @@ import time
 from string import Template
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes, to_text
 
 
 DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
@@ -251,13 +252,16 @@ class HAProxy(object):
         """
         self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.client.connect(self.socket)
-        self.client.sendall('%s\n' % cmd)
-        result = ''
-        buf = ''
+        self.client.sendall(to_bytes('%s\n' % cmd))
+
+        result = b''
+        buf = b''
         buf = self.client.recv(RECV_SIZE)
         while buf:
             result += buf
             buf = self.client.recv(RECV_SIZE)
+        result = to_text(result, errors='surrogate_or_strict')
+
         if capture_output:
             self.capture_command_output(cmd, result.strip())
         self.client.close()
