@@ -158,4 +158,4 @@
  - name: Assert fact returns empty
    assert:
       that:
-        - fact.ansible_facts.aks.count == 0
+        - "fact.ansible_facts.aks | length == 0"
