@@ -231,7 +231,8 @@ options:
   customization:
     description:
     - Parameters for OS customization when cloning from template.
-    - All parameters and VMware object names are case sensetive.
+    - All parameters and VMware object names are case sensitive.
+    - Linux based OS requires Perl to be installed.
     - 'Common parameters (Linux/Windows):'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter).'
