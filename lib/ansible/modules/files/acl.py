@@ -130,7 +130,6 @@ acl:
 import os
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
 
@@ -202,7 +201,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
     if default:
         cmd.insert(1, '-d')
 
-    cmd.append(shlex_quote(path))
+    cmd.append(path)
     return cmd
 
 
@@ -225,7 +224,7 @@ def acl_changed(module, cmd):
 def run_acl(module, cmd, check_rc=True):
 
     try:
-        (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
+        (rc, out, err) = module.run_command(cmd, check_rc=check_rc)
     except Exception as e:
         module.fail_json(msg=to_native(e))
 
