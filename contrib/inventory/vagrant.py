@@ -38,13 +38,16 @@ import os.path
 import subprocess
 import re
 from paramiko import SSHConfig
-from cStringIO import StringIO
 from optparse import OptionParser
 from collections import defaultdict
 try:
     import json
 except:
     import simplejson as json
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
 
 _group = 'vagrant'  # a default group
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
@@ -74,7 +77,7 @@ def get_ssh_config():
 
 # list all the running boxes
 def list_running_boxes():
-    output = subprocess.check_output(["vagrant", "status"]).split('\n')
+    output = subprocess.check_output(["vagrant", "status"]).decode('utf-8').split('\n')
 
     boxes = []
 
@@ -90,7 +93,7 @@ def list_running_boxes():
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = subprocess.check_output(["vagrant", "ssh-config", box_name])
+    output = subprocess.check_output(["vagrant", "ssh-config", box_name]).decode('utf-8')
     config = SSHConfig()
     config.parse(StringIO(output))
     host_config = config.lookup(box_name)
