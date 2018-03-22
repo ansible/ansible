@@ -1,6 +1,6 @@
 - name: Fix resource prefix
   set_fact:
-    resource_prefix: "{{ resource_prefix | replace("-","x") }}"
+    resource_prefix: "{{ resource_prefix | replace('-','x') }}"
 
 - name: create storage account for function apps
   azure_rm_storageaccount:
