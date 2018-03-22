@@ -410,23 +410,61 @@ class PluginLoader:
         display.debug(msg)
 
     def all(self, *args, **kwargs):
-        ''' instantiates all plugins with the same arguments '''
+        '''
+        Iterate through all plugins of this type
+
+        A plugin loader is initialized with a specific type.  This function is an iterator returning
+        all of the plugins of that type to the caller.
+
+        :kwarg path_only: If this is set to True, then we return the paths to where the plugins reside
+            instead of an instance of the plugin.  This conflicts with class_only and both should
+            not be set.
+        :kwarg class_only: If this is set to True then we return the python class which implements
+            a plugin rather than an instance of the plugin.  This conflicts with path_only and both
+            should not be set.
+        :kwarg dedupe: By default, we only return one plugin per plugin name.  Deduplication happens
+            in the same way as the :meth:`get` and :meth:`find_plugin` methods resolves which plugin
+            should take precedence.  If this is set to False, then we return all of the plugins
+            found, including those with duplicate names.  In the case of duplicates, the order in
+            which they are returned is the one that would take precedence first, followed by the
+            others that were found in decreasing precedence order.
+        :*args: Any extra arguments are passed to each plugin when it is instantiated.
+        :**kwargs: Any extra keyword arguments are passed to each plugin when it is instantiated.
+        '''
 
         global _PLUGIN_FILTERS
 
+        # TODO: Change the signature of this method to:
+        # def all(return_type='instance', dedupe=False, args=None, kwargs=None):
+        #     if args is None: args = []
+        #     if kwargs is None: kwargs = {}
+        #     return_type can be instance, class, or path.
+        #     Those changes will mean that plugin parameters won't conflict with our params and
+        #     will also make it impossible to request both a path and a class at the same time.
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
+        # Having both path_only and class_only is a coding bug
+        if path_only and class_only:
+            raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
+
+        dedupe = kwargs.pop('dedupe', True)
         all_matches = []
         found_in_cache = True
 
         for i in self._get_paths():
             all_matches.extend(glob.glob(os.path.join(i, "*.py")))
 
+        loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):
-            name = os.path.basename(os.path.splitext(path)[0])
+            name = os.path.splitext(path)[0]
+            basename = os.path.basename(name)
 
-            if '__init__' in name or name in _PLUGIN_FILTERS[self.package]:
+            if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
                 continue
+
+            if dedupe and basename in loaded_modules:
+                continue
+            loaded_modules.add(basename)
 
             if path_only:
                 yield path
@@ -434,12 +472,6 @@ class PluginLoader:
 
             if path not in self._module_cache:
                 module = self._load_module_source(name, path)
-                if module in self._module_cache.values():
-                    # In ``_load_module_source`` if a plugin has a duplicate name, we just return the
-                    # previously matched plugin from sys.modules, which means you are never getting both,
-                    # just one, but cached for both paths, this isn't normally a problem, except with callbacks
-                    # where it will run that single callback twice. This rejects duplicates.
-                    continue
                 self._module_cache[path] = module
                 found_in_cache = False
 
@@ -461,7 +493,7 @@ class PluginLoader:
                 if not issubclass(obj, plugin_class):
                     continue
 
-            self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+            self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
@@ -470,7 +502,7 @@ class PluginLoader:
 
             # load plugin config data
             if not found_in_cache:
-                self._load_config_defs(name, path)
+                self._load_config_defs(basename, path)
 
             self._update_object(obj, name, path)
             yield obj

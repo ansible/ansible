@@ -300,7 +300,8 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in self._filter_loader.all()]
+        plugins = [x for x in self._filter_loader.all(dedupe=False)]
+        plugins.reverse()
 
         self._filters = dict()
         for fp in plugins:
@@ -320,7 +321,8 @@ class Templar:
         if self._tests is not None:
             return self._tests.copy()
 
-        plugins = [x for x in self._test_loader.all()]
+        plugins = [x for x in self._test_loader.all(dedupe=False)]
+        plugins.reverse()
 
         self._tests = dict()
         for fp in plugins:

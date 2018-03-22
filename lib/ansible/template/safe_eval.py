@@ -91,11 +91,11 @@ def safe_eval(expr, locals=None, include_exceptions=False):
         )
 
     filter_list = []
-    for filter in filter_loader.all():
+    for filter in reversed([f for f in filter_loader.all(dedupe=False)]):
         filter_list.extend(filter.filters().keys())
 
     test_list = []
-    for test in test_loader.all():
+    for test in reversed([t for t in test_loader.all(dedupe=False)]):
         test_list.extend(test.tests().keys())
 
     CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list + test_list
