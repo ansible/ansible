@@ -149,7 +149,9 @@ class AnsibleCloudStackVPCOffering(AnsibleCloudStack):
         vo = self.query_api('listVPCOfferings', **args)
 
         if vo:
-            self.vpc_offering = vo['vpcoffering'][0]
+            for _, rule in enumerate(vo['vpcoffering']):
+                if args['name'] == rule['name']:
+                    self.vpc_offering = rule
 
         return self.vpc_offering
 
