@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -34,7 +38,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running configuration commands.
     Please use M(exos_config) to configure EXOS devices.
-extends_documentation_fragment: exos
 notes:
   - If a command sent to the device requires answering a prompt, it is possible
     to pass a dict containing I(command), I(answer) and I(prompt). See examples.
