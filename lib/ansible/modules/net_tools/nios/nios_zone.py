@@ -59,6 +59,11 @@ options:
     description:
       - Configures the name server group for this zone. Name server group is
         mutually exclusive with grid primary and grid secondaries.
+  restart_if_needed:
+    version_added: "2.6"
+    description:
+      - If set to True, causes the NIOS DNS service to restart and load the
+        new zone configuration
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
@@ -152,6 +157,7 @@ def main():
         grid_primary=dict(type='list', elements='dict', options=grid_spec),
         grid_secondaries=dict(type='list', elements='dict', options=grid_spec),
         ns_group=dict(),
+        restart_if_needed=dict(type='bool'),
 
         extattrs=dict(type='dict'),
         comment=dict()
