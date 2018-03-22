@@ -42,6 +42,18 @@
        - output.changed
        - output.state.provisioning_state == 'Succeeded'
 
+ - name: Get AKS fact
+   azure_rm_aks_facts:
+      name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      resource_group: "{{ resource_group }}"
+   register: fact
+
+ - name: Assert fact returns the created one
+   assert:
+      that:
+        - fact.ansible_facts.aks.count == 1
+        - fact.ansible_facts.aks[0].id == output.state.id
+
  - name: Create an AKS instance (idempotent)
    azure_rm_aks:
      name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -136,3 +148,14 @@
    assert:
      that:
        - not output.changed
+
+ - name: Get AKS fact
+   azure_rm_aks_facts:
+      name: "aks{{ resource_group | hash('md5') | truncate(7, True, '') }}"
+      resource_group: "{{ resource_group }}"
+   register: fact
+
+ - name: Assert fact returns empty
+   assert:
+      that:
+        - fact.ansible_facts.aks.count == 0
