@@ -1,0 +1,2 @@
+bugfixes:
+- Fix for consul_kv idempotence on Python3 https://github.com/ansible/ansible/issues/35893
