@@ -19,8 +19,7 @@
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
  - block:
-   - include: 'repo.yml'
-     when: ansible_distribution in ('Ubuntu', 'Debian')
+     - include: 'repo.yml'
    always:
      - apt_repository:
          repo: "deb file:{{ repodir }} ./"
@@ -28,6 +27,7 @@
      - file:
          name: "{{ repodir }}"
          state: absent
+   when: ansible_distribution in ('Ubuntu', 'Debian')
 
  - include: 'apt-multiarch.yml'
    when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
