@@ -53,10 +53,11 @@ options:
         required: false
     virtual_network_resource_group:
         description:
-            - When creating a network interface, if a specific virtual network from another resource group should be
-              used, use this parameter to specify the resource group to use. Otherwise I(resource_group) will be used
-              by default.
-              If I(virtual_network_name) is specified as virtual network id, this parameter will be ignored.
+        - The resource group of I(virtual_network_name).
+        - If not set then this is the same resource group as I(resource_group).
+        - This can be used to specify the resource group of a virtual network that is in another resource group
+          than the network interface.
+        - If I(virtual_network_name) is specified as a virtual network id, this parameter is ignored.
         version_added: 2.6
     virtual_network_name:
         description:
