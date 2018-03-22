@@ -413,12 +413,15 @@ def get_route_table_by_tags(connection, module, vpc_id, tags):
 def route_spec_matches_route(route_spec, route):
     if route_spec.get('GatewayId') and 'nat-' in route_spec['GatewayId']:
         route_spec['NatGatewayId'] = route_spec.pop('GatewayId')
+    if route_spec.get('GatewayId') and 'vpce-' in route_spec['GatewayId']:
+        if route_spec.get('DestinationCidrBlock', '').startswith('pl-'):
+            route_spec['DestinationPrefixListId'] = route_spec.pop('DestinationCidrBlock')
 
     return set(route_spec.items()).issubset(route.items())
 
 
 def route_spec_matches_route_cidr(route_spec, route):
-    return route_spec['DestinationCidrBlock'] == route['DestinationCidrBlock']
+    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock')
 
 
 def rename_key(d, old_key, new_key):
@@ -441,15 +444,26 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     for route_spec in route_specs:
         match = index_of_matching_route(route_spec, routes_to_match)
         if match is None:
-            route_specs_to_create.append(route_spec)
+            if route_spec.get('DestinationCidrBlock'):
+                route_specs_to_create.append(route_spec)
+            else:
+                module.warn("Skipping creating {0} because it has no destination cidr block. "
+                            "To add VPC endpoints to route tables use the ec2_vpc_endpoint module.".format(route_spec))
         else:
             if match[0] == "replace":
-                route_specs_to_recreate.append(route_spec)
+                if route_spec.get('DestinationCidrBlock'):
+                    route_specs_to_recreate.append(route_spec)
+                else:
+                    module.warn("Skipping recreating route {0} because it has no destination cidr block.".format(route_spec))
             del routes_to_match[match[1]]
 
     routes_to_delete = []
     if purge_routes:
         for r in routes_to_match:
+            if not r.get('DestinationCidrBlock'):
+                module.warn("Skipping purging route {0} because it has no destination cidr block. "
+                            "To remove VPC endpoints from route tables use the ec2_vpc_endpoint module.".format(r))
+                continue
             if r['Origin'] == 'CreateRoute':
                 routes_to_delete.append(r)
 
