@@ -70,4 +70,11 @@
       description: "fake-ppc64"
       baseurl: "file://{{ repodir_ppc64 }}"
       gpgcheck: no
+
+  - set_fact:
+      repos:
+        - "fake-{{ ansible_architecture }}"
+        - "fake-i686"
+        - "fake-ppc64"
+
   when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
