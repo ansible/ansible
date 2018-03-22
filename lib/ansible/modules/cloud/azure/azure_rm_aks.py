@@ -232,9 +232,11 @@ def create_aks_dict(aks):
         kubernetes_version=aks.kubernetes_version,
         tags=aks.tags,
         linux_profile=create_linux_profile_dict(aks.linux_profile),
-        service_principal_profile=create_service_principal_profile_dict(aks.service_principal_profile),
+        service_principal_profile=create_service_principal_profile_dict(
+            aks.service_principal_profile),
         provisioning_state=aks.provisioning_state,
-        agent_pool_profiles=create_agent_pool_profiles_dict(aks.agent_pool_profiles),
+        agent_pool_profiles=create_agent_pool_profiles_dict(
+            aks.agent_pool_profiles),
         type=aks.type
     )
 
@@ -301,7 +303,8 @@ agent_pool_profile_spec = dict(
     os_disk_size_gb=dict(type='int'),
     dns_prefix=dict(type='str'),
     ports=dict(type='list', elements='int'),
-    storage_profiles=dict(type='str', choices=['StorageAccount', 'ManagedDisks']),
+    storage_profiles=dict(type='str', choices=[
+                          'StorageAccount', 'ManagedDisks']),
     vnet_subnet_id=dict(type='str'),
     os_type=dict(type='str', choices=['Linux', 'Windows'])
 )
@@ -361,7 +364,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         self.service_principal = None
 
         required_if = [
-            ('state', 'present', ['dns_prefix', 'linux_profile', 'agent_pool_profiles', 'service_principal'])
+            ('state', 'present', [
+             'dns_prefix', 'linux_profile', 'agent_pool_profiles', 'service_principal'])
         ]
 
         self.results = dict(changed=False, state=dict())
@@ -392,7 +396,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)
             if agentpoolcount > 1:
-                self.fail('You cannot specify more than one agent_pool_profiles currently')
+                self.fail(
+                    'You cannot specify more than one agent_pool_profiles currently')
 
             self.results['state'] = response
             if not response:
@@ -400,7 +405,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
             else:
                 self.log('Results : {0}'.format(response))
-                update_tags, response['tags'] = self.update_tags(response['tags'])
+                update_tags, response['tags'] = self.update_tags(
+                    response['tags'])
 
                 if response['provisioning_state'] == "Succeeded":
                     if update_tags:
@@ -417,7 +423,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     # Cannot Update the SSH Key for now // Let service to handle it
                     if is_property_changed('linux_profile', 'ssh_key'):
                         self.log(("Linux Profile Diff SSH, Was {0} / Now {1}"
-                                 .format(response['linux_profile'].ssh.public_keys[0].key_data, self.linux_profile.get('ssh_key'))))
+                                  .format(response['linux_profile'].ssh.public_keys[0].key_data, self.linux_profile.get('ssh_key'))))
                         to_be_updated = True
                         # self.module.warn("linux_profile.ssh_key cannot be updated")
 
@@ -426,14 +432,14 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     # Cannot Update the Username for now // Let service to handle it
                     if is_property_changed('linux_profile', 'admin_username'):
                         self.log(("Linux Profile Diff User, Was {0} / Now {1}"
-                                 .format(response['linux_profile'].admin_username, self.linux_profile.get('admin_username'))))
+                                  .format(response['linux_profile'].admin_username, self.linux_profile.get('admin_username'))))
                         to_be_updated = True
                         # self.module.warn("linux_profile.admin_username cannot be updated")
 
                     # Cannot have more that one agent pool profile for now
                     if len(response['agent_pool_profiles']) != len(self.agent_pool_profiles):
-                       self.log("Agent Pool count is diff, need to updated")
-                       to_be_updated = True
+                        self.log("Agent Pool count is diff, need to updated")
+                        to_be_updated = True
 
                     if response['kubernetes_version'] != self.kubernetes_version:
                         to_be_updated = True
@@ -444,12 +450,13 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                             if profile_result['name'] == profile_self['name']:
                                 matched = True
                                 if profile_result['count'] != profile_self['count'] \
-                                    or profile_result['vm_size'] != profile_self['vm_size'] \
-                                    or profile_result['os_disk_size_gb'] != profile_self['os_disk_size_gb'] \
-                                    or profile_result['dns_prefix'] != profile_self['dns_prefix'] \
-                                    or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id') \
-                                    or set(profile_result['ports'] or []) != set(profile_self.get('ports') or []):
-                                    self.log(("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
+                                        or profile_result['vm_size'] != profile_self['vm_size'] \
+                                        or profile_result['os_disk_size_gb'] != profile_self['os_disk_size_gb'] \
+                                        or profile_result['dns_prefix'] != profile_self['dns_prefix'] \
+                                        or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id') \
+                                        or set(profile_result['ports'] or []) != set(profile_self.get('ports') or []):
+                                    self.log(
+                                        ("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found")
@@ -489,9 +496,11 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         agentpools = []
 
         if self.agent_pool_profiles:
-            agentpools = [create_agent_pool_profile_instance(profile) for profile in self.agent_pool_profiles]
+            agentpools = [create_agent_pool_profile_instance(
+                profile) for profile in self.agent_pool_profiles]
 
-        service_principal_profile = create_service_principal_profile_instance(self.service_principal)
+        service_principal_profile = create_service_principal_profile_instance(
+            self.service_principal)
 
         parameters = ManagedCluster(
             location=self.location,
@@ -516,7 +525,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             return create_aks_dict(response)
         except CloudError as exc:
             self.log('Error attempting to create the AKS instance.')
-            self.fail("Error creating the AKS instance: {0}".format(exc.message))
+            self.fail(
+                "Error creating the AKS instance: {0}".format(exc.message))
 
     def delete_aks(self):
         '''
@@ -526,7 +536,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         self.log("Deleting the AKS instance {0}".format(self.name))
         try:
-            poller = self.containerservice_client.managed_clusters.delete(self.resource_group, self.name)
+            poller = self.containerservice_client.managed_clusters.delete(
+                self.resource_group, self.name)
             self.get_poller_result(poller)
             return True
         except CloudError as e:
@@ -540,9 +551,11 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: deserialized AKS instance state dictionary
         '''
-        self.log("Checking if the AKS instance {0} is present".format(self.name))
+        self.log(
+            "Checking if the AKS instance {0} is present".format(self.name))
         try:
-            response = self.containerservice_client.managed_clusters.get(self.resource_group, self.name)
+            response = self.containerservice_client.managed_clusters.get(
+                self.resource_group, self.name)
             self.log("Response : {0}".format(response))
             self.log("AKS instance : {0} found".format(response.name))
             return create_aks_dict(response)
