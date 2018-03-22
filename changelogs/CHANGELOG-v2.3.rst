@@ -1,6 +1,20 @@
 =====================================
 Ansible 2.3 "Ramble On" Release Notes
 =====================================
+2.3.4 "Ramble On" - TBD
+-----------------------
+
+-  Flush stdin when passing the become password. Fixes some cases of
+   timeout on Python3 with the ssh connection plugin:
+   https://github.com/ansible/ansible/pull/35049
+
+Bugfixes
+~~~~~~~~
+
+-  Fix setting of environment in a task that uses a loop:
+   https://github.com/ansible/ansible/issues/32685
+-  Fix https retrieval with TLSv1.2:
+   https://github.com/ansible/ansible/pull/32053
 
 2.3.3 "Ramble On" - TBD
 -----------------------
@@ -8,6 +22,9 @@ Ansible 2.3 "Ramble On" Release Notes
 Bugfixes
 ~~~~~~~~
 
+-  Security fix for CVE-2017-7550 the jenkins\_plugin module was logging
+   the jenkins server password if the url\_password was passed via the
+   params field: https://github.com/ansible/ansible/pull/30875
 -  Fix alternatives module handlling of non existing options
 -  Fix synchronize traceback with the docker connection plugin
 -  Do not escape backslashes in the template lookup plugin to mirror
@@ -59,6 +76,19 @@ Bugfixes
 -  Fixed check mode for enable on Solaris for service module
 -  Fix cloudtrail module to allow AWS profiles other than the default
 -  Fix an encoding issue with secret (password) vars\_prompts
+-  Fix for Windows become to show the stdout and stderr strings on a
+   failure
+-  Fix the issue SSL verification can not be disabled for Tower modules
+-  Use safe\_load instead on load to read a yaml document
+-  Fix for win\_file to respect check mode when deleting directories
+-  Include\_role now complains about invalid arguments
+-  Added socket conditions to ignore for wait\_for, no need to error for
+   closing already closed connection
+-  Updated hostname module to work on newer RHEL7 releases
+-  Security fix to avoid provider password leaking in logs for network
+   modules
+
+ \* Python3 fixes for azure modules
 
 2.3.2 "Ramble On" - 2017-08-04
 ------------------------------
@@ -277,7 +307,6 @@ New: lookups
 
 -  keyring: allows getting password from the 'controller' system's
    keyrings
--  chef\_databag: allows querying Chef Databags via pychef library
 
 New: cache
 ^^^^^^^^^^
@@ -335,8 +364,6 @@ New Modules
 -  bigswitch:
 -  bigmon\_chain
 -  bigmon\_policy
--  cisco
--  cisco\_spark
 -  cloudengine:
 -  ce\_command
 -  cloudscale\_server

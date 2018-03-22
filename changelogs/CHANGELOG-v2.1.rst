@@ -1,6 +1,17 @@
 =====================================================
 Ansible 2.1 "The Song Remains the Same" Release Notes
 =====================================================
+2.1.6 "The Song Remains the Same" - 06-01-2017
+----------------------------------------------
+
+-  Security fix for CVE-2017-7481 - data for lookup plugins used as
+   variables was not being correctly marked as "unsafe".
+
+2.1.5 "The Song Remains the Same" - 03-27-2017
+----------------------------------------------
+
+-  Security continued fix for CVE-2016-9587 - Handle some additional
+   corner cases in the way conditionals are parsed and evaluated.
 
 2.1.4 "The Song Remains the Same" - 2017-01-16
 ----------------------------------------------

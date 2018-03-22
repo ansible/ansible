@@ -1,6 +1,13 @@
 =======================================================
 Ansible 2.0 "Over the Hills and Far Away" Release Notes
 =======================================================
+2.0.3 "Over the Hills and Far Away"
+-----------------------------------
+
+-  Backport fix to uri module to return the body of an error response
+-  Backport fix to uri module to handle file:/// uris.
+-  Backport fix to uri module to fix traceback when handling certain
+   server error types.
 
 2.0.2 "Over the Hills and Far Away"
 -----------------------------------
@@ -210,6 +217,11 @@ Major Changes:
        # Output
        "msg": "Testing some things"
 
+-  In 1.9.x, newlines in templates were converted to Unix EOL
+   conventions. If someone wanted a templated file to end up with
+   Windows or Mac EOL conventions, this could cause problems for them.
+   In 2.x newlines now remain as specified in the template file.
+
 -  When specifying complex args as a variable, the variable must use the
    full jinja2 variable syntax ('{{var\_name}}') - bare variable names
    there are no longer accepted. In fact, even specifying args with
@@ -230,6 +242,14 @@ Major Changes:
            - file:
              args: "{{item}}"
              with_items: my_dirs
+
+-  The bigip\* networking modules have a new parameter, validate\_certs.
+   When True (the default) the module will validate any hosts it
+   connects to against the TLS certificates it presents when run on new
+   enough python versions. If the python version is too old to validate
+   certificates or you used certificates that cannot be validated
+   against available CAs you will need to add validate\_certs=no to your
+   playbook for those tasks.
 
 Plugins
 ~~~~~~~
@@ -259,196 +279,180 @@ Deprecated Modules (new ones in parens):
 New Modules:
 ^^^^^^^^^^^^
 
--  amazon
--  ec2\_ami\_copy
--  ec2\_ami\_find
--  ec2\_elb\_facts
--  ec2\_eni
--  ec2\_eni\_facts
--  ec2\_remote\_facts
--  ec2\_vpc\_igw
--  ec2\_vpc\_net
--  ec2\_vpc\_net\_facts
--  ec2\_vpc\_route\_table
--  ec2\_vpc\_route\_table\_facts
--  ec2\_vpc\_subnet
--  ec2\_vpc\_subnet\_facts
--  ec2\_win\_password
--  ecs\_cluster
--  ecs\_task
--  ecs\_taskdefinition
--  elasticache\_subnet\_group\_facts
--  iam
--  iam\_cert
--  iam\_policy
--  route53\_facts
--  route53\_health\_check
--  route53\_zone
--  s3\_bucket
--  s3\_lifecycle
--  s3\_logging
--  sns\_topic
--  sqs\_queue
--  sts\_assume\_role
+-  amazon: ec2\_ami\_copy
+-  amazon: ec2\_ami\_find
+-  amazon: ec2\_elb\_facts
+-  amazon: ec2\_eni
+-  amazon: ec2\_eni\_facts
+-  amazon: ec2\_remote\_facts
+-  amazon: ec2\_vpc\_igw
+-  amazon: ec2\_vpc\_net
+-  amazon: ec2\_vpc\_net\_facts
+-  amazon: ec2\_vpc\_route\_table
+-  amazon: ec2\_vpc\_route\_table\_facts
+-  amazon: ec2\_vpc\_subnet
+-  amazon: ec2\_vpc\_subnet\_facts
+-  amazon: ec2\_win\_password
+-  amazon: ecs\_cluster
+-  amazon: ecs\_task
+-  amazon: ecs\_taskdefinition
+-  amazon: elasticache\_subnet\_group\_facts
+-  amazon: iam
+-  amazon: iam\_cert
+-  amazon: iam\_policy
+-  amazon: route53\_facts
+-  amazon: route53\_health\_check
+-  amazon: route53\_zone
+-  amazon: sts\_assume\_role
+-  amazon: s3\_bucket
+-  amazon: s3\_lifecycle
+-  amazon: s3\_logging
+-  amazon: sqs\_queue
+-  amazon: sns\_topic
+-  amazon: sts\_assume\_role
 -  apk
 -  bigip\_gtm\_wide\_ip
 -  bundler
--  centurylink
--  clc\_aa\_policy
--  clc\_alert\_policy
--  clc\_blueprint\_package
--  clc\_firewall\_policy
--  clc\_group
--  clc\_loadbalancer
--  clc\_modify\_server
--  clc\_publicip
--  clc\_server
--  clc\_server\_snapshot
+-  centurylink: clc\_aa\_policy
+-  centurylink: clc\_alert\_policy
+-  centurylink: clc\_blueprint\_package
+-  centurylink: clc\_firewall\_policy
+-  centurylink: clc\_group
+-  centurylink: clc\_loadbalancer
+-  centurylink: clc\_modify\_server
+-  centurylink: clc\_publicip
+-  centurylink: clc\_server
+-  centurylink: clc\_server\_snapshot
 -  circonus\_annotation
--  consul
 -  consul
 -  consul\_acl
 -  consul\_kv
 -  consul\_session
 -  cloudtrail
--  cloudstack
--  cs\_account
--  cs\_affinitygroup
--  cs\_domain
--  cs\_facts
--  cs\_firewall
--  cs\_iso
--  cs\_instance
--  cs\_instancegroup
--  cs\_ip\_address
--  cs\_loadbalancer\_rule
--  cs\_loadbalancer\_rule\_member
--  cs\_network
--  cs\_portforward
--  cs\_project
--  cs\_securitygroup
--  cs\_securitygroup\_rule
--  cs\_sshkeypair
--  cs\_staticnat
--  cs\_template
--  cs\_user
--  cs\_vmsnapshot
+-  cloudstack: cs\_account
+-  cloudstack: cs\_affinitygroup
+-  cloudstack: cs\_domain
+-  cloudstack: cs\_facts
+-  cloudstack: cs\_firewall
+-  cloudstack: cs\_iso
+-  cloudstack: cs\_instance
+-  cloudstack: cs\_instancegroup
+-  cloudstack: cs\_ip\_address
+-  cloudstack: cs\_loadbalancer\_rule
+-  cloudstack: cs\_loadbalancer\_rule\_member
+-  cloudstack: cs\_network
+-  cloudstack: cs\_portforward
+-  cloudstack: cs\_project
+-  cloudstack: cs\_sshkeypair
+-  cloudstack: cs\_securitygroup
+-  cloudstack: cs\_securitygroup\_rule
+-  cloudstack: cs\_staticnat
+-  cloudstack: cs\_template
+-  cloudstack: cs\_user
+-  cloudstack: cs\_vmsnapshot
 -  cronvar
 -  datadog\_monitor
 -  deploy\_helper
--  docker
--  docker\_login
+-  docker: docker\_login
 -  dpkg\_selections
 -  elasticsearch\_plugin
 -  expect
 -  find
--  google
--  gce\_tag
+-  google: gce\_tag
 -  hall
 -  ipify\_facts
 -  iptables
--  libvirt
--  virt\_net
--  virt\_pool
+-  libvirt: virt\_net
+-  libvirt: virt\_pool
 -  maven\_artifact
--  openstack
--  os\_auth
--  os\_client\_config
--  os\_image
--  os\_image\_facts
--  os\_floating\_ip
--  os\_ironic
--  os\_ironic\_node
--  os\_keypair
--  os\_network
--  os\_network\_facts
--  os\_nova\_flavor
--  os\_object
--  os\_port
--  os\_project
--  os\_router
--  os\_security\_group
--  os\_security\_group\_rule
--  os\_server
--  os\_server\_actions
--  os\_server\_facts
--  os\_server\_volume
--  os\_subnet
--  os\_subnet\_facts
--  os\_user
--  os\_user\_group
--  os\_volume
--  openvswitch\_db
+-  openstack: os\_auth
+-  openstack: os\_client\_config
+-  openstack: os\_image
+-  openstack: os\_image\_facts
+-  openstack: os\_floating\_ip
+-  openstack: os\_ironic
+-  openstack: os\_ironic\_node
+-  openstack: os\_keypair
+-  openstack: os\_network
+-  openstack: os\_network\_facts
+-  openstack: os\_nova\_flavor
+-  openstack: os\_object
+-  openstack: os\_port
+-  openstack: os\_project
+-  openstack: os\_router
+-  openstack: os\_security\_group
+-  openstack: os\_security\_group\_rule
+-  openstack: os\_server
+-  openstack: os\_server\_actions
+-  openstack: os\_server\_facts
+-  openstack: os\_server\_volume
+-  openstack: os\_subnet
+-  openstack: os\_subnet\_facts
+-  openstack: os\_user
+-  openstack: os\_user\_group
+-  openstack: os\_volume
+-  openvswitch\_db.
 -  osx\_defaults
 -  pagerduty\_alert
 -  pam\_limits
 -  pear
--  profitbricks
--  profitbricks
--  profitbricks\_datacenter
--  profitbricks\_nic
--  profitbricks\_snapshot
--  profitbricks\_volume
--  profitbricks\_volume\_attachments
--  proxmox
--  proxmox
--  proxmox\_template
+-  profitbricks: profitbricks
+-  profitbricks: profitbricks\_datacenter
+-  profitbricks: profitbricks\_nic
+-  profitbricks: profitbricks\_volume
+-  profitbricks: profitbricks\_volume\_attachments
+-  profitbricks: profitbricks\_snapshot
+-  proxmox: proxmox
+-  proxmox: proxmox\_template
 -  puppet
 -  pushover
 -  pushbullet
--  rax
--  rax\_clb\_ssl
--  rax\_mon\_alarm
--  rax\_mon\_check
--  rax\_mon\_entity
--  rax\_mon\_notification
--  rax\_mon\_notification\_plan
--  rabbitmq
+-  rax: rax\_clb\_ssl
+-  rax: rax\_mon\_alarm
+-  rax: rax\_mon\_check
+-  rax: rax\_mon\_entity
+-  rax: rax\_mon\_notification
+-  rax: rax\_mon\_notification\_plan
 -  rabbitmq\_binding
 -  rabbitmq\_exchange
 -  rabbitmq\_queue
 -  selinux\_permissive
 -  sendgrid
--  sensu
 -  sensu\_check
 -  sensu\_subscription
 -  seport
 -  slackpkg
 -  solaris\_zone
 -  taiga\_issue
--  vertica
 -  vertica\_configuration
 -  vertica\_facts
 -  vertica\_role
 -  vertica\_schema
 -  vertica\_user
--  vmware
--  vca\_fw
--  vca\_nat
--  vmware\_cluster
--  vmware\_datacenter
--  vmware\_dns\_config
--  vmware\_dvs\_host
--  vmware\_dvs\_portgroup
--  vmware\_dvswitch
--  vmware\_host
--  vmware\_migrate\_vmk
--  vmware\_portgroup
--  vmware\_target\_canonical\_facts
--  vmware\_vm\_facts
--  vmware\_vm\_vss\_dvs\_migrate
--  vmware\_vmkernel
--  vmware\_vmkernel\_ip\_config
--  vmware\_vsan\_cluster
--  vmware\_vswitch
--  vsphere\_copy
--  webfaction
+-  vmware: vca\_fw
+-  vmware: vca\_nat
+-  vmware: vmware\_cluster
+-  vmware: vmware\_datacenter
+-  vmware: vmware\_dns\_config
+-  vmware: vmware\_dvs\_host
+-  vmware: vmware\_dvs\_portgroup
+-  vmware: vmware\_dvswitch
+-  vmware: vmware\_host
+-  vmware: vmware\_migrate\_vmk
+-  vmware: vmware\_portgroup
+-  vmware: vmware\_target\_canonical\_facts
+-  vmware: vmware\_vm\_facts
+-  vmware: vmware\_vm\_vss\_dvs\_migrate
+-  vmware: vmware\_vmkernel
+-  vmware: vmware\_vmkernel\_ip\_config
+-  vmware: vmware\_vsan\_cluster
+-  vmware: vmware\_vswitch
+-  vmware: vsphere\_copy
 -  webfaction\_app
 -  webfaction\_db
 -  webfaction\_domain
 -  webfaction\_mailbox
 -  webfaction\_site
--  windows
 -  win\_acl
 -  win\_dotnet\_ngen
 -  win\_environment
@@ -467,7 +471,6 @@ New Modules:
 -  win\_updates
 -  win\_webpicmd
 -  xenserver\_facts
--  zabbbix
 -  zabbix\_host
 -  zabbix\_hostmacro
 -  zabbix\_screen
@@ -575,3 +578,11 @@ Minor changes:
    ::
 
        - debug: msg="The error message was: {{error_code |default('') }}"
+
+-  The yum module's detection of installed packages has been made more
+   robust by using /usr/bin/rpm in cases where it woud have used
+   repoquery before.
+-  The pip module now properly reports changes when packages are coming
+   from a VCS.
+-  Fixes for retrieving files over https when a CONNECT-only proxy is in
+   the middle.
