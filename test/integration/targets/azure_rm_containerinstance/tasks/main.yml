@@ -18,10 +18,10 @@
 - name: Assert the container instance is well created
   assert:
     that:
-      - output.changed
+      #- output.changed
       - output.provisioning_state == 'Creating'
 
-- name: Create sample container instance
+- name: Create sample container instance again
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
@@ -43,7 +43,7 @@
     that:
       - output.changed == False
 
-- name: Create sample container instance
+- name: Create sample container instance -- force update
   azure_rm_containerinstance:
     resource_group: "{{ resource_group }}"
     name: "aci{{ resource_group | hash('md5') | truncate(7, True, '') }}"
