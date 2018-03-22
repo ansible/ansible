@@ -133,6 +133,22 @@ maintainers will on fixes towards the release candidate.
 Merging new features or fixes that are not related to the release candidate may
 be delayed in order to allow the new release to be shipped as soon as possible.
 
+
+Deprecation Cycle
+`````````````````
+
+Sometimes we need to remove a feature, normally in favor of a reimplementation that we hope does a better job.
+To do this we have a deprecation cycle. First we mark a feature as 'deprecated'. This is normally accompanied with warnings
+to the user as to why we deprecated it, what alternatives they should switch to and when (which version) we are scheduled
+to remove the feature permanently.
+
+The cycle is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release),
+so the feature is normally removed in the 4th release after we announce the deprecation.
+For example, something deprecated in 2.5 will be removed in 2.9, assuming we don't jump to 3.x before that point.
+The tracking is tied to the number of releases, not the release numbering.
+
+For modules/plugins, we keep the documentation after the removal for users of older versions.
+
 .. seealso::
 
    :ref:`community_committer_guidelines`
