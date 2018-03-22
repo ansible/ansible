@@ -226,12 +226,6 @@
       <<: *aws_connection_info
     register: recreate_waf_regex_condition
 
-  - debug: msg=created
-  - debug:
-      var: create_waf_regex_condition.condition
-  - debug: msg=recreated
-  - debug:
-      var: recreate_waf_regex_condition.condition
   - name: check that a new pattern is created (because the first pattern should have been deleted once unused)
     assert:
       that:
