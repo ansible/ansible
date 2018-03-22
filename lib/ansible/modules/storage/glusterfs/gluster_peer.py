@@ -22,7 +22,7 @@ description:
   - Create or diminish a GlusterFS trusted storage pool. A set of nodes can be
     added into an existing trusted storage pool or a new storage pool can be
     formed. Or, nodes can be removed from an existing trusted storage pool.
-version_added: "2.5"
+version_added: "2.6"
 author: Sachidananda Urs (@sac)
 options:
     state:
@@ -126,7 +126,7 @@ class Peer(object):
     def call_peer_commands(self, cmds):
         errors = []
         for cmd in cmds:
-            rc, out, err = pops._run_command('gluster', cmd)
+            rc, out, err = self._run_command('gluster', cmd)
             if rc:
                 errors.append(err)
         return errors
@@ -141,7 +141,8 @@ class Peer(object):
         cmd = self.module.get_bin_path(op, True) + opts + ' --mode=script'
         return self.module.run_command(cmd)
 
-if __name__ == '__main__':
+
+def main():
     module = AnsibleModule(
         argument_spec=dict(
             force=dict(choices=["yes", "no"]),
@@ -149,8 +150,11 @@ if __name__ == '__main__':
             state=dict(required=True, choices=["absent", "present"]),
         ),
     )
-
     pops = Peer(module)
     cmds = pops.gluster_peer_ops()
     errors = pops.call_peer_commands(cmds)
     pops.get_output(errors)
+
+
+if __name__ == "__main__":
+    main()
