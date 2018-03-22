@@ -538,7 +538,7 @@ def subnets_to_associate(nacl, client, module):
             all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
-    return [s['SubnetId'] for s in all_found if s.get('SubnetId')]
+    return list(set(s['SubnetId'] for s in all_found if s.get('SubnetId')))
 
 
 def main():
