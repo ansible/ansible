@@ -1,0 +1,42 @@
+- block:
+  - name: Install foo package version 1.0.0
+    apt:
+      name: foo=1.0.0
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+
+  - name: Update to foo version 1.0.1
+    apt:
+      name: foo
+      state: latest
+      allow_unauthenticated: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes

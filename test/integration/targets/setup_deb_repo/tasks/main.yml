@@ -1,0 +1,36 @@
+- block:
+  - name: Install needed packages
+    apt:
+      name: "{{ item }}"
+    with_items:
+      - dpkg-dev
+      - equivs
+      - libfile-fcntllock-perl  # to silence warning by equivs-build
+
+  - set_fact:
+      repodir: /tmp/repo/
+
+  - name: Create repo dir
+    file:
+      path: "{{ repodir }}"
+      state: directory
+      mode: 0755
+
+  - name: Create deb files
+    shell: "equivs-build {{ item }}"
+    args:
+      chdir: "{{ repodir }}"
+    with_fileglob:
+      - "files/package_specs/*"
+
+  - name: Create repo
+    shell: dpkg-scanpackages --multiversion . /dev/null | gzip -9c > Packages.gz
+    args:
+      chdir: "{{ repodir }}"
+
+  - name: Install the repo
+    apt_repository:
+      repo: "deb file:{{ repodir }} ./"
+      validate_certs: no
+
+  when: ansible_distribution in ['Ubuntu', 'Debian']
