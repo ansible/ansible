@@ -51,7 +51,7 @@
  - name: Assert fact returns the created one
    assert:
       that:
-        - fact.ansible_facts.aks.count == 1
+        - "fact.ansible_facts.aks | length == 1"
         - fact.ansible_facts.aks[0].id == output.state.id
 
  - name: Create an AKS instance (idempotent)
