@@ -8,18 +8,8 @@
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 
-# Functions
-function Test-Admin {
-    $CurrentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $IsAdmin = $CurrentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
-
-    return $IsAdmin
-}
-
-# Check admin rights
-if (-not (Test-Admin)) {
-    Fail-Json -obj @{} -message "Module was not started with elevated rights"
-}
+$params = Parse-Args -arguments $args
+$Trimmed = Get-AnsibleParam -obj $params -name "trimmed" -type "bool" -default $false
 
 # Create a new result object
 $result = @{
@@ -41,7 +31,7 @@ foreach ($disk in $disks) {
     $pdisk = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object {
         $_.DeviceId -eq $disk.Number
     }
-    if ($pdisk) {
+    if ($pdisk -and !$Trimmed) {
         $disk_info["physical_disk"] += @{
             size = $pdisk.Size
             allocated_size = $pdisk.AllocatedSize
@@ -130,7 +120,7 @@ foreach ($disk in $disks) {
     $disk_info.guid = $disk.Guid
     $disk_info.path = $disk.Path
     $parts = Get-Partition -DiskNumber $($disk.Number) -ErrorAction SilentlyContinue
-    if ($parts) {
+    if ($parts -and !$Trimmed) {
         $disk_info["partitions"]  += @()
         foreach ($part in $parts) {
             $partition_info  = @{
