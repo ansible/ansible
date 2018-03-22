@@ -19,7 +19,7 @@
   assert:
     that:
       #- output.changed
-      - output.provisioning_state == 'Creating'
+      - output.provisioning_state == 'Succeeded'
 
 - name: Create sample container instance again
   azure_rm_containerinstance:
@@ -65,7 +65,7 @@
   assert:
     that:
       - output.changed
-      - output.provisioning_state == 'Creating'
+      - output.provisioning_state == 'Succeeded'
 
 - name: Remove container instance
   azure_rm_containerinstance:
