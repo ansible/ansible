@@ -69,9 +69,10 @@ message:
 """
 
 hello = 'world'
-import q
-foo = q/'bar'
-q/foo
+foo = 'bar'
+#import q
+#foo = q/'bar'
+#q/foo
 
 #q.d()
 #import epdb; epdb.serve()#; epdb.st()
