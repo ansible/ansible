@@ -64,6 +64,7 @@ options:
     description:
       - If set to True, causes the NIOS DNS service to restart and load the
         new zone configuration
+    type: bool
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
