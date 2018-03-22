@@ -28,12 +28,16 @@ from ansible.template import Templar
 
 
 # For filtering out modules correctly below
-RAW_PARAM_MODULES = ([
+FREEFORM_ACTIONS = frozenset((
     'command',
     'win_command',
     'shell',
     'win_shell',
     'script',
+    'raw'
+))
+
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'include',
     'include_vars',
     'include_tasks',
@@ -43,9 +47,17 @@ RAW_PARAM_MODULES = ([
     'add_host',
     'group_by',
     'set_fact',
-    'raw',
     'meta',
-])
+))
+
+BUILTIN_TASKS = frozenset((
+    'meta',
+    'include',
+    'include_tasks',
+    'include_role',
+    'import_tasks',
+    'import_role'
+))
 
 
 class ModuleArgsParser:
@@ -158,7 +170,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directly in arguments
-        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
+        if args and action not in FREEFORM_ACTIONS:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
@@ -189,7 +201,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: copy: src=a dest=b
-            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+            check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -214,21 +226,20 @@ class ModuleArgsParser:
         action = None
         args = None
 
-        actions_allowing_raw = ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
-                check_raw = action in actions_allowing_raw
+                check_raw = action in FREEFORM_ACTIONS
                 args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
             # form is like:  action: copy src=a dest=b
             (action, args) = self._split_module_string(thing)
-            check_raw = action in actions_allowing_raw
+            check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -275,7 +286,7 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item in action_loader or item in ['meta', 'include', 'include_tasks', 'include_role', 'import_tasks', 'import_role']:
+            if item in BUILTIN_TASKS or item in action_loader or item in module_loader:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
