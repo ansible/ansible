@@ -461,7 +461,7 @@ For instance, what if you want users to be able to control some aspect about how
 
 If a remotely managed system has an ``/etc/ansible/facts.d`` directory, any files in this directory
 ending in ``.fact``, can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
-An alternate directory can be specified using the ``fact_path`` play directive.
+An alternate directory can be specified using the ``fact_path`` play keyword.
 
 For instance assume a ``/etc/ansible/facts.d/preferences.fact``::
 
@@ -828,7 +828,7 @@ Variable Precedence: Where Should I Put A Variable?
 ````````````````````````````````````````````````````
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
-you know where to put a variable, and then you have to think about it a lot less.  
+you know where to put a variable, and then you have to think about it a lot less.
 
 Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".
 Why?  Because that's not Ansible's Zen philosophy of doing things.
@@ -841,16 +841,7 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-In 1.x, the precedence is as follows (with the last listed variables winning prioritization):
-
- * "role defaults", which lose in priority to everything and are the most easily overridden 
- * variables defined in inventory
- * facts discovered about a system
- * "most everything else" (command line switches, vars in play, included vars, role vars, etc.)
- * connection variables (``ansible_user``, etc.)
- * extra vars (``-e`` in the command line) always win
-
-In Ansible version 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
+Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
   * role defaults [1]_
   * inventory file or script group vars [2]_
@@ -895,7 +886,7 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
           This last one can be superceeded by the user via `ansible_group_priority`, which defaults to 0 for all groups.
 
 
-Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and keywords.  For example::
 
     ansible -u lola myhost
 
