@@ -50,6 +50,15 @@ options:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
+        required: false
+    virtual_network_resource_group:
+        description:
+        - The resource group of I(virtual_network_name).
+        - If not set then this is the same resource group as I(resource_group).
+        - This can be used to specify the resource group of a virtual network that is in another resource group
+          than the network interface.
+        - If I(virtual_network_name) is specified as a virtual network id, this parameter is ignored.
+        version_added: 2.6
     virtual_network_name:
         description:
             - Name or id of an existing virtual network with which the network interface will be associated. Required
@@ -366,6 +375,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
             public_ip=dict(type='bool', default=True),
             subnet_name=dict(type='str', aliases=['subnet']),
+            virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
             ip_configurations=dict(type='list', default=None, elements='dict', options=ip_configuration_spec),
@@ -386,6 +396,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.public_ip_address_name = None
         self.public_ip = None
         self.subnet_name = None
+        self.virtual_network_resource_group = None
         self.virtual_network_name = None
         self.public_ip_allocation_method = None
         self.state = None
@@ -422,7 +433,10 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         # parse the virtual network resource group and name
         virtual_network_dict = parse_resource_id(self.virtual_network_name)
         virtual_network_name = virtual_network_dict.get('name')
-        virtual_network_resource_group = virtual_network_dict.get('resource_group', self.resource_group)
+        virtual_network_resource_group = virtual_network_dict.get('resource_group', self.virtual_network_resource_group)
+
+        if virtual_network_resource_group is None:
+            virtual_network_resource_group = self.resource_group
 
         if self.state == 'present' and not self.ip_configurations:
             # construct the ip_configurations array for compatiable
