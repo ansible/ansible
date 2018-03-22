@@ -8,47 +8,41 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
+
 DOCUMENTATION = r'''
 ---
 module: win_disk_facts
-version_added: '2.5'
+version_added: '2.6'
 short_description: Show the attached disks and disk information of the target host
 description:
    - With the module you can retrieve and output detailed information about the attached disks of the target and
-     its volumes and partitions if existent.
+     it's volumes and partitions if existent.
+   - You can use the trimmed option in order to get detailed disk information
+     but no details about the partitions and volumes of the disk.
 requirements:
     - Windows 8.1 / Windows 2012 (NT 6.2)
 author:
     - Marc Tschapek (@marqelme)
+options:
+  trimmed:
+      description: 
+        - The trimmed option can be used to reduce the output of the module.
+        - Then only the disk fact details will be displayed but no detailed information about the partitions and volumes of the disk.
 notes:
   - In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
     U(https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx)
 '''
 
 EXAMPLES = r'''
-- name: Get disk facts
+- name: get disk facts
   win_disk_facts:
-
-- name: Output first disk size
+- name: output first disk size
   debug:
     var: ansible_facts.disks[0].size
 
-- name: Convert first system disk into various formats
-  debug:
-    msg: '{{ disksize_gib }} vs {{ disksize_gib_human }}'
-  vars:
-    # Get first system disk
-    disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
-
-    # Show disk size in Gibibytes
-    disksize_gib_human: '{{ disk.size|filesizeformat(True) }}'   # returns "223.6 GiB" (human readable)
-    disksize_gib: '{{ (disk.size/1024|pow(3))|round|int }} GiB'  # returns "224 GiB" (value in GiB)
-
-    # Show disk size in Gigabytes
-    disksize_gb_human: '{{ disk.size|filesizeformat }}'        # returns "240.1 GB" (human readable)
-    disksize_gb: '{{ (disk.size/1000|pow(3))|round|int }} GB'  # returns "240 GB" (value in GB)
-
-- name: Output second disk serial number
+- name: get disk facts
+  win_disk_facts:
+- name: output second disk serial number
   debug:
     var: ansible_facts.disks[0].serial_number
 '''
@@ -59,7 +53,12 @@ ansible_facts:
     returned: always
     type: complex
     contains:
-        ansible_disks:
+        total_disks:
+            description: Count of found disks on the target.
+            returned: if disks were found
+            type: int
+            sample: 3
+        disks:
             description: Detailed information about one particular disk.
             returned: if disks were found
             type: list
@@ -70,10 +69,10 @@ ansible_facts:
                     type: int
                     sample: 0
                 size:
-                    description: Size in bytes of the particular disk.
+                    description: Size in Gibibyte of the particular disk.
                     returned: always
-                    type: int
-                    sample: 227727638528
+                    type: string
+                    sample: "100GiB"
                 bus_type:
                     description: Bus type of the particular disk.
                     returned: always
@@ -100,30 +99,30 @@ ansible_facts:
                     type: string
                     sample: "Online"
                 sector_size:
-                    description: Sector size in bytes of the particular disk.
+                    description: Sector size in byte of the particular disk.
                     returned: always
-                    type: int
-                    sample: 4096
+                    type: string
+                    sample: "512s/byte/bytes/"
                 read_only:
                     description: Read only status of the particular disk.
                     returned: always
-                    type: bool
-                    sample: True
+                    type: string
+                    sample: "true"
                 bootable:
                     description: Information whether the particular disk is a bootable disk.
                     returned: always
-                    type: bool
-                    sample: False
+                    type: string
+                    sample: "false"
                 system_disk:
                     description: Information whether the particular disk is a system disk.
                     returned: always
-                    type: bool
-                    sample: True
+                    type: string
+                    sample: "true"
                 clustered:
                     description: Information whether the particular disk is clustered (part of a failover cluster).
                     returned: always
-                    type: bool
-                    sample: False
+                    type: string
+                    sample: "false"
                 manufacturer:
                     description: Manufacturer of the particular disk.
                     returned: always
@@ -176,10 +175,11 @@ ansible_facts:
                             sample: 1
                         size:
                             description:
-                              - Size in bytes of the particular partition.
+                              - Size in Gibibyte of the particular partition.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 838860800
+                            type: string
+                            sample: "0.031GiB"
                         type:
                             description: Type of the particular partition.
                             returned: always
@@ -193,8 +193,8 @@ ansible_facts:
                         no_default_driveletter:
                             description: Information whether the particular partition has a default drive letter or not.
                             returned: if partition_style property of the particular disk has value "GPT"
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "true"
                         mbr_type:
                             description: mbr type of the particular partition.
                             returned: if partition_style property of the particular disk has value "MBR"
@@ -203,8 +203,8 @@ ansible_facts:
                         active:
                             description: Information whether the particular partition is an active partition or not.
                             returned: if partition_style property of the particular disk has value "MBR"
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "true"
                         drive_letter:
                             description: Drive letter of the particular partition.
                             returned: if existent
@@ -223,13 +223,13 @@ ansible_facts:
                         hidden:
                             description: Information whether the particular partition is hidden or not.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "true"
                         shadow_copy:
                             description: Information whether the particular partition is a shadow copy of another partition.
                             returned: always
-                            type: bool
-                            sample: False
+                            type: string
+                            sample: "false"
                         guid:
                             description: GUID of the particular partition.
                             returned: if existent
@@ -247,16 +247,18 @@ ansible_facts:
                             contains:
                                 size:
                                     description:
-                                      - Size in bytes of the particular volume.
+                                      - Size in Gibibyte of the particular volume.
+                                      - Accurate to three decimal places.
                                     returned: always
-                                    type: int
-                                    sample: 838856704
+                                    type: string
+                                    sample: "0,342GiB"
                                 size_remaining:
                                     description:
-                                      - Remaining size in bytes of the particular volume.
+                                      - Remaining size in Gibibyte of the particular volume.
+                                      - Accurate to three decimal places.
                                     returned: always
-                                    type: int
-                                    sample: 395620352
+                                    type: string
+                                    sample: "0,146GiB"
                                 type:
                                     description: File system type of the particular volume.
                                     returned: always
@@ -278,10 +280,10 @@ ansible_facts:
                                     type: string
                                     sample: "Fixed"
                                 allocation_unit_size:
-                                    description: Allocation unit size in bytes of the particular volume.
+                                    description: Allocation unit size in Kibibyte of the particular volume.
                                     returned: always
-                                    type: int
-                                    sample: 4096
+                                    type: string
+                                    sample: "64KiB"
                                 object_id:
                                     description: Object ID of the particular volume.
                                     returned: always
@@ -304,16 +306,18 @@ ansible_facts:
                             sample: "UnSpecified"
                         size:
                             description:
-                              - Size in bytes of the particular physical disk.
+                              - Size in Gibibyte of the particular physical disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 240057409536
+                            type: string
+                            sample: "200GiB"
                         allocated_size:
                             description:
-                              - Allocated size in bytes of the particular physical disk.
+                              - Allocated size in Gibibyte of the particular physical disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 240057409536
+                            type: string
+                            sample: "100GiB"
                         device_id:
                             description: Device ID of the particular physical disk.
                             returned: always
@@ -362,8 +366,8 @@ ansible_facts:
                         spindle_speed:
                             description: Spindle speed in rpm of the particular physical disk.
                             returned: always
-                            type: int
-                            sample: 4294967295
+                            type: string
+                            sample: "4294967295rpm"
                         physical_location:
                             description: Physical location of the particular physical disk.
                             returned: always
@@ -382,8 +386,8 @@ ansible_facts:
                         can_pool:
                             description: Information whether the particular physical disk can be added to a storage pool.
                             returned: always
-                            type: bool
-                            sample: False
+                            type: string
+                            sample: "false"
                         cannot_pool_reason:
                             description: Information why the particular physical disk can not be added to a storage pool.
                             returned: if can_pool property has value false
@@ -392,13 +396,13 @@ ansible_facts:
                         indication_enabled:
                             description: Information whether indication is enabled for the particular physical disk.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "True"
                         partial:
                             description: Information whether the particular physical disk is partial.
                             returned: always
-                            type: bool
-                            sample: False
+                            type: string
+                            sample: "False"
                         serial_number:
                             description: Serial number of the particular physical disk.
                             returned: always
@@ -421,22 +425,25 @@ ansible_facts:
                     contains:
                         size:
                             description:
-                              - Size in bytes of the particular virtual disk.
+                              - Size in Gibibyte of the particular virtual disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 240057409536
+                            type: string
+                            sample: "300GiB"
                         allocated_size:
                             description:
-                              - Allocated size in bytes of the particular virtual disk.
+                              - Allocated size in Gibibyte of the particular virtual disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 240057409536
+                            type: string
+                            sample: "100GiB"
                         footprint_on_pool:
                             description:
-                              - Footprint on pool in bytes of the particular virtual disk.
+                              - Footprint on pool in Gibibyte of the particular virtual disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 240057409536
+                            type: string
+                            sample: "100GiB"
                         name:
                             description: Name of the particular virtual disk.
                             returned: always
@@ -463,10 +470,10 @@ ansible_facts:
                             type: string
                             sample: "Thin"
                         allocation_unit_size:
-                            description: Allocation unit size in bytes of the particular virtual disk.
+                            description: Allocation unit size in Kibibyte of the particular virtual disk.
                             returned: always
-                            type: int
-                            sample: 4096
+                            type: string
+                            sample: "4KiB"
                         media_type:
                             description: Media type of the particular virtual disk.
                             returned: always
@@ -490,8 +497,8 @@ ansible_facts:
                         write_cache_size:
                             description: Write cache size in byte of the particular virtual disk.
                             returned: always
-                            type: int
-                            sample: 100
+                            type: string
+                            sample: "100s/byte/bytes/"
                         fault_domain_awareness:
                             description: Fault domain awareness of the particular virtual disk.
                             returned: always
@@ -499,45 +506,46 @@ ansible_facts:
                             sample: "PhysicalDisk"
                         inter_leave:
                             description:
-                              - Inter leave in bytes of the particular virtual disk.
+                              - Inter leave in Kibibyte of the particular virtual disk.
+                              - Accurate to three decimal places.
                             returned: always
-                            type: int
-                            sample: 102400
+                            type: string
+                            sample: "100KiB"
                         deduplication_enabled:
                             description: Information whether deduplication is enabled for the particular virtual disk.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "True"
                         enclosure_aware:
                             description: Information whether the particular virtual disk is enclosure aware.
                             returned: always
-                            type: bool
-                            sample: False
+                            type: string
+                            sample: "False"
                         manual_attach:
                             description: Information whether the particular virtual disk is manual attached.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "True"
                         snapshot:
                             description: Information whether the particular virtual disk is a snapshot.
                             returned: always
-                            type: bool
-                            sample: False
+                            type: string
+                            sample: "False"
                         tiered:
                             description: Information whether the particular virtual disk is tiered.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "True"
                         physical_sector_size:
-                            description: Physical sector size in bytes of the particular virtual disk.
+                            description: Physical sector size in Kibibyte of the particular virtual disk.
                             returned: always
-                            type: int
-                            sample: 4096
+                            type: string
+                            sample: "4KiB"
                         logical_sector_size:
                             description: Logical sector size in byte of the particular virtual disk.
                             returned: always
-                            type: int
-                            sample: 512
+                            type: string
+                            sample: "512s/byte/bytes/"
                         available_copies:
                             description: Number of the available copies of the particular virtual disk.
                             returned: if existent
@@ -566,8 +574,8 @@ ansible_facts:
                         request_no_spof:
                             description: Information whether the particular virtual disk requests no single point of failure.
                             returned: always
-                            type: bool
-                            sample: True
+                            type: string
+                            sample: "True"
                         resiliency_setting_name:
                             description: Type of the physical disk redundancy of the particular virtual disk.
                             returned: always
