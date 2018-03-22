@@ -35,13 +35,11 @@ def get_all_plugin_loaders():
 
 
 class PluginLoader:
-
     '''
     PluginLoader loads plugins from the configured plugin directories.
 
-    It searches for plugins by iterating through the combined list of
-    play basedirs, configured paths, and the python path.
-    The first match is used.
+    It searches for plugins by iterating through the combined list of play basedirs, configured
+    paths, and the python path.  The first match is used.
     '''
 
     def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
@@ -422,32 +420,36 @@ class PluginLoader:
         :kwarg class_only: If this is set to True then we return the python class which implements
             a plugin rather than an instance of the plugin.  This conflicts with path_only and both
             should not be set.
-        :kwarg dedupe: By default, we only return one plugin per plugin name.  Deduplication happens
-            in the same way as the :meth:`get` and :meth:`find_plugin` methods resolves which plugin
+        :kwarg _dedupe: By default, we only return one plugin per plugin name.  Deduplication happens
+            in the same way as the :meth:`get` and :meth:`find_plugin` methods resolve which plugin
             should take precedence.  If this is set to False, then we return all of the plugins
             found, including those with duplicate names.  In the case of duplicates, the order in
             which they are returned is the one that would take precedence first, followed by the
-            others that were found in decreasing precedence order.
+            others  in decreasing precedence order.  This should only be used by subclasses which
+            want to manage their own deduplication of the plugins.
         :*args: Any extra arguments are passed to each plugin when it is instantiated.
         :**kwargs: Any extra keyword arguments are passed to each plugin when it is instantiated.
         '''
-
-        global _PLUGIN_FILTERS
-
         # TODO: Change the signature of this method to:
-        # def all(return_type='instance', dedupe=False, args=None, kwargs=None):
+        # def all(return_type='instance', args=None, kwargs=None):
         #     if args is None: args = []
         #     if kwargs is None: kwargs = {}
         #     return_type can be instance, class, or path.
-        #     Those changes will mean that plugin parameters won't conflict with our params and
+        #     These changes will mean that plugin parameters won't conflict with our params and
         #     will also make it impossible to request both a path and a class at the same time.
+        #
+        #     Move _dedupe to be a class attribute, CUSTOM_DEDUPE, with subclasses for filters and
+        #     tests setting it to True
+
+        global _PLUGIN_FILTERS
+
+        dedupe = kwargs.pop('_dedupe', True)
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
         # Having both path_only and class_only is a coding bug
         if path_only and class_only:
             raise AnsibleError('Do not set both path_only and class_only when calling PluginLoader.all()')
 
-        dedupe = kwargs.pop('dedupe', True)
         all_matches = []
         found_in_cache = True
 
@@ -506,6 +508,52 @@ class PluginLoader:
 
             self._update_object(obj, name, path)
             yield obj
+
+
+class Jinja2Loader(PluginLoader):
+    """
+    PluginLoader optimized for Jinja2 plugins
+
+    The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
+    The way the calling code is setup, we need to do a few things differently in the all() method
+    """
+    def find_plugin(self, name):
+        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
+        # we deduplicate differently than the base class
+        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+
+    def get(self, name, *args, **kwargs):
+        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
+        # we deduplicate differently than the base class
+        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+
+    def all(self, *args, **kwargs):
+        """
+        Differences with :meth:`PluginLoader.all`:
+
+        * We do not deduplicate ansible plugin names.  This is because we don't care about our
+          plugin names, here.  We care about the names of the actual jinja2 plugins which are inside
+          of our plugins.
+        * We reverse the order of the list of plugins compared to other PluginLoaders.  This is
+          because of how calling code chooses to sync the plugins from the list.  It adds all the
+          Jinja2 plugins from one of our Ansible plugins into a dict.  Then it adds the Jinja2
+          plugins from the next Ansible plugin, overwriting any Jinja2 plugins that had the same
+          name.  This is an encapsulation violation (the PluginLoader should not know about what
+          calling code does with the data) but we're pushing the common code here.  We'll fix
+          this in the future by moving more of the common code into this PluginLoader.
+        * We return a list.  We could iterate the list instead but that's extra work for no gain because
+          the API receiving this doesn't care.  It just needs an iterable
+        """
+        # We don't deduplicate ansible plugin names.  Instead, calling code deduplicates jinja2
+        # plugin names.
+        kwargs['_dedupe'] = False
+
+        # We have to instantiate a list of all plugins so that we can reverse it.  We reverse it so
+        # that calling code will deduplicate this correctly.
+        plugins = [p for p in super(Jinja2Loader, self).all(*args, **kwargs)]
+        plugins.reverse()
+
+        return plugins
 
 
 def _load_plugin_filter():
@@ -642,14 +690,14 @@ lookup_loader = PluginLoader(
     required_base_class='LookupBase',
 )
 
-filter_loader = PluginLoader(
+filter_loader = Jinja2Loader(
     'FilterModule',
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
 )
 
-test_loader = PluginLoader(
+test_loader = Jinja2Loader(
     'TestModule',
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
