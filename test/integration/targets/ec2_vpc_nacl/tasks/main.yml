@@ -1,0 +1,132 @@
+---
+- block:
+
+    # ============================================================
+
+    - name: test without any parameters
+      ec2_vpc_nacl:
+      register: result
+      ignore_errors: yes
+
+    - name: assert required parameters
+      assert:
+        that:
+          - result.failed
+          - "result.msg == 'one of the following is required: name, nacl_id'"
+
+    # ============================================================
+
+    - name: set connection information for subsequent tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    # ============================================================
+
+    - name: create a VPC
+      ec2_vpc_net:
+        cidr_block: 10.230.230.0/24
+        name: "{{ resource_prefix }}"
+        state: present
+        <<: *aws_connection_info
+      register: vpc
+
+    - name: create subnets
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        az: "{{ aws_region}}{{ item.az }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: present
+        tags:
+          Name: "{{ item.name }}"
+        <<: *aws_connection_info
+      with_items:
+        - cidr: 10.230.230.0/26
+          az: "a"
+          name: "{{ resource_prefix }}-subnet-1"
+        - cidr: 10.230.230.64/26
+          az: "b"
+          name: "{{ resource_prefix }}-subnet-2"
+        - cidr: 10.230.230.128/26
+          az: "a"
+          name: "{{ resource_prefix }}-subnet-3"
+        - cidr: 10.230.230.192/26
+          az: "b"
+          name: "{{ resource_prefix }}-subnet-4"
+      register: subnets
+
+    # ============================================================
+
+    - include_tasks: tasks/subnet_ids.yml
+      vars:
+        vpc_id: "{{ vpc.vpc.id }}"
+        subnet_ids: "{{ subnets | json_query('results[*].subnet.id') }}"
+
+    - include_tasks: tasks/subnet_names.yml
+      vars:
+        vpc_id: "{{ vpc.vpc.id }}"
+        subnet_names: "{{ subnets | json_query('results[*].subnet.tags.Name') }}"
+
+    - include_tasks: tasks/tags.yml
+      vars:
+        vpc_id: "{{ vpc.vpc.id }}"
+        subnet_ids: "{{ subnets | json_query('results[*].subnet.id') }}"
+
+    - include_tasks: tasks/ingress_and_egress.yml
+      vars:
+        vpc_id: "{{ vpc.vpc.id }}"
+        subnet_ids: "{{ subnets | json_query('results[*].subnet.id') }}"
+
+    # ============================================================
+
+  always:
+
+    - name: remove network ACL
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        state: absent
+        <<: *aws_connection_info
+      register: removed_acl
+      until: removed_acl is success
+      retries: 5
+      delay: 2
+      ignore_errors: yes
+
+    - name: remove subnets
+      ec2_vpc_subnet:
+        cidr: "{{ item.cidr }}"
+        az: "{{ aws_region}}{{ item.az }}"
+        vpc_id: "{{ vpc.vpc.id }}"
+        state: absent
+        tags:
+          Public: "{{ item.public | string }}"
+          Name: "{{ item.public | ternary('public', 'private') }}-{{ item.az }}"
+        <<: *aws_connection_info
+      with_items:
+        - cidr: 10.230.230.0/26
+          az: "a"
+          public: "True"
+        - cidr: 10.230.230.64/26
+          az: "b"
+          public: "True"
+        - cidr: 10.230.230.128/26
+          az: "a"
+          public: "False"
+        - cidr: 10.230.230.192/26
+          az: "b"
+          public: "False"
+      ignore_errors: yes
+
+    - name: remove the VPC
+      ec2_vpc_net:
+        cidr_block: 10.230.230.0/24
+        name: "{{ resource_prefix }}"
+        state: absent
+        <<: *aws_connection_info
+
+    # ============================================================
