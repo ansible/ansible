@@ -44,13 +44,14 @@ class PluginLoader:
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None):
+    def __init__(self, class_name, package, config, subdir, aliases=None, required_base_class=None, unique_file=True):
         aliases = {} if aliases is None else aliases
 
         self.class_name = class_name
         self.base_class = required_base_class
         self.package = package
         self.subdir = subdir
+        self.unique_file = unique_file
 
         # FIXME: remove alias dict in favor of alias by symlink?
         self.aliases = aliases
@@ -75,6 +76,7 @@ class PluginLoader:
 
         self._extra_dirs = []
         self._searched_paths = set()
+        self._matched = []
 
     def __setstate__(self, data):
         '''
@@ -232,6 +234,7 @@ class PluginLoader:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
                 self._paths = None
+                self._matched = []
                 display.debug('Added %s to loader search path' % (directory))
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
@@ -416,14 +419,26 @@ class PluginLoader:
 
         path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
-        all_matches = []
+
         found_in_cache = True
 
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+        if not self._matched:
+            for i in self._get_paths():
+                self._matched.extend(glob.glob(os.path.join(i, "*.py")))
 
-        for path in sorted(all_matches, key=os.path.basename):
-            name = os.path.basename(os.path.splitext(path)[0])
+        if self.unique_file:
+            # first found wins, so the list indicates the precedence
+            pathlist = sorted(self._matched, key=os.path.basename)
+        else:
+            # since we load all files 'last loaded' wins in this case so we reverse the list to maintain precedence
+            pathlist = reversed(self._matched)
+
+        for path in pathlist:
+
+            if self.unique_file:
+                name = os.path.basename(os.path.splitext(path)[0])
+            else:
+                name = path
 
             if '__init__' in name or name in _PLUGIN_FILTERS[self.package]:
                 continue
@@ -615,13 +630,15 @@ filter_loader = PluginLoader(
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
+    unique_file=False,
 )
 
 test_loader = PluginLoader(
     'TestModule',
     'ansible.plugins.test',
     C.DEFAULT_TEST_PLUGIN_PATH,
-    'test_plugins'
+    'test_plugins',
+    unique_file=False,
 )
 
 strategy_loader = PluginLoader(
