@@ -97,7 +97,7 @@ class LookupModule(LookupBase):
     def run(self, terms, variables=None, **kwargs):
         op = OnePass()
 
-        op.assert_logged_in
+        op.assert_logged_in()
 
         field = kwargs.get('field', 'password')
         vault = kwargs.get('vault')
