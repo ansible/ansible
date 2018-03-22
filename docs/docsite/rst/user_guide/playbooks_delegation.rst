@@ -233,7 +233,7 @@ Like most tasks, this can be optionally paired with "delegate_to" to specify an 
           run_once: true
           delegate_to: web01.example.org
 
-As alwayw with delegation, the action will be executed on the delegated host, but the information is still that of the original host in the task.
+As always with delegation, the action will be executed on the delegated host, but the information is still that of the original host in the task.
 
 .. note::
      When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
