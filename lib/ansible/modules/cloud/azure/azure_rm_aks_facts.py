@@ -138,7 +138,8 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         result = []
 
         try:
-            item = self.containerservice_client.managed_clusters.get(self.resource_group, self.name)
+            item = self.containerservice_client.managed_clusters.get(
+                self.resource_group, self.name)
         except CloudError:
             pass
 
@@ -153,7 +154,8 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.log('List all Azure Kubernetes Services')
 
         try:
-            response = self.containerservice_client.managed_clusters.list(self.resource_group)
+            response = self.containerservice_client.managed_clusters.list(
+                self.resource_group)
         except AzureHttpError as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
 
@@ -169,6 +171,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMManagedClusterFacts()
+
 
 if __name__ == '__main__':
     main()
