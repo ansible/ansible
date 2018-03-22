@@ -335,7 +335,9 @@ class PathMapper(object):
                 'units': units_path,
             }
 
-        if path.startswith('lib/ansible/plugins/terminal/'):
+        if (path.startswith('lib/ansible/plugins/terminal/') or
+                path.startswith('lib/ansible/plugins/cliconf/') or
+                path.startswith('lib/ansible/plugins/netconf/')):
             if ext == '.py':
                 if name in self.prefixes and self.prefixes[name] == 'network':
                     network_target = 'network/%s/' % name
