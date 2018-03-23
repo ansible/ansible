@@ -372,7 +372,7 @@ def main():
         repeat=dict(required=False, type='int', default=10),
         deployment_configuration=dict(required=False, default={}, type='dict'),
         placement_constraints=dict(required=False, default=[], type='list'),
-        placement_strategy=dict(required=False, default=[], type='list')
+        placement_strategy=dict(required=False, default=[], type='list'),
         healthcheck_graceperiod=dict(required=False, default=0, type='int')
     ))
 
