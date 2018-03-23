@@ -1,0 +1,2 @@
+- set_fact:
+    role1_canary3: r1c3
