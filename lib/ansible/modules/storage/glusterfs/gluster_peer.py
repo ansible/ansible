@@ -38,15 +38,16 @@ options:
           - List of nodes that have to be probed into the pool.
        required: true
     force:
-       choices: ["yes", "no"]
-       default: "no"
+       type: bool
+       default: "false"
        description:
           - Applicable only while removing the nodes from the pool. gluster
             will refuse to detach a node from the pool if any one of the node
             is down, in such cases force can be used.
 requirements:
-  - PyYAML
   - GlusterFS > 3.2
+notes:
+  - This module does not support check mode.
 '''
 
 EXAMPLES = '''
@@ -68,7 +69,7 @@ EXAMPLES = '''
          state: absent
          nodes:
               - 10.0.0.1
-         force: yes
+         force: true
 '''
 
 RETURN = '''
@@ -93,13 +94,13 @@ class Peer(object):
         nodes = literal_eval(self._validated_params('nodes'))
         if nodes[0] is None:
             # Found a list with None as its first element
-            self.module.exit_json(rc=1, msg="No nodes found, provide at least "
+            self.module.fail_json(rc=1, msg="Nodes not found, provide at least "
                                   "one node.")
         return nodes
 
     def gluster_peer_ops(self):
         nodes = self.get_nodes()
-        force = 'force' if self.module.params.get('force') == 'yes' else ''
+        force = 'force' if self.module.params.get('force') else ''
         if self.state == 'present':
             nodes = self.get_to_be_probed_hosts(nodes)
             action = 'probe'
@@ -133,7 +134,7 @@ class Peer(object):
 
     def get_output(self, errors):
         if not errors:
-            self.module.exit_json(rc=0, changed=1)
+            self.module.exit_json(rc=0, changed=True)
         else:
             self.module.fail_json(rc=1, msg='\n'.join(errors))
 
@@ -145,16 +146,36 @@ class Peer(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            force=dict(choices=["yes", "no"]),
+            force=dict(type='bool', required=False),
             nodes=dict(),
             state=dict(required=True, choices=["absent", "present"]),
         ),
+        supports_check_mode=False,
     )
     pops = Peer(module)
+    # Verify if GlusterFS 3.2 or over is installed
+    if not valid_gluster_version(module):
+        module.fail_json(msg="GlusterFS version > 3.2 is required")
     cmds = pops.gluster_peer_ops()
     errors = pops.call_peer_commands(cmds)
     pops.get_output(errors)
 
+
+def valid_gluster_version(module):
+    cmd = module.get_bin_path('gluster', True) + ' --version'
+    # Check if the required gluster version is installed
+    result = module.run_command(cmd)
+    ver_line = result[1].split('\n')[0]
+    version = ver_line.split(' ')[1]
+    major_vers = int(version[0])
+    minor_vers = int(version[2])
+    if major_vers >= 3:
+        # check minor version
+        if minor_vers < 2:
+            return False
+    else:
+        return False
+    return True
 
 if __name__ == "__main__":
     main()
