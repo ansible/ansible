@@ -35,8 +35,8 @@ options:
     state:
         description:
           - The action to take with the supplied key and value. If the state is 'present' and `value` is set, the key
-            contents will be set to the value supplied and `changed` will be set to `true` only if the value was 
-            different to the current contents. If the state is 'present' and `value` is not set, the existing value 
+            contents will be set to the value supplied and `changed` will be set to `true` only if the value was
+            different to the current contents. If the state is 'present' and `value` is not set, the existing value
             associated to the key will be returned. The state 'absent' will remove the key/value pair,
             again 'changed' will be set to true only if the key actually existed
             prior to the removal. An attempt can be made to obtain or free the
@@ -213,7 +213,6 @@ def get_value(module):
     index, existing_value = consul_api.kv.get(key)
 
     module.exit_json(changed=False, index=index, data=existing_value)
-
 
 
 def add_value(module):
