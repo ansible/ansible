@@ -140,7 +140,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-def is_deployed(module):
+def is_deployed(module, state):
 
     if module.params['deployment_strategy'] == 'http':
         data_dict = {
@@ -166,7 +166,7 @@ def is_deployed(module):
     else:
         rc, stdout, stderr = cli_run_commands(module, ['deployment-info', '--name=%s' % module.params['deployment']])
 
-        if rc != 0:
+        if (state == 'deployed' or state == 'present') and rc != 0:
             return False
         try:
             lines = stdout.split()
@@ -198,7 +198,7 @@ def fs_deploy(module, deployed):
         shutil.copyfile(module.params['src'], os.path.join(module.params['deploy_path'], module.params['deployment']))
 
         while not deployed:
-            deployed = is_deployed(module)
+            deployed = is_deployed(module, state)
             if is_failed(module.params['deploy_path'], module.params['deployment']):
                 module.fail_json(msg='Deploying %s failed.' % module.params['deployment'])
             time.sleep(1)
@@ -209,7 +209,7 @@ def fs_deploy(module, deployed):
             shutil.copyfile(module.params['src'], os.path.join(module.params['deploy_path'], module.params['deployment']))
             deployed = False
             while not deployed:
-                deployed = is_deployed(module)
+                deployed = is_deployed(module, state)
                 if is_failed(module.params['deploy_path'], module.params['deployment']):
                     module.fail_json(msg='Deploying %s failed.' % module.params['deployment'])
                 time.sleep(1)
@@ -424,11 +424,14 @@ def main():
     if deployment_strategy == 'filesystem':
         module.warn('Filesystem deployments are not recommended for production use.')
 
-    if not os.path.exists(deploy_path):
+    if (deployment_strategy == 'filesystem' ) and not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
 
+    if state == 'undeployed' or state == 'absent':
+        deployed = is_deployed(module, state)
     action = DEPLOY_CALLABLES[deployment_strategy][state]
-    deployed = is_deployed(module)
+    if state == 'deployed' or state == 'present':
+        deployed = is_deployed(module, state)
     result = dict(changed=action(module, deployed))
 
     module.exit_json(**result)
