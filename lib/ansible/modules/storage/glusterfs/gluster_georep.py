@@ -46,7 +46,7 @@ options:
             Geo-Replication session.
        required: true
     force:
-       choices: ["true", "false"]
+       type: bool
        default: "false"
        description:
           - Applicable only with states started, stopped, and while creating a
@@ -154,8 +154,9 @@ options:
           - The path of the meta volume mount point.
 
 requirements:
-  - PyYAML
   - GlusterFS > 3.2
+notes:
+  - This module does not support check mode.
 '''
 
 EXAMPLES = '''
@@ -197,7 +198,6 @@ EXAMPLES = '''
           state: started
           mastervol: master
           slavevol: 10.70.41.224:slave
-          force: true
           use_tarssh: true
           rsync_command: sync
 '''
@@ -243,8 +243,7 @@ class GeoRep(object):
         if self.action in ['delete']:
             force = ''
         else:
-            force = self.module.params['force']
-            force = 'force' if force == "true" else ' '
+            force = 'force' if self.module.params.get('force') else ''
 
         # If options are set, then `state' has to be set to started
         options = self.config_georep()
@@ -259,8 +258,7 @@ class GeoRep(object):
                     rc, output, err = self.call_gluster_cmd('volume',
                                                             'geo-replication',
                                                             mastervol, slavevol,
-                                                            self.action, opt,
-                                                            force)
+                                                            self.action, opt)
         if self.action in ['stop', 'delete'] and self.user == 'root':
             self.user = 'geoaccount'
             rc, output, err = self.call_gluster_cmd('volume', 'geo-replication',
@@ -306,7 +304,7 @@ class GeoRep(object):
     def _get_output(self, rc, output, err):
         carryon = True if self.action in ['stop', 'delete',
                                           'resume'] else False
-        changed = 0 if (carryon and rc) else 1
+        changed = False if (carryon and rc) else True
         if self.action in ['stop', 'delete'] and (
                 self.user == 'root' and changed == 0):
             return
@@ -329,7 +327,7 @@ def main():
             # resume', 'config'
             mastervol=dict(),
             slavevol=dict(),
-            force=dict(required=False, choices=['true', 'false']),
+            force=dict(type='bool', required=False),
             georepuser=dict(),
             gluster_log_file=dict(),
             gluster_log_level=dict(required=False,
@@ -359,9 +357,28 @@ def main():
             use_meta_volume=dict(required=False, choices=['true', 'false']),
             meta_volume_mnt=dict()
         ),
+        supports_check_mode=False,
     )
+    # Verify if GlusterFS 3.2 or over is installed
+    if not valid_gluster_version(module):
+        module.fail_json(msg="GlusterFS version > 3.2 is required")
     GeoRep(module)
 
+def valid_gluster_version(module):
+    cmd = module.get_bin_path('gluster', True) + ' --version'
+    # Check if the required gluster version is installed
+    result = module.run_command(cmd)
+    ver_line = result[1].split('\n')[0]
+    version = ver_line.split(' ')[1]
+    major_vers = int(version[0])
+    minor_vers = int(version[2])
+    if major_vers >= 3:
+        # check minor version
+        if minor_vers < 2:
+            return False
+    else:
+        return False
+    return True
 
 if __name__ == '__main__':
     main()
