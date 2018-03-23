@@ -49,14 +49,24 @@ class RabbitMqVhostLimits(object):
             if self._node is not None:
                 cmd.extend(['-n', self._node])
             rc, out, err = self._module.run_command(cmd + args, check_rc=True)
-            # return out.splitlines()
-            # rc, out, err = self._module.run_command(cmd + args)
             return dict(rc=rc, out=out.splitlines(), err=err.splitlines())
         return list()
 
     def list(self):
         exec_result = self._exec(['list_vhost_limits', '-p', self._vhost])
-        return exec_result['out'][0]
+        vhost_limits = exec_result['out'][0]
+        max_connections = None
+        max_queues = None
+        if vhost_limits:
+            vhost_limits = json.loads(vhost_limits)
+            if 'max-connections' in vhost_limits:
+                max_connections = vhost_limits['max-connections']
+            if 'max-queues' in vhost_limits:
+                max_queues = vhost_limits['max-queues'] 
+        return dict(
+            max_connections=max_connections,
+            max_queues=max_queues
+        )
 
     def set(self):
         json_str = '{{"max-connections": {0}, "max-queues": {1}}}'.format(self._max_connections, self._max_queues)
@@ -86,24 +96,25 @@ def main():
 
     module_result = dict(changed=False)
     rabbitmq_vhost_limits = RabbitMqVhostLimits(module)
-
-    wanted_status = {
-        'max-connections': max_connections,
-        'max-queues': max_queues
-    }
     current_status = rabbitmq_vhost_limits.list()
 
-    if current_status: # when some value has already set
-        if state == 'present':
-            if wanted_status != json.loads(current_status):
-                rabbitmq_vhost_limits.set()
-                module_result['changed'] = True
-        else: # state == 'absent'
-            rabbitmq_vhost_limits.clear()
-            module_result['changed'] = True
-    else: # when any value has not set yet
+    if state == 'present':
+        wanted_status = dict(
+            max_connections=max_connections,
+            max_queues=max_queues
+        )
+    else: # state == 'absent'
+        wanted_status = dict(
+            max_connections=None,
+            max_queues=None
+        )
+
+    if current_status != wanted_status:
         if state == 'present':
             rabbitmq_vhost_limits.set()
+            module_result['changed'] = True
+        else: # state == 'absent'
+            rabbitmq_vhost_limits.clear()
             module_result['changed'] = True
 
     module.exit_json(**module_result)
