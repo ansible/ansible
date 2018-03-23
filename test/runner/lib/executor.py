@@ -1183,12 +1183,12 @@ def get_integration_local_filter(args, targets):
     """
     exclude = []
 
-    if os.getuid() != 0:
+    if not args.allow_root and os.getuid() != 0:
         skip = 'needs/root/'
         skipped = [target.name for target in targets if skip in target.aliases]
         if skipped:
             exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require running as root: %s'
+            display.warning('Excluding tests marked "%s" which require --allow-root or running as root: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     # consider explicit testing of destructive as though --allow-destructive was given
