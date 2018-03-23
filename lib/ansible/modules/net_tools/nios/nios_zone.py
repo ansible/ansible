@@ -62,7 +62,7 @@ options:
   restart_if_needed:
     version_added: "2.6"
     description:
-      - If set to True, causes the NIOS DNS service to restart and load the
+      - If set to true, causes the NIOS DNS service to restart and load the
         new zone configuration
     type: bool
   extattrs:
@@ -96,6 +96,7 @@ EXAMPLES = '''
     grid_secondaries:
       - name: gridsecondary1.grid.com
       - name: gridsecondary2.grid.com
+    restart_if_needed: true
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -107,6 +108,7 @@ EXAMPLES = '''
   nios_zone:
     name: ansible.com
     ns_group: examplensg
+    restart_if_needed: true
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
