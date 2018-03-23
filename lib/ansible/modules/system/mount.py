@@ -121,6 +121,14 @@ EXAMPLES = '''
     fstype: xfs
     opts: noatime
     state: present
+
+- name: Mount Distributed Filesystem
+  mount:
+    path: /opt/data/moosefs
+    src: mfsmount
+    fstype: fuse
+    opts: "mfsmaster=moosefs001.example.com,mfssubfolder=/dfs,_netdev"
+    state: mounted
 '''
 
 
