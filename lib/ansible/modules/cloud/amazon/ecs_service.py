@@ -338,7 +338,7 @@ class EcsServiceManager:
             role=role,
             deploymentConfiguration=deployment_configuration,
             placementConstraints=placement_constraints,
-            placementStrategy=placement_strategy
+            placementStrategy=placement_strategy,
             healthCheckGracePeriodSeconds=healthcheck_graceperiod)
         return response['service']
 
