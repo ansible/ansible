@@ -1,0 +1,2 @@
+bugfixes:
+- win_certificate_store - fixed a typo that stopped it from getting the key_storage values
