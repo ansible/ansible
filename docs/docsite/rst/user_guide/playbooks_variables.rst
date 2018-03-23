@@ -987,7 +987,9 @@ Parameterized roles are useful.
 If you are using a role and want to override a default, pass it as a parameter to the role like so::
 
     roles:
-       - { role: apache, http_port: 8080 }
+       - role: apache
+         vars:
+            http_port: 8080
 
 This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
@@ -996,10 +998,18 @@ role you are sharing with others.
 This can often be used for things that might apply to some hosts multiple times. For example::
 
     roles:
-       - { role: app_user, name: Ian    }
-       - { role: app_user, name: Terry  }
-       - { role: app_user, name: Graham }
-       - { role: app_user, name: John   }
+       - role: app_user
+         vars:
+            myname: Ian
+       - role: app_user
+         vars:
+           myname: Terry
+       - role: app_user
+         vars:
+           myname: Graham
+       - role: app_user
+         vars:
+           myname: John
 
 In this example, the same role was invoked multiple times.  It's quite likely there was
 no default for 'name' supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
@@ -1010,9 +1020,11 @@ Generally speaking, variables set in one role are available to others.  This mea
 can set variables in there and make use of them in other roles and elsewhere in your playbook::
 
      roles:
-        - { role: common_settings }
-        - { role: something, foo: 12 }
-        - { role: something_else }
+        - role: common_settings
+        - role: something
+          vars:
+            foo: 12
+        - role: something_else
 
 .. note:: There are some protections in place to avoid the need to namespace variables.
           In the above, variables defined in common_settings are most definitely available to 'something' and 'something_else' tasks, but if
