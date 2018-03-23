@@ -145,11 +145,12 @@ EXAMPLES = '''
 '''
 RETURN = '''
 state:
-    description: Current state of the azure container service (AKS)
+    description: Current state of the Azure Container Service (AKS)
     returned: always
     type: dict
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -237,7 +238,8 @@ def create_aks_dict(aks):
         provisioning_state=aks.provisioning_state,
         agent_pool_profiles=create_agent_pool_profiles_dict(
             aks.agent_pool_profiles),
-        type=aks.type
+        type=aks.type,
+        kube_config=aks.kube_config
     )
 
 
@@ -382,7 +384,6 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             setattr(self, key, kwargs[key])
 
         resource_group = None
-        results = dict()
         to_be_updated = False
 
         resource_group = self.get_resource_group(self.resource_group)
@@ -519,9 +520,10 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
 
         try:
-            poller = self.containerservice_client.managed_clusters.create_or_update(self.resource_group, self.name,
-                                                                                    parameters)
+            poller = self.containerservice_client.managed_clusters.create_or_update(
+                self.resource_group, self.name, parameters)
             response = self.get_poller_result(poller)
+            response.kube_config = self.get_aks_kubeconfig()
             return create_aks_dict(response)
         except CloudError as exc:
             self.log('Error attempting to create the AKS instance.')
@@ -558,10 +560,21 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                 self.resource_group, self.name)
             self.log("Response : {0}".format(response))
             self.log("AKS instance : {0} found".format(response.name))
+            response.kube_config = self.get_aks_kubeconfig()
             return create_aks_dict(response)
         except CloudError:
             self.log('Did not find the AKS instance.')
             return False
+
+    def get_aks_kubeconfig(self):
+        '''
+        Gets kubeconfig for the specified AKS instance.
+
+        :return: AKS instance kubeconfig
+        '''
+        access_profile = self.containerservice_client.managed_clusters.get_access_profiles(
+            self.resource_group, self.name, "clusterUser")
+        return base64.b64decode(access_profile.kube_config)
 
 
 def main():
