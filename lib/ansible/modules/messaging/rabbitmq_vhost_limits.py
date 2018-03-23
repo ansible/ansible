@@ -125,7 +125,7 @@ class RabbitMqVhostLimits(object):
             if 'max-connections' in vhost_limits:
                 max_connections = vhost_limits['max-connections']
             if 'max-queues' in vhost_limits:
-                max_queues = vhost_limits['max-queues'] 
+                max_queues = vhost_limits['max-queues']
         return dict(
             max_connections=max_connections,
             max_queues=max_queues
@@ -168,7 +168,7 @@ def main():
             max_connections=max_connections,
             max_queues=max_queues
         )
-    else: # state == 'absent'
+    else:  # state == 'absent'
         wanted_status = dict(
             max_connections=None,
             max_queues=None
@@ -179,7 +179,7 @@ def main():
             if not module.check_mode:
                 rabbitmq_vhost_limits.set()
             module_result['changed'] = True
-        else: # state == 'absent'
+        else:  # state == 'absent'
             if not module.check_mode:
                 rabbitmq_vhost_limits.clear()
             module_result['changed'] = True
