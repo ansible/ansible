@@ -186,7 +186,7 @@ def is_failed(deploy_path, deployment):
     return os.path.exists(os.path.join(deploy_path, "%s.failed" % deployment))
 
 
-def fs_deploy(module, deployed):
+def fs_deploy(module, deployed, state):
 
     if not deployed:
         if not os.path.exists(module.params['src']):
@@ -424,7 +424,7 @@ def main():
     if deployment_strategy == 'filesystem':
         module.warn('Filesystem deployments are not recommended for production use.')
 
-    if (deployment_strategy == 'filesystem' ) and not os.path.exists(deploy_path):
+    if (deployment_strategy == 'filesystem') and not os.path.exists(deploy_path):
         module.fail_json(msg="deploy_path does not exist.")
 
     if state == 'undeployed' or state == 'absent':
