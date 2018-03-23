@@ -5,7 +5,7 @@
 
 - set_fact: idem="true"
 - set_fact: idem="false"
-  when: ((platform | search('N7K')) and (imagetag and (imagetag | version_compare('D1', 'eq'))))
+  when: ((platform is search('N7K')) and (imagetag and (imagetag is version_compare('D1', 'eq'))))
 
 - block:
   - name: Create user
