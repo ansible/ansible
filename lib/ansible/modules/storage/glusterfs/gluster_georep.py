@@ -364,6 +364,7 @@ def main():
         module.fail_json(msg="GlusterFS version > 3.2 is required")
     GeoRep(module)
 
+
 def valid_gluster_version(module):
     cmd = module.get_bin_path('gluster', True) + ' --version'
     # Check if the required gluster version is installed
