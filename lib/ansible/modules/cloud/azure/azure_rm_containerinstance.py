@@ -304,8 +304,8 @@ class AzureRMContainerInstance(AzureRMModuleBase):
                 self.log("Need to check if container group has to be deleted or may be updated")
                 if self.force_update:
                     self.log('Deleting container instance before update')
-                    if not self.check_mode:
-                        self.delete_containerinstance()
+                    #if not self.check_mode:
+                    #    self.delete_containerinstance()
 
         if self.state == 'present':
 
