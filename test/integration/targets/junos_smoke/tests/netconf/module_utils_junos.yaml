@@ -43,18 +43,18 @@
       - "'<message>this is my login banner</message>' in config.xml"
 
 # hit discard_changes()
-# - name: check mode
-#   junos_banner:
-#     banner: login
-#     text: this is not the banner you're looking for
-#     state: present
-#     provider: "{{ netconf }}"
-#   register: result
-#   check_mode: yes
-#
-# - assert:
-#     that:
-#       - result.changed == false
+- name: check mode
+  junos_banner:
+    banner: login
+    text: this is not the banner you're looking for
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+  check_mode: yes
+
+- assert:
+    that:
+      - result.changed == false
 
 
 # hit field_top in map_obj_to_ele
