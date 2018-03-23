@@ -1,7 +1,7 @@
-- debug: msg="START iosxr netconf/common_utils.yaml on connection={{ ansible_connection }}"
+- debug: msg="START iosxr netconf/misc_tests.yaml on connection={{ ansible_connection }}"
 
 
-# hit get_oper()
+# hit module_utils.network.iosxr -> get_oper()
 - name: Setup (interface is up)
   iosxr_interface:
     name: GigabitEthernet0/0/0/1
@@ -36,4 +36,4 @@
       - "result.failed == true"
       - "'state eq(down)' in result.failed_conditions"
 
-- debug: msg="END iosxr netconf/common_utils.yaml on connection={{ ansible_connection }}"
+- debug: msg="END iosxr netconf/misc_tests.yaml on connection={{ ansible_connection }}"
