@@ -17,7 +17,7 @@ First, group your inventory logically. Best practice is to group servers and net
 
 Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor``) in your group names. Group names are case sensitive.
 
-This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``metagroupname:children`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
+This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``[metagroupname:children]`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
 
 .. code-block:: yaml
 
@@ -111,27 +111,17 @@ Variable Syntax
 
 The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each. 
 
-- In an inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
+- In an ini-style inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``. 
 - In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
 
   - In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``. 
   - In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
 
 
-Move Group Variables to ``group_vars`` Files
+Group Inventory by Platform
 ================================================================================
 
-As your inventory grows, you may want to group devices by platform and move shared variables out of the main inventory file into a set of group variable files. This reduces duplication further and sets the stage for managing devices on multiple platforms in a single inventory file. The directory tree for this setup looks like this:
-
-.. code-block:: console
-
-   .
-   ├── first_playbook.yml
-   ├── inventory
-   ├── group_vars
-       └── vyos.yml
-
-The group name must match the file name in your ``group_vars`` directory. In this example, Ansible will load the file ``group_vars/vyos.yml`` when it finds the group ``[vyos]`` in the inventory. So this inventory:
+As your inventory grows, you may want to group devices by platform. This allows you to specify platform-specific variables easily for all devices on that platform:
 
 .. code-block:: yaml
 
@@ -147,6 +137,11 @@ The group name must match the file name in your ``group_vars`` directory. In thi
    vyos_leafs
    vyos_spines
 
+   [vyos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=vyos
+   ansible_user=my_vyos_user
+
    [network:children]
    vyos
 
@@ -157,15 +152,6 @@ The group name must match the file name in your ``group_vars`` directory. In thi
    [datacenter:children]
    vyos
    servers
-
-works with this ``group_vars/vyos.yml`` content:
-
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: vyos
-   ansible_user: my_vyos_user
-
 
 With this setup, you can run first_playbook.yml with only two flags:
 
@@ -216,14 +202,15 @@ The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vau
           65656439626166666363323435613131643066353762333232326232323565376635
    Encryption successful
 
-Copy this output into your ``group_vars/vyos.yml`` file, which now looks like this:
+Copy this output into your inventory file under ``[vyos:vars]``, which now looks like this:
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: vyos
-   ansible_user: my_vyos_user
-   ansible_ssh_pass: !vault |
+   [vyos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=vyos
+   ansible_user=my_vyos_user
+   ansible_ssh_pass= !vault |
           $ANSIBLE_VAULT;1.2;AES256;my_user
           66386134653765386232383236303063623663343437643766386435663632343266393064373933
           3661666132363339303639353538316662616638356631650a316338316663666439383138353032
