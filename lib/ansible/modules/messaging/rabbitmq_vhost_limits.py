@@ -15,17 +15,60 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module:
-short_description:
+module: rabbitmq_vhost_limits
+author: '"Hiroyuki Matsuo (@h-matsuo)"'
+version_added: "2.4"
+
+short_description: Manage the state of virtual host limits in RabbitMQ
 description:
-  -
-version_added:
-author: '"First Last (@GitHubID)"'
+  - This module can enforce or clear limits on a virtual host.
+  - Recognised limits are `max_connections` and `max-queues`.
+
 options:
+    max_connections:
+        description:
+            - Max number of concurrent connections.
+            - Negative value means "no limit".
+        default: -1
+    max_queues:
+        description:
+            - Max number of queues.
+            - Negative value means "no limit".
+        default: -1
+    node:
+        description:
+            - Erlang node name of the rabbit to configure.
+    state:
+        description:
+            - Specify if limits are to be set or cleared.
+        default: present
+        choices: [present, absent]
+    vhost:
+        description:
+            - RabbitMQ virtual host to apply these limits.
+        default: /
 '''
 
 
 EXAMPLES = '''
+# Limits both of the max number of connections and the max number of queues on / vhost.
+- rabbitmq_vhost_limits:
+    max_connections: 64
+    max_queues: 256
+    vhost: /
+    state: present
+
+# Limits the max number of connections on / vhost.
+# This task implicitly clears the max number of queues limit using default value: -1.
+- rabbitmq_vhost_limits:
+    max_connections: 64
+    vhost: /
+    state: present
+
+# Clears the limits on / vhost.
+- rabbitmq_vhost_limits:
+    vhost: /
+    state: absent
 '''
 
 
@@ -43,14 +86,12 @@ class RabbitMqVhostLimits(object):
         self._vhost = module.params['vhost']
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
-    def _exec(self, args, run_in_check_mode=False):
-        if (not self._module.check_mode) or run_in_check_mode:
-            cmd = [self._rabbitmqctl, '-q']
-            if self._node is not None:
-                cmd.extend(['-n', self._node])
-            rc, out, err = self._module.run_command(cmd + args, check_rc=True)
-            return dict(rc=rc, out=out.splitlines(), err=err.splitlines())
-        return list()
+    def _exec(self, args):
+        cmd = [self._rabbitmqctl, '-q']
+        if self._node is not None:
+            cmd.extend(['-n', self._node])
+        rc, out, err = self._module.run_command(cmd + args, check_rc=True)
+        return dict(rc=rc, out=out.splitlines(), err=err.splitlines())
 
     def list(self):
         exec_result = self._exec(['list_vhost_limits', '-p', self._vhost])
@@ -111,10 +152,12 @@ def main():
 
     if current_status != wanted_status:
         if state == 'present':
-            rabbitmq_vhost_limits.set()
+            if not module.check_mode:
+                rabbitmq_vhost_limits.set()
             module_result['changed'] = True
         else: # state == 'absent'
-            rabbitmq_vhost_limits.clear()
+            if not module.check_mode:
+                rabbitmq_vhost_limits.clear()
             module_result['changed'] = True
 
     module.exit_json(**module_result)
