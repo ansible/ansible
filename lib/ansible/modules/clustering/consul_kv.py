@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: consul_kv
 short_description: Manipulate entries in the key/value store of a consul cluster
 description:
-  - Allows the addition, modification and deletion of key/value entries in a
+  - Allows the retrieval, addition, modification and deletion of key/value entries in a
     consul cluster via the agent. The entire contents of the record, including
     the indices, flags and session are returned as 'value'.
   - If the key represents a prefix then Note that when a value is removed, the existing
@@ -34,10 +34,10 @@ author:
 options:
     state:
         description:
-          - The action to take with the supplied key and value. If the state is
-            'present', the key contents will be set to the value supplied,
-            'changed' will be set to true only if the value was different to the
-            current contents. The state 'absent' will remove the key/value pair,
+          - The action to take with the supplied key and value. If the state is 'present' and `value` is set, the key
+            contents will be set to the value supplied and `changed` will be set to `true` only if the value was 
+            different to the current contents. If the state is 'present' and `value` is not set, the existing value 
+            associated to the key will be returned. The state 'absent' will remove the key/value pair,
             again 'changed' will be set to true only if the key actually existed
             prior to the removal. An attempt can be made to obtain or free the
             lock associated with a key/value pair with the states 'acquire' or
