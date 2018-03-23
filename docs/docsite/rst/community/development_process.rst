@@ -151,7 +151,7 @@ Workflow Labels
 -  **community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community.
 -  **core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team.
 -  **needs_info**: Waiting on info from the submitter.
--  **needs_rebase**: Waiting on the submitter to rebase. (Note: no longer used by the bot.)
+-  **needs_rebase**: Waiting on the submitter to rebase.
 -  **needs_revision**: Waiting on the submitter to make changes.
 -  **shipit**: Waiting for final review by the core team for potential merge.
 
