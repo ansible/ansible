@@ -529,7 +529,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
     return set()
 
 
-def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, installroot='/'):
+def what_provides(module, repoq, yum_basecmd, req_spec, conf_file, qf=def_qf, en_repos=None, dis_repos=None, installroot='/'):
     if en_repos is None:
         en_repos = []
     if dis_repos is None:
@@ -545,7 +545,19 @@ def what_provides(module, repoq, req_spec, conf_file, qf=def_qf, en_repos=None, 
             for rid in en_repos:
                 my.repos.enableRepo(rid)
 
-            pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+            try:
+                pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+            except Exception as e:
+                # If a repo with `repo_gpgcheck=1` is added and the repo GPG
+                # key was never accepted, quering this repo will throw an
+                # error: 'repomd.xml signature could not be verified'. In that
+                # situation we need to run `yum -y makecache` which will accept
+                # the key and try again.
+                if 'repomd.xml signature could not be verified' in to_native(e):
+                    module.run_command(yum_basecmd + ['makecache'])
+                    pkgs = my.returnPackagesByDep(req_spec) + my.returnInstalledPackagesByDep(req_spec)
+                else:
+                    raise
             if not pkgs:
                 e, m, _ = my.pkgSack.matchPackageNames([req_spec])
                 pkgs.extend(e)
@@ -862,7 +874,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
                     continue
 
             # look up what pkgs provide this
-            pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
                 res['results'].append("No package matching '%s' found available, installed or updated" % spec)
@@ -1127,7 +1139,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, up
                     pkgs['update'].append(spec)
                 else:
                     pkgs['install'].append(spec)
-            pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
+            pkglist = what_provides(module, repoq, yum_basecmd, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot)
             # FIXME..? may not be desirable to throw an exception here if a single package is missing
             if not pkglist:
                 res['msg'] += "No package matching '%s' found available, installed or updated" % spec
