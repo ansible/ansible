@@ -147,6 +147,8 @@ class CallbackModule(CallbackBase):
         play = self._play_name
         name = task.get_name().strip()
         path = task.get_path()
+        if not path: # implicit setup module doesn't have a task path
+            path = "UnknownPath." + name
 
         if not task.no_log:
             args = ', '.join(('%s=%s' % a for a in task.args.items()))
