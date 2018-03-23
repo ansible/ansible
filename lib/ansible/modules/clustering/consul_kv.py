@@ -135,6 +135,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
+NOT_SET = object()
+
 
 def _has_value_changed(consul_client, key, target_value):
     """
@@ -158,15 +160,19 @@ def _has_value_changed(consul_client, key, target_value):
 
 
 def execute(module):
-
     state = module.params.get('state')
 
     if state == 'acquire' or state == 'release':
         lock(module, state)
-    if state == 'present':
-        add_value(module)
-    else:
+    elif state == 'present':
+        if module.params.get('value') == NOT_SET:
+            get_value(module)
+        else:
+            add_value(module)
+    elif state == 'absent':
         remove_value(module)
+    else:
+        module.exit_json(msg="Unsupported state: %s" % (state, ))
 
 
 def lock(module, state):
@@ -199,6 +205,15 @@ def lock(module, state):
     module.exit_json(changed=changed,
                      index=index,
                      key=key)
+
+
+def get_value(module):
+    consul_api = get_consul_api(module)
+    key = module.params.get('key')
+    index, existing_value = consul_api.kv.get(key)
+
+    module.exit_json(changed=False, index=index, data=existing_value)
+
 
 
 def add_value(module):
@@ -274,13 +289,10 @@ def main():
             retrieve=dict(type='bool', default=True),
             state=dict(type='str', default='present', choices=['absent', 'acquire', 'present', 'release']),
             token=dict(type='str', no_log=True),
-            value=dict(type='str'),
+            value=dict(type='str', default=NOT_SET),
             session=dict(type='str'),
         ),
-        supports_check_mode=False,
-        required_if=[
-            ['state', 'present', ['value']],
-        ],
+        supports_check_mode=False
     )
 
     test_dependencies(module)
