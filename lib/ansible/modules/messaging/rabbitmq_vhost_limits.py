@@ -17,12 +17,12 @@ DOCUMENTATION = '''
 ---
 module: rabbitmq_vhost_limits
 author: '"Hiroyuki Matsuo (@h-matsuo)"'
-version_added: "2.4"
+version_added: "2.5"
 
 short_description: Manage the state of virtual host limits in RabbitMQ
 description:
   - This module can enforce or clear limits on a virtual host.
-  - Recognised limits are `max_connections` and `max-queues`.
+  - Recognized limits are I(max_connections) and I(max-queues).
 
 options:
     max_connections:
