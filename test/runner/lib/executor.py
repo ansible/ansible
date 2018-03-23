@@ -1191,15 +1191,15 @@ def get_integration_local_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --allow-root or running as root: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    # consider explicit testing of destructive as though --allow-destructive was given
-    include_destructive = any(target.startswith('destructive/') for target in args.include)
+    override_destructive = set(target for target in args.include if target.startswith('destructive/'))
 
-    if not args.allow_destructive and not include_destructive:
+    if not args.allow_destructive:
         skip = 'destructive/'
-        skipped = [target.name for target in targets if skip in target.aliases]
+        override = [target.name for target in targets if override_destructive & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
         if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require --allow-destructive to run locally: %s'
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-destructive or prefixing with "destructive/" to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     if args.python_version.startswith('3'):
