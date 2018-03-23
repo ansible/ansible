@@ -34,6 +34,7 @@ except ImportError:
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
@@ -433,13 +434,27 @@ def list_snapshots(vm):
 
 
 def vmware_argument_spec():
-
     return dict(
-        hostname=dict(type='str', required=True),
-        username=dict(type='str', aliases=['user', 'admin'], required=True),
-        password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
-        port=dict(type='int', default=443),
-        validate_certs=dict(type='bool', required=False, default=True),
+        hostname=dict(type='str',
+                      required=False,
+                      fallback=(env_fallback, ['VMWARE_HOST']),
+                      ),
+        username=dict(type='str',
+                      aliases=['user', 'admin'],
+                      required=False,
+                      fallback=(env_fallback, ['VMWARE_USER'])),
+        password=dict(type='str',
+                      aliases=['pass', 'pwd'],
+                      required=False,
+                      no_log=True,
+                      fallback=(env_fallback, ['VMWARE_PASSWORD'])),
+        port=dict(type='int',
+                  default=443,
+                  fallback=(env_fallback, ['VMWARE_PORT'])),
+        validate_certs=dict(type='bool',
+                            required=False,
+                            default=True,
+                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])),
     )
 
 
@@ -447,8 +462,23 @@ def connect_to_api(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
-    port = module.params['port'] or 443
+    port = module.params.get('port', 443)
     validate_certs = module.params['validate_certs']
+
+    if not hostname:
+        module.fail_json(msg="Hostname parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_HOST=ESXI_HOSTNAME'")
+
+    if not username:
+        module.fail_json(msg="Username parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_USER=ESXI_USERNAME'")
+
+    if not password:
+        module.fail_json(msg="Password parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_PASSWORD=ESXI_PASSWORD'")
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '

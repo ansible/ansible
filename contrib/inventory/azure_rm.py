@@ -200,8 +200,6 @@ except ImportError:
     # python3
     import configparser as cp
 
-from packaging.version import Version
-
 from os.path import expanduser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
@@ -630,7 +628,7 @@ class AzureInventory(object):
                     if machine.os_profile.windows_configuration.win_rm.listeners is not None:
                         host_vars['windows_rm']['listeners'] = []
                         for listener in machine.os_profile.windows_configuration.win_rm.listeners:
-                            host_vars['windows_rm']['listeners'].append(dict(protocol=listener.protocol,
+                            host_vars['windows_rm']['listeners'].append(dict(protocol=listener.protocol.name,
                                                                              certificate_url=listener.certificate_url))
 
             for interface in machine.network_profile.network_interfaces:

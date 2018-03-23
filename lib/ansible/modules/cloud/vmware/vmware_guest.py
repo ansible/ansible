@@ -231,7 +231,8 @@ options:
   customization:
     description:
     - Parameters for OS customization when cloning from template.
-    - All parameters and VMware object names are case sensetive.
+    - All parameters and VMware object names are case sensitive.
+    - Linux based OS requires Perl to be installed.
     - 'Common parameters (Linux/Windows):'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter).'
@@ -786,7 +787,12 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="hardware.num_cpus attribute is mandatory for VM creation")
 
             if 'memory_mb' in self.params['hardware']:
-                self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                try:
+                    self.configspec.memoryMB = int(self.params['hardware']['memory_mb'])
+                except ValueError:
+                    self.module.fail_json(msg="Failed to parse hardware.memory_mb value."
+                                              " Please refer the documentation and provide"
+                                              " correct value.")
                 if vm_obj is None or self.configspec.memoryMB != vm_obj.config.hardware.memoryMB:
                     self.change_detected = True
             # memory_mb is mandatory for VM creation

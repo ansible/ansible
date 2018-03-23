@@ -26,8 +26,9 @@ description:
     - Create, update, stop and start a virtual machine. Provide an existing storage account and network interface or
       allow the module to create these for you. If you choose not to provide a network interface, the resource group
       must contain a virtual network with at least one subnet.
-    - Currently requires an image found in the Azure Marketplace. Use azure_rm_virtualmachineimage_facts module
-      to discover the publisher, offer, sku and version of a particular image.
+    - Before Ansible 2.5, this required an image found in the Azure Marketplace which can be discovered with
+      M(azure_rm_virtualmachineimage_facts). In Ansible 2.5 and newer, custom images can be used as well, see the
+      examples for more details.
 
 options:
     resource_group:
@@ -202,9 +203,11 @@ options:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
               determines if the public IP address remains permanently associated with the Network Interface. If set
               to 'Dynamic' the public IP address may change any time the VM is rebooted or power cycled.
+            - The C(Disabled) choice was added in Ansible 2.6.
         choices:
             - Dynamic
             - Static
+            - Disabled
         default:
             - Static
         aliases:
@@ -646,7 +649,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                                  default='ReadOnly'),
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
-            public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Static',
+            public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static', 'Disabled'], default='Static',
                                              aliases=['public_ip_allocation']),
             open_ports=dict(type='list'),
             network_interface_names=dict(type='list', aliases=['network_interfaces']),
@@ -1641,8 +1644,11 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             if not subnet_id:
                 self.fail(no_subnets_msg)
 
-        self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
-        pip = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
+        pip = None
+        if self.public_ip_allocation_method != 'Disabled':
+            self.results['actions'].append('Created default public IP {0}'.format(self.name + '01'))
+            pip_info = self.create_default_pip(self.resource_group, self.location, self.name + '01', self.public_ip_allocation_method)
+            pip = self.network_models.PublicIPAddress(id=pip_info.id, location=pip_info.location, resource_guid=pip_info.resource_guid)
 
         self.results['actions'].append('Created default security group {0}'.format(self.name + '01'))
         group = self.create_default_securitygroup(self.resource_group, self.location, self.name + '01', self.os_type,
@@ -1661,9 +1667,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         parameters.network_security_group = self.network_models.NetworkSecurityGroup(id=group.id,
                                                                                      location=group.location,
                                                                                      resource_guid=group.resource_guid)
-        parameters.ip_configurations[0].public_ip_address = self.network_models.PublicIPAddress(id=pip.id,
-                                                                                                location=pip.location,
-                                                                                                resource_guid=pip.resource_guid)
+        parameters.ip_configurations[0].public_ip_address = pip
 
         self.log("Creating NIC {0}".format(network_interface_name))
         self.log(self.serialize_obj(parameters, 'NetworkInterface'), pretty_print=True)
