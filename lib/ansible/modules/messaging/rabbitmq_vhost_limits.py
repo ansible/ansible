@@ -12,12 +12,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: rabbitmq_vhost_limits
 author: '"Hiroyuki Matsuo (@h-matsuo)"'
-version_added: "2.5"
+version_added: "2.6"
 
 short_description: Manage the state of virtual host limits in RabbitMQ
 description:
@@ -37,7 +36,7 @@ options:
         default: -1
     node:
         description:
-            - Erlang node name of the rabbit to configure.
+            - Erlang node name of the rabbit to be configured.
     state:
         description:
             - Specify if limits are to be set or cleared.
@@ -48,7 +47,6 @@ options:
             - RabbitMQ virtual host to apply these limits.
         default: /
 '''
-
 
 EXAMPLES = '''
 # Limits both of the max number of connections and the max number of queues on / vhost.
@@ -69,6 +67,30 @@ EXAMPLES = '''
 - rabbitmq_vhost_limits:
     vhost: /
     state: absent
+'''
+
+RETURN = '''
+max_connections:
+    description:
+        - Current max number of concurrent connections; C(null) if there are no limits.
+    returned: always
+    type: int
+    sample: 64
+max_queues:
+    description: Current max number of queues; C(null) if there are no limits.
+    returned: always
+    type: int
+    sample: 256
+node:
+    description: Erlag node name to be configured in this task; C(null) if not specified.
+    returned: always
+    type: string
+    sample: rabbit
+vhost:
+    description: RabbitMQ virtual host to be configured in this task.
+    returned: always
+    type: string
+    sample: /
 '''
 
 
@@ -133,7 +155,9 @@ def main():
 
     max_connections = module.params['max_connections']
     max_queues = module.params['max_queues']
+    node = module.params['node']
     state = module.params['state']
+    vhost = module.params['vhost']
 
     module_result = dict(changed=False)
     rabbitmq_vhost_limits = RabbitMqVhostLimits(module)
@@ -159,6 +183,12 @@ def main():
             if not module.check_mode:
                 rabbitmq_vhost_limits.clear()
             module_result['changed'] = True
+
+    current_status = rabbitmq_vhost_limits.list()
+    module_result['max_connections'] = current_status['max_connections']
+    module_result['max_queues'] = current_status['max_queues']
+    module_result['node'] = node
+    module_result['vhost'] = vhost
 
     module.exit_json(**module_result)
 
