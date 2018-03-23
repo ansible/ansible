@@ -4,11 +4,12 @@ Ansible Releases at a Glance
 VERSION  RELEASE     CODE NAME
 ++++++++++++++++++++++++++++++
 
-2.5.0    TBD         "Kashmir"
+2.5.0    2018-03-22  "Kashmir"
 2.4.3    01-31.2018  "Dancing Days"
 2.4.2    11-29-2017  "Dancing Days"
 2.4.1    10-25-2017  "Dancing Days"
 2.4.0    09-19-2017  "Dancing Days"
+2.3.3    12-20-2017  "Ramble On"
 2.3.2    2017-08-04  "Ramble On"
 2.3.1    2017-06-01  "Ramble On"
 2.3.0    2017-04-12  "Ramble On"

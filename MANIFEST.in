@@ -15,7 +15,6 @@ recursive-include licenses *
 recursive-include packaging *
 recursive-include test *
 include Makefile
-include VERSION
 include MANIFEST.in
 include changelogs/*.rst
 include contrib/README.md

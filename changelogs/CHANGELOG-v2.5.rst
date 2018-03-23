@@ -2,31 +2,15 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
-v2.5.0rc3
-=========
+v2.5.0
+======
 
 Release Summary
 ---------------
 
-| Release Date: 2018-03-15
-| Estimated Final Release: 2018-03-22
-| `Porting Guide <http://docs.ansible.com/ansible/devel/porting_guides.html>`_
+| Release Date: 2018-03-22
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`_
 
-
-Bugfixes
---------
-
-- Connection error messages may contain characters that jinja2 would interpret as a template.  Wrap the error string so this doesn't happen (https://github.com/ansible/ansible/pull/37329)
-
-- Fix onyx_linkagg module writing debugging information to a tempfile on the remote machine (https://github.com/ansible/ansible/pull/37308)
-
-- terraform - fixed typo in module result stdout value (https://github.com/ansible/ansible/pull/37253)
-
-- setup - ensure that `ansible_lo` is properly nested under ansible_facts (https://github.com/ansible/ansible/pull/37360)
-
-
-v2.5.0rc2
-=========
 
 Major Changes
 -------------
@@ -40,140 +24,6 @@ Major Changes
   * Filters: Add a filter to convert XML response from a network device to JSON object.
   * Loads of bug fixes.
   * Plus lots more.
-
-
-Bugfixes
---------
-
-- tower_* modules - fix credentials to work with v1 and v2 of Ansible Tower API
-
-- docker_container, docker_image, docker_network modules - Update to work with Docker SDK 3.1
-
-- edgeos_facts - fix error when there are no commit revisions (https://github.com/ansible/ansible/issues/37123)
-
-- setup.py - Ensure we install ansible-config and ansible-inventory with `pip install -e` (https://github.com/ansible/ansible/pull/37151)
-
-- Fix bytes/text handling in maven_artifact that was causing tracebacks on Python3
-
-- znode - fixed a bug calling the zookeeper API under Python3 https://github.com/ansible/ansible/pull/36999
-
-- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. https://github.com/ansible/ansible/pull/37048
-
-- (network)_vlan / (network)_vrf - decouple config/state check (https://github.com/ansible/ansible/pull/36704)
-
-- nxos_vlan / nxos_linkagg - fixed various issues (https://github.com/ansible/ansible/pull/36711)
-
-- nios - allow ib_spec attrs to be filtered in update (https://github.com/ansible/ansible/pull/36673)
-
-- nso_config / nso_verify - fixed various issues (https://github.com/ansible/ansible/pull/36583)
-
-- cs_sshkeypair - fixed ssh key rename (https://github.com/ansible/ansible/pull/36726)
-
-- cliconf - fixed get_config traceback (https://github.com/ansible/ansible/pull/36682)
-
-- impi_boot - added floppy option (https://github.com/ansible/ansible/pull/36174)
-
-- nso_config - fixed ordering issues (https://github.com/ansible/ansible/pull/36774)
-
-- nxos_facts - fixed ipv6 parsing issues on new nxos releases (https://github.com/ansible/ansible/pull/36796)
-
-- nso_config - fixed dependency sort cycle issue (https://github.com/ansible/ansible/pull/36828)
-
-- ovirt_* - various fixes (https://github.com/ansible/ansible/pull/36828)
-
-- aws_ssm_parameter_store - added no_log to value arg (https://github.com/ansible/ansible/pull/36828)
-
-- openshift_raw - fixed creation of RoleBinding resources (https://github.com/ansible/ansible/pull/36887)
-
-- nxos_interface - fixed multiple issues (https://github.com/ansible/ansible/pull/36827)
-
-- junos_command - fixed Python3 issues (https://github.com/ansible/ansible/pull/36782)
-
-- ios_static_route - fixed idempotence issue (https://github.com/ansible/ansible/pull/35912)
-
-- win_lineinfile - fixed issue where \r and \n as a string was converted to newline (https://github.com/ansible/ansible/pull/35100)
-
-- win_uri - return response info and content on a non 200 message
-
-- win_wait_for - fixed issue when trying to check a localport when the port is not available externally
-
-
-v2.5.0rc1
-=========
-
-Minor Changes
--------------
-
-- aci_* modules - added signature based authentication
-
-- aci_* modules - included dedicated ACI documentation
-
-- aci_* modules - improved ACI return values
-
-
-Deprecated Features
--------------------
-
-- Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
-
-
-Bugfixes
---------
-
-- include_role - improved performance and recursion depth (https://github.com/ansible/ansible/pull/36470)
-
-- lineinfile - fixed regexp used with insert(before|after) inserting duplicate lines (https://github.com/ansible/ansible/pull/36156)
-
-- Fix for ansible_*_interpreter on Python3 when using non-newstyle modules. Those include old-style ansible modules and Ansible modules written in non-python scripting languages (https://github.com/ansible/ansible/pull/36541)
-
-- fix for ansible-vault always requesting passwords (https://github.com/ansible/ansible/issues/33027)
-
-- ios CLI - fixed prompt detection (https://github.com/ansible/ansible/issues/35662)
-
-- nxos_user - fixed structured output issue (https://github.com/ansible/ansible/pull/36193)
-
-- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36340)
-
-- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36374)
-
-- nxos_install_os - kickstart_image_file is no longer required (https://github.com/ansible/ansible/pull/36319)
-
-- script/patch - fixed tempfile ownership issues (https://github.com/ansible/ansible/issues/36398)
-
-- nxos_bgp_neighbor - fixed various module arg issues (https://github.com/ansible/ansible/pull/36318)
-
-- vyos_l3_interface - fixed issues with multiple addresses on an interface (https://github.com/ansible/ansible/pull/36377)
-
-- nxos_banner - fixed issues with unstructured output (https://github.com/ansible/ansible/pull/36411)
-
-- nxos_bgp_neighbor_af - fixed various issues (https://github.com/ansible/ansible/pull/36472)
-
-- vyos_config - fixed IndexError in sanitize_config (https://github.com/ansible/ansible/pull/36375)
-
-- cs_user - fixed user_api_secret return for ACS 4.10+ (https://github.com/ansible/ansible/pull/36447)
-
-- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36514)
-
-- fix cases where INVENTORY_UNPARSED_IS_FAILED didn't fail (https://github.com/ansible/ansible/issues/36034)
-
-- aws_ses_identity - fixed failure on missing identity info (https://github.com/ansible/ansible/issues/36065)
-
-- ec2_vpc_net_facts - fixed traceback for regions other than us-east-1 (https://github.com/ansible/ansible/pull/35302)
-
-- aws_waf_* - fixed traceback on WAFStaleDataException (https://github.com/ansible/ansible/pull/36405)
-
-- ec2_group - fixed check_mode when using tags (https://github.com/ansible/ansible/pull/36503)
-
-- loop item labels will now update if templated (https://github.com/ansible/ansible/pull/36430)
-
-- win_feature - will display a more helpful error when it fails during execution (https://github.com/ansible/ansible/pull/36491)
-
-
-v2.5.0b2
-========
-
-Major Changes
--------------
 
 - New simpler and more intuitive 'loop' keyword for task loops. The ``with_<lookup>`` loops will likely be deprecated in the near future and eventually removed.
 
@@ -238,9 +88,17 @@ Minor Changes
   the spelling of the config value. ANSIBLE\_REMOTE\_TEMP will be
   deprecated in the future.
 
+- aci_* modules - added signature based authentication
+
+- aci_* modules - included dedicated ACI documentation
+
+- aci_* modules - improved ACI return values
+
 
 Deprecated Features
 -------------------
+
+- Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
 
 - Previously deprecated 'hostfile' config settings have been
   're-deprecated' because previously code did not warn about deprecated
@@ -742,17 +600,29 @@ New Modules
 Bugfixes
 --------
 
+- tower_* modules - fix credentials to work with v1 and v2 of Ansible Tower API
+
 - azure_rm modules - updated with internal changes to use API profiles and kwargs for future Azure Stack support and better stability between SDK updates. (https://github.com/ansible/ansible/pull/35538)
 
 - fixed memory bloat on nested includes by preventing blocks from self-parenting (https://github.com/ansible/ansible/pull/36075)
 
 - updated to ensure displayed messages under peristent connections are returned to the controller (https://github.com/ansible/ansible/pull/36064)
 
+- docker_container, docker_image, docker_network modules - Update to work with Docker SDK 3.1
+
+- edgeos_facts - fix error when there are no commit revisions (https://github.com/ansible/ansible/issues/37123)
+
 - eos_vrf and eos_eapi - fixed vrf parsing (https://github.com/ansible/ansible/pull/35791)
+
+- include_role - improved performance and recursion depth (https://github.com/ansible/ansible/pull/36470)
 
 - interface_file - now accepts interfaces without address family or method (https://github.com/ansible/ansible/pull/34200)
 
 - lineinfile - fixed insertion if pattern already exists (https://github.com/ansible/ansible/pull/33393)
+
+- lineinfile - fixed regexp used with insert(before|after) inserting duplicate lines (https://github.com/ansible/ansible/pull/36156)
+
+- Connection error messages may contain characters that jinja2 would interpret as a template.  Wrap the error string so this doesn't happen (https://github.com/ansible/ansible/pull/37329)
 
 - nxos_evpn_vni - fixed a number of issues (https://github.com/ansible/ansible/pull/35930)
 
@@ -760,7 +630,19 @@ Bugfixes
 
 - nxos_interface_ospf - added various bugfixes (https://github.com/ansible/ansible/pull/35988)
 
+- Fix onyx_linkagg module writing debugging information to a tempfile on the remote machine (https://github.com/ansible/ansible/pull/37308)
+
 - openshift modules - updated to client version 0.4.0 (https://github.com/ansible/ansible/pull/35127)
+
+- setup.py - Ensure we install ansible-config and ansible-inventory with `pip install -e` (https://github.com/ansible/ansible/pull/37151)
+
+- Fix for ansible_*_interpreter on Python3 when using non-newstyle modules. Those include old-style ansible modules and Ansible modules written in non-python scripting languages (https://github.com/ansible/ansible/pull/36541)
+
+- Fix bytes/text handling in maven_artifact that was causing tracebacks on Python3
+
+- znode - fixed a bug calling the zookeeper API under Python3 https://github.com/ansible/ansible/pull/36999
+
+- Fix for unarchive when users use the --strip-components extra_opt to tar causing ansible to set permissions on the wrong directory. https://github.com/ansible/ansible/pull/37048
 
 - fixed templating issues in loop_control (https://github.com/ansible/ansible/pull/36124)
 
@@ -772,6 +654,82 @@ Bugfixes
 
 - ios_ping - updated to allow for count > 70 (https://github.com/ansible/ansible/pull/36142)
 
+- fix for ansible-vault always requesting passwords (https://github.com/ansible/ansible/issues/33027)
+
+- ios CLI - fixed prompt detection (https://github.com/ansible/ansible/issues/35662)
+
+- nxos_user - fixed structured output issue (https://github.com/ansible/ansible/pull/36193)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36340)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36374)
+
+- nxos_install_os - kickstart_image_file is no longer required (https://github.com/ansible/ansible/pull/36319)
+
+- script/patch - fixed tempfile ownership issues (https://github.com/ansible/ansible/issues/36398)
+
+- nxos_bgp_neighbor - fixed various module arg issues (https://github.com/ansible/ansible/pull/36318)
+
+- vyos_l3_interface - fixed issues with multiple addresses on an interface (https://github.com/ansible/ansible/pull/36377)
+
+- nxos_banner - fixed issues with unstructured output (https://github.com/ansible/ansible/pull/36411)
+
+- nxos_bgp_neighbor_af - fixed various issues (https://github.com/ansible/ansible/pull/36472)
+
+- vyos_config - fixed IndexError in sanitize_config (https://github.com/ansible/ansible/pull/36375)
+
+- cs_user - fixed user_api_secret return for ACS 4.10+ (https://github.com/ansible/ansible/pull/36447)
+
+- nxos_* modules - various fixes (https://github.com/ansible/ansible/pull/36514)
+
+- fix cases where INVENTORY_UNPARSED_IS_FAILED didn't fail (https://github.com/ansible/ansible/issues/36034)
+
+- aws_ses_identity - fixed failure on missing identity info (https://github.com/ansible/ansible/issues/36065)
+
+- ec2_vpc_net_facts - fixed traceback for regions other than us-east-1 (https://github.com/ansible/ansible/pull/35302)
+
+- aws_waf_* - fixed traceback on WAFStaleDataException (https://github.com/ansible/ansible/pull/36405)
+
+- ec2_group - fixed check_mode when using tags (https://github.com/ansible/ansible/pull/36503)
+
+- loop item labels will now update if templated (https://github.com/ansible/ansible/pull/36430)
+
+- (network)_vlan / (network)_vrf - decouple config/state check (https://github.com/ansible/ansible/pull/36704)
+
+- nxos_vlan / nxos_linkagg - fixed various issues (https://github.com/ansible/ansible/pull/36711)
+
+- nios - allow ib_spec attrs to be filtered in update (https://github.com/ansible/ansible/pull/36673)
+
+- nso_config / nso_verify - fixed various issues (https://github.com/ansible/ansible/pull/36583)
+
+- cs_sshkeypair - fixed ssh key rename (https://github.com/ansible/ansible/pull/36726)
+
+- cliconf - fixed get_config traceback (https://github.com/ansible/ansible/pull/36682)
+
+- impi_boot - added floppy option (https://github.com/ansible/ansible/pull/36174)
+
+- nso_config - fixed ordering issues (https://github.com/ansible/ansible/pull/36774)
+
+- nxos_facts - fixed ipv6 parsing issues on new nxos releases (https://github.com/ansible/ansible/pull/36796)
+
+- nso_config - fixed dependency sort cycle issue (https://github.com/ansible/ansible/pull/36828)
+
+- ovirt_* - various fixes (https://github.com/ansible/ansible/pull/36828)
+
+- aws_ssm_parameter_store - added no_log to value arg (https://github.com/ansible/ansible/pull/36828)
+
+- openshift_raw - fixed creation of RoleBinding resources (https://github.com/ansible/ansible/pull/36887)
+
+- nxos_interface - fixed multiple issues (https://github.com/ansible/ansible/pull/36827)
+
+- junos_command - fixed Python3 issues (https://github.com/ansible/ansible/pull/36782)
+
+- ios_static_route - fixed idempotence issue (https://github.com/ansible/ansible/pull/35912)
+
+- terraform - fixed typo in module result stdout value (https://github.com/ansible/ansible/pull/37253)
+
+- setup - ensure that `ansible_lo` is properly nested under ansible_facts (https://github.com/ansible/ansible/pull/37360)
+
 - vmware_guest_snapshot - updated to always check for root snapshot (https://github.com/ansible/ansible/pull/36001)
 
 - vyos - added fixes to check mode support (https://github.com/ansible/ansible/pull/35977)
@@ -780,7 +738,15 @@ Bugfixes
 
 - win_domain_controller - updated to only specify ReadOnlyReplica when necessary (https://github.com/ansible/ansible/pull/36017)
 
+- win_feature - will display a more helpful error when it fails during execution (https://github.com/ansible/ansible/pull/36491)
+
+- win_lineinfile - fixed issue where \r and \n as a string was converted to newline (https://github.com/ansible/ansible/pull/35100)
+
 - win_updates - fixed regression with string category names (https://github.com/ansible/ansible/pull/36015)
 
+- win_uri - return response info and content on a non 200 message
+
 - win_uri - fixed issues with the creates and removes options (https://github.com/ansible/ansible/pull/36016)
+
+- win_wait_for - fixed issue when trying to check a localport when the port is not available externally
 
