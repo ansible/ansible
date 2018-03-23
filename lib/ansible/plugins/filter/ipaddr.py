@@ -785,7 +785,7 @@ def next_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
@@ -807,7 +807,7 @@ def previous_nth_usable(value, offset):
         return False
 
     if type(offset) != int:
-        raise errors.AnsibleFilterError('Must pass in an interger')
+        raise errors.AnsibleFilterError('Must pass in an integer')
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
