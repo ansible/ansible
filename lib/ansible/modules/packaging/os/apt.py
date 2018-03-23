@@ -274,6 +274,7 @@ APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
+APT_MARK_INVALID_OP = 'Invalid operation'
 
 HAS_PYTHON_APT = True
 try:
@@ -468,6 +469,22 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
+def mark_installed_manually(m, packages):
+    if not packages:
+        return
+
+    apt_mark_cmd_path = m.get_bin_path("apt-mark", required=True)
+    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    rc, out, err = m.run_command(cmd)
+
+    if APT_MARK_INVALID_OP in err:
+        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
+        rc, out, err = m.run_command(cmd)
+
+    if rc != 0:
+        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+
+
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
@@ -476,6 +493,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
+    package_names = []
     for package in pkgspec:
         if build_dep:
             # Let apt decide what to install
@@ -483,6 +501,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             continue
 
         name, version = package_split(package)
+        package_names.append(name)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if (not installed and not only_upgrade) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
@@ -544,9 +563,14 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
-        return (status, data)
     else:
-        return (True, dict(changed=False))
+        status = True
+        data = dict(changed=False)
+
+    if not build_dep:
+        mark_installed_manually(m, package_names)
+
+    return (status, data)
 
 
 def get_field_of_deb(m, deb_file, field="Version"):
