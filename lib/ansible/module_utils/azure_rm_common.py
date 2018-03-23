@@ -770,17 +770,41 @@ class AzureRMModuleBase(object):
             if os_type == 'Linux':
                 # add an inbound SSH rule
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow SSH Access',
-                                                     source_port_range='*', destination_port_range='22', priority=100, name='SSH')
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow SSH Access',
+                                                     source_port_range='*',
+                                                     destination_port_range='22',
+                                                     priority=100,
+                                                     name='SSH')
                 ]
                 parameters.location = location
             else:
                 # for windows add inbound RDP and WinRM rules
                 parameters.security_rules = [
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow RDP port 3389',
-                                                     source_port_range='*', destination_port_range='3389', priority=100, name='RDP01'),
-                    self.network_models.SecurityRule('Tcp', '*', '*', 'Allow', 'Inbound', description='Allow WinRM HTTPS port 5986',
-                                                     source_port_range='*', destination_port_range='5986', priority=101, name='WinRM01'),
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow RDP port 3389',
+                                                     source_port_range='*',
+                                                     destination_port_range='3389',
+                                                     priority=100,
+                                                     name='RDP01'),
+                    self.network_models.SecurityRule(protocol='Tcp',
+                                                     source_address_prefix='*',
+                                                     destination_address_prefix='*',
+                                                     access='Allow',
+                                                     direction='Inbound',
+                                                     description='Allow WinRM HTTPS port 5986',
+                                                     source_port_range='*',
+                                                     destination_port_range='5986',
+                                                     priority=101,
+                                                     name='WinRM01'),
                 ]
         else:
             # Open custom ports
