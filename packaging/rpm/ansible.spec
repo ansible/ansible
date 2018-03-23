@@ -141,6 +141,9 @@ rm -rf %{buildroot}
 * Wed Jan 31 2018 Ansible, Inc. <info@ansible.com> - 2.4.3.0-1
 - Release 2.4.3.0-1
 
+* Wed Dec 20 2017 Ansible, Inc. <info@ansible.com> - 2.3.3.0-1
+- Release 2.3.3.0-1
+
 * Wed Nov 29 2017 Ansible, Inc. <info@ansible.com> - 2.4.2.0-1
 - Release 2.4.2.0-1
 
@@ -150,41 +153,38 @@ rm -rf %{buildroot}
 * Mon Sep 18 2017 Ansible, Inc. <info@ansible.com> - 2.4.0.0-1
 - Release 2.4.0.0-1
 
-* Wed Dec 20 2017 Ansible, Inc. <info@ansible.com> - 2.3.3.0-1
-- Release 2.3.3.0-1
-
 * Fri Aug 04 2017 Ansible, Inc. <info@ansible.com> - 2.3.2.0-1
 - Release 2.3.2.0-1
 
 * Thu Jun 01 2017 Ansible, Inc. <info@ansible.com> - 2.3.1.0-1
 - Release 2.3.1.0-1
 
-* Wed Apr 12 2017 Ansible, Inc. <info@ansible.com> - 2.3.0.0-1
-- Release 2.3.0.0-1
+* Thu Jun 01 2017 Ansible, Inc. <info@ansible.com> - 2.1.6.0-1
+- Release 2.1.6.0-1
 
 * Tue May 09 2017 Ansible, Inc. <info@ansible.com> - 2.2.3.0-1
 - Release 2.2.3.0-1
 
+* Wed Apr 12 2017 Ansible, Inc. <info@ansible.com> - 2.3.0.0-1
+- Release 2.3.0.0-1
+
 * Mon Mar 27 2017 Ansible, Inc. <info@ansible.com> - 2.2.2.0-1
 - Release 2.2.2.0-1
 
-* Mon Jan 16 2017 Ansible, Inc. <info@ansible.com> - 2.2.1.0-1
-- Release 2.2.1.0-1
-
-* Mon Oct 31 2016 Ansible, Inc. <info@ansible.com> - 2.2.0.0-1
-- Release 2.2.0.0-1
-
-* Thu Jun 01 2017 Ansible, Inc. <info@ansible.com> - 2.1.6.0-1
-- Release 2.1.6.0-1
-
 * Mon Mar 27 2017 Ansible, Inc. <info@ansible.com> - 2.1.5.0-1
 - Release 2.1.5.0-1
+
+* Mon Jan 16 2017 Ansible, Inc. <info@ansible.com> - 2.2.1.0-1
+- Release 2.2.1.0-1
 
 * Mon Jan 16 2017 Ansible, Inc. <info@ansible.com> - 2.1.4.0-1
 - Release 2.1.4.0-1
 
 * Fri Nov 04 2016 Ansible, Inc. <info@ansible.com> - 2.1.3.0-1
 - Release 2.1.3.0-1
+
+* Mon Oct 31 2016 Ansible, Inc. <info@ansible.com> - 2.2.0.0-1
+- Release 2.2.0.0-1
 
 * Thu Sep 29 2016 Ansible, Inc. <info@ansible.com> - 2.1.2.0-1
 - Release 2.1.2.0-1
