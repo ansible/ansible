@@ -229,6 +229,10 @@ def parse_args():
                              action='store_true',
                              help='allow tests requiring root when not root')
 
+    integration.add_argument('--allow-disabled',
+                             action='store_true',
+                             help='allow tests which have been marked as disabled')
+
     integration.add_argument('--retry-on-error',
                              action='store_true',
                              help='retry failed test with increased verbosity')

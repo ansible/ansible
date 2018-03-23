@@ -1180,6 +1180,24 @@ def get_integration_filter(args, targets):
     return get_integration_local_filter(args, targets)
 
 
+def common_integration_filter(args, targets, exclude):
+    """
+    :type args: IntegrationConfig
+    :type targets: tuple[IntegrationTarget]
+    :type exclude: list[str]
+    """
+    override_disabled = set(target for target in args.include if target.startswith('disabled/'))
+
+    if not args.allow_disabled:
+        skip = 'disabled/'
+        override = [target.name for target in targets if override_disabled & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
+        if skipped:
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-disabled or prefixing with "disabled/": %s'
+                            % (skip.rstrip('/'), ', '.join(skipped)))
+
+
 def get_integration_local_filter(args, targets):
     """
     :type args: IntegrationConfig
@@ -1187,6 +1205,8 @@ def get_integration_local_filter(args, targets):
     :rtype: list[str]
     """
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     if not args.allow_root and os.getuid() != 0:
         skip = 'needs/root/'
@@ -1229,6 +1249,8 @@ def get_integration_docker_filter(args, targets):
     :rtype: list[str]
     """
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     if not args.docker_privileged:
         skip = 'needs/privileged/'
@@ -1275,6 +1297,8 @@ def get_integration_remote_filter(args, targets):
     platform = parts[0]
 
     exclude = []
+
+    common_integration_filter(args, targets, exclude)
 
     skip = 'skip/%s/' % platform
     skipped = [target.name for target in targets if skip in target.aliases]
