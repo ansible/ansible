@@ -208,6 +208,7 @@ RETURN = '''
 from ansible.module_utils.basic import AnsibleModule
 from ast import literal_eval
 import re
+from distutils.version import LooseVersion
 
 
 class GeoRep(object):
@@ -360,26 +361,22 @@ def main():
         supports_check_mode=False,
     )
     # Verify if GlusterFS 3.2 or over is installed
-    if not valid_gluster_version(module):
-        module.fail_json(msg="GlusterFS version > 3.2 is required")
+    required_version = "3.2"
+    if is_invalid_gluster_version(module, required_version):
+        module.fail_json(msg="GlusterFS version > %s is required" %
+                         required_version)
     GeoRep(module)
 
 
-def valid_gluster_version(module):
+def is_invalid_gluster_version(module, required_version):
     cmd = module.get_bin_path('gluster', True) + ' --version'
-    # Check if the required gluster version is installed
     result = module.run_command(cmd)
     ver_line = result[1].split('\n')[0]
     version = ver_line.split(' ')[1]
-    major_vers = int(version[0])
-    minor_vers = int(version[2])
-    if major_vers >= 3:
-        # check minor version
-        if minor_vers < 2:
-            return False
-    else:
-        return False
-    return True
+    # If the installed version is less than 3.2, it is an invalid version
+    # return True
+    return LooseVersion(version) < LooseVersion(required_version)
+
 
 if __name__ == '__main__':
     main()
