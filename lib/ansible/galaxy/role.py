@@ -54,6 +54,7 @@ class GalaxyRole(object):
 
         self._metadata = None
         self._install_info = None
+        self._selected = None
         self._validate_certs = not galaxy.options.ignore_certs
 
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
@@ -71,11 +72,20 @@ class GalaxyRole(object):
                 path = os.path.join(path, self.name)
             self.path = path
         else:
+            dir_name = self.name
+            # Append version to directory name, if present
+            if self.version:
+                dir_name += "-%s" % self.version
             # use the first path by default
-            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            self.path = os.path.join(galaxy.roles_paths[0], dir_name)
             # create list of possible paths
             self.paths = [x for x in galaxy.roles_paths]
-            self.paths = [os.path.join(x, self.name) for x in self.paths]
+            self.paths = [os.path.join(x, dir_name) for x in self.paths]
+
+        # Override name/version from install info, if available
+        if self.install_info:
+            self.name = self._install_info['name']
+            self.version = self._install_info['version']
 
     def __repr__(self):
         """
@@ -121,6 +131,11 @@ class GalaxyRole(object):
                 try:
                     f = open(info_path, 'r')
                     self._install_info = yaml.safe_load(f)
+                    # Set 'name' field in install_info from object for backward
+                    # compatability with data written by an older version of
+                    # Ansible
+                    if not ('name' in self._install_info):
+                        self._install_info['name'] = self.name
                 except:
                     display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
@@ -128,16 +143,35 @@ class GalaxyRole(object):
                     f.close()
         return self._install_info
 
-    def _write_galaxy_install_info(self):
+    @property
+    def selected(self):
+        """
+        Returns whether role version is selected
+        This looks for a symlink in the same dir pointing to this role
+        """
+        if self._selected is None:
+            link_path = self._symlink_path()
+            if os.path.exists(link_path) and os.path.islink(link_path):
+                if os.path.basename(os.readlink(link_path)) == os.path.basename(self.path):
+                    self._selected = True
+                    return self._selected
+            self._selected = False
+        return self._selected
+
+    def _write_galaxy_install_info(self, install_date=None):
         """
         Writes a YAML-formatted file to the role's meta/ directory
         (named .galaxy_install_info) which contains some information
         we can use later for commands like 'list' and 'info'.
         """
 
+        if install_date is None:
+            install_date = datetime.datetime.utcnow().strftime("%c")
+
         info = dict(
+            name=self.name,
             version=self.version,
-            install_date=datetime.datetime.utcnow().strftime("%c"),
+            install_date=install_date,
         )
         if not os.path.exists(os.path.join(self.path, 'meta')):
             os.makedirs(os.path.join(self.path, 'meta'))
@@ -150,6 +184,34 @@ class GalaxyRole(object):
 
         return True
 
+    def _rename_role_with_version(self):
+        new_path = "%s-%s" % (self.path, self.version)
+        display.debug("Renaming %s to %s" % (self.path, new_path))
+        os.rename(self.path, new_path)
+        self.path = new_path
+        # Rewrite install info to make sure we have the new fields
+        self._write_galaxy_install_info(install_date=self.install_info['install_date'])
+
+    def _symlink_path(self):
+        return os.path.join(os.path.dirname(self.path), self.name)
+
+    def select(self):
+        """
+        Select this particular role version as the default for when no version is
+        specified in a playbook
+        """
+        link_path = self._symlink_path()
+        if os.path.lexists(link_path):
+            if os.path.islink(link_path):
+                os.remove(link_path)
+            else:
+                if link_path == self.path:
+                    self._rename_role_with_version()
+                else:
+                    other_role = GalaxyRole(self.galaxy, os.path.basename(link_path), path=link_path)
+                    other_role._rename_role_with_version()
+        os.symlink(os.path.basename(self.path), link_path)
+
     def remove(self):
         """
         Removes the specified role from the roles path.
@@ -158,10 +220,13 @@ class GalaxyRole(object):
         """
         if self.metadata:
             try:
+                # Remove symlink, if selected
+                if self.selected:
+                    os.remove(self._symlink_path())
                 rmtree(self.path)
-                return True
             except:
                 pass
+            return True
 
         return False
 
@@ -247,6 +312,11 @@ class GalaxyRole(object):
         else:
             raise AnsibleError("No valid role data found")
 
+        # Append version to role path, if not already present
+        if not self.path.endswith("-%s" % self.version):
+            self.path = self.path + ("-%s" % self.version)
+            self.paths = [path + ("-%s" % self.version) for path in self.paths if not path.endswith("-%s" % self.version)]
+
         if tmp_file:
 
             display.debug("installing from %s" % tmp_file)
@@ -330,8 +400,12 @@ class GalaxyRole(object):
                         if error:
                             raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
-                # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
+
+                # Select this role version if there is no current selection
+                if not os.path.lexists(self._symlink_path()):
+                    self.select()
+
                 if not (self.src and os.path.isfile(self.src)):
                     try:
                         os.unlink(tmp_file)
