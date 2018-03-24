@@ -1690,7 +1690,7 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 }
 @media screen and (min-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: calc(100% - 300px);float:left;background:#fcfcfc;min-height:100%}
 }
-.wy-nav-content{padding:1.618em 3.236em;height:100%;margin:auto;overflow-x: hidden;overflow-y: scroll;}
+.wy-nav-content{padding:1.618em 3.236em;height:100%;margin:auto;overflow-x: hidden;overflow-y: scroll;position: fixed;width: inherit}
 .wy-body-mask{position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.2);display:none;z-index:499}
 .wy-body-mask.on{display:block}
 footer{color:gray}
