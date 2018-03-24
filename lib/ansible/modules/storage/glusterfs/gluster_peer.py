@@ -77,34 +77,30 @@ RETURN = '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ast import literal_eval
+from distutils.version import LooseVersion
 
 
 class Peer(object):
     def __init__(self, module):
         self.module = module
-        self.state = self._validated_params('state')
-
-    def _validated_params(self, opt):
-        if self.module.params[opt] is None:
-            msg = "Please provide %s option in the playbook!" % opt
-            self.module.fail_json(rc=4, msg=msg)
-        return self.module.params[opt]
-
-    def get_nodes(self):
-        nodes = literal_eval(self._validated_params('nodes'))
-        if nodes[0] is None:
-            # Found a list with None as its first element
-            self.module.fail_json(rc=1, msg="Nodes not found, provide at least "
-                                  "one node.")
-        return nodes
+        self.state = self.module.params['state']
 
     def gluster_peer_ops(self):
-        nodes = self.get_nodes()
+        try:
+            nodes = literal_eval(self.module.params['nodes'])
+        except ValueError:
+            self.module.fail_json(msg="nodes must be a list")
+        if not nodes:
+            self.module.fail_json(msg="nodes list cannot be empty")
+        # There is a possiblitity of nodes getting other type of data
+        # structures. For example a dictionary
+        if type(nodes) != list:
+            self.module.fail_json(msg="nodes must be a list")
         force = 'force' if self.module.params.get('force') else ''
         if self.state == 'present':
             nodes = self.get_to_be_probed_hosts(nodes)
             action = 'probe'
-        elif self.state == 'absent':
+        else:
             action = 'detach'
         cmd = []
         for node in nodes:
@@ -147,35 +143,30 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             force=dict(type='bool', required=False),
-            nodes=dict(),
+            nodes=dict(required=True),
             state=dict(required=True, choices=["absent", "present"]),
         ),
-        supports_check_mode=False,
     )
     pops = Peer(module)
-    # Verify if GlusterFS 3.2 or over is installed
-    if not valid_gluster_version(module):
-        module.fail_json(msg="GlusterFS version > 3.2 is required")
+    required_version = "3.2"
+    # Verify if required GlusterFS version is installed
+    if is_invalid_gluster_version(module, required_version):
+        module.fail_json(msg="GlusterFS version > %s is required" %
+                         required_version)
     cmds = pops.gluster_peer_ops()
     errors = pops.call_peer_commands(cmds)
     pops.get_output(errors)
 
 
-def valid_gluster_version(module):
+def is_invalid_gluster_version(module, required_version):
     cmd = module.get_bin_path('gluster', True) + ' --version'
-    # Check if the required gluster version is installed
     result = module.run_command(cmd)
     ver_line = result[1].split('\n')[0]
     version = ver_line.split(' ')[1]
-    major_vers = int(version[0])
-    minor_vers = int(version[2])
-    if major_vers >= 3:
-        # check minor version
-        if minor_vers < 2:
-            return False
-    else:
-        return False
-    return True
+    # If the installed version is less than 3.2, it is an invalid version
+    # return True
+    return LooseVersion(version) < LooseVersion(required_version)
+
 
 if __name__ == "__main__":
     main()
