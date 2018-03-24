@@ -140,6 +140,7 @@ def main():
             state=dict(type='str', choices=['absent', 'present'],
                        default='present'),
         ),
+        supports_check_mode=False
     )
     pops = Peer(module)
     required_version = "3.2"
