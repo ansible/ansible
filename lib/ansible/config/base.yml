@@ -321,6 +321,18 @@ COMMAND_WARNINGS:
   - {key: command_warnings, section: defaults}
   type: boolean
   version_added: "1.8"
+LOCALHOST_WARNING:
+  name: Warning when using implicit inventory with only localhost
+  default: True
+  description:
+    - By default Ansible will issue a warning when there are no hosts in the
+      inventory.
+    - These warnings can be silenced by adjusting this setting to False. 
+  env: [{name: ANSIBLE_LOCALHOST_WARNING}]
+  ini:
+  - {key: localhost_warning, section: defaults}
+  type: boolean
+  version_added: "2.6"
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
