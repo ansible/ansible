@@ -205,7 +205,7 @@ class ManagePosixCI(object):
         :type src: str
         :type dst: str
         """
-        for dummy in range(1, 3):
+        for dummy in range(1, 10):
             try:
                 run_command(self.core_ci.args,
                             ['scp'] + self.ssh_args +
