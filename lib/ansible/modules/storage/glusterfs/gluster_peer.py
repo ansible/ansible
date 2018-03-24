@@ -94,7 +94,7 @@ class Peer(object):
             self.module.fail_json(msg="nodes list cannot be empty")
         # There is a possiblitity of nodes getting other type of data
         # structures. For example a dictionary
-        if type(nodes) != list:
+        if not isinstance(nodes, list):
             self.module.fail_json(msg="nodes must be a list")
         force = 'force' if self.module.params.get('force') else ''
         if self.state == 'present':
