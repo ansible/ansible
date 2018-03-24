@@ -88,14 +88,11 @@ import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
-URPMI_PATH = '/usr/sbin/urpmi'
-URPME_PATH = '/usr/sbin/urpme'
-
 
 def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q %s %s" % (name, root_option(root))
+    cmd = "%s -q %s %s" % (RPM_PATH, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
@@ -106,13 +103,14 @@ def query_package(module, name, root):
 def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q --whatprovides %s %s" % (name, root_option(root))
+    cmd = "%s -q --whatprovides %s %s" % (RPM_PATH, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
 
 def update_package_db(module):
-    cmd = "/usr/sbin/urpmi.update -a -q"
+
+    cmd = "%s -a -q" % (URPMIUPDATE_PATH,)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
@@ -197,8 +195,14 @@ def main():
         ),
     )
 
-    if not os.path.exists(URPMI_PATH):
-        module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
+    global URPMI_PATH
+    URPMI_PATH = module.get_bin_path("urpmi", True)
+    global RPM_PATH
+    RPM_PATH =  module.get_bin_path("rpm", True)
+    global URPME_PATH
+    URPME_PATH = module.get_bin_path("urpme", True)
+    global URPMIUPDATE_PATH
+    URPMIUPDATE_PATH = module.get_bin_path("urpmi.update", True)
 
     p = module.params
 
