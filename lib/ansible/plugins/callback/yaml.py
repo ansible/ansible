@@ -17,6 +17,16 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
+    options:
+      censored:
+        description: comma-separated list of censored variables that won't get printed
+        env:
+          - name: ANSIBLE_YAML_CALLBACK_CENSORED
+        required: False
+        default: null
+        ini:
+          - section: callback_yaml
+            key: censored
 '''
 
 import yaml
@@ -61,6 +71,25 @@ def my_represent_scalar(self, tag, value, style=None):
         self.represented_objects[self.alias_key] = node
     return node
 
+#returns a flattened formatting of a complex dict which we can "walk"
+def clean_result(input, scensored):
+    #print(type(input))
+    if type(input) is dict:
+        for item in input.keys():
+            #print(item)
+            if item in scensored:
+                input[item] = 'scensored'
+            else:
+                input[item]  = clean_result(input[item], scensored)
+    elif type(input) is list:
+        for item in input:
+            item = clean_result(item, scensored)
+    else:
+        #print('str: ' + input)
+        if input in scensored:
+            pass
+    #print('\n')
+    return input
 
 class CallbackModule(Default):
 
@@ -83,6 +112,7 @@ class CallbackModule(Default):
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(result)
+        censored = self._plugin_options['censored']
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -111,9 +141,14 @@ class CallbackModule(Default):
         if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
             abridged_result['stdout_lines'] = '<omitted>'
 
+
         if abridged_result:
+            if censored:
+                cleaned_result = clean_result(abridged_result, [x.strip() for x in censored.split(',')])
+            else:
+                cleaned_result = abridged_result
             dumped += '\n'
-            dumped += yaml.dump(abridged_result, width=1000, Dumper=AnsibleDumper, default_flow_style=False)
+            dumped += yaml.dump(cleaned_result, width=1000, Dumper=AnsibleDumper, default_flow_style=False)
 
         # indent by a couple of spaces
         dumped = '\n  '.join(dumped.split('\n')).rstrip()
