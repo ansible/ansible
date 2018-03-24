@@ -432,9 +432,9 @@ class PyVmomiDeviceHelper(object):
     def __init__(self, module):
         self.module = module
         self.next_disk_unit_number = 0
+        self.next_controller_number = -1
 
-    @staticmethod
-    def create_scsi_controller(scsi_type):
+    def create_scsi_controller(self, scsi_type):
         scsi_ctl = vim.vm.device.VirtualDeviceSpec()
         scsi_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         if scsi_type == 'lsilogic':
@@ -455,6 +455,8 @@ class PyVmomiDeviceHelper(object):
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
         scsi_ctl.device.scsiCtlrUnitNumber = 7
+        scsi_ctl.device.key = self.next_controller_number
+        self.next_controller_number -= 1
 
         return scsi_ctl
 
@@ -465,13 +467,14 @@ class PyVmomiDeviceHelper(object):
             isinstance(device, vim.vm.device.VirtualBusLogicController) or \
             isinstance(device, vim.vm.device.VirtualLsiLogicSASController)
 
-    @staticmethod
-    def create_ide_controller():
+    def create_ide_controller(self):
         ide_ctl = vim.vm.device.VirtualDeviceSpec()
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
         ide_ctl.device.deviceInfo = vim.Description()
         ide_ctl.device.busNumber = 0
+        ide_ctl.device.key = self.next_controller_number
+        self.next_controller_number -= 1
 
         return ide_ctl
 
