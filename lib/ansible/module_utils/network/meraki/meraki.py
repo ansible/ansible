@@ -169,13 +169,13 @@ class MerakiModule(object):
         ''' Check original and proposed data to see if an update is needed '''
         self.merged = self.original
         is_changed = False
-        for k, v in original.items():
+        for k, v in self.original.items():
             try:
-                if v != proposed[k]:
+                if v != self.proposed[k]:
                     is_changed = True
-                    merged[k] = proposed[k]
+                    self.merged[k] = self.proposed[k]
             except KeyError:
-                merged[k] = ''
+                self.merged[k] = ''
                 if v != '':
                     is_changed = True
         return is_changed
@@ -222,7 +222,7 @@ class MerakiModule(object):
 
     def is_org(self, org_id):
         ''' Checks whether an organization exists based on its id '''
-        orgs = get_orgs()
+        orgs = self.get_orgs()
         for o in orgs:
             if o['id'] == org_id:
                 return True
@@ -250,12 +250,12 @@ class MerakiModule(object):
         if self.params['org_id'] is not None:
             if self.is_org(self.params['org_id']) is True:
                 return self.params['org_id']
-        org = is_org_dupe(self.params['org_name'], self.get_orgs())
+        org = self.is_org_dupe(self.params['org_name'], self.get_orgs())
         return org['id']
 
     def get_net(self, org_name, net_name):
         ''' Return network information '''
-        org_id = get_org_id(org_name)
+        org_id = self.get_org_id(org_name)
         path = '/organizations/{0}/networks'.format(org_id)
         return self.response_json(self.request('GET', path))
 
@@ -271,9 +271,9 @@ class MerakiModule(object):
     def construct_path(self, action):
         built_path = self.url_catalog[action][self.function]
         if 'replace_org_id' in built_path:
-            built_path.replace('replace_org_id', self.get_org_id(module.params['org_name']))
+            built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
         if 'replace_net_id' in built_path:
-            built_path.replace('replace_net_id', self.get_net_id(module.params['net_name']))
+            built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
         return built_path
 
     def create_object(self, payload):
