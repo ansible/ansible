@@ -27,9 +27,10 @@ from datetime import datetime
 from ansible.module_utils.urls import open_url
 from ansible.plugins.callback import CallbackBase
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = """
     callback: grafana_annotations
-    type: notification
+    callback_type: notification
     short_description: send ansible events as annotations on charts to grafana over http api.
     description:
       - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
@@ -39,42 +40,68 @@ DOCUMENTATION = '''
     options:
       grafana_url:
         description: Grafana annotations api URL
+        required: True
         env:
           - name: GRAFANA_URL
-        default: http://127.0.0.1:3000/api/annotations
-      grafana_validate_certs:
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_url
+      validate_grafana_certs:
         description: (bool) validate the SSL certificate of the Grafana server. (For HTTPS url)
         env:
           - name: GRAFANA_VALIDATE_CERT
+        ini:
+          - section: callback_grafana_annotations
+            key: validate_grafana_certs
         default: True
       http_agent:
         description: The HTTP 'User-agent' value to set in HTTP requets.
         env:
           - name: HTTP_AGENT
+        ini:
+          - section: callback_grafana_annotations
+            key: http_agent
         default: 'Ansible (grafana_annotations callback)'
-      api_key:
+      grafana_api_key:
         description: Grafana API key, allowing to authenticate when posting on the HTTP API.
                      If not provided, grafana_login and grafana_password will
                      be required.
         env:
           - name: GRAFANA_API_KEY
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_api_key
       grafana_user:
-        description: Grafana user used for authentication. Ignored if api_key is provided.
+        description: Grafana user used for authentication. Ignored if grafana_api_key is provided.
         env:
           - name: GRAFANA_USER
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_user
+        default: ansible
       grafana_password:
-        description: Grafana password used for authentication. Ignored if api_key is provided.
+        description: Grafana password used for authentication. Ignored if grafana_api_key is provided.
         env:
           - name: GRAFANA_PASSWORD
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_password
+        default: ansible
       grafana_dashboard_id:
         description: The grafana dashboard id where the annotation shall be created.
         env:
           - name: GRAFANA_DASHBOARD_ID
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_dashboard_id
       grafana_panel_id:
         description: The grafana panel id where the annotation shall be created.
         env:
           - name: GRAFANA_PANEL_ID
-'''
+        ini:
+          - section: callback_grafana_annotations
+            key: grafana_panel_id
+"""
 
 
 PLAYBOOK_START_TXT = """\
@@ -111,14 +138,6 @@ Result:
 def to_millis(dt):
     return int(dt.strftime('%s')) * 1000
 
-def str2bool(string):
-    if string in [True, 'True', 'true', '1', 'yes']:
-        return True
-    elif string in [False, 'False', 'false', '0', 'no']:
-        return True
-    else:
-        raise Exception("Unsupported value '%s' as boolean" % string)
-
 
 class CallbackModule(CallbackBase):
     """
@@ -134,34 +153,41 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'grafana_annotations'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self):
-        super(CallbackModule, self).__init__()
+    def __init__(self, display=None):
 
-        api_key = os.getenv('GRAFANA_API_KEY', None)
-        self.grafana_url = os.getenv('GRAFANA_URL', 'http://127.0.0.1:3000/api/annotations')
-        self.grafana_validate_certs = str2bool(os.getenv('GRAFANA_VALIDATE_CERT', True))
-        self.http_agent = os.getenv('HTTP_AGENT', 'Ansible (grafana_annotations callback)')
-        self.grafana_user = os.getenv('GRAFANA_USER', None)
-        self.grafana_password = os.getenv('GRAFANA_PASSWORD', None)
-        self.dashboard_id = os.getenv('GRAFANA_DASHBOARD_ID', None)
-        self.panel_id = os.getenv('GRAFANA_PANEL_ID', None)
-        self.force_basic_auth = False
+        super(CallbackModule, self).__init__(display=display)
 
         self.headers = {'Content-Type': 'application/json'}
-
-        if api_key:
-            self.headers['Authorization'] = "Bearer %s" % api_key
-        elif self.grafana_user is not None and self.grafana_password is not None:
-            self.force_basic_auth = True
-        else:
-            self.disabled = True
-            self._display.warning("Authentcation required, please set GRAFANA_API_KEY or GRAFANA_USER/GRAFANA_PASSWORD")
-            return
-
-        self.errors = 0
+        self.force_basic_auth = False
         self.hostname = socket.gethostname()
         self.username = getpass.getuser()
         self.start_time = datetime.now()
+        self.errors = 0
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.grafana_api_key = self.get_option('grafana_api_key')
+        self.grafana_url = self.get_option('grafana_url')
+        self.validate_grafana_certs = self.get_option('validate_grafana_certs')
+        self.http_agent = self.get_option('http_agent')
+        self.grafana_user = self.get_option('grafana_user')
+        self.grafana_password = self.get_option('grafana_password')
+        self.dashboard_id = self.get_option('grafana_dashboard_id')
+        self.panel_id = self.get_option('grafana_panel_id')
+
+        if self.grafana_api_key:
+            self.headers['Authorization'] = "Bearer %s" % self.grafana_api_key
+        else:
+            self.force_basic_auth = True
+
+        if self.grafana_url is None:
+            self.disabled = True
+            self._display.warning('Grafana URL was not provided. The '
+                                  'Grafana URL can be provided using '
+                                  'the `GRAFANA_URL` environment variable.')
+        self._display.info('Grafana URL: %s' % self.grafana_url)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
@@ -226,8 +252,9 @@ class CallbackModule(CallbackBase):
     def _send_annotation(self, annotation):
         try:
             response = open_url(self.grafana_url, data=annotation, headers=self.headers,
-                                method="POST", validate_certs=self.grafana_validate_certs,
+                                method="POST",
+                                validate_certs=self.validate_grafana_certs,
                                 url_username=self.grafana_user, url_password=self.grafana_password,
                                 http_agent=self.http_agent, force_basic_auth=self.force_basic_auth)
         except Exception as e:
-            self._display.warning('Could not submit message to Grafana: %s' % str(e))
+            self._display.error('Could not submit message to Grafana: %s' % str(e))
