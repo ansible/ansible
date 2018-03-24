@@ -198,7 +198,7 @@ def main():
     global URPMI_PATH
     URPMI_PATH = module.get_bin_path("urpmi", True)
     global RPM_PATH
-    RPM_PATH =  module.get_bin_path("rpm", True)
+    RPM_PATH = module.get_bin_path("rpm", True)
     global URPME_PATH
     URPME_PATH = module.get_bin_path("urpme", True)
     global URPMIUPDATE_PATH
