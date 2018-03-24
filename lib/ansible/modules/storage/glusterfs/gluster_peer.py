@@ -27,6 +27,7 @@ author: Sachidananda Urs (@sac)
 options:
     state:
        choices: ["present", "absent"]
+       default: "present"
        description:
           - Determines whether the nodes should be attached to the pool or
             removed from the pool. If the state is present, nodes will be
@@ -76,7 +77,6 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ast import literal_eval
 from distutils.version import LooseVersion
 
 
@@ -86,16 +86,9 @@ class Peer(object):
         self.state = self.module.params['state']
 
     def gluster_peer_ops(self):
-        try:
-            nodes = literal_eval(self.module.params['nodes'])
-        except ValueError:
-            self.module.fail_json(msg="nodes must be a list")
+        nodes = self.module.params['nodes']
         if not nodes:
             self.module.fail_json(msg="nodes list cannot be empty")
-        # There is a possiblitity of nodes getting other type of data
-        # structures. For example a dictionary
-        if not isinstance(nodes, list):
-            self.module.fail_json(msg="nodes must be a list")
         force = 'force' if self.module.params.get('force') else ''
         if self.state == 'present':
             nodes = self.get_to_be_probed_hosts(nodes)
@@ -143,8 +136,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             force=dict(type='bool', required=False),
-            nodes=dict(required=True),
-            state=dict(required=True, choices=["absent", "present"]),
+            nodes=dict(type='list', required=True),
+            state=dict(type='str', choices=['absent', 'present'],
+                       default='present'),
         ),
     )
     pops = Peer(module)
