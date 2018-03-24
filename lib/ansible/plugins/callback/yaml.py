@@ -73,10 +73,8 @@ def my_represent_scalar(self, tag, value, style=None):
 
 #returns a flattened formatting of a complex dict which we can "walk"
 def clean_result(input, scensored):
-    #print(type(input))
     if type(input) is dict:
         for item in input.keys():
-            #print(item)
             if item in scensored:
                 input[item] = '###########'
             else:
@@ -85,10 +83,8 @@ def clean_result(input, scensored):
         for item in input:
             item = clean_result(item, scensored)
     else:
-        #print('str: ' + input)
         if input in scensored:
             pass
-    #print('\n')
     return input
 
 class CallbackModule(Default):
