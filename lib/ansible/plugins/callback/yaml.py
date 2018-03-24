@@ -78,7 +78,7 @@ def clean_result(input, scensored):
         for item in input.keys():
             #print(item)
             if item in scensored:
-                input[item] = 'scensored'
+                input[item] = '###########'
             else:
                 input[item]  = clean_result(input[item], scensored)
     elif type(input) is list:
