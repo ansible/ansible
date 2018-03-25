@@ -71,19 +71,19 @@ def my_represent_scalar(self, tag, value, style=None):
         self.represented_objects[self.alias_key] = node
     return node
 
-#returns a flattened formatting of a complex dict which we can "walk"
-def clean_result(input, scensored):
+#iterate output object and replace censored values
+def clean_result(input, censored):
     if type(input) is dict:
         for item in input.keys():
-            if item in scensored:
+            if item in censored:
                 input[item] = '###########'
             else:
-                input[item]  = clean_result(input[item], scensored)
+                input[item]  = clean_result(input[item], censored)
     elif type(input) is list:
         for item in input:
-            item = clean_result(item, scensored)
+            item = clean_result(item, censored)
     else:
-        if input in scensored:
+        if input in censored:
             pass
     return input
 
