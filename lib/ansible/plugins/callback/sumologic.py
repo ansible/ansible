@@ -20,13 +20,15 @@ __metaclass__ = type
 DOCUMENTATION = '''
 callback: sumologic
 type: aggregate
-short_description: Sends playbook task result events to Sumologic
+short_description: Sends task result events to Sumologic
+author: "Ryan Currah (@ryancurrah)"
 description:
-  - This callback plugin will send playbook task results as JSON formatted events to a Sumologic HTTP collector source
-version_added: "2.3"
+  - This callback plugin will send task results as JSON formatted events to a Sumologic HTTP collector source
+version_added: "2.6"
 requirements:
   - Whitelisting this callback plugin in ansible.cfg configuration
-  - Create a HTTP collector source in Sumologic and specify a custom timestamp format of 'yyyy-MM-dd HH:mm:ss ZZZZ' and a custom timestamp locator of '"timestamp":\s"(.*)"'
+  - Create a HTTP collector source in Sumologic and specify a custom timestamp format of 'yyyy-MM-dd HH:mm:ss ZZZZ' and a custom timestamp locator
+    of '"timestamp": "(.*)"'
 options:
   url:
     description: URL to the Sumologic HTTP collector source
@@ -44,10 +46,13 @@ examples: >
     callback_whitelist = sumologic
 
   Set the environment variable
-    export SUMOLOGIC_URL=https://endpoint1.collection.us2.sumologic.com/receiver/v1/http/R8moVSv1d8EW9LAUFZJ6dbxCFxwLH6kfCdcBfddl-ddr2J8oeJdbqv5sR4NH0tDaN5naz2ZmIfxCbLuL-BN5twcTpMk__pYy_cDmp==
+    export SUMOLOGIC_URL=https://endpoint1.collection.us2.sumologic.com/receiver/v1/http/R8moSv1d8EW9LAUFZJ6dbxCFxwLH6kfCdcBfddlfxCbLuL-BN5twcTpMk__pYy_cDmp==
+
+  Set the ansible.cfg variable
+    [callback_sumologic]
+    url = https://endpoint1.collection.us2.sumologic.com/receiver/v1/http/R8moSv1d8EW9LAUFZJ6dbxCFxwLH6kfCdcBfddlfxCbLuL-BN5twcTpMk__pYy_cDmp==
 '''
 
-import os
 import json
 import uuid
 import socket
@@ -76,7 +81,7 @@ class SumologicHTTPCollectorSource(object):
 
         if result._task_fields['args'].get('_ansible_version'):
             self.ansible_version = \
-              result._task_fields['args'].get('_ansible_version')
+                result._task_fields['args'].get('_ansible_version')
 
         if result._task._role:
             ansible_role = str(result._task._role)
@@ -191,4 +196,3 @@ class CallbackModule(CallbackBase):
             result,
             self._runtime(result)
         )
-
