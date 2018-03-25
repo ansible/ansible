@@ -338,3 +338,24 @@
     - invalid_path.content is defined
     - invalid_path.method == 'GET'
     - invalid_path.connection is defined
+
+- name: post request with custom headers
+  win_uri:
+    url: http://{{httpbin_host}}/post
+    method: POST
+    headers:
+      Test-Header: hello
+      Another-Header: world
+    content_type: application/json
+    body: '{"foo": "bar"}'
+    return_content: yes
+  register: post_request_with_custom_headers
+
+- name: assert post with custom headers
+  assert:
+    that:
+    - not post_request_with_custom_headers.changed
+    - post_request_with_custom_headers.status_code == 200
+    - post_request_with_custom_headers.json.headers['Content-Type'] == "application/json"
+    - post_request_with_custom_headers.json.headers['Test-Header'] == 'hello'
+    - post_request_with_custom_headers.json.headers['Another-Header'] == 'world'

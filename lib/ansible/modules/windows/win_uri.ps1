@@ -125,7 +125,7 @@ if ($headers) {
             default { $req_headers.Add($header.Name, $header.Value) }
         }
     }
-    $client.Headers = $req_headers
+    $client.Headers.Add($req_headers)
 }
 
 if ($client_cert) {
