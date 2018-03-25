@@ -193,6 +193,19 @@ Result::
 
 See also :ref:`single_encrypted_variable`
 
+After you added the encrypted value to a var file, you can see the original value by using the debug module. Please note if your YAML file defines the `ansible_connection` variable (as we used in our example), it will take effect when you execute the command below. To prevent this, please make a copy of the file without the ansible_connection variable. 
+
+.. code-block:: console
+
+   cat vars.yml | grep -v ansible_connection >> vars_no_connection.yml
+
+   ansible localhost -m debug -a var="new_user_password" -e "@vars_no_connection.yml" --ask-vault-pass
+   Vault password:
+
+   localhost | SUCCESS => {
+       "new_user_password": "hunter2"
+   }
+
 
 .. _vault_ids:
 
