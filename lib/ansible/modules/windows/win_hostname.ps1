@@ -35,9 +35,17 @@ if ($check_mode) {
 if (-not $check_mode) {
     if ($newComputerName -ne $currentComputerName) {
         $setResult = (Set-ComputerName($newComputerName))
-        $result.changed = $true
-        $result.rc = $setResult
-        Set-Attr $result "computer_name" $newComputerName
+        if ($setResult -eq 0) {         
+            $result.changed = $true
+            $result.rc = $setResult
+            Set-Attr $result "computer_name" $newComputerName
+        }
+        else {
+               $result.changed = $false
+               $result.rc = $setResult
+               Set-ComputerName($currentComputerName)
+               Set-Attr $result "computer_name" $currentComputerName
+            }    
     }   
    
 }
