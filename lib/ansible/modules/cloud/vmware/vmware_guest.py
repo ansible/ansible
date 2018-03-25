@@ -179,7 +179,10 @@ options:
     - '     - C(independent_nonpersistent): Changes to virtual disk are made to a redo log and discarded at power off, but not affected by snapshots.'
   cdrom:
     description:
-    - A list of cdroms to add.
+    - A list of CD-ROMs to configure.
+    - If not provided, CD-ROMs already present on the VM are ignored.
+    - If provided, any CD-ROM in the VM but not in the list is removed from the VM.
+    - In the case of multiple CD-ROMs, to ignore a specific CD-ROM on the VM, use an empty dictionary in the list.
     - 'Valid attributes are:'
     - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
@@ -926,12 +929,21 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
-        if "cdrom" in self.params and self.params["cdrom"]:
+        if self.params.get("cdrom", None) is not None:
             cdrom_devices = self.get_vm_cdrom_devices(vm=vm_obj)
             for cdrom_pair in zip_longest(cdrom_devices, self.params["cdrom"]):
                 cdrom_device, cdrom_params = cdrom_pair
-                if not cdrom_params:
-                    # Ignore unconfigured CD-ROM
+                if cdrom_params is not None and not cdrom_params:
+                    # Skip CD-ROM that exists in VM, and has empty (but declared) params.
+                    continue
+
+                if cdrom_params is None:
+                    # CD-ROM is in VM and not params. Delete it
+                    cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+                    cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+                    cdrom_spec.device = cdrom_device
+                    self.configspec.deviceChange.append(cdrom_spec)
+                    self.change_detected = True
                     continue
 
                 if "type" not in cdrom_params or cdrom_params["type"] not in ["none", "client", "iso"]:
@@ -2208,7 +2220,7 @@ def main():
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
-        cdrom=dict(type='list', default=[]),
+        cdrom=dict(type='list'),
         hardware=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         datacenter=dict(type='str', default='ha-datacenter'),
