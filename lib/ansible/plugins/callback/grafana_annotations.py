@@ -32,6 +32,7 @@ DOCUMENTATION = """
     callback: grafana_annotations
     callback_type: notification
     short_description: send ansible events as annotations on charts to grafana over http api.
+    author: "Rémi REY (@rrey)"
     description:
       - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
     version_added: "2.5"
