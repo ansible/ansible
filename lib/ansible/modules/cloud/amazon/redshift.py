@@ -131,7 +131,7 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ 'boto' ]
+requirements: [ 'boto3' ]
 extends_documentation_fragment:
   - aws
   - ec2

@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowRedshiftManagment",
+      "Action": [
+        "redshift:CreateCluster",
+        "redshift:CreateTags",
+        "redshift:DeleteCluster",
+        "redshift:DeleteTags",
+        "redshift:DescribeClusters",
+        "redshift:DescribeTags",
+        "redshift:ModifyCluster",
+        "redshift:RebootCluster"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
