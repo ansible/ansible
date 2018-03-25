@@ -479,11 +479,11 @@ class PyVmomiDeviceHelper(object):
         return ide_ctl
 
     @staticmethod
-    def create_cdrom(ide_ctl, cdrom_type, iso_path=None):
+    def create_cdrom(ide_ctl_device, cdrom_type, iso_path=None):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
-        cdrom_spec.device.controllerKey = ide_ctl.device.key
+        cdrom_spec.device.controllerKey = ide_ctl_device.key
         cdrom_spec.device.key = -1
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
@@ -853,16 +853,17 @@ class PyVmomiHelper(PyVmomi):
             iso_path = self.params["cdrom"]["iso_path"] if "iso_path" in self.params["cdrom"] else None
             if cdrom_device is None:
                 # Creating new CD-ROM
-                ide_device = self.get_vm_ide_device(vm=vm_obj)
-                if ide_device is None:
+                ide_ctl_device = self.get_vm_ide_controller(vm=vm_obj)
+                if ide_ctl_device is None:
                     # Creating new IDE device
-                    ide_device = self.device_helper.create_ide_controller()
+                    ide_ctl_spec = self.device_helper.create_ide_controller()
                     self.change_detected = True
-                    self.configspec.deviceChange.append(ide_device)
-                elif len(ide_device.device) > 3:
+                    self.configspec.deviceChange.append(ide_ctl_spec)
+                    ide_ctl_device = ide_ctl_spec.device
+                elif len(ide_ctl_device.device) > 3:
                     self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
 
-                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
+                cdrom_spec = self.device_helper.create_cdrom(ide_ctl_device=ide_ctl_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
                 if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
                     cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
 
@@ -954,7 +955,7 @@ class PyVmomiHelper(PyVmomi):
 
         return None
 
-    def get_vm_ide_device(self, vm=None):
+    def get_vm_ide_controller(self, vm=None):
         if vm is None:
             return None
 
