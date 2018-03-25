@@ -261,6 +261,7 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             lv=dict(type='str'),
+            minsize=dict(type='str'),
             size=dict(type='str'),
             opts=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -290,6 +291,7 @@ def main():
 
     vg = module.params['vg']
     lv = module.params['lv']
+    minsize = module.params['minsize']
     size = module.params['size']
     opts = module.params['opts']
     state = module.params['state']
@@ -316,6 +318,18 @@ def main():
         test_opt = ' --test'
     else:
         test_opt = ''
+
+    if minsize:
+         if minsize[-1].lower() in 'bskmgtpe':
+             minsize_unit = minsize[-1].lower()
+             minsize = minsize[0:-1]
+
+         try:
+             float(minsize)
+             if not minsize[0].isdigit():
+                 raise ValueError()
+         except ValueError:
+             module.fail_json(msg="Bad minsize specification of '%s'" % minsize)
 
     if size:
         # LVCREATE(8) -l --extents option with percentage
@@ -507,9 +521,9 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if int(size) > this_lv['size']:
+            if int(size) > this_lv['size'] or int(minsize) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and int(size) < this_lv['size']:
+            elif not minsize and shrink and int(size) < this_lv['size']:
                 if int(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
@@ -521,7 +535,9 @@ def main():
             if tool:
                 if resizefs:
                     tool = '%s %s' % (tool, '--resizefs')
-                cmd = "%s %s -%s %s%s %s/%s %s" % (tool, test_opt, size_opt, size, size_unit, vg, this_lv['name'], pvs)
+                elif minsize:
+                     size_plus = '+'
+                cmd = "%s %s -%s %s%s%s %s/%s %s" % (tool, test_opt, size_opt, size_plus, size, size_unit, vg, this_lv['name'], pvs)
                 rc, out, err = module.run_command(cmd)
                 if "Reached maximum COW size" in out:
                     module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
