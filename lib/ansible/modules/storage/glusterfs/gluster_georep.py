@@ -206,7 +206,6 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ast import literal_eval
 import re
 from distutils.version import LooseVersion
 
@@ -322,7 +321,7 @@ class GeoRep(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True,
+            state=dict(type='str',
                        choices=['present', 'absent', 'started', 'stopped',
                                 'paused', 'resumed']),
             # resume', 'config'
