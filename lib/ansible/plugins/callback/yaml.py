@@ -71,14 +71,15 @@ def my_represent_scalar(self, tag, value, style=None):
         self.represented_objects[self.alias_key] = node
     return node
 
-#iterate output object and replace censored values
+
 def clean_result(input, censored):
+    """iterate output object and replace censored values"""
     if type(input) is dict:
         for item in input.keys():
             if item in censored:
                 input[item] = '###########'
             else:
-                input[item]  = clean_result(input[item], censored)
+                input[item] = clean_result(input[item], censored)
     elif type(input) is list:
         for item in input:
             item = clean_result(item, censored)
@@ -86,6 +87,7 @@ def clean_result(input, censored):
         if input in censored:
             pass
     return input
+
 
 class CallbackModule(Default):
 
@@ -136,7 +138,6 @@ class CallbackModule(Default):
         # if we already have stdout, we don't need stdout_lines
         if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
             abridged_result['stdout_lines'] = '<omitted>'
-
 
         if abridged_result:
             if censored:
