@@ -3,6 +3,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 DOCUMENTATION = '''
@@ -27,6 +28,18 @@ DOCUMENTATION = '''
         ini:
           - section: callback_yaml
             key: censored
+      censored_use_regex:
+        short_description: set to false to use exact matching of the above list, set to true to use regex matching
+        description:
+          - Set to 0 to do exact matches
+          - Set to 1 to use regex matching
+        env:
+          - name: ANSIBLE_YAML_CALLBACK_CENSORED_USE_REGEX
+        required: False
+        default: 0
+        ini:
+          - section: callback_yaml
+            key: use_regex
 '''
 
 import yaml
@@ -72,17 +85,26 @@ def my_represent_scalar(self, tag, value, style=None):
     return node
 
 
-def clean_result(input, censored):
+def clean_result(use_regex, input, censored):
     """iterate output object and replace censored values"""
     if type(input) is dict:
         for item in input.keys():
-            if item in censored:
+            item_is_censored = False
+            for censored_item in censored:
+                #print(str(censored_item) + str(censored_item))
+                if use_regex:
+                    if re.search(censored_item, item):
+                        item_is_censored = True
+                else:
+                    if censored_item == item:
+                        item_is_censored = True
+            if item_is_censored:
                 input[item] = '###########'
             else:
-                input[item] = clean_result(input[item], censored)
+                input[item] = clean_result(use_regex, input[item], censored)
     elif type(input) is list:
         for item in input:
-            item = clean_result(item, censored)
+            item = clean_result(use_regex, item, censored)
     else:
         if input in censored:
             pass
@@ -90,7 +112,6 @@ def clean_result(input, censored):
 
 
 class CallbackModule(Default):
-
     """
     Variation of the Default output which uses nicely readable YAML instead
     of JSON for printing results.
@@ -106,11 +127,16 @@ class CallbackModule(Default):
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+            return json.dumps(dict(
+                censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(result)
         censored = self._plugin_options['censored']
+        censored_use_regex_flag = self._plugin_options['censored_use_regex']
+        censored_use_regex = False
+        if censored_use_regex_flag == '1':
+            censored_use_regex = True
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -141,7 +167,7 @@ class CallbackModule(Default):
 
         if abridged_result:
             if censored:
-                cleaned_result = clean_result(abridged_result, [x.strip() for x in censored.split(',')])
+                cleaned_result = clean_result(censored_use_regex, abridged_result, [x.strip() for x in censored.split(',')])
             else:
                 cleaned_result = abridged_result
             dumped += '\n'
