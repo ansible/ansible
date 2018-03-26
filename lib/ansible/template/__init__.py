@@ -292,7 +292,7 @@ class Templar:
         ))
         self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self):
+    def _get_filters(self, builtin_filters):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -304,6 +304,9 @@ class Templar:
 
         # TODO: Remove registering tests as filters in 2.9
         for name, func in self._get_tests().items():
+            if name in builtin_filters:
+                # If we have a custom test named the same as a builtin filter, don't register as a filter
+                continue
             self._filters[name] = tests_as_filters_warning(name, func)
 
         for fp in self._filter_loader.all():
@@ -678,7 +681,7 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters())
+            myenv.filters.update(self._get_filters(myenv.filters))
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
