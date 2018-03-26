@@ -64,7 +64,7 @@ options:
       - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter.
         The 'memory_mb' and 'num_cpus' changes are applied to powered-on vms when hot-plugging is enabled for the guest.
     default: present
-    choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured', 'reboot_guest', 'poweroff_guest']
   from_template:
     version_added: "1.9"
     description:
@@ -1537,9 +1537,26 @@ def power_state(vm, state, force):
         try:
             if state == 'powered_off':
                 vm.power_off(sync_run=True)
+            elif state == 'poweroff_guest':
+                if power_status in ('POWERED ON'):
+                    vm.shutdown_guest()
+                elif power_status in ('POWERED OFF'):
+                    return False
+                else:
+                    return "Cannot poweroff_guest VM in the current state %s" \
+                        % power_status
 
             elif state == 'powered_on':
                 vm.power_on(sync_run=True)
+
+            elif state == 'reboot_guest':
+                if power_status in ('POWERED ON'):
+                    vm.reboot_guest()
+                elif power_status in ('POWERED OFF'):
+                    vm.power_on(sync_run=True)
+                else:
+                    return "Cannot reboot_guest VM in the current state %s" \
+                        % power_status
 
             elif state == 'restarted':
                 if power_status in ('POWERED ON', 'POWERING ON', 'RESETTING'):
@@ -1715,7 +1732,9 @@ def main():
                     'present',
                     'absent',
                     'restarted',
-                    'reconfigured'
+                    'reconfigured',
+                    'reboot_guest',
+                    'poweroff_guest'
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, type='bool'),
@@ -1812,7 +1831,7 @@ def main():
                 module.fail_json(msg="Fact gather failed with exception %s"
                                  % to_native(e), exception=traceback.format_exc())
         # Power Changes
-        elif state in ['powered_on', 'powered_off', 'restarted']:
+        elif state in ['powered_on', 'powered_off', 'restarted', 'reboot_guest', 'poweroff_guest']:
             state_result = power_state(vm, state, force)
 
             # Failure
