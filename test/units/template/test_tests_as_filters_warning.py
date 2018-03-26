@@ -1,5 +1,7 @@
 from ansible.template import Templar, display
 from units.mock.loader import DictDataLoader
+from jinja2.filters import FILTERS
+from os.path import isabs
 
 
 def test_tests_as_filters_warning(mocker):
@@ -7,7 +9,7 @@ def test_tests_as_filters_warning(mocker):
         "/path/to/my_file.txt": "foo\n",
     })
     templar = Templar(loader=fake_loader, variables={})
-    filters = templar._get_filters()
+    filters = templar._get_filters(templar.environment.filters)
 
     mocker.patch.object(display, 'deprecated')
 
@@ -28,3 +30,6 @@ def test_tests_as_filters_warning(mocker):
     display.deprecated.reset_mock()
     filters['bool'](True)
     assert display.deprecated.call_count == 0
+
+    # Ensure custom test does not override builtin filter
+    assert filters.get('abs') != isabs
