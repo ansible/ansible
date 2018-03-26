@@ -26,7 +26,77 @@ ec2_data = {
                     "state": "retry"
                 },
             ]
-        }
+        },
+        "SubnetExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(Subnets[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidSubnetID.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
+        "SubnetHasMapPublicTrue": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": True,
+                    "argument": "Subnets[].MapPublicIpOnLaunch",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetHasMapPublicFalse": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": False,
+                    "argument": "Subnets[].MapPublicIpOnLaunch",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetHasAssignIpv6True": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": True,
+                    "argument": "Subnets[].AssignIpv6AddressOnCreation",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetHasAssignIpv6False": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": False,
+                    "argument": "Subnets[].AssignIpv6AddressOnCreation",
+                    "state": "success"
+                },
+            ]
+        },
     }
 }
 
@@ -42,7 +112,37 @@ waiters_by_name = {
         model_for('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
-        ))
+        )),
+    ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
+        'subnet_exists',
+        model_for('SubnetExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_map_public_true'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_map_public_true',
+        model_for('SubnetHasMapPublicTrue'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_map_public_false'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_map_public_false',
+        model_for('SubnetHasMapPublicFalse'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_assign_ipv6_true'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_assign_ipv6_true',
+        model_for('SubnetHasAssignIpv6True'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_assign_ipv6_false'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_assign_ipv6_false',
+        model_for('SubnetHasAssignIpv6False'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
 }
 
 

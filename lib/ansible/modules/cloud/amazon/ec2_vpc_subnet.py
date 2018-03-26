@@ -209,9 +209,10 @@ import traceback
 try:
     import botocore
 except ImportError:
-    pass  # caught by imported boto3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
                                       ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info,
                                       boto3_conn, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
@@ -251,7 +252,22 @@ def describe_subnets_with_backoff(client, **params):
     return client.describe_subnets(**params)
 
 
-def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None):
+def wait_config(wait_timeout, start_time):
+    remaining_wait_timeout = int(wait_timeout + start_time - time.time())
+    return {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
+
+
+def handle_waiter(conn, module, waiter_name, params, start_time):
+    params['WaiterConfig'] = wait_config(module.params['wait_timeout'], start_time)
+    try:
+        get_waiter(conn, waiter_name).wait(
+            **params
+        )
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, "Failed to wait for updates")
+
+
+def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None, start_time=None):
     wait = module.params['wait']
     wait_timeout = module.params['wait_timeout']
 
@@ -273,12 +289,12 @@ def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None):
     # new subnets's id to do things like create tags results in
     # exception.
     if wait and subnet.get('state') != 'available':
-        delay = 5
-        max_attempts = wait_timeout // delay
-        waiter_config = dict(Delay=delay, MaxAttempts=max_attempts)
-        waiter = conn.get_waiter('subnet_available')
+        handle_waiter(conn, module, 'subnet_exists', {'SubnetIds': [subnet['id']]}, start_time)
         try:
-            waiter.wait(SubnetIds=[subnet['id']], WaiterConfig=waiter_config)
+            conn.get_waiter('subnet_available').wait(
+                SubnetIds=[subnet['id']],
+                WaiterConfig=wait_config(wait_timeout, start_time)
+            )
             subnet['state'] = 'available'
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json(msg="Create subnet action timed out waiting for Subnet to become available. %s" % str(e), exception=traceback.format_exc())
@@ -300,7 +316,12 @@ def ensure_tags(conn, module, subnet, tags, purge_tags, start_time):
     if to_update:
         try:
             if not module.check_mode:
-                conn.create_tags(Resources=[subnet['id']], Tags=ansible_dict_to_boto3_tag_list(to_update))
+                AWSRetry.exponential_backoff(
+                    catch_extra_error_codes=['InvalidSubnetID.NotFound']
+                )(conn.create_tags)(
+                    Resources=[subnet['id']],
+                    Tags=ansible_dict_to_boto3_tag_list(to_update)
+                )
 
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -313,7 +334,9 @@ def ensure_tags(conn, module, subnet, tags, purge_tags, start_time):
                 for key in to_delete:
                     tags_list.append({'Key': key})
 
-                conn.delete_tags(Resources=[subnet['id']], Tags=tags_list)
+                AWSRetry.exponential_backoff(
+                    catch_extra_error_codes=['InvalidSubnetID.NotFound']
+                )(conn.delete_tags)(Resources=[subnet['id']], Tags=tags_list)
 
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -322,12 +345,8 @@ def ensure_tags(conn, module, subnet, tags, purge_tags, start_time):
     if module.params['wait']:
         # Wait for tags to be updated
         filters = [{'Name': 'tag:{0}'.format(k), 'Values': [v]} for k, v in tags.items()]
-        remaining_wait_timeout = module.params['wait_timeout'] + start_time - time.time()
-        waiter_config = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
-        try:
-            conn.get_waiter('subnet_available').wait(Filters=filters, WaiterConfig=waiter_config)
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.warn("Failed to wait for tags to update")
+        handle_waiter(conn, module, 'subnet_exists',
+                      {'SubnetIds': [subnet['id']], 'Filters': filters}, start_time)
 
     return changed
 
@@ -337,19 +356,16 @@ def ensure_map_public(conn, module, subnet, map_public, check_mode, start_time):
         return
     try:
         conn.modify_subnet_attribute(SubnetId=subnet['id'], MapPublicIpOnLaunch={'Value': map_public})
-        if module.params['wait']:
-            updated = False
-            while module.params['wait_timeout'] + start_time - time.time() > 0:
-                current_value = conn.describe_subnets(SubnetIds=[subnet['id']])['Subnets'][0]['MapPublicIpOnLaunch']
-                if current_value != map_public:
-                    time.sleep(3)
-                else:
-                    updated = True
-                    break
-            if not updated:
-                module.warn("Failed to wait for MapPublicIpOnLaunch to be updated for {0}".format(subnet['id']))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
+
+    if module.params['wait']:
+        if map_public:
+            handle_waiter(conn, module, 'subnet_has_map_public_true',
+                          {'SubnetIds': [subnet['id']]}, start_time)
+        else:
+            handle_waiter(conn, module, 'subnet_has_map_public_false',
+                          {'SubnetIds': [subnet['id']]}, start_time)
 
 
 def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, check_mode, start_time):
@@ -357,19 +373,16 @@ def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, ch
         return
     try:
         conn.modify_subnet_attribute(SubnetId=subnet['id'], AssignIpv6AddressOnCreation={'Value': assign_instances_ipv6})
-        if module.params['wait']:
-            updated = False
-            while module.params['wait_timeout'] + start_time - time.time() > 0:
-                current_value = conn.describe_subnets(SubnetIds=[subnet['id']])['Subnets'][0]['AssignIpv6AddressOnCreation']
-                if current_value != assign_instances_ipv6:
-                    time.sleep(3)
-                else:
-                    updated = True
-                    break
-            if not updated:
-                module.warn("Failed to wait for AssignIpv6AddressOnCreation to be updated for {0}".format(subnet['id']))
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
+
+    if module.params['wait']:
+        if assign_instances_ipv6:
+            handle_waiter(conn, module, 'subnet_has_assign_ipv6_true',
+                          {'SubnetIds': [subnet['id']]}, start_time)
+        else:
+            handle_waiter(conn, module, 'subnet_has_assign_ipv6_false',
+                          {'SubnetIds': [subnet['id']]}, start_time)
 
 
 def disassociate_ipv6_cidr(conn, module, subnet, start_time):
@@ -384,15 +397,12 @@ def disassociate_ipv6_cidr(conn, module, subnet, start_time):
 
     # Wait for cidr block to be disassociated
     if module.params['wait']:
-        remaining_wait_timeout = module.params['wait_timeout'] + start_time - time.time()
-        waiter_config = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
-        try:
-            conn.get_waiter('subnet_available').wait(Filters=ansible_dict_to_boto3_filter_list(
-                {'ipv6-cidr-block-association.ipv6-cidr-block': subnet['ipv6_association_id'],
-                 'ipv6-cidr-block-association.state': 'disassociated',
-                 'vpc-id': subnet['vpc_id']}), WaiterConfig=waiter_config)
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.warn("Failed to wait for IPv6 CIDR block to be removed")
+        filters = ansible_dict_to_boto3_filter_list(
+            {'ipv6-cidr-block-association.state': ['disassociated'],
+             'vpc-id': subnet['vpc_id']}
+        )
+        handle_waiter(conn, module, 'subnet_exists',
+                      {'SubnetIds': [subnet['id']], 'Filters': filters}, start_time)
 
 
 def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode, start_time):
@@ -424,18 +434,17 @@ def ensure_ipv6_cidr_block(conn, module, subnet, ipv6_cidr, check_mode, start_ti
         try:
             if not check_mode:
                 associate_resp = conn.associate_subnet_cidr_block(SubnetId=subnet['id'], Ipv6CidrBlock=ipv6_cidr)
-                # Wait for cidr block to be associated
-                if wait:
-                    remaining_wait_timeout = module.params['wait_timeout'] + start_time - time.time()
-                    waiter_config = {'Delay': 5, 'MaxAttempts': remaining_wait_timeout // 5}
-                    conn.get_waiter('subnet_available').wait(Filters=ansible_dict_to_boto3_filter_list(
-                        {'ipv6-cidr-block-association.ipv6-cidr-block': ipv6_cidr,
-                         'ipv6-cidr-block-association.state': 'associated',
-                         'vpc-id': subnet['vpc_id']})
-                    )
             changed = True
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't associate ipv6 cidr {0} to {1}".format(ipv6_cidr, subnet['id']))
+        else:
+            if not check_mode and wait:
+                filters = ansible_dict_to_boto3_filter_list(
+                    {'ipv6-cidr-block-association.state': ['associated'],
+                     'vpc-id': subnet['vpc_id']}
+                )
+                handle_waiter(conn, module, 'subnet_exists',
+                              {'SubnetIds': [subnet['id']], 'Filters': filters}, start_time)
 
         if associate_resp.get('Ipv6CidrBlockAssociation', {}).get('AssociationId'):
             subnet['ipv6_association_id'] = associate_resp['Ipv6CidrBlockAssociation']['AssociationId']
@@ -470,7 +479,8 @@ def ensure_subnet_present(conn, module):
 
     if subnet is None:
         if not module.check_mode:
-            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'], ipv6_cidr=module.params['ipv6_cidr'], az=module.params['az'])
+            subnet = create_subnet(conn, module, module.params['vpc_id'], module.params['cidr'],
+                                   ipv6_cidr=module.params['ipv6_cidr'], az=module.params['az'], start_time=start_time)
         changed = True
         # Subnet will be None when check_mode is true
         if subnet is None:
@@ -478,6 +488,8 @@ def ensure_subnet_present(conn, module):
                 'changed': changed,
                 'subnet': {}
             }
+    if module.params['wait']:
+        handle_waiter(conn, module, 'subnet_exists', {'SubnetIds': [subnet['id']]}, start_time)
 
     if module.params['ipv6_cidr'] != subnet.get('ipv6_cidr_block'):
         if ensure_ipv6_cidr_block(conn, module, subnet, module.params['ipv6_cidr'], module.check_mode, start_time):
