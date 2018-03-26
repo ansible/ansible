@@ -506,7 +506,7 @@ class PluginLoader:
             if not found_in_cache:
                 self._load_config_defs(basename, path)
 
-            self._update_object(obj, name, path)
+            self._update_object(obj, basename, path)
             yield obj
 
 
