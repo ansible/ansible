@@ -505,7 +505,7 @@
   assert:
     that:
     - win_service_change_password_current_user is changed
-    - win_service_change_password_current_user.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user.username|lower == '.\\{{ansible_user|lower}}'
     - win_service_change_password_current_user.desktop_interact == False
 
 - name: set service username to current user again
@@ -519,7 +519,7 @@
   assert:
     that:
     - win_service_change_password_current_user_again is not changed
-    - win_service_change_password_current_user_again.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user_again.username|lower == '.\\{{ansible_user|lower}}'
     - win_service_change_password_current_user_again.desktop_interact == False
 
 - name: set service display name
