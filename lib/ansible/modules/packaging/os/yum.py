@@ -770,7 +770,7 @@ def exec_install(module, items, action, pkgs, res, yum_basecmd):
     res['msg'] += err
     res['changed'] = True
 
-    if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+    if ('Nothing to do' in out and rc == 0) or ('does not have any packages' in err):
         res['changed'] = False
 
     if rc != 0:
