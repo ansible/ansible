@@ -45,15 +45,15 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Gather facts about all KMS keys
-- kms_facts
+- aws_kms_facts
 
 # Gather facts about all keys with a Name tag
-- kms_facts:
+- aws_kms_facts:
     filters:
       tag-key: Name
 
 # Gather facts about all keys with a specific name
-- kms_facts:
+- aws_kms_facts:
     filters:
       "tag:Name": Example
 '''
