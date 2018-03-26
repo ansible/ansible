@@ -38,10 +38,10 @@ options:
       - replaces the old special privilege REQUIRESSL.
       - introduced to allow compatibility with MySQL > 5.7.6
       - introduced to allow compatibility with MariaDB > 10.2.0
+    type: bool
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "2.5"
+    version_added: "2.6"
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash.
