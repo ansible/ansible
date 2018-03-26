@@ -35,15 +35,13 @@
  - include: 'apt-builddep.yml'
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
- - include: upgrade.yml upgrade_type=dist
+ - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type=dist force_apt_get={{ False | bool }}"
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
  - name: Check if aptitude is installed
    command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
    register: aptitude_status
    when: ansible_distribution in ('Ubuntu', 'Debian')
-
- - debug: var=aptitude_status.stdout
 
  - name: Remove aptitude, if installed, to test fall-back to apt-get
    apt:
@@ -66,7 +64,7 @@
      pkg: aptitude
      state: present
 
- - include: upgrade.yml upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}
+ - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
    when:
      - ansible_distribution in ('Ubuntu', 'Debian')
    with_items:
