@@ -529,7 +529,6 @@ class ClustersModule(BaseModule):
         return True
 
     def update_check(self, entity):
-        sched_policy = self._get_sched_policy()
         migration_policy = getattr(entity.migration, 'policy', None)
         cluster_cpu = getattr(entity, 'cpu', dict())
         return (

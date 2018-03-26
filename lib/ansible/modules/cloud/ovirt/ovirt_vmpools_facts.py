@@ -103,5 +103,6 @@ def main():
     finally:
         connection.close(logout=auth.get('token') is None)
 
+
 if __name__ == '__main__':
     main()

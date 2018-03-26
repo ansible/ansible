@@ -292,7 +292,6 @@ try:
     import ovirtsdk4.types as otypes
 
     from ovirtsdk4.types import StorageDomainStatus as sdstate
-    from ovirtsdk4.types import HostStatus as hoststate
     from ovirtsdk4.types import DataCenterStatus as dcstatus
 except ImportError:
     pass

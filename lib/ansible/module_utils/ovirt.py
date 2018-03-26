@@ -550,7 +550,7 @@ class BaseModule(object):
                 new_entity = self.build_entity()
                 if not self._module.check_mode:
                     update_params = update_params or {}
-                    updated_entity = entity_service.update(
+                    entity = entity_service.update(
                         new_entity,
                         **update_params
                     )
@@ -585,13 +585,11 @@ class BaseModule(object):
             # Wait for the entity to be created and to be in the defined state:
             entity_service = self._service.service(entity.id)
 
-            def state_condition(entity):
-                return entity
-
+        def state_condition(entity):
             if result_state:
+                return entity and entity.status == result_state
 
-                def state_condition(entity):
-                    return entity and entity.status == result_state
+            return entity
 
             wait(
                 service=entity_service,
