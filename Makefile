@@ -21,12 +21,13 @@ PREFIX ?= '/usr/local'
 
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
-ifneq ($(shell which a2x 2>/dev/null),)
-ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
-ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
+MANPAGES ?= $(patsubst %.rst.in,%,$(wildcard ./docs/man/man1/ansible*.1.rst.in))
+ifneq ($(shell which rst2man 2>/dev/null),)
+ASCII2MAN = rst2man $< $@
+else ifneq ($(shell which rst2man.py 2>/dev/null),)
+ASCII2MAN = rst2man.py $< $@
 else
-ASCII2MAN = @echo "ERROR: AsciiDoc 'a2x' command is not installed but is required to build $(MANPAGES)" && exit 1
+ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
 endif
 GENERATE_CLI = docs/bin/generate_man.py
 
@@ -140,14 +141,15 @@ integration:
 authors:
 	sh hacking/authors.sh
 
-# Regenerate %.1.asciidoc if %.1.asciidoc.in has been modified more
-# recently than %.1.asciidoc.
-%.1.asciidoc: %.1.asciidoc.in
+# Regenerate %.1.rst if %.1.rst.in has been modified more
+# recently than %.1.rst.
+%.1.rst: %.1.rst.in
 	sed "s/%VERSION%/$(VERSION)/" $< > $@
+	rm $<
 
-# Regenerate %.1 if %.1.asciidoc or VERSION has been modified more
-# recently than %.1. (Implicitly runs the %.1.asciidoc recipe)
-%.1: %.1.asciidoc VERSION
+# Regenerate %.1 if %.1.rst or VERSION has been modified more
+# recently than %.1. (Implicitly runs the %.1.rst recipe)
+%.1: %.1.rst VERSION
 	$(ASCII2MAN)
 
 .PHONY: loc
@@ -176,7 +178,7 @@ clean:
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete
-	find ./docs/man -type f -name "*.asciidoc" -delete
+	find ./docs/man -type f -name "*.rst" -delete
 	find ./docs/man/man3 -type f -name "*.3" -delete
 	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
@@ -345,13 +347,13 @@ epub:
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
-.PHONY: generate_asciidoc
-generate_asciidoc: lib/ansible/cli/*.py
+.PHONY: generate_rst
+generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
 	PYTHONPATH=./lib $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
 
-docs: generate_asciidoc
+docs: generate_rst
 	make $(MANPAGES)
 
 .PHONY: alldocs
