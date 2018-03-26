@@ -60,7 +60,7 @@ MOCK_ENTRIES = [
         ],
         'output': {
             'uuid': '9876543210',
-            'vaultUuid': '2468',
+            'vaultUuid': '1357',
             'overview': {
                 'title': 'Mock Website',
                 'URLs': [
@@ -83,7 +83,7 @@ MOCK_ENTRIES = [
         ],
         'output': {
             'uuid': '864201357',
-            'vaultUuid': '2468',
+            'vaultUuid': '1357',
             'overview': {
                 'title': 'Mock Something'
             },
