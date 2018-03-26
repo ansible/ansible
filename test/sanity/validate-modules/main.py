@@ -1092,7 +1092,7 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         code=329,
                         msg=('Default value from the argument_spec (%r) is not compatible '
-                             'with type %r' % (data['default'], _type))
+                             'with type %r defined in the argument_spec' % (data['default'], _type))
                     )
                     continue
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
@@ -1132,19 +1132,40 @@ class ModuleValidator(Validator):
                 )
 
             # TODO: needs to recursively traverse suboptions
+            doc_choices = []
             try:
-                with CaptureStd():
-                    doc_choices = [_type_checker(c) for c in docs.get('options', {}).get(arg, {}).get('choices', [])]
-            except (Exception, SystemExit):
-                self.reporter.error(
-                    path=self.object_path,
-                    code=328,
-                    msg=('Choices value from the documentation (%r) is not compatible '
-                         'with type %r defined in the argument_spec' % (docs.get('options', {}).get(arg, {}).get('choices', []), data.get('type', 'str')))
-                )
+                for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
+                    try:
+                        with CaptureStd():
+                            doc_choices.append(_type_checker(choice))
+                    except (Exception, SystemExit):
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=328,
+                            msg=('Choices value from the documentation (%r) is not compatible '
+                                 'with type %r defined in the argument_spec' % (choice, _type))
+                        )
+                        raise StopIteration()
+            except StopIteration:
                 continue
-            with CaptureStd():
-                arg_choices = [_type_checker(c) for c in data.get('choices', [])]
+
+            arg_choices = []
+            try:
+                for choice in data.get('choices', []):
+                    try:
+                        with CaptureStd():
+                            arg_choices.append(_type_checker(choice))
+                    except (Exception, SystemExit):
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=330,
+                            msg=('Choices value from the argument_spec (%r) is not compatible '
+                                 'with type %r defined in the argument_spec' % (choice, _type))
+                        )
+                        raise StopIteration()
+            except StopIteration:
+                continue
+
             if not compare_unordered_lists(arg_choices, doc_choices):
                 self.reporter.error(
                     path=self.object_path,
