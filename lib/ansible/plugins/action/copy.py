@@ -435,7 +435,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif remote_src:
-            result.update(self._execute_module(task_vars=task_vars))
+            result.update(self._execute_module(module_name='copy', task_vars=task_vars))
             return result
         else:
             # find_needle returns a path that may not have a trailing slash on
