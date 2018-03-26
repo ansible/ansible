@@ -361,10 +361,10 @@ def ensure_map_public(conn, module, subnet, map_public, check_mode, start_time):
 
     if module.params['wait']:
         if map_public:
-            handle_waiter(conn, module, 'subnet_has_map_public_true',
+            handle_waiter(conn, module, 'subnet_has_map_public',
                           {'SubnetIds': [subnet['id']]}, start_time)
         else:
-            handle_waiter(conn, module, 'subnet_has_map_public_false',
+            handle_waiter(conn, module, 'subnet_no_map_public',
                           {'SubnetIds': [subnet['id']]}, start_time)
 
 
@@ -378,10 +378,10 @@ def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, ch
 
     if module.params['wait']:
         if assign_instances_ipv6:
-            handle_waiter(conn, module, 'subnet_has_assign_ipv6_true',
+            handle_waiter(conn, module, 'subnet_has_assign_ipv6',
                           {'SubnetIds': [subnet['id']]}, start_time)
         else:
-            handle_waiter(conn, module, 'subnet_has_assign_ipv6_false',
+            handle_waiter(conn, module, 'subnet_no_assign_ipv6',
                           {'SubnetIds': [subnet['id']]}, start_time)
 
 

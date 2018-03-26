@@ -45,7 +45,7 @@ ec2_data = {
                 },
             ]
         },
-        "SubnetHasMapPublicTrue": {
+        "SubnetHasMapPublic": {
             "delay": 5,
             "maxAttempts": 40,
             "operation": "DescribeSubnets",
@@ -58,7 +58,7 @@ ec2_data = {
                 },
             ]
         },
-        "SubnetHasMapPublicFalse": {
+        "SubnetNoMapPublic": {
             "delay": 5,
             "maxAttempts": 40,
             "operation": "DescribeSubnets",
@@ -71,7 +71,7 @@ ec2_data = {
                 },
             ]
         },
-        "SubnetHasAssignIpv6True": {
+        "SubnetHasAssignIpv6": {
             "delay": 5,
             "maxAttempts": 40,
             "operation": "DescribeSubnets",
@@ -84,7 +84,7 @@ ec2_data = {
                 },
             ]
         },
-        "SubnetHasAssignIpv6False": {
+        "SubnetNoAssignIpv6": {
             "delay": 5,
             "maxAttempts": 40,
             "operation": "DescribeSubnets",
@@ -119,27 +119,27 @@ waiters_by_name = {
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
-    ('EC2', 'subnet_has_map_public_true'): lambda ec2: core_waiter.Waiter(
-        'subnet_has_map_public_true',
-        model_for('SubnetHasMapPublicTrue'),
+    ('EC2', 'subnet_has_map_public'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_map_public',
+        model_for('SubnetHasMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
-    ('EC2', 'subnet_has_map_public_false'): lambda ec2: core_waiter.Waiter(
-        'subnet_has_map_public_false',
-        model_for('SubnetHasMapPublicFalse'),
+    ('EC2', 'subnet_no_map_public'): lambda ec2: core_waiter.Waiter(
+        'subnet_no_map_public',
+        model_for('SubnetNoMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
-    ('EC2', 'subnet_has_assign_ipv6_true'): lambda ec2: core_waiter.Waiter(
-        'subnet_has_assign_ipv6_true',
-        model_for('SubnetHasAssignIpv6True'),
+    ('EC2', 'subnet_has_assign_ipv6'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_assign_ipv6',
+        model_for('SubnetHasAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
-    ('EC2', 'subnet_has_assign_ipv6_false'): lambda ec2: core_waiter.Waiter(
-        'subnet_has_assign_ipv6_false',
-        model_for('SubnetHasAssignIpv6False'),
+    ('EC2', 'subnet_no_assign_ipv6'): lambda ec2: core_waiter.Waiter(
+        'subnet_no_assign_ipv6',
+        model_for('SubnetNoAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
