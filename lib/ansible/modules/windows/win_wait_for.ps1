@@ -23,6 +23,7 @@ $timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 30
 
 $result = @{
     changed = $false
+    elapsed = 0
 }
 
 # validate the input with the various options
@@ -126,9 +127,8 @@ if ($path -eq $null -and $port -eq $null -and $state -ne "drained") {
         }
 
         if ($complete -eq $false) {
-            $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be present"
             } else {
@@ -158,9 +158,8 @@ if ($path -eq $null -and $port -eq $null -and $state -ne "drained") {
         }
 
         if ($complete -eq $false) {
-            $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            $result.elapsed = $elapsed_seconds
             if ($search_regex -eq $null) {
                 Fail-Json $result "timeout while waiting for file $path to be absent"
             } else {
@@ -185,9 +184,8 @@ if ($path -eq $null -and $port -eq $null -and $state -ne "drained") {
         }
 
         if ($complete -eq $false) {
-            $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to start listening"
         }
     } elseif ($state -in @("stopped","absent")) {
@@ -206,9 +204,8 @@ if ($path -eq $null -and $port -eq $null -and $state -ne "drained") {
         }
 
         if ($complete -eq $false) {
-            $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to stop listening"
         }
     } elseif ($state -eq "drained") {
@@ -247,15 +244,14 @@ if ($path -eq $null -and $port -eq $null -and $state -ne "drained") {
         }
 
         if ($complete -eq $false) {
-            $elapsed_seconds = ((Get-Date) - $module_start).TotalSeconds
+            $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $result.wait_attempts = $attempts
-            $result.elapsed = $elapsed_seconds
             Fail-Json $result "timeout while waiting for $($hostname):$port to drain"
         }
     }
 }
 
-$result.wait_attempts = $attempts
 $result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+$result.wait_attempts = $attempts
 
 Exit-Json $result

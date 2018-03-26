@@ -170,6 +170,14 @@ EXAMPLES = r'''
     ansible_connection: local
 '''
 
+RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while waiting
+  returned: always
+  type: int
+  sample: 23
+'''
+
 import binascii
 import datetime
 import errno

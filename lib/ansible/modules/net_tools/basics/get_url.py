@@ -213,12 +213,12 @@ backup_file:
     sample: /path/to/file.txt.2015-02-12@22:09~
 checksum_dest:
     description: sha1 checksum of the file after copy
-    returned: success
+    returned: always
     type: string
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 checksum_src:
     description: sha1 checksum of the file
-    returned: success
+    returned: always
     type: string
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 dest:
@@ -226,6 +226,11 @@ dest:
     returned: success
     type: string
     sample: /path/to/file.txt
+elapsed:
+    description: The number of seconds that elapsed while performing the download
+    returned: always
+    type: int
+    sample: 23
 gid:
     description: group id of the file
     returned: success
@@ -268,7 +273,7 @@ size:
     sample: 1220
 src:
     description: source file used after download
-    returned: changed
+    returned: always
     type: string
     sample: /tmp/tmpAdFLdV
 state:
@@ -418,6 +423,15 @@ def main():
     timeout = module.params['timeout']
     tmp_dest = module.params['tmp_dest']
 
+    result = dict(
+        changed=False,
+        checksum_dest=None,
+        checksum_src=None,
+        dest=dest,
+        elapsed=0,
+        url=url,
+    )
+
     # Parse headers to dict
     if isinstance(module.params['headers'], dict):
         headers = module.params['headers']
@@ -456,7 +470,7 @@ def main():
             # Ensure the checksum portion is a hexdigest
             int(checksum, 16)
         except ValueError:
-            module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>")
+            module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>", **result)
 
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
@@ -474,7 +488,7 @@ def main():
                 file_args['path'] = dest
                 changed = module.set_fs_attributes_if_different(file_args, False)
                 if changed:
-                    module.exit_json(msg="file already exists but file attributes changed", dest=dest, url=url, changed=changed)
+                    module.exit_json(msg="file already exists but file attributes changed", **resul)
                 module.exit_json(msg="file already exists", dest=dest, url=url, changed=changed)
 
             checksum_mismatch = True
@@ -490,7 +504,10 @@ def main():
             force = True
 
     # download to tmpsrc
+    start = datetime.datetime.utcnow()
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+    result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
+    result['src'] = tmpsrc
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
@@ -504,44 +521,41 @@ def main():
             filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
 
-    checksum_src = None
-    checksum_dest = None
-
     # If the remote URL exists, we're done with check mode
     if module.check_mode:
         os.remove(tmpsrc)
-        res_args = dict(url=url, dest=dest, src=tmpsrc, changed=True, msg=info.get('msg', ''))
-        module.exit_json(**res_args)
+        result['changed'] = True
+        module.exit_json(msg=info.get('msg', ''), **result)
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
-        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], **result)
     if not os.access(tmpsrc, os.R_OK):
         os.remove(tmpsrc)
-        module.fail_json(msg="Source %s is not readable" % (tmpsrc))
-    checksum_src = module.sha1(tmpsrc)
+        module.fail_json(msg="Source %s is not readable" % (tmpsrc), **result)
+    result['checksum_src'] = module.sha1(tmpsrc)
 
     # check if there is no dest file
     if os.path.exists(dest):
         # raise an error if copy has no permission on dest
         if not os.access(dest, os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s is not writable" % (dest))
+            module.fail_json(msg="Destination %s is not writable" % (dest), **result)
         if not os.access(dest, os.R_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s is not readable" % (dest))
-        checksum_dest = module.sha1(dest)
+            module.fail_json(msg="Destination %s is not readable" % (dest), **result)
+        result['checksum_dest'] = module.sha1(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s does not exist" % (os.path.dirname(dest)))
+            module.fail_json(msg="Destination %s does not exist" % (os.path.dirname(dest)), **result)
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
-            module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)))
+            module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)), **result)
 
     backup_file = None
-    if checksum_src != checksum_dest:
+    if result['checksum_src'] != result['checksum_dest']:
         try:
             if backup:
                 if os.path.exists(dest):
@@ -551,7 +565,7 @@ def main():
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)),
-                             exception=traceback.format_exc())
+                             exception=traceback.format_exc(), **result)
         changed = True
     else:
         changed = False
@@ -563,29 +577,25 @@ def main():
 
         if checksum != destination_checksum:
             os.remove(dest)
-            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum))
+            module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
     module.params['path'] = dest
     file_args = module.load_file_common_arguments(module.params)
     file_args['path'] = dest
-    changed = module.set_fs_attributes_if_different(file_args, changed)
+    result['changed'] = module.set_fs_attributes_if_different(file_args, changed)
 
     # Backwards compat only.  We'll return None on FIPS enabled systems
     try:
-        md5sum = module.md5(dest)
+        result['md5sum'] = module.md5(dest)
     except ValueError:
-        md5sum = None
+        result['md5sum'] = None
 
-    res_args = dict(
-        url=url, dest=dest, src=tmpsrc, md5sum=md5sum, checksum_src=checksum_src,
-        checksum_dest=checksum_dest, changed=changed, msg=info.get('msg', ''), status_code=info.get('status', '')
-    )
     if backup_file:
-        res_args['backup_file'] = backup_file
+        result['backup_file'] = backup_file
 
     # Mission complete
-    module.exit_json(**res_args)
+    module.exit_json(msg=info.get('msg', ''), status_code=info.get('status', ''), **result)
 
 
 if __name__ == '__main__':
