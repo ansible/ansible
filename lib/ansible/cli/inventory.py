@@ -78,6 +78,10 @@ class InventoryCLI(CLI):
             basedir_opts=True,
         )
 
+        # remove unused default options
+        self.parser.remove_option('--limit')
+        self.parser.remove_option('--list-hosts')
+
         # Actions
         action_group = optparse.OptionGroup(self.parser, "Actions", "One of following must be used on invocation, ONLY ONE!")
         action_group.add_option("--list", action="store_true", default=False, dest='list', help='Output all hosts info, works as inventory script')
@@ -85,8 +89,6 @@ class InventoryCLI(CLI):
         action_group.add_option("--graph", action="store_true", default=False, dest='graph',
                                 help='create inventory graph, if supplying pattern it must be a valid group name')
         self.parser.add_option_group(action_group)
-
-        # Options
 
         # graph
         self.parser.add_option("-y", "--yaml", action="store_true", default=False, dest='yaml',
