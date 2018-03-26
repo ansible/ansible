@@ -2129,7 +2129,7 @@ def main():
                 )
                 module.exit_json(**result)
             # set powerstate
-            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
+            tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:
