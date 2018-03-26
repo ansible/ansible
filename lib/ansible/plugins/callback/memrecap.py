@@ -25,9 +25,13 @@ import os
 import subprocess
 import threading
 
-import memory_profiler as mp
-
 from ansible.plugins.callback import CallbackBase
+
+try:
+    import memory_profiler as mp
+    HAS_MEMORY_PROFILER = True
+except ImportError:
+    HAS_MEMORY_PROFILER = False
 
 
 class MemProf(threading.Thread):
@@ -64,14 +68,18 @@ class CallbackModule(CallbackBase):
 
     def __init__(self, display=None):
         super(CallbackModule, self).__init__(display)
-        self._pid = os.getpid()
+        if not HAS_MEMORY_PROFILER:
+            self._display.warning('The required "memory_profiler" python module is not installed, disabling the "memrecap" callback plugin')
+            self.disabled = True
+        else:
+            self._pid = os.getpid()
 
-        self._proc = FakePopen(self._pid)
-        self._task_proc = FakePopen(self._pid)
+            self._proc = FakePopen(self._pid)
+            self._task_proc = FakePopen(self._pid)
 
-        self._task_memprof = None
-        self._memprof = MemProf(self._proc)
-        self._memprof.start()
+            self._task_memprof = None
+            self._memprof = MemProf(self._proc)
+            self._memprof.start()
 
         self.task_results = []
 
