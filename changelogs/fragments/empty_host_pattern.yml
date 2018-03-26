@@ -1,0 +1,2 @@
+bugfixes:
+    - return empty list if host pattern is empty https://github.com/ansible/ansible/pull/37931
