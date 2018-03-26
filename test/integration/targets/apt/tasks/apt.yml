@@ -168,7 +168,7 @@
 - name: verify sane error message
   assert:
     that:
-      - "'E:Failed to fetch' in apt_result['msg']"
+      - "'Failed to fetch' in apt_result['msg']"
       - "'403' in apt_result['msg']"
 
 - name: Clean up

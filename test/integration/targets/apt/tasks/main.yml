@@ -30,7 +30,9 @@
    when: ansible_distribution in ('Ubuntu', 'Debian')
 
  - include: 'apt-multiarch.yml'
-   when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
+   when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
+     - ansible_userspace_architecture != apt_foreign_arch
 
  - include: 'apt-builddep.yml'
    when: ansible_distribution in ('Ubuntu', 'Debian')
@@ -48,6 +50,7 @@
      pkg: aptitude
      state: absent
    when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
      - aptitude_status.stdout.find('ii') != -1
 
  - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
@@ -63,6 +66,8 @@
    apt:
      pkg: aptitude
      state: present
+   when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
 
  - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
    when:
@@ -78,4 +83,5 @@
      pkg: aptitude
      state: absent
    when:
+     - ansible_distribution in ('Ubuntu', 'Debian')
      - aptitude_status.stdout.find('ii') == -1
