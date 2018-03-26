@@ -85,8 +85,11 @@ class OnePass(object):
 
     def _parse_field(self, field_name, data_json):
         data = json.loads(data_json)
-        for section_data in data['details']['sections']:
-            for field_data in section_data.get('fields', {}):
+        for field_data in data['details'].get('fields', []):
+            if field_data.get('name') == field_name:
+                return field_data.get('value', '')
+        for section_data in data['details'].get('sections', []):
+            for field_data in section_data.get('fields', []):
                 if field_data.get('t') == field_name:
                     return field_data.get('v', '')
         return ''

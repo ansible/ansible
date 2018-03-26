@@ -76,21 +76,56 @@ MOCK_ENTRIES = [
             }
         }
     },
+    {
+        'vault_name': 'Acme Logins',
+        'queries': [
+            '864201357'
+        ],
+        'output': {
+            'uuid': '864201357',
+            'vaultUuid': '2468',
+            'overview': {
+                'title': 'Mock Something'
+            },
+            'details': {
+                'fields' : [
+                    {
+                        'value' : 'jbond@mi6.gov.uk',
+                        'name' : 'emailAddress'
+                    },
+                    {
+                        'name' : 'password',
+                        'value' : 'vauxhall'
+                    }
+                ]
+            }
+        }
+    },
 ]
 
 
 def get_mock_query_generator(require_field=None):
+    def _process_field(field):
+        field_name = field.get('name', field.get('t'))
+        field_value = field.get('value', field.get('v'))
+
+        if require_field is None or field_name == require_field:
+            return entry, query, field_name, field_value
+
     for entry in MOCK_ENTRIES:
         for query in entry['queries']:
-            for section in entry['output']['details']['sections']:
+            for field in entry['output']['details'].get('fields', []):
+                fixture = _process_field(field)
+                if fixture: yield fixture
+            for section in entry['output']['details'].get('sections', []):
                 for field in section['fields']:
-                    if require_field is None or field['t'] == require_field:
-                        yield entry, query, field
+                    fixture = _process_field(field)
+                    if fixture: yield fixture
 
 
 def get_one_mock_query(require_field=None):
     generator = get_mock_query_generator(require_field)
-    return next(generator, None)
+    return next(generator)
 
 
 class MockOnePass(OnePass):
@@ -198,8 +233,8 @@ class TestOnePass(unittest.TestCase):
     def test_onepassword_get(self):
         op = MockOnePass()
         query_generator = get_mock_query_generator()
-        for dummy, query, field in query_generator:
-            self.assertEqual(field['v'], op.get_field(query, field['t']))
+        for dummy, query, field_name, field_value in query_generator:
+            self.assertEqual(field_value, op.get_field(query, field_name))
 
     def test_onepassword_get_not_found(self):
         op = MockOnePass()
@@ -207,14 +242,14 @@ class TestOnePass(unittest.TestCase):
 
     def test_onepassword_get_with_vault(self):
         op = MockOnePass()
-        entry, query, field = get_one_mock_query()
+        entry, query, field_name, field_value = get_one_mock_query()
         for vault_query in [entry['vault_name'], entry['output']['vaultUuid']]:
-            self.assertEqual(field['v'], op.get_field(query, field['t'], vault_query))
+            self.assertEqual(field_value, op.get_field(query, field_name, vault_query))
 
     def test_onepassword_get_with_wrong_vault(self):
         op = MockOnePass()
-        dummy, query, field = get_one_mock_query()
-        self.assertEqual('', op.get_field(query, field['t'], 'a fake vault'))
+        dummy, query, field_name, dummy = get_one_mock_query()
+        self.assertEqual('', op.get_field(query, field_name, 'a fake vault'))
 
 
 @patch('ansible.plugins.lookup.onepassword.OnePass', MockOnePass)
@@ -234,5 +269,5 @@ class TestLookupModule(unittest.TestCase):
     def test_onepassword_plugin_default_field(self):
         lookup_plugin = LookupModule()
 
-        dummy, query, field = get_one_mock_query('password')
-        self.assertEqual([field['v']], lookup_plugin.run([query]))
+        dummy, query, dummy, field_value = get_one_mock_query('password')
+        self.assertEqual([field_value], lookup_plugin.run([query]))
