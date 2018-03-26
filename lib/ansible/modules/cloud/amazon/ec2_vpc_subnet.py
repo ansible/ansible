@@ -263,8 +263,10 @@ def handle_waiter(conn, module, waiter_name, params, start_time):
         get_waiter(conn, waiter_name).wait(
             **params
         )
+    except botocore.exceptions.WaiterError as e:
+        module.fail_json_aws(e, "Failed to wait for updates to complete")
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-        module.fail_json_aws(e, "Failed to wait for updates")
+        module.fail_json_aws(e, "An exception happened while trying to wait for updates")
 
 
 def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None, start_time=None):
@@ -297,7 +299,7 @@ def create_subnet(conn, module, vpc_id, cidr, ipv6_cidr=None, az=None, start_tim
             )
             subnet['state'] = 'available'
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json(msg="Create subnet action timed out waiting for Subnet to become available. %s" % str(e), exception=traceback.format_exc())
+            module.fail_json_aws(e, "Create subnet action timed out waiting for subnet to become available")
 
     return subnet
 
@@ -564,8 +566,7 @@ def main():
         elif state == 'absent':
             result = ensure_subnet_absent(connection, module)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(),
-                         **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e)
 
     module.exit_json(**result)
 
