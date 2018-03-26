@@ -178,7 +178,11 @@ def grafana_plugin(module, params):
         stdout_lines = stdout.split("\n")
         for line in stdout_lines:
             if line.find(params['name']):
-                plugin_name, plugin_version = line.split(' @ ')
+                if line.find(' @ ') != -1:
+                    line = line.rstrip()
+                    plugin_name, plugin_version = line.split(' @ ')
+                else:
+                    plugin_version = None
                 return {'msg': 'Grafana plugin {} installed : {}'.format(params['name'], cmd),
                         'changed': True,
                         'version': plugin_version}
