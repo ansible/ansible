@@ -172,12 +172,12 @@ def main():
                            timeout=module.params['timeout'])
 
     if info["status"] != 200:
-        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
 
     result = to_native(resp.read())
 
     if 'Exception:' in result and 'at java.lang.Thread' in result:
-        module.fail_json(msg="script failed with stacktrace:\n " + result)
+        module.fail_json(msg="script failed with stacktrace:\n " + result, output='')
 
     module.exit_json(
         output=result,
