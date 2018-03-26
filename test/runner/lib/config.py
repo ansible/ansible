@@ -46,6 +46,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
+        self.docker_memory = args.docker_memory if 'docker_memory' in args else None
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
