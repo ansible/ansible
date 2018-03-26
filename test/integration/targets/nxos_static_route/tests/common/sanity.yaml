@@ -11,8 +11,9 @@
       route_name: testing
       pref: 100
       tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
       provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: &true
@@ -21,11 +22,33 @@
 
   - name: "Conf Idempotence"
     nxos_static_route: *configure
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: &false
       that:
         - "result.changed == false"
+
+  - name: change static route
+    nxos_static_route: &configure1
+      prefix: "192.168.20.64/24"
+      next_hop: "3.3.3.3"
+      route_name: default
+      pref: 10
+      tag: default
+      vrf: "{{ item }}"
+      provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Conf1 Idempotence"
+    nxos_static_route: *configure1
+    with_items: "{{ vrfs }}"
+    register: result
+
+  - assert: *false
 
   - name: remove static route
     nxos_static_route: &remove
@@ -33,16 +56,17 @@
       next_hop: "3.3.3.3"
       route_name: testing
       pref: 100
-      tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
       state: absent
       provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: *true
 
   - name: "Remove Idempotence"
     nxos_static_route: *remove
+    with_items: "{{ vrfs }}"
     register: result
 
   - assert: *false
@@ -96,9 +120,10 @@
       route_name: testing
       pref: 100
       tag: 5500
-      vrf: testing
+      vrf: "{{ item }}"
       state: absent
       provider: "{{ connection }}"
+    with_items: "{{ vrfs }}"
     ignore_errors: yes
 
   - name: remove static route aggregate
