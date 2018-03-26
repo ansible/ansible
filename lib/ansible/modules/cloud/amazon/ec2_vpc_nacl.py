@@ -43,13 +43,49 @@ options:
     required: false
   egress:
     description:
-      - A list of rules for outgoing traffic.
-      - Each rule must be specified as a list.
+      - A list of rules for outgoing traffic. Each rule must be specified as a list. See examples.
+    suboptions:
+      rule_number:
+        description: an integer from 1 to 32766
+        required: true
+      protocol:
+        description: the protocol for the rule
+        required: true
+        choices: ['tcp', 'udp', 'icmp', '-1', 'all']
+      cidr_ipv4:
+        description: The CIDR of the IPv4 network range to allow or deny
+        required: true
+      icmp_type:
+        description: An integer, the ICMP type if the protocol is icmp. A value of -1 means all types.
+      icmp_code:
+        description: An integer, the ICMP code if the protocol is icmp. A value of -1 means all codes.
+      from_port:
+        description: An integer, the last port in the range for TCP or UDP protocols.
+      to_port:
+        description: An integer, the first port in the range for TCP or UDP protocols.
     required: false
   ingress:
     description:
-      - List of rules for incoming traffic.
-      - Each rule must be specified as a list.
+      - List of rules for incoming traffic. Each rule must be specified as a list. See examples.
+    suboptions:
+      rule_number:
+        description: an integer from 1 to 32766
+        required: true
+      protocol:
+        description: the protocol for the rule
+        required: true
+        choices: ['tcp', 'udp', 'icmp', '-1', 'all']
+      cidr_ipv4:
+        description: The CIDR of the IPv4 network range to allow or deny
+        required: true
+      icmp_type:
+        description: An integer, the ICMP type if the protocol is icmp. A value of -1 means all types.
+      icmp_code:
+        description: An integer, the ICMP code if the protocol is icmp. A value of -1 means all codes.
+      from_port:
+        description: An integer, the last port in the range for TCP or UDP protocols.
+      to_port:
+        description: An integer, the first port in the range for TCP or UDP protocols.
     required: false
   tags:
     description:
@@ -163,7 +199,7 @@ PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 
 # Utility methods
 def icmp_present(entry):
-    if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
+    if entry[1] == 'icmp' or entry[1] == 1:
         return True
 
 
@@ -538,6 +574,24 @@ def subnets_to_associate(nacl, client, module):
 
 
 def main():
+    rule_list_options = {
+        'required': False,
+        'type': 'list',
+        'elements': 'list',
+        'options': {
+            'rule_number': dict(required=True, type='int'),
+            'protocol': dict(required=True, choices=['tcp', 'udp', 'icmp', '-1', 'all']),
+            'rule_action': dict(required=True, choices=['allow', 'deny']),
+            'ipv4_cidr': dict(required=True),
+            'icmp_type': dict(type='int'),
+            'icmp_code': dict(type='int'),
+            'from_port': dict(type='int'),
+            'to_port': dict(type='int')
+        },
+        'required_together': [('from_port', 'to_port'),
+                              ('icmp_type', 'icmp_code')],
+        'mutually_exclusive': [('icmp_type', 'from_port')]
+    }
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         vpc_id=dict(),
@@ -545,8 +599,8 @@ def main():
         nacl_id=dict(),
         subnets=dict(required=False, type='list', default=list()),
         tags=dict(required=False, type='dict'),
-        ingress=dict(required=False, type='list', default=list()),
-        egress=dict(required=False, type='list', default=list(),),
+        ingress=rule_list_options,
+        egress=rule_list_options,
         state=dict(default='present', choices=['present', 'absent']),
     ),
     )
