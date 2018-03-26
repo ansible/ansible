@@ -34,7 +34,7 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping, MutableSequence
+from collections import Mapping, MutableMapping, MutableSequence
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
@@ -326,7 +326,7 @@ def combine(*terms, **kwargs):
 
     dicts = []
     for t in terms:
-        if isinstance(t, MutableMapping):
+        if isinstance(t, (MutableMapping, Mapping)):
             dicts.append(t)
         elif isinstance(t, list):
             dicts.append(combine(*t, **kwargs))

@@ -113,6 +113,10 @@ Errors
   324       Value for "default" from the argument_spec does not match the documentation
   325       argument_spec defines type="bool" but documentation does not
   326       Value for "choices" from the argument_spec does not match the documentation
+  327       Default value from the documentation is not compatible with type defined in the argument_spec
+  328       Choices value from the documentation is not compatible with type defined in the argument_spec
+  329       Default value from the argument_spec is not compatible with type defined in the argument_spec
+  330       Choices value from the argument_spec is not compatible with type defined in the argument_spec
   ..
 ---------   -------------------
   **4xx**   **Syntax**
