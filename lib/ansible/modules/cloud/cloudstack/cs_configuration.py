@@ -228,7 +228,9 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
         configurations = self.query_api('listConfigurations', **args)
         if not configurations:
             self.module.fail_json(msg="Configuration %s not found." % args['name'])
-        configuration = configurations['configuration'][0]
+        for config in configurations['configuration']:
+            if args['name'] == config['name']:
+                configuration = config
         return configuration
 
     def get_value(self):
