@@ -154,6 +154,7 @@ def delegate_docker(args, exclude, require):
     util_image = args.docker_util
     test_image = args.docker
     privileged = args.docker_privileged
+    memory_limit = args.docker_memory
 
     if util_image:
         docker_pull(args, util_image)
@@ -168,6 +169,8 @@ def delegate_docker(args, exclude, require):
         '--docker-privileged': 0,
         '--docker-util': 1,
     }
+    if memory_limit:
+        options['--docker-memory'] = memory_limit
 
     cmd = generate_command(args, '/root/ansible/test/runner/test.py', options, exclude, require)
 
@@ -215,6 +218,12 @@ def delegate_docker(args, exclude, require):
                 '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
                 '--privileged=%s' % str(privileged).lower(),
             ]
+
+            if memory_limit:
+                test_options.extend([
+                    '--memory=%d' % memory_limit,
+                    '--memory-swap=0',
+                ])
 
             docker_socket = '/var/run/docker.sock'
 

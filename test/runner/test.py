@@ -605,6 +605,9 @@ def add_extra_docker_options(parser, integration=True):
                         action='store_true',
                         help='run docker container in privileged mode')
 
+    docker.add_argument('--docker-memory',
+                        help='Memory limit for docker in bytes', type=int)
+
 
 def complete_target(prefix, parsed_args, **_):
     """
