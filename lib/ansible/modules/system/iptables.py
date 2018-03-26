@@ -454,6 +454,7 @@ def construct_rule(params):
 
 def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
+    cmd.append('-w')
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
     if action == '-I' and params['rule_num']:
