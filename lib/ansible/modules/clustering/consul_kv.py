@@ -213,7 +213,8 @@ def lock(module, state):
 def get_value(module):
     consul_api = get_consul_api(module)
     key = module.params.get('key')
-    index, existing_value = consul_api.kv.get(key)
+
+    index, existing_value = consul_api.kv.get(key, recurse=module.params.get('recurse'))
 
     module.exit_json(changed=False, index=index, data=existing_value)
 
