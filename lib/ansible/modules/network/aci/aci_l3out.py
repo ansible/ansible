@@ -53,15 +53,13 @@ options:
     aliases: [ target ]
   route_control:
     description:
-    - Route Control enforcement direction.
-    choices: [ 'export,import', 'export' ]
-    default: export
+    - Route Control enforcement direction. The only allowed values are export or import,export.
+    choices: [ 'export', 'import' ]
     aliases: [ route_control_enforcement ]
   l3protocol:
     description:
     - Routing protocol for the L3Out
-    choices: [ static, bgp, ospf ]
-    default: static
+    choices: [ static, bgp, ospf, pim ]
   description:
     description:
     - Description for the L3Out.
@@ -70,14 +68,8 @@ options:
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
-    - Use C(query) for listing an object or multiple objects.
-    choices: [ absent, present, query ]
+    choices: [ absent, present ]
     default: present
-  method:
-    description:
-    - The HTTP method used for the request to the APIC
-    choices: [ get, post, delete ]
-    aliases: [ action ]
 extends_documentation_fragment: aci
 '''
 
@@ -214,20 +206,16 @@ def main():
         vrf=dict(type='str', aliases=['vrf_name']),
         tenant=dict(type='str', aliases=['tenant_name']),
         description=dict(type='str', aliases=['descr']),
-        route_control=dict(type='str', default='export', choices=[
-                           'export,import', 'export'], aliases=['route_control_enforcement']),
+        route_control=dict(type='list', choices=[
+                           'export', 'import'], aliases=['route_control_enforcement']),
         dscp=dict(type='str',
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        l3protocol=dict(type='str', default='static',
-                        choices=['static', 'bgp', 'ospf']),
-        state=dict(type='str', default='present', choices=[
-                   'absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=[
-                    'action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        # Deprecated in v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),
+        l3protocol=dict(type='list',
+                        choices=['static', 'bgp', 'ospf', 'pim']),
+        state=dict(type='str', default='present',
+                   choices=['absent', 'present'])
     )
 
     module = AnsibleModule(
@@ -251,8 +239,17 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
+    enforce_ctrl = ''
+    if enforceRtctrl is not None:
+        if len(enforceRtctrl) == 1 and enforceRtctrl[0] == 'import':
+            aci.fail_json(
+                "The route_control parameter is invalid: allowed options are export or import,export only")
+        elif len(enforceRtctrl) == 1 and enforceRtctrl[0] == 'export':
+            enforce_ctrl = 'export'
+        else:
+            enforce_ctrl = 'export,import'
     child_classes = ['l3extRsL3DomAtt', 'l3extRsEctx',
-                     'bgpExtP', 'ospfExtP', 'eigrpExtP']
+                     'bgpExtP', 'ospfExtP', 'eigrpExtP', 'pimExtP']
 
     aci.construct_url(
         root_class=dict(
@@ -277,12 +274,17 @@ def main():
             tDn='uni/l3dom-{0}'.format(domain)))),
         dict(l3extRsEctx=dict(attributes=dict(tnFvCtxName=vrf))),
     ]
-    if l3protocol == 'bgp':
-        child_configs.append(
-            dict(bgpExtP=dict(attributes=dict(descr='', nameAlias=''))))
-    if l3protocol == 'ospf':
-        child_configs.append(
-            dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))
+    if l3protocol is not None:
+        for protocol in l3protocol:
+            if protocol == 'bgp':
+                child_configs.append(
+                    dict(bgpExtP=dict(attributes=dict(descr='', nameAlias=''))))
+            elif protocol == 'ospf':
+                child_configs.append(
+                    dict(ospfExtP=dict(attributes=dict(descr='', nameAlias=''))))
+            elif protocol == 'pim':
+                child_configs.append(
+                    dict(pimExtP=dict(attributes=dict(descr='', nameAlias=''))))
 
     if state == 'present':
         aci.payload(
@@ -291,11 +293,8 @@ def main():
                 name=l3out,
                 descr=description,
                 dn='uni/tn-{0}/out-{1}'.format(tenant, l3out),
-                enforceRtctrl=enforceRtctrl,
-                targetDscp=dscp,
-                nameAlias='',
-                ownerKey='',
-                ownerTag='',
+                enforceRtctrl=enforce_ctrl,
+                targetDscp=dscp
             ),
             child_configs=child_configs,
         )
