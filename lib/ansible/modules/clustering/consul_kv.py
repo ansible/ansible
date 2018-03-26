@@ -135,7 +135,10 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
-NOT_SET = object()
+# Note: although the python-consul documentation implies that using a key with a value of `None` with `put` has a
+# special meaning (https://python-consul.readthedocs.io/en/latest/#consul-kv), if not set in the subsequently API call,
+# the value just defaults to an empty string (https://www.consul.io/api/kv.html#create-update-key)
+NOT_SET = None
 
 
 def _has_value_changed(consul_client, key, target_value):
@@ -165,10 +168,10 @@ def execute(module):
     if state == 'acquire' or state == 'release':
         lock(module, state)
     elif state == 'present':
-        if module.params.get('value') == NOT_SET:
+        if module.params.get('value') is NOT_SET:
             get_value(module)
         else:
-            add_value(module)
+            set_value(module)
     elif state == 'absent':
         remove_value(module)
     else:
@@ -215,12 +218,14 @@ def get_value(module):
     module.exit_json(changed=False, index=index, data=existing_value)
 
 
-def add_value(module):
-
+def set_value(module):
     consul_api = get_consul_api(module)
 
     key = module.params.get('key')
     value = module.params.get('value')
+
+    if value is NOT_SET:
+        raise AssertionError('Cannot set value of "%s" to `NOT_SET`', (key, ))
 
     index, changed = _has_value_changed(consul_api, key, value)
 
