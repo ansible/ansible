@@ -25,6 +25,7 @@ import yaml
 import yaml.reader
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
@@ -117,15 +118,11 @@ def parse_yaml(value, lineno, module, name, load_all=False):
     return data, errors, traces
 
 
-def maybe_convert_bool(value):
-    """Safe conversion to boolean, catching TypeError and returning the original result
-
-    Only used in doc<->arg_spec comparisons
-    """
-    try:
-        return boolean(value)
-    except TypeError:
-        return value
+def is_empty(value):
+    """Evaluate null like values excluding False"""
+    if value is False:
+        return False
+    return not bool(value)
 
 
 def compare_unordered_lists(a, b):
@@ -136,3 +133,11 @@ def compare_unordered_lists(a, b):
       - unhashable elements
     """
     return len(a) == len(b) and all(x in b for x in a)
+
+
+class NoArgsAnsibleModule(AnsibleModule):
+    """AnsibleModule that does not actually load params. This is used to get access to the
+    methods within AnsibleModule without having to fake a bunch of data
+    """
+    def _load_params(self):
+        self.params = {}
