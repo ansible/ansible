@@ -57,7 +57,7 @@ options:
     default: 0
   state:
     description:
-      - If C(mount), the device will be actively mounted without changing
+      - If C(mounted_raw), the device will be actively mounted without changing
         I(fstab). If the mount point is not present, the mount
         point will be created.
       - If C(mounted), the device will be actively mounted and appropriately
@@ -71,7 +71,7 @@ options:
         I(fstab) and will also unmount the device and remove the mount
         point.
     required: true
-    choices: [ absent, mounted, present, mount, unmounted ]
+    choices: [ absent, mounted, present, mounted_raw, unmounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab). You shouldn't use this option
@@ -145,7 +145,7 @@ EXAMPLES = '''
     path: /mnt/data
     src: /dev/sb1
     fstype: ext4
-    state: mount
+    state: mounted_raw
 '''
 
 
@@ -618,7 +618,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(default=False, type='bool'),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'mount', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'mounted_raw', 'present', 'unmounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -689,7 +689,7 @@ def main():
     #   Do not change fstab state, but unmount.
     # present:
     #   Add to fstab, do not change mount state.
-    # mount:
+    # mounted_raw:
     #   Mount only, do not change fstab state.
     # mounted:
     #   Add to fstab if not there and make sure it is mounted. If it has
@@ -725,7 +725,7 @@ def main():
                         msg="Error unmounting %s: %s" % (name, msg))
 
             changed = True
-    elif state == 'mount':
+    elif state == 'mounted_raw':
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
