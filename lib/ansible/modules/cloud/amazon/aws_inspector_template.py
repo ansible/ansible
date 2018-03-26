@@ -8,7 +8,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: inspector_template
+module: aws_inspector_template
 short_description: Create and Delete Amazon Inspector Assessment Templates
 description: Creates and deletes Amazon Inspector assessment templates.
 version_added: "2.6"
@@ -166,29 +166,32 @@ subscriptions:
 tags:
   description: List of tags added to this assessment template.
   returned: success
-  type: list
-  sample: [{"key": "technical_contact", "value": "johndoe"}]
+  type: dict
+  sample: {"technical_contact": "johndoe"}
 user_attributes_for_findings:
   description: List of user-defined attributes that are assigned to every
                generated finding from the assessment run that uses this
                assessment template.
   returned: success
-  type: list
-  sample: [{"key": "run_no", "value": 12345}, {"key": "env", "value": "dev"}]
+  type: dict
+  sample: {"run_no": 12345, "env": "dev"}
 '''
 
 import re
-try:
-    from botocore.exceptions import ClientError, ValidationError
-except ImportError:
-    pass  # Handled AnsibleAWSModule
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import AWSRetry
 from ansible.module_utils.ec2 import (
-    boto3_conn,
+    HAS_BOTO3,
+    ansible_dict_to_boto3_tag_list,
+    boto3_tag_list_to_ansible_dict,
     camel_dict_to_snake_dict,
-    get_aws_connection_info,
+    compare_aws_tags,
 )
+
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
 
 def _check_subs(module, subs):
@@ -224,36 +227,49 @@ def _check_subs(module, subs):
     return checked_subs
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_template_arn(client, module, name):
     try:
         return client.list_assessment_templates(
             filter={'namePattern': name},
         ).get('assessmentTemplateArns')[0]
-    except (ClientError, ValidationError) as e:
+    except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg='trying to retrieve template arn')
     except IndexError:
         return None
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_template(client, module, arn):
     try:
         template = client.describe_assessment_templates(
             assessmentTemplateArns=[arn],
         ).get('assessmentTemplates')[0]
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg='trying to retrieve template')
     except IndexError:
         module.fail_json(msg='unknown template: %s' % arn)
 
+    template.update(
+        {
+            'userAttributesForFindings': boto3_tag_list_to_ansible_dict(
+                template.get('userAttributesForFindings'), 'key', 'value'
+            )
+        }
+    )
     template.update({'tags': _retrieve_tags(client, module, arn)})
     template.update({'subscriptions': _retrieve_subs(client, module, arn)})
 
     return camel_dict_to_snake_dict(template)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_rules_arns(client, module, rules):
     # Add new rules to this dictionary
     rules_mapping = {
@@ -274,7 +290,10 @@ def get_rules_arns(client, module, rules):
         all_rules = client.describe_rules_packages(
             rulesPackageArns=all_rules_arns,
         ).get('rulesPackages')
-    except (ClientError, ValidationError) as e:
+    except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to retrieve rules")
 
     return [
@@ -283,33 +302,46 @@ def get_rules_arns(client, module, rules):
     ]
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def _retrieve_tags(client, module, arn):
     try:
-        return client.list_tags_for_resource(resourceArn=arn).get('tags')
-    except (ClientError, ValidationError) as e:
+        return boto3_tag_list_to_ansible_dict(
+            client.list_tags_for_resource(resourceArn=arn).get('tags')
+        )
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to retrieve tags for target")
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def set_tags(client, module, arn, tags):
     try:
         return client.set_tags_for_resource(
-            resourceArn=arn, tags=tags,
-        ).get('changed')
-    except (ClientError, ValidationError) as e:
+            resourceArn=arn, tags=ansible_dict_to_boto3_tag_list(
+                tags, 'key', 'value'
+            ),
+        )
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to set tags on target")
 
 
 def update_tags(client, module, arn, tags):
-    existing_tags = _retrieve_tags(client, module, arn)
-    if sorted(tags) != sorted(existing_tags):
+    tags_to_add, tags_to_remove = compare_aws_tags(
+        tags, _retrieve_tags(client, module, arn)
+    )
+
+    if (tags_to_add or tags_to_remove):
         return set_tags(client, module, arn, tags)
     else:
         return None
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def _retrieve_subs(client, module, arn):
     try:
         event_subs = client.list_event_subscriptions(resourceArn=arn)
@@ -322,7 +354,10 @@ def _retrieve_subs(client, module, arn):
             )
             subs += event_subs.get('subscriptions')
             next_token = event_subs.get('nextToken')
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to retrieve subs for target")
 
     return [
@@ -331,7 +366,7 @@ def _retrieve_subs(client, module, arn):
     ]
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def add_subs(client, module, arn, subs):
     changed = False
     try:
@@ -342,13 +377,16 @@ def add_subs(client, module, arn, subs):
                 topicArn=sub.get('topic_arn'),
             )
             changed = True
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to add sub to target")
 
     return changed
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def delete_subs(client, module, arn, subs):
     changed = False
     try:
@@ -359,7 +397,10 @@ def delete_subs(client, module, arn, subs):
                 topicArn=sub.get('topic_arn'),
             )
             changed = True
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to delete sub from target")
 
     return changed
@@ -368,32 +409,36 @@ def delete_subs(client, module, arn, subs):
 def update_subs(client, module, arn, subs):
     changed = False
     existing_subs = _retrieve_subs(client, module, arn)
-    if sorted(subs) != sorted(existing_subs):
-        to_add = [sub for sub in subs if sub not in existing_subs]
-        to_delete = [sub for sub in existing_subs if sub not in subs]
-        if to_add:
-            if add_subs(client, module, arn, to_add):
-                changed = True
-        if to_delete:
-            if delete_subs(client, module, arn, to_delete):
-                changed = True
+
+    to_add = [sub for sub in subs if sub not in existing_subs]
+    if to_add:
+        if add_subs(client, module, arn, to_add):
+            changed = True
+
+    to_delete = [sub for sub in existing_subs if sub not in subs]
+    if to_delete:
+        if delete_subs(client, module, arn, to_delete):
+            changed = True
 
     return changed
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def get_target_arn(client, module, target):
     try:
         return client.list_assessment_targets(
             filter={'assessmentTargetNamePattern': target},
         ).get('assessmentTargetArns')[0]
-    except (ClientError, ValidationError) as e:
+    except (
+        botocore.exceptions.BotoCoreError,
+        botocore.exceptions.ClientError,
+    ) as e:
         module.fail_json_aws(e, msg="trying to retrieve target arn")
     except IndexError:
         module.fail_json(msg='unknown target: %s' % target)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def main():
     argument_spec = dict(
         attributes=dict(type='dict', default={}),
@@ -418,39 +463,19 @@ def main():
         supports_check_mode=False,
     )
 
-    attributes = [
-        {'key': key, 'value': value} for key, value in
-        module.params.get('attributes').items()
-    ]
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 and botocore are required for this module')
+
+    attributes = module.params.get('attributes')
     duration = module.params.get('duration')
     name = module.params.get('name')
     rules = module.params.get('rules')
     subscriptions = _check_subs(module, module.params.get('subscriptions'))
     state = module.params.get('state').lower()
-    tags = [
-        {'key': key, 'value': value} for key, value in
-        module.params.get('tags').items()
-    ]
+    tags = module.params.get('tags')
     target = module.params.get('target')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(
-        module,
-        boto3=True,
-    )
-
-    if not region:
-        module.fail_json(msg='region must be specified')
-
-    try:
-        client = boto3_conn(
-            module, conn_type='client',
-            resource='inspector',
-            region=region,
-            endpoint=ec2_url,
-            **aws_connect_kwargs
-        )
-    except (ClientError, ValidationError) as e:
-        module.fail_json_aws(e, msg="trying to connect to AWS")
+    client = module.client('inspector')
 
     arn = get_template_arn(client, module, name)
     if state == 'present' and arn:
@@ -462,7 +487,10 @@ def main():
         if update_subs(client, module, arn, subscriptions):
             changed = True
 
-        module.exit_json(changed=changed, **get_template(client, module, arn))
+        module.exit_json(
+            changed=changed,
+            **get_template(client, module, arn)
+        )
     elif state == 'present' and not arn:
         try:
             arn = client.create_assessment_template(
@@ -470,9 +498,14 @@ def main():
                 assessmentTemplateName=name,
                 durationInSeconds=duration * 60,
                 rulesPackageArns=get_rules_arns(client, module, rules),
-                userAttributesForFindings=attributes,
+                userAttributesForFindings=ansible_dict_to_boto3_tag_list(
+                    attributes, 'key', 'value'
+                ),
             ).get('assessmentTemplateArn')
-        except (ClientError, ValidationError) as e:
+        except (
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+        ) as e:
             module.fail_json_aws(e, msg="trying to create template")
 
         set_tags(client, module, arn, tags)
@@ -484,7 +517,10 @@ def main():
         try:
             client.delete_assessment_template(assessmentTemplateArn=arn)
             module.exit_json(changed=True)
-        except (ClientError, ValidationError) as e:
+        except(
+            botocore.exceptions.BotoCoreError,
+            botocore.exceptions.ClientError,
+        ) as e:
             module.fail_json_aws(e, msg="trying to delete template")
 
     elif state == 'absent' and not arn:

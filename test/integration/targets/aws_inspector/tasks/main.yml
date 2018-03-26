@@ -74,7 +74,119 @@
           - target_group_tag_change_verify.tags.Name == aws_inspector_scan_name
           - target_group_tag_change_verify.tags.changed == "yes"
 
+    - name: Create AWS Inspector Template
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        target: "{{ aws_inspector_scan_name }}"
+        duration: 15
+        rules:
+          - cve
+          - best_practices
+        tags:
+          test_tag: "{{ aws_inspector_scan_name }}"
+          changed: "no"
+        attributes:
+          test_attribute: "{{ aws_inspector_scan_name }}"
+        <<: *aws_connection_info
+      register: template_create
+
+    - name: Create AWS Inspector Template (Verify)
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        target: "{{ aws_inspector_scan_name }}"
+        duration: 15
+        rules:
+          - cve
+          - best_practices
+        tags:
+          test_tag: "{{ aws_inspector_scan_name }}"
+          changed: "no"
+        attributes:
+          test_attribute: "{{ aws_inspector_scan_name }}"
+        <<: *aws_connection_info
+      register: template_create_verify
+
+    - name: Assert Successful AWS Inspector Template Creation
+      assert:
+        that:
+          - template_create is changed
+          - template_create.name == aws_inspector_scan_name
+          - template_create.tags.test_tag == aws_inspector_scan_name
+          - template_create.tags.changed == "no"
+          - template_create.user_attributes_for_findings.test_attribute == aws_inspector_scan_name
+          - template_create_verify is not changed
+          - template_create_verify.name == aws_inspector_scan_name
+          - template_create_verify.tags.test_tag == aws_inspector_scan_name
+          - template_create_verify.tags.changed == "no"
+          - template_create_verify.user_attributes_for_findings.test_attribute == aws_inspector_scan_name
+
+    - name: Change AWS Inspector Template Tags
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        target: "{{ aws_inspector_scan_name }}"
+        duration: 15
+        rules:
+          - cve
+          - best_practices
+        tags:
+          test_tag: "{{ aws_inspector_scan_name }}"
+          changed: "yes"
+        attributes:
+          test_attribute: "{{ aws_inspector_scan_name }}"
+        <<: *aws_connection_info
+      register: template_tags_change
+
+    - name: Change AWS Inspector Template Tags (Verify)
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        target: "{{ aws_inspector_scan_name }}"
+        duration: 15
+        rules:
+          - cve
+          - best_practices
+        tags:
+          test_tag: "{{ aws_inspector_scan_name }}"
+          changed: "yes"
+        attributes:
+          test_attribute: "{{ aws_inspector_scan_name }}"
+        <<: *aws_connection_info
+      register: template_tags_change_verify
+
+    - name: Assert Successful AWS Inspector Template Tag Change
+      assert:
+        that:
+          - template_tags_change is changed
+          - template_tags_change.name == aws_inspector_scan_name
+          - template_tags_change.tags.test_tag == aws_inspector_scan_name
+          - template_tags_change.tags.changed == "yes"
+          - template_tags_change.user_attributes_for_findings.test_attribute == aws_inspector_scan_name
+          - template_tags_change_verify is not changed
+          - template_tags_change_verify.name == aws_inspector_scan_name
+          - template_tags_change_verify.tags.test_tag == aws_inspector_scan_name
+          - template_tags_change_verify.tags.changed == "yes"
+          - template_tags_change_verify.user_attributes_for_findings.test_attribute == aws_inspector_scan_name
+
   always:
+    - name: Delete AWS Inspector Template
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: templete_delete
+
+    - name: Delete AWS Inspector Template (Verify)
+      aws_inspector_template:
+        name: "{{ aws_inspector_scan_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: templete_delete_verify
+
+    - name: Assert Successful AWS Inspector Target Group Deletion
+      assert:
+        that:
+          - templete_delete is changed
+          - templete_delete_verify is not changed
+
     - name: Delete AWS Inspector Target Group
       aws_inspector_target:
         name: "{{ aws_inspector_scan_name }}"
