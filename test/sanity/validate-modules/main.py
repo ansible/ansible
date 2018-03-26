@@ -45,7 +45,7 @@ from module_args import AnsibleModuleImportError, get_argument_spec
 
 from schema import doc_schema, metadata_1_1_schema, return_schema
 
-from utils import CaptureStd, compare_unordered_lists, maybe_convert_bool, parse_yaml
+from utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
@@ -1042,6 +1042,9 @@ class ModuleValidator(Validator):
             )
             return
 
+        # Use this to access type checkers later
+        module = NoArgsAnsibleModule({})
+
         provider_args = set()
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
@@ -1072,14 +1075,46 @@ class ModuleValidator(Validator):
                 # don't validate docs<->arg_spec checks below
                 continue
 
+            _type = data.get('type', 'str')
+            if callable(_type):
+                _type_checker = _type
+            else:
+                _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
+
             # TODO: needs to recursively traverse suboptions
-            doc_default = docs.get('options', {}).get(arg, {}).get('default', None)
-            if data.get('type') == 'bool':
-                doc_default = maybe_convert_bool(doc_default)
-            arg_default = data.get('default')
-            if 'default' in data and data.get('type') == 'bool':
-                arg_default = maybe_convert_bool(data['default'])
-            if 'default' in data and arg_default != doc_default:
+            arg_default = None
+            if 'default' in data and not is_empty(data['default']):
+                try:
+                    with CaptureStd():
+                        arg_default = _type_checker(data['default'])
+                except (Exception, SystemExit):
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=329,
+                        msg=('Default value from the argument_spec (%r) is not compatible '
+                             'with type %r defined in the argument_spec' % (data['default'], _type))
+                    )
+                    continue
+            elif data.get('default') is None and _type == 'bool' and 'options' not in data:
+                arg_default = False
+            try:
+                doc_default = None
+                doc_options_arg = docs.get('options', {}).get(arg, {})
+                if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
+                    with CaptureStd():
+                        doc_default = _type_checker(doc_options_arg['default'])
+                elif doc_options_arg.get('default') is None and _type == 'bool' and 'suboptions' not in doc_options_arg:
+                    doc_default = False
+            except (Exception, SystemExit):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=327,
+                    msg=('Default value from the documentation (%r) is not compatible '
+                         'with type %r defined in the argument_spec' % (doc_options_arg.get('default'), _type))
+                )
+                continue
+
+            if arg_default != doc_default:
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
@@ -1097,13 +1132,46 @@ class ModuleValidator(Validator):
                 )
 
             # TODO: needs to recursively traverse suboptions
-            doc_choices = docs.get('options', {}).get(arg, {}).get('choices', [])
-            if not compare_unordered_lists(data.get('choices', []), doc_choices):
+            doc_choices = []
+            try:
+                for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
+                    try:
+                        with CaptureStd():
+                            doc_choices.append(_type_checker(choice))
+                    except (Exception, SystemExit):
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=328,
+                            msg=('Choices value from the documentation (%r) is not compatible '
+                                 'with type %r defined in the argument_spec' % (choice, _type))
+                        )
+                        raise StopIteration()
+            except StopIteration:
+                continue
+
+            arg_choices = []
+            try:
+                for choice in data.get('choices', []):
+                    try:
+                        with CaptureStd():
+                            arg_choices.append(_type_checker(choice))
+                    except (Exception, SystemExit):
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=330,
+                            msg=('Choices value from the argument_spec (%r) is not compatible '
+                                 'with type %r defined in the argument_spec' % (choice, _type))
+                        )
+                        raise StopIteration()
+            except StopIteration:
+                continue
+
+            if not compare_unordered_lists(arg_choices, doc_choices):
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
                     msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (data.get('choices', []), arg, doc_choices))
+                         'documentation (%r)' % (arg_choices, arg, doc_choices))
                 )
 
         if docs:
