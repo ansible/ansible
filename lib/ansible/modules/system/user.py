@@ -173,6 +173,13 @@ options:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
               Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
+    password_lock:
+        description:
+            - Lock the password (usermod -L ) by adding a '!' at the beginning of the password user entry. 
+              This option does not disable the user, only lock the password.
+        type: bool
+        default: 'no'
+        version_added: "2.6"
     local:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
@@ -289,6 +296,7 @@ class User(object):
         self.update_password = module.params['update_password']
         self.home = module.params['home']
         self.expires = None
+        self.password_lock = module.params['password_lock']
         self.groups = None
         self.local = module.params['local']
 
@@ -519,6 +527,9 @@ class User(object):
         if self.expires:
             cmd.append('-e')
             cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+
+        if self.password_lock:
+            cmd.append('-L')
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
@@ -908,6 +919,9 @@ class FreeBsdUser(User):
             days = (time.mktime(self.expires) - time.time()) // 86400
             cmd.append('-e')
             cmd.append(str(int(days)))
+
+        if self.password_lock:
+            cmd.append('-L')
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -2152,6 +2166,7 @@ def main():
             ssh_key_passphrase=dict(type='str', no_log=True),
             update_password=dict(type='str', default='always', choices=['always', 'on_create']),
             expires=dict(type='float'),
+            password_lock=dict(type='bool'),
             local=dict(type='bool'),
         ),
         supports_check_mode=True
