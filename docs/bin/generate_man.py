@@ -241,12 +241,12 @@ if __name__ == '__main__':
         if cli_name == 'adhoc':
             cli_class_name = 'AdHocCLI'
             # myclass = 'AdHocCLI'
-            output[cli_name] = 'ansible.1.asciidoc.in'
+            output[cli_name] = 'ansible.1.rst.in'
             cli_bin_name = 'ansible'
         else:
             # myclass = "%sCLI" % libname.capitalize()
             cli_class_name = "%sCLI" % cli_name.capitalize()
-            output[cli_name] = 'ansible-%s.1.asciidoc.in' % cli_name
+            output[cli_name] = 'ansible-%s.1.rst.in' % cli_name
             cli_bin_name = 'ansible-%s' % cli_name
 
         # FIXME:
@@ -255,7 +255,7 @@ if __name__ == '__main__':
 
     cli_list = allvars.keys()
 
-    doc_name_formats = {'man': '%s.1.asciidoc.in',
+    doc_name_formats = {'man': '%s.1.rst.in',
                         'rst': '%s.rst'}
 
     for cli_name in cli_list:
