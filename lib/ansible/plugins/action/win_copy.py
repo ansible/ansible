@@ -11,6 +11,7 @@ import base64
 import json
 import os
 import os.path
+import shutil
 import tempfile
 import traceback
 import zipfile
@@ -320,12 +321,10 @@ class ActionModule(ActionBase):
             )
         )
         copy_args.pop('content', None)
-        os.remove(zip_path)
-
         module_return = self._execute_module(module_name='copy',
                                              module_args=copy_args,
                                              task_vars=task_vars)
-        os.removedirs(os.path.dirname(zip_path))
+        shutil.rmtree(os.path.dirname(zip_path))
         return module_return
 
     def run(self, tmp=None, task_vars=None):
