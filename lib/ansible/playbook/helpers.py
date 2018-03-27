@@ -107,18 +107,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
         if not isinstance(task_ds, dict):
             AnsibleAssertionError('The ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
-        args_parser = ModuleArgsParser(task_ds)
-        try:
-            (action, args, delegate_to) = args_parser.parse()
-        except AnsibleParserError as e:
-            # if the raises exception was created with obj=ds args, then it includes the detail
-            # so we dont need to add it so we can just re raise.
-            if e._obj:
-                raise
-            # But if it wasn't, we can add the yaml object now to get more detail
-            raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
-
-        if action == 'block':
+        if 'block' in task_ds:
             t = Block.load(
                 task_ds,
                 play=play,
@@ -131,6 +120,17 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
+            args_parser = ModuleArgsParser(task_ds)
+            try:
+                (action, args, delegate_to) = args_parser.parse()
+            except AnsibleParserError as e:
+                # if the raises exception was created with obj=ds args, then it includes the detail
+                # so we dont need to add it so we can just re raise.
+                if e._obj:
+                    raise
+                # But if it wasn't, we can add the yaml object now to get more detail
+                raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
+
             if action in ('include', 'import_tasks', 'include_tasks'):
 
                 if use_handlers:
