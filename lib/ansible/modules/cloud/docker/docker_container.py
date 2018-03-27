@@ -744,6 +744,10 @@ class TaskParameters(DockerBaseClass):
                 if network.get('links'):
                     network['links'] = self._parse_links(network['links'])
 
+        if self.mac_address:
+            # Ensure the MAC address uses colons instead of hyphens for later comparison
+            self.mac_address = self.mac_address.replace('-', ':')
+
         if self.entrypoint:
             # convert from list to str.
             self.entrypoint = ' '.join([str(x) for x in self.entrypoint])
