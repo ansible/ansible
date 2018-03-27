@@ -159,7 +159,7 @@ class ModuleArgsParser:
         if action is not None:
             args = self._normalize_new_style_args(thing, action)
         else:
-            (action, args) = self._normalize_old_style_args(thing, action)
+            (action, args) = self._normalize_old_style_args(thing)
 
             # this can occasionally happen, simplify
             if args and 'args' in args:
@@ -210,7 +210,7 @@ class ModuleArgsParser:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
-    def _normalize_old_style_args(self, thing, original_action):
+    def _normalize_old_style_args(self, thing):
         '''
         deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
@@ -245,9 +245,6 @@ class ModuleArgsParser:
         else:
             # need a dict or a string, so giving up
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
-
-        if action in ('include', 'include_tasks', 'import_tasks', 'include_role', 'import_role'):
-            raise AnsibleParserError('%s can not be used with %s' % (action, original_action), obj=self._task_ds)
 
         return (action, args)
 
