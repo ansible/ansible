@@ -207,7 +207,7 @@ Top-level connection arguments will be removed in 2.9
 
 Top-level connection arguments like ``username``, ``host``, and ``password`` are deprecated and will be removed in version 2.9.
 
-**OLD** In Ansible 2.4
+**OLD** In Ansible < 2.4
 
 .. code-block:: yaml
 
@@ -231,36 +231,13 @@ The deprecation warnings reflect this schedule. The task above, run in Ansible 2
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
-We recommend setting connection properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). To update the ``ios_command`` task above, move the connection properties to inventory like this:
-
-**NEW** In Ansible 2.5
-
-.. code-block:: yaml
-
-    - name: example of using top-level options for connection properties
-      ios_command:
-        commands: show version
-        host: "{{ inventory_hostname }}"
-
-.. code-block:: ini
-
-   [ios:vars]
-   ansible_become=yes
-   ansible_become_method=enable
-   ansible_become_pass=cisco
-   ansible_network_os=ios
-   ansible_password=cisco
-   ansible_user=cisco
-
-For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`.
+We recommend using the new connection types ``network_cli`` and ``netconf`` (see below), using standard Ansible connection properties, and setting those properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`.
 
 Adding persistent connection types ``network_cli`` and ``netconf``
 ------------------------------------------------------------------
 
 Ansible 2.5 introduces two top-level persistent connection types, ``network_cli`` and ``netconf``. With ``connection: local``, each task passed the connection parameters, which had to be stored in your playbooks. With ``network_cli`` and ``netconf`` the playbook passes the connection parameters once, so you can pass them at the command line if you prefer. We recommend you use ``network_cli`` and ``netconf`` whenever possible.
-Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information.
-Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to 
-specify your connection variables with standard Ansible connection variables:
+Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information. Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to specify your connection variables with standard Ansible connection variables:
 
 **OLD** In Ansible 2.4
 
