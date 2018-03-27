@@ -1,0 +1,3 @@
+bugfixes:
+- Ansible.ModuleUtils.FileUtil - Catch DirectoryNotFoundException with Test-AnsiblePath
+  https://github.com/ansible/ansible/pull/37968
