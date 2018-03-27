@@ -138,8 +138,13 @@ EXAMPLES = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.firewalld import FirewallTransaction, fw_offline
 
-from firewall.client import Rich_Rule
-from firewall.client import FirewallClientZoneSettings
+try:
+    from firewall.client import Rich_Rule
+    from firewall.client import FirewallClientZoneSettings
+except ImportError:
+    # The import errors are handled via FirewallTransaction, don't need to
+    # duplicate that here
+    pass
 
 # globals
 module = None

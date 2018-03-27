@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # (c) 2018, Adam Miller (maxamillion@fedoraproject.org)
