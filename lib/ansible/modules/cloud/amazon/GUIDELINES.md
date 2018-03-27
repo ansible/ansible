@@ -299,7 +299,7 @@ catch throttling exceptions to work correctly), you'd need to provide a backoff 
 and then put exception handling around the backoff function.
 
 You can use `exponential_backoff` or `jittered_backoff` strategies - see
-the [cloud module_utils](https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/cloud.py)
+the [cloud module_utils](/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
@@ -508,7 +508,7 @@ available during the test run. Second putting the test in a test group causing i
 continuous integration build.
 
 Tests for new modules should be added to the same group as existing AWS tests. In general just copy
-an existing aliases file such as the [aws_s3 tests aliases file](https://github.com/ansible/ansible/blob/devel/test/integration/targets/aws_s3/aliases).
+an existing aliases file such as the [aws_s3 tests aliases file](/test/integration/targets/aws_s3/aliases).
 
 ### AWS Credentials for Integration Tests
 
