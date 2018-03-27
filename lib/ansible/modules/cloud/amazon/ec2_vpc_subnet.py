@@ -211,6 +211,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
@@ -506,7 +507,8 @@ def ensure_subnet_present(conn, module):
         changed = True
 
     if module.params['tags'] != subnet['tags']:
-        if ensure_tags(conn, module, subnet, module.params['tags'], module.params['purge_tags'], start_time):
+        stringified_tags_dict = dict((to_text(k), to_text(v)) for k, v in module.params['tags'].items())
+        if ensure_tags(conn, module, subnet, stringified_tags_dict, module.params['purge_tags'], start_time):
             changed = True
 
     subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
