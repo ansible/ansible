@@ -23,21 +23,27 @@ DOCUMENTATION = """
       - use the op command line utility to fetch specific fields from 1Password
     options:
       _terms:
-        description: identifier(s) of object(s) from which you want to retrieve the field (UUID, name or domain)
+        description: identifier(s) (UUID, name or domain; case-insensitive) of item(s) to retrieve
         required: True
       field:
-        description: field to return from 1Password
+        description: field to return from each matching item (case-insensitive)
         default: 'password'
+      section:
+        description: item section containing the field to retrieve (case-insensitive); if absent will return first match from any section
+        default: None
       vault:
-        description: vault to retrieve from (if absent will search all available vaults)
+        description: vault containing the item to retrieve (case-insensitive); if absent will search all vaults
         default: None
 """
 
 EXAMPLES = """
-- name: "retrieve password from entry named KITT in any vault"
+- name: "retrieve password for KITT"
   debug: password="{{ lookup('onepassword', 'KITT') }}"
 
-- name: "retrieve username from entry named HAL 9000 in vault Discovery"
+- name: "retrieve password for Wintermute"
+  debug: password="{{ lookup('onepassword', 'Tessier-Ashpool', section='Wintermute') }}"
+
+- name: "retrieve username for HAL"
   debug: password="{{ lookup('onepassword', 'HAL 9000', field='username', vault='Discovery') }}"
 """
 
@@ -68,12 +74,12 @@ class OnePass(object):
         except:
             raise AnsibleError("Not logged into 1Password: please run 'op signin' first")
 
-    def get_field(self, item_id, field, vault=None):
+    def get_field(self, item_id, field, section=None, vault=None):
         args = ["get", "item", item_id]
         if vault is not None:
             args += ['--vault={0}'.format(vault)]
         output, dummy = self._run(args)
-        return self._parse_field(field, output) if output != '' else ''
+        return self._parse_field(output, field, section) if output != '' else ''
 
     def _run(self, args, expected_rc=0):
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
@@ -83,14 +89,17 @@ class OnePass(object):
             raise AnsibleError(err)
         return out, err
 
-    def _parse_field(self, field_name, data_json):
+    def _parse_field(self, data_json, field_name, section_title=None):
         data = json.loads(data_json)
-        for field_data in data['details'].get('fields', []):
-            if field_data.get('name') == field_name:
-                return field_data.get('value', '')
+        if section_title is None:
+            for field_data in data['details'].get('fields', []):
+                if field_data.get('name').lower() == field_name.lower():
+                    return field_data.get('value', '')
         for section_data in data['details'].get('sections', []):
+            if section_title is not None and section_title.lower() != section_data['title'].lower():
+                continue
             for field_data in section_data.get('fields', []):
-                if field_data.get('t') == field_name:
+                if field_data.get('t').lower() == field_name.lower():
                     return field_data.get('v', '')
         return ''
 
@@ -103,9 +112,10 @@ class LookupModule(LookupBase):
         op.assert_logged_in()
 
         field = kwargs.get('field', 'password')
+        section = kwargs.get('section')
         vault = kwargs.get('vault')
 
         values = []
         for term in terms:
-            values.append(op.get_field(term, field, vault))
+            values.append(op.get_field(term, field, section, vault))
         return values

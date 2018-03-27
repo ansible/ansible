@@ -107,12 +107,12 @@ MOCK_ENTRIES = [
 
 
 def get_mock_query_generator(require_field=None):
-    def _process_field(field):
+    def _process_field(field, section_title=None):
         field_name = field.get('name', field.get('t'))
         field_value = field.get('value', field.get('v'))
 
         if require_field is None or field_name == require_field:
-            return entry, query, field_name, field_value
+            return entry, query, section_title, field_name, field_value
 
     for entry in MOCK_ENTRIES:
         for query in entry['queries']:
@@ -122,7 +122,7 @@ def get_mock_query_generator(require_field=None):
                     yield fixture
             for section in entry['output']['details'].get('sections', []):
                 for field in section['fields']:
-                    fixture = _process_field(field)
+                    fixture = _process_field(field, section['title'])
                     if fixture:
                         yield fixture
 
@@ -139,7 +139,7 @@ class MockOnePass(OnePass):
 
     def _lookup_mock_entry(self, key, vault=None):
         for entry in MOCK_ENTRIES:
-            if vault is not None and vault != entry['vault_name'] and vault != entry['output']['vaultUuid']:
+            if vault is not None and vault.lower() != entry['vault_name'].lower() and vault.lower() != entry['output']['vaultUuid'].lower():
                 continue
 
             match_fields = [
@@ -237,23 +237,41 @@ class TestOnePass(unittest.TestCase):
     def test_onepassword_get(self):
         op = MockOnePass()
         query_generator = get_mock_query_generator()
-        for dummy, query, field_name, field_value in query_generator:
+        for dummy, query, dummy, field_name, field_value in query_generator:
             self.assertEqual(field_value, op.get_field(query, field_name))
 
     def test_onepassword_get_not_found(self):
         op = MockOnePass()
         self.assertEqual('', op.get_field('a fake query', 'a fake field'))
 
+    def test_onepassword_get_with_section(self):
+        op = MockOnePass()
+        dummy, query, section_title, field_name, field_value = get_one_mock_query()
+        self.assertEqual(field_value, op.get_field(query, field_name, section=section_title))
+
     def test_onepassword_get_with_vault(self):
         op = MockOnePass()
-        entry, query, field_name, field_value = get_one_mock_query()
+        entry, query, dummy, field_name, field_value = get_one_mock_query()
         for vault_query in [entry['vault_name'], entry['output']['vaultUuid']]:
-            self.assertEqual(field_value, op.get_field(query, field_name, vault_query))
+            self.assertEqual(field_value, op.get_field(query, field_name, vault=vault_query))
 
     def test_onepassword_get_with_wrong_vault(self):
         op = MockOnePass()
-        dummy, query, field_name, dummy = get_one_mock_query()
-        self.assertEqual('', op.get_field(query, field_name, 'a fake vault'))
+        dummy, query, dummy, field_name, dummy = get_one_mock_query()
+        self.assertEqual('', op.get_field(query, field_name, vault='a fake vault'))
+
+    def test_onepassword_get_diff_case(self):
+        op = MockOnePass()
+        entry, query, section_title, field_name, field_value = get_one_mock_query()
+        self.assertEqual(
+            field_value,
+            op.get_field(
+                query,
+                field_name.upper(),
+                vault=entry['vault_name'].upper(),
+                section=section_title.upper()
+            )
+        )
 
 
 @patch('ansible.plugins.lookup.onepassword.OnePass', MockOnePass)
@@ -273,5 +291,5 @@ class TestLookupModule(unittest.TestCase):
     def test_onepassword_plugin_default_field(self):
         lookup_plugin = LookupModule()
 
-        dummy, query, dummy, field_value = get_one_mock_query('password')
+        dummy, query, dummy, dummy, field_value = get_one_mock_query('password')
         self.assertEqual([field_value], lookup_plugin.run([query]))
