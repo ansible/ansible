@@ -345,7 +345,7 @@ def ensure_tags(conn, module, subnet, tags, purge_tags, start_time):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Couldn't delete tags")
 
-    if module.params['wait']:
+    if module.params['wait'] and not module.check_mode:
         # Wait for tags to be updated
         filters = [{'Name': 'tag:{0}'.format(k), 'Values': [v]} for k, v in tags.items()]
         handle_waiter(conn, module, 'subnet_exists',
