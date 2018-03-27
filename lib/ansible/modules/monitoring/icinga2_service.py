@@ -111,22 +111,22 @@ options:
   max_check_attempts:
     description:
       - The number of times a service is checked before changing into a hard state.
-    type: int
+    type: integer
   check_period:
     description:
       - The name of a time period which determines when this service should be checked.
   check_timeout:
     description:
-      - Check command timeout in seconds. Overrides the CheckCommand’s timeout attribute.
-    type: int
+      - Check command timeout in seconds. Overrides the CheckCommand's timeout attribute.
+    type: integer
   check_interval:
-    description: 
-      - The check interval (in seconds). This interval is used for checks when the service is in a HARD state. 
-    type: int
+    description:
+      - The check interval (in seconds). This interval is used for checks when the service is in a HARD state.
+    type: integer
   retry_interval:
     description:
       - The retry interval (in seconds). This interval is used for checks when the service is in a SOFT state.
-    type: int
+    type: integer
   enable_notifications:
     description:
       - Whether notifications are enabled.
@@ -151,12 +151,15 @@ options:
     description:
       - Enables event handlers for this host.
     type: bool
+  flapping_threshold:
+    description:
+      - The number when a services is in flapping
   event_command:
     description:
-      - The name of an event command that should be executed every time the service’s state changes or the service is in a SOFT state.
+      - The name of an event command that should be executed every time the service's state changes or the service is in a SOFT state.
   volatile:
     description:
-      - The volatile setting enables always HARD state types if NOT-OK state changes occur. 
+      - The volatile setting enables always HARD state types if NOT-OK state changes occur.
     default: False
     type: bool
   command_endpoint:
@@ -227,7 +230,6 @@ data:
 
 import json
 import os
-import types
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
@@ -236,19 +238,19 @@ from ansible.module_utils.urls import fetch_url, url_argument_spec
 # ===========================================
 # Return a dict that is flat (no dict as values)
 #
-def flat_dict (aDict):
-  if type(aDict) is types.DictType:
-    flat = {}
-    for key, value in aDict.iteritems():
-       if type (value) is types.DictType:
-         ret = flat_dict (value)
-         for k, v in ret.iteritems():
-           flat[key+'.'+k] = v
-       else:
-         flat[key] = value
-    return flat
-  else:
-    return aDict
+def flat_dict(aDict):
+    if isinstance(aDict, dict):
+        flat = {}
+        for key, value in aDict.items():
+            if isinstance(value, dict):
+                ret = flat_dict(value)
+                for k, v in ret.items():
+                    flat[key+'.'+k]=v
+            else:
+                flat[key]=value
+        return flat
+    else:
+        return aDict
 
 
 # ===========================================
@@ -337,7 +339,7 @@ class icinga2_api:
             method="GET"
         )
         changed = False
-        ch_data={
+        ch_data = {
             'attrs': {}
         }
         ic_attr = flat_dict(ret['data']['results'][0]['attrs'])
@@ -368,7 +370,7 @@ def main():
         service=dict(),
         zone=dict(default=None),
         template=dict(default=None),
-        check_command=dict(required=True,default=None),
+        check_command=dict(required=True),
         cascade=dict(default=True, type='bool'),
         display_name=dict(default=None),
         force_check=dict(default=True, type='bool'),
@@ -415,7 +417,7 @@ def main():
     if module.params["template"]:
         template.append(module.params["template"])
     check_command = module.params["check_command"]
-    cascade=module.params["cascade"]
+    cascade = module.params["cascade"]
     command_endpoint = module.params["command_endpoint"]
     force_check = module.params["force_check"]
     display_name = module.params["display_name"]
@@ -430,7 +432,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to Icinga. Exception message: %s" % (e))
 
-# Add attributes
+    # Add attributes
     data = {
         'templates': template,
         'attrs': {
@@ -441,18 +443,18 @@ def main():
             }
         }
     }
-    #Loop through list of setable objects. 
-    obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks', 
-              'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile', 
-              'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt' ]
+    # Loop through list of setable objects.
+    obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks',
+        'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile',
+        'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt']
     for x in obj_attrs:
         if module.params[x]:
-            data['attrs'][x]=module.params[x]
-        
+            data['attrs'][x] = module.params[x]
+
     if variables:
         data['attrs']['vars'].update(variables)
 
-    data['attrs'] = flat_dict (data['attrs'])
+    data['attrs'] = flat_dict(data['attrs'])
     changed = False
     if icinga.exists(name):
         diff, ch_data = icinga.diff(name, data)
@@ -465,7 +467,7 @@ def main():
                     if ret['code'] == 200:
                         changed = True
                     else:
-                        module.fail_json(msg="Caught return code [%i] deleting service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] deleting service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception deleting service: " + str(e))
         elif diff:
@@ -480,9 +482,9 @@ def main():
                         if force_check:
                             ret = icinga.check(name)
                             if ret['code'] != 200:
-                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'], ret['data']))
                     else:
-                        module.fail_json(msg="Caught return code [%i] modifying service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] modifying service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception modifying service: " + str(e))
     else:
@@ -497,9 +499,9 @@ def main():
                         if force_check:
                             ret = icinga.check(name)
                             if ret['code'] != 200:
-                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'], ret['data']))
                     else:
-                        module.fail_json(msg="Caught return code [%i] creating service: %s" % (ret['code'],ret['data']))
+                        module.fail_json(msg="Caught return code [%i] creating service: %s" % (ret['code'], ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception creating service: " + str(e))
 
