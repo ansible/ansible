@@ -826,8 +826,7 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
                 result['changed'] = True
 
     # need to get new metadata if changed
-    if result['changed']:
-        result['instance'] = gather_vm_facts(content, vm)
+    result['instance'] = gather_vm_facts(content, vm)
 
     return result
 
