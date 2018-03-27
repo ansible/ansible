@@ -384,7 +384,7 @@ def main():
 
     venv_created = False
     if chdir:
-        env = os.path.join(chdir, env)
+        env = os.path.join(chdir, env or '')
 
     if umask and not isinstance(umask, int):
         try:
