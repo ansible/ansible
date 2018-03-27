@@ -69,7 +69,7 @@ def main():
                         continue
                     if alternative_shebang:
                         if shebang == alternative_shebang:
-                           continue
+                            continue
                         print('%s:%d:%d: expected module shebang "%s" or "%s" but found: %s' % (path, 1, 1, expected_shebang, alternative_shebang, shebang))
 
                     print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
