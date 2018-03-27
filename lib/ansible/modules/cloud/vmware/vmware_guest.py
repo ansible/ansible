@@ -1122,7 +1122,7 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = self.cache.get_network(network_name).summary.opaqueNetworkId
-                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s'%(self.cache.get_network(network_name).summary.opaqueNetworkId)
+                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % (self.cache.get_network(network_name).summary.opaqueNetworkId)
 
             else:
                 # vSwitch
