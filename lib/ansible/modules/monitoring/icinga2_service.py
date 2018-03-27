@@ -19,114 +19,180 @@ module: icinga2_service
 short_description: Manage a service for a host in Icinga2
 description:
    - "Add or remove a services to Icinga2 through the API"
-   - "( see https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/ )"
-version_added: "2.5"
+   - "See U(https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/)"
+   - "Many option defaults are controlled by the Icinga2 configuration."
+version_added: "2.6"
 author: "Jurgen Brand (@t794104)"
 options:
+  cascade:
+    description:
+      - This option controls behaviour when I(state) is C(absent) and the object is present. When set to C(true)
+        the object and all objects that depend on it are removed. When set to C(false), the icinga API will let
+        you know that the object cannot be removed, while there are dependent objects.
+    default: true
+    type: bool
+  check_command:
+    description:
+      - The command used to execute the service check
+    required: true
+  client_cert:
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, I(client_key) is not required.
+  client_key:
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If I(client_cert) contains both the certificate
+        and key, this option is not required.
+  display_name:
+    description:
+      - The name used to display the service. If not set, then Icinga will use the value of I(name).
+  force_basic_auth:
+    description:
+      - Httplib2, the library used by the uri module only sends authentication information when a webservice
+        responds to an initial request with a C(401) status. Since some basic auth services do not properly
+        send a C(401), logins will fail. This option forces the sending of the Basic authentication header
+        upon initial request.
+    default: no
+    type: bool
+  force_check:
+    description:
+      - Force a check when a service is created or modified
+    type: bool
+    default: yes
+  host:
+    description:
+      - The name of the host the service is associated to.
+      - If used, must be paired with I(service).
+      - Mutually exclusive with I(name).
+  name:
+    description:
+      - Name of the service in Icinga2 style; C(host!service). Where C(host) is
+        an existing host.
+      - Mutually exclusive with I(host) + I(service).
+  service:
+    description:
+      - The name of the service.
+      - If used, must be paired with I(host).
+      - Mutually exclusive with I(name).
+  state:
+    description:
+      - Apply feature state.
+    choices: [ "present", "absent" ]
+    default: present
+  template:
+    description:
+      - The template used to define the host
   url:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
+  url_password:
+    description:
+        - The password for use in HTTP basic authentication.
+        - If the I(url_username) option is not specified, the I(url_password) option will not be used.
+  url_username:
+    description:
+      - The username for use in HTTP basic authentication.
+      - This parameter can be used without I(url_password) for sites that allow empty passwords.
   use_proxy:
     description:
       - If C(no), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
-    default: 'yes'
+    default: yes
     type: bool
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    default: 'yes'
+    default: yes
     type: bool
-  url_username:
+  max_check_attempts:
     description:
-      - The username for use in HTTP basic authentication.
-      - This parameter can be used without C(url_password) for sites that allow empty passwords.
-  url_password:
+      - The number of times a service is checked before changing into a hard state.
+    type: int
+  check_period:
     description:
-        - The password for use in HTTP basic authentication.
-        - If the C(url_username) parameter is not specified, the C(url_password) parameter will not be used.
-  force_basic_auth:
+      - The name of a time period which determines when this service should be checked.
+  check_timeout:
     description:
-      - httplib2, the library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail. This option forces the sending of the Basic authentication header
-        upon initial request.
-    default: 'no'
+      - Check command timeout in seconds. Overrides the CheckCommand’s timeout attribute.
+    type: int
+  check_interval:
+    description: 
+      - The check interval (in seconds). This interval is used for checks when the service is in a HARD state. 
+    type: int
+  retry_interval:
+    description:
+      - The retry interval (in seconds). This interval is used for checks when the service is in a SOFT state.
+    type: int
+  enable_notifications:
+    description:
+      - Whether notifications are enabled.
     type: bool
-  client_cert:
+  enable_active_checks:
     description:
-      - PEM formatted certificate chain file to be used for SSL client
-        authentication. This file can also include the key as well, and if
-        the key is included, C(client_key) is not required.
-  client_key:
+      - Whether active checks are enabled.
+    type: bool
+  enable_passive_checks:
     description:
-      - PEM formatted file that contains your private key to be used for SSL
-        client authentication. If C(client_cert) contains both the certificate
-        and key, this option is not required.
-  state:
+      - Whether passive checks are enabled.
+    type: bool
+  enable_event_handler:
     description:
-      - Apply feature state.
-    required: false
-    choices: [ "present", "absent" ]
-    default: present
-  name:
+       - Enables event handlers for this host.
+    type: bool
+  enable_flapping:
     description:
-      - Name of the service in Icinga2 style; <host>!<service>. Where <host> is
-        a existing host.
-      - Mutually exclusive with host / service.
-    required: true
-  host:
+      - Enables Whether flap detection is enabled.
+    type: bool
+  enable_perfdata:
     description:
-      - The name of the host the service will be create for.
-      - If used, must be paired with service.
-      - Mutually exclusive with name.
-  service:
+      - Enables event handlers for this host.
+    type: bool
+  event_command:
     description:
-      - The name of the service.
-      - If used, must be paired with host.
-      - Mutually exclusive with name.
-  zone:
+      - The name of an event command that should be executed every time the service’s state changes or the service is in a SOFT state.
+  volatile:
     description:
-      - The zone from where this host should be polled.
-  template:
+      - The volatile setting enables always HARD state types if NOT-OK state changes occur. 
+    default: False
+    type: bool
+  command_endpoint:
     description:
-      - the template used to define the host
-    required: false
-    default: None
-  check_command:
+      - The endpoint where commands are executed on.
+  notes:
     description:
-      - the command used to check if the host is alive
-    required: false
-    default: "hostalive"
-  display_name:
+      - Notes for the host.
+  notes_url:
     description:
-      - the name used to display the service
-    required: false
-    default: if none is give it is the value of the <name> parameter
-  ip:
+      - URL for notes for the host (for example, in notification commands).
+  action_url:
     description:
-      - The IP address of the host.
-    required: true
-  force_check:
+      - URL for actions for the host (for example, an external graphing tool).
+  image_icon:
     description:
-      - Force a (re)check when a service is created or modified
-    required: false
-    default: Yes
+      -  Icon image for the host. Used by external interfaces only.
+  image_icon_alt:
+    description:
+      - Icon image description for the host. Used by external interface only.
   variables:
     description:
       - List of variables.
     required: false
-    default: None
+  zone:
+    description:
+      - The zone from where this host should be polled. If I(zone) is omitted, during creation of the object,
+        then the zone will be inherited from the engine that processes the API call.
 '''
 
 EXAMPLES = '''
 - name: Add a service to a host to icinga
-  icinga_host:
-    icinga_server: "icinga.example.com"
-    icinga_user: "anisble"
-    icinga_pass: "mypassword"
+  icinga2_service:
+    url: "https://icinga2.example.com"
+    url_username: "ansible"
+    url_password: "a_secret"
     state: present
     name: "{{ ansible_fqdn }}!nrpe"
     display_name: "NRPE"
@@ -135,10 +201,10 @@ EXAMPLES = '''
         nrpe_port: "5667"
 
 - name: Same service but with host/service
-  icinga_host:
-    icinga_server: "icinga.example.com"
-    icinga_user: "anisble"
-    icinga_pass: "mypassword"
+  icinga2_service:
+    url: "https://icinga2.example.com"
+    url_username: "ansible"
+    url_password: "a_secret"
     state: present
     host: "{{ ansible_fqdn }}"
     service: "nrpe"
@@ -161,9 +227,28 @@ data:
 
 import json
 import os
+import types
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+
+
+# ===========================================
+# Return a dict that is flat (no dict as values)
+#
+def flat_dict (aDict):
+  if type(aDict) is types.DictType:
+    flat = {}
+    for key, value in aDict.iteritems():
+       if type (value) is types.DictType:
+         ret = flat_dict (value)
+         for k, v in ret.iteritems():
+           flat[key+'.'+k] = v
+       else:
+         flat[key] = value
+    return flat
+  else:
+    return aDict
 
 
 # ===========================================
@@ -179,12 +264,16 @@ class icinga2_api:
         }
         url = self.module.params.get("url") + "/" + path
         rsp, info = fetch_url(module=self.module, url=url, data=data, headers=headers, method=method)
-        body = ''
-        if rsp:
+        # catching transport level code and body first
+        body = info['msg']
+        code = info['status']
+        if info['status'] <= 400:
+            # approved of transport level responses
             body = json.loads(rsp.read())
-        if info['status'] >= 400:
-            body = info['body']
-        return {'code': info['status'], 'data': body}
+            if method != 'GET':
+                # for POST and PUT there is a json code available for usage
+                code = body['results'][0]['code']
+        return {'code': int(code), 'data': body}
 
     def check_connection(self):
         ret = self.call_url('v1/status')
@@ -209,8 +298,11 @@ class icinga2_api:
         )
         return ret
 
-    def delete(self, service):
-        data = {"cascade": 1}
+    def delete(self, service, cascade):
+        if cascade:
+            data = {"cascade": 1}
+        else:
+            data = {"cascade": 0}
         ret = self.call_url(
             path="v1/objects/services/" + service,
             data=self.module.jsonify(data),
@@ -245,13 +337,19 @@ class icinga2_api:
             method="GET"
         )
         changed = False
-        ic_data = ret['data']['results'][0]
-        for key in data['attrs']:
-            if key not in ic_data['attrs'].keys():
+        ch_data={
+            'attrs': {}
+        }
+        ic_attr = flat_dict(ret['data']['results'][0]['attrs'])
+        an_attr = flat_dict(data['attrs'])
+        for key in an_attr:
+            if key not in ic_attr.keys():
                 changed = True
-            elif data['attrs'][key] != ic_data['attrs'][key]:
+                ch_data['attrs'][key] = an_attr[key]
+            elif an_attr[key] != ic_attr[key]:
                 changed = True
-        return changed
+                ch_data['attrs'][key] = an_attr[key]
+        return (changed, ch_data)
 
 
 # ===========================================
@@ -268,13 +366,33 @@ def main():
         name=dict(),
         host=dict(),
         service=dict(),
-        zone=dict(),
+        zone=dict(default=None),
         template=dict(default=None),
-        check_command=dict(default="hostalive"),
+        check_command=dict(required=True,default=None),
+        cascade=dict(default=True, type='bool'),
         display_name=dict(default=None),
-        command_endpoint=dict(default=""),
         force_check=dict(default=True, type='bool'),
         variables=dict(type='dict', default=None),
+        max_check_attempts=dict(default=None, type='int'),
+        check_period=dict(default=None),
+        check_timeout=dict(default=None, type='int'),
+        check_interval=dict(default=None, type='int'),
+        retry_interval=dict(default=None, type='int'),
+        enable_notifications=dict(default=None, type='bool'),
+        enable_active_checks=dict(default=None, type='bool'),
+        enable_passive_checks=dict(default=None, type='bool'),
+        enable_event_handler=dict(default=None, type='bool'),
+        enable_flapping=dict(default=None, type='bool'),
+        enable_perfdata=dict(default=None, type='bool'),
+        event_command=dict(default=None),
+        flapping_threshold=dict(default=None),
+        volatile=dict(default=False, type='bool'),
+        command_endpoint=dict(default=None),
+        notes=dict(default=None),
+        notes_url=dict(default=None),
+        action_url=dict(default=None),
+        image_icon=dict(default=None),
+        image_icon_alt=dict(default=None),
     )
 
     # Define the main module
@@ -293,15 +411,14 @@ def main():
         name = module.params["host"] + "!" + module.params["service"]
     else:
         name = module.params["name"]
-    zone = module.params["zone"]
     template = []
-    template.append(name)
     if module.params["template"]:
         template.append(module.params["template"])
     check_command = module.params["check_command"]
+    cascade=module.params["cascade"]
     command_endpoint = module.params["command_endpoint"]
-    display_name = module.params["display_name"]
     force_check = module.params["force_check"]
+    display_name = module.params["display_name"]
     if not display_name:
         display_name = name
     variables = module.params["variables"]
@@ -313,52 +430,61 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to Icinga. Exception message: %s" % (e))
 
+# Add attributes
     data = {
+        'templates': template,
         'attrs': {
             'check_command': check_command,
-            'command_endpoint': command_endpoint,
             'display_name': display_name,
-            'zone': zone,
             'vars': {
-                'made_by': "ansible",
-            },
-            'templates': template,
+                'made_by': 'Ansible'
+            }
         }
     }
-
+    #Loop through list of setable objects. 
+    obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks', 
+              'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile', 
+              'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt' ]
+    for x in obj_attrs:
+        if module.params[x]:
+            data['attrs'][x]=module.params[x]
+        
     if variables:
         data['attrs']['vars'].update(variables)
 
+    data['attrs'] = flat_dict (data['attrs'])
     changed = False
     if icinga.exists(name):
+        diff, ch_data = icinga.diff(name, data)
         if state == "absent":
             if module.check_mode:
                 module.exit_json(changed=True, name=name, data=data)
             else:
                 try:
-                    ret = icinga.delete(name)
+                    ret = icinga.delete(name, cascade)
                     if ret['code'] == 200:
                         changed = True
                     else:
-                        module.fail_json(msg="bad return code deleting service: %s" % (ret['data']))
+                        module.fail_json(msg="Caught return code [%i] deleting service: %s" % (ret['code'],ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception deleting service: " + str(e))
-
-        elif icinga.diff(name, data):
+        elif diff:
             if module.check_mode:
-                module.exit_json(changed=False, name=name, data=data)
-            # ret = icinga.modify(name,data)
-            ret = icinga.delete(name)
-            ret = icinga.create(name, data)
-            if ret['code'] == 200:
-                changed = True
-                if force_check:
-                    ret = icinga.check(name)
-                    if ret['code'] != 200:
-                        module.fail_json(msg="bad return code checking service: %s" % (ret['data']))
+                module.exit_json(changed=False, name=name, data=ch_data)
             else:
-                module.fail_json(msg="bad return code modifying service: %s" % (ret['data']))
-
+                try:
+                    ret = icinga.modify(name, ch_data)
+                    if ret['code'] == 200:
+                        changed = True
+                        data = ch_data
+                        if force_check:
+                            ret = icinga.check(name)
+                            if ret['code'] != 200:
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
+                    else:
+                        module.fail_json(msg="Caught return code [%i] modifying service: %s" % (ret['code'],ret['data']))
+                except Exception as e:
+                    module.fail_json(msg="exception modifying service: " + str(e))
     else:
         if state == "present":
             if module.check_mode:
@@ -371,9 +497,9 @@ def main():
                         if force_check:
                             ret = icinga.check(name)
                             if ret['code'] != 200:
-                                module.fail_json(msg="bad return code checking service: %s" % (ret['data']))
+                                module.fail_json(msg="Caught return code [%i] forcing service check: %s" % (ret['code'],ret['data']))
                     else:
-                        module.fail_json(msg="bad return code creating service: %s" % (ret['data']))
+                        module.fail_json(msg="Caught return code [%i] creating service: %s" % (ret['code'],ret['data']))
                 except Exception as e:
                     module.fail_json(msg="exception creating service: " + str(e))
 
