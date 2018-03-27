@@ -102,13 +102,14 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
-                    # Create a temporary copy of the play here, so we can run post_validate
-                    # on it without the templating changes affecting the original object.
-                    # Doing this before vars_prompt to allow for using variables in prompt.
+                    # Create a temporary copy of the play here, so we can template varibales
+                    # in vars_prompt fields without the templating changes affecting the original object.
+                    # This allows variables to be used in vars_prompt fields.
                     all_vars = self._variable_manager.get_vars(play=play)
                     templar = Templar(loader=self._loader, variables=all_vars)
+                    templated_vars_prompt = templar.template(play.vars_prompt)
                     new_play = play.copy()
-                    new_play.post_validate(templar)
+                    setattr(new_play, 'vars_prompt', templated_vars_prompt)
 
                     if play.vars_prompt:
                         for var in new_play.vars_prompt:
