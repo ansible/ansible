@@ -1,0 +1,2 @@
+bugfixes:
+  - vars_prompt - properly template play level variables in vars_prompt (https://github.com/ansible/ansible/issues/37984)
