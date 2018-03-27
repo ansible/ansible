@@ -728,8 +728,7 @@ def main():
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
-            except (OSError, IOError):
-                e = get_exception()
+            except (OSError, IOError) as e:
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, str(e)))
 
