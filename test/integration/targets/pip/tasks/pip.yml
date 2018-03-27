@@ -208,3 +208,16 @@
   assert:
     that:
       - "venv_chdir.changed"
+
+# https://github.com/ansible/ansible/issues/37912
+- name: install pip throught pip into fresh virtualenv
+  pip:
+    name: pip
+    virtualenv: "{{ output_dir }}/pipenv"
+  
+- name: pip chdir without virtualenv
+  pip:
+    chdir: "{{ output_dir }}/"
+    executable: "{{ output_dir }}/pipenv/bin/pip"
+    state: latest
+    name: pip
