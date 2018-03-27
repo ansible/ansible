@@ -1019,6 +1019,14 @@ def main():
         dest = os.path.abspath(dest)
         if bare:
             gitconfig = os.path.join(dest, 'config')
+        elif os.path.isfile(os.path.join(dest, '.git')):
+            with open(os.path.join(dest, '.git'), 'r') as gitfile:
+                data = gitfile.read()
+            match = re.match('gitdir: (.+)$', data)
+            if match:
+                separate_git_dir = match.group(1)
+                os.environ['GIT_DIR'] = separate_git_dir
+                gitconfig = os.path.join(separate_git_dir, 'config')
         else:
             gitconfig = os.path.join(dest, '.git', 'config')
 

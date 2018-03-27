@@ -1,0 +1,18 @@
+# test code for repositories with separate git dir updating
+# see https://github.com/ansible/ansible/pull/38016
+# see https://github.com/ansible/ansible/issues/30034
+
+- name: SEPARATE-GIT-DIR | clear checkout_dir
+  file:
+    state: absent
+    path: '{{ checkout_dir }}'
+
+- name: SEPARATE-GIT-DIR | clone with a separate git dir
+  command: git clone {{ repo_format1 }} git --separate-git-dir=separate.git
+  args:
+    chdir: "{{ output_dir }}"
+
+- name: SEPARATE-GIT-DIR | update repo the usual way
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ checkout_dir }}"

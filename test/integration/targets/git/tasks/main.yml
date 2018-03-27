@@ -36,3 +36,8 @@
 - include_tasks: reset-origin.yml
 - include_tasks: ambiguous-ref.yml
 - include_tasks: archive.yml
+- include_tasks: separate-git-dir.yml
+  when:
+    - not gpg_version.stderr
+    - gpg_version.stdout
+    - git_version.stdout is version("1.7.5", '>=')
