@@ -158,10 +158,9 @@ EXAMPLES = '''
   grafana_datasource:
     name: my_elastic
     grafana_url: http://grafana.company.com
-    type: elasticsearch
+    ds_type: elasticsearch
     url: https://elasticsearch.company.com:9200
     database: my-index_*
-    basic_auth: yes
     basic_auth_user: grafana
     basic_auth_password: xxxxxxxx
     json_data: '{"esVersion":5, "timeField": "@timestamp"}'
