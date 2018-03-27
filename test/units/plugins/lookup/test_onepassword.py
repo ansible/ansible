@@ -41,6 +41,7 @@ MOCK_ENTRIES = [
             },
             'details': {
                 'sections': [{
+                    'title': '',
                     'fields': [
                         {'t': 'username', 'v': 'jamesbond'},
                         {'t': 'password', 'v': 't0pS3cret'},
@@ -69,6 +70,7 @@ MOCK_ENTRIES = [
             },
             'details': {
                 'sections': [{
+                    'title': '',
                     'fields': [
                         {'t': 'password', 'v': 't0pS3cret'}
                     ]
@@ -88,14 +90,14 @@ MOCK_ENTRIES = [
                 'title': 'Mock Something'
             },
             'details': {
-                'fields' : [
+                'fields': [
                     {
-                        'value' : 'jbond@mi6.gov.uk',
-                        'name' : 'emailAddress'
+                        'value': 'jbond@mi6.gov.uk',
+                        'name': 'emailAddress'
                     },
                     {
-                        'name' : 'password',
-                        'value' : 'vauxhall'
+                        'name': 'password',
+                        'value': 'vauxhall'
                     }
                 ]
             }
@@ -116,11 +118,13 @@ def get_mock_query_generator(require_field=None):
         for query in entry['queries']:
             for field in entry['output']['details'].get('fields', []):
                 fixture = _process_field(field)
-                if fixture: yield fixture
+                if fixture:
+                    yield fixture
             for section in entry['output']['details'].get('sections', []):
                 for field in section['fields']:
                     fixture = _process_field(field)
-                    if fixture: yield fixture
+                    if fixture:
+                        yield fixture
 
 
 def get_one_mock_query(require_field=None):
