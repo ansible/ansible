@@ -17,7 +17,7 @@ Function Test-AnsiblePath {
     # Replacement for Test-Path
     try {
         $file_attributes = [System.IO.File]::GetAttributes($Path)
-    } catch [System.IO.FileNotFoundException] {
+    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
         return $false
     }
 
