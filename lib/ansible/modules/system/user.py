@@ -175,7 +175,7 @@ options:
         version_added: "1.9"
     password_lock:
         description:
-            - Lock the password (usermod -L ) by adding a '!' at the beginning of the password user entry. 
+            - Lock the password (usermod -L ) by adding a '!' at the beginning of the password user entry.
               This option does not disable the user, only lock the password.
         type: bool
         default: 'no'
