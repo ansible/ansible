@@ -202,6 +202,11 @@ No notable changes.
 Network
 =======
 
+Expanding documentation
+-----------------------
+
+We're expanding the network documentation. There's new content and a :ref:`new Ansible Network landing page<network_guide>`. We will continue to build the network-related documentation moving forward.
+
 Top-level connection arguments will be removed in 2.9
 -----------------------------------------------------
 
