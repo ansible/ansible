@@ -257,7 +257,7 @@ For more information, see the :ref:`using become with network modules<become-net
 Adding persistent connection types ``network_cli`` and ``netconf``
 ------------------------------------------------------------------
 
-Ansible 2.5 introduces two persistent connection types, ``network_cli`` and ``netconf``. We recommend you use these whenever possible.
+Ansible 2.5 introduces two top-level persistent connection types, ``network_cli`` and ``netconf``. With ``connection: local``, each task passed the connection parameters, which had to be stored in your playbooks. With ``network_cli`` and ``netconf`` the playbook passes the connection parameters once, so you can pass them at the command line if you prefer. We recommend you use ``network_cli`` and ``netconf`` whenever possible.
 Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information.
 Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to 
 specify your connection variables with standard Ansible connection variables:
