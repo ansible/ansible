@@ -424,9 +424,6 @@ class AzureRMModuleBase(object):
                     if not self.module.params['tags'].get(key):
                         new_tags.pop(key)
                         changed = True
-        elif bool(new_tags):
-            # self.tags is empty but remote tags contain value
-            changed = True
         return changed, new_tags
 
     def has_tags(self, obj_tags, tag_list):
