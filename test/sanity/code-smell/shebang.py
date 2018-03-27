@@ -23,12 +23,10 @@ def main():
         '.ps1': b'#!powershell',
     }
 
-    alternative_shebangs = {
-        '.ps1': b'#!powershell\r',
-    }
-
     skip = set([
         'hacking/cherrypick.py',
+        'test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1',
+        'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
@@ -61,16 +59,11 @@ def main():
             if is_module:
                 ext = os.path.splitext(path)[1]
                 expected_shebang = module_shebangs.get(ext)
-                alternative_shebang = alternative_shebangs.get(ext)
                 expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
 
                 if expected_shebang:
                     if shebang == expected_shebang:
                         continue
-                    if alternative_shebang:
-                        if shebang == alternative_shebang:
-                            continue
-                        print('%s:%d:%d: expected module shebang "%s" or "%s" but found: %s' % (path, 1, 1, expected_shebang, alternative_shebang, shebang))
 
                     print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
                 else:
