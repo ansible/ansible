@@ -736,11 +736,11 @@ def main():
 
         res = 0
 
-        # TODO: add a check to see if src have changed and remount if necessary
-
-        changed = True
-        if not module.check_mode:
-            res, msg = mount_raw(module, args)
+        if not os.path.ismount(name):
+            # TODO: add a check to see if src have changed and remount
+            if not module.check_mode:
+                res, msg = mount_raw(module, args)
+            changed = True
 
         if res:
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
