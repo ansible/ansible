@@ -207,7 +207,7 @@ Top-level connection arguments will be removed in 2.9
 
 Top-level connection arguments like ``username``, ``host``, and ``password`` are deprecated and will be removed in version 2.9.
 
-OLD In Ansible 2.4
+**OLD** In Ansible 2.4
 
 .. code-block:: yaml
 
@@ -231,9 +231,9 @@ The deprecation warnings reflect this schedule. The task above, run in Ansible 2
    [DEPRECATION WARNING]: Param 'host' is deprecated. See the module docs for more information. This feature will be removed in version 2.9.
    Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
 
-We recommend setting connection properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`. To update the ``ios_command`` task above, move the connection properties to inventory like this:
+We recommend setting connection properties in inventory by group. As you update your playbooks and inventory files, you can easily make the change to ``become`` for privilege escalation (on platforms that support it). To update the ``ios_command`` task above, move the connection properties to inventory like this:
 
-NEW In Ansible 2.5
+**NEW** In Ansible 2.5
 
 .. code-block:: yaml
 
@@ -252,14 +252,17 @@ NEW In Ansible 2.5
    ansible_password=cisco
    ansible_user=cisco
 
+For more information, see the :ref:`using become with network modules<become-network>` guide and the :ref:`platform documentation<platform_options>`.
+
 Adding persistent connection types ``network_cli`` and ``netconf``
 ------------------------------------------------------------------
 
 Ansible 2.5 introduces two persistent connection types, ``network_cli`` and ``netconf``. We recommend you use these whenever possible.
+Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the :ref:`platform documentation<platform_options>` for more information.
 Unless you need a ``local`` connection, update your playbooks to use ``network_cli`` or ``netconf`` and to 
 specify your connection variables with standard Ansible connection variables:
 
-OLD In Ansible 2.4
+**OLD** In Ansible 2.4
 
 .. code-block:: yaml
 
@@ -278,7 +281,7 @@ OLD In Ansible 2.4
        username: admin
        password: admin
 
-NEW In Ansible 2.5
+**NEW** In Ansible 2.5
 
 .. code-block:: ini
 
@@ -296,8 +299,6 @@ NEW In Ansible 2.5
 
 Using a provider dictionary with either ``network_cli`` or ``netconf`` will result in a warning.
 
-Note that eAPI and NX-API still require ``local`` connections with ``provider`` dictionaries. See the
-the :ref:`platform documentation<platform_options>` for more information. 
 
 Developers: Shared Module Utilities Moved
 -----------------------------------------
@@ -310,13 +311,13 @@ Beginning with Ansible 2.5, shared module utilities for network modules moved to
 
 If your module uses shared module utilities, you must update all references. For example, change:
 
-OLD In Ansible 2.4
+**OLD** In Ansible 2.4
 
 .. code-block:: python
 
    from ansible.module_utils.vyos import get_config, load_config
 
-NEW In Ansible 2.5
+**NEW** In Ansible 2.5
 
 .. code-block:: python
 
