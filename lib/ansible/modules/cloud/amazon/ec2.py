@@ -134,7 +134,6 @@ options:
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     type: bool
-    default: 'no'
   private_ip:
     version_added: "1.2"
     description:
@@ -1560,7 +1559,7 @@ def warn_if_public_ip_assignment_changed(module, instance):
 
     # Check that public ip assignment is the same and warn if not
     public_dns_name = getattr(instance, 'public_dns_name', None)
-    if (assign_public_ip or public_dns_name) and (not public_dns_name or not assign_public_ip):
+    if (assign_public_ip or public_dns_name) and (not public_dns_name or assign_public_ip is False):
         module.warn("Unable to modify public ip assignment to {0} for instance {1}. "
                     "Whether or not to assign a public IP is determined during instance creation.".format(assign_public_ip, instance.id))
 
@@ -1590,7 +1589,7 @@ def main():
             user_data=dict(),
             instance_tags=dict(type='dict'),
             vpc_subnet_id=dict(),
-            assign_public_ip=dict(type='bool', default=False),
+            assign_public_ip=dict(type='bool'),
             private_ip=dict(),
             instance_profile_name=dict(),
             instance_ids=dict(type='list', aliases=['instance_id']),
