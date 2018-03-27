@@ -81,7 +81,6 @@ options:
         use this on OpenBSD with any state that operates on the live
         filesystem.
     default: /etc/fstab (/etc/vfstab on Solaris)
-    aliases: [ fstab ]
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
@@ -611,7 +610,7 @@ def main():
         argument_spec=dict(
             boot=dict(type='bool', default=True),
             dump=dict(type='str'),
-            fstab=dict(type='str', aliases=['fstab']),
+            fstab=dict(type='str'),
             fstype=dict(type='str'),
             path=dict(type='path', required=True, aliases=['name']),
             opts=dict(type='str'),
