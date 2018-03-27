@@ -158,9 +158,10 @@ class AzureRMImage(AzureRMModuleBase):
             self.check_provisioning_state(image, self.state)
             results = image.id
             # update is not supported except for tags
-            update_tags, self.tags = self.update_tags(image.tags)
+            update_tags, tags = self.update_tags(image.tags)
             if update_tags:
                 changed = True
+                self.tags = tags
             if self.state == 'absent':
                 changed = True
         # the image does not exist and create a new one
