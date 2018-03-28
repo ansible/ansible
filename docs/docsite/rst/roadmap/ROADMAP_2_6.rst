@@ -17,7 +17,7 @@ Ansible 2.6
 Engine improvements
 -------------------
 
-- Version 2.6 is largely going to be a stabalisation release for Core code.
+- Version 2.6 is largely going to be a stabilization release for Core code.
 - Some of the items covered in this release, but are not limited to are the following:
 
   - ``ansible-inventory``
