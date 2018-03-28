@@ -183,7 +183,33 @@
   assert:
     that: results.changed
 
-- name: Create VMSS - test idempotency
+- name: Create VMSS without data discs
+  azure_rm_virtualmachine_scaleset:
+    resource_group: "{{ resource_group }}"
+    name: testVMSS
+    vm_size: Standard_DS1_v2
+    admin_username: testuser
+    ssh_password_enabled: true
+    admin_password: "Password1234!"
+    capacity: 2
+    virtual_network_name: testVnet
+    subnet_name: testSubnet
+    upgrade_policy: Manual
+    tier: Standard
+    managed_disk_type: Standard_LRS
+    os_disk_caching: ReadWrite
+    image:
+      offer: CoreOS
+      publisher: CoreOS
+      sku: Stable
+      version: latest
+  register: results
+
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
+
+- name: Create VMSS - add data discs again
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS
@@ -212,7 +238,7 @@
 
 - name: Assert that VMSS ran
   assert:
-    that: results.changed
+    that: results.changed == False
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
