@@ -213,7 +213,8 @@ class HostNetworksModule(BaseModule):
         # Check if labels need to be updated on interface/bond:
         if labels:
             net_labels = nic_service.network_labels_service().list()
-            if sorted(labels) != sorted([lbl.id for lbl in net_labels]):
+            # If any passed label isn't in set of current labels, then add it:
+            if not set(labels).issubset([lbl.id for lbl in net_labels]):
                 return True
 
         if not networks:
@@ -287,27 +288,28 @@ def main():
         nics_service = host_service.nics_service()
         nic = search_by_name(nics_service, nic_name)
 
-        network_names = [network['name'] for network in networks]
+        network_names = [network['name'] for network in networks or []]
         state = module.params['state']
         if (
             state == 'present' and
             (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
         ):
+            removed_bonds = []
             # Remove networks which are attached to different interface then user want:
             attachments_service = host_service.network_attachments_service()
-            remove_network_attachments = [
-                a for a in attachments_service.list()
-                if get_link_name(connection, a.network) in network_names and
-                get_link_name(connection, a.host_nic) != interface
-            ]
-            if remove_network_attachments:
-                host_networks_module.action(
-                    entity=host,
-                    action='setup_networks',
-                    post_action=host_networks_module._action_save_configuration,
-                    check_connectivity=module.params['check'],
-                    removed_network_attachments=remove_network_attachments,
-                )
+
+            # Append attachment ID to network if needs update:
+            for a in attachments_service.list():
+                current_network_name = get_link_name(connection, a.network)
+                if current_network_name in network_names:
+                    for n in networks:
+                        if n['name'] == current_network_name:
+                            n['id'] = a.id
+
+            # Check if we have to break some bonds:
+            for host_nic in nics_service.list():
+                if host_nic.bonding and nic.id in [slave.id for slave in host_nic.bonding.slaves]:
+                    removed_bonds.append(otypes.HostNic(id=host_nic.id))
 
             # Assign the networks:
             host_networks_module.action(
@@ -315,6 +317,7 @@ def main():
                 action='setup_networks',
                 post_action=host_networks_module._action_save_configuration,
                 check_connectivity=module.params['check'],
+                removed_bonds=removed_bonds if removed_bonds else None,
                 modified_bonds=[
                     otypes.HostNic(
                         name=bond.get('name'),
@@ -341,6 +344,7 @@ def main():
                 ] if labels else None,
                 modified_network_attachments=[
                     otypes.NetworkAttachment(
+                        id=network.get('id'),
                         network=otypes.Network(
                             name=network['name']
                         ) if network['name'] else None,
@@ -362,9 +366,7 @@ def main():
                                 ),
                             ),
                         ],
-                    ) for network in networks if network['name'] not in [
-                        get_link_name(connection, a.network) for a in attachments_service.list()
-                    ]  # Attach only networks which are not yet attached.
+                    ) for network in networks
                 ] if networks else None,
             )
         elif state == 'absent' and nic:
