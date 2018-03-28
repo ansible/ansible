@@ -60,6 +60,10 @@ options:
           - 'LessThanThreshold'
           - 'GreaterThanThreshold'
           - 'GreaterThanOrEqualToThreshold'
+          - '<='
+          - '<'
+          - '>'
+          - '>='
     threshold:
         description:
           - Sets the min/max bound for triggering the alarm
@@ -134,7 +138,7 @@ options:
           - 'ignore'
           - 'missing'
         default: 'missing'
-        version_added: "2.5"
+        version_added: "2.6"
 extends_documentation_fragment:
     - aws
     - ec2
