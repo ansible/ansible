@@ -113,8 +113,8 @@ def query_package_provides(module, name, root):
 
 def update_package_db(module):
 
-    URPMIUPDATE_PATH = module.get_bin_path("urpmi.update", True)
-    cmd = "%s -a -q" % (URPMIUPDATE_PATH,)
+    urpmiupdate_path = module.get_bin_path("urpmi.update", True)
+    cmd = "%s -a -q" % (urpmiupdate_path,)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
