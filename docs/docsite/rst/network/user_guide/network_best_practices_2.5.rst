@@ -55,12 +55,12 @@ An ``inventory`` file is an INI-like configuration file that defines the mapping
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``my_group:vars`` capability in your inventory file:
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file:
 
 .. code-block:: ini
 
    [all:vars]
-   # these defaults can be overridden for any group in the group:vars section
+   # these defaults can be overridden for any group in the [group:vars] section
    ansible_connection=network_cli
    ansible_user=ansible
 
