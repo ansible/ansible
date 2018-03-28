@@ -298,11 +298,11 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state):
             if option in ["pre-up", "up", "down", "post-up"] and value is not None and value != "None":
                 for target_option in filter(lambda i: i['value'] == value, target_options):
                     changed = True
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
             else:
                 changed = True
                 for target_option in target_options:
-                    lines = list(filter(lambda l: l != target_option, lines))
+                    lines = list(filter(lambda ln: ln != target_option, lines))
     else:
         module.fail_json(msg="Error: unsupported state %s, has to be either present or absent" % state)
 
@@ -330,7 +330,7 @@ def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
-    f.writelines(lines)
+    f.write(to_bytes(''.join(lines), errors='surrogate_or_strict'))
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 
