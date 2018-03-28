@@ -40,6 +40,7 @@ def test_open_url(mocker):
 
     assert len(found_handlers) == 2
 
+
 def test_open_url_http(mocker):
     urlopen_mock = mocker.patch('ansible.module_utils.urls.urllib_request.urlopen')
     install_opener_mock = mocker.patch('ansible.module_utils.urls.urllib_request.install_opener')
