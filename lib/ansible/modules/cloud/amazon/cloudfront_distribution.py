@@ -1418,7 +1418,7 @@ class CloudFrontValidationManager(object):
         if not origin['s3_origin_access_identity_enabled']:
             return None
         try:
-            comment = "Origin Access Identity created by Ansible at %s" % self.__default_datetime_string
+            comment = "access-identity-by-ansible-%s-%s" % (origin.get('domain_name'), self.__default_datetime_string)
             cfoai_config = dict(CloudFrontOriginAccessIdentityConfig=dict(CallerReference=self.__default_datetime_string,
                                                                           Comment=comment))
             oai = client.create_cloud_front_origin_access_identity(**cfoai_config)['CloudFrontOriginAccessIdentity']['Id']
