@@ -17,9 +17,9 @@ if [ "${platform}" = "freebsd" ]; then
             gtar \
             python \
             sudo \
-         && break
-         echo "Failed to install packages. Sleeping before trying again..."
-         sleep 10
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
     done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
@@ -31,9 +31,9 @@ elif [ "${platform}" = "rhel" ]; then
             python-jinja2 \
             python-virtualenv \
             python2-cryptography \
-         && break
-         echo "Failed to install packages. Sleeping before trying again..."
-         sleep 10
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
     done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
