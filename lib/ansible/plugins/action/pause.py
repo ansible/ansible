@@ -96,7 +96,7 @@ class ActionModule(ActionBase):
             prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue', echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to abort', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -156,6 +156,7 @@ class ActionModule(ActionBase):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 stdin = None
+
             if fd is not None:
                 if isatty(fd):
                     old_settings = termios.tcgetattr(fd)
@@ -169,7 +170,8 @@ class ActionModule(ActionBase):
                     if not seconds:
                         new_settings = termios.tcgetattr(fd)
                         new_settings[0] = new_settings[0] | termios.ICRNL
-                        new_settings[3] = new_settings[3] | termios.ICANON
+                        if seconds or 'prompt' in self._task.args:
+                            new_settings[3] = new_settings[3] | termios.ICANON
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                         if echo:
@@ -181,19 +183,19 @@ class ActionModule(ActionBase):
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
+
             while True:
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-
-                        if seconds:
-                            if key_pressed == b'\x03':
-                                raise KeyboardInterrupt
+                        if key_pressed == b'\x03': # value for Ctrl+C
+                            raise KeyboardInterrupt
 
                     if not seconds:
                         if fd is None or not isatty(fd):
-                            display.warning("Not waiting from prompt as stdin is not interactive")
+                            display.warning("Not waiting for response to prompt as stdin is not interactive")
                             break
+
                         # read key presses and act accordingly
                         if key_pressed in (b'\r', b'\n'):
                             break
@@ -203,11 +205,10 @@ class ActionModule(ActionBase):
                 except KeyboardInterrupt:
                     if seconds is not None:
                         signal.alarm(0)
-                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                    if self._c_or_a(stdin):
-                        break
-                    else:
-                        raise AnsibleError('user requested abort!')
+                        display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                        if self._c_or_a(stdin):
+                            break
+                    raise AnsibleError('user requested abort!')
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal
