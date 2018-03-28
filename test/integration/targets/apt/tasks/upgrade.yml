@@ -1,14 +1,4 @@
 ---
-- name: Remove packages that cause the upgrade below to fail, they need manual intervention to upgrade
-  apt:
-    name: "{{ pkg }}"
-    state: absent
-  with_items:
-    - mysql-server-5.7
-    - mysql-server
-  loop_control:
-    loop_var: pkg
-
 #### Tests for upgrade/download functions in modules/packaging/os/apt.py ####
 - name: download and install old version of hello
   apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
