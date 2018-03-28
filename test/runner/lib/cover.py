@@ -155,16 +155,10 @@ def command_coverage_report(args):
             options.append('--show-missing')
 
         if args.include:
-            options.extend([
-                '--include',
-                args.include
-            ])
+            options.extend(['--include', args.include])
 
         if args.omit:
-            options.extend([
-                '--omit',
-                args.omit
-            ])
+            options.extend(['--omit', args.omit])
 
         env = common_environment()
         env.update(dict(COVERAGE_FILE=output_file))
