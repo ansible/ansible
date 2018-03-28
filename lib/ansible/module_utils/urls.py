@@ -824,6 +824,8 @@ class Request:
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
 
+        For documentation of params, see ``Request.open``
+
         >>> from ansible.module_utils.urls import Request
         >>> r = Request()
         >>> r.open('GET', 'http://httpbin.org/cookies/set?k1=v1').read()
@@ -860,11 +862,41 @@ class Request:
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None):
-        '''
+        """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
         Does not require the module environment
-        '''
+
+        Returns :class:`HTTPResponse` object.
+
+        :arg method: method for the request
+        :arg url: URL to request
+
+        :kwarg data: (optional) bytes, or file-like object to send
+            in the body of the request
+        :kwarg headers: (optional) Dictionary of HTTP Headers to send with the
+            request
+        :kwarg use_proxy: (optional) Boolean of whether or not to use proxy
+        :kwarg force: (optional) Boolean of whether or not to set `cache-control: no-cache` header
+        :kwarg last_mod_time: (optional) Datetime object to use when setting If-Modified-Since header
+        :kwarg timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float
+        :kwarg validate_certs: (optional) Booleani that controls whether we verify
+            the server's TLS certificate
+        :kwarg url_username: (optional) String of the user to use when authenticating
+        :kwarg url_password: (optional) String of the password to use when authenticating
+        :kwarg http_agent: (optional) String of the User-Agent to use in the request
+        :kwarg force_basic_auth: (optional) Boolean determining if auth header should be sent in the initial request
+        :kwarg follow_redirects: (optional) String of urllib2, all/yes, safe, none to determine how redirects are
+            followed, see RedirectHandlerFactory for more information
+        :kwarg client_cert: (optional) PEM formatted certificate chain file to be used for SSL client authentication.
+            This file can also include the key as well, and if the key is included, client_key is not required
+        :kwarg client_key: (optional) PEM formatted file that contains your private key to be used for SSL client
+            authentication. If client_cert contains both the certificate and key, this option is not required
+        :kwarg cookies: (optional) CookieJar object to send with the
+            request
+        :returns: HTTPResponse
+        """
 
         method = method.upper()
 
@@ -1012,6 +1044,79 @@ class Request:
 
         r = urllib_request.urlopen(*urlopen_args)
         return r
+
+    def get(self, url, **kwargs):
+        r"""Sends a GET request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('GET', url, **kwargs)
+
+    def options(self, url, **kwargs):
+        r"""Sends a OPTIONS request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('OPTIONS', url, **kwargs)
+
+    def head(self, url, **kwargs):
+        r"""Sends a HEAD request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('HEAD', url, **kwargs)
+
+    def post(self, url, data=None, **kwargs):
+        r"""Sends a POST request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('POST', url, data=data, **kwargs)
+
+    def put(self, url, data=None, **kwargs):
+        r"""Sends a PUT request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('PUT', url, data=data, **kwargs)
+
+    def patch(self, url, data=None, **kwargs):
+        r"""Sends a PATCH request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('PATCH', url, data=data, **kwargs)
+
+    def delete(self, url, **kwargs):
+        r"""Sends a DELETE request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwargs \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('DELETE', url, **kwargs)
 
 
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
