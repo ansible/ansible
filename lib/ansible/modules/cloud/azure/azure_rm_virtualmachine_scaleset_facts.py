@@ -26,13 +26,9 @@ options:
     name:
         description:
             - Limit results to a specific virtual machine scale set
-        required: false
-        default: null
     resource_group:
         description:
             - The resource group to search for the desired virtual machine scale set
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure

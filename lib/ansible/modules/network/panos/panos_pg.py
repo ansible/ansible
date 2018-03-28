@@ -41,7 +41,6 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     pg_name:
         description:
@@ -50,43 +49,29 @@ options:
     data_filtering:
         description:
             - name of the data filtering profile
-        required: false
-        default: None
     file_blocking:
         description:
             - name of the file blocking profile
-        required: false
-        default: None
     spyware:
         description:
             - name of the spyware profile
-        required: false
-        default: None
     url_filtering:
         description:
             - name of the url filtering profile
-        required: false
-        default: None
     virus:
         description:
             - name of the anti-virus profile
-        required: false
-        default: None
     vulnerability:
         description:
             - name of the vulnerability profile
-        required: false
-        default: None
     wildfire:
         description:
             - name of the wildfire analysis profile
-        required: false
-        default: None
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

@@ -26,13 +26,9 @@ options:
     user:
       description:
         - User that receives the permissions specified by the role.
-      required: False
-      default: null
     team:
       description:
         - Team that receives the permissions specified by the role.
-      required: False
-      default: null
     role:
       description:
         - The role type to grant/revoke.
@@ -41,37 +37,24 @@ options:
     target_team:
       description:
         - Team that the role acts on.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the role acts on.
-      required: False
-      default: null
     job_template:
       description:
-        - The job_template the role acts on.
-      required: False
-      default: null
+        - The job template the role acts on.
     credential:
       description:
         - Credential the role acts on.
-      required: False
-      default: null
     organization:
       description:
-        - Organiation the role acts on.
-      required: False
-      default: null
+        - Organization the role acts on.
     project:
       description:
         - Project the role acts on.
-      required: False
-      default: null
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

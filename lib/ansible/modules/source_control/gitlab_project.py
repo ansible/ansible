@@ -31,32 +31,24 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     group:
         description:
             - The name of the group of which this projects belongs to.
             - When not provided, project will belong to user which is configured in 'login_user' or 'login_token'
             - When provided with username, project will be created for this user. 'login_user' or 'login_token' needs admin rights.
-        required: false
-        default: null
     name:
         description:
             - The name of the project
@@ -65,63 +57,57 @@ options:
         description:
             - The path of the project you want to create, this will be server_url/<group>/path
             - If not supplied, name will be used.
-        required: false
-        default: null
     description:
         description:
             - An description for the project.
-        required: false
-        default: null
     issues_enabled:
         description:
             - Whether you want to create issues or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     merge_requests_enabled:
         description:
             - If merge requests can be made or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     wiki_enabled:
         description:
             - If an wiki for this project should be available or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
             - Possible values are true and false.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     public:
         description:
             - If the project is public available or not.
             - Setting this to true is same as setting visibility_level to 20.
             - Possible values are true and false.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     visibility_level:
         description:
             - Private. visibility_level is 0. Project access must be granted explicitly for each user.
             - Internal. visibility_level is 10. The project can be cloned by any logged in user.
             - Public. visibility_level is 20. The project can be cloned without any authentication.
             - Possible values are 0, 10 and 20.
-        required: false
         default: 0
     import_url:
         description:
             - Git repository which will be imported into gitlab.
             - Gitlab server needs read access to this git repository.
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     state:
         description:
             - create or delete project.
             - Possible values are present and absent.
-        required: false
         default: "present"
         choices: ["present", "absent"]
 '''

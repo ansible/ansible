@@ -29,7 +29,6 @@ options:
              Usually the location is the results folder, but you can
              choose another location based on your write permission.
         required: true
-        default: Null
         version_added: 2.3
     host:
         description:
@@ -40,7 +39,6 @@ options:
              an abstraction of the group of network elements that need to be
              configured.
         required: true
-        default: Null
         version_added: 2.3
     username:
         description:
@@ -51,7 +49,6 @@ options:
              variable. This parameter is optional. If it is not specified, no
              default value will be used.
         required: true
-        default: Null
         version_added: 2.3
     password:
         description:
@@ -62,7 +59,6 @@ options:
              variable. This parameter is optional. If it is not specified, no
              default value will be used.
         required: true
-        default: Null
         version_added: 2.3
     enablePassword:
         description:
@@ -72,8 +68,6 @@ options:
              should come from the inventory file, you can also specify it as a
              variable. This parameter is optional. If it is not specified,
              no default value will be used.
-        required: false
-        default: Null
         version_added: 2.3
     deviceType:
         description:
@@ -81,7 +75,6 @@ options:
              The choices NE1072T,NE1032,NE1032T,NE10032,
              NE2572 are added since version 2.4
         required: Yes
-        default: null
         choices: [g8272_cnos,g8296_cnos,g8332_cnos,NE1072T,NE1032,
          NE1032T,NE10032,NE2572]
         version_added: 2.3

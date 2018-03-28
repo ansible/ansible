@@ -42,33 +42,23 @@ options:
         description:
             - Full name of the interface, i.e. 40GE1/0/22.
         required: true
-        default: null
     mode:
         description:
             - The link type of an interface.
-        required: false
-        default: null
         choices: ['access','trunk']
     access_vlan:
         description:
             - If C(mode=access), used as the access VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     native_vlan:
         description:
             - If C(mode=trunk), used as the trunk native VLAN ID, in the range from 1 to 4094.
-        required: false
-        default: null
     trunk_vlans:
         description:
             - If C(mode=trunk), used as the VLAN range to ADD or REMOVE
               from the trunk, such as 2-10 or 2,5,10-15, etc.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present', 'absent', 'unconfigured']
 '''

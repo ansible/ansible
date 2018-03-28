@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-
 module: nxos_udld
 extends_documentation_fragment: nxos
 version_added: "2.2"
@@ -41,24 +40,20 @@ options:
     aggressive:
         description:
             - Toggles aggressive mode.
-        required: false
-        default: null
         choices: ['enabled','disabled']
     msg_time:
         description:
-            - Message time in seconds for UDLD packets.
-        required: false
-        default: null
+            - Message time in seconds for UDLD packets or keyword 'default'.
     reset:
         description:
-            - Ability to reset UDLD down interfaces.
-        required: false
-        default: null
-        choices: ['true','false']
+            - Ability to reset all ports shut down by UDLD. 'state' parameter
+              cannot be 'absent' when this is present.
+        type: bool
+        default: 'no'
     state:
         description:
-            - Manage the state of the resource.
-        required: false
+            - Manage the state of the resource. When set to 'absent',
+              aggressive and msg_time are set to their default values.
         default: present
         choices: ['present','absent']
 

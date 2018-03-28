@@ -61,8 +61,6 @@ options:
         description:
             - Name of the kickstart image file on flash.
               (Not required on all Nexus platforms)
-        required: false
-        default: null
     issu:
         version_added: "2.5"
         description:
@@ -73,7 +71,6 @@ options:
             - Selecting 'desired' means that upgrades will use ISSU if possible
               but will fall back to disruptive upgrade if needed.
             - Selecting 'no' means do not use ISSU. Forced disruptive.
-        required: false
         choices: ['required','desired', 'yes', 'no']
         default: 'no'
 '''

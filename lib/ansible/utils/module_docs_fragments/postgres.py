@@ -21,34 +21,25 @@ options:
   login_user:
     description:
       - The username used to authenticate with
-    required: false
     default: postgres
   login_password:
     description:
       - The password used to authenticate with
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database
-    required: false
-    default: null
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
-    required: false
-    default: null
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
@@ -56,8 +47,6 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
       - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    required: false
-    default: null
     version_added: '2.3'
 notes:
 - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.

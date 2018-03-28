@@ -33,18 +33,12 @@ options:
   vlan_id:
     description:
       - Single VLAN ID.
-    required: false
-    default: null
   vlan_range:
     description:
       - Range of VLANs such as 2-10 or 2,5,10-15, etc.
-    required: false
-    default: null
   name:
     description:
       - Name of VLAN.
-    required: false
-    default: null
   interfaces:
     description:
       - List of interfaces that should be associated to the VLAN.
@@ -59,35 +53,29 @@ options:
     description:
       - Manage the vlan operational state of the VLAN
         This is being deprecated in favor of state.
-    required: false
     default: active
     choices: ['active','suspend']
   admin_state:
     description:
       - Manage the VLAN administrative state of the VLAN equivalent
         to shut/no shut in VLAN config mode.
-    required: false
     default: up
     choices: ['up','down']
   mapped_vni:
     description:
       - The Virtual Network Identifier (VNI) ID that is mapped to the
         VLAN. Valid values are integer and keyword 'default'. Range 4096-16773119.
-    required: false
-    default: null
     version_added: "2.2"
   state:
     description:
       - Manage the state of the resource.
         Active and Suspend will assume the vlan is present.
-    required: false
     default: present
     choices: ['present','absent', 'active', 'suspend']
   mode:
     description:
       - Set VLAN mode to classical ethernet or fabricpath.
         This is a valid option for Nexus 5000 and 7000 series.
-    required: false
     default: ce
     choices: ['ce','fabricpath']
     version_added: "2.4"
@@ -97,7 +85,8 @@ options:
   purge:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
   delay:
     description:
       - Time in seconds to wait before checking for the operational state on remote

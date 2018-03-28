@@ -33,14 +33,11 @@ options:
     blob:
         description:
             - Name of a blob object within the container.
-        required: false
-        default: null
         aliases:
             - blob_name
     blob_type:
         description:
             - Type of Blob Object.
-        required: false
         default: block
         choices:
             - block
@@ -55,46 +52,32 @@ options:
     content_type:
         description:
             - Set the blob content-type header. For example, 'image/png'.
-        default: null
-        required: false
     cache_control:
         description:
             - Set the blob cache-control header.
-        required: false
-        default: null
     content_disposition:
         description:
             - Set the blob content-disposition header.
-        required: false
-        default: null
     content_encoding:
         description:
             - Set the blob encoding header.
-        required: false
-        default: null
     content_language:
         description:
             - Set the blob content-language header.
-        required: false
-        default: null
     content_md5:
         description:
             - Set the blob md5 hash value.
-        required: false
-        default: null
     dest:
         description:
             - Destination file path. Use with state 'present' to download a blob.
         aliases:
             - destination
-        required: false
-        default: null
     force:
         description:
             - Overwrite existing blob or file when uploading or downloading. Force deletion of a container
               that contains blobs.
-        default: false
-        required: false
+        type: bool
+        default: no
     resource_group:
         description:
             - Name of the resource group to use.
@@ -106,8 +89,6 @@ options:
             - Source file path. Use with state 'present' to upload a blob.
         aliases:
             - source
-        required: false
-        default: null
     state:
         description:
             - Assert the state of a container or blob.
@@ -120,7 +101,6 @@ options:
               to download. If a blob (uploading) or a file (downloading) already exists, it will not be overwritten
               unless the force parameter is true.
         default: present
-        required: false
         choices:
             - absent
             - present
@@ -128,8 +108,6 @@ options:
         description:
             - Determine a container's level of public access. By default containers are private. Can only be set at
               time of container creation.
-        required: false
-        default: null
         choices:
             - container
             - blob

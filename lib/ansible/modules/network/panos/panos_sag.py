@@ -36,16 +36,13 @@ options:
         description:
             - IP address (or hostname) of PAN-OS device
         required: true
-        default: null
     password:
         description:
             - password for authentication
         required: true
-        default: null
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     api_key:
         description:
@@ -54,38 +51,29 @@ options:
         description:
             - name of the dynamic address group
         required: true
-        default: null
     static_match_filter:
         description:
             - Static filter user by the address group
         required: true
-        default: null
     devicegroup:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined
             it is assumed that we are contacting a firewall.
-        required: false
-        default: None
     description:
         description:
             - The purpose / objective of the static Address Group
-        required: false
-        default: null
     tags:
         description:
             - Tags to be associated with the address group
-        required: false
-        default: null
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
     operation:
         description:
             - The operation to perform Supported values are I(add)/I(list)/I(delete).
         required: true
-        default: null
 '''
 
 EXAMPLES = '''

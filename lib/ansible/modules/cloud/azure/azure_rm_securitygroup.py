@@ -31,28 +31,23 @@ options:
             - The set of default rules automatically added to a security group at creation. In general default
               rules will not be modified. Modify rules to shape the flow of traffic to or from a subnet or NIC. See
               rules below for the makeup of a rule dict.
-        required: false
-        default: null
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     name:
         description:
             - Name of the security group to operate on.
-        required: false
-        default: null
     purge_default_rules:
         description:
             - Remove any existing rules not matching those defined in the default_rules parameter.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     purge_rules:
         description:
             - Remove any existing rules not matching those defined in the rules parameters.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     resource_group:
         description:
             - Name of the resource group the security group belongs to.
@@ -60,8 +55,6 @@ options:
     rules:
         description:
             - Set of rules shaping traffic flow to or from a subnet or NIC. Each rule is a dictionary.
-        required: false
-        default: null
         suboptions:
             name:
                 description:
@@ -122,7 +115,6 @@ options:
             - Assert the state of the security group. Set to 'present' to create or update a security group. Set to
               'absent' to remove a security group.
         default: present
-        required: false
         choices:
             - absent
             - present

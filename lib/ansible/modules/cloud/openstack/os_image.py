@@ -29,68 +29,48 @@ options:
      description:
         - Name that has to be given to the image
      required: true
-     default: None
    id:
      version_added: "2.4"
      description:
         - The Id of the image
-     required: false
-     default: None
    checksum:
      version_added: "2.5"
      description:
         - The checksum of the image
-     required: false
-     default: None
    disk_format:
      description:
         - The format of the disk that is getting uploaded
-     required: false
      default: qcow2
    container_format:
      description:
         - The format of the container
-     required: false
      default: bare
    owner:
      description:
         - The owner of the image
-     required: false
-     default: None
    min_disk:
      description:
         - The minimum disk space (in GB) required to boot this image
-     required: false
-     default: None
    min_ram:
      description:
         - The minimum ram (in MB) required to boot this image
-     required: false
-     default: None
    is_public:
      description:
         - Whether the image can be accessed publicly. Note that publicizing an image requires admin role by default.
-     required: false
+     type: bool
      default: 'yes'
    filename:
      description:
         - The path to the file which has to be uploaded
-     required: false
-     default: None
    ramdisk:
      description:
         - The name of an existing ramdisk image that will be associated with this image
-     required: false
-     default: None
    kernel:
      description:
         - The name of an existing kernel image that will be associated with this image
-     required: false
-     default: None
    properties:
      description:
         - Additional properties to be associated with this image
-     required: false
      default: {}
    state:
      description:
@@ -100,7 +80,6 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements: ["shade"]
 '''
 

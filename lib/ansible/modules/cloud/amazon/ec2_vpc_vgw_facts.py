@@ -24,13 +24,9 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
-    required: false
-    default: None
   vpn_gateway_ids:
     description:
       - Get details of a specific Virtual Gateway ID. This value should be provided as a list.
-    required: false
-    default: None
 author: "Nick Aslanidis (@naslanidis)"
 extends_documentation_fragment:
     - aws

@@ -38,16 +38,10 @@ options:
       required: True
     return_fields:
       description: The list of field names to return for the specified object.
-      required: False
-      default: null
     filter:
       description: a dict object that is used to filter the return objects
-      required: False
-      default: null
     extattrs:
       description: a dict object that is used to filter on extattrs
-      required: false
-      default: null
 """
 
 EXAMPLES = """

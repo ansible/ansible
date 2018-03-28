@@ -22,46 +22,33 @@ class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
   mode:
-    required: false
-    default: null
     description:
       - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like C(0644) or C(01777)).
         Leaving off the leading zero will likely have unexpected results.
         As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
-    required: false
-    default: null
     description:
       - Name of the user that should own the file/directory, as would be fed to I(chown).
   group:
-    required: false
-    default: null
     description:
       - Name of the group that should own the file/directory, as would be fed to I(chown).
   seuser:
-    required: false
-    default: null
     description:
       - User part of SELinux file context. Will default to system policy, if
         applicable. If set to C(_default), it will use the C(user) portion of the
         policy if available.
   serole:
-    required: false
-    default: null
     description:
       - Role part of SELinux file context, C(_default) feature works as for I(seuser).
   setype:
-    required: false
-    default: null
     description:
       - Type part of SELinux file context, C(_default) feature works as for I(seuser).
   selevel:
-    required: false
-    default: "s0"
     description:
       - Level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
+    default: "s0"
   unsafe_writes:
     description:
       -  Normally this module uses atomic operations to prevent data corruption or inconsistent reads from the target files,
@@ -70,15 +57,12 @@ options:
       -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
          not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
     type: bool
-    required: false
-    default: false
+    default: 'no'
     version_added: "2.2"
   attributes:
     description:
       - Attributes the file or directory should have. To get supported flags look at the man page for I(chattr) on the target system.
         This string should contain the attributes in the same order as the one displayed by I(lsattr).
-    required: false
-    default: None
     aliases: ['attr']
     version_added: "2.3"
 """

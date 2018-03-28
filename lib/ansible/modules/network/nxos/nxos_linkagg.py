@@ -39,39 +39,33 @@ options:
   mode:
     description:
       - Mode for the link aggregation group.
-    required: false
-    default: on
-    choices: ['active','passive','on']
+    choices: [ active, 'on', passive ]
+    default: 'on'
   min_links:
     description:
       - Minimum number of ports required up
         before bringing up the link aggregation group.
-    required: false
-    default: null
   members:
     description:
       - List of interfaces that will be managed in the link aggregation group.
-    required: false
-    default: null
   force:
     description:
       - When true it forces link aggregation group members to match what
         is declared in the members param. This can be used to remove members.
-    required: false
-    choices: [True, False]
-    default: False
+    type: bool
+    default: 'no'
   aggregate:
     description: List of link aggregation definitions.
   state:
     description:
       - State of the link aggregation group.
-    required: false
     default: present
     choices: ['present','absent']
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """

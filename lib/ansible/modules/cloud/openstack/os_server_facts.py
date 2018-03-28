@@ -31,18 +31,15 @@ options:
      description:
        - restrict results to servers with names or UUID matching
          this glob expression (e.g., C<web*>).
-     required: false
-     default: None
    detailed:
      description:
         - when true, return additional detail about servers at the expense
           of additional API calls.
-     required: false
-     default: false
+     type: bool
+     default: 'no'
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 extends_documentation_fragment: openstack
 '''
 

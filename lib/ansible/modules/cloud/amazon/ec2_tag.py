@@ -24,21 +24,15 @@ options:
     description:
       - The EC2 resource id.
     required: true
-    default: null
-    aliases: []
   state:
     description:
       - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of an instance.
-    required: false
     default: present
     choices: ['present', 'absent', 'list']
-    aliases: []
   tags:
     description:
       - a hash/dictionary of tags to add to the resource; '{"key":"value"}' and '{"key":"value","key":"value"}'
     required: true
-    default: null
-    aliases: []
 
 author: "Lester Wade (@lwade)"
 extends_documentation_fragment:

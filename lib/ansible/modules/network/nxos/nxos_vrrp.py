@@ -51,33 +51,27 @@ options:
         required: true
     priority:
         description:
-            - VRRP priority.
-        required: false
-        default: null
+            - VRRP priority or 'default' keyword
+        default: 100
     preempt:
         description:
             - Enable/Disable preempt.
-        choices: ['True', 'False']
+        type: bool
+        default: 'yes'
     vip:
         description:
-            - VRRP virtual IP address.
-        required: false
-        default: null
+            - VRRP virtual IP address or 'default' keyword
     authentication:
         description:
-            - Clear text authentication string.
-        required: false
-        default: null
+            - Clear text authentication string or 'default' keyword
     admin_state:
         description:
             - Used to enable or disable the VRRP process.
-        required: false
-        choices: ['shutdown', 'no shutdown']
-        default: no shutdown
+        choices: ['shutdown', 'no shutdown', 'default']
+        default: shutdown
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

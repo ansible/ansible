@@ -39,15 +39,12 @@ options:
             - Dynamic
             - Static
         default: Dynamic
-        required: false
     domain_name_label:
         description:
             - The customizable portion of the FQDN assigned to public IP address. This is an explicit setting. If
               no value is provided, any existing value will be removed on an existing public IP.
         aliases:
             - domain_name_label
-        required: false
-        default: null
     name:
         description:
             - Name of the Public IP.
@@ -60,12 +57,10 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
 
 extends_documentation_fragment:
     - azure

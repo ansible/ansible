@@ -32,83 +32,53 @@ options:
         description:
             - Create a maintenance window or get a list of ongoing windows.
         required: true
-        default: null
         choices: [ "running", "started", "ongoing", "absent" ]
-        aliases: []
     name:
         description:
             - PagerDuty unique subdomain.
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - PagerDuty user ID.
         required: true
-        default: null
-        choices: []
-        aliases: []
     passwd:
         description:
             - PagerDuty user password.
         required: true
-        default: null
-        choices: []
-        aliases: []
     token:
         description:
             - A pagerduty token, generated on the pagerduty site. Can be used instead of
               user/passwd combination.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: '1.8'
     requester_id:
         description:
             - ID of user making the request. Only needed when using a token and creating a maintenance_window.
         required: true
-        default: null
-        choices: []
-        aliases: []
         version_added: '1.8'
     service:
         description:
             - A comma separated list of PagerDuty service IDs.
-        required: false
-        default: null
-        choices: []
         aliases: [ services ]
     hours:
         description:
             - Length of maintenance window in hours.
-        required: false
         default: 1
-        choices: []
-        aliases: []
     minutes:
         description:
             - Maintenance window in minutes (this is added to the hours).
-        required: false
         default: 0
-        choices: []
-        aliases: []
         version_added: '1.8'
     desc:
         description:
             - Short description of maintenance window.
-        required: false
         default: Created by Ansible
-        choices: []
-        aliases: []
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
               on personally controlled sites using self-signed certificates.
-        required: false
+        type: bool
         default: 'yes'
-        choices: ['yes', 'no']
         version_added: 1.5.1
 '''
 

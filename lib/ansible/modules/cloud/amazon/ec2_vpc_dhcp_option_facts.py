@@ -25,14 +25,10 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
-    required: false
-    default: null
   dhcp_options_ids:
     description:
       - Get details of specific DHCP Option ID
       - Provide this value as a list
-    required: false
-    default: None
     aliases: ['DhcpOptionIds']
 extends_documentation_fragment:
     - aws

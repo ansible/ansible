@@ -31,8 +31,9 @@ options:
   port:
     description:
     - Port number to be used for REST connection.
-    default: 443 (for https) and 80 (for http)
+    - The default value depends on parameter `use_ssl`.
     type: int
+    default: 443 (https), 80 (http)
   username:
     description:
     - The username to use for authentication.

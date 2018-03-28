@@ -26,7 +26,6 @@ options:
   public_key:
     description:
       - Public Key string to upload. Can be a file path or string
-    default: null
   state:
     description:
       - Indicate desired state of the resource

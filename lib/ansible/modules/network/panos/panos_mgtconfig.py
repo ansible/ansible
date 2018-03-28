@@ -41,33 +41,24 @@ options:
     username:
         description:
             - username for authentication
-        required: false
         default: "admin"
     dns_server_primary:
         description:
             - address of primary DNS server
-        required: false
-        default: None
     dns_server_secondary:
         description:
             - address of secondary DNS server
-        required: false
-        default: None
     panorama_primary:
         description:
             - address of primary Panorama server
-        required: false
-        default: None
     panorama_secondary:
         description:
             - address of secondary Panorama server
-        required: false
-        default: None
     commit:
         description:
             - commit if changed
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

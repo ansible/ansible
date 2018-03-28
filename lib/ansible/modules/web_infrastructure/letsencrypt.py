@@ -102,7 +102,8 @@ options:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
       - This option will only be used when C(acme_version) is not 1.
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.5"
   challenge:
     description: The challenge to be performed.
@@ -156,8 +157,8 @@ options:
       - Whether calls to the ACME directory will validate TLS certificates.
       - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
         for example when testing against a local Pebble server.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     version_added: 2.5
 '''
 

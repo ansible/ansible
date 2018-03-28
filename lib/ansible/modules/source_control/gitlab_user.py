@@ -32,25 +32,19 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     name:
         description:
             - Name of the user you want to create
@@ -71,18 +65,12 @@ options:
     sshkey_name:
         description:
             - The name of the sshkey
-        required: false
-        default: null
     sshkey_file:
         description:
             - The ssh key itself.
-        required: false
-        default: null
     group:
         description:
             - Add user as an member to this group.
-        required: false
-        default: null
     access_level:
         description:
             - The access level to the group. One of the following can be used.
@@ -91,20 +79,17 @@ options:
             - developer
             - master
             - owner
-        required: false
-        default: null
     state:
         description:
             - create or delete group.
             - Possible values are present and absent.
-        required: false
         default: present
         choices: ["present", "absent"]
     confirm:
         description:
             - Require confirmation.
-        required: false
-        default: true
+        type: bool
+        default: 'yes'
         version_added: "2.4"
 '''
 

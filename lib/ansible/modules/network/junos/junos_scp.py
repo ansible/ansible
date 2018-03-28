@@ -30,27 +30,23 @@ options:
         transfered. The argument C(recursive) must be C(true) to transfer
         directories.
     required: true
-    default: null
   dest:
     description:
       - The C(dest) argument specifies the path in which to receive the files.
-    required: false
     default: '.'
   recursive:
     description:
       - The C(recursive) argument enables recursive transfer of files and
         directories.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
   remote_src:
     description:
       - The C(remote_src) argument enables the download of files (I(scp get)) from
         the remote device. The default behavior is to upload files (I(scp put))
         to the remote device.
-    required: false
-    default: false
-    choices: ['true', 'false']
+    type: bool
+    default: 'no'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)

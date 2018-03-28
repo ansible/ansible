@@ -56,67 +56,50 @@ options:
     source_ip:
         description:
             - list of source addresses
-        required: false
         default: ["any"]
     destination_ip:
         description:
             - list of destination addresses
-        required: false
         default: ["any"]
     service:
         description:
             - service
-        required: false
         default: "any"
     snat_type:
         description:
             - type of source translation
-        required: false
-        default: None
     snat_address_type:
         description:
             - type of source translation. Supported values are I(translated-address)/I(translated-address).
-        required: false
         default: 'translated-address'
     snat_static_address:
         description:
             - Source NAT translated address. Used with Static-IP translation.
-        required: false
-        default: None
     snat_dynamic_address:
         description:
             - Source NAT translated address. Used with Dynamic-IP and Dynamic-IP-and-Port.
-        required: false
-        default: None
     snat_interface:
         description:
             - snat interface
-        required: false
-        default: None
     snat_interface_address:
         description:
             - snat interface address
-        required: false
-        default: None
     snat_bidirectional:
         description:
             - bidirectional flag
-        required: false
-        default: "false"
+        type: bool
+        default: 'no'
     dnat_address:
         description:
             - dnat translated address
-        required: false
-        default: None
     dnat_port:
         description:
             - dnat translated port
-        required: false
-        default: None
     commit:
         description:
             - Commit configuration if changed.
-        default: true
+        type: bool
+        default: 'yes'
 '''
 
 EXAMPLES = '''

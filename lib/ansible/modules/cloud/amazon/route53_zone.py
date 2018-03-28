@@ -33,30 +33,22 @@ options:
     state:
         description:
             - whether or not the zone should exist or not
-        required: false
         default: present
         choices: [ "present", "absent" ]
     vpc_id:
         description:
             - The VPC ID the zone should be a part of (if this is going to be a private zone)
-        required: false
-        default: null
     vpc_region:
         description:
             - The VPC Region the zone should be a part of (if this is going to be a private zone)
-        required: false
-        default: null
     comment:
         description:
             - Comment associated with the zone
-        required: false
         default: ''
     hosted_zone_id:
         description:
             - The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
               Required if there are multiple zones identified with the above options
-        required: false
-        default: null
         version_added: 2.4
 extends_documentation_fragment:
     - aws

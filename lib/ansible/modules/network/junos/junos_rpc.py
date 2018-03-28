@@ -37,8 +37,6 @@ options:
       - The C(args) argument provides a set of arguments for the RPC
         call and are encoded in the request message.  This argument
         accepts a set of key=value arguments.
-    required: false
-    default: null
   attrs:
     description:
       - The C(attrs) arguments defines a list of attributes and their values
@@ -50,7 +48,6 @@ options:
         return data.  This argument accepts one of C(xml), C(text),
         or C(json).  For C(json), the JUNOS device must be running a
         version of software that supports native JSON output.
-    required: false
     default: xml
 requirements:
   - ncclient (>=v0.5.2)

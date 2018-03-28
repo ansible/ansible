@@ -25,25 +25,17 @@ options:
     name:
         description:
             - Creation Token of Amazon EFS file system.
-        required: false
-        default: None
     id:
         description:
             - ID of Amazon EFS.
-        required: false
-        default: None
     tags:
         description:
             - List of tags of Amazon EFS. Should be defined as dictionary
-        required: false
-        default: None
     targets:
         description:
           - list of targets on which to filter the returned results
           - result must match all of the specified targets, each of which can be
             a security group ID, a subnet ID or an IP address
-        required: false
-        default: None
 extends_documentation_fragment:
   - aws
   - ec2

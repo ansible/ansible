@@ -9,6 +9,7 @@ lib/ansible/modules/cloud/amazon/aws_s3.py E322
 lib/ansible/modules/cloud/amazon/cloudfront_facts.py E323
 lib/ansible/modules/cloud/amazon/data_pipeline.py E322
 lib/ansible/modules/cloud/amazon/ec2.py E322
+lib/ansible/modules/cloud/amazon/ec2_asg.py E323
 lib/ansible/modules/cloud/amazon/ec2_eip.py E322
 lib/ansible/modules/cloud/amazon/ec2_elb_facts.py E323
 lib/ansible/modules/cloud/amazon/ec2_group.py E322
@@ -240,7 +241,6 @@ lib/ansible/modules/network/cloudengine/ce_acl_advance.py E322
 lib/ansible/modules/network/cloudengine/ce_acl_interface.py E322
 lib/ansible/modules/network/cloudengine/ce_bfd_global.py E322
 lib/ansible/modules/network/cloudengine/ce_bfd_session.py E322
-lib/ansible/modules/network/cloudengine/ce_bfd_view.py E322
 lib/ansible/modules/network/cloudengine/ce_bgp.py E322
 lib/ansible/modules/network/cloudengine/ce_bgp_af.py E322
 lib/ansible/modules/network/cloudengine/ce_bgp_neighbor.py E322

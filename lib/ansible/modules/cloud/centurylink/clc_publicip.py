@@ -24,12 +24,9 @@ options:
       - The protocol that the public IP will listen for.
     default: TCP
     choices: ['TCP', 'UDP', 'ICMP']
-    required: False
   ports:
     description:
       - A list of ports to expose. This is required when state is 'present'
-    required: False
-    default: None
   server_ids:
     description:
       - A list of servers to create public ips on.
@@ -40,13 +37,11 @@ options:
         already exists.
     default: present
     choices: ['present', 'absent']
-    required: False
   wait:
     description:
       - Whether to wait for the tasks to finish before returning.
-    choices: [ True, False ]
-    default: True
-    required: False
+    type: bool
+    default: 'yes'
 requirements:
     - python = 2.7
     - requests >= 2.5.0

@@ -38,7 +38,6 @@ options:
               least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     excludes:
-        default: null
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - Excludes is a patterns should not be returned in list. Multiple patterns can be specified
@@ -60,10 +59,10 @@ options:
         choices: [ any, directory, file, link ]
         default: file
     recurse:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - If target is a directory, recursively descend into the directory looking for files.
+        type: bool
+        default: 'no'
     size:
         description:
             - Select files whose size is equal to or greater than the specified size.
@@ -77,25 +76,25 @@ options:
         description:
             - Choose the file property against which we compare age.
     hidden:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - Set this to true to include hidden files, otherwise they'll be ignored.
-    follow:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    follow:
         description:
             - Set this to true to follow symlinks in path for systems with python 2.6+.
-    get_checksum:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    get_checksum:
         description:
             - Set this to true to retrieve a file's sha1 checksum.
-    use_regex:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    use_regex:
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+        type: bool
+        default: 'no'
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''

@@ -27,8 +27,6 @@ options:
       - The file on the remote system to fetch. This I(must) be a file, not a
         directory. Recursive fetching may be supported in a later release.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - A directory to save the file into. For example, if the I(dest)
@@ -36,7 +34,6 @@ options:
         C(host.example.com), would be saved into
         C(/backup/host.example.com/etc/profile)
     required: true
-    default: null
   fail_on_missing:
     version_added: "1.1"
     description:
@@ -44,16 +41,14 @@ options:
         read for any reason.  Prior to Ansible-2.5, setting this would only fail
         if the source file was missing.
       - The default was changed to "yes" in Ansible-2.5.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
   validate_checksum:
     version_added: "1.4"
     description:
       - Verify that the source and destination checksums match after the files are fetched.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
     aliases: [ "validate_md5" ]
   flat:
     version_added: "1.2"
@@ -62,7 +57,6 @@ options:
         hostname/path/to/file to the destination.  If dest ends with '/', it
         will use the basename of the source file, similar to the copy module.
         Obviously this is only handy if the filenames are unique.
-requirements: []
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

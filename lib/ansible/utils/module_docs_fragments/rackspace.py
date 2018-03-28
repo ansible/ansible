@@ -30,7 +30,6 @@ options:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
-    default: null
     aliases:
       - creds_file
   env:
@@ -79,7 +78,6 @@ options:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
-    default: null
     aliases:
       - creds_file
   env:

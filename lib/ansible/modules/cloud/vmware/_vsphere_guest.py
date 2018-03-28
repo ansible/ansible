@@ -28,7 +28,6 @@ options:
     description:
       - The hostname of the vcenter server the module will connect to, to create the guest.
     required: true
-    default: null
   validate_certs:
     description:
       - Validate SSL certs.  Note, if running on python without SSLContext
@@ -36,9 +35,8 @@ options:
         as pysphere does not support validating certificates on older python.
         Prior to 2.1, this module would always validate on python >= 2.7.9 and
         never validate on python <= 2.7.8.
-    required: false
-    default: yes
     type: bool
+    default: 'yes'
     version_added: 2.1
   guest:
     description:
@@ -48,28 +46,20 @@ options:
     description:
       - Username to connect to vcenter as.
     required: true
-    default: null
   password:
     description:
       - Password of the user to connect to vcenter as.
     required: true
-    default: null
   resource_pool:
     description:
       - The name of the resource_pool to create the VM in.
-    required: false
-    default: None
   cluster:
     description:
       - The name of the cluster to create the VM in. By default this is derived from the host you tell the module to build the guest on.
-    required: false
-    default: None
   esxi:
     description:
       - Dictionary which includes datacenter and hostname on which the VM should be created. For standalone ESXi hosts, ha-datacenter should be used as the
         datacenter name
-    required: false
-    default: null
   state:
     description:
       - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter.
@@ -81,62 +71,48 @@ options:
     description:
       - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware
         such as CPU, RAM, NICs or Disks can be applied when launching from template.
-    default: no
     type: bool
+    default: 'no'
   template_src:
     version_added: "1.9"
     description:
       - Name of the source template to deploy from
-    default: None
   snapshot_to_clone:
     description:
         - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
     version_added: "2.0"
-    required: false
-    default: none
   power_on_after_clone:
     description:
       - Specifies if the VM should be powered on after the clone.
-    required: false
-    default: yes
     type: bool
+    default: 'yes'
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
-    required: false
-    default: null
   vm_hardware:
     description:
       - A key, value list of VM config settings. Must include ['memory_mb', 'num_cpus', 'osid', 'scsi'].
-    required: false
-    default: null
   vm_nic:
     description:
       - A key, value list of nics, their types and what network to put them on.
-    required: false
-    default: null
+      - Optionaly with their MAC address.
   vm_extra_config:
     description:
       - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
-    required: false
-    default: null
   vm_hw_version:
     description:
       - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware
         version of existing vm is not supported.
-    required: false
-    default: null
     version_added: "1.7"
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
     type: bool
-    default: null
   force:
     description:
       - Boolean. Allows you to run commands which may alter the running state of a guest. Also used to reconfigure and destroy.
-    default: "no"
     type: bool
+    default: 'no'
 
 notes:
   - This module should run from a system that can access vSphere directly.

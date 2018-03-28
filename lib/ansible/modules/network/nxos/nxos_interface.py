@@ -45,13 +45,10 @@ options:
     description:
       - Full name of interface, i.e. Ethernet1/1, port-channel10.
     required: true
-    default: null
     aliases: [interface]
   interface_type:
     description:
       - Interface type to be unconfigured from the device.
-    required: false
-    default: null
     choices: ['loopback', 'portchannel', 'svi', 'nve']
     version_added: 2.2
   speed:
@@ -61,42 +58,32 @@ options:
   admin_state:
     description:
       - Administrative state of the interface.
-    required: false
     default: up
     choices: ['up','down']
   description:
     description:
       - Interface description.
-    required: false
-    default: null
   mode:
     description:
       - Manage Layer 2 or Layer 3 state of the interface.
         This option is supported for ethernet and portchannel interface.
         Applicable for ethernet and portchannel interface only.
-    required: false
-    default: null
     choices: ['layer2','layer3']
   mtu:
     description:
       - MTU for a specific interface. Must be an even number between 576 and 9216.
         Applicable for ethernet interface only.
-    required: false
     version_added: 2.5
   ip_forward:
     description:
       - Enable/Disable ip forward feature on SVIs.
-    required: false
-    default: null
     choices: ['enable','disable']
     version_added: 2.2
   fabric_forwarding_anycast_gateway:
     description:
       - Associate SVI with anycast gateway under VLAN configuration mode.
         Applicable for SVI interface only.
-    required: false
-    default: null
-    choices: ['true','false']
+    type: bool
     version_added: 2.2
   duplex:
     description:
@@ -134,7 +121,6 @@ options:
   state:
     description:
       - Specify desired state of the resource.
-    required: true
     default: present
     choices: ['present','absent','default']
   delay:

@@ -44,7 +44,6 @@ options:
     state:
         description:
             - Whether the application should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -57,19 +56,18 @@ options:
         description:
             - Whether the app should restart with an autostart.cgi script
         type: bool
-        default: "no"
+        default: 'no'
 
     extra_info:
         description:
             - Any extra parameters required by the app
-        required: false
-        default: null
+        default: ''
 
     port_open:
         description:
             - IF the port should be opened
         type: bool
-        default: false
+        default: 'no'
 
     login_name:
         description:
@@ -84,7 +82,7 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
+        default: False
 
 '''
 

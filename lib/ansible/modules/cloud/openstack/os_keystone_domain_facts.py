@@ -27,17 +27,13 @@ options:
    name:
      description:
         - Name or ID of the domain
-     required: false
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
           this dictionary may be additional dictionaries.
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''

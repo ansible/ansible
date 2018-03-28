@@ -54,8 +54,6 @@ options:
         the task to wait for a particular conditional to be true
         before moving forward.  If the conditional is not true
         by the configured I(retries), the task fails. See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
   match:
     description:
@@ -65,7 +63,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -74,7 +71,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the I(wait_for)
         conditionals.
-    required: false
     default: 10
   interval:
     description:
@@ -82,7 +78,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 
 notes:

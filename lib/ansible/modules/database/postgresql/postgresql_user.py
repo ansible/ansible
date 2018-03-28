@@ -36,7 +36,6 @@ options:
     description:
       - name of the user (role) to add or remove
     required: true
-    default: null
   password:
     description:
       - set the user's password, before 1.4 this was required.
@@ -45,16 +44,14 @@ options:
         C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
         C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
         MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
-    default: null
   db:
     description:
       - name of database where permissions will be granted
-    default: null
   fail_on_user:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
+    type: bool
     default: 'yes'
-    choices: [ yes, no ]
   port:
     description:
       - Database port to connect to.
@@ -66,7 +63,6 @@ options:
   login_password:
     description:
       - Password used to authenticate with PostgreSQL
-    default: null
   login_host:
     description:
       - Host running PostgreSQL.
@@ -74,11 +70,9 @@ options:
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
-    default: null
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    default: null
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
@@ -94,21 +88,19 @@ options:
     description:
       - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
         stored password is hashed when encrypted is set.
-    default: false
     version_added: '1.4'
   expires:
     description:
       - The date at which the user's password is to expire.
       - If set to C('infinity'), user's password never expire.
       - Note that this value should be a valid SQL date and time type.
-    default: null
     version_added: '1.4'
   no_password_changes:
     description:
       - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
+    type: bool
     default: 'no'
-    choices: [ yes, no ]
     version_added: '2.0'
   ssl_mode:
     description:
@@ -122,12 +114,10 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    default: null
     version_added: '2.3'
   conn_limit:
     description:
       - Specifies the user connection limit.
-    default: null
     version_added: '2.4'
 notes:
    - The default authentication assumes that you are either logging in as or

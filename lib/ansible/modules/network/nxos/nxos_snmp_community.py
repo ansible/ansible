@@ -42,23 +42,17 @@ options:
     access:
         description:
             - Access type for community.
-        required: false
-        default: null
         choices: ['ro','rw']
     group:
         description:
             - Group to which the community belongs.
-        required: false
-        default: null
     acl:
         description:
             - ACL name to filter snmp requests.
-        required: false
         default: 1
     state:
         description:
             - Manage the state of the resource.
-        required: true
         default: present
         choices: ['present','absent']
 '''

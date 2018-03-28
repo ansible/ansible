@@ -46,11 +46,9 @@ options:
     host_groups:
         description:
             - List of host groups the host is part of.
-        required: false
     link_templates:
         description:
             - List of templates linked to the host.
-        default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
@@ -77,7 +75,6 @@ options:
     proxy:
         description:
             - The name of the Zabbix Proxy to be used
-        default: None
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
@@ -159,9 +156,9 @@ options:
         version_added: '2.5'
     force:
         description:
-            - Overwrite the host configuration, even if already present
+            - Overwrite the host configuration, even if already present.
+        type: bool
         default: 'yes'
-        choices: [ 'yes', 'no' ]
         version_added: '2.0'
 extends_documentation_fragment:
     - zabbix
