@@ -111,22 +111,18 @@ options:
   max_check_attempts:
     description:
       - The number of times a service is checked before changing into a hard state.
-    type: integer
   check_period:
     description:
       - The name of a time period which determines when this service should be checked.
   check_timeout:
     description:
       - Check command timeout in seconds. Overrides the CheckCommand's timeout attribute.
-    type: integer
   check_interval:
     description:
       - The check interval (in seconds). This interval is used for checks when the service is in a HARD state.
-    type: integer
   retry_interval:
     description:
       - The retry interval (in seconds). This interval is used for checks when the service is in a SOFT state.
-    type: integer
   enable_notifications:
     description:
       - Whether notifications are enabled.
@@ -245,9 +241,9 @@ def flat_dict(aDict):
             if isinstance(value, dict):
                 ret = flat_dict(value)
                 for k, v in ret.items():
-                    flat[key+'.'+k]=v
+                    flat[key + '.' + k] = v
             else:
-                flat[key]=value
+                flat[key] = value
         return flat
     else:
         return aDict
@@ -445,8 +441,8 @@ def main():
     }
     # Loop through list of setable objects.
     obj_attrs = ['max_check_attempts', 'check_period', 'check_timeout', 'check_interval', 'retry_interval', 'enable_notifications', 'enable_active_checks',
-        'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile',
-        'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt']
+                 'enable_passive_checks', 'enable_event_handler', 'enable_flapping', 'enable_perfdata', 'event_command', 'flapping_threshold', 'volatile',
+                 'command_endpoint', 'notes', 'notes_url', 'action_url', 'image_icon', 'image_icon_alt']
     for x in obj_attrs:
         if module.params[x]:
             data['attrs'][x] = module.params[x]
