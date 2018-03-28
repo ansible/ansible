@@ -84,7 +84,7 @@ default this uses sftp. If that's not available, you can switch to scp in
    By default, Ansible uses Python 2 in order to maintain compatibility with older distributions
    such as RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
+   the ``ansible_python_interpreter`` variable in inventory (see :ref:`inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.
@@ -116,23 +116,19 @@ On RHEL and CentOS:
 
     $ sudo yum install ansible
 
-.. note:: We've changed how the Ansible community packages are distributed.
-  For users of RHEL/CentOS/Scientific Linux version 7, the Ansible community RPM
-  package will transition from the EPEL repository to the Extras channel.  There will be no
-  change for version 6 of RHEL/CentOS/Scientific Linux since Extras is not a part of version 6.
+RPMs for RHEL 7 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
 
-RPMs for RHEL7 are available from `the Extras channel <https://access.redhat.com/solutions/912213>`_.
+To enable the Ansible Engine repository, run the following command:
 
-RPMs for RHEL6 are available from yum for `EPEL
-<http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
-Fedora distributions.
+.. code-block:: bash
 
-Ansible will also have RPMs/YUM-repo available `here <https://releases.ansible.com/ansible/rpm/`>_.
+    $ sudo subsription-manager repos --enable rhel-7-server-ansible-2.4-rpms
 
-Ansible version 2.4 can manage earlier operating
-systems that contain Python 2.6 or higher.
+RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <http://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
-You can also build an RPM yourself.  From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
+Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
+
+You can also build an RPM yourself. From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
 
 .. code-block:: bash
 
