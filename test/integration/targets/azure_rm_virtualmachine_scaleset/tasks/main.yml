@@ -238,7 +238,7 @@
 
 - name: Assert that VMSS ran
   assert:
-    that: results.changed == False
+    that: results.changed
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
