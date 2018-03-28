@@ -221,3 +221,9 @@
     executable: "{{ output_dir }}/pipenv/bin/pip"
     state: latest
     name: pip
+  register: venv_chdir_wo_virtualenv
+
+- name: test for previos task not fail
+  assert:
+    that:
+      - "venv_chdir_wo_virtualenv.changed or venv_chdir_wo_virtualenv.ok"
