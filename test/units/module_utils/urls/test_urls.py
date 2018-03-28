@@ -71,3 +71,12 @@ def test_maybe_add_ssl_handler(mocker):
     handler = urls.maybe_add_ssl_handler(url, True)
     assert handler.hostname == 'ansible.com'
     assert handler.port == 443
+
+    url = 'http://ansible.com/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler is None
+
+
+def test_basic_auth_header():
+    header = urls.basic_auth_header('user', 'passwd')
+    assert header == b'Basic dXNlcjpwYXNzd2Q='
