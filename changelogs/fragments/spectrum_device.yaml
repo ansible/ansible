@@ -1,0 +1,4 @@
+new_modules:
+- |
+  Monitoring
+    -  spectrum\_device
