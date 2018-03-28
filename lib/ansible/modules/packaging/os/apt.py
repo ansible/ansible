@@ -739,7 +739,7 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
 
     if autoremove:
         autoremove = '--auto-remove'
@@ -756,7 +756,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
-        upgrade_command = "dist-upgrade"
+        upgrade_command = "dist-upgrade %s" % (autoremove)
     elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
