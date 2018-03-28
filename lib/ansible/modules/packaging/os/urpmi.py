@@ -8,6 +8,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils.basic import AnsibleModule
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -82,18 +83,12 @@ EXAMPLES = '''
     update_cache: yes
 '''
 
-import os
-import shlex
-import sys
-
-from ansible.module_utils.basic import AnsibleModule
-
 
 def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    RPM_PATH = module.get_bin_path("rpm", True)
-    cmd = "%s -q %s %s" % (RPM_PATH, name, root_option(root))
+    rpm_path = module.get_bin_path("rpm", True)
+    cmd = "%s -q %s %s" % (rpm_path, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
@@ -104,8 +99,8 @@ def query_package(module, name, root):
 def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    RPM_PATH = module.get_bin_path("rpm", True)
-    cmd = "%s -q --whatprovides %s %s" % (RPM_PATH, name, root_option(root))
+    rpm_path = module.get_bin_path("rpm", True)
+    cmd = "%s -q --whatprovides %s %s" % (rpm_path, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
@@ -128,8 +123,8 @@ def remove_packages(module, packages, root):
         if not query_package(module, package, root):
             continue
 
-        URPME_PATH = module.get_bin_path("urpme", True)
-        cmd = "%s --auto %s %s" % (URPME_PATH, root_option(root), package)
+        urpme_path = module.get_bin_path("urpme", True)
+        cmd = "%s --auto %s %s" % (urpme_path, root_option(root), package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -162,12 +157,14 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
         else:
             force_yes = ''
 
-        URPMI_PATH = module.get_bin_path("urpmi", True)
-        cmd = ("%s --auto %s --quiet %s %s %s" % (URPMI_PATH, force_yes, no_recommends_yes, root_option(root), packages))
+        urpmi_path = module.get_bin_path("urpmi", True)
+        cmd = ("%s --auto %s --quiet %s %s %s" % (urpmi_path, force_yes,
+                                                  no_recommends_yes,
+                                                  root_option(root),
+                                                  packages))
 
         rc, out, err = module.run_command(cmd)
 
-        installed = True
         for package in pkgspec:
             if not query_package_provides(module, package, root):
                 module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
@@ -191,7 +188,8 @@ def root_option(root):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='installed', choices=['absent', 'installed', 'present', 'removed']),
+            state=dict(type='str', default='installed',
+                       choices=['absent', 'installed', 'present', 'removed']),
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
             force=dict(type='bool', default=True),
             no_recommends=dict(type='bool', default=True, aliases=['no-recommends']),
