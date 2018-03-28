@@ -7,7 +7,6 @@ __metaclass__ = type
 
 from ansible.module_utils import urls
 from ansible.module_utils._text import to_native
-#import build_ssl_validation_error, HAS_SSLCONTEXT, HAS_URLLIB3_PYOPENSSLCONTEXT, HAS_URLLIB3_SSL_WRAP_SOCKET
 
 import pytest
 
