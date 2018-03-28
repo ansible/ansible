@@ -516,7 +516,7 @@ def main():
     cmd.append(source)
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
-    (rc, out, err) = module.run_command(cmd)
+    (rc, out, err) = module.run_command(cmdstr)
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
