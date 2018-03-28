@@ -132,6 +132,8 @@ class ManagePosixCI(object):
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
         elif self.core_ci.platform == 'rhel':
             self.become = ['sudo', '-in', 'bash', '-c']
+        elif self.core_ci.platform == 'ubuntu':
+            self.become = ['sudo', '-in', 'bash', '-c']
 
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""

@@ -1266,6 +1266,7 @@ def get_integration_remote_filter(args, targets):
     parts = args.remote.split('/', 1)
 
     platform = parts[0]
+    version = parts[1]
 
     exclude = []
 
@@ -1277,6 +1278,15 @@ def get_integration_remote_filter(args, targets):
                         % (skip.rstrip('/'), platform, ', '.join(skipped)))
 
     python_version = 2  # remotes are expected to default to python 2
+
+    if platform == 'ubuntu' and int(version.split('.')[0]) >= 16:
+        python_version = 3
+
+    if args.python:  # specifying a numeric --python option overrides the default python
+        if args.python.startswith('3'):
+            python_version = 3
+        elif args.python.startswith('2'):
+            python_version = 2
 
     skip = 'skip/python%d/' % python_version
     skipped = [target.name for target in targets if skip in target.aliases]

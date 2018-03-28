@@ -37,6 +37,13 @@ elif [ "${platform}" = "rhel" ]; then
     done
 
     pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
+elif [ "${platform}" = "ubuntu" ]; then
+    # Support images with only python3 installed.
+    if [ ! -f /usr/bin/python ] && [ -f /usr/bin/python3 ]; then
+        ln -s /usr/bin/python3 /usr/bin/python
+    fi
+
+    pip --version 2>/dev/null || curl --silent --show-error https://bootstrap.pypa.io/get-pip.py | python
 fi
 
 if [ "${platform}" = "freebsd" ] || [ "${platform}" = "osx" ]; then

@@ -66,6 +66,7 @@ class AnsibleCoreCI(object):
                 'aws',
                 'windows',
                 'freebsd',
+                'ubuntu',
                 'vyos',
                 'junos',
                 'ios',
