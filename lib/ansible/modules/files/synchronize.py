@@ -478,7 +478,7 @@ def main():
         cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
-        cmd.append('--rsync-path=\'%s\'' % rsync_path)
+        cmd.append('--rsync-path=%s' % rsync_path)
 
     if rsync_opts:
         cmd.extend(' '.join(rsync_opts))
@@ -499,7 +499,7 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     changed_marker = '<<CHANGED>>'
-    cmd.append('--out-format=\'' + changed_marker + '%i %n%L\'')
+    cmd.append('--out-format=' + changed_marker + '%i %n%L')
 
     # expand the paths
     if '@' not in source:
