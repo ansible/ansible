@@ -246,3 +246,5 @@ class CoverageReportConfig(CoverageConfig):
         super(CoverageReportConfig, self).__init__(args)
 
         self.show_missing = args.show_missing  # type: bool
+        self.include = args.include  # type: str
+        self.omit = args.omit  # type: str
