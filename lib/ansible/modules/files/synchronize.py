@@ -505,7 +505,7 @@ def main():
             cmd.append('--link-dest=%s' % link_path)
 
     changed_marker = '<<CHANGED>>'
-    cmd.append('--out-format=' + changed_marker + '%i %n%L')
+    cmd.append('--out-format=\'' + changed_marker + '%i %n%L\'')
 
     # expand the paths
     if '@' not in source:
