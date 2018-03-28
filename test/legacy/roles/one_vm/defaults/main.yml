@@ -1,0 +1,56 @@
+---
+# This is a role for running integration test of the one_vm module.
+# For this role to be used you need to meet the following prerequisites:
+#   1. Environment variables ONE_URL, ONE_USERNAME and ONE_PASSWORD
+#      need to be set.
+#   2. VM template needs to exist. Here is an example of VM template:
+#
+#        CONTEXT = [
+#          NETWORK = "YES",
+#          REPORT_READY = "YES",
+#          SET_HOSTNAME = "$NAME",
+#          SSH_PUBLIC_KEY = "$USER[SSH_PUBLIC_KEY]",
+#          TOKEN = "YES" ]
+#        CPU = "0.2"
+#        CPU_COST = ".0890000000"
+#        DISK = [
+#          IMAGE = "CentOS 7",
+#          IMAGE_UNAME = "oneadmin" ]
+#        DISK_COST = ".0000005853"
+#        GRAPHICS = [
+#          LISTEN = "0.0.0.0",
+#          TYPE = "VNC" ]
+#        HYPERVISOR = "kvm"
+#        LOGO = "images/logos/centos.png"
+#        MEMORY = "1024"
+#        MEMORY_COST = ".0000003560"
+#        SCHED_DS_REQUIREMENTS = "NAME=local_system"
+#        USER_INPUTS = [
+#          CPU = "O|fixed|| |0.2",
+#          MEMORY = "M|list||1024,2048,4096,8192,16384,24576,32768,49152,65536|1024",
+#          VCPU = "O|list||1,2,4,6,8,10|1" ]
+#        VCPU = "1"
+#
+#   3. Play vars need to be set bellow to reflect the vm IDs, networks, template IDs, etc.
+
+one_template_id: 15
+one_template_name: 'CentOS 7'
+one_template_name_with_2_disks: 'Centos_2_disks'
+one_memory: '4 GB'
+one_cpu: 0.1
+one_vcpu: 4
+
+one_incorrect_memory: '123ABC'
+one_incorrect_disk_size: '12344FFB'
+one_disk_size: '32.4 GB'
+
+one_networks_good:
+  - NETWORK: "default-test-private"
+    NETWORK_UNAME: "oneadmin"
+    SECURITY_GROUPS: "10"
+  - NETWORK_ID: 27
+
+one_networks_bad:
+  - NETWORK_ID: 999
+  - IP: '9.9.9'
+one_vm_name: 'foo123'
