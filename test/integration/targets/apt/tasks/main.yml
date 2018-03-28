@@ -16,33 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - block:
-  - name: Remove mysql which causes the upgrade tests to fail
-    block:
-      - service:
-          name: mysql
-          state: stopped
-
-      - apt:
-          name: mysql*
-          state: absent
-          purge: yes
-          autoremove: yes
-          update_cache: yes
-
-      - file:
-          name: "{{ item }}"
-          state: absent
-        with_items:
-         - /etc/mysql
-         - /var/log/mysql
-         - /var/lib/mysql
-    when: ansible_distribution_version is version('16.04', '==')
-
-  # https://github.com/Microsoft/WSL/issues/143#issuecomment-209072634
-  - name: Fix udev so its upgrade works
-    script: fix-udev.sh
-    when: ansible_distribution_version is version('14.04', '==')
-
   - include: 'apt.yml'
 
   - block:
@@ -99,15 +72,6 @@
       state: absent
     when:
       - aptitude_status.stdout.find('ii') == -1
-
-  - name: Install mysql-server back since we uninstalled it to make upgrades work
-    apt:
-      name: mysql-server
-      state: present
-    environment:
-      noninteractive_env:
-        debian_frontend: noninteractive
-    when: ansible_distribution_version is version ('16.04', '==')
 
   when:
     - ansible_distribution in ('Ubuntu', 'Debian')
