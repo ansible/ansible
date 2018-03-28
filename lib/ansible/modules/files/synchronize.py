@@ -484,7 +484,7 @@ def main():
         cmd.append('--rsh=\'%s\'' % ssh_cmd_str)
 
     if rsync_path:
-        cmd.append('--rsync-path=%s' % rsync_path)
+        cmd.append('--rsync-path=\'%s\'' % rsync_path)
 
     if rsync_opts:
         cmd.extend(rsync_opts)
