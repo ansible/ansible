@@ -146,13 +146,14 @@ class IncludedFile:
                         if role_name is not None:
                             role_name = templar.template(role_name)
 
-                        original_task._role_name = role_name
-                        for from_arg in original_task.FROM_ARGS:
+                        new_task = original_task.copy()
+                        new_task._role_name = role_name
+                        for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_variables:
                                 from_key = from_arg.replace('_from', '')
-                                original_task._from_files[from_key] = templar.template(include_variables[from_arg])
+                                new_task._from_files[from_key] = templar.template(include_variables[from_arg])
 
-                        inc_file = IncludedFile("role", include_variables, original_task, is_role=True)
+                        inc_file = IncludedFile("role", include_variables, new_task, is_role=True)
 
                     try:
                         pos = included_files.index(inc_file)
