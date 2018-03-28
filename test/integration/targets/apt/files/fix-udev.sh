@@ -1,5 +1,7 @@
+#!/bin/bash
+
 cat > /usr/sbin/policy-rc.d <<EOF
-#!/bin/sh
+#!/bin/bash
 exit 101
 EOF
 chmod +x /usr/sbin/policy-rc.d
