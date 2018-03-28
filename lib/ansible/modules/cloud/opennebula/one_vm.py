@@ -1146,13 +1146,13 @@ def disk_save_as(module, client, vm, disk_saveas, wait_timeout):
     if not disk_saveas.get('name'):
         module.fail_json(msg="Key 'name' is required for 'disk_saveas' option")
 
-    disk_name = disk_saveas.get('name')
+    image_name = disk_saveas.get('name')
     disk_id = disk_saveas.get('disk_id', 0)
 
     if not module.check_mode:
         if vm.state != VM_STATES.index('POWEROFF'):
             module.fail_json(msg="'disksaveas' option can be used only when the VM is in 'POWEROFF' state")
-        client.call('vm.disksaveas', vm.id, disk_id, disk_name, 'OS', -1)
+        client.call('vm.disksaveas', vm.id, disk_id, image_name, 'OS', -1)
         wait_for_poweroff(module, vm, wait_timeout)
 
 
