@@ -188,7 +188,7 @@ class ActionModule(ActionBase):
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-                        if key_pressed == b'\x03': # value for Ctrl+C
+                        if key_pressed == b'\x03':  # value for Ctrl+C
                             raise KeyboardInterrupt
 
                     if not seconds:
