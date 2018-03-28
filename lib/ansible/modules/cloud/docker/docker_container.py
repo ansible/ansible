@@ -174,6 +174,7 @@ options:
   links:
     description:
       - List of name aliases for linked containers in the format C(container_name:alias)
+        Setting this will force container to be restarted.
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
