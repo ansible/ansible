@@ -159,6 +159,14 @@ class ActionModule(ActionBase):
 
             if fd is not None:
                 if isatty(fd):
+
+                    # grab actual Ctrl+C sequence
+                    try:
+                        intr = termios.tcgetattr(fd)[6][termios.VINTR]
+                    except Exception:
+                        # unsupported/not present, use default
+                        intr =  b'\x03'  # value for Ctrl+C
+
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
 
@@ -184,11 +192,12 @@ class ActionModule(ActionBase):
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
 
+
             while True:
                 try:
                     if fd is not None:
                         key_pressed = stdin.read(1)
-                        if key_pressed == b'\x03':  # value for Ctrl+C
+                        if key_pressed == intr:  # value for Ctrl+C
                             raise KeyboardInterrupt
 
                     if not seconds:
