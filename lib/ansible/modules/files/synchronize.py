@@ -481,7 +481,7 @@ def main():
         cmd.append('--rsync-path=%s' % rsync_path)
 
     if rsync_opts:
-        cmd.extend(' '.join(rsync_opts))
+        cmd.append(' '.join(rsync_opts))
 
     if partial:
         cmd.append('--partial')
