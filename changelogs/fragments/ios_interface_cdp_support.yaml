@@ -1,0 +1,2 @@
+bugfixes:
+- ios_interface - neighbors option now include CDP neighbors (https://github.com/ansible/ansible/pull/37667)
