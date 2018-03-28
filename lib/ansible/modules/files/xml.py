@@ -178,7 +178,7 @@ EXAMPLES = r'''
     attribute: validatedon
     value: 1976-08-05
 
-# How to read an attrribute value and access it in Ansible
+# How to read an attribute value and access it in Ansible
 - name: Read attribute value
   xml:
     path: /foo/bar.xml
