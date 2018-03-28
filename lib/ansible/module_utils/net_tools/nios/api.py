@@ -50,7 +50,7 @@ nios_provider_spec = {
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
     'max_retries': dict(type='int', default=3),
-    'wapi_version': dict(default='1.4'),
+    'wapi_version': dict(default='2.1'),
     'max_results': dict(type='int', default=1000)
 }
 
