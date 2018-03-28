@@ -22,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: "'unnest' all elements into single list"
-  debug: msg="all in one list {{lookup('flatten', [1,2,3,[5,6]], [a,b,c], [[5,6,1,3], [34,a,b,c]])}}"
+  debug: msg="all in one list {{lookup('flattened', [1,2,3,[5,6]], [a,b,c], [[5,6,1,3], [34,a,b,c]])}}"
 """
 
 RETURN = """
