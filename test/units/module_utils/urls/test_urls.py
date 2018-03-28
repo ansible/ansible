@@ -45,3 +45,30 @@ def test_build_ssl_validation_error(mocker):
         urls.build_ssl_validation_error('hostname', 'port', 'paths', exc='BOOM')
 
     assert 'BOOM' in to_native(excinfo.value)
+
+
+def test_maybe_add_ssl_handler(mocker):
+    mocker.patch.object(urls, 'HAS_SSL', new=False)
+    with pytest.raises(urls.NoSSLError):
+        urls.maybe_add_ssl_handler('https://ansible.com/', True)
+
+    mocker.patch.object(urls, 'HAS_SSL', new=True)
+    url = 'https://user:passwd@ansible.com/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == 'ansible.com'
+    assert handler.port == 443
+
+    url = 'https://ansible.com:4433/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == 'ansible.com'
+    assert handler.port == 4433
+
+    url = 'https://user:passwd@ansible.com:4433/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == 'ansible.com'
+    assert handler.port == 4433
+
+    url = 'https://ansible.com/'
+    handler = urls.maybe_add_ssl_handler(url, True)
+    assert handler.hostname == 'ansible.com'
+    assert handler.port == 443
