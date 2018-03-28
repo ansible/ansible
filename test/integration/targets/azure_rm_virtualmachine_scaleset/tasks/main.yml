@@ -174,9 +174,9 @@
       version: latest
   register: results
 
-#- name: Assert that VMSS ran
-#  assert:
-#    that: results.changed
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
 
 - name: Update VMSS - add data discs
   azure_rm_virtualmachine_scaleset:
@@ -205,9 +205,9 @@
         managed_disk_type: Standard_LRS
   register: results
 
-#- name: Assert that VMSS ran
-#  assert:
-#    that: results.changed
+- name: Assert that VMSS ran
+  assert:
+    that: results.changed
 
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
