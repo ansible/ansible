@@ -178,7 +178,7 @@ class ActionModule(ActionBase):
                     if not seconds:
                         new_settings = termios.tcgetattr(fd)
                         new_settings[0] = new_settings[0] | termios.ICRNL
-                        if seconds or 'prompt' in self._task.args:
+                        if 'prompt' in self._task.args:
                             new_settings[3] = new_settings[3] | termios.ICANON
                         termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
