@@ -475,13 +475,13 @@ def main():
         ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
         if ssh_args:
             ssh_cmd_str += ' %s' % ssh_args
-        cmd.append('--rsh=\'%s\'' % ssh_cmd_str)
+        cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
         cmd.append('--rsync-path=\'%s\'' % rsync_path)
 
     if rsync_opts:
-        cmd.extend(rsync_opts)
+        cmd.extend(' '.join(rsync_opts))
 
     if partial:
         cmd.append('--partial')
@@ -510,7 +510,7 @@ def main():
     cmd.append(source)
     cmd.append(dest)
     cmdstr = ' '.join(cmd)
-    (rc, out, err) = module.run_command(cmdstr)
+    (rc, out, err) = module.run_command(cmd)
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
 
