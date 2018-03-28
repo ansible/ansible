@@ -1,0 +1,4 @@
+---
+- hosts: localhost
+  roles:
+    - { role: one_vm, tags: test_one_vm }
