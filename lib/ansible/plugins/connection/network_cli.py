@@ -62,6 +62,7 @@ options:
         when first establishing the SSH connection.
     vars:
       - name: ansible_ssh_pass
+      - name: ansible_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to to authenticate to the
