@@ -1,0 +1,2 @@
+bugfixes:
+- filters - Don't overwrite builtin jinja2 filters with tests (https://github.com/ansible/ansible/pull/37881)
