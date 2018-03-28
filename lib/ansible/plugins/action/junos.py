@@ -39,6 +39,7 @@ except ImportError:
 
 CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
 
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
