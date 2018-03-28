@@ -48,6 +48,10 @@ options:
   display_name:
     description:
       - The name used to display the service. If not set, then Icinga will use the value of I(name).
+  http_agent:
+    description:
+      - The http agent used
+    default: ansible-httpget
   force_basic_auth:
     description:
       - Httplib2, the library used by the uri module only sends authentication information when a webservice
