@@ -62,7 +62,6 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    [all:vars]
    # these defaults can be overridden for any group in the group:vars section
    ansible_connection=network_cli
-   ansible_python_interpreter=python
    ansible_user=ansible
 
    [switches:children]
