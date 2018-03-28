@@ -48,6 +48,11 @@ options:
       - Command to execute when the container starts.
         A command may be either a string or a list.
         Prior to version 2.4, strings were split on commas.
+  nano_cpus:
+    description:
+        - Specify how much CPU resources a container can use.
+    default: 0
+    version_added: "2.6"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
@@ -628,6 +633,7 @@ class TaskParameters(DockerBaseClass):
         self.capabilities = None
         self.cleanup = None
         self.command = None
+        self.nano_cpus = None
         self.cpu_period = None
         self.cpu_quota = None
         self.cpuset_cpus = None
@@ -895,7 +901,8 @@ class TaskParameters(DockerBaseClass):
             group_add='groups',
             devices='devices',
             pid_mode='pid_mode',
-            tmpfs='tmpfs'
+            tmpfs='tmpfs',
+            nano_cpus='nano_cpus',
         )
 
         if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
@@ -1363,6 +1370,7 @@ class Container(DockerBaseClass):
             cpuset_cpus=host_config.get('CpusetCpus'),
             cpuset_mems=host_config.get('CpusetMems'),
             cpu_shares=host_config.get('CpuShares'),
+            nano_cpus=host_config.get('nano_cpus'),
             kernel_memory=host_config.get("KernelMemory"),
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
@@ -1975,6 +1983,7 @@ def main():
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
+        nano_cpus=dict(type='int'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
