@@ -397,6 +397,15 @@ def parse_args():
     coverage_report.add_argument('--show-missing',
                                  action='store_true',
                                  help='show line numbers of statements not executed')
+    coverage_report.add_argument('--include',
+                                 metavar='PAT1,PAT2,...',
+                                 help='include only files whose paths match one of these '
+                                      'patterns. Accepts shell-style wildcards, which must be '
+                                      'quoted.')
+    coverage_report.add_argument('--omit',
+                                 metavar='PAT1,PAT2,...',
+                                 help='omit files whose paths match one of these patterns. '
+                                      'Accepts shell-style wildcards, which must be quoted.')
 
     add_extra_coverage_options(coverage_report)
 
