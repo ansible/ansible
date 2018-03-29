@@ -4,6 +4,7 @@
 - name: Install git
   package:
     name: git
+  when: ansible_distribution != "MacOSX"
   
 - include: 'pip.yml'
   when: ansible_fips|bool != True
