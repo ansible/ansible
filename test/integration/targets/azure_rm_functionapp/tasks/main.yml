@@ -5,14 +5,14 @@
 - name: create storage account for function apps
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: '{{ storage_account_name }}'
+    name: sa{{ fixed_resource_prefix }}
     account_type: Standard_LRS
 
 - name: create basic function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
     name: af{{ fixed_resource_prefix }}
-    storage_account: '{{ storage_account_name }}'
+    storage_account: sa{{ fixed_resource_prefix }}
   register: output
 
 - name: assert the function was created
@@ -85,5 +85,5 @@
 - name: delete storage account
   azure_rm_storageaccount:
     resource_group: '{{ resource_group }}'
-    name: '{{ storage_account_name }}'
+    name: sa{{ fixed_resource_prefix }}
     state: absent
