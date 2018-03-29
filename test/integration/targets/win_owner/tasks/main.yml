@@ -172,7 +172,7 @@
 - name: create test user
   win_user:
     name: test win owner
-    password: TtPp!@#$%^ + {{ lookup('password', '/dev/null length=15') }}
+    password: E1K0-O8b1-c8M9-c6D5
 
 - name: set owner with space recurse
   win_owner:
@@ -184,7 +184,7 @@
 - name: get owner of folder of set owner with space recurse
   win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
   register: actual_recurse_space
-  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  failed_when: actual_recurse_space.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
   with_items:
   - folder with space
   - folder with space\file.txt
@@ -208,7 +208,7 @@
 - name: get owner of folder of set owner with space recurse again
   win_command: powershell.exe "(Get-Acl -Path '{{test_win_owner_path}}\\{{item}}').Owner"
   register: actual_recurse_space_again
-  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname + '\\TEST WIN OWNER'
+  failed_when: actual_recurse_space_again.stdout_lines[0]|upper != ansible_hostname|upper + '\\TEST WIN OWNER'
   with_items:
   - folder with space
   - folder with space\file.txt

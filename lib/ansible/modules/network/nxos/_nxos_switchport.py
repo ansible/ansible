@@ -25,7 +25,10 @@ DOCUMENTATION = '''
 module: nxos_switchport
 extends_documentation_fragment: nxos
 version_added: "2.1"
-deprecated: Use M(nxos_l2_interface) instead.
+deprecated:
+  removed_in: "2.9"
+  why: Replaced with generic version.
+  alternative: Use M(nxos_l2_interface) instead.
 short_description: Manages Layer 2 switchport interfaces.
 description:
   - Manages Layer 2 interfaces

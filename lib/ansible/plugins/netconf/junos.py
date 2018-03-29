@@ -63,11 +63,7 @@ class Netconf(NetconfBase):
     def execute_rpc(self, name):
         """RPC to be execute on remote device
            :name: Name of rpc in string format"""
-        try:
-            obj = to_ele(to_bytes(name, errors='surrogate_or_strict'))
-            return self.m.rpc(obj).data_xml
-        except RPCError as exc:
-            raise Exception(to_xml(exc.xml))
+        return self.rpc(name)
 
     @ensure_connected
     def load_configuration(self, *args, **kwargs):

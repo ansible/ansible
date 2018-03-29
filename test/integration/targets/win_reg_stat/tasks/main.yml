@@ -50,7 +50,6 @@
 - name: set expected value for reg structure
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -79,7 +78,6 @@
 - name: set expected value for reg key with no sub keys but some properties
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -103,7 +101,6 @@
 - name: set expected value for reg key without sub keys or properties
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -124,7 +121,6 @@
 - name: set expected value for non-existent reg key
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: false
       failed: false
@@ -143,7 +139,6 @@
 - name: set expected string property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -165,7 +160,6 @@
 - name: set expected expand string property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -187,7 +181,6 @@
 - name: set expected multi string property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -209,7 +202,6 @@
 - name: set expected binary property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -231,7 +223,6 @@
 - name: set expected dword property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -253,7 +244,6 @@
 - name: set expected qword property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -275,7 +265,6 @@
 - name: set expected none property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -297,7 +286,6 @@
 - name: set expected none with value property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: true
       failed: false
@@ -319,7 +307,6 @@
 - name: set expected non-existence property
   set_fact:
     expected:
-      attempts: 1
       changed: false
       exists: false
       failed: false

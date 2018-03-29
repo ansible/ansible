@@ -21,6 +21,8 @@ root directory of the Ansible repo.
 
     $ pip install .[azure]
 
+You can also directly run Ansible in [Azure Cloud Shell](https://shell.azure.com), where Ansible is pre-installed.  
+
 Authenticating with Azure
 -------------------------
 

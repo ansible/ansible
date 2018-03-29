@@ -17,7 +17,51 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes.
+Dynamic includes and attribute inheritance
+------------------------------------------
+
+In Ansible version 2.4, the concept of dynamic includes (``include_tasks``) versus static imports (``import_tasks``) was introduced to clearly define the differences in how ``include`` works between dynamic and static includes. 
+
+All attributes applied to a dynamic ``include_*`` would only apply to the include itself, while attributes applied to a
+static ``import_*`` would be inherited by the tasks within.
+
+This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within. 
+
+To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks
+should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
+
+**OLD** In Ansible 2.4:
+
+.. code-block:: yaml
+
+    - include_tasks: "{{ ansible_distribution }}.yml"
+      tags:
+        - distro_include
+
+
+**NEW** In Ansible 2.5:
+
+Including task:
+
+.. code-block:: yaml
+
+    - include_tasks: "{{ ansible_distribution }}.yml"
+      tags:
+        - distro_include
+
+Included file:
+
+.. code-block:: yaml
+
+    - block:
+        - debug:
+            msg: "In included file"
+
+        - apt:
+            name: nginx
+            state: latest
+      tags:
+        - distro_include
 
 Deprecated
 ==========
@@ -76,7 +120,17 @@ Modules removed
 
 The following modules no longer exist:
 
-* None
+* :ref:`nxos_mtu <nxos_mtu>` use :ref:`nxos_system <nxos_system>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface>` instead
+* :ref:`cl_interface_policy <cl_interface_policy>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_bridge <cl_bridge>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_img_install <cl_img_install>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_ports <cl_ports>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_license <cl_license>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_interface <cl_interface>` use :ref:`nclu <nclu>` instead
+* :ref:`cl_bond <cl_bond>` use :ref:`nclu <nclu>` instead
+* :ref:`ec2_vpc <ec_vpc>` use :ref:`ec2_vpc_net <ec2_vpc_net>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet>`, :ref:`ec2_vpc_dhcp_options <ec2_vpc_dhcp_options>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl>` instead.
+* :ref:`ec2_ami_search <ec2_ami_search` use :ref:`ec2_ami_facts <ec2_ami_facts>` instead
+* :ref:`docker <docker>` use :ref:`docker_container <docker_container>` and :ref:`docker_image <docker_image>` instead
 
 Deprecation notices
 -------------------
@@ -86,6 +140,7 @@ The following modules will be removed in Ansible 2.9. Please update update your 
 * :ref:`nxos_ip_interface <nxos_ip_interface>` use :ref:`nxos_l3_interface <nxos_l3_interface>` instead.
 * :ref:`nxos_portchannel <nxos_portchannel>` use :ref:`nxos_linkagg <nxos_linkagg>` instead.
 * :ref:`nxos_switchport <nxos_switchport>` use :ref:`nxos_l2_interface <nxos_l2_interface>` instead.
+* :ref:`panos_security_policy <panos_security_policy>` use :ref:`panos_security_rule <panos_security_rule>` instead.
 
 Noteworthy module changes
 -------------------------

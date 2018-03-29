@@ -30,24 +30,18 @@ class TestNiosApi(unittest.TestCase):
         self.mock_connector.stop()
 
     def test_get_provider_spec(self):
-        provider_options = ['host', 'username', 'password', 'ssl_verify',
+        provider_options = ['host', 'username', 'password', 'ssl_verify', 'silent_ssl_warnings',
                             'http_request_timeout', 'http_pool_connections',
-                            'http_pool_maxsize', 'max_retries', 'wapi_version']
-        res = api.get_provider_spec()
+                            'http_pool_maxsize', 'max_retries', 'wapi_version', 'max_results']
+        res = api.WapiBase.provider_spec
         self.assertIsNotNone(res)
         self.assertIn('provider', res)
         self.assertIn('options', res['provider'])
         returned_options = res['provider']['options']
         self.assertEqual(sorted(provider_options), sorted(returned_options.keys()))
 
-    def test_wapi_base(self):
-        wapi = api.WapiBase(self.module)
-
-        with self.assertRaises(NotImplementedError):
-            wapi.run(None, None)
-
     def _get_wapi(self, test_object):
-        wapi = api.Wapi(self.module)
+        wapi = api.WapiModule(self.module)
         wapi.get_object = Mock(name='get_object', return_value=test_object)
         wapi.create_object = Mock(name='create_object')
         wapi.update_object = Mock(name='update_object')

@@ -11,6 +11,7 @@
       name: PGSQLS100
       tier: basic
     location: westus
+    storage_mb: 51200
     enforce_ssl: True
     admin_username: zimxyz
     admin_password: Testpasswordxyz12!

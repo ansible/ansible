@@ -39,7 +39,6 @@ EXAMPLES = '''
 import os
 import socket
 import traceback
-from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import (
     AnsibleModule,
@@ -567,10 +566,14 @@ class FedoraHostname(Hostname):
 class SLESHostname(Hostname):
     platform = 'Linux'
     distribution = 'Suse linux enterprise server '
-    distribution_version = get_distribution_version()
-    if distribution_version and LooseVersion("10") <= LooseVersion(distribution_version) <= LooseVersion("12"):
-        strategy_class = SLESStrategy
-    else:
+    try:
+        distribution_version = get_distribution_version()
+        # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
+        if distribution_version and 10 <= float(distribution_version) <= 12:
+            strategy_class = SLESStrategy
+        else:
+            raise ValueError()
+    except ValueError:
         strategy_class = UnimplementedStrategy
 
 

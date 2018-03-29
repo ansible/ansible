@@ -36,7 +36,8 @@ description:
       U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8)"
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
-      v1 or v2 protocol."
+      v1 or v2 protocol. I(Warning): ACME v2 support is currently experimental, as
+      the Let's Encrypt production ACME v2 endpoint is still under development."
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
 requirements:
   - "python >= 2.6"
@@ -82,6 +83,11 @@ options:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new ACME v2 endpoint."
+      - "I(Warning): ACME v2 support is currently experimental, as the Let's Encrypt
+         production ACME v2 endpoint is still under development. The code is tested
+         against the latest staging endpoint as well as the Pebble testing server,
+         but there could be bugs which will only appear with a newer version of these
+         or with the production ACME v2 endpoint."
     default: 1
     choices: [1, 2]
     version_added: "2.5"
@@ -131,6 +137,13 @@ options:
       - "Required if C(dest) is not specified."
     version_added: 2.5
     aliases: ['fullchain']
+  chain_dest:
+    description:
+      - If specified, the intermediate certificate will be written to this file.
+    required: false
+    default: null
+    aliases: ['chain']
+    version_added: 2.5
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -138,6 +151,14 @@ options:
          If the certificate is not renewed, module return values will not
          include C(challenge_data)."
     default: 10
+  validate_certs:
+    description:
+      - Whether calls to the ACME directory will validate TLS certificates.
+      - I(Warning:) Should I(only ever) be set to C(false) for testing purposes,
+        for example when testing against a local Pebble server.
+    required: false
+    default: true
+    version_added: 2.5
 '''
 
 EXAMPLES = '''
@@ -175,12 +196,13 @@ EXAMPLES = '''
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
 #     when: sample_com_challenge is changed
 
-- name: Let the challenge be validated and retrieve the cert
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
     account_key_src: /etc/pki/cert/private/account.key
     csr: /etc/pki/cert/csr/sample.com.csr
     dest: /etc/httpd/ssl/sample.com.crt
     fullchain_dest: /etc/httpd/ssl/sample.com-fullchain.crt
+    chain_dest: /etc/httpd/ssl/sample.com-intermediate.crt
     data: "{{ sample_com_challenge }}"
 
 ### Example with DNS challenge against production ACME server ###
@@ -202,17 +224,34 @@ EXAMPLES = '''
 #
 # - route53:
 #     zone: sample.com
-#     record: "{{ item.value[challenge].resource }}.sample.com"
+#     record: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].record }}"
 #     type: TXT
 #     ttl: 60
-#     value: '"{{ item.value[challenge].resource_value }}"'
+#     # Note: route53 requires TXT entries to be enclosed in quotes
+#     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value }}"
+#     when: sample_com_challenge is changed
+#
+# Alternative way:
+#
+# - route53:
+#     zone: sample.com
+#     record: "{{ item.key }}"
+#     type: TXT
+#     ttl: 60
+#     # Note: item.value is a list of TXT entries, and route53
+#     # requires every entry to be enclosed in quotes
+#     value: "{{ item.value | map('regex_replace', '^(.*)$', '\'\\1\'' ) | list }}"
+#     with_dict: sample_com_challenge.challenge_data_dns
+#     when: sample_com_challenge is changed
 
-- name: Let the challenge be validated and retrieve the cert
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
   letsencrypt:
     account_key_src: /etc/pki/cert/private/account.key
     account_email: myself@sample.com
     src: /etc/pki/cert/csr/sample.com.csr
     cert: /etc/httpd/ssl/sample.com.crt
+    fullchain: /etc/httpd/ssl/sample.com-fullchain.crt
+    chain: /etc/httpd/ssl/sample.com-intermediate.crt
     challenge: dns-01
     acme_directory: https://acme-v01.api.letsencrypt.org/directory
     remaining_days: 60
@@ -239,6 +278,17 @@ challenge_data:
       returned: changed
       type: string
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
+    record:
+      description: the full DNS record's name for the challenge
+      returned: changed and challenge is dns-01
+      type: string
+      sample: _acme-challenge.example.com
+      version_added: "2.5"
+challenge_data_dns:
+  description: list of TXT values per DNS record, in case challenge is dns-01
+  returned: changed
+  type: dict
+  version_added: "2.5"
 authorizations:
   description: ACME authorization data.
   returned: changed
@@ -248,10 +298,21 @@ authorizations:
         description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.1.4
         returned: success
         type: dict
+order_uri:
+  description: ACME order URI.
+  returned: changed
+  type: string
+  version_added: "2.5"
 finalization_uri:
   description: ACME finalization URI.
   returned: changed
   type: string
+  version_added: "2.5"
+account_uri:
+  description: ACME account URI.
+  returned: changed
+  type: string
+  version_added: "2.5"
 '''
 
 import base64
@@ -505,8 +566,14 @@ class ACMEAccount(object):
                 if m is not None:
                     account_key_type = m.group(1).lower()
                     break
+        if account_key_type is None:
+            # This happens for example if openssl_privatekey created this key
+            # (as opposed to the OpenSSL binary). For now, we assume this is
+            # an RSA key.
+            # FIXME: add some kind of auto-detection
+            account_key_type = "rsa"
         if account_key_type not in ("rsa", "ec"):
-            return 'unknown key type "%s" % account_key_type', {}
+            return 'unknown key type "%s"' % account_key_type, {}
 
         openssl_keydump_cmd = [self._openssl_bin, account_key_type, "-in", key, "-noout", "-text"]
         dummy, out, dummy = self.module.run_command(openssl_keydump_cmd, check_rc=True)
@@ -739,14 +806,16 @@ class ACMEClient(object):
         self.version = module.params['acme_version']
         self.challenge = module.params['challenge']
         self.csr = module.params['csr']
-        self.dest = module.get('dest')
-        self.fullchain_dest = module.get('fullchain_dest')
+        self.dest = module.params.get('dest')
+        self.fullchain_dest = module.params.get('fullchain_dest')
+        self.chain_dest = module.params.get('chain_dest')
         self.account = ACMEAccount(module)
         self.directory = self.account.directory
         self.data = module.params['data']
         self.authorizations = None
         self.cert_days = -1
         self.changed = self.account.changed
+        self.order_uri = self.data.get('order_uri') if self.data else None
         self.finalize_uri = self.data.get('finalize_uri') if self.data else None
 
         if not os.path.exists(self.csr):
@@ -807,7 +876,7 @@ class ACMEClient(object):
             result['uri'] = info['location']
             return result
 
-    def _get_challenge_data(self, auth):
+    def _get_challenge_data(self, auth, domain):
         '''
         Returns a dict with the data for all proposed (and supported) challenges
         of the given authorization.
@@ -828,7 +897,7 @@ class ACMEClient(object):
             if type == 'http-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.3
                 resource = '.well-known/acme-challenge/' + token
-                value = keyauthorization
+                data[type] = {'resource': resource, 'resource_value': keyauthorization}
             elif type == 'tls-sni-02':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.4
                 token_digest = hashlib.sha256(token.encode('utf8')).hexdigest()
@@ -840,15 +909,33 @@ class ACMEClient(object):
                     "{0}.{1}.token.acme.invalid".format(token_digest[:len_token_digest // 2], token_digest[len_token_digest // 2:]),
                     "{0}.{1}.ka.acme.invalid".format(ka_digest[:len_ka_digest // 2], ka_digest[len_ka_digest // 2:]),
                 ]
+                data[type] = {'resource': resource, 'resource_value': value}
             elif type == 'dns-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8.5
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
+                record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
+                data[type] = {'resource': resource, 'resource_value': value, 'record': record}
             else:
                 continue
 
-            data[type] = {'resource': resource, 'resource_value': value}
         return data
+
+    def _fail_challenge(self, domain, auth, error):
+        '''
+        Aborts with a specific error for a challenge.
+        '''
+        error_details = ''
+        # multiple challenges could have failed at this point, gather error
+        # details for all of them before failing
+        for challenge in auth['challenges']:
+            if challenge['status'] == 'invalid':
+                error_details += ' CHALLENGE: {0}'.format(challenge['type'])
+                if 'error' in challenge:
+                    error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
+                else:
+                    error_details += ';'
+        self.module.fail_json(msg="{0}: {1}".format(error.format(domain), error_details))
 
     def _validate_challenges(self, domain, auth):
         '''
@@ -888,19 +975,7 @@ class ACMEClient(object):
             time.sleep(2)
 
         if status == 'invalid':
-            error_details = ''
-            # multiple challenges could have failed at this point, gather error
-            # details for all of them before failing
-            for challenge in result['challenges']:
-                if challenge['status'] == 'invalid':
-                    error_details += ' CHALLENGE: {0}'.format(challenge['type'])
-                    if 'errors' in challenge:
-                        error_details += ' DETAILS: {0};'.format('; '.join([error['detail'] for error in challenge['errors']]))
-                    elif 'error' in challenge:
-                        error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
-                    else:
-                        error_details += ';'
-            self.module.fail_json(msg="Authorization for {0} returned invalid: {1}".format(result['identifier']['value'], error_details))
+            self._fail_challenge(domain, result, 'Authorization for {0} returned invalid')
 
         return status == 'valid'
 
@@ -987,7 +1062,7 @@ class ACMEClient(object):
 
     def _new_cert_v1(self):
         '''
-        Create a new certificate based on the csr.
+        Create a new certificate based on the CSR (ACME v1 protocol).
         Return the certificate object as dict
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.5
         '''
@@ -1016,6 +1091,10 @@ class ACMEClient(object):
             return {'cert': self._der_to_pem(result), 'uri': info['location'], 'chain': chain}
 
     def _new_order_v2(self):
+        '''
+        Start a new certificate order (ACME v2 protocol).
+        https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-7.4
+        '''
         identifiers = []
         for domain in self.domains:
             identifiers.append({
@@ -1036,60 +1115,86 @@ class ACMEClient(object):
             auth_data['uri'] = auth_uri
             self.authorizations[domain] = auth_data
 
+        self.order_uri = info['location']
         self.finalize_uri = result['finalize']
 
-    def do_challenges(self):
+    def is_first_step(self):
         '''
-        Create new authorizations for all domains of the CSR and return
-        the challenge details for the chosen challenge type.
+        Return True if this is the first execution of this module, i.e. if a
+        sufficient data object from a first run has not been provided.
+        '''
+        if (self.data is None) or ('authorizations' not in self.data):
+            return True
+        if self.finalize_uri is None and self.version != 1:
+            return True
+        return False
+
+    def start_challenges(self):
+        '''
+        Create new authorizations for all domains of the CSR,
+        respectively start a new order for ACME v2.
         '''
         self.authorizations = {}
-        if (self.data is None) or ('authorizations' not in self.data):
-            # First run: start new order
-            if self.version == 1:
-                for domain in self.domains:
-                    new_auth = self._new_authz_v1(domain)
-                    self._add_or_update_auth(domain, new_auth)
-            else:
-                self._new_order_v2()
-            self.changed = True
+        if self.version == 1:
+            for domain in self.domains:
+                new_auth = self._new_authz_v1(domain)
+                self._add_or_update_auth(domain, new_auth)
         else:
-            # Second run: verify challenges
-            for domain, auth in self.data['authorizations'].items():
-                self.authorizations[domain] = auth
-                if auth['status'] == 'pending':
-                    self._validate_challenges(domain, auth)
+            self._new_order_v2()
+        self.changed = True
 
+    def get_challenges_data(self):
+        '''
+        Get challenge details for the chosen challenge type.
+        Return a tuple of generic challenge details, and specialized DNS challenge details.
+        '''
+        # Get general challenge data
         data = {}
         for domain, auth in self.authorizations.items():
-            # _validate_challenges updates the global authrozation dict,
-            # so get the current version of the authorization we are working
-            # on to retrieve the challenge data
-            data[domain] = self._get_challenge_data(self.authorizations[domain])
+            data[domain] = self._get_challenge_data(self.authorizations[domain], domain)
+        # Get DNS challenge data
+        data_dns = {}
+        if self.challenge == 'dns-01':
+            for domain, challenges in data.items():
+                if self.challenge in challenges:
+                    values = data_dns.get(challenges[self.challenge]['record'])
+                    if values is None:
+                        values = []
+                        data_dns[challenges[self.challenge]['record']] = values
+                    values.append(challenges[self.challenge]['resource_value'])
+        return data, data_dns
 
-        return data
+    def finish_challenges(self):
+        '''
+        Verify challenges for all domains of the CSR.
+        '''
+        self.authorizations = {}
+        for domain, auth in self.data['authorizations'].items():
+            self.authorizations[domain] = auth
+            if auth['status'] == 'pending':
+                self._validate_challenges(domain, auth)
 
     def get_certificate(self):
         '''
         Request a new certificate and write it to the destination file.
-        Only do this if a destination file was provided and if all authorizations
-        for the domains of the csr are valid. No Return value.
+        First verifies whether all authorizations are valid; if not, aborts
+        with an error.
         '''
-        if self.dest is None and self.fullchain_dest is None:
-            return
-        if self.finalize_uri is None and self.version != 1:
-            return
-
         for domain in self.domains:
             auth = self.authorizations.get(domain)
-            if auth is None or ('status' not in auth) or (auth['status'] != 'valid'):
-                return
+            if auth is None:
+                self.module.fail_json(msg='Found no authorization information for "{0}"!'.format(domain))
+            if 'status' not in auth:
+                self._fail_challenge(domain, auth, 'Authorization for {0} returned no status')
+            if auth['status'] != 'valid':
+                self._fail_challenge(domain, auth, 'Authorization for {0} returned status ' + str(auth['status']))
 
         if self.version == 1:
             cert = self._new_cert_v1()
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
+
         if cert['cert'] is not None:
             pem_cert = cert['cert']
 
@@ -1103,6 +1208,9 @@ class ACMEClient(object):
                 self.cert_days = get_cert_days(self.module, self.fullchain_dest)
                 self.changed = True
 
+            if self.chain_dest and write_file(self.module, self.chain_dest, ("\n".join(chain)).encode('utf8')):
+                self.changed = True
+
 
 def main():
     module = AnsibleModule(
@@ -1111,7 +1219,7 @@ def main():
             account_key_content=dict(type='str', no_log=True),
             account_email=dict(required=False, default=None, type='str'),
             acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, type='int'),
+            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
             agreement=dict(required=False, type='str'),
             terms_agreed=dict(required=False, default=False, type='bool'),
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
@@ -1119,7 +1227,9 @@ def main():
             data=dict(required=False, no_log=True, default=None, type='dict'),
             dest=dict(aliases=['cert'], type='path'),
             fullchain_dest=dict(aliases=['fullchain'], type='path'),
+            chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
@@ -1135,6 +1245,11 @@ def main():
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
     locale.setlocale(locale.LC_ALL, 'C')
 
+    if not module.params.get('validate_certs'):
+        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
+                            'This should only be done for testing against a local ACME server for ' +
+                            'development purposes, but *never* for production purposes.')
+
     if module.params.get('dest'):
         cert_days = get_cert_days(module, module.params['dest'])
     else:
@@ -1149,13 +1264,22 @@ def main():
         else:
             client = ACMEClient(module)
             client.cert_days = cert_days
-            data = client.do_challenges()
-            client.get_certificate()
+            if client.is_first_step():
+                # First run: start challenges / start new order
+                client.start_challenges()
+            else:
+                # Second run: finish challenges, and get certificate
+                client.finish_challenges()
+                client.get_certificate()
+            data, data_dns = client.get_challenges_data()
             module.exit_json(
                 changed=client.changed,
                 authorizations=client.authorizations,
                 finalize_uri=client.finalize_uri,
+                order_uri=client.order_uri,
+                account_uri=client.account.uri,
                 challenge_data=data,
+                challenge_data_dns=data_dns,
                 cert_days=client.cert_days
             )
     else:

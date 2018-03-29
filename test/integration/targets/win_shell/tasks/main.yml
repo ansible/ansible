@@ -105,17 +105,34 @@
     - shellout is skipped
     - shellout.msg is search('exists')
 
+- name: get path of pagefile
+  win_shell: |
+    $pagefile = $null
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem
+    if ($cs.AutomaticManagedPagefile) {
+        $pagefile = "$($env:SystemRoot.Substring(0, 1)):\pagefile.sys"
+    } else {
+        $pf = Get-CimInstance -ClassName Win32_PageFileSetting
+        if ($pf -ne $null) {
+            $pagefile = $pf[0].Name
+        }
+    }
+    $pagefile
+  register: pagefile_path
+
 - name: test creates with hidden system file, should skip
   win_shell: echo test
   args:
-    creates: C:\pagefile.sys
+    creates: '{{pagefile_path.stdout_lines[0]}}'
   register: shellout
+  when: pagefile_path.stdout_lines|count != 0
 
 - name: validate result
   assert:
     that:
     - shellout is skipped
     - shellout.msg is search('exists')
+  when: pagefile_path.stdout_lines|count != 0
 
 - name: ensure testfile is still present
   win_stat:

@@ -505,7 +505,14 @@ class ModuleValidator(Validator):
 
         return min(linenos)
 
-    def _find_main_call(self):
+    def _find_main_call(self, look_for="main"):
+        """ Ensure that the module ends with:
+            if __name__ == '__main__':
+                main()
+        OR, in the case of modules that are in the docs-only deprecation phase
+            if __name__ == '__main__':
+                removed_module()
+        """
         lineno = False
         if_bodies = []
         for child in self.ast.body:
@@ -547,13 +554,13 @@ class ModuleValidator(Validator):
             if isinstance(child, ast.Expr):
                 if isinstance(child.value, ast.Call):
                     if (isinstance(child.value.func, ast.Name) and
-                            child.value.func.id == 'main'):
+                            child.value.func.id == look_for):
                         lineno = child.lineno
                         if lineno < self.length - 1:
                             self.reporter.error(
                                 path=self.object_path,
                                 code=104,
-                                msg='Call to main() not the last line',
+                                msg=('Call to %s() not the last line' % look_for),
                                 line=lineno
                             )
 
@@ -561,7 +568,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=103,
-                msg='Did not find a call to main'
+                msg=('Did not find a call to %s()' % look_for)
             )
 
         return lineno or 0
@@ -746,6 +753,9 @@ class ModuleValidator(Validator):
         for child in self.ast.body:
             if isinstance(child, ast.Assign):
                 for grandchild in child.targets:
+                    if not isinstance(grandchild, ast.Name):
+                        continue
+
                     if grandchild.id == 'DOCUMENTATION':
                         docs['DOCUMENTATION']['value'] = child.value.s
                         docs['DOCUMENTATION']['lineno'] = child.lineno
@@ -1220,10 +1230,18 @@ class ModuleValidator(Validator):
                 )
             return
 
+        end_of_deprecation_should_be_docs_only = False
         if self._python_module():
             doc_info, docs = self._validate_docs()
 
-        if self._python_module() and not self._just_docs():
+            # See if current version => deprecated.removed_in, ie, should be docs only
+            if 'deprecated' in docs and docs['deprecated'] is not None:
+                removed_in = docs.get('deprecated')['removed_in']
+                strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                end_of_deprecation_should_be_docs_only = strict_ansible_version >= removed_in
+                # FIXME if +2 then file should be empty? - maybe add this only in the future
+
+        if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_docs_only:
             self._validate_argument_spec(docs)
             self._check_for_sys_exit()
             self._find_blacklist_imports()
@@ -1239,11 +1257,14 @@ class ModuleValidator(Validator):
             self._find_ps_docs_py_file()
 
         self._check_gpl3_header()
-        if not self._just_docs():
+        if not self._just_docs() and not end_of_deprecation_should_be_docs_only:
             self._check_interpreter(powershell=self._powershell_module())
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
+        if end_of_deprecation_should_be_docs_only:
+            # Ensure that `if __name__ == '__main__':` calls `removed_module()` which ensure that the module has no code in
+            main = self._find_main_call('removed_module')
 
 
 class PythonPackageValidator(Validator):

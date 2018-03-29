@@ -107,15 +107,6 @@
 
     - block:
       - include_role:
-          name: nxos_mtu
-        when: "limit_to in ['*', 'nxos_mtu']"
-      rescue:
-        - set_fact:
-            failed_modules: "{{ failed_modules }} + [ 'nxos_mtu' ]"
-            test_failed: true
-
-    - block:
-      - include_role:
           name: nxos_system
         when: "limit_to in ['*', 'nxos_system']"
       rescue:

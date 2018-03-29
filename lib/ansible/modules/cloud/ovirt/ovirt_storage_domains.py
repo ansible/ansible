@@ -114,6 +114,7 @@ options:
             - "C(address) - Address of the fibre channel storage server."
             - "C(port) - Port of the fibre channel storage server."
             - "C(lun_id) - LUN id."
+            - "C(override_luns) - If I(True) FCP storage domain luns will be overridden before adding."
             - "Note that these parameters are not idempotent."
     wipe_after_delete:
         description:

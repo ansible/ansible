@@ -32,7 +32,7 @@ options:
   aaa_user_type:
     description:
     - Whether this is a normal user or an appuser.
-    choices: [ user, userapp ]
+    choices: [ user, appuser ]
     default: user
   certificate:
     description:

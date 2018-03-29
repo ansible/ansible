@@ -61,6 +61,7 @@ class TestDellos10Facts(TestDellos10Module):
                     command = str(command).replace('|', '')
                 filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
+                filename = filename.replace(':', '_colon_')
                 output.append(load_fixture(filename))
             return output
 

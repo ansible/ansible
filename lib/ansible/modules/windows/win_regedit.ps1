@@ -448,7 +448,12 @@ try {
                 if (-not $check_mode) {
                     $reg_key = Get-Item -Path $path
                     try {
-                        $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).SetValue($name, $data, $type)
+                        $sub_key = $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree)
+                        try {
+                            $sub_key.SetValue($name, $data, $type)
+                        } finally {
+                            $sub_key.Close()
+                        }
                     } catch {
                         Fail-Json $result "failed to change registry property '$name' at $($path): $($_.Exception.Message)"
                     } finally {
@@ -476,7 +481,12 @@ $key_prefix[$path]
             if (-not $check_mode) {
                 $reg_key = Get-Item -Path $path
                 try {
-                    $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).SetValue($name, $data, $type)
+                    $sub_key = $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree)
+                    try {
+                        $sub_key.SetValue($name, $data, $type)
+                    } finally {
+                        $sub_key.Close()
+                    }
                 } catch {
                     Fail-Json $result "failed to change registry property '$name' at $($path): $($_.Exception.Message)"
                 } finally {
@@ -525,7 +535,12 @@ $key_prefix[$path]
                     if (-not $check_mode) {
                         $reg_key = Get-Item -Path $path
                         try {
-                            $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree).DeleteValue($name)
+                            $sub_key = $reg_key.OpenSubKey($null, [Microsoft.Win32.RegistryKeyPermissionCheck]::ReadWriteSubTree)
+                            try {
+                                $sub_key.DeleteValue($name)
+                            } finally {
+                                $sub_key.Close()
+                            }
                         } catch {
                             Fail-Json $result "failed to delete registry property '$name' at $($path): $($_.Exception.Message)"
                         } finally {

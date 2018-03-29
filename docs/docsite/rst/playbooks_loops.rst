@@ -120,7 +120,7 @@ Using register with a loop
 
 After using ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module.
 
-Here is an example of using ``register`` with ``with_items``::
+Here is an example of using ``register`` with ``loop``::
 
     - shell: "echo {{ item }}"
       loop:
@@ -195,14 +195,12 @@ One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` var
     # show all the hosts in the inventory
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ groups['all'] }}"
+      loop: "{{ groups['all'] }}"
 
     # show all the hosts in the current play
     - debug:
         msg: "{{ item }}"
-      loop:
-        - "{{ ansible_play_batch }}"
+      loop: "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 

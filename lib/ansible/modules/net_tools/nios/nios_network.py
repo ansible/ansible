@@ -110,6 +110,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: set dhcp options for a network
   nios_network:
@@ -123,6 +124,7 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 
 - name: remove a network
   nios_network:
@@ -132,13 +134,14 @@ EXAMPLES = '''
       host: "{{ inventory_hostname_short }}"
       username: admin
       password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.net_tools.nios.api import get_provider_spec, Wapi
+from ansible.module_utils.net_tools.nios.api import WapiModule
 
 
 def options(module):
@@ -200,12 +203,12 @@ def main():
     )
 
     argument_spec.update(ib_spec)
-    argument_spec.update(get_provider_spec())
+    argument_spec.update(WapiModule.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    wapi = Wapi(module)
+    wapi = WapiModule(module)
     result = wapi.run('network', ib_spec)
 
     module.exit_json(**result)

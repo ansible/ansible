@@ -468,7 +468,7 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n")
             if isinstance(doc['deprecated'], dict):
-                text.append("\tReason: %(why)s\n\tScheduled removal: Ansible %(version)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
             else:
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")

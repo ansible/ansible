@@ -21,17 +21,17 @@
 #
 - name: download EPEL GPG key
   get_url:
-    url: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
     dest: /tmp/RPM-GPG-KEY-EPEL-7
 
 - name: download sl rpm
   get_url:
-    url: https://download.fedoraproject.org/pub/epel/7/x86_64/Packages/s/sl-5.02-1.el7.x86_64.rpm
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/sl-5.02-1.el7.x86_64.rpm
     dest: /tmp/sl.rpm
 
 - name: download Mono key
   get_url:
-    url: http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/mono.gpg
     dest: /tmp/mono.gpg
 
 - name: remove EPEL GPG key from keyring
@@ -96,7 +96,7 @@
 - name: remove GPG key from url
   rpm_key:
     state: absent
-    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: Confirm key is missing
   shell: "rpm --checksig /tmp/sl.rpm"
@@ -112,7 +112,7 @@
 - name: add GPG key from url
   rpm_key:
     state: present
-    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: check GPG signature of sl. Should return okay
   shell: "rpm --checksig /tmp/sl.rpm"
@@ -128,7 +128,7 @@
 - name: add very first key on system
   rpm_key:
     state: present
-    key: https://download.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: check GPG signature of sl. Should return okay
   shell: "rpm --checksig /tmp/sl.rpm"

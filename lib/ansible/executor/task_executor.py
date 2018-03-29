@@ -35,6 +35,24 @@ except ImportError:
 __all__ = ['TaskExecutor']
 
 
+def remove_omit(task_args, omit_token):
+    '''
+    Remove args with a value equal to the ``omit_token`` recursively
+    to align with now having suboptions in the argument_spec
+    '''
+    new_args = {}
+
+    for i in iteritems(task_args):
+        if i[1] == omit_token:
+            continue
+        elif isinstance(i[1], dict):
+            new_args[i[0]] = remove_omit(i[1], omit_token)
+        else:
+            new_args[i[0]] = i[1]
+
+    return new_args
+
+
 class TaskExecutor:
 
     '''
@@ -494,7 +512,7 @@ class TaskExecutor:
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
+            self._task.args = remove_omit(self._task.args, omit_token)
 
         # Read some values from the task, so that we can modify them if need be
         if self._task.until:
@@ -577,7 +595,8 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            result['attempts'] = attempt
+            if self._task.until:
+                result['attempts'] = attempt
 
             # set the changed property if it was missing.
             if 'changed' not in result:

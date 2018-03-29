@@ -25,7 +25,9 @@ description:
     a deterministic way.
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XR 6.1.2
+  - Tested against IOS XRv 6.1.2
+  - Avoid service disrupting changes (viz. Management IP) from config replace.
+  - Do not use C(end) in the replace config file.
 options:
   lines:
     description:
@@ -164,6 +166,7 @@ EXAMPLES = """
 - name: load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
+    replace: config
     backup: yes
 """
 
@@ -181,11 +184,24 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.iosxr.iosxr import load_config, get_config
-from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec
+from ansible.module_utils.network.iosxr.iosxr import iosxr_argument_spec, copy_file
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 
-
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
+
+
+def copy_file_to_node(module):
+    """ Copy config file to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
+    """
+    src = '/tmp/ansible_config.txt'
+    file = open(src, 'wb')
+    file.write(module.params['src'])
+    file.close()
+
+    dst = '/harddisk:/ansible_config.txt'
+    copy_file(module, src, dst, 'sftp')
+
+    return True
 
 
 def check_args(module, warnings):
@@ -224,18 +240,30 @@ def run(module, result):
     admin = module.params['admin']
     check_mode = module.check_mode
 
-    candidate = get_candidate(module)
+    candidate_config = get_candidate(module)
+    running_config = get_running_config(module)
 
+    commands = None
     if match != 'none' and replace != 'config':
-        contents = get_running_config(module)
-        configobj = NetworkConfig(contents=contents, indent=1)
-        commands = candidate.difference(configobj, path=path, match=match,
-                                        replace=replace)
+        commands = candidate_config.difference(running_config, path=path, match=match, replace=replace)
+    elif replace_config:
+        can_config = candidate_config.difference(running_config, path=path, match=match, replace=replace)
+        candidate = dumps(can_config, 'commands').split('\n')
+        run_config = running_config.difference(candidate_config, path=path, match=match, replace=replace)
+        running = dumps(run_config, 'commands').split('\n')
+
+        if len(candidate) > 1 or len(running) > 1:
+            ret = copy_file_to_node(module)
+            if not ret:
+                module.fail_json(msg='Copy of config file to the node failed')
+
+            commands = ['load harddisk:/ansible_config.txt']
     else:
-        commands = candidate.items
+        commands = candidate_config.items
 
     if commands:
-        commands = dumps(commands, 'commands').split('\n')
+        if not replace_config:
+            commands = dumps(commands, 'commands').split('\n')
 
         if any((module.params['lines'], module.params['src'])):
             if module.params['before']:
@@ -247,10 +275,10 @@ def run(module, result):
             result['commands'] = commands
 
         commit = not check_mode
-        diff = load_config(module, commands, commit=commit, replace=replace_config,
-                           comment=comment, admin=admin)
+        diff = load_config(module, commands, commit=commit, replace=replace_config, comment=comment, admin=admin)
         if diff:
             result['diff'] = dict(prepared=diff)
+
         result['changed'] = True
 
 

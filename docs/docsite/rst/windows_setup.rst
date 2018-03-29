@@ -35,7 +35,7 @@ This is an example of how to run this script from PowerShell:
 .. code-block:: powershell
 
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
-    $file = "$env:SystemDrive\temp\Upgrade-PowerShell.ps1"
+    $file = "$env:TEMP\Upgrade-PowerShell.ps1"
     $username = "Administrator"
     $password = "Password"
 

@@ -76,4 +76,15 @@ options:
             variable.
         required: false
         default: 1.4
+      max_results:
+        description:
+          - Specifies the maximum number of objects to be returned,
+            if set to a negative number the appliance will return an error when the
+            number of returned objects would exceed the setting.
+          - Value can also be specified using C(INFOBLOX_MAX_RESULTS) environment
+            variable.
+        required: false
+        default: 1000
+notes:
+  - "This module must be run locally, which can be achieved by specifying C(connection: local)."
 """

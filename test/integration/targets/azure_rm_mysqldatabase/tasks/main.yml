@@ -11,6 +11,7 @@
       name: MYSQLB50
       tier: basic
     location: westus
+    storage_mb: 51200
     version: 5.6
     enforce_ssl: True
     admin_username: zimxyz

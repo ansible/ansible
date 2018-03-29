@@ -44,6 +44,10 @@ options:
       description: a dict object that is used to filter the return objects
       required: False
       default: null
+    extattrs:
+      descrpition: a dict object that is used to filter on extattrs
+      required: false
+      default: null
 """
 
 EXAMPLES = """
@@ -91,8 +95,8 @@ obj_type:
 """
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.net_tools.nios.api import nios_provider_spec
-from ansible.module_utils.net_tools.nios.api import get_connector
+from ansible.module_utils.net_tools.nios.api import WapiLookup
+from ansible.module_utils.net_tools.nios.api import normalize_extattrs, flatten_extattrs
 from ansible.errors import AnsibleError
 
 
@@ -106,6 +110,11 @@ class LookupModule(LookupBase):
 
         return_fields = kwargs.pop('return_fields', None)
         filter_data = kwargs.pop('filter', {})
+        extattrs = normalize_extattrs(kwargs.pop('extattrs', {}))
         provider = kwargs.pop('provider', {})
-        connector = get_connector(**provider)
-        return connector.get_object(obj_type, filter_data, return_fields=return_fields)
+        wapi = WapiLookup(provider)
+        res = wapi.get_object(obj_type, filter_data, return_fields=return_fields)
+        for obj in res:
+            if 'extattrs' in obj:
+                obj['extattrs'] = flatten_extattrs(obj['extattrs'])
+        return res

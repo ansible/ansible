@@ -171,6 +171,10 @@ options:
             - Type of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
         choices: [ desktop, server ]
+    quota_id:
+        description:
+            - "Virtual Machine quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine."
+        version_added: "2.5"
     operating_system:
         description:
             - Operating system of the Virtual Machine.
@@ -221,6 +225,22 @@ options:
             - List of boot devices which should be used to boot. For example C([ cdrom, hd ]).
             - Default value is set by oVirt/RHV engine.
         choices: [ cdrom, hd, network ]
+    boot_menu:
+        description:
+            - "I(True) enable menu to select boot device, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        version_added: "2.5"
+    usb_support:
+        description:
+            - "I(True) enable USB support, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        version_added: "2.5"
+    serial_console:
+        description:
+            - "I(True) enable VirtIO serial console, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        version_added: "2.5"
+    sso:
+        description:
+            - "I(True) enable Single Sign On by Guest Agent, I(False) to disable it. By default is chosen by oVirt/RHV engine."
+        version_added: "2.5"
     host:
         description:
             - Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler.
@@ -231,6 +251,13 @@ options:
             - If I(no) Virtual Machine won't be set as highly available.
             - If no value is passed, default value is set by oVirt/RHV engine.
         type: bool
+    high_availability_priority:
+        description:
+            - Indicates the priority of the virtual machine inside the run and migration queues.
+              Virtual machines with higher priorities will be started and migrated before virtual machines with lower
+              priorities. The value is an integer between 0 and 100. The higher the value, the higher the priority.
+            - If no value is passed, default value is set by oVirt/RHV engine.
+        version_added: "2.5"
     lease:
         description:
             - Name of the storage domain this virtual machine lease reside on.
@@ -567,6 +594,7 @@ EXAMPLES = '''
     cluster: Default
     memory: 1GiB
     high_availability: true
+    high_availability_priority: 50  # Available from Ansible 2.5
     cloud_init:
       nic_boot_protocol: static
       nic_ip_address: 10.34.60.86
@@ -686,6 +714,19 @@ EXAMPLES = '''
   ovirt_vms:
     state: absent
     name: myvm
+
+# Defining a specific quota for a VM:
+# Since Ansible 2.5
+- ovirt_quotas_facts:
+    data_center: Default
+    name: myquota
+- ovirt_vms:
+    name: myvm
+    sso: False
+    boot_menu: True
+    usb_support: True
+    serial_console: True
+    quota_id: "{{ ovirt_quotas[0]['id'] }}"
 '''
 
 
@@ -802,9 +843,25 @@ class VmsModule(BaseModule):
             use_latest_template_version=self.param('use_latest_template_version'),
             stateless=self.param('stateless') or self.param('use_latest_template_version'),
             delete_protected=self.param('delete_protected'),
+            bios=(
+                otypes.Bios(boot_menu=otypes.BootMenu(enabled=self.param('boot_menu')))
+            ) if self.param('boot_menu') is not None else None,
+            console=(
+                otypes.Console(enabled=self.param('serial_console'))
+            ) if self.param('serial_console') is not None else None,
+            usb=(
+                otypes.Usb(enabled=self.param('usb_support'))
+            ) if self.param('usb_support') is not None else None,
+            sso=(
+                otypes.Sso(
+                    methods=[otypes.Method(id=otypes.SsoMethod.GUEST_AGENT)] if self.param('sso') else []
+                )
+            ),
+            quota=otypes.Quota(id=self._module.params.get('quota_id')) if self.param('quota_id') is not None else None,
             high_availability=otypes.HighAvailability(
-                enabled=self.param('high_availability')
-            ) if self.param('high_availability') is not None else None,
+                enabled=self.param('high_availability'),
+                priority=self.param('high_availability_priority'),
+            ) if self.param('high_availability') is not None or self.param('high_availability_priority') else None,
             lease=otypes.StorageDomainLease(
                 storage_domain=otypes.StorageDomain(
                     id=get_id_by_name(
@@ -871,7 +928,13 @@ class VmsModule(BaseModule):
             equal(self.param('cpu_threads'), entity.cpu.topology.threads) and
             equal(self.param('type'), str(entity.type)) and
             equal(self.param('operating_system'), str(entity.os.type)) and
+            equal(self.param('boot_menu'), entity.bios.boot_menu.enabled) and
+            equal(self.param('serial_console'), entity.console.enabled) and
+            equal(self.param('usb_support'), entity.usb.enabled) and
+            equal(self.param('sso'), True if entity.sso.methods else False) and
+            equal(self.param('quota_id'), getattr(entity.quota, 'id')) and
             equal(self.param('high_availability'), entity.high_availability.enabled) and
+            equal(self.param('high_availability_priority'), entity.high_availability.priority) and
             equal(self.param('lease'), get_link_name(self._connection, getattr(entity.lease, 'storage_domain', None))) and
             equal(self.param('stateless'), entity.stateless) and
             equal(self.param('cpu_shares'), entity.cpu_shares) and
@@ -1457,7 +1520,13 @@ def main():
         lun_mappings=dict(default=[], type='list'),
         domain_mappings=dict(default=[], type='list'),
         reassign_bad_macs=dict(default=None, type='bool'),
+        boot_menu=dict(type='bool'),
+        serial_console=dict(type='bool'),
+        usb_support=dict(type='bool'),
+        sso=dict(type='bool'),
+        quota_id=dict(type='str'),
         high_availability=dict(type='bool'),
+        high_availability_priority=dict(type='int'),
         lease=dict(type='str'),
         stateless=dict(type='bool'),
         delete_protected=dict(type='bool'),

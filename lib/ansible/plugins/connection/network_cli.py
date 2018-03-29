@@ -234,7 +234,7 @@ class Connection(ConnectionBase):
             try:
                 cmd = json.loads(to_text(cmd, errors='surrogate_or_strict'))
                 kwargs = {'command': to_bytes(cmd['command'], errors='surrogate_or_strict')}
-                for key in ('prompt', 'answer', 'sendonly', 'newline'):
+                for key in ('prompt', 'answer', 'sendonly', 'newline', 'prompt_retry_check'):
                     if cmd.get(key) is True or cmd.get(key) is False:
                         kwargs[key] = cmd[key]
                     elif cmd.get(key) is not None:
@@ -283,10 +283,10 @@ class Connection(ConnectionBase):
         if self.connected:
             return
 
-        p = connection_loader.get('paramiko', self._play_context, '/dev/null')
-        p.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        p.force_persistence = self.force_persistence
-        ssh = p._connect()
+        self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+        self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        self.paramiko_conn.force_persistence = self.force_persistence
+        ssh = self.paramiko_conn._connect()
 
         display.vvvv('ssh connection done, setting terminal', host=self._play_context.remote_addr)
 
@@ -372,7 +372,7 @@ class Connection(ConnectionBase):
             self._connected = False
             display.debug("ssh connection has been closed successfully")
 
-    def receive(self, command=None, prompts=None, answer=None, newline=True):
+    def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''
         Handles receiving of output from command
         '''
@@ -380,6 +380,8 @@ class Connection(ConnectionBase):
         handled = False
 
         self._matched_prompt = None
+        self._matched_cmd_prompt = None
+        matched_prompt_window = window_count = 0
 
         while True:
             data = self._ssh_shell.recv(256)
@@ -393,19 +395,24 @@ class Connection(ConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            window_count += 1
+
             if prompts and not handled:
                 handled = self._handle_prompt(window, prompts, answer, newline)
-            elif prompts and handled:
-                # check again even when handled, a sub-prompt could be
-                # repeating (like in the case of a wrong enable password, etc)
-                self._handle_prompt(window, prompts, answer, newline)
+                matched_prompt_window = window_count
+            elif prompts and handled and prompt_retry_check and matched_prompt_window + 1 == window_count:
+                # check again even when handled, if same prompt repeats in next window
+                # (like in the case of a wrong enable password, etc) indicates
+                # value of answer is wrong, report this as error.
+                if self._handle_prompt(window, prompts, answer, newline, prompt_retry_check):
+                    raise AnsibleConnectionFailure("For matched prompt '%s', answer is not valid" % self._matched_cmd_prompt)
 
             if self._find_prompt(window):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 return self._sanitize(resp, command)
 
-    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False):
+    def send(self, command, prompt=None, answer=None, newline=True, sendonly=False, prompt_retry_check=False):
         '''
         Sends the command to the device in the opened shell
         '''
@@ -414,7 +421,7 @@ class Connection(ConnectionBase):
             self._ssh_shell.sendall(b'%s\r' % command)
             if sendonly:
                 return
-            response = self.receive(command, prompt, answer, newline)
+            response = self.receive(command, prompt, answer, newline, prompt_retry_check)
             return to_text(response, errors='surrogate_or_strict')
         except (socket.timeout, AttributeError):
             display.vvvv(traceback.format_exc(), host=self._play_context.remote_addr)
@@ -428,7 +435,7 @@ class Connection(ConnectionBase):
             data = regex.sub(b'', data)
         return data
 
-    def _handle_prompt(self, resp, prompts, answer, newline):
+    def _handle_prompt(self, resp, prompts, answer, newline, prompt_retry_check=False):
         '''
         Matches the command prompt and responds
 
@@ -444,9 +451,13 @@ class Connection(ConnectionBase):
         for regex in prompts:
             match = regex.search(resp)
             if match:
-                self._ssh_shell.sendall(b'%s' % answer)
-                if newline:
-                    self._ssh_shell.sendall(b'\r')
+                # if prompt_retry_check is enabled to check if same prompt is
+                # repeated don't send answer again.
+                if not prompt_retry_check:
+                    self._ssh_shell.sendall(b'%s' % answer)
+                    if newline:
+                        self._ssh_shell.sendall(b'\r')
+                self._matched_cmd_prompt = match.group()
                 return True
         return False
 

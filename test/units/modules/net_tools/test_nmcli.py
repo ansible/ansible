@@ -1,8 +1,9 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import pytest
 import json
+
+import pytest
 
 from ansible.modules.net_tools import nmcli
 
@@ -115,6 +116,32 @@ TESTCASE_BRIDGE_SLAVE = [
         'path_cost': 100,
         'state': 'present',
         '_ansible_check_mode': False,
+    }
+]
+
+TESTCASE_VLAN = [
+    {
+        'type': 'vlan',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'vlan_not_exists',
+        'ip4': '10.10.10.10',
+        'gw4': '10.10.10.1',
+        'state': 'present',
+        '_ansible_check_mode': False,
+    }
+]
+
+
+TESTCASE_ETHERNET_DHCP = [
+    {
+        'type': 'ethernet',
+        'conn_name': 'non_existent_nw_device',
+        'ifname': 'ethernet_non_existant',
+        'ip4': '10.10.10.10',
+        'gw4': '10.10.10.1',
+        'state': 'present',
+        '_ansible_check_mode': False,
+        'dhcp_client_id': '00:11:22:AA:BB:CC:DD',
     }
 ]
 
@@ -360,3 +387,52 @@ def test_mod_bridge_slave(mocked_generic_connection_modify):
 
     for param in ['bridge-port.path-cost', '100']:
         assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VLAN, indirect=['patch_ansible_module'])
+def test_create_vlan_con(mocked_generic_connection_create):
+    """
+    Test if VLAN created
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['vlan']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_VLAN, indirect=['patch_ansible_module'])
+def test_mod_vlan_conn(mocked_generic_connection_modify):
+    """
+    Test if VLAN modified
+    """
+
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    for param in ['vlan.id']:
+        assert param in args[0]
+
+
+@pytest.mark.parametrize('patch_ansible_module', TESTCASE_ETHERNET_DHCP, indirect=['patch_ansible_module'])
+def test_eth_dhcp_client_id_con_create(mocked_generic_connection_create):
+    """
+    Test : Ethernet connection created with DHCP_CLIENT_ID
+    """
+    with pytest.raises(SystemExit):
+        nmcli.main()
+
+    assert nmcli.Nmcli.execute_command.call_count == 1
+    arg_list = nmcli.Nmcli.execute_command.call_args_list
+    args, kwargs = arg_list[0]
+
+    assert 'ipv4.dhcp-client-id' in args[0]

@@ -427,7 +427,7 @@ lib/ansible/modules/network/ordnance/ordnance_facts.py E322
 lib/ansible/modules/network/panos/panos_nat_rule.py E322
 lib/ansible/modules/network/panos/panos_sag.py E322
 lib/ansible/modules/network/panos/panos_sag.py E323
-lib/ansible/modules/network/panos/panos_security_policy.py E322
+lib/ansible/modules/network/panos/_panos_security_policy.py E322
 lib/ansible/modules/network/panos/panos_security_rule.py E322
 lib/ansible/modules/network/radware/vdirect_commit.py E321
 lib/ansible/modules/network/radware/vdirect_file.py E321

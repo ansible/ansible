@@ -37,7 +37,7 @@ options:
   type:
     description: The provider's type.
     required: true
-    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director']
+    choices: ['Openshift', 'Amazon', 'oVirt', 'VMware', 'Azure', 'Director', 'OpenStack']
   zone:
     description: The ManageIQ zone name that will manage the provider.
     required: false
@@ -65,6 +65,12 @@ options:
     required: false
     default: null
     description: Tenant ID. defaults to None.
+    version_added: "2.5"
+    aliases: [ keystone_v3_domain_id ]
+  tenant_mapping_enabled:
+    required: false
+    default: false
+    description: Whether to enable mapping of existing tenants. defaults to False.
     version_added: "2.5"
   api_version:
     required: false
@@ -487,6 +493,48 @@ EXAMPLES = '''
       hostname: director.example.com
       userid: heat-admin
       auth_key: 'SecretSSHPrivateKey'
+
+- name: Create a new OpenStack provider in ManageIQ with amqp metrics
+  manageiq_provider:
+    name: 'EngOpenStack'
+    type: 'OpenStack'
+    api_version: 'v3'
+    state: 'present'
+    provider_region: 'europe'
+    tenant_mapping_enabled: 'False'
+    keystone_v3_domain_id: 'mydomain'
+    provider:
+      hostname: 'openstack.example.com'
+      userid: 'admin'
+      password: 'password'
+      security_protocol: 'ssl-with-validation'
+      verify_ssl: 'true'
+      certificate_authority: |
+        -----BEGIN CERTIFICATE-----
+        FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+        c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+        MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+        ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+        ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+        AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+        Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+        z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+        ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+        AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+        SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+        QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+        aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+        gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+        qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+        XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+        -----END CERTIFICATE-----
+    metrics:
+      role: amqp
+      hostname: 'amqp.example.com'
+      security_protocol: 'non-ssl'
+      port: 5666
+      userid: admin
+      password: password
 '''
 
 RETURN = '''
@@ -522,6 +570,9 @@ def supported_providers():
         Director=dict(
             class_name='ManageIQ::Providers::Openstack::InfraManager',
             ssh_keypair_role="ssh_keypair"
+        ),
+        OpenStack=dict(
+            class_name='ManageIQ::Providers::Openstack::CloudManager',
         ),
     )
 
@@ -681,7 +732,7 @@ class ManageIQProvider(object):
 
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
-                      subscription, uid_ems, api_version):
+                      subscription, uid_ems, tenant_mapping_enabled, api_version):
         """ Edit a user from manageiq.
 
         Returns:
@@ -698,6 +749,7 @@ class ManageIQProvider(object):
             host_default_vnc_port_end=host_default_vnc_port_end,
             subscription=subscription,
             uid_ems=uid_ems,
+            tenant_mapping_enabled=tenant_mapping_enabled,
             api_version=api_version,
         )
 
@@ -722,7 +774,7 @@ class ManageIQProvider(object):
 
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
-                        subscription, uid_ems, api_version):
+                        subscription, uid_ems, tenant_mapping_enabled, api_version):
         """ Creates the user in manageiq.
 
         Returns:
@@ -745,6 +797,7 @@ class ManageIQProvider(object):
                 host_default_vnc_port_end=host_default_vnc_port_end,
                 subscription=subscription,
                 uid_ems=uid_ems,
+                tenant_mapping_enabled=tenant_mapping_enabled,
                 api_version=api_version,
                 connection_configurations=endpoints,
             )
@@ -767,7 +820,8 @@ def main():
         host_default_vnc_port_start=dict(),
         host_default_vnc_port_end=dict(),
         subscription=dict(),
-        azure_tenant_id=dict(),
+        azure_tenant_id=dict(aliases=['keystone_v3_domain_id']),
+        tenant_mapping_enabled=dict(default=False, type='bool'),
         api_version=dict(),
         type=dict(choices=supported_providers().keys()),
     )
@@ -794,6 +848,7 @@ def main():
     host_default_vnc_port_end = module.params['host_default_vnc_port_end']
     subscription = module.params['subscription']
     uid_ems = module.params['azure_tenant_id']
+    tenant_mapping_enabled = module.params['tenant_mapping_enabled']
     api_version = module.params['api_version']
     state = module.params['state']
 
@@ -842,12 +897,12 @@ def main():
         if provider:
             res_args = manageiq_provider.edit_provider(provider, name, provider_type, endpoints, zone_id, provider_region,
                                                        host_default_vnc_port_start, host_default_vnc_port_end,
-                                                       subscription, uid_ems, api_version)
+                                                       subscription, uid_ems, tenant_mapping_enabled, api_version)
         # if we do not have a provider, create it
         else:
             res_args = manageiq_provider.create_provider(name, provider_type, endpoints, zone_id, provider_region,
                                                          host_default_vnc_port_start, host_default_vnc_port_end,
-                                                         subscription, uid_ems, api_version)
+                                                         subscription, uid_ems, tenant_mapping_enabled, api_version)
 
     module.exit_json(**res_args)
 

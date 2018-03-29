@@ -297,7 +297,41 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        if b_lines[index[0]] != b_new_line:
+        # Add lines when the regexp match already exists somewhere else in the file
+        if insertafter and insertafter != 'EOF':
+
+            # Ensure there is a line separator after the found string
+            # at the end of the file.
+            if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                b_lines[-1] = b_lines[-1] + b_linesep
+
+            # If the line to insert after is at the end of the file
+            # use the appropriate index value.
+            if len(b_lines) == index[1]:
+                if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                    b_lines.append(b_line + b_linesep)
+                    msg = 'line added'
+                    changed = True
+            elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                b_lines.insert(index[1], b_line + b_linesep)
+                msg = 'line added'
+                changed = True
+
+        elif insertbefore:
+            # If the line to insert before is at the beginning of the file
+            # use the appropriate index value.
+            if index[1] == 0:
+                if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
+                    msg = 'line replaced'
+                    changed = True
+
+            elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                b_lines.insert(index[1], b_line + b_linesep)
+                msg = 'line replaced'
+                changed = True
+
+        elif b_lines[index[0]] != b_new_line:
             b_lines[index[0]] = b_new_line
             msg = 'line replaced'
             changed = True
@@ -322,7 +356,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         b_lines.append(b_line + b_linesep)
         msg = 'line added'
         changed = True
-    # insert* matched, but not the regexp
+    # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
         msg = 'line added'
@@ -463,6 +497,7 @@ def main():
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
 
         absent(module, path, params['regexp'], params.get('line', None), backup)
+
 
 if __name__ == '__main__':
     main()

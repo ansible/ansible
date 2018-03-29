@@ -469,12 +469,14 @@
 
 - name: get result of create new key in loaded hive (check mode)
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_key_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive (check mode)
   assert:
@@ -491,12 +493,14 @@
 
 - name: get result of create new key in loaded hive
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_key_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of create new key in loaded hive
   assert:
@@ -533,11 +537,11 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
+      $prop.Close()
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_prop_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property (check mode)
   assert:
@@ -561,11 +565,11 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
+      $prop.Close()
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: new_prop_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of set hive key property
   assert:
@@ -603,11 +607,11 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
+      $prop.Close()
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_prop_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property (check mode)
   assert:
@@ -629,11 +633,11 @@
     $prop = Get-ItemProperty -Path HKLM:\ANSIBLE\NewKey -Name TestProp -ErrorAction SilentlyContinue
     if ($prop) {
       $prop.TestProp
+      $prop.Close()
     }
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_prop_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove hive key property
   assert:
@@ -665,12 +669,14 @@
 
 - name: get result of remove key in loaded hive (check mode)
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_key_in_hive_result_check
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of removekey in loaded hive (check mode)
   assert:
@@ -688,12 +694,14 @@
 
 - name: get result of remove key in loaded hive
   win_shell: |
+    $ErrorActionPreference = "Stop"
     &reg.exe load HKLM\ANSIBLE C:\Users\Default\NTUSER.dat > $null
     Test-Path -Path HKLM:\ANSIBLE\NewKey
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    &reg.exe unload HKLM\ANSIBLE > $null
     exit 0
   register: remove_key_in_hive_result
-
-- win_command: reg.exe unload HKLM\ANSIBLE
 
 - name: assert result of remove key in loaded hive
   assert:

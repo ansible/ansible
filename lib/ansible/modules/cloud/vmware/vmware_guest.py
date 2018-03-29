@@ -947,7 +947,7 @@ class PyVmomiHelper(PyVmomi):
                 # VDS switch
                 pg_obj = find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
+                if vm_obj is None or (nic.device.backing and not hasattr(nic.device.backing, 'port')) or \
                    (nic.device.backing and (nic.device.backing.port.portgroupKey != pg_obj.key or
                                             nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     dvs_port_connection = vim.dvs.PortConnection()
@@ -1465,7 +1465,6 @@ class PyVmomiHelper(PyVmomi):
         # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
 
         # FIXME:
-        #   - multiple templates by the same name
         #   - static IPs
 
         self.folder = self.params.get('folder', None)
@@ -1515,16 +1514,14 @@ class PyVmomiHelper(PyVmomi):
         destfolder = f_obj
 
         if self.params['template']:
-            # FIXME: need to search for this in the same way as guests to ensure accuracy
-            vm_obj = find_obj(self.content, [vim.VirtualMachine], self.params['template'])
+            vm_obj = self.get_vm_or_template(template_name=self.params['template'])
             if vm_obj is None:
                 self.module.fail_json(msg="Could not find a template named %(template)s" % self.params)
         else:
             vm_obj = None
 
-        # need a resource pool if cloning from template
-        if self.params['resource_pool'] or self.params['template']:
-            resource_pool = self.get_resource_pool()
+        # always get a resource_pool
+        resource_pool = self.get_resource_pool()
 
         # set the destination datastore for VM & disks
         (datastore, datastore_name) = self.select_datastore(vm_obj)
@@ -1600,7 +1597,6 @@ class PyVmomiHelper(PyVmomi):
                                                         vmPathName="[" + datastore_name + "]")
 
                 clone_method = 'CreateVM_Task'
-                resource_pool = self.get_resource_pool()
                 try:
                     task = destfolder.CreateVM_Task(config=self.configspec, pool=resource_pool)
                 except vmodl.fault.InvalidRequest as e:
