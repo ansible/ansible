@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: os_security_group_facts
 short_description: Retrieve facts about all OpenStack security groups.
-version_added: "2.5"
+version_added: "2.6"
 author: "Ulrich Fink (fink@netzlink.com)"
 description:
     - Retrieve facts about all security groups from OpenStack.
@@ -94,7 +94,7 @@ openstack_security_groups:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec
+from ansible.module_utils.openstack import openstack_argument_spec
 
 try:
     import shade
