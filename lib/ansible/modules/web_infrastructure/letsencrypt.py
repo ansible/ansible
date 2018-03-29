@@ -1112,10 +1112,12 @@ class ACMEClient(object):
         if info['status'] not in [201]:
             self.module.fail_json(msg="Error new order: CODE: {0} RESULT: {1}".format(info['status'], result))
 
-        for identifier, auth_uri in zip(result['identifiers'], result['authorizations']):
-            domain = identifier['value']
+        for auth_uri in result['authorizations']:
             auth_data = simple_get(self.module, auth_uri)
             auth_data['uri'] = auth_uri
+            domain = auth_data['identifier']['value']
+            if auth_data.get('wildcard', False):
+                domain = '*.{0}'.format(domain)
             self.authorizations[domain] = auth_data
 
         self.order_uri = info['location']
