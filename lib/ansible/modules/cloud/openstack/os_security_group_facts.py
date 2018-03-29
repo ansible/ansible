@@ -95,6 +95,7 @@ openstack_security_groups:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_argument_spec
+from __future__ import (absolute_import, division, print_function)
 
 try:
     import shade
@@ -104,10 +105,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = openstack_full_argument_spec(
-        name=dict(required=False, default=None),
-        filters=dict(required=False, type='dict', default=None)
-    )
+    argument_spec = openstack_argument_spec()
     module = AnsibleModule(argument_spec)
 
     if not HAS_SHADE:
