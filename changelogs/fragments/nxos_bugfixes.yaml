@@ -1,0 +1,11 @@
+bugfixes:
+- _nxos_switchport - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37328)
+- nxos_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37336)
+- nxos_snapshot - fix documentation and add required parameter logic (https://github.com/ansible/ansible/pull/37232, https://github.com/ansible/ansible/pull/37248)
+- Improve integration test - Ensure each transport test runs only once (https://github.com/ansible/ansible/pull/37462)
+- nxos_user - Integration test (https://github.com/ansible/ansible/pull/37852)
+- nxos_bgp_af - Fix UnboundLocalError (https://github.com/ansible/ansible/pull/37610)
+- nxos_vrf - Fix nxos_vrf issues (https://github.com/ansible/ansible/pull/37092)
+- nxos_vrf_af - Fix nxos_vrf_af issues (https://github.com/ansible/ansible/pull/37211)
+- nxos_udld - Fix nxos_udld issues (https://github.com/ansible/ansible/pull/37418)
+- nxos_vlan - Fix nxos_vlan issues (https://github.com/ansible/ansible/pull/38008)
