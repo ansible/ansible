@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -93,9 +97,9 @@ openstack_security_groups:
           tenant_id:
 '''
 
-from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_argument_spec
+
 
 try:
     import shade
