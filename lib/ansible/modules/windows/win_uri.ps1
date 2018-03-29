@@ -264,8 +264,11 @@ if ($return_content -or $dest) {
     }
 }
 
-if ($status_code -notcontains $response.StatusCode) {
-    Fail-Json -obj $result -message "Status code of request '$($response.StatusCode)' is not in list of valid status codes $status_code."
+# use numerical format of response status for comparison
+$resp_code = [System.Enum]::Format([System.Net.HttpStatusCode], $response.StatusCode, "d")
+
+if ($status_code -notcontains $resp_code) {
+    Fail-Json -obj $result -message "Status code of request '$resp_code' is not in list of valid status codes $status_code."
 }
 
 Exit-Json -obj $result

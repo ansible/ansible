@@ -250,8 +250,7 @@
 - name: validate status_codes are correct
   win_uri:
     url: http://{{httpbin_host}}/status/202
-    status_code:
-    - 202
+    status_code: 202, 418
     method: POST
     body: foo
   register: status_code_check
