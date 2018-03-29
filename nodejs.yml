@@ -1,0 +1,30 @@
+---
+- hosts: server1
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Clone bitbucket repo
+    git:
+     repo: clone=https://username:password@bitbucket.org/brange-name/username.git
+     dest: /var/www/
+     version: master
+     state: present
+
+  - name: create docker container
+    docker_container:
+      name: app-name
+      image: node:6.10.2
+      exposed_ports:
+        - 9000
+      ports:
+        "80:9000"
+      state: present
+  - name: install npm
+    command: chdir=/var/www/app-name npm install -g
+    with_items:
+      - forever
+      - babel-core
+      - bower
+  - name: Start the worker
+    command: env NODE_ENV=dev chdir=/var/www/app-name forever start ./index.js
