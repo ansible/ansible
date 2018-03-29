@@ -11,6 +11,7 @@ def main():
         'lib/ansible/module_utils/six/__init__.py',
         'lib/ansible/module_utils/urls.py',
         'test/units/module_utils/urls/test_open_url.py',
+        'test/units/module_utils/urls/test_fetch_url.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
