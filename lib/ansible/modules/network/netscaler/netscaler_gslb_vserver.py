@@ -20,7 +20,7 @@ short_description: Configure gslb vserver entities in Netscaler.
 description:
     - Configure gslb vserver entities in Netscaler.
 
-version_added: "2.4.0"
+version_added: "2.6"
 
 author: George Nikolopoulos (@giorgos-nikolopoulos)
 
