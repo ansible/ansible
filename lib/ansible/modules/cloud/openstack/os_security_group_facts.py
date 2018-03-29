@@ -93,9 +93,9 @@ openstack_security_groups:
           tenant_id:
 '''
 
+from __future__ import (absolute_import, division, print_function)
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_argument_spec
-from __future__ import (absolute_import, division, print_function)
 
 try:
     import shade
