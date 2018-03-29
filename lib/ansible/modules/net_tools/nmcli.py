@@ -467,7 +467,7 @@ try:
 
     from gi.repository import NetworkManager, NMClient
     HAVE_NM_CLIENT = True
-except ImportError:
+except (ImportError, ValueError):
     HAVE_NM_CLIENT = False
 
 from ansible.module_utils.basic import AnsibleModule
