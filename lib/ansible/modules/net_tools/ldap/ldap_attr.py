@@ -313,7 +313,7 @@ def main():
 
     if not HAS_LDAP:
         module.fail_json(
-            msg="Missing required 'ldap' module (pip install python-ldap)")
+            msg="Missing required 'ldap' module on target host (pip install python-ldap)")
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
