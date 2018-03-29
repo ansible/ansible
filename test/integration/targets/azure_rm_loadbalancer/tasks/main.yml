@@ -169,3 +169,16 @@
     name: ansiblepip3
     resource_group: '{{ resource_group }}'
     state: absent
+
+- name: cleanup subnet
+  azure_rm_subnet:
+      resource_group: "{{ resource_group }}"
+      name: lbtestfromansiblesb
+      virtual_network: lbtestfromansiblevn
+      state: absent
+
+- name: cleanup virtual network
+  azure_rm_virtualnetwork:
+      resource_group: "{{ resource_group }}"
+      name: lbtestfromansiblevn
+      state: absent
