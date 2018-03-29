@@ -164,17 +164,6 @@
     name: lbtestfromansible
     state: absent
 
-- name: delete load balancer (idempotent)
-  azure_rm_loadbalancer:
-    resource_group: '{{ resource_group }}'
-    name: lbtestfromansible
-    state: absent
-  register: output
-
-- name: assert idempotent
-  assert:
-    that: not output.changed
-
 - name: cleanup public ip
   azure_rm_publicipaddress:
     name: ansiblepip3
