@@ -306,14 +306,8 @@ EXAMPLES = '''
 
 import os
 
-# Python3 compat. six.moves.shlex_quote will be available once we're free to
-# upgrade beyond six-1.4 module-side.
-try:
-    from shlex import quote as shlex_quote
-except ImportError:
-    from pipes import quote as shlex_quote
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 client_addr = None
@@ -481,7 +475,7 @@ def main():
         ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
         if ssh_args:
             ssh_cmd_str += ' %s' % ssh_args
-        cmd.append('--rsh=\'%s\'' % ssh_cmd_str)
+        cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
         cmd.append('--rsync-path=%s' % rsync_path)
