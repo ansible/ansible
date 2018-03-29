@@ -28,8 +28,8 @@ def fake_old_module_open(mocker):
         mocker.patch('builtins.open', m)
 
 
-def test_shebang(fake_old_module_open):
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {})
+def test_shebang(fake_old_module_open, templar):
+    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar)
     assert shebang == '#!/usr/bin/python'
 
 
@@ -38,5 +38,5 @@ def test_shebang_task_vars(fake_old_module_open, templar):
         'ansible_python_interpreter': '/usr/bin/python3'
     }
 
-    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, task_vars=task_vars, templar=templar)
+    (data, style, shebang) = modify_module('fake_module', 'fake_path', {}, templar, task_vars=task_vars)
     assert shebang == '#!/usr/bin/python3'
