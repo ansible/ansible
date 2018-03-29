@@ -28,14 +28,14 @@ options:
     required: true
   dest:
     description:
-      - path of where to download the file to (if desired). If I(dest) is a
+      - A path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
   user:
     description:
-      - username for the module to use for Digest, Basic or WSSE authentication.
+      - A username for the module to use for Digest, Basic or WSSE authentication.
   password:
     description:
-      - password for the module to use for Digest, Basic or WSSE authentication.
+      - A password for the module to use for Digest, Basic or WSSE authentication.
   body:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
@@ -79,14 +79,14 @@ options:
         any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
         where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
         are deprecated and will be removed in some future version of Ansible.
-    choices: [ "all", "safe", "none" ]
+    choices: [ all, none, safe ]
     default: "safe"
   creates:
     description:
-      - a filename, when it already exists, this step will not be run.
+      - A filename, when it already exists, this step will not be run.
   removes:
     description:
-      - a filename, when it does not exist, this step will not be run.
+      - A filename, when it does not exist, this step will not be run.
   status_code:
     description:
       - A valid, numeric, HTTP status code that signifies success of the
@@ -111,7 +111,7 @@ options:
     version_added: '2.1'
   others:
     description:
-      - all arguments accepted by the M(file) module also work here
+      - All arguments accepted by the M(file) module also work here
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated.  This should only
@@ -376,7 +376,7 @@ def main():
         body_format=dict(type='str', default='raw', choices=['raw', 'json']),
         method=dict(type='str', default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
         return_content=dict(type='bool', default='no'),
-        follow_redirects=dict(type='str', default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
+        follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
         status_code=dict(type='list', default=[200]),
