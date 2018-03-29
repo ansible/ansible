@@ -285,7 +285,7 @@ options:
             - 'disabled'
         description:
             - "Enable logging appflow flow information."
-            
+
     edr:
         choices:
             - 'enabled'
