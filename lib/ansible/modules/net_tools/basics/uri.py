@@ -136,7 +136,7 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server. Cannot be used with I(body).
-    version_added: '2.5'
+    version_added: '2.6'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
