@@ -9,7 +9,7 @@ import socket
 
 from ansible.module_utils.six import StringIO
 from ansible.module_utils.six.moves.http_cookiejar import Cookie
-from ansible.module_utils.urls import fetch_url, urllib_error, ConnectionError, NoSSLError
+from ansible.module_utils.urls import fetch_url, urllib_error, ConnectionError, NoSSLError, httplib
 
 import pytest
 from mock import MagicMock
@@ -188,3 +188,9 @@ def test_fetch_url_exception(open_url_mock, fake_ansible_module):
     exception = info.pop('exception')
     assert info == {'msg': 'An unknown error occurred: TESTS', 'status': -1, 'url': 'http://ansible.com/'}
     assert "Exception: TESTS" in exception
+
+
+def test_fetch_url_badstatusline(open_url_mock, fake_ansible_module):
+    open_url_mock.side_effect = httplib.BadStatusLine('TESTS')
+    r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
+    assert info == {'msg': 'Connection failure: connection was closed before a valid response was received: TESTS', 'status': -1, 'url': 'http://ansible.com/'}
