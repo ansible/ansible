@@ -69,7 +69,7 @@ options:
         default: null
     comparison_results_file:
         description:
-            - Name of the file where snapshots comparison will be store.
+            - Name of the file where snapshots comparison will be stored when C(action=compare).
         required: false
         default: null
     compare_option:
@@ -354,7 +354,13 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
+    required_if = [("action", "compare", ["snapshot1", "snapshot2", "comparison_results_file"]),
+                   ("action", "create", ["snapshot_name", "description"]),
+                   ("action", "add", ["section", "show_command", "row_id", "element_key1"]),
+                   ("action", "delete", ["snapshot_name"])]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
                            supports_check_mode=True)
 
     warnings = list()
@@ -363,32 +369,9 @@ def main():
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
 
-    CREATE_PARAMS = ['snapshot_name', 'description']
-    ADD_PARAMS = ['section', 'show_command', 'row_id', 'element_key1']
-    COMPARE_PARAMS = ['snapshot1', 'snapshot2', 'comparison_results_file']
-
     if not os.path.isdir(module.params['path']):
         module.fail_json(msg='{0} is not a valid directory name.'.format(
             module.params['path']))
-
-    if action == 'create':
-        for param in CREATE_PARAMS:
-            if not module.params[param]:
-                module.fail_json(msg='snapshot_name and description are '
-                                     'required when action=create')
-    elif action == 'add':
-        for param in ADD_PARAMS:
-            if not module.params[param]:
-                module.fail_json(msg='section, show_command, row_id '
-                                     'and element_key1 are required '
-                                     'when action=add')
-    elif action == 'compare':
-        for param in COMPARE_PARAMS:
-            if not module.params[param]:
-                module.fail_json(msg='snapshot1 and snapshot2 are required '
-                                     'when action=create')
-    elif action == 'delete' and not module.params['snapshot_name']:
-        module.fail_json(msg='snapshot_name is required when action=delete')
 
     existing_snapshots = invoke('get_existing', module)
     action_results = invoke('action_%s' % action, module, existing_snapshots)

@@ -1,0 +1,2 @@
+bugfixes:
+- ios_l2_interface - fix removal of trunk vlans (https://github.com/ansible/ansible/pull/37389)
