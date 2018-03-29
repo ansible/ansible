@@ -59,12 +59,12 @@ options:
                 choices:
                     - Static
                     - Dynamic
-                version_added: 2.6                    
+                version_added: 2.6
             subnet:
                 description:
                     - The reference of the subnet resource.
                     - Should be an existing subnet's resource id.
-                version_added: 2.6                    
+                version_added: 2.6
         version_added: 2.5
     backend_address_pools:
         description: List of backend address pools
