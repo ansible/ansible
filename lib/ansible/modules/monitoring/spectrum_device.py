@@ -224,7 +224,7 @@ def get_device(device_ip):
     model_address = model.find('./*[@id="0x12d7f"]').text
 
     # derive the landscape handler from the model handler of the device
-    model_landscape = "0x%x" % int(int(model_handle, 16) / 0x100000 * 0x100000)
+    model_landscape = "0x%x" % int(int(model_handle, 16) // 0x100000 * 0x100000)
 
     device = dict(
         model_handle=model_handle,
@@ -264,7 +264,7 @@ def add_device():
     model = root.find('ca:model', namespace)
 
     model_handle = model.get('mh')
-    model_landscape = "0x%x" % int(int(model_handle, 16) / 0x100000 * 0x100000)
+    model_landscape = "0x%x" % int(int(model_handle, 16) // 0x100000 * 0x100000)
 
     device = dict(
         model_handle=model_handle,
