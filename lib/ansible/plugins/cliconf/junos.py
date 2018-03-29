@@ -25,7 +25,7 @@ from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
-from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.cliconf import CliconfBase
 
 
 class Cliconf(CliconfBase):
@@ -84,10 +84,8 @@ class Cliconf(CliconfBase):
         command += b' and-quit'
         return self.send_command(command)
 
-    def discard_changes(self, rollback_id=None):
-        command = b'rollback'
-        if rollback_id is not None:
-            command += b' %s' % int(rollback_id)
+    def discard_changes(self):
+        command = b'rollback 0'
         for cmd in chain(to_list(command), b'exit'):
             self.send_command(cmd)
 

@@ -60,6 +60,8 @@ options:
   force:
     description:
       - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes)'
+      - "This option will disable checking both the packages' signatures and the certificates of the
+        web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
       - '**This is a destructive operation with the potential to destroy your system, and it should almost never be used.**
          Please also see C(man apt-get) for more information.'
@@ -68,6 +70,7 @@ options:
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
+      - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
     type: bool
     default: 'no'
     version_added: "2.1"
@@ -252,7 +255,6 @@ import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_url
 
@@ -273,6 +275,7 @@ APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
+APT_MARK_INVALID_OP = 'Invalid operation'
 
 HAS_PYTHON_APT = True
 try:
@@ -467,6 +470,22 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
+def mark_installed_manually(m, packages):
+    if not packages:
+        return
+
+    apt_mark_cmd_path = m.get_bin_path("apt-mark", required=True)
+    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    rc, out, err = m.run_command(cmd)
+
+    if APT_MARK_INVALID_OP in err:
+        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
+        rc, out, err = m.run_command(cmd)
+
+    if rc != 0:
+        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+
+
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
@@ -475,6 +494,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
+    package_names = []
     for package in pkgspec:
         if build_dep:
             # Let apt decide what to install
@@ -482,6 +502,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             continue
 
         name, version = package_split(package)
+        package_names.append(name)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if (not installed and not only_upgrade) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
@@ -543,9 +564,14 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
-        return (status, data)
     else:
-        return (True, dict(changed=False))
+        status = True
+        data = dict(changed=False)
+
+    if not build_dep:
+        mark_installed_manually(m, package_names)
+
+    return (status, data)
 
 
 def get_field_of_deb(m, deb_file, field="Version"):
@@ -588,9 +614,8 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             # to install so they're all done in one shot
             deps_to_install.extend(pkg.missing_deps)
 
-        except Exception:
-            e = get_exception()
-            m.fail_json(msg="Unable to install package: %s" % str(e))
+        except Exception as e:
+            m.fail_json(msg="Unable to install package: %s" % to_native(e))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
@@ -714,7 +739,7 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
 
     if autoremove:
         autoremove = '--auto-remove'
@@ -731,7 +756,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
-        upgrade_command = "dist-upgrade"
+        upgrade_command = "dist-upgrade %s" % (autoremove)
     elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
@@ -805,9 +830,8 @@ def download(module, deb):
             f.write(data)
         f.close()
         deb = package
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, e))
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
 
     return deb
 
@@ -843,9 +867,8 @@ def get_cache(module):
     cache = None
     try:
         cache = apt.Cache()
-    except SystemError:
-        e = get_exception()
-        if '/var/lib/apt/lists/' in str(e).lower():
+    except SystemError as e:
+        if '/var/lib/apt/lists/' in to_native(e).lower():
             # update cache until files are fixed or retries exceeded
             retries = 0
             while retries < 2:
@@ -854,11 +877,11 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (to_native(e), so + se), rc=rc)
             # try again
             cache = apt.Cache()
         else:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=to_native(e))
     return cache
 
 
@@ -895,7 +918,7 @@ def main():
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
             module.run_command(['apt-get', 'update'], check_rc=True)
-            module.run_command(['apt-get', 'install', PYTHON_APT, '-y', '-q'], check_rc=True)
+            module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile
@@ -957,14 +980,15 @@ def main():
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
                 # Retry to update the cache up to 3 times
+                err = ''
                 for retry in range(3):
                     try:
                         cache.update()
                         break
-                    except apt.cache.FetchFailedException:
-                        pass
+                    except apt.cache.FetchFailedException as e:
+                        err = to_native(e)
                 else:
-                    module.fail_json(msg='Failed to update apt cache.')
+                    module.fail_json(msg='Failed to update apt cache: %s' % err)
                 cache.open(progress=None)
                 updated_cache = True
                 mtimestamp, updated_cache_time = get_updated_cache_time()

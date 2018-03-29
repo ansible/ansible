@@ -39,39 +39,33 @@ options:
   mode:
     description:
       - Mode for the link aggregation group.
-    required: false
-    default: on
-    choices: ['active','passive','on']
+    choices: [ active, 'on', passive ]
+    default: 'on'
   min_links:
     description:
       - Minimum number of ports required up
         before bringing up the link aggregation group.
-    required: false
-    default: null
   members:
     description:
       - List of interfaces that will be managed in the link aggregation group.
-    required: false
-    default: null
   force:
     description:
       - When true it forces link aggregation group members to match what
         is declared in the members param. This can be used to remove members.
-    required: false
-    choices: [True, False]
-    default: False
+    type: bool
+    default: 'no'
   aggregate:
     description: List of link aggregation definitions.
   state:
     description:
       - State of the link aggregation group.
-    required: false
     default: present
     choices: ['present','absent']
   purge:
     description:
       - Purge links not defined in the I(aggregate) parameter.
-    default: no
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -133,19 +127,21 @@ import re
 from copy import deepcopy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 
 
 def execute_show_command(command, module):
-    provider = module.params['provider']
-    if provider['transport'] == 'cli':
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
+
+    if network_api == 'cliconf':
         if 'show port-channel summary' in command:
             command += ' | json'
         cmds = [command]
         body = run_commands(module, cmds)
-    elif provider['transport'] == 'nxapi':
+    elif network_api == 'nxapi':
         cmds = [command]
         body = run_commands(module, cmds)
 

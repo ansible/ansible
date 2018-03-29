@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Matt Davis <mdavis_ansible@rolpdog.com>
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -19,7 +19,7 @@ module: win_updates
 version_added: "2.0"
 short_description: Download and install Windows updates
 description:
-    - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client
+    - Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client.
 options:
     blacklist:
         description:
@@ -29,13 +29,11 @@ options:
           skipped and not installed.
         - Each entry can either be the KB article or Update title as a regex
           according to the PowerShell regex rules.
-        required: false
         version_added: '2.5'
     category_names:
         description:
         - A scalar or list of categories to install updates from
-        required: false
-        default: ["CriticalUpdates","SecurityUpdates","UpdateRollups"]
+        default: [ CriticalUpdates, SecurityUpdates, UpdateRollups ]
         choices:
         - Application
         - Connectors
@@ -70,15 +68,11 @@ options:
         description:
         - Controls whether found updates are returned as a list or actually installed.
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
-        required: false
+        choices: [ installed, searched ]
         default: installed
-        choices:
-        - installed
-        - searched
     log_path:
         description:
         - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
-        required: false
     whitelist:
         description:
         - A list of update titles or KB numbers that can be used to specify
@@ -90,9 +84,9 @@ options:
         - The whitelist is only validated on updates that were found based on
           I(category_names). It will not force the module to install an update
           if it was not in the category specified.
-        required: false
         version_added: '2.5'
-author: "Matt Davis (@nitzmahone)"
+author:
+- Matt Davis (@nitzmahone)
 notes:
 - C(win_updates) must be run by a user with membership in the local Administrators group.
 - C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
@@ -117,11 +111,11 @@ EXAMPLES = r'''
   win_updates:
     category_names: SecurityUpdates
 
-- name: Search-only, return list of found updates (if any), log to c:\ansible_wu.txt
+- name: Search-only, return list of found updates (if any), log to C:\ansible_wu.txt
   win_updates:
     category_names: SecurityUpdates
     state: searched
-    log_path: c:\ansible_wu.txt
+    log_path: C:\ansible_wu.txt
 
 - name: Install all security updates with automatic reboots
   win_updates:

@@ -25,41 +25,35 @@ description:
 options:
     job_template:
       description:
-        - Name of the job_template to use.
+        - Name of the job template to use.
       required: True
     job_explanation:
       description:
         - Job explanation field.
-      default: null
     job_type:
       description:
         - Job_type to use for the job, only used if prompt for job_type is set.
       choices: ["run", "check", "scan"]
-      default: null
     inventory:
       description:
         - Inventory to use for the job, only used if prompt for inventory is set.
-      default: null
     credential:
       description:
         - Credential to use for job, only used if prompt for credential is set.
-      default: null
     extra_vars:
       description:
-        - Extra_vars to use for the job_template. Prepend '@' if a file.
-      default: null
+        - Extra_vars to use for the job_template. Prepend C(@) if a file.
     limit:
       description:
-        - Limit to use for the job_template.
-      default: null
+        - Limit to use for the I(job_template).
     tags:
       description:
         - Specific tags to use for from playbook.
-      default: null
     use_job_endpoint:
       description:
         - Disable launching jobs from job template.
-      default: False
+      type: bool
+      default: 'no'
 extends_documentation_fragment: tower
 '''
 

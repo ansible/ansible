@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: tower_job_template
 author: "Wayne Witzel III (@wwitzel3)"
 version_added: "2.3"
-short_description: create, update, or destroy Ansible Tower job_template.
+short_description: create, update, or destroy Ansible Tower job template.
 description:
     - Create, update, or destroy Ansible Tower job templates. See
       U(https://www.ansible.com/tower) for an overview.
@@ -29,112 +29,87 @@ options:
       required: True
     description:
       description:
-        - Description to use for the job_template.
-      required: False
-      default: null
+        - Description to use for the job template.
     job_type:
       description:
-        - The job_type to use for the job_template.
+        - The job_type to use for the job template.
       required: True
       choices: ["run", "check", "scan"]
     inventory:
       description:
-        - Inventory to use for the job_template.
-      required: False
-      default: null
+        - Inventory to use for the job template.
     project:
       description:
-        - Project to use for the job_template.
+        - Project to use for the job template.
       required: True
     playbook:
       description:
-        - Playbook to use for the job_template.
+        - Playbook to use for the job template.
       required: True
     machine_credential:
       description:
-        - Machine_credential to use for the job_template.
-      required: False
-      default: null
+        - Machine_credential to use for the job template.
     cloud_credential:
       description:
-        - Cloud_credential to use for the job_template.
-      required: False
-      default: null
+        - Cloud_credential to use for the job template.
     network_credential:
       description:
-        - The network_credential to use for the job_template.
-      required: False
-      default: null
+        - The network_credential to use for the job template.
     forks:
       description:
         - The number of parallel or simultaneous processes to use while executing the playbook.
-      required: False
-      default: null
     limit:
       description:
         - A host pattern to further constrain the list of hosts managed or affected by the playbook
-      required: False
-      default: null
     verbosity:
       description:
         - Control the output level Ansible produces as the playbook runs.
-      required: False
       choices: ["verbose", "debug"]
-      default: null
     job_tags:
       description:
-        - The job_tags to use for the job_template.
-      required: False
-      default: null
+        - The job_tags to use for the job template.
     skip_tags:
       description:
-        - The skip_tags to use for the job_template.
-      required: False
-      default: null
+        - The skip_tags to use for the job template.
     host_config_key:
       description:
         - Allow provisioning callbacks using this host config key.
-      required: False
-      default: null
     extra_vars_path:
       description:
-        - Path to the extra_vars yaml file.
-      required: False
-      default: null
+        - Path to the C(extra_vars) YAML file.
     ask_extra_vars:
       description:
-        - Prompt user for extra_vars on launch.
-      required: False
-      default: False
+        - Prompt user for C(extra_vars) on launch.
+      type: bool
+      default: 'no'
     ask_tags:
       description:
         - Prompt user for job tags on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_job_type:
       description:
         - Prompt user for job type on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_inventory:
       description:
         - Propmt user for inventory on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     ask_credential:
       description:
         - Prompt user for credential on launch.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     become_enabled:
       description:
-        - Should become_enabled.
-      required: False
-      default: False
+        - Activate privilege escalation.
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower

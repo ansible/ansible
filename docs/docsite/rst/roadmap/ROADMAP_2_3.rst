@@ -1,6 +1,6 @@
-============================
-Ansible by Red Hat, Core 2.3
-============================
+===========
+Ansible 2.3
+===========
 **Target: Mid April 2017**
 
 .. contents:: Topics
@@ -145,7 +145,7 @@ Amazon
 Lead by ryansb
 
 - Improve ec2.py integration tests **(partial, more to do in 2.4)**
-- ELB version 2 **(pushed - needs_revision [PR](https://github.com/ansible/ansible/pull/19491))**
+- ELB version 2 **(pushed - needs_revision)** `PR <https://github.com/ansible/ansible/pull/19491>`_
 - CloudFormation YAML, cross-stack reference, and roles support **(done)**
 - ECS module refactor **(done)**
 - AWS module unit testing w/ placebo (boto3 only) **(pushed 2.4)**

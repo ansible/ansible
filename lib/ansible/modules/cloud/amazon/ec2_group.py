@@ -167,6 +167,13 @@ EXAMPLES = '''
       - proto: all
         # the containing group name may be specified here
         group_name: example
+      - proto: all
+        # in the 'proto' attribute, if you specify -1, all, or a protocol number other than tcp, udp, icmp, or 58 (ICMPv6),
+        # traffic on all ports is allowed, regardless of any ports you specify
+        from_port: 10050 # this value is ignored
+        to_port: 10050 # this value is ignored
+        cidr_ip: 10.0.0.0/8
+
     rules_egress:
       - proto: tcp
         from_port: 80
@@ -789,22 +796,24 @@ def main():
 
             changed = True
 
-        if tags is not None:
+        if tags is not None and group is not None:
             current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
             tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, tags, purge_tags)
             if tags_to_delete:
-                try:
-                    client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
-                except botocore.exceptions.ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                if not module.check_mode:
+                    try:
+                        client.delete_tags(Resources=[group['GroupId']], Tags=[{'Key': tag} for tag in tags_to_delete])
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
             # Add/update tags
             if tags_need_modify:
-                try:
-                    client.create_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
-                except botocore.exceptions.ClientError as e:
-                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+                if not module.check_mode:
+                    try:
+                        client.create_tags(Resources=[group['GroupId']], Tags=ansible_dict_to_boto3_tag_list(tags_need_modify))
+                    except botocore.exceptions.ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
     else:
@@ -932,7 +941,7 @@ def main():
                     # If rule already exists, don't later delete it
                     changed, ip_permission = authorize_ip("out", changed, client, group, groupRules, ipv6,
                                                           ip_permission, module, rule, "ipv6")
-        elif vpc_id is not None:
+        elif 'VpcId' in group:
             # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added

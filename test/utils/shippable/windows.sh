@@ -5,7 +5,8 @@ set -o pipefail
 declare -a args
 IFS='/:' read -ra args <<< "$1"
 
-target="windows/ci/group${args[1]}/"
+version="${args[1]}"
+target="windows/ci/group${args[2]}/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
@@ -19,6 +20,9 @@ python_versions=(
     2.7
 )
 
+# version to test when only testing a single version
+single_version=2012-R2
+
 # shellcheck disable=SC2086
 ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
@@ -29,18 +33,19 @@ if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Running Windows integration tests for multiple versions concurrently."
 
     platforms=(
-        --windows 2008
-        --windows 2008-R2
-        --windows 2012
-        --windows 2012-R2
-        --windows 2016
+        --windows "${version}"
     )
 else
     echo "No changes requiring integration tests specific to Windows were detected."
-    echo "Running Windows integration tests for a single version only."
+    echo "Running Windows integration tests for a single version only: ${single_version}"
+
+    if [ "${version}" != "${single_version}" ]; then
+        echo "Skipping this job since it is for: ${version}"
+        exit 0
+    fi
 
     platforms=(
-        --windows 2012-R2
+        --windows "${version}"
     )
 fi
 

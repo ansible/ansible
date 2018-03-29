@@ -50,7 +50,6 @@ options:
   db_name:
     description:
       - Name of the database.
-    default: null
   availability_zone:
     description:
       - availability zone in which to launch cluster
@@ -58,7 +57,6 @@ options:
   number_of_nodes:
     description:
       - Number of nodes. Only used when cluster_type=multi-node.
-    default: null
   cluster_subnet_group_name:
     description:
       - which subnet to place the cluster
@@ -66,79 +64,69 @@ options:
   cluster_security_groups:
     description:
       - in which security group the cluster belongs
-    default: null
     aliases: ['security_groups']
   vpc_security_group_ids:
     description:
       - VPC security group
     aliases: ['vpc_security_groups']
-    default: null
   skip_final_cluster_snapshot:
     description:
       - skip a final snapshot before deleting the cluster. Used only when command=delete.
     aliases: ['skip_final_snapshot']
-    default: false
+    default: 'no'
     version_added: "2.4"
   final_cluster_snapshot_identifier:
     description:
       - identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided,
         final_cluster_snapshot_identifier must be false. Used only when command=delete.
     aliases: ['final_snapshot_id']
-    default: null
     version_added: "2.4"
   preferred_maintenance_window:
     description:
       - maintenance window
     aliases: ['maintance_window', 'maint_window']
-    default: null
   cluster_parameter_group_name:
     description:
       - name of the cluster parameter group
     aliases: ['param_group_name']
-    default: null
   automated_snapshot_retention_period:
     description:
       - period when the snapshot take place
     aliases: ['retention_period']
-    default: null
   port:
     description:
       - which port the cluster is listining
-    default: null
   cluster_version:
     description:
       - which version the cluster should have
     aliases: ['version']
     choices: ['1.0']
-    default: null
   allow_version_upgrade:
     description:
       - flag to determinate if upgrade of version is possible
     aliases: ['version_upgrade']
-    default: true
+    default: 'yes'
   publicly_accessible:
     description:
       - if the cluster is accessible publicly or not
-    default: false
+    default: 'no'
   encrypted:
     description:
       -  if the cluster is encrypted or not
-    default: false
+    default: 'no'
   elastic_ip:
     description:
       - if the cluster has an elastic IP or not
-    default: null
   new_cluster_identifier:
     description:
       - Only used when command=modify.
     aliases: ['new_identifier']
-    default: null
   wait:
     description:
       - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be
         terminated.
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

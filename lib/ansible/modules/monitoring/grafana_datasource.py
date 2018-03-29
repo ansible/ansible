@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2017, Thierry Sallé (@tsalle)
+
+# Copyright: (c) 2017, Thierry Sallé (@tsalle)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,171 +16,151 @@ DOCUMENTATION = '''
 ---
 module: grafana_datasource
 author:
-  - "Thierry Sallé (@tsalle)"
+  - Thierry Sallé (@tsalle)
 version_added: "2.5"
-short_description: Manage grafana datasources
+short_description: Manage Grafana datasources
 description:
-  - Create/update/delete grafana datasources via API
+  - Create/update/delete Grafana datasources via API.
 options:
   grafana_url:
-    required: true
     description:
-      - Grafana url
+      - The Grafana URL.
+    required: true
   name:
-    required: true
     description:
-      - Name of the datasource
+      - The name of the datasource.
+    required: true
   ds_type:
-    required: true
-    choices: [graphite,prometheus,elasticsearch,influxdb,opentsdb,mysql,postgres]
     description:
-     - Type of the datasource
+     - The type of the datasource.
+    required: true
+    choices: [ elasticsearch, graphite, influxdb, mysql, opentsdb, postgres, prometheus ]
   url:
+    description:
+      - The URL of the datasource.
     required: true
-    description:
-      - Url of the datasource
   access:
-    required: false
+    description:
+      - The access mode for this datasource.
+    choices: [ direct, proxy ]
     default: proxy
-    choices: [proxy,direct]
-    description:
-      - Access mode for this datasource
   grafana_user:
-    required: false
-    default: admin
     description:
-      - Grafana API user
+      - The Grafana API user.
+    default: admin
   grafana_password:
-    required: false
+    description:
+      - The Grafana API password.
     default: admin
-    description:
-      - Grafana API password
   grafana_api_key:
-    required: false
     description:
-      - Grafana API key
-      - If set, grafana_user and grafana_password will be ignored
+      - The Grafana API key.
+      - If set, C(grafana_user) and C(grafana_password) will be ignored.
   database:
-    required: false
     description:
       - Name of the database for the datasource.
-      - This options is required when the ds_type is influxdb, elasticsearch (index name), mysql or postgres
+      - This options is required when the C(ds_type) is C(influxdb), C(elasticsearch) (index name), C(mysql) or C(postgres).
+    required: false
   user:
-    required: false
     description:
-      - Datasource login user for influxdb datasources
+      - The datasource login user for influxdb datasources.
   password:
-    required: false
     description:
-      - Datasource password
+      - The datasource password
   basic_auth_user:
-    required: false
     description:
-      - Datasource basic auth user.
+      - The datasource basic auth user.
       - Setting this option with basic_auth_password will enable basic auth.
   basic_auth_password:
-    required: false
     description:
-      - Datasource basic auth password, when basic auth is true
+      - The datasource basic auth password, when C(basic auth) is C(yes).
   with_credentials:
-    required: false
-    default: false
     description:
       - Whether credentials such as cookies or auth headers should be sent with cross-site requests.
+    type: bool
+    default: 'no'
   tls_client_cert:
-    required: false
     description:
-      - client tls certificate.
-      - If tls_client_cert and tls_client_key are set, this will enable tls auth.
-      - begins with ----- BEGIN CERTIFICATE -----
+      - The client TLS certificate.
+      - If C(tls_client_cert) and C(tls_client_key) are set, this will enable TLS authentication.
+      - Starts with ----- BEGIN CERTIFICATE -----
   tls_client_key:
-    required: false
     description:
-      - client tls private key
-      - befins with ----- BEGIN RSA PRIVATE KEY -----
+      - The client TLS private key
+      - Starts with ----- BEGIN RSA PRIVATE KEY -----
   tls_ca_cert:
-    required: false
     description:
-      - tls ca certificate for self signed certificates.
-      - only used when tls_client_cert and tls_client_key are set
+      - The TLS CA certificate for self signed certificates.
+      - Only used when C(tls_client_cert) and C(tls_client_key) are set.
   is_default:
-    required: false
-    default: false
     description:
-      - Make this datasource the default one
+      - Make this datasource the default one.
+    type: bool
+    default: 'no'
   org_id:
-    required: false
     description:
-      - Grafana Organisation ID in which the datasource should be created
-      - Not used when grafana_api_key is set, because the grafana_api_key only belong to one organisation.
+      - Grafana Organisation ID in which the datasource should be created.
+      - Not used when C(grafana_api_key) is set, because the C(grafana_api_key) only belong to one organisation.
     default: 1
   state:
-    required: false
-    default: present
-    choices: [present, absent]
     description:
       - Status of the datasource
+    choices: [ absent, present ]
+    default: present
   es_version:
-    required: false
-    default: 5
-    choices: [2, 5, 56]
     description:
-      - Elasticsearch version (for ds_type = elasticsearch only)
-      - Version 56 is for elasticsearch 5.6+ where tou can specify the max_concurrent_shard_requests option.
+      - Elasticsearch version (for C(ds_type = elasticsearch) only)
+      - Version 56 is for elasticsearch 5.6+ where tou can specify the C(max_concurrent_shard_requests) option.
+    choices: [ 2, 5, 56 ]
+    default: 5
   max_concurrent_shard_requests:
-    required: false
-    default: 256
     description:
       - Starting with elasticsearch 5.6, you can specify the max concurrent shard per requests.
+    default: 256
   time_field:
-    required: false
-    default: timestamp
     description:
-      - Name of the time field in elasticsearch ds
+      - Name of the time field in elasticsearch ds.
       - For example C(@timestamp)
+    default: timestamp
   time_interval:
-    required: false
     description:
-      - Minimum group by interval for influxdb or elasticsearch datasources
-      - for example '>10s'
+      - Minimum group by interval for C(influxdb) or C(elasticsearch) datasources.
+      - for example C(>10s)
   interval:
-    required: false
+    description:
+      - For elasticsearch C(ds_type), this is the index pattern used.
     choices: ['', 'Hourly', 'Daily', 'Weekly', 'Monthly', 'Yearly']
-    description:
-      - for elasticsearch ds_type, this is the index pattern used.
   tsdb_version:
-    required: false
-    choices: [1, 2, 3]
     description:
-      - opentsdb version (1 for <= 2.1, 2 for ==2.2, 3 for ==2.3)
+      - The opentsdb version.
+      - Use C(1) for <=2.1, C(2) for ==2.2, C(3) for ==2.3.
+    choices: [ 1, 2, 3 ]
     default: 1
   tsdb_resolution:
-    required: false
-    choices: [second, millisecond]
     description:
-      - opentsdb time resolution
-    default: 1
+      - The opentsdb time resolution.
+    choices: [ millisecond, second ]
+    default: second
   sslmode:
-    choices: ['disable','require','verify-ca','verify-full']
     description:
-      - SSL mode for postgres datasoure type.
+      - SSL mode for C(postgres) datasoure type.
+    choices: [ disable, require, verify-ca, verify-full ]
   validate_certs:
-    required: false
-    default: True
     description:
-      - Validate or not grafana certificate
+      - Whether to validate the Grafana certificate.
+    type: bool
+    default: 'yes'
 '''
 
 EXAMPLES = '''
 ---
-- name: create elasticsearch datasource
+- name: Create elasticsearch datasource
   grafana_datasource:
     name: my_elastic
     grafana_url: http://grafana.company.com
-    type: elasticsearch
+    ds_type: elasticsearch
     url: https://elasticsearch.company.com:9200
     database: my-index_*
-    basic_auth: true
     basic_auth_user: grafana
     basic_auth_password: xxxxxxxx
     json_data: '{"esVersion":5, "timeField": "@timestamp"}'
@@ -429,8 +409,8 @@ def grafana_delete_datasource(module, data):
         else:
             raise GrafanaAPIException('Unable to update the datasource id %s : %s' % (ds['id'], info))
     else:
-        # datasource does not exists : do nothing
-        result = {'msg': "Datasource %s does not exists" % data['name'],
+        # datasource does not exist, do nothing
+        result = {'msg': "Datasource %s does not exist." % data['name'],
                   'changed': False,
                   'id': 0,
                   'name': data['name']}

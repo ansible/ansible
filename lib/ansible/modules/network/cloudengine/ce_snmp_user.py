@@ -33,50 +33,32 @@ options:
     acl_number:
         description:
             - Access control list number.
-        required: false
-        default: null
     usm_user_name:
         description:
             - Unique name to identify the USM user.
-        required: false
-        default: null
     aaa_local_user:
         description:
             - Unique name to identify the local user.
-        required: false
-        default: null
     remote_engine_id:
         description:
             - Remote engine id of the USM user.
-        required: false
-        default: null
     user_group:
         description:
             - Name of the group where user belongs to.
-        required: false
-        default: null
     auth_protocol:
         description:
             - Authentication protocol.
-        required: false
-        default: null
         choices: ['noAuth', 'md5', 'sha']
     auth_key:
         description:
             - The authentication password. Password length, 8-255 characters.
-        required: false
-        default: null
     priv_protocol:
         description:
             - Encryption protocol.
-        required: false
-        default: null
         choices: ['noPriv', 'des56', '3des168', 'aes128', 'aes192', 'aes256']
     priv_key:
         description:
             - The encryption password. Password length 8-255 characters.
-        required: false
-        default: null
 '''
 
 EXAMPLES = '''

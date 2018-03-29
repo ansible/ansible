@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2016 Ansible Project
+# Copyright: (c) 2016, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -32,22 +32,22 @@ options:
         description:
             - Choose the file property against which we compare C(age). The
               default attribute we compare with is the last modification time.
+        choices: [ atime, ctime, mtime ]
         default: mtime
-        choices: ['atime', 'mtime', 'ctime']
     checksum_algorithm:
         description:
             - Algorithm to determine the checksum of a file. Will throw an error
               if the host is unable to use specified algorithm.
+        choices: [ md5, sha1, sha256, sha384, sha512 ]
         default: sha1
-        choices: ['md5', 'sha1', 'sha256', 'sha384', 'sha512']
     file_type:
         description: Type of file to search for.
+        choices: [ directory, file ]
         default: file
-        choices: ['file', 'directory']
     follow:
         description:
-            - Set this to true to follow symlinks in the path. This needs to
-              be used in conjunction with C(recurse).
+            - Set this to C(yes) to follow symlinks in the path.
+            - This needs to be used in conjunction with C(recurse).
         type: bool
         default: 'no'
     get_checksum:
@@ -64,7 +64,7 @@ options:
         description:
             - List of paths of directories to search for files or folders in.
               This can be supplied as a single path or a list of paths.
-        required: true
+        required: yes
     patterns:
         description:
             - One or more (powershell or regex) patterns to compare filenames
@@ -87,7 +87,7 @@ options:
               evaluated for symbolic links.
     use_regex:
         description:
-            - Will set patterns to run as a regex check if true.
+            - Will set patterns to run as a regex check if set to C(yes).
         type: bool
         default: 'no'
 author:
@@ -97,99 +97,103 @@ author:
 EXAMPLES = r'''
 - name: Find files in path
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
 
 - name: Find hidden files in path
   win_find:
-    paths: D:\temp
-    hidden: True
+    paths: D:\Temp
+    hidden: yes
 
 - name: Find files in multiple paths
   win_find:
-    paths: ['C:\temp', 'D:\temp']
+    paths:
+    - C:\Temp
+    - D:\Temp
 
 - name: Find files in directory while searching recursively
   win_find:
-    paths: D:\temp
-    recurse: True
+    paths: D:\Temp
+    recurse: yes
 
 - name: Find files in directory while following symlinks
   win_find:
-    paths: D:\temp
-    recurse: True
-    follow: True
+    paths: D:\Temp
+    recurse: yes
+    follow: yes
 
 - name: Find files with .log and .out extension using powershell wildcards
   win_find:
-    paths: D:\temp
-    patterns: ['*.log', '*.out']
+    paths: D:\Temp
+    patterns: [ '*.log', '*.out' ]
 
 - name: Find files in path based on regex pattern
   win_find:
-    paths: D:\temp
-    patterns: 'out_\d{8}-\d{6}.log'
+    paths: D:\Temp
+    patterns: out_\d{8}-\d{6}.log
 
 - name: Find files older than 1 day
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     age: 86400
 
 - name: Find files older than 1 day based on create time
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     age: 86400
     age_stamp: ctime
 
 - name: Find files older than 1 day with unit syntax
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     age: 1d
 
 - name: Find files newer than 1 hour
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     age: -3600
 
 - name: Find files newer than 1 hour with unit syntax
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     age: -1h
 
 - name: Find files larger than 1MB
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     size: 1048576
 
 - name: Find files larger than 1GB with unit syntax
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     size: 1g
 
 - name: Find files smaller than 1MB
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     size: -1048576
 
 - name: Find files smaller than 1GB with unit syntax
   win_find:
-    paths: D:\temp
+    paths: D:\Temp
     size: -1g
 
 - name: Find folders/symlinks in multiple paths
   win_find:
-    paths: ['C:\temp', 'D:\temp']
+    paths:
+    - C:\Temp
+    - D:\Temp
     file_type: directory
 
 - name: Find files and return SHA256 checksum of files found
   win_find:
-    paths: C:\temp
-    get_checksum: True
+    paths: C:\Temp
+    get_checksum: yes
     checksum_algorithm: sha256
 
 - name: Find files and do not return the checksum
   win_find:
-    path: C:\temp
-    get_checksum: False
+    paths: C:\Temp
+    get_checksum: no
 '''
 
 RETURN = r'''

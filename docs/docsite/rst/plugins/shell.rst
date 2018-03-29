@@ -25,17 +25,17 @@ In this case, you will also want to update the :ref:`ansible_executable` to matc
 
 .. seealso::
 
-   :doc:`../playbooks`
+   :doc:`../user_guide/playbooks`
        An introduction to playbooks
    :doc:`inventory`
        Ansible inventory plugins
    :doc:`callback`
        Ansible callback plugins
-   :doc:`../playbooks_filters`
+   :doc:`../user_guide/playbooks_filters`
        Jinja2 filter plugins
-   :doc:`../playbooks_tests`
+   :doc:`../user_guide/playbooks_tests`
        Jinja2 test plugins
-   :doc:`../playbooks_lookups`
+   :doc:`../user_guide/playbooks_lookups`
        Jinja2 lookup plugins
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

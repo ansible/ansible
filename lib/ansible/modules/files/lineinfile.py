@@ -42,10 +42,10 @@ options:
   regexp:
     description:
       - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found; only the last line
+        C(state=present), the pattern to replace if found. Only the last line
         found will be replaced. For C(state=absent), the pattern of the line(s)
-        to remove.  Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        to remove. Uses Python regular expressions.
+        See U(http://docs.python.org/2/library/re.html).
     version_added: '1.7'
   state:
     description:
@@ -150,10 +150,11 @@ EXAMPLES = r"""
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if it does not exist, without passing regexp
+# Add a line to a file if the file does not exist, without passing regexp
 - lineinfile:
     path: /tmp/testfile
     line: '192.168.1.99 foo.lab.net foo'
+    create: yes
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile:
@@ -238,7 +239,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         b_destpath = os.path.dirname(b_dest)
         if not os.path.exists(b_destpath) and not module.check_mode:
-            os.makedirs(b_destpath)
+            try:
+                os.makedirs(b_destpath)
+            except Exception as e:
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+
         b_lines = []
     else:
         f = open(b_dest, 'rb')
@@ -278,7 +283,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 if firstmatch:
                     break
             if insertbefore:
-                # + 1 for the previous line
+                # index[1] for the previous line
                 index[1] = lineno
                 if firstmatch:
                     break
@@ -297,44 +302,49 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # Add lines when the regexp match already exists somewhere else in the file
-        if insertafter and insertafter != 'EOF':
+        # If a regexp is specified and a match is found anywhere in the file, do
+        # not insert the line before or after.
+        if regexp is None and m:
 
-            # Ensure there is a line separator after the found string
-            # at the end of the file.
-            if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
-                b_lines[-1] = b_lines[-1] + b_linesep
+            # Insert lines
+            if insertafter and insertafter != 'EOF':
 
-            # If the line to insert after is at the end of the file
-            # use the appropriate index value.
-            if len(b_lines) == index[1]:
-                if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                    b_lines.append(b_line + b_linesep)
+                # Ensure there is a line separator after the found string
+                # at the end of the file.
+                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                    b_lines[-1] = b_lines[-1] + b_linesep
+
+                # If the line to insert after is at the end of the file
+                # use the appropriate index value.
+                if len(b_lines) == index[1]:
+                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                        b_lines.append(b_line + b_linesep)
+                        msg = 'line added'
+                        changed = True
+                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    b_lines.insert(index[1], b_line + b_linesep)
                     msg = 'line added'
                     changed = True
-            elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
-                b_lines.insert(index[1], b_line + b_linesep)
-                msg = 'line added'
-                changed = True
 
-        elif insertbefore:
-            # If the line to insert before is at the beginning of the file
-            # use the appropriate index value.
-            if index[1] == 0:
-                if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+            elif insertbefore:
+                # If the line to insert before is at the beginning of the file
+                # use the appropriate index value.
+                if index[1] == 0:
+                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                        b_lines.insert(index[1], b_line + b_linesep)
+                        msg = 'line replaced'
+                        changed = True
+
+                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
                     msg = 'line replaced'
                     changed = True
-
-            elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                b_lines.insert(index[1], b_line + b_linesep)
-                msg = 'line replaced'
-                changed = True
 
         elif b_lines[index[0]] != b_new_line:
             b_lines[index[0]] = b_new_line
             msg = 'line replaced'
             changed = True
+
     elif backrefs:
         # Do absolutely nothing, since it's not safe generating the line
         # without the regexp matching to populate the backrefs.

@@ -41,7 +41,6 @@ options:
     state:
         description:
             - Whether the website should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -53,22 +52,18 @@ options:
     https:
         description:
             - Whether or not to use HTTPS
-        required: false
-        choices:
-            - true
-            - false
-        default: 'false'
+        type: bool
+        default: 'no'
 
     site_apps:
         description:
             - A mapping of URLs to apps
-        required: false
+        default: []
 
     subdomains:
         description:
             - A list of subdomains associated with this site.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -97,12 +92,12 @@ EXAMPLES = '''
 '''
 
 import socket
-import xmlrpclib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():

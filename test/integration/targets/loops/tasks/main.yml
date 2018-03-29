@@ -1,3 +1,7 @@
+#
+# loop_control/pause
+#
+
 - name: Measure time before
   shell: date +%s
   register: before
@@ -146,3 +150,55 @@
     that:
       - 'results10["results"][0]["ping"] == "Hello World"'
       - 'results10["results"][1]["ping"] == "Olá Mundo"'
+
+#
+# loop_control/index_var
+#
+
+- name: check that the index var is created and increments as expected
+  assert:
+    that: my_idx == item|int
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+- name: check that value of index var matches position of current item in source list
+  assert:
+    that: 'test_var.index(item) == my_idx'
+  vars:
+    test_var: ['a', 'b', 'c']
+  with_items: "{{ test_var }}"
+  loop_control:
+    index_var: my_idx
+
+- name: check index var with included tasks file
+  include_tasks: index_var_tasks.yml
+  with_sequence: start=0 count=3
+  loop_control:
+    index_var: my_idx
+
+#
+# loop_control/label
+# https://github.com/ansible/ansible/pull/36430
+#
+
+- set_fact:
+    loopthis:
+        - name: foo
+          label: foo_label
+        - name: bar
+          label: bar_label
+
+- name: check that item label is updated each iteration
+  debug:
+    msg: "{{ looped_var.name }}"
+  with_items: "{{ loopthis }}"
+  loop_control:
+    loop_var: looped_var
+    label: "looped_var {{ looped_var.label }}"
+  register: output
+
+- assert:
+    that:
+      - "output.results[0]['_ansible_item_label'] == 'looped_var foo_label'"
+      - "output.results[1]['_ansible_item_label'] == 'looped_var bar_label'"

@@ -29,7 +29,6 @@ options:
       - Specifies the fully qualified hostname to add or remove from
         the system
     required: true
-    default: null
   view:
     description:
       - Sets the DNS view to associate this host record with.  The DNS
@@ -42,8 +41,6 @@ options:
     description:
       - Configures the IPv4 addresses for this host record.  This argument
         accepts a list of values (see suboptions)
-    required: false
-    default: null
     aliases:
       - ipv4
     suboptions:
@@ -51,19 +48,15 @@ options:
         description:
           - Configures the IPv4 address for the host record
         required: true
-        default: null
         aliases:
           - address
       mac:
         description:
           - Configures the hardware MAC address for the host record
-        required: false
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
         accepts a list of values (see options)
-    required: false
-    default: null
     aliases:
       - ipv6
     suboptions:
@@ -71,33 +64,27 @@ options:
         description:
           - Configures the IPv6 address for the host record
         required: true
-        default: null
         aliases:
           - address
   ttl:
     description:
       - Configures the TTL to be associated with this host record
-    required: false
-    default: null
   extattrs:
     description:
       - Allows for the configuration of Extensible Attributes on the
         instance of the object.  This argument accepts a set of key / value
         pairs for configuration.
-    required: false
   comment:
     description:
       - Configures a text string comment to be associated with the instance
         of this object.  The provided text string will be configured on the
         object instance.
-    required: false
   state:
     description:
       - Configures the intended state of the instance of the object on
         the NIOS server.  When this value is set to C(present), the object
         is configured on the device and when this value is set to C(absent)
         the value is removed (if necessary) from the device.
-    required: false
     default: present
     choices:
       - present
@@ -109,7 +96,7 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      address: 192.168.10.1
+      - address: 192.168.10.1
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -121,7 +108,7 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      address: 192.168.10.1
+      - address: 192.168.10.1
     comment: this is a test comment
     state: present
     provider:

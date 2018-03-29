@@ -37,7 +37,7 @@ options:
     description:
     - List of existing volumes to add to hostgroup.
 extends_documentation_fragment:
-- purestorage
+- purestorage.fa
 '''
 
 EXAMPLES = r'''

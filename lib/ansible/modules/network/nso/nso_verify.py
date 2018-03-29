@@ -37,7 +37,8 @@ description:
   - This module provides support for verifying Cisco NSO configuration is in
     compliance with specified values.
 requirements:
-  - Cisco NSO version 4.4.3 or higher.
+  - Cisco NSO version 3.4.12 or higher, 4.2.7 or higher,
+    4.3.8 or higher, 4.4.3 or higher, 4.5 or higher.
 author: "Claes Nästén (@cnasten)"
 options:
   data:
@@ -99,6 +100,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class NsoVerify(object):
+    REQUIRED_VERSIONS = [
+        (4, 5),
+        (4, 4, 3),
+        (4, 3, 8),
+        (4, 2, 7),
+        (3, 4, 12)
+    ]
+
     def __init__(self, client, data):
         self._client = client
         self._data = data
@@ -107,7 +116,7 @@ class NsoVerify(object):
         violations = []
 
         # build list of values from configured data
-        value_builder = ValueBuilder(self._client)
+        value_builder = ValueBuilder(self._client, 'verify')
         for key, value in self._data.items():
             value_builder.build('', key, value)
 
@@ -137,11 +146,17 @@ class NsoVerify(object):
                 n_value = normalize_value(
                     expected_value.value, value, expected_value.path)
                 if n_value != expected_value.value:
-                    violations.append({
-                        'path': expected_value.path,
-                        'expected-value': expected_value.value,
-                        'value': n_value
-                    })
+                    # if the value comparision fails, try mapping identityref
+                    value_type = value_builder.get_type(expected_value.path)
+                    if value_type is not None and 'identityref' in value_type:
+                        n_value, t_value = self.get_prefix_name(value)
+
+                    if expected_value.value != n_value:
+                        violations.append({
+                            'path': expected_value.path,
+                            'expected-value': expected_value.value,
+                            'value': n_value
+                        })
             else:
                 raise ModuleFailException(
                     'value state {0} not supported at {1}'.format(
@@ -165,7 +180,7 @@ def main():
     client = connect(p)
     nso_verify = NsoVerify(client, p['data'])
     try:
-        verify_version(client)
+        verify_version(client, NsoVerify.REQUIRED_VERSIONS)
 
         violations = nso_verify.main()
         client.logout()

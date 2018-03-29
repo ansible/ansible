@@ -30,7 +30,6 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
-    default: null
     aliases:
       - containers
 
@@ -42,7 +41,6 @@ options:
   driver_options:
     description:
       - Dictionary of network settings. Consult docker docs for valid options and values.
-    default: null
 
   force:
     description:
@@ -52,25 +50,25 @@ options:
         network.  This option is required if you have changed the IPAM or
         driver options and want an existing network to be updated to use the
         new options.
-    default: false
+    type: bool
+    default: 'no'
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
         Use C(appends) to leave existing containers connected.
-    default: false
+    type: bool
+    default: 'no'
     aliases:
       - incremental
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
-    default: null
 
   ipam_options:
     description:
       - Dictionary of IPAM options.
-    default: null
 
   state:
     description:
@@ -151,11 +149,11 @@ facts:
     sample: {}
 '''
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, HAS_DOCKER_PY_2, HAS_DOCKER_PY_3
 
 try:
     from docker import utils
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.types import IPAMPool, IPAMConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
@@ -269,12 +267,12 @@ class DockerNetworkManager(object):
         if not self.existing_network:
             ipam_pools = []
             if self.parameters.ipam_options:
-                if HAS_DOCKER_PY_2:
+                if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                     ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
                 else:
                     ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
 
-            if HAS_DOCKER_PY_2:
+            if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
                 ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
                                          pool_configs=ipam_pools)
             else:

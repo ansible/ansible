@@ -43,17 +43,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -61,8 +57,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
     version_added: "2.2"
   before:
     description:
@@ -71,16 +65,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -91,9 +81,8 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
-    default: line
     choices: ['line', 'strict', 'exact', 'none']
+    default: line
   replace:
     description:
       - Instructs the module on the way to perform the configuration
@@ -102,7 +91,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   multiline_delimiter:
@@ -111,7 +99,6 @@ options:
         element to the IOS device.  It specifies the character to use
         as the delimiting character.  This only applies to the
         configuration action.
-    required: false
     default: "@"
     version_added: "2.3"
   force:
@@ -122,10 +109,9 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.7.
-    required: false
-    default: false
+        will be removed in Ansible 2.6.
     type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -133,9 +119,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
@@ -146,8 +131,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -156,9 +139,8 @@ options:
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   save:
     description:
@@ -167,9 +149,8 @@ options:
         running.  If check mode is specified, this argument is ignored.
       - This option is deprecated as of Ansible 2.4 and will be removed
         in Ansible 2.8, use C(save_when) instead.
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save_when:
     description:
@@ -185,7 +166,6 @@ options:
         startup-config.  If the argument is set to I(changed), then the running-config
         will only be copied to the startup-config if the task has made a change.
         I(changed) was added in Ansible 2.5.
-    required: false
     default: never
     choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
@@ -201,7 +181,6 @@ options:
       - When this option is configured as I(running), the module will
         return the before and after diff of the running-config with respect
         to any changes made to the device configuration.
-    required: false
     choices: ['running', 'startup', 'intended']
     version_added: "2.4"
   diff_ignore_lines:
@@ -210,7 +189,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
     version_added: "2.4"
   intended_config:
     description:
@@ -221,7 +199,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
     version_added: "2.4"
 """
 
@@ -236,6 +213,27 @@ EXAMPLES = """
       - description test interface
       - ip address 172.31.1.1 255.255.255.0
     parents: interface Ethernet1
+
+- name: configure ip helpers on multiple interfaces
+  ios_config:
+    lines:
+      - ip helper-address 172.26.1.10
+      - ip helper-address 172.26.3.8
+    parents: "{{ item }}"
+  with_items:
+    - interface Ethernet1
+    - interface Ethernet2
+    - interface GigabitEthernet1
+
+- name: configure policer in Scavenger class
+  ios_config:
+    lines:
+      - conform-action transmit
+      - exceed-action drop
+    parents:
+      - policy-map Foo
+      - class Scavenger
+      - police cir 64000
 
 - name: load new acl into device
   ios_config:
@@ -410,7 +408,7 @@ def main():
         save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.7')
+        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(ios_argument_spec)

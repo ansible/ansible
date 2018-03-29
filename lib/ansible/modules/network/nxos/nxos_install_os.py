@@ -60,8 +60,7 @@ options:
     kickstart_image_file:
         description:
             - Name of the kickstart image file on flash.
-        required: false
-        default: null
+              (Not required on all Nexus platforms)
     issu:
         version_added: "2.5"
         description:
@@ -72,7 +71,6 @@ options:
             - Selecting 'desired' means that upgrades will use ISSU if possible
               but will fall back to disruptive upgrade if needed.
             - Selecting 'no' means do not use ISSU. Forced disruptive.
-        required: false
         choices: ['required','desired', 'yes', 'no']
         default: 'no'
 '''
@@ -179,17 +177,6 @@ def get_platform(module):
         type = 'unknown'
 
     return type
-
-
-def kickstart_image_required(module):
-    '''Determine if platform requires a kickstart image'''
-    data = execute_show_command(module, 'show version')[0]
-    kickstart_required = False
-    for x in data.split('\n'):
-        if re.search(r'kickstart image file is:', x):
-            kickstart_required = True
-
-    return kickstart_required
 
 
 def parse_show_install(data):
@@ -393,6 +380,7 @@ def build_install_cmd_set(issu, image, kick, type):
     else:
         commands.append(
             '%s system %s kickstart %s' % (rootcmd, image, kick))
+
     return commands
 
 
@@ -462,7 +450,7 @@ def check_mode_nextgen(module, issu, image, kick=None):
         # The system may be busy from the previous call to check_mode so loop
         # until it's done.
         data = check_install_in_progress(module, commands, opts)
-    if re.search(r'No install all data found', data['raw']):
+    if data['server_error']:
         data['error'] = True
     return data
 
@@ -563,10 +551,6 @@ def main():
 
     if kif == 'null' or kif == '':
         kif = None
-
-    if kickstart_image_required(module) and kif is None:
-        msg = 'This platform requires a kickstart_image_file'
-        module.fail_json(msg=msg)
 
     install_result = do_install_all(module, issu, sif, kick=kif)
     if install_result['error']:

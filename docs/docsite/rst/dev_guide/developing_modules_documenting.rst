@@ -188,7 +188,7 @@ The following fields can be used and are all required unless specified otherwise
 :module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 :short_description:
-  * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
+  * A short description which is displayed on the :ref:`all_modules` page and ``ansible-doc -l``.
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 :description:
@@ -407,6 +407,8 @@ Example usage::
     See also M(win_copy) or M(win_template).
     ...
     See U(https://www.ansible.com/tower) for an overview.
+    ...
+    See L(IOS Platform Options guide, ../network/user_guide/platform_ios.html)
 
 
 .. note::
@@ -429,6 +431,9 @@ Examples can be found by searching for ``extends_documentation_fragment`` under 
 Testing documentation
 ---------------------
 
+The simplest way to check if your documentation works is to use ``ansible-doc`` to view it. Any parsing errors will be apparent, and details can be obtained by adding ``-vvv``.
+
+If you are going to submit the module for inclusion in the main Ansible repo you should make sure that it renders correctly as HTML.
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.

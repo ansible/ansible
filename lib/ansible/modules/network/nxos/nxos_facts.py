@@ -273,9 +273,22 @@ class Interfaces(FactsBase):
         ('eth_hw_desc', 'type')
     ])
 
+    INTERFACE_SVI_MAP = frozenset([
+        ('svi_line_proto', 'state'),
+        ('svi_bw', 'bandwidth'),
+        ('svi_mac', 'macaddress'),
+        ('svi_mtu', 'mtu'),
+        ('type', 'type')
+    ])
+
     INTERFACE_IPV4_MAP = frozenset([
         ('eth_ip_addr', 'address'),
         ('eth_ip_mask', 'masklen')
+    ])
+
+    INTERFACE_SVI_IPV4_MAP = frozenset([
+        ('svi_ip_addr', 'address'),
+        ('svi_ip_mask', 'masklen')
     ])
 
     INTERFACE_IPV6_MAP = frozenset([
@@ -318,11 +331,18 @@ class Interfaces(FactsBase):
             name = item['interface']
 
             intf = dict()
-            intf.update(self.transform_dict(item, self.INTERFACE_MAP))
+            if 'type' in item:
+                intf.update(self.transform_dict(item, self.INTERFACE_SVI_MAP))
+            else:
+                intf.update(self.transform_dict(item, self.INTERFACE_MAP))
 
             if 'eth_ip_addr' in item:
                 intf['ipv4'] = self.transform_dict(item, self.INTERFACE_IPV4_MAP)
                 self.facts['all_ipv4_addresses'].append(item['eth_ip_addr'])
+
+            if 'svi_ip_addr' in item:
+                intf['ipv4'] = self.transform_dict(item, self.INTERFACE_SVI_IPV4_MAP)
+                self.facts['all_ipv4_addresses'].append(item['svi_ip_addr'])
 
             interfaces[name] = intf
 
@@ -389,7 +409,11 @@ class Interfaces(FactsBase):
                     name = item['ROW_intf']['intf-name']
                     intf = self.facts['interfaces'][name]
                     intf['ipv6'] = self.transform_dict(item, self.INTERFACE_IPV6_MAP)
-                    self.facts['all_ipv6_addresses'].append(item['ROW_intf']['addr'])
+                    try:
+                        addr = item['ROW_intf']['addr']
+                    except KeyError:
+                        addr = item['ROW_intf']['TABLE_addr']['ROW_addr']['addr']
+                    self.facts['all_ipv6_addresses'].append(addr)
             else:
                 return ""
         except TypeError:

@@ -260,7 +260,7 @@ COLOR_ERROR:
 COLOR_HIGHLIGHT:
   name: Color for highlighting
   default: white
-  description: Color used for highlights
+  description: Defines the color to use for highlighting
   env: [{name: ANSIBLE_COLOR_HIGHLIGHT}]
   ini:
   - {key: highlight, section: colors}
@@ -315,7 +315,7 @@ COMMAND_WARNINGS:
   default: True
   description:
     - By default Ansible will issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
-    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module optoin ``warn``.
+    - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
   - {key: command_warnings, section: defaults}
@@ -360,7 +360,7 @@ DEFAULT_ASK_SUDO_PASS:
   name: Ask for the sudo password
   default: False
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
     version: "2.8"
     alternatives: become
   description:
@@ -373,7 +373,7 @@ DEFAULT_ASK_SU_PASS:
   name: Ask for the su password
   default: False
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
     version: "2.8"
     alternatives: become
   description:
@@ -473,6 +473,14 @@ DEFAULT_CALLBACK_WHITELIST:
   - {key: callback_whitelist, section: defaults}
   type: list
   yaml: {key: plugins.callback.whitelist}
+DEFAULT_CLICONF_PLUGIN_PATH:
+  name: Cliconf Plugins Path
+  default: ~/.ansible/plugins/cliconf:/usr/share/ansible/plugins/cliconf
+  description: Colon separated paths in which Ansible will search for Cliconf Plugins.
+  env: [{name: ANSIBLE_CLICONF_PLUGINS}]
+  ini:
+  - {key: cliconf_plugins, section: defaults}
+  type: pathspec
 DEFAULT_CONNECTION_PLUGIN_PATH:
   name: Connection Plugins Path
   default: ~/.ansible/plugins/connection:/usr/share/ansible/plugins/connection
@@ -710,6 +718,14 @@ DEFAULT_LOG_PATH:
   ini:
   - {key: log_path, section: defaults}
   type: path
+DEFAULT_LOG_FILTER:
+  name: Name filters for python logger
+  default: []
+  description: List of logger names to filter out of the log file
+  env: [{name: ANSIBLE_LOG_FILTER}]
+  ini:
+    - {key: log_filter, section: defaults}
+  type: list
 DEFAULT_LOOKUP_PLUGIN_PATH:
   name: Lookup Plugins Path
   description: Colon separated paths in which Ansible will search for Lookup Plugins.
@@ -792,6 +808,14 @@ DEFAULT_MODULE_UTILS_PATH:
   ini:
   - {key: module_utils, section: defaults}
   type: pathspec
+DEFAULT_NETCONF_PLUGIN_PATH:
+  name: Netconf Plugins Path
+  default: ~/.ansible/plugins/netconf:/usr/share/ansible/plugins/netconf
+  description: Colon separated paths in which Ansible will search for Netconf Plugins.
+  env: [{name: ANSIBLE_NETCONF_PLUGINS}]
+  ini:
+  - {key: netconf_plugins, section: defaults}
+  type: pathspec
 DEFAULT_NO_LOG:
   name: No log
   default: False
@@ -842,7 +866,10 @@ DEFAULT_PRIVATE_KEY_FILE:
 DEFAULT_PRIVATE_ROLE_VARS:
   name: Private role variables
   default: False
-  description: ''
+  description:
+    - Makes role variables inaccessible from other roles.
+    - This was introduced as a way to reset role variables to default values if
+      a role is used more than once in a playbook.
   env: [{name: ANSIBLE_PRIVATE_ROLE_VARS}]
   ini:
   - {key: private_role_vars, section: defaults}
@@ -977,7 +1004,7 @@ DEFAULT_SU:
 DEFAULT_SUDO:
   default: False
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework
     version: "2.8"
     alternatives: become
   description: 'Toggle the use of "sudo" for tasks.'
@@ -989,7 +1016,7 @@ DEFAULT_SUDO_EXE:
   name: sudo executable
   default: sudo
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_exe.
     version: "2.8"
     alternatives: become
   description: 'specify an "sudo" executable, otherwise it relies on PATH.'
@@ -1000,7 +1027,7 @@ DEFAULT_SUDO_FLAGS:
   name: sudo flags
   default: '-H -S -n'
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_flags.
     version: "2.8"
     alternatives: become
   description: 'Flags to pass to "sudo"'
@@ -1011,7 +1038,7 @@ DEFAULT_SUDO_USER:
   name: sudo user
   default:
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_user.
     version: "2.8"
     alternatives: become
   description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
@@ -1022,7 +1049,7 @@ DEFAULT_SU_EXE:
   name: su executable
   default: su
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_exe.
     version: "2.8"
     alternatives: become
   description: 'specify an "su" executable, otherwise it relies on PATH.'
@@ -1033,7 +1060,7 @@ DEFAULT_SU_FLAGS:
   name: su flags
   default: ''
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_flags.
     version: "2.8"
     alternatives: become
   description: 'Flags to pass to su'
@@ -1048,7 +1075,7 @@ DEFAULT_SU_USER:
   ini:
   - {key: su_user, section: defaults}
   deprecated:
-    why: In favor of become which is a generic framework
+    why: In favor of Ansible Become, which is a generic framework. See become_user.
     version: "2.8"
     alternatives: become
 DEFAULT_SYSLOG_FACILITY:
@@ -1072,6 +1099,14 @@ DEFAULT_TASK_INCLUDES_STATIC:
     why: include itself is deprecated and this setting will not matter in the future
     version: "2.8"
     alternatives: None, as its already built into the decision between include_tasks and import_tasks
+DEFAULT_TERMINAL_PLUGIN_PATH:
+  name: Terminal Plugins Path
+  default: ~/.ansible/plugins/terminal:/usr/share/ansible/plugins/terminal
+  description: Colon separated paths in which Ansible will search for Terminal Plugins.
+  env: [{name: ANSIBLE_TERMINAL_PLUGINS}]
+  ini:
+  - {key: terminal_plugins, section: defaults}
+  type: pathspec
 DEFAULT_TEST_PLUGIN_PATH:
   name: Jinja2 Test Plugins Path
   description: Colon separated paths in which Ansible will search for Jinja2 Test Plugins.
@@ -1298,6 +1333,14 @@ INVENTORY_ENABLED:
   ini:
   - {key: enable_plugins, section: inventory}
   type: list
+INVENTORY_EXPORT:
+  name: Set ansible-inventory into export mode
+  default: False
+  description: Controls if ansible-inventory will accurately reflect Ansible's view into inventory or its optimized for exporting.
+  env: [{name: ANSIBLE_INVENTORY_EXPORT}]
+  ini:
+  - {key: export, section: inventory}
+  type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
   default: "{{(BLACKLIST_EXTS + ( '~', '.orig', '.ini', '.cfg', '.retry'))}}"

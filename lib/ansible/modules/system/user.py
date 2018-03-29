@@ -119,7 +119,8 @@ options:
         default: "no"
     login_class:
         description:
-            - Optionally sets the user's login class for FreeBSD, OpenBSD and NetBSD systems.
+            - Optionally sets the user's login class for FreeBSD, DragonFlyBSD, OpenBSD and
+              NetBSD systems.
     remove:
         description:
             - When used with C(state=absent), behavior is as with C(userdel --remove).
@@ -170,7 +171,7 @@ options:
     expires:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
-              Currently supported on Linux and FreeBSD.
+              Currently supported on Linux, FreeBSD, and DragonFlyBSD.
         version_added: "1.9"
     local:
         description:
@@ -229,7 +230,6 @@ import time
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 try:
     import spwd
@@ -298,9 +298,8 @@ class User(object):
         if module.params['expires']:
             try:
                 self.expires = time.gmtime(module.params['expires'])
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, e))
+            except Exception as e:
+                module.fail_json(msg="Invalid expires time %s: %s" % (self.expires, to_native(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -637,9 +636,8 @@ class User(object):
             try:
                 os.mkdir(ssh_dir, int('0700', 8))
                 os.chown(ssh_dir, info[2], info[3])
-            except OSError:
-                e = get_exception()
-                return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
+            except OSError as e:
+                return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
@@ -709,15 +707,13 @@ class User(object):
             if os.path.exists(skeleton):
                 try:
                     shutil.copytree(skeleton, path, symlinks=True)
-                except OSError:
-                    e = get_exception()
-                    self.module.exit_json(failed=True, msg="%s" % e)
+                except OSError as e:
+                    self.module.exit_json(failed=True, msg="%s" % to_native(e))
         else:
             try:
                 os.makedirs(path)
-            except OSError:
-                e = get_exception()
-                self.module.exit_json(failed=True, msg="%s" % e)
+            except OSError as e:
+                self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
     def chown_homedir(self, uid, gid, path):
         try:
@@ -727,9 +723,8 @@ class User(object):
                     os.chown(os.path.join(root, d), uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
-        except OSError:
-            e = get_exception()
-            self.module.exit_json(failed=True, msg="%s" % e)
+        except OSError as e:
+            self.module.exit_json(failed=True, msg="%s" % to_native(e))
 
 
 # ===========================================
@@ -933,6 +928,17 @@ class FreeBsdUser(User):
             return self.execute_command(cmd)
 
         return (rc, out, err)
+
+
+class DragonFlyBsdUser(FreeBsdUser):
+    """
+    This is a DragonFlyBSD User manipulation class - it inherits the
+    FreeBsdUser class behaviors, such as using the pw command to
+    manipulate the user database, followed by the chpass command
+    to change the password.
+    """
+
+    platform = 'DragonFly'
 
 
 class OpenBSDUser(User):
@@ -1289,9 +1295,8 @@ class SunOS(User):
                     maxweeks = value.rstrip('\n')
                 elif key == "WARNWEEKS":
                     warnweeks = value.rstrip('\n')
-        except Exception:
-            err = get_exception()
-            self.module.fail_json(msg="failed to read /etc/default/passwd: %s" % str(err))
+        except Exception as err:
+            self.module.fail_json(msg="failed to read /etc/default/passwd: %s" % to_native(err))
 
         return (minweeks, maxweeks, warnweeks)
 
@@ -1372,9 +1377,8 @@ class SunOS(User):
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
-                except Exception:
-                    err = get_exception()
-                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
+                except Exception as err:
+                    self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
 
         return (rc, out, err)
 
@@ -1468,9 +1472,8 @@ class SunOS(User):
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
                     rc = 0
-                except Exception:
-                    err = get_exception()
-                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
+                except Exception as err:
+                    self.module.fail_json(msg="failed to update users password: %s" % to_native(err))
 
         return (rc, out, err)
 

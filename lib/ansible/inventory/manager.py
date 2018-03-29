@@ -28,7 +28,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins.loader import inventory_loader
 from ansible.utils.path import unfrackpath
@@ -86,12 +86,12 @@ def split_host_pattern(pattern):
     if isinstance(pattern, list):
         return list(itertools.chain(*map(split_host_pattern, pattern)))
     elif not isinstance(pattern, string_types):
-        pattern = to_native(pattern)
+        pattern = to_text(pattern, errors='surrogate_or_strict')
 
     # If it's got commas in it, we'll treat it as a straightforward
     # comma-separated list of patterns.
-    if ',' in pattern:
-        patterns = pattern.split(',')
+    if u',' in pattern:
+        patterns = pattern.split(u',')
 
     # If it doesn't, it could still be a single pattern. This accounts for
     # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
@@ -104,12 +104,12 @@ def split_host_pattern(pattern):
             # This mishandles IPv6 addresses, and is retained only for backwards
             # compatibility.
             patterns = re.findall(
-                r'''(?:             # We want to match something comprising:
+                to_text(r'''(?:     # We want to match something comprising:
                         [^\s:\[\]]  # (anything other than whitespace or ':[]'
                         |           # ...or...
                         \[[^\]]*\]  # a single complete bracketed expression)
                     )+              # occurring once or more
-                ''', pattern, re.X
+                '''), pattern, re.X
             )
 
     return [p.strip() for p in patterns]
@@ -211,7 +211,10 @@ class InventoryManager(object):
             # do post processing
             self._inventory.reconcile_inventory()
         else:
-            display.warning("No inventory was parsed, only implicit localhost is available")
+            if C.INVENTORY_UNPARSED_IS_FAILED:
+                raise AnsibleError("No inventory was parsed, please check your configuration and options.")
+            else:
+                display.warning("No inventory was parsed, only implicit localhost is available")
 
         self._inventory_plugins = []
 
@@ -233,9 +236,9 @@ class InventoryManager(object):
                     continue
 
                 # recursively deal with directory entries
-                fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(to_native(fullpath), cache=cache)
-                display.debug(u'parsed %s as %s' % (fullpath, parsed_this_one))
+                b_fullpath = os.path.join(b_source, i)
+                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
+                display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
         else:
@@ -251,11 +254,16 @@ class InventoryManager(object):
             # try source with each plugin
             failures = []
             for plugin in self._inventory_plugins:
-                plugin_name = to_native(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+                plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
                 display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
 
-                # initialize
-                if plugin.verify_file(source):
+                # initialize and figure out if plugin wants to attempt parsing this file
+                try:
+                    plugin_wants = bool(plugin.verify_file(source))
+                except Exception:
+                    plugin_wants = False
+
+                if plugin_wants:
                     try:
                         # in case plugin fails 1/2 way we dont want partial inventory
                         plugin.parse(self._inventory, self._loader, source, cache=cache)
@@ -273,18 +281,10 @@ class InventoryManager(object):
             else:
                 if not parsed and failures:
                     # only if no plugin processed files should we show errors.
-                    if C.INVENTORY_UNPARSED_IS_FAILED:
-                        msg = "Could not parse inventory source %s with available plugins:\n" % source
-                        for fail in failures:
-                            msg += 'Plugin %s failed: %s\n' % (fail['plugin'], to_native(fail['exc']))
-                            if display.verbosity >= 3:
-                                msg += "%s\n" % fail['exc'].tb
-                        raise AnsibleParserError(msg)
-                    else:
-                        for fail in failures:
-                            display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                            if hasattr(fail['exc'], 'tb'):
-                                display.vvv(to_text(fail['exc'].tb))
+                    for fail in failures:
+                        display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                        if hasattr(fail['exc'], 'tb'):
+                            display.vvv(to_text(fail['exc'].tb))
         if not parsed:
             display.warning("Unable to parse %s as an inventory source" % to_text(source))
 
@@ -337,10 +337,10 @@ class InventoryManager(object):
             pattern_hash = pattern
 
         if not ignore_limits and self._subset:
-            pattern_hash += ":%s" % to_native(self._subset)
+            pattern_hash += u":%s" % to_text(self._subset, errors='surrogate_or_strict')
 
         if not ignore_restrictions and self._restriction:
-            pattern_hash += ":%s" % to_native(self._restriction)
+            pattern_hash += u":%s" % to_text(self._restriction, errors='surrogate_or_strict')
 
         if pattern_hash not in self._hosts_patterns_cache:
 

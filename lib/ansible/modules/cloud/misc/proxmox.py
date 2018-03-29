@@ -32,134 +32,100 @@ options:
     description:
       - the password to authenticate with
       - you can use PROXMOX_PASSWORD environment variable
-    default: null
-    required: false
   vmid:
     description:
       - the instance id
       - if not set, the next available VM ID will be fetched from ProxmoxAPI.
       - if not set, will be fetched from PromoxAPI based on the hostname
-    default: null
-    required: false
   validate_certs:
     description:
       - enable / disable https certificate verification
-    default: false
-    required: false
     type: bool
+    default: 'no'
   node:
     description:
       - Proxmox VE node, when new VM will be created
       - required only for C(state=present)
       - for another states will be autodiscovered
-    default: null
-    required: false
   pool:
     description:
       - Proxmox VE resource pool
-    default: null
-    required: false
     version_added: "2.3"
   password:
     description:
       - the instance root password
       - required only for C(state=present)
-    default: null
-    required: false
   hostname:
     description:
       - the instance hostname
       - required only for C(state=present)
       - must be unique if vmid is not passed
-    default: null
-    required: false
   ostemplate:
     description:
       - the template for VM creating
       - required only for C(state=present)
-    default: null
-    required: false
   disk:
     description:
       - hard disk size in GB for instance
     default: 3
-    required: false
   cores:
     description:
       - Specify number of cores per socket.
-    required: false
     default: 1
     version_added: 2.4
   cpus:
     description:
       - numbers of allocated cpus for instance
     default: 1
-    required: false
   memory:
     description:
       - memory size in MB for instance
     default: 512
-    required: false
   swap:
     description:
       - swap memory size in MB for instance
     default: 0
-    required: false
   netif:
     description:
       - specifies network interfaces for the container. As a hash/dictionary defining interfaces.
-    default: null
-    required: false
   mounts:
     description:
       - specifies additional mounts (separate disks) for the container. As a hash/dictionary defining mount points
-    default: null
-    required: false
     version_added: "2.2"
   ip_address:
     description:
       - specifies the address the container will be assigned
-    default: null
-    required: false
   onboot:
     description:
       - specifies whether a VM will be started during system bootup
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   storage:
     description:
       - target storage
     default: 'local'
-    required: false
   cpuunits:
     description:
       - CPU weight for a VM
     default: 1000
-    required: false
   nameserver:
     description:
       - sets DNS server IP address for a container
-    default: null
-    required: false
   searchdomain:
     description:
       - sets DNS search domain for a container
-    default: null
-    required: false
   timeout:
     description:
       - timeout for operations
     default: 30
-    required: false
   force:
     description:
       - forcing operations
       - can be used only with states C(present), C(stopped), C(restarted)
       - with C(state=present) force option allow to overwrite existing container
       - with states C(stopped) , C(restarted) allow to force stop instance
-    default: false
-    required: false
     type: bool
+    default: 'no'
   state:
     description:
      - Indicate desired state of the instance
@@ -169,13 +135,12 @@ options:
     description:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
     version_added: "2.3"
-    default: null
   unprivileged:
     version_added: "2.3"
     description:
       - Indicate if the container should be unprivileged
-    default: false
-    required: false
+    type: bool
+    default: 'no'
 
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.

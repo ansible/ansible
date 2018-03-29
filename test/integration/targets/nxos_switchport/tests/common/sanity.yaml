@@ -88,8 +88,37 @@
 
   - assert: *false
 
-  - name: Ensure these VLANs are not being tagged on the trunk
+  - name: Remove full trunk vlan range 2-50.
     nxos_switchport: &no_tag
+      interface: "{{ intname }}"
+      mode: trunk
+      trunk_vlans: 2-50
+      state: absent
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Remove full trunk vlan range 2-50.
+    nxos_switchport: *no_tag
+    register: result
+
+  - assert: *false
+
+  - name: Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_switchport: *tag
+    register: result
+
+  - assert: *true
+
+  - name: Check Idempotence Reconfigure interface trunk port and ensure 2-50 are being tagged
+    nxos_switchport: *tag
+    register: result
+
+  - assert: *false
+
+  - name: Remove partial trunk vlan range 30-4094 are removed
+    nxos_switchport: &partial
       interface: "{{ intname }}"
       mode: trunk
       trunk_vlans: 30-4094
@@ -99,8 +128,8 @@
 
   - assert: *true
 
-  - name: "no tag vlan Idempotence"
-    nxos_switchport: *no_tag
+  - name: Check Idempotence Remove partial trunk vlan range 30-4094 are removed
+    nxos_switchport: *partial
     register: result
 
   - assert: *false

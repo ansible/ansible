@@ -1,11 +1,37 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.6"></a>
+
+## 2.6 "Heartbreaker" - ACTIVE DEVELOPMENT
+
+[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html)
+
+### Major Changes
+
+### Deprecations (to be removed in 2.10)
+
+See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides/porting_guides.html) for more information
+
+### Minor Changes
+* Removed restriction from protocol in cloudflare_dns module to allow other protocols than tcp and udp to be specified.
+
+* Ansible 2.6 and onwards, `target_id` parameter in `vmware_target_canonical_facts` module is an optional parameter.
+
+#### Removed modules (previously deprecated)
+
+### New Modules
+
+#### Cloud
+- amazon
+  * aws_caller_facts
+
+
 <a id="2.5"></a>
 
-## 2.5 "TBD" - ACTIVE DEVELOPMENT
+## 2.5 "Kashmir" - March 2018 (estimated)
 
-[Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html)
+[Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html)
 
 ### Major Changes
 * Removed the previously deprecated 'accelerate' mode and all associated keywords and code.
@@ -40,8 +66,10 @@ Ansible Changes By Release
 * nxos_switchport module is deprecated in Ansible 2.5. Use nxos_l2_interface module instead.
 * ec2_ami_find has been deprecated, use ec2_ami_facts.
 * panos_security_policy: Use panos_security_rule - the old module uses deprecated API calls
+* vsphere_guest is deprecated in Ansible 2.5 and will be removed in Ansible-2.9. Use vmware_guest module instead.
+* Apstra's ``aos_*`` modules are deprecated. See new modules at [ansible-apstra](https://www.ansible.com/ansible-apstra)
 
-See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) for more information
+See [Porting Guide](https://docs.ansible.com/ansible/devel/porting_guides/porting_guide_2.5.html) for more information
 
 ### Minor Changes
 * added a few new magic vars corresponding to configuration/command line options:
@@ -62,6 +90,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * `osx_say` module was renamed into `say`.
 * Task debugger functionality was moved into `StrategyBase`, and extended to allow explicit invocation from use of the `debugger` keyword.
   The `debug` strategy is still functional, and is now just a trigger to enable this functionality
+* The ANSIBLE_REMOTE_TMP environment variable has been added to supplement (and
+  override) ANSIBLE_REMOTE_TEMP.  This matches with the spelling of the config
+  value. ANSIBLE_REMOTE_TEMP will be deprecated in the future.
+* A few modules were updated to put temporary files in the existing temp dir already created for the module itself, including get_url, assemble, uri and yum.
 
 #### Removed Modules (previously deprecated):
 * accelerate.
@@ -73,11 +105,11 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * ec2_vpc.
 * ec2_ami_search, use ec2_ami_facts instead.
 * nxos_mtu, use nxos_system's `system_mtu` option. To specify an interfaces MTU use nxos_interface.
-  https://github.com/ansible/ansible/issues/29387
+* panos_nat_policy: Use panos_nat_rule the old module uses deprecated API calls
 
 ### New Plugins
 
-## Lookups
+#### Lookups
 * aws_ssm: Query AWS ssm data
 * aws_account_attribute: Query AWS account attributes such as EC2-Classic
     availability
@@ -85,8 +117,17 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 * openshift: Return info from Openshift installation
 * redis: look up date from Redis DB, deprecates the redis_kv one.
 
-## Callbacks
+#### Callbacks
 * yaml
+
+#### Connections
+* network_cli
+* netconf
+
+While neither is technically a new plugin, these connections may now be used directly with network modules. See [Network Best Practices for Ansible 2.5](http://docs.ansible.com/ansible/devel/network_best_practices_2.5.html) for more details.
+
+#### Filters
+* parse_xml
 
 ### New Modules
 
@@ -98,35 +139,46 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aws_batch_compute_environment
   * aws_batch_job_definition
   * aws_batch_job_queue
-  * aws_elasticbeanstalk_app
   * aws_direct_connect_gateway
   * aws_direct_connect_virtual_interface
+  * aws_elasticbeanstalk_app
   * aws_kms_facts
   * aws_region_facts
   * aws_s3_cors
   * aws_ses_identity
   * aws_ssm_parameter_store
   * aws_waf_condition
+  * aws_waf_rule
+  * aws_waf_web_acl
   * cloudfront_distribution
+  * cloudfront_invalidation
   * cloudfront_origin_access_identity
+  * cloudwatchlogs_log_group
+  * cloudwatchlogs_log_group_facts
   * ec2_ami_facts
   * ec2_asg_lifecycle_hook
   * ec2_customer_gateway_facts
+  * ec2_instance
   * ec2_placement_group
   * ec2_placement_group_facts
   * ec2_vpc_egress_igw
   * ecs_taskdefinition_facts
   * elasticache_facts
+  * elb_target
   * iam_role_facts
   * iam_user
 - azure
   * azure_rm_containerinstance
   * azure_rm_containerregistry
   * azure_rm_image
+  * azure_rm_keyvault
+  * azure_rm_keyvaultkey
+  * azure_rm_keyvaultsecret
   * azure_rm_mysqldatabase
   * azure_rm_mysqlserver
   * azure_rm_postgresqldatabase
   * azure_rm_postgresqlserver
+  * azure_rm_sqldatabase
   * azure_rm_sqlserver
   * azure_rm_sqlserver_facts
 - cloudscale
@@ -141,33 +193,52 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * digital_ocean_certificate
   * digital_ocean_floating_ip_facts
   * digital_ocean_sshkey_facts
+- dimensiondata
+  * dimensiondata_vlan
+- google
+  * gcp_dns_managed_zone
 - misc
   * terraform
 - oneandone
+  * oneandone_firewall_policy
+  * oneandone_load_balancer
+  * oneandone_monitoring_policy
+  * oneandone_private_network
+  * oneandone_public_ip
   * oneandone_server
 - openstack
   * os_keystone_endpoint
+  * os_project_access
 - ovirt
   * ovirt_api_facts
   * ovirt_disk_facts
 - spotinst
   * spotinst_aws_elastigroup
 - vmware
+  * vcenter_folder
   * vmware_cfg_backup
   * vmware_datastore_facts
   * vmware_drs_rule_facts
   * vmware_guest_file_operation
   * vmware_guest_powerstate
+  * vmware_guest_snapshot_facts
   * vmware_host_acceptance
   * vmware_host_config_facts
   * vmware_host_config_manager
+  * vmware_host_datastore
+  * vmware_host_dns_facts
   * vmware_host_facts
+  * vmware_host_firewall_facts
+  * vmware_host_firewall_manager
+  * vmware_host_lockdown
   * vmware_host_ntp
+  * vmware_host_package_facts
   * vmware_host_service_facts
   * vmware_host_service_manager
   * vmware_host_vmnic_facts
   * vmware_local_role_manager
   * vmware_vm_vm_drs_rule
+  * vmware_vmkernel_facts
 - vultr
   * vr_account_facts
   * vr_dns_domain
@@ -180,6 +251,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * vr_user
 
 #### Clustering
+  * etcd3
 - k8s
   * k8s_raw
   * k8s_scale
@@ -199,9 +271,11 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 #### Identity
 - ipa
   * ipa_dnszone
+  * ipa_service
   * ipa_subca
 - keycloak
   * keycloak_client
+  * keycloak_clienttemplate
 
 #### Monitoring
   * grafana_dashboard
@@ -214,9 +288,16 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 #### Net Tools
   * ip_netns
+- nios
+  * nios_dns_view
+  * nios_host_record
+  * nios_network
+  * nios_network_view
+  * nios_zone
 
 #### Network
 - aci
+  * aci_aaa_user
   * aci_aaa_user_certificate
   * aci_access_port_to_interface_policy_leaf_profile
   * aci_aep_to_domain
@@ -225,27 +306,41 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * aci_domain_to_vlan_pool
   * aci_encap_pool
   * aci_encap_pool_range
+  * aci_fabric_node
   * aci_firmware_source
+  * aci_interface_policy_fc
   * aci_interface_policy_leaf_policy_group
   * aci_interface_policy_leaf_profile
+  * aci_interface_policy_lldp
+  * aci_interface_policy_mcp
+  * aci_interface_policy_port_security
   * aci_interface_selector_to_switch_policy_leaf_profile
+  * aci_static_binding_to_epg
   * aci_switch_leaf_selector
   * aci_switch_policy_leaf_profile
+  * aci_switch_policy_vpc_protection_group
   * aci_vlan_pool
   * aci_vlan_pool_encap_block
 - avi
   * avi_api_version
+  * avi_clusterclouddetails
   * avi_customipamdnsprofile
   * avi_errorpagebody
   * avi_errorpageprofile
   * avi_gslbservice_patch_member
   * avi_wafpolicy
+  * avi_wafprofile
+- edgeos
+  * edgeos_command
+  * edgeos_config
+  * edgeos_facts
 - enos
   * enos_command
   * enos_config
   * enos_facts
 - eos
   * eos_interface
+  * eos_l2_interface
   * eos_l3_interface
   * eos_linkagg
   * eos_lldp
@@ -278,6 +373,8 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * bigip_wait
   * bigiq_regkey_license
   * bigiq_regkey_pool
+- fortimanager
+  * fmgr_script
 - ios
   * ios_l2_interface
   * ios_l3_interface
@@ -291,7 +388,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * ironware_config
   * ironware_facts
 - junos
+  * junos_l2_interface
   * junos_scp
+- netact
+  * netact_cm_command
 - netscaler
   * netscaler_nitro_request
 - nso
@@ -324,6 +424,9 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * onyx_protocol
   * onyx_vlan
 - panos
+  * panos_dag_tags
+  * panos_match_rule
+  * panos_op
   * panos_query_rules
 - radware
   * vdirect_commit
@@ -339,10 +442,12 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 #### Packaging
 - os
   * package_facts
+  * rhsm_repository
 
 #### Remote Management
 - manageiq
   * manageiq_alert_profiles
+  * manageiq_alerts
   * manageiq_policies
   * manageiq_tags
 - oneview
@@ -353,9 +458,12 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * oneview_san_manager_facts
 - ucs
   * ucs_ip_pool
+  * ucs_lan_connectivity
   * ucs_mac_pool
   * ucs_san_connectivity
   * ucs_vhba_template
+  * ucs_vlans
+  * ucs_vnic_template
   * ucs_vsans
   * ucs_wwn_pool
 
@@ -363,6 +471,10 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
   * mksysb
   * nosh
   * service_facts
+  * vdo
+
+#### Web Infrastructure
+  * jenkins_job_facts
 
 #### Windows
   * win_audit_policy_system
@@ -1106,7 +1218,7 @@ See [Porting Guide](http://docs.ansible.com/ansible/devel/porting_guides.html) f
 
 <a id="2.3.3"></a>
 
-## 2.3.3 "Ramble On" - TBD
+## 2.3.3 "Ramble On" - 2017-12-20
 
 ### Bugfixes
 * Fix alternatives module handlling of non existing options

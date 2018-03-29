@@ -1,0 +1,9 @@
+{
+    "prefixes": [
+        "lib/ansible/modules/"
+    ],
+    "extensions": [
+        ".py"
+    ],
+    "output": "path-line-column-message"
+}

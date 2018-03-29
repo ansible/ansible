@@ -32,32 +32,23 @@ options:
   user:
     description:
       - The username of the person doing the deployment
-    required: false
-    default: None
   repo:
     description:
       - URL of the project repository
-    required: false
-    default: None
   revision:
     description:
       - A hash, number, tag, or other identifier showing what revision was deployed
-    required: false
-    default: None
   url:
     description:
       - Optional URL to submit the notification to.
-    required: false
     default: "https://api.honeybadger.io/v1/deploys"
   validate_certs:
     description:
       - If C(no), SSL certificates for the target url will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
-requirements: []
 '''
 
 EXAMPLES = '''

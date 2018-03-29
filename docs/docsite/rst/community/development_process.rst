@@ -23,6 +23,64 @@ Ansible accepts code via **pull requests** ("PRs" for short). GitHub provides a 
 
 Because Ansible receives many pull requests, we use an automated process to help us through the process of reviewing and merging pull requests. That process is managed by **Ansibullbot**.
 
+Backport Pull Request Process
+-----------------------------
+
+After the pull request submitted to Ansible for the ``devel`` branch is
+accepted and merged, the following instructions will help you create a
+pull request to backport the change to a previous stable branch.
+
+.. note::
+
+    These instructions assume that ``stable-2.5`` is the targeted release
+    branch for the backport.
+
+.. note::
+
+    These instructions assume that ``https://github.com/ansible/ansible.git``
+    is configured as a ``git remote`` named ``upstream``. If you do not use
+    a ``git remote`` named ``upstream``, adjust the instructions accordingly.
+
+.. note::
+
+   These instructions assume that ``https://github.com/<yourgithubaccount>/ansible.git``
+   is configured as a ``git remote`` named ``origin``. If you do not use
+   a ``git remote`` named ``origin``, adjust the instructions accordingly.
+
+#. Prepare your devel, stable, and feature branches:
+
+   ::
+
+       git fetch upstream
+       git checkout -b backport/2.5/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.5
+
+#. Cherry pick the relevant commit SHA from the devel branch into your feature
+   branch, handling merge conflicts as necessary:
+
+   ::
+
+       git cherry-pick -x [SHA_FROM_DEVEL]
+
+#. Add a changelog entry for the change, and commit it.
+
+#. Push your feature branch to your fork on GitHub:
+
+   ::
+
+       git push origin backport/2.5/[PR_NUMBER_FROM_DEVEL]
+
+#. Submit the pull request for ``backport/2.5/[PR_NUMBER_FROM_DEVEL]``
+   against the ``stable-2.5`` branch
+
+.. note::
+
+    The choice to use ``backport/2.5/[PR_NUMBER_FROM_DEVEL]`` as the
+    name for the feature branch is somewhat arbitrary, but conveys meaning
+    about the purpose of that branch. It is not required to use this format,
+    but it can be helpful, especially when making multiple backport PRs for
+    multiple stable branches.
+
+
 Ansibullbot
 ===========
 
@@ -93,7 +151,7 @@ Workflow Labels
 -  **community_review**: Pull requests for modules that are currently awaiting review by their maintainers in the Ansible community.
 -  **core_review**: Pull requests for modules that are currently awaiting review by their maintainers on the Ansible Core team.
 -  **needs_info**: Waiting on info from the submitter.
--  **needs_rebase**: Waiting on the submitter to rebase. (Note: no longer used by the bot.)
+-  **needs_rebase**: Waiting on the submitter to rebase.
 -  **needs_revision**: Waiting on the submitter to make changes.
 -  **shipit**: Waiting for final review by the core team for potential merge.
 

@@ -71,6 +71,7 @@ def complex_argspec():
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bar1=dict(type='bool'),
         zardoz=dict(choices=['one', 'two']),
+        zardoz2=dict(type='list', choices=['one', 'two', 'three']),
     )
     mut_ex = (('bar', 'bam'),)
     req_to = (('bam', 'baz'),)
@@ -253,6 +254,25 @@ class TestComplexArgSpecs:
 
         assert results['failed']
         assert results['msg'] == "parameters are required together: bam, baz"
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zardoz2': ['one', 'four', 'five']}], indirect=['stdin'])
+    def test_fail_list_with_choices(self, capfd, mocker, stdin, complex_argspec):
+        """Fail because one of the items is not in the choice"""
+        with pytest.raises(SystemExit):
+            basic.AnsibleModule(**complex_argspec)
+
+        out, err = capfd.readouterr()
+        results = json.loads(out)
+
+        assert results['failed']
+        assert results['msg'] == "value of zardoz2 must be one or more of: one, two, three. Got no match for: four, five"
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zardoz2': ['one', 'three']}], indirect=['stdin'])
+    def test_list_with_choices(self, capfd, mocker, stdin, complex_argspec):
+        """Test choices with list"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['zardoz2'], list)
+        assert am.params['zardoz2'] == ['one', 'three']
 
 
 class TestComplexOptions:

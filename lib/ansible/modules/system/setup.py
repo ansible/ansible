@@ -150,8 +150,8 @@ def main():
     # TODO: decide what '!all' means, I lean towards making it mean none, but likely needs
     #       some tweaking on how gather_subset operations are performed
     minimal_gather_subset = frozenset(['apparmor', 'caps', 'cmdline', 'date_time',
-                                       'distribution', 'dns', 'env', 'fips', 'local', 'lsb',
-                                       'pkg_mgr', 'platform', 'python', 'selinux',
+                                       'distribution', 'dns', 'env', 'fips', 'local',
+                                       'lsb', 'pkg_mgr', 'platform', 'python', 'selinux',
                                        'service_mgr', 'ssh_pub_keys', 'user'])
 
     all_collector_classes = default_collectors.collectors

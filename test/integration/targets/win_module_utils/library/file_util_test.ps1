@@ -48,6 +48,14 @@ if ($pagefile) {
 $actual = Test-AnsiblePath -Path C:\fakefile
 Assert-Equals -actual $actual -expected $false
 
+# Test-AnsiblePath Directory that doesn't exist
+$actual = Test-AnsiblePath -Path C:\fakedirectory
+Assert-Equals -actual $actual -expected $false
+
+# Test-AnsiblePath file in non-existant directory
+$actual = Test-AnsiblePath -Path C:\fakedirectory\fakefile.txt
+Assert-Equals -actual $actual -expected $false
+
 # Test-AnsiblePath Normal directory
 $actual = Test-AnsiblePath -Path C:\Windows
 Assert-Equals -actual $actual -expected $true

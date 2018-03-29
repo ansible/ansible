@@ -69,6 +69,7 @@ options:
             - Field introduced in 17.1.9,17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     members:
         description:
             - List of pool group members object of type poolgroupmember.

@@ -26,9 +26,18 @@
       - no channel-group 20
     provider: "{{ connection }}"
     parents: "{{ item }}"
+  ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
     - "interface {{ testint2 }}"
+
+- name: Put interface in L2 mode
+  nxos_interface:
+    aggregate:
+    - { name: "{{testint1}}" }
+    - { name: "{{testint2}}" }
+    mode: layer2
+  when: platform is match("N35")
 
 - name: create linkagg
   nxos_linkagg: &create
@@ -181,6 +190,7 @@
       - no channel-group 20
     provider: "{{ connection }}"
     parents: "{{ item }}"
+  ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
     - "interface {{ testint2 }}"

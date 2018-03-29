@@ -45,37 +45,26 @@ options:
   description:
     description:
       - Description of the NVE interface.
-    required: false
-    default: null
   host_reachability:
     description:
       - Specify mechanism for host reachability advertisement.
-    required: false
-    choices: ['true', 'false']
-    default: null
+    type: bool
   shutdown:
     description:
       - Administratively shutdown the NVE interface.
-    required: false
-    choices: ['true','false']
-    default: true
+    type: bool
   source_interface:
     description:
       - Specify the loopback interface whose IP address should be
         used for the NVE interface.
-    required: false
-    default: null
   source_interface_hold_down_time:
     description:
       - Suppresses advertisement of the NVE loopback address until
         the overlay has converged.
-    required: false
-    default: null
   state:
     description:
       - Determines whether the config should be present or not
         on the device.
-    required: false
     default: present
     choices: ['present','absent']
 '''

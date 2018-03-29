@@ -58,10 +58,10 @@ from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def has_lldp(module):
-    output = run_commands(module, ['show lldp'])
+    config = get_config(module, flags=['| section lldp'])
 
     is_lldp_enable = False
-    if len(output) > 0 and "LLDP is not enabled" not in output[0]:
+    if "no lldp run" not in config:
         is_lldp_enable = True
 
     return is_lldp_enable

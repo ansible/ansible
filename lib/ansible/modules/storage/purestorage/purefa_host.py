@@ -46,7 +46,7 @@ options:
     description:
     - Volume name to map to the host.
 extends_documentation_fragment:
-- purestorage
+- purestorage.fa
 '''
 
 EXAMPLES = r'''

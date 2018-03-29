@@ -43,10 +43,7 @@ options:
      - Whether the tag should be present or absent on the resource.
     default: present
     choices: ['present', 'absent']
-  api_token:
-    description:
-     - DigitalOcean api token.
-
+extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
     They both refer to the v2 token.
@@ -63,7 +60,7 @@ EXAMPLES = '''
     name: production
     state: present
 
-- name: tag a resource; creating the tag if it does not exists
+- name: tag a resource; creating the tag if it does not exist
   digital_ocean_tag:
     name: "{{ item }}"
     resource_id: "73333005"
@@ -119,11 +116,6 @@ def core(module):
 
     rest = DigitalOceanHelper(module)
 
-    # Check if api_token is valid or not
-    response = rest.get('account')
-    if response.status_code == 401:
-        module.fail_json(msg='Failed to login using api_token, please verify '
-                             'validity of api_token')
     if state == 'present':
         response = rest.get('tags/{0}'.format(name))
         status_code = response.status_code
@@ -197,15 +189,15 @@ def core(module):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            name=dict(type='str', required=True),
-            resource_id=dict(aliases=['droplet_id'], type='str'),
-            resource_type=dict(choices=['droplet'], default='droplet'),
-            state=dict(choices=['present', 'absent'], default='present'),
-            api_token=dict(aliases=['API_TOKEN'], no_log=True),
-        )
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        name=dict(type='str', required=True),
+        resource_id=dict(aliases=['droplet_id'], type='str'),
+        resource_type=dict(choices=['droplet'], default='droplet'),
+        state=dict(choices=['present', 'absent'], default='present'),
     )
+
+    module = AnsibleModule(argument_spec=argument_spec)
 
     try:
         core(module)

@@ -271,6 +271,12 @@ options:
                     - Server port number.
                     - Range C(1) - C(65535)
                     - "* in CLI is represented as 65535 in NITRO API"
+            state:
+                choices:
+                    - 'enabled'
+                    - 'disabled'
+                description:
+                    - Initial state of the service after binding.
             hashid:
                 description:
                     - The hash identifier for the service.
@@ -427,6 +433,7 @@ def get_configured_service_members(client, module):
         'servicegroupname',
         'ip',
         'port',
+        'state',
         'hashid',
         'serverid',
         'servername',
@@ -460,8 +467,7 @@ def get_configured_service_members(client, module):
     return members
 
 
-def servicemembers_identical(client, module):
-    log('servicemembers_identical')
+def get_actual_service_members(client, module):
     try:
         # count() raises nitro exception instead of returning 0
         count = servicegroup_servicegroupmember_binding.count(client, module.params['servicegroupname'])
@@ -474,7 +480,13 @@ def servicemembers_identical(client, module):
             servicegroup_members = []
         else:
             raise
+    return servicegroup_members
 
+
+def servicemembers_identical(client, module):
+    log('servicemembers_identical')
+
+    servicegroup_members = get_actual_service_members(client, module)
     log('servicemembers %s' % servicegroup_members)
     module_servicegroups = get_configured_service_members(client, module)
     log('Number of service group members %s' % len(servicegroup_members))
@@ -497,33 +509,55 @@ def servicemembers_identical(client, module):
 
 def sync_service_members(client, module):
     log('sync_service_members')
-    delete_all_servicegroup_members(client, module)
+    configured_service_members = get_configured_service_members(client, module)
+    actual_service_members = get_actual_service_members(client, module)
+    skip_add = []
+    skip_delete = []
 
-    for member in get_configured_service_members(client, module):
-        member.add()
+    # Find positions of identical service members
+    for (configured_index, configured_service) in enumerate(configured_service_members):
+        for (actual_index, actual_service) in enumerate(actual_service_members):
+            if configured_service.has_equal_attributes(actual_service):
+                skip_add.append(configured_index)
+                skip_delete.append(actual_index)
 
+    # Delete actual that are not identical to any configured
+    for (actual_index, actual_service) in enumerate(actual_service_members):
+        # Skip identical
+        if actual_index in skip_delete:
+            log('Skipping actual delete at index %s' % actual_index)
+            continue
 
-def delete_all_servicegroup_members(client, module):
-    log('delete_all_servicegroup_members')
-    if servicegroup_servicegroupmember_binding.count(client, module.params['servicegroupname']) == 0:
-        return
-    servicegroup_members = servicegroup_servicegroupmember_binding.get(client, module.params['servicegroupname'])
-    log('len %s' % len(servicegroup_members))
-    log('count %s' % servicegroup_servicegroupmember_binding.count(client, module.params['servicegroupname']))
-    for member in servicegroup_members:
-        log('%s' % dir(member))
-        log('ip %s' % member.ip)
-        log('servername %s' % member.servername)
+        # Fallthrouth to deletion
         if all([
-            hasattr(member, 'ip'),
-            member.ip is not None,
-            hasattr(member, 'servername'),
-            member.servername is not None,
+            hasattr(actual_service, 'ip'),
+            actual_service.ip is not None,
+            hasattr(actual_service, 'servername'),
+            actual_service.servername is not None,
         ]):
-            member.ip = None
+            actual_service.ip = None
 
-        member.servicegroupname = module.params['servicegroupname']
-        servicegroup_servicegroupmember_binding.delete(client, member)
+        actual_service.servicegroupname = module.params['servicegroupname']
+        servicegroup_servicegroupmember_binding.delete(client, actual_service)
+
+    # Add configured that are not already present in actual
+    for (configured_index, configured_service) in enumerate(configured_service_members):
+
+        # Skip identical
+        if configured_index in skip_add:
+            log('Skipping configured add at index %s' % configured_index)
+            continue
+
+        # Fallthrough to addition
+        configured_service.add()
+
+
+def monitor_binding_equal(configured, actual):
+    if any([configured.monitorname != actual.monitor_name,
+            configured.servicegroupname != actual.servicegroupname,
+            configured.weight != float(actual.weight)]):
+        return False
+    return True
 
 
 def get_configured_monitor_bindings(client, module):
@@ -593,11 +627,13 @@ def monitor_bindings_identical(client, module):
     # Compare key to key
     for key in configured_key_set:
         configured_proxy = configured_bindings[key]
+
+        # Follow nscli convention for missing weight value
+        if not hasattr(configured_proxy, 'weight'):
+            configured_proxy.weight = 1
         log('configured_proxy %s' % [configured_proxy.monitorname, configured_proxy.servicegroupname, configured_proxy.weight])
         log('actual_bindings %s' % [actual_bindings[key].monitor_name, actual_bindings[key].servicegroupname, actual_bindings[key].weight])
-        if any([configured_proxy.monitorname != actual_bindings[key].monitor_name,
-                configured_proxy.servicegroupname != actual_bindings[key].servicegroupname,
-                configured_proxy.weight != float(actual_bindings[key].weight)]):
+        if not monitor_binding_equal(configured_proxy, actual_bindings[key]):
             return False
 
     # Fallthrought to success
@@ -606,8 +642,23 @@ def monitor_bindings_identical(client, module):
 
 def sync_monitor_bindings(client, module):
     log('Entering sync_monitor_bindings')
-    # Delete existing bindings
-    for binding in get_actual_monitor_bindings(client, module).values():
+
+    actual_bindings = get_actual_monitor_bindings(client, module)
+
+    # Exclude default monitors from deletion
+    for monitorname in ('tcp-default', 'ping-default'):
+        if monitorname in actual_bindings:
+            del actual_bindings[monitorname]
+
+    configured_bindings = get_configured_monitor_bindings(client, module)
+
+    to_remove = list(set(actual_bindings.keys()) - set(configured_bindings.keys()))
+    to_add = list(set(configured_bindings.keys()) - set(actual_bindings.keys()))
+    to_modify = list(set(configured_bindings.keys()) & set(actual_bindings.keys()))
+
+    # Delete existing and modifiable bindings
+    for key in to_remove + to_modify:
+        binding = actual_bindings[key]
         b = lbmonitor_servicegroup_binding()
         b.monitorname = binding.monitor_name
         b.servicegroupname = module.params['servicegroupname']
@@ -616,9 +667,9 @@ def sync_monitor_bindings(client, module):
             continue
         lbmonitor_servicegroup_binding.delete(client, b)
 
-    # Apply configured bindings
-
-    for binding in get_configured_monitor_bindings(client, module).values():
+    # Add new and modified bindings
+    for key in to_add + to_modify:
+        binding = configured_bindings[key]
         log('Adding %s' % binding.monitorname)
         binding.add()
 

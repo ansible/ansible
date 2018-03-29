@@ -36,6 +36,7 @@ import json
 import os
 from copy import deepcopy
 
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes
 
@@ -69,6 +70,7 @@ def aci_argument_spec():
         password=dict(type='str', no_log=True),
         private_key=dict(type='path', aliases=['cert_key']),  # Beware, this is not the same as client_key !
         certificate_name=dict(type='str', aliases=['cert_name']),  # Beware, this is not the same as client_cert !
+        output_level=dict(type='str', choices=['debug', 'info', 'normal']),
         timeout=dict(type='int', default=30),
         use_proxy=dict(type='bool', default=True),
         use_ssl=dict(type='bool', default=True),
@@ -115,56 +117,6 @@ URL_MAPPING = dict(
 '''
 
 
-def aci_response_error(result):
-    ''' Set error information when found '''
-    result['error_code'] = 0
-    result['error_text'] = 'Success'
-
-    # Handle possible APIC error information
-    if result['totalCount'] != '0':
-        try:
-            result['error_code'] = result['imdata'][0]['error']['attributes']['code']
-            result['error_text'] = result['imdata'][0]['error']['attributes']['text']
-        except (KeyError, IndexError):
-            pass
-
-
-def aci_response_json(result, rawoutput):
-    ''' Handle APIC JSON response output '''
-    try:
-        result.update(json.loads(rawoutput))
-    except Exception as e:
-        # Expose RAW output for troubleshooting
-        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as JSON, see 'raw' output. %s" % e)
-        return
-
-    # Handle possible APIC error information
-    aci_response_error(result)
-
-
-def aci_response_xml(result, rawoutput):
-    ''' Handle APIC XML response output '''
-
-    # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
-    try:
-        xml = lxml.etree.fromstring(to_bytes(rawoutput))
-        xmldata = cobra.data(xml)
-    except Exception as e:
-        # Expose RAW output for troubleshooting
-        result.update(raw=rawoutput, error_code=-1, error_text="Unable to parse output as XML, see 'raw' output. %s" % e)
-        return
-
-    # Reformat as ACI does for JSON API output
-    try:
-        result.update(imdata=xmldata['imdata']['children'])
-    except KeyError:
-        result['imdata'] = dict()
-    result['totalCount'] = xmldata['imdata']['attributes']['totalCount']
-
-    # Handle possible APIC error information
-    aci_response_error(result)
-
-
 class ACIModule(object):
 
     def __init__(self, module):
@@ -173,8 +125,35 @@ class ACIModule(object):
         self.result = dict(changed=False)
         self.headers = dict()
 
+        # error output
+        self.error = dict(code=None, text=None)
+
+        # normal output
+        self.existing = None
+
+        # info output
+        self.config = dict()
+        self.original = None
+        self.proposed = dict()
+
+        # debug output
+        self.filter_string = ''
+        self.method = None
+        self.path = None
+        self.response = None
+        self.status = None
+        self.url = None
+
+        # aci_rest output
+        self.imdata = None
+        self.totalCount = None
+
         # Ensure protocol is set
         self.define_protocol()
+
+        if self.module._debug:
+            self.module.warn('Enable debug output because ANSIBLE_DEBUG was set.')
+            self.params['output_level'] = 'debug'
 
         if self.params['private_key']:
             # Perform signature-based authentication, no need to log on separately
@@ -187,6 +166,37 @@ class ACIModule(object):
             self.login()
         else:
             self.module.fail_json(msg="Either parameter 'password' or 'private_key' is required for authentication")
+
+    def boolean(self, value, true='yes', false='no'):
+        ''' Return an acceptable value back '''
+
+        # When we expect value is of type=bool
+        if value is None:
+            return None
+        elif value is True:
+            return true
+        elif value is False:
+            return false
+
+        # When we expect value is of type=raw, deprecate in Ansible v2.8 (and all modules use type=bool)
+        try:
+            # This supports all Ansible boolean types
+            bool_value = boolean(value)
+            if bool_value is True:
+                return true
+            elif bool_value is False:
+                return false
+        except:
+            # This provides backward compatibility to Ansible v2.4, deprecate in Ansible v2.8
+            if value == true:
+                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'yes' as a boolean value." % value, '2.9')
+                return true
+            elif value == false:
+                self.module.deprecate("Boolean value '%s' is no longer valid, please use 'no' as a boolean value." % value, '2.9')
+                return false
+
+        # If all else fails, escalate back to user
+        self.module.fail_json(msg="Boolean value '%s' is an invalid ACI boolean value.")
 
     def iso8601_format(self, dt):
         ''' Return an ACI-compatible ISO8601 formatted time: 2123-12-12T00:00:00.000+00:00 '''
@@ -238,15 +248,15 @@ class ACIModule(object):
 
         # Handle APIC response
         if auth['status'] != 200:
-            self.result['response'] = auth['msg']
-            self.result['status'] = auth['status']
+            self.response = auth['msg']
+            self.status = auth['status']
             try:
                 # APIC error
-                aci_response_json(self.result, auth['body'])
-                self.module.fail_json(msg='Authentication failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.response_json(auth['body'])
+                self.fail_json(msg='Authentication failed: %(code)s %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Authentication failed for %(url)s. %(msg)s' % auth)
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % auth)
 
         # Retain cookie for later use
         self.headers['Cookie'] = resp.headers['Set-Cookie']
@@ -259,7 +269,7 @@ class ACIModule(object):
 
         # NOTE: ACI documentation incorrectly uses complete URL
         if path is None:
-            path = self.result['path']
+            path = self.path
         path = '/' + path.lstrip('/')
 
         if payload is None:
@@ -283,61 +293,114 @@ class ACIModule(object):
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
                                  'APIC-Request-Signature=%s' % sig_signature
 
+    def response_json(self, rawoutput):
+        ''' Handle APIC JSON response output '''
+        try:
+            jsondata = json.loads(rawoutput)
+        except Exception as e:
+            # Expose RAW output for troubleshooting
+            self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. %s" % e)
+            self.result['raw'] = rawoutput
+            return
+
+        # Extract JSON API output
+        try:
+            self.imdata = jsondata['imdata']
+        except KeyError:
+            self.imdata = dict()
+        self.totalCount = int(jsondata['totalCount'])
+
+        # Handle possible APIC error information
+        self.response_error()
+
+    def response_xml(self, rawoutput):
+        ''' Handle APIC XML response output '''
+
+        # NOTE: The XML-to-JSON conversion is using the "Cobra" convention
+        try:
+            xml = lxml.etree.fromstring(to_bytes(rawoutput))
+            xmldata = cobra.data(xml)
+        except Exception as e:
+            # Expose RAW output for troubleshooting
+            self.error = dict(code=-1, text="Unable to parse output as XML, see 'raw' output. %s" % e)
+            self.result['raw'] = rawoutput
+            return
+
+        # Reformat as ACI does for JSON API output
+        try:
+            self.imdata = xmldata['imdata']['children']
+        except KeyError:
+            self.imdata = dict()
+        self.totalCount = int(xmldata['imdata']['attributes']['totalCount'])
+
+        # Handle possible APIC error information
+        self.response_error()
+
+    def response_error(self):
+        ''' Set error information when found '''
+
+        # Handle possible APIC error information
+        if self.totalCount != '0':
+            try:
+                self.error = self.imdata[0]['error']['attributes']
+            except (KeyError, IndexError):
+                pass
+
     def request(self, path, payload=None):
         ''' Perform a REST request '''
 
         # Ensure method is set (only do this once)
         self.define_method()
-        self.result['path'] = path
+        self.path = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
             self.cert_auth(path=path, payload=payload)
 
         # Perform request
-        resp, info = fetch_url(self.module, self.result['url'],
+        resp, info = fetch_url(self.module, self.url,
                                data=payload,
                                headers=self.headers,
                                method=self.params['method'].upper(),
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'])
 
-        self.result['response'] = info['msg']
-        self.result['status'] = info['status']
+        self.response = info['msg']
+        self.status = info['status']
 
         # Handle APIC response
         if info['status'] != 200:
             try:
                 # APIC error
-                aci_response_json(self.result, info['body'])
-                self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.response_json(info['body'])
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-        aci_response_json(self.result, resp.read())
+        self.response_json(resp.read())
 
     def query(self, path):
         ''' Perform a query with no payload '''
 
-        self.result['path'] = path
+        self.path = path
 
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s:%(port)s/' % self.params + path.lstrip('/')
         else:
-            self.result['url'] = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
+            self.url = '%(protocol)s://%(host)s/' % self.params + path.lstrip('/')
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
             self.cert_auth(path=path, method='GET')
 
         # Perform request
-        resp, query = fetch_url(self.module, self.result['url'],
+        resp, query = fetch_url(self.module, self.url,
                                 data=None,
                                 headers=self.headers,
                                 method='GET',
@@ -346,15 +409,15 @@ class ACIModule(object):
 
         # Handle APIC response
         if query['status'] != 200:
-            self.result['response'] = query['msg']
-            self.result['status'] = query['status']
+            self.response = query['msg']
+            self.status = query['status']
             try:
                 # APIC error
-                aci_response_json(self.result, query['body'])
-                self.module.fail_json(msg='Query failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.response_json(query['body'])
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Query failed for %(url)s. %(msg)s' % query)
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % query)
 
         query = json.loads(resp.read())
 
@@ -402,12 +465,12 @@ class ACIModule(object):
         else:
             path, filter_string = self._construct_url_1(root_class, child_includes)
 
-        self.result['path'] = path
+        self.path = path
         if 'port' in self.params and self.params['port'] is not None:
-            self.result['url'] = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
+            self.url = '{0}://{1}:{2}/{3}'.format(self.module.params['protocol'], self.module.params['host'], self.module.params['port'], path)
         else:
-            self.result['url'] = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
-        self.result['filter_string'] = filter_string
+            self.url = '{0}://{1}/{2}'.format(self.module.params['protocol'], self.module.params['host'], path)
+        self.filter_string = filter_string
 
     def _construct_url_1(self, obj, child_includes):
         """
@@ -594,9 +657,9 @@ class ACIModule(object):
         This method is used to handle the logic when the modules state is equal to absent. The method only pushes a change if
         the object exists, and if check_mode is False. A successful change will mark the module as changed.
         """
-        self.result['proposed'] = {}
+        self.proposed = dict()
 
-        if not self.result['existing']:
+        if not self.existing:
             return
 
         elif not self.module.check_mode:
@@ -604,31 +667,31 @@ class ACIModule(object):
             if self.params['private_key'] is not None:
                 self.cert_auth(method='DELETE')
 
-            resp, info = fetch_url(self.module, self.result['url'],
+            resp, info = fetch_url(self.module, self.url,
                                    headers=self.headers,
                                    method='DELETE',
                                    timeout=self.params['timeout'],
                                    use_proxy=self.params['use_proxy'])
 
-            self.result['response'] = info['msg']
-            self.result['status'] = info['status']
-            self.result['method'] = 'DELETE'
+            self.response = info['msg']
+            self.status = info['status']
+            self.method = 'DELETE'
 
             # Handle APIC response
             if info['status'] == 200:
                 self.result['changed'] = True
-                aci_response_json(self.result, resp.read())
+                self.response_json(resp.read())
             else:
                 try:
                     # APIC error
-                    aci_response_json(self.result, info['body'])
-                    self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                    self.response_json(info['body'])
+                    self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
                 except KeyError:
                     # Connection error
-                    self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                    self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
-            self.result['method'] = 'DELETE'
+            self.method = 'DELETE'
 
     def get_diff(self, aci_class):
         """
@@ -639,9 +702,9 @@ class ACIModule(object):
         :param aci_class: Type str.
                           This is the root dictionary key for the MO's configuration body, or the ACI class of the MO.
         """
-        proposed_config = self.result['proposed'][aci_class]['attributes']
-        if self.result['existing']:
-            existing_config = self.result['existing'][0][aci_class]['attributes']
+        proposed_config = self.proposed[aci_class]['attributes']
+        if self.existing:
+            existing_config = self.existing[0][aci_class]['attributes']
             config = {}
 
             # values are strings, so any diff between proposed and existing can be a straight replace
@@ -664,9 +727,9 @@ class ACIModule(object):
                 config = {aci_class: {'attributes': {}, 'children': children}}
 
         else:
-            config = self.result['proposed']
+            config = self.proposed
 
-        self.result['config'] = config
+        self.config = config
 
     @staticmethod
     def get_diff_child(child_class, proposed_child, existing_child):
@@ -685,7 +748,8 @@ class ACIModule(object):
         """
         update_config = {child_class: {'attributes': {}}}
         for key, value in proposed_child.items():
-            if value != existing_child[key]:
+            existing_field = existing_child.get(key)
+            if value != existing_field:
                 update_config[child_class]['attributes'][key] = value
 
         if not update_config[child_class]['attributes']:
@@ -703,10 +767,10 @@ class ACIModule(object):
         :return: The list of updated child config dictionaries. None is returned if there are no changes to the child
                  configurations.
         """
-        proposed_children = self.result['proposed'][aci_class].get('children')
+        proposed_children = self.proposed[aci_class].get('children')
         if proposed_children:
             child_updates = []
-            existing_children = self.result['existing'][0][aci_class].get('children', [])
+            existing_children = self.existing[0][aci_class].get('children', [])
 
             # Loop through proposed child configs and compare against existing child configuration
             for child in proposed_children:
@@ -733,32 +797,32 @@ class ACIModule(object):
         that this method can be used to supply the existing configuration when using the get_diff method. The response, status,
         and existing configuration will be added to the self.result dictionary.
         """
-        uri = self.result['url'] + self.result['filter_string']
+        uri = self.url + self.filter_string
 
         # Sign and encode request as to APIC's wishes
         if self.params['private_key'] is not None:
-            self.cert_auth(path=self.result['path'] + self.result['filter_string'], method='GET')
+            self.cert_auth(path=self.path + self.filter_string, method='GET')
 
         resp, info = fetch_url(self.module, uri,
                                headers=self.headers,
                                method='GET',
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'])
-        self.result['response'] = info['msg']
-        self.result['status'] = info['status']
-        self.result['method'] = 'GET'
+        self.response = info['msg']
+        self.status = info['status']
+        self.method = 'GET'
 
         # Handle APIC response
         if info['status'] == 200:
-            self.result['existing'] = json.loads(resp.read())['imdata']
+            self.existing = json.loads(resp.read())['imdata']
         else:
             try:
                 # APIC error
-                aci_response_json(self.result, info['body'])
-                self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                self.response_json(info['body'])
+                self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
             except KeyError:
                 # Connection error
-                self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
     @staticmethod
     def get_nested_config(proposed_child, existing_children):
@@ -802,7 +866,7 @@ class ACIModule(object):
                               MOs should have their own module.
         """
         proposed = dict((k, str(v)) for k, v in class_config.items() if v is not None)
-        self.result['proposed'] = {aci_class: {'attributes': proposed}}
+        self.proposed = {aci_class: {'attributes': proposed}}
 
         # add child objects to proposed
         if child_configs:
@@ -821,7 +885,7 @@ class ACIModule(object):
                     children.append(child)
 
             if children:
-                self.result['proposed'][aci_class].update(dict(children=children))
+                self.proposed[aci_class].update(dict(children=children))
 
     def post_config(self):
         """
@@ -829,36 +893,107 @@ class ACIModule(object):
         the object has differences than what exists on the APIC, and if check_mode is False. A successful change will mark the
         module as changed.
         """
-        if not self.result['config']:
+        if not self.config:
             return
         elif not self.module.check_mode:
             # Sign and encode request as to APIC's wishes
             if self.params['private_key'] is not None:
-                self.cert_auth(method='POST', payload=json.dumps(self.result['config']))
+                self.cert_auth(method='POST', payload=json.dumps(self.config))
 
-            resp, info = fetch_url(self.module, self.result['url'],
-                                   data=json.dumps(self.result['config']),
+            resp, info = fetch_url(self.module, self.url,
+                                   data=json.dumps(self.config),
                                    headers=self.headers,
                                    method='POST',
                                    timeout=self.params['timeout'],
                                    use_proxy=self.params['use_proxy'])
 
-            self.result['response'] = info['msg']
-            self.result['status'] = info['status']
-            self.result['method'] = 'POST'
+            self.response = info['msg']
+            self.status = info['status']
+            self.method = 'POST'
 
             # Handle APIC response
             if info['status'] == 200:
                 self.result['changed'] = True
-                aci_response_json(self.result, resp.read())
+                self.response_json(resp.read())
             else:
                 try:
                     # APIC error
-                    aci_response_json(self.result, info['body'])
-                    self.module.fail_json(msg='Request failed: %(error_code)s %(error_text)s' % self.result, **self.result)
+                    self.response_json(info['body'])
+                    self.fail_json(msg='APIC Error %(code)s: %(text)s' % self.error)
                 except KeyError:
                     # Connection error
-                    self.module.fail_json(msg='Request failed for %(url)s. %(msg)s' % info)
+                    self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         else:
             self.result['changed'] = True
-            self.result['method'] = 'POST'
+            self.method = 'POST'
+
+    def exit_json(self, **kwargs):
+
+        if 'state' in self.params:
+            if self.params['state'] in ('absent', 'present'):
+                if self.params['output_level'] in ('debug', 'info'):
+                    self.result['previous'] = self.existing
+
+        # Return the gory details when we need it
+        if self.params['output_level'] == 'debug':
+            if 'state' in self.params:
+                self.result['filter_string'] = self.filter_string
+            self.result['method'] = self.method
+            # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
+            self.result['response'] = self.response
+            self.result['status'] = self.status
+            self.result['url'] = self.url
+
+        if 'state' in self.params:
+            self.original = self.existing
+            if self.params['state'] in ('absent', 'present'):
+                self.get_existing()
+
+            # if self.module._diff and self.original != self.existing:
+            #     self.result['diff'] = dict(
+            #         before=json.dumps(self.original, sort_keys=True, indent=4),
+            #         after=json.dumps(self.existing, sort_keys=True, indent=4),
+            #     )
+            self.result['current'] = self.existing
+
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['sent'] = self.config
+                self.result['proposed'] = self.proposed
+
+        self.result.update(**kwargs)
+        self.module.exit_json(**self.result)
+
+    def fail_json(self, msg, **kwargs):
+
+        # Return error information, if we have it
+        if self.error['code'] is not None and self.error['text'] is not None:
+            self.result['error'] = self.error
+
+        if 'state' in self.params:
+            if self.params['state'] in ('absent', 'present'):
+                if self.params['output_level'] in ('debug', 'info'):
+                    self.result['previous'] = self.existing
+
+            # Return the gory details when we need it
+            if self.params['output_level'] == 'debug':
+                if self.imdata is not None:
+                    self.result['imdata'] = self.imdata
+                    self.result['totalCount'] = self.totalCount
+
+        if self.params['output_level'] == 'debug':
+            if self.url is not None:
+                if 'state' in self.params:
+                    self.result['filter_string'] = self.filter_string
+                self.result['method'] = self.method
+                # self.result['path'] = self.path  # Adding 'path' in result causes state: absent in output
+                self.result['response'] = self.response
+                self.result['status'] = self.status
+                self.result['url'] = self.url
+
+        if 'state' in self.params:
+            if self.params['output_level'] in ('debug', 'info'):
+                self.result['sent'] = self.config
+                self.result['proposed'] = self.proposed
+
+        self.result.update(**kwargs)
+        self.module.fail_json(msg=msg, **self.result)

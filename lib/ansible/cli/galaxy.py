@@ -81,8 +81,8 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog init [options] role_name")
             self.parser.add_option('--init-path', dest='init_path', default="./",
                                    help='The path in which the skeleton role will be created. The default is the current working directory.')
-            self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
-                                   help='Initialize the skeleton role with default contents for a Container Enabled role.')
+            self.parser.add_option('--type', dest='role_type', action='store', default='default',
+                                   help="Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'.")
             self.parser.add_option('--role-skeleton', dest='role_skeleton', default=C.GALAXY_ROLE_SKELETON,
                                    help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
@@ -91,6 +91,8 @@ class GalaxyCLI(CLI):
                                    help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
+            self.parser.add_option('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
+                                   default=False, help='Use tar instead of the scm archive option when packaging the role')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -212,7 +214,7 @@ class GalaxyCLI(CLI):
             license='license (GPLv2, CC-BY, etc)',
             issue_tracker_url='http://example.com/issue/tracker',
             min_ansible_version='1.2',
-            container_enabled=self.options.container_enabled
+            role_type=self.options.role_type
         )
 
         # create role directory
@@ -233,7 +235,7 @@ class GalaxyCLI(CLI):
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
-            dirs[:] = [d for d in dirs if not any(r.match(os.path.join(rel_root, d)) for r in skeleton_ignore_re)]
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)

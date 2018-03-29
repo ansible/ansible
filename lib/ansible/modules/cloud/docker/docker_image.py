@@ -243,11 +243,11 @@ image:
 import os
 import re
 
-from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils._text import to_native
 
 try:
-    if HAS_DOCKER_PY_2:
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
         from docker.auth import resolve_repository_name
     else:
         from docker.auth.auth import resolve_repository_name
@@ -399,8 +399,12 @@ class ImageManager(DockerBaseClass):
 
             try:
                 with open(self.archive_path, 'w') as fd:
-                    for chunk in image.stream(2048, decode_content=False):
-                        fd.write(chunk)
+                    if HAS_DOCKER_PY_3:
+                        for chunk in image:
+                            fd.write(chunk)
+                    else:
+                        for chunk in image.stream(2048, decode_content=False):
+                            fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
@@ -500,13 +504,14 @@ class ImageManager(DockerBaseClass):
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
-            stream=True,
             timeout=self.http_timeout,
             pull=self.pull,
             forcerm=self.rm,
             dockerfile=self.dockerfile,
             decode=True
         )
+        if not HAS_DOCKER_PY_3:
+            params['stream'] = True
         build_output = []
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)

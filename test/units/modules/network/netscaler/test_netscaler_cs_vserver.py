@@ -45,6 +45,8 @@ class TestNetscalerCSVserverModule(TestModule):
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver.csvserver': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_cspolicy_binding.csvserver_cspolicy_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding': m,
+            'nssrc.com.citrix.netscaler.nitro.resource.config.cs.csvserver_lbvserver_binding.csvserver_lbvserver_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding': m,
             'nssrc.com.citrix.netscaler.nitro.resource.config.ssl.sslvserver_sslcertkey_binding.sslvserver_sslcertkey_binding': m,

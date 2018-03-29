@@ -20,7 +20,6 @@ description:
 options:
   attribute:
     description: The attribute for which to get the value(s).
-    default: null
     choices:
       - supported-platforms
       - default-vpc

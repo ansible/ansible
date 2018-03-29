@@ -46,11 +46,9 @@ options:
     host_groups:
         description:
             - List of host groups the host is part of.
-        required: false
     link_templates:
         description:
             - List of templates linked to the host.
-        default: None
     inventory_mode:
         description:
             - Configure the inventory mode.
@@ -76,8 +74,7 @@ options:
         default: 'present'
     proxy:
         description:
-            - The name of the Zabbix Proxy to be used
-        default: None
+            - The name of the Zabbix proxy to be used.
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
@@ -90,9 +87,7 @@ options:
     tls_connect:
         description:
             - Specifies what encryption to use for outgoing connections.
-            - The tls_connect parameter accepts values of 1 to 7
             - Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
-            - Values can be combined.
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
@@ -107,13 +102,13 @@ options:
         version_added: '2.5'
     tls_psk_identity:
         description:
-            - PSK value is a hard to guess string of hexadecimal digits.
             - It is a unique name by which this specific PSK is referred to by Zabbix components
-            - Do not put sensitive information in PSK identity string, it is transmitted over the network unencrypted.
+            - Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
     tls_psk:
         description:
+            - PSK value is a hard to guess string of hexadecimal digits.
             - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
@@ -159,9 +154,9 @@ options:
         version_added: '2.5'
     force:
         description:
-            - Overwrite the host configuration, even if already present
+            - Overwrite the host configuration, even if already present.
+        type: bool
         default: 'yes'
-        choices: [ 'yes', 'no' ]
         version_added: '2.0'
 extends_documentation_fragment:
     - zabbix

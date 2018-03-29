@@ -1,5 +1,5 @@
 # Test code for the ACI modules
-# Copyright 2017, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: debug
     state: present
     tenant: anstest
   register: tenant_present
@@ -110,15 +111,15 @@
     that:
       - phys_check_mode_present.changed == true
       - phys_present.changed == true
-      - phys_present.existing == []
-      - 'phys_present.config == {"fvRsDomAtt": {"attributes": {}}}'
+      - phys_present.previous == []
+      - 'phys_present.sent == {"fvRsDomAtt": {"attributes": {}}}'
       - '"[uni/phys-anstest].json" in phys_present.url'
       - phys_idempotent.changed == false
-      - phys_idempotent.config == {}
+      - phys_idempotent.sent == {}
       - phys_update.changed == true
-      - 'phys_update.config == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
+      - 'phys_update.sent == {"fvRsDomAtt": {"attributes": {"instrImedcy": "immediate"}}}'
       - vmm_present.changed == true
-      - 'vmm_present.config == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
+      - 'vmm_present.sent == {"fvRsDomAtt": {"attributes": {"resImedcy": "pre-provision"}}}'
       - '"[uni/vmmp-VMware/dom-anstest].json" in vmm_present.url'
       - present_missing_params.failed == true
       - 'present_missing_params.msg == "domain_type is vmm but all of the following are missing: vm_provider"'
@@ -138,7 +139,7 @@
   assert:
     that:
       - binding_query.changed == false
-      - binding_query.existing | length > 1
+      - binding_query.current | length > 1
       - '"class/fvRsDomAtt.json" in binding_query.url'
 
 - name: delete domain epg binding - check mode
@@ -175,12 +176,12 @@
   assert:
     that:
       - epg_domain_check_mode_absent.changed == true
-      - epg_domain_check_mode_absent.existing != []
+      - epg_domain_check_mode_absent.previous != []
       - epg_domain_absent.changed == true
-      - epg_domain_absent.existing == epg_domain_check_mode_absent.existing
+      - epg_domain_absent.previous == epg_domain_check_mode_absent.previous
       - epg_vmm_domain_absent.changed == true
       - idempotency_absent.changed == false
-      - idempotency_absent.existing == []
+      - idempotency_absent.previous == []
       - absent_missing_param.failed == true
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: ap, domain, domain_type, epg"'
 

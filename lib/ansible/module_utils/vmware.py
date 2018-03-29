@@ -34,6 +34,7 @@ except ImportError:
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six import integer_types, iteritems, string_types
+from ansible.module_utils.basic import env_fallback
 
 
 class TaskError(Exception):
@@ -290,6 +291,7 @@ def gather_vm_facts(content, vm):
         'hw_guest_ha_state': None,
         'hw_is_template': vm.config.template,
         'hw_folder': None,
+        'hw_version': vm.config.version,
         'guest_tools_status': _get_vm_prop(vm, ('guest', 'toolsRunningStatus')),
         'guest_tools_version': _get_vm_prop(vm, ('guest', 'toolsVersion')),
         'guest_question': vm.summary.runtime.question,
@@ -432,13 +434,27 @@ def list_snapshots(vm):
 
 
 def vmware_argument_spec():
-
     return dict(
-        hostname=dict(type='str', required=True),
-        username=dict(type='str', aliases=['user', 'admin'], required=True),
-        password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
-        port=dict(type='int', default=443),
-        validate_certs=dict(type='bool', required=False, default=True),
+        hostname=dict(type='str',
+                      required=False,
+                      fallback=(env_fallback, ['VMWARE_HOST']),
+                      ),
+        username=dict(type='str',
+                      aliases=['user', 'admin'],
+                      required=False,
+                      fallback=(env_fallback, ['VMWARE_USER'])),
+        password=dict(type='str',
+                      aliases=['pass', 'pwd'],
+                      required=False,
+                      no_log=True,
+                      fallback=(env_fallback, ['VMWARE_PASSWORD'])),
+        port=dict(type='int',
+                  default=443,
+                  fallback=(env_fallback, ['VMWARE_PORT'])),
+        validate_certs=dict(type='bool',
+                            required=False,
+                            default=True,
+                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])),
     )
 
 
@@ -446,8 +462,23 @@ def connect_to_api(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
-    port = module.params['port'] or 443
+    port = module.params.get('port', 443)
     validate_certs = module.params['validate_certs']
+
+    if not hostname:
+        module.fail_json(msg="Hostname parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_HOST=ESXI_HOSTNAME'")
+
+    if not username:
+        module.fail_json(msg="Username parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_USER=ESXI_USERNAME'")
+
+    if not password:
+        module.fail_json(msg="Password parameter is missing."
+                             " Please specify this parameter in task or"
+                             " export environment variable like 'export VMWARE_PASSWORD=ESXI_PASSWORD'")
 
     if validate_certs and not hasattr(ssl, 'SSLContext'):
         module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update '
@@ -716,7 +747,7 @@ def find_host_by_cluster_datacenter(module, content, datacenter_name, cluster_na
     return None, cluster
 
 
-def set_vm_power_state(content, vm, state, force):
+def set_vm_power_state(content, vm, state, force, timeout=0):
     """
     Set the power status for a VM determined by the current and
     requested states. force is forceful
@@ -764,6 +795,8 @@ def set_vm_power_state(content, vm, state, force):
                     if vm.guest.toolsRunningStatus == 'guestToolsRunning':
                         if expected_state == 'shutdownguest':
                             task = vm.ShutdownGuest()
+                            if timeout > 0:
+                                result.update(wait_for_poweroff(vm, timeout))
                         else:
                             task = vm.RebootGuest()
                         # Set result['changed'] immediately because
@@ -793,9 +826,22 @@ def set_vm_power_state(content, vm, state, force):
                 result['changed'] = True
 
     # need to get new metadata if changed
-    if result['changed']:
-        result['instance'] = gather_vm_facts(content, vm)
+    result['instance'] = gather_vm_facts(content, vm)
 
+    return result
+
+
+def wait_for_poweroff(vm, timeout=300):
+    result = dict()
+    interval = 15
+    while timeout > 0:
+        if vm.runtime.powerState.lower() == 'poweredoff':
+            break
+        time.sleep(interval)
+        timeout -= interval
+    else:
+        result['failed'] = True
+        result['msg'] = 'Timeout while waiting for VM power off.'
     return result
 
 
@@ -1071,6 +1117,42 @@ class PyVmomi(object):
         """
         return find_hostsystem_by_name(self.content, hostname=host_name)
 
+    def get_all_host_objs(self, cluster_name=None, esxi_host_name=None):
+        """
+        Function to get all host system managed object
+
+        Args:
+            cluster_name: Name of Cluster
+            esxi_host_name: Name of ESXi server
+
+        Returns: A list of all host system managed objects, else empty list
+
+        """
+        host_obj_list = []
+        if not self.is_vcenter():
+            hosts = get_all_objs(self.content, [vim.HostSystem]).keys()
+            if hosts:
+                host_obj_list.append(hosts[0])
+        else:
+            if cluster_name:
+                cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
+                if cluster_obj:
+                    host_obj_list = [host for host in cluster_obj.host]
+                else:
+                    self.module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
+            elif esxi_host_name:
+                if isinstance(esxi_host_name, str):
+                    esxi_host_name = [esxi_host_name]
+
+                for host in esxi_host_name:
+                    esxi_host_obj = self.find_hostsystem_by_name(host_name=host)
+                    if esxi_host_obj:
+                        host_obj_list = [esxi_host_obj]
+                    else:
+                        self.module.fail_json(changed=False, msg="ESXi '%s' not found" % host)
+
+        return host_obj_list
+
     # Network related functions
     @staticmethod
     def find_host_portgroup_by_name(host, portgroup_name):
@@ -1087,3 +1169,56 @@ class PyVmomi(object):
             if portgroup.spec.name == portgroup_name:
                 return portgroup
         return False
+
+    def get_all_port_groups_by_host(self, host_system):
+        """
+        Function to get all Port Group by host
+        Args:
+            host_system: Name of Host System
+
+        Returns: List of Port Group Spec
+        """
+        pgs_list = []
+        for pg in host_system.config.network.portgroup:
+            pgs_list.append(pg)
+        return pgs_list
+
+    # Datacenter
+    def find_datacenter_by_name(self, datacenter_name):
+        """
+        Function to get datacenter managed object by name
+
+        Args:
+            datacenter_name: Name of datacenter
+
+        Returns: datacenter managed object if found else None
+
+        """
+        return find_datacenter_by_name(self.content, datacenter_name=datacenter_name)
+
+    def find_datastore_by_name(self, datastore_name):
+        """
+        Function to get datastore managed object by name
+        Args:
+            datastore_name: Name of datastore
+
+        Returns: datastore managed object if found else None
+
+        """
+        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+
+    # Datastore cluster
+    def find_datastore_cluster_by_name(self, datastore_cluster_name):
+        """
+        Function to get datastore cluster managed object by name
+        Args:
+            datastore_cluster: Name of datastore cluster
+
+        Returns: Datastore cluster managed object if found else None
+
+        """
+        data_store_clusters = get_all_objs(self.content, [vim.StoragePod])
+        for dsc in data_store_clusters:
+            if dsc.name == datastore_cluster_name:
+                return dsc
+        return None

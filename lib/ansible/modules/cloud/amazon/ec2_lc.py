@@ -54,8 +54,6 @@ options:
     description:
       - Instance type to use for the instance
     required: true
-    default: null
-    aliases: []
   image_id:
     description:
       - The AMI unique identifier to be used for the group
@@ -87,7 +85,8 @@ options:
   instance_monitoring:
     description:
       - Specifies whether instances are launched with detailed monitoring.
-    default: false
+    type: bool
+    default: 'no'
   assign_public_ip:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address
@@ -172,6 +171,17 @@ EXAMPLES = '''
       iops: 3000
       delete_on_termination: true
 
+# create a launch configuration to omit the /dev/sdf EBS device that is included in the AMI image
+
+- ec2_lc:
+    name: special
+    image_id: ami-XXX
+    key_name: default
+    security_groups: ['group', 'group2' ]
+    instance_type: t1.micro
+    volumes:
+    - device_name: /dev/sdf
+      no_device: true
 '''
 
 RETURN = '''
@@ -396,7 +406,7 @@ def create_block_device_meta(module, volume):
     if 'device_type' in volume:
         volume['volume_type'] = volume.pop('device_type')
 
-    if 'snapshot' not in volume and 'ephemeral' not in volume:
+    if 'snapshot' not in volume and 'ephemeral' not in volume and 'no_device' not in volume:
         if 'volume_size' not in volume:
             module.fail_json(msg='Size must be specified when creating a new volume or modifying the root volume')
     if 'snapshot' in volume:
@@ -414,7 +424,7 @@ def create_block_device_meta(module, volume):
     if 'device_name' in volume:
         return_object['DeviceName'] = volume.get('device_name')
 
-    if 'no_device' is volume:
+    if 'no_device' in volume:
         return_object['NoDevice'] = volume.get('no_device')
 
     if any(key in volume for key in ['snapshot', 'volume_size', 'volume_type', 'delete_on_termination', 'ips', 'encrypted']):

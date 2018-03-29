@@ -97,7 +97,6 @@ class InventoryData(object):
                                 'You can correct this by setting ansible_python_interpreter for localhost')
             new_host.set_variable("ansible_python_interpreter", py_interp)
             new_host.set_variable("ansible_connection", 'local')
-            new_host.set_variable("ansible_remote_tmp", C.DEFAULT_LOCAL_TMP)
 
             self.localhost = new_host
 
@@ -129,7 +128,7 @@ class InventoryData(object):
             if self.groups['ungrouped'] in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
                 if set(mygroups).difference(set([self.groups['all'], self.groups['ungrouped']])):
-                    host.remove_group(self.groups['ungrouped'])
+                    self.groups['ungrouped'].remove_host(host)
 
             elif not host.implicit:
                 # add ungrouped hosts to ungrouped, except implicit

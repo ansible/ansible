@@ -24,8 +24,10 @@ import re
 import time
 
 import ansible.constants as C
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_native
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
@@ -43,7 +45,21 @@ class ShellBase(AnsiblePlugin):
                         'LC_ALL': module_locale,
                         'LC_MESSAGES': module_locale}
 
-        self.tempdir = None
+        self.tmpdir = None
+
+    def _normalize_system_tmpdirs(self):
+        # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
+        # can vary between remote user and become user.  Therefore the safest practice will be for
+        # this to always be specified as full paths)
+        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmpdirs')]
+
+        # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
+        # which is almost certainly going to fail in a cornercase.
+        if not all(os.path.isabs(d) for d in normalized_paths):
+            raise AnsibleError('The configured system_tmpdirs contains a relative path: {0}. All'
+                               ' system_tmpdirs must be absolute'.format(to_native(normalized_paths)))
+
+        self.set_option('system_tmpdirs', normalized_paths)
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
@@ -51,6 +67,14 @@ class ShellBase(AnsiblePlugin):
 
         # set env
         self.env.update(self.get_option('environment'))
+
+        # We can remove the try: except in the future when we make ShellBase a proper subset of
+        # *all* shells.  Right now powershell and third party shells which do not use the
+        # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
+        try:
+            self._normalize_system_tmpdirs()
+        except AnsibleError:
+            pass
 
     def env_prefix(self, **kwargs):
         return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
@@ -104,22 +128,24 @@ class ShellBase(AnsiblePlugin):
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
 
         # When system is specified we have to create this in a directory where
-        # other users can read and access the temp directory.
+        # other users can read and access the tmp directory.
         # This is because we use system to create tmp dirs for unprivileged users who are
         # sudo'ing to a second unprivileged user.
-        # The 'system_temps' setting defines dirctories we can use for this purpose
+        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
         # the default are, /tmp and /var/tmp.
         # So we only allow one of those locations if system=True, using the
         # passed in tmpdir if it is valid or the first one from the setting if not.
 
         if system:
-            if tmpdir.startswith(tuple(self.get_option('system_temps'))):
+            tmpdir = tmpdir.rstrip('/')
+
+            if tmpdir in self.get_option('system_tmpdirs'):
                 basetmpdir = tmpdir
             else:
-                basetmpdir = self.get_option('system_temps')[0]
+                basetmpdir = self.get_option('system_tmpdirs')[0]
         else:
             if tmpdir is None:
-                basetmpdir = self.get_option('remote_temp')
+                basetmpdir = self.get_option('remote_tmp')
             else:
                 basetmpdir = tmpdir
 

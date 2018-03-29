@@ -39,41 +39,32 @@ options:
   name:
     description:
       - The name of the new AMI to copy. (As of 2.3 the default is 'default', in prior versions it was 'null'.)
-    required: false
     default: "default"
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the new AMI.
-    required: false
-    default: null
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
-    required: false
-    default: null
     version_added: "2.2"
   kms_key_id:
     description:
       - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
-    required: false
-    default: null
     version_added: "2.2"
   wait:
     description:
       - Wait for the copied AMI to be in state 'available' before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. (As of 2.3 this option is deprecated. See boto3 Waiters)
-    required: false
-    default: 1200
+      - How long before wait gives up, in seconds. Prior to 2.3 the default was 1200.
+      - From 2.3-2.5 this option was deprecated in favor of boto3 waiter defaults.
+        This was reenabled in 2.6 to allow timeouts greater than 10 minutes.
+    default: 600
   tags:
     description:
       - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
-    required: false
-    default: null
 author: "Amir Moulavi <amir.moulavi@gmail.com>, Tim C <defunct@defunct.io>"
 extends_documentation_fragment:
     - aws
@@ -95,6 +86,7 @@ EXAMPLES = '''
     region: eu-west-1
     source_image_id: ami-xxxxxxx
     wait: yes
+    wait_timeout: 1200  # Default timeout is 600
   register: image_id
 
 # Named AMI copy
@@ -170,7 +162,12 @@ def copy_image(module, ec2):
     try:
         image_id = ec2.copy_image(**params)['ImageId']
         if module.params.get('wait'):
-            ec2.get_waiter('image_available').wait(ImageIds=[image_id])
+            delay = 15
+            max_attempts = module.params.get('wait_timeout') // delay
+            ec2.get_waiter('image_available').wait(
+                ImageIds=[image_id],
+                WaiterConfig={'Delay': delay, 'MaxAttempts': max_attempts}
+            )
         if module.params.get('tags'):
             ec2.create_tags(
                 Resources=[image_id],
@@ -198,7 +195,7 @@ def main():
         encrypted=dict(type='bool', default=False, required=False),
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
-        wait_timeout=dict(default=1200),
+        wait_timeout=dict(type='int', default=600),
         tags=dict(type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)

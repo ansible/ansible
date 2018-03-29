@@ -180,3 +180,9 @@ def get_change_token(client, module):
         return token['ChangeToken']
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't obtain change token")
+
+
+@AWSRetry.backoff(tries=10, delay=2, backoff=2.0, catch_extra_error_codes=['WAFStaleDataException'])
+def run_func_with_change_token_backoff(client, module, params, func):
+    params['ChangeToken'] = get_change_token(client, module)
+    return func(**params)

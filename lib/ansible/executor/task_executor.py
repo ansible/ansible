@@ -9,6 +9,7 @@ import pty
 import time
 import json
 import subprocess
+import sys
 import traceback
 
 from ansible import constants as C
@@ -16,7 +17,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import cPickle
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -169,7 +170,7 @@ class TaskExecutor:
             display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
-            return dict(failed=True, msg=to_text(e, nonstring='simplerepr'))
+            return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')))
         except Exception as e:
             return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()), stdout='')
         finally:
@@ -269,13 +270,18 @@ class TaskExecutor:
         task_vars = self._job_vars
 
         loop_var = 'item'
+        index_var = None
         label = None
         loop_pause = 0
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         if self._task.loop_control:
-            loop_var = self._task.loop_control.loop_var
-            loop_pause = self._task.loop_control.pause
+            # FIXME: move this to the object itself to allow post_validate to take care of templating
+            loop_var = templar.template(self._task.loop_control.loop_var)
+            index_var = templar.template(self._task.loop_control.index_var)
+            loop_pause = templar.template(self._task.loop_control.pause)
             # the these may be 'None', so we still need to default to something useful
-            label = self._task.loop_control.label or ('{{' + loop_var + '}}')
+            # this is tempalted below after an item is assigned
+            label = (self._task.loop_control.label or ('{{' + loop_var + '}}'))
 
         if loop_var in task_vars:
             display.warning(u"The loop variable '%s' is already in use. "
@@ -287,12 +293,17 @@ class TaskExecutor:
             # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
             items = self._squash_items(items, loop_var, task_vars)
 
-        for item in items:
+        for item_index, item in enumerate(items):
             task_vars[loop_var] = item
+            if index_var:
+                task_vars[index_var] = item_index
 
             # pause between loop iterations
             if loop_pause and ran_once:
-                time.sleep(loop_pause)
+                try:
+                    time.sleep(float(loop_pause))
+                except ValueError as e:
+                    raise AnsibleError('Invalid pause value: %s, produced error: %s' % (loop_pause, to_native(e)))
             else:
                 ran_once = True
 
@@ -316,12 +327,13 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res[loop_var] = item
+            if index_var:
+                res[index_var] = item_index
             res['_ansible_item_result'] = True
             res['_ansible_ignore_errors'] = task_fields.get('ignore_errors')
 
             if label is not None:
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
-                res['_ansible_item_label'] = templar.template(label)
+                res['_ansible_item_label'] = templar.template(label, cache=False)
 
             self._rslt_q.put(
                 TaskResult(
@@ -396,7 +408,7 @@ class TaskExecutor:
                     # * lists can be squashed together
                     # * dicts could squash entries that match in all cases except the
                     #   name or pkg field.
-        except:
+        except Exception:
             # Squashing is an optimization.  If it fails for any reason,
             # simply use the unoptimized list of items.
 
@@ -581,7 +593,7 @@ class TaskExecutor:
                     failed_when_result = False
                 return failed_when_result
 
-            if 'ansible_facts' in result:
+            if 'ansible_facts' in result and self._task.action not in ('set_fact', 'include_vars'):
                 vars_copy.update(namespace_facts(result['ansible_facts']))
                 if C.INJECT_FACTS_AS_VARS:
                     vars_copy.update(clean_facts(result['ansible_facts']))
@@ -639,7 +651,7 @@ class TaskExecutor:
         if self._task.register:
             variables[self._task.register] = wrap_var(result)
 
-        if 'ansible_facts' in result:
+        if 'ansible_facts' in result and self._task.action not in ('set_fact', 'include_vars'):
             variables.update(namespace_facts(result['ansible_facts']))
             if C.INJECT_FACTS_AS_VARS:
                 variables.update(clean_facts(result['ansible_facts']))
@@ -723,7 +735,12 @@ class TaskExecutor:
                 except AttributeError:
                     pass
 
-            time_left -= self._task.poll
+                # Little hack to raise the exception if we've exhausted the timeout period
+                time_left -= self._task.poll
+                if time_left <= 0:
+                    raise
+            else:
+                time_left -= self._task.poll
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
@@ -839,7 +856,23 @@ class TaskExecutor:
         Starts the persistent connection
         '''
         master, slave = pty.openpty()
-        p = subprocess.Popen(["ansible-connection", to_text(os.getppid())], stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        python = sys.executable
+
+        def find_file_in_path(filename):
+            # Check $PATH first, followed by same directory as sys.argv[0]
+            paths = os.environ['PATH'].split(os.pathsep) + [os.path.dirname(sys.argv[0])]
+            for dirname in paths:
+                fullpath = os.path.join(dirname, filename)
+                if os.path.isfile(fullpath):
+                    return fullpath
+
+            raise AnsibleError("Unable to find location of '%s'" % filename)
+
+        p = subprocess.Popen(
+            [python, find_file_in_path('ansible-connection'), to_text(os.getppid())],
+            stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
@@ -858,9 +891,12 @@ class TaskExecutor:
         stdin.close()
 
         if p.returncode == 0:
-            result = json.loads(to_text(stdout))
+            result = json.loads(to_text(stdout, errors='surrogate_then_replace'))
         else:
-            result = json.loads(to_text(stderr))
+            try:
+                result = json.loads(to_text(stderr, errors='surrogate_then_replace'))
+            except json.decoder.JSONDecodeError:
+                result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
         if 'messages' in result:
             for msg in result.get('messages'):
@@ -868,8 +904,9 @@ class TaskExecutor:
 
         if 'error' in result:
             if self._play_context.verbosity > 2:
-                msg = "The full traceback is:\n" + result['exception']
-                display.display(msg, color=C.COLOR_ERROR)
+                if result.get('exception'):
+                    msg = "The full traceback is:\n" + result['exception']
+                    display.display(msg, color=C.COLOR_ERROR)
             raise AnsibleError(result['error'])
 
         return result['socket_path']

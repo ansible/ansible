@@ -41,8 +41,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        tmp = self._connection._shell.tempdir
+        del tmp  # tmp no longer has any effect
 
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -54,7 +53,20 @@ class ActionModule(ActionBase):
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
-        trim_blocks = self._task.args.get('trim_blocks', None)
+        trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
+        lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+
+        # Option `lstrip_blocks' was added in Jinja2 version 2.7.
+        if lstrip_blocks:
+            try:
+                import jinja2.defaults
+            except ImportError:
+                raise AnsibleError('Unable to import Jinja2 defaults for determing Jinja2 features.')
+
+            try:
+                jinja2.defaults.LSTRIP_BLOCKS
+            except AttributeError:
+                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
 
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
@@ -109,8 +121,8 @@ class ActionModule(ActionBase):
                     self._templar.environment.variable_start_string = variable_start_string
                 if variable_end_string is not None:
                     self._templar.environment.variable_end_string = variable_end_string
-                if trim_blocks is not None:
-                    self._templar.environment.trim_blocks = bool(trim_blocks)
+                self._templar.environment.trim_blocks = trim_blocks
+                self._templar.environment.lstrip_blocks = lstrip_blocks
 
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
@@ -134,9 +146,12 @@ class ActionModule(ActionBase):
             new_task.args.pop('variable_start_string', None)
             new_task.args.pop('variable_end_string', None)
             new_task.args.pop('trim_blocks', None)
+            new_task.args.pop('lstrip_blocks', None)
+
+            local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
+
             try:
-                tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
-                result_file = os.path.join(tempdir, os.path.basename(source))
+                result_file = os.path.join(local_tempdir, os.path.basename(source))
                 with open(result_file, 'wb') as f:
                     f.write(to_bytes(resultant, errors='surrogate_or_strict'))
 
@@ -154,12 +169,13 @@ class ActionModule(ActionBase):
                                                                         loader=self._loader,
                                                                         templar=self._templar,
                                                                         shared_loader_obj=self._shared_loader_obj)
-                result.update(copy_action.run(task_vars=task_vars, tmp=tmp))
+                result.update(copy_action.run(task_vars=task_vars))
             finally:
-                shutil.rmtree(tempdir)
+                shutil.rmtree(local_tempdir)
+
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(tmp)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

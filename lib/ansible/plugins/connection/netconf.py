@@ -46,7 +46,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
         configured, then the default netconf plugin will be used.
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:
@@ -88,14 +87,14 @@ options:
         timeout seconds, an error is generated.
     default: 120
   host_key_auto_add:
-    type: boolean
+    type: bool
     description:
       - By default, Ansible will prompt the user before adding SSH keys to the
         known hosts file.  Enabling this option, unknown host keys will
         automatically be added to the known hosts file.
       - Be sure to fully understand the security implications of enabling this
         option on production systems as it could create a security vulnerability.
-    default: False
+    default: 'no'
     ini:
       section: paramiko_connection
       key: host_key_auto_add
@@ -156,6 +155,10 @@ except ImportError:
     display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
+
+network_os_device_param_map = {
+    "nxos": "nexus"
+}
 
 
 class Connection(ConnectionBase):
@@ -238,7 +241,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        device_params = {'name': (network_os or 'default')}
+        device_params = {'name': (network_os_device_param_map.get(network_os) or network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
@@ -276,7 +279,8 @@ class Connection(ConnectionBase):
         if self._netconf:
             display.display('loaded netconf plugin for network_os %s' % network_os, log_only=True)
         else:
-            display.display('unable to load netconf for network_os %s' % network_os)
+            self._netconf = netconf_loader.get("default", self)
+            display.display('unable to load netconf plugin for network_os %s, falling back to default plugin' % network_os)
 
         return 0, to_bytes(self._manager.session_id, errors='surrogate_or_strict'), b''
 

@@ -26,20 +26,15 @@ options:
     description:
       - Name of user to add
     required: true
-    default: null
     aliases: [username, name]
   password:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
         C(force=yes).
-    required: false
-    default: null
   tags:
     description:
       - User tags specified as comma delimited
-    required: false
-    default: null
   permissions:
     description:
       - a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
@@ -47,18 +42,15 @@ options:
       - This option should be preferable when you care about all permissions of the user.
       - You should use vhost, configure_priv, write_priv, and read_priv options instead
         if you care about permissions for just some vhosts.
-    required: false
     default: []
   vhost:
     description:
       - vhost to apply access privileges.
       - This option will be ignored when permissions option is used.
-    required: false
     default: /
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   configure_priv:
@@ -67,7 +59,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   write_priv:
     description:
@@ -75,7 +66,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   read_priv:
     description:
@@ -83,18 +73,15 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   force:
     description:
       - Deletes and recreates the user.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   state:
     description:
       - Specify if user is to be added or removed
-    required: false
     default: present
     choices: [present, absent]
 '''

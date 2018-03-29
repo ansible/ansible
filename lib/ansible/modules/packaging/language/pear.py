@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Afterburn <http://github.com/afterburn>
@@ -34,14 +34,11 @@ options:
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent", "latest"]
     executable:
       description:
         - Path to the pear executable
-      required: false
-      default: null
       version_added: "2.4"
 '''
 

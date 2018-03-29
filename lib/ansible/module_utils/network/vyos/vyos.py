@@ -29,7 +29,7 @@ import json
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.connection import Connection
+from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
 
@@ -143,14 +143,13 @@ def load_config(module, commands, commit=False, comment=None):
     if commit:
         try:
             out = connection.commit(comment)
-        except:
+        except ConnectionError:
             connection.discard_changes()
             module.fail_json(msg='commit failed: %s' % out)
-
-    if not commit:
-        connection.discard_changes()
+        else:
+            connection.get('exit')
     else:
-        connection.get('exit')
+        connection.discard_changes()
 
     if diff:
         return diff

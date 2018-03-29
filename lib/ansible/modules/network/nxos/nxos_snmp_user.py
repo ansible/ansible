@@ -46,29 +46,20 @@ options:
     authentication:
         description:
             - Authentication parameters for the user.
-        required: false
-        default: null
         choices: ['md5', 'sha']
     pwd:
         description:
             - Authentication password when using md5 or sha.
-        required: false
-        default: null
     privacy:
         description:
             - Privacy password for the user.
-        required: false
-        default: null
     encrypt:
         description:
             - Enables AES-128 bit encryption when using privacy password.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''

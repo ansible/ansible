@@ -41,15 +41,13 @@ options:
     state:
         description:
             - Whether the domain should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
     subdomains:
         description:
             - Any subdomains to create.
-        required: false
-        default: null
+        default: []
 
     login_name:
         description:
@@ -82,12 +80,11 @@ EXAMPLES = '''
 
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
@@ -96,7 +93,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
-            subdomains=dict(required=False, default=[]),
+            subdomains=dict(required=False, default=[], type='list'),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),
         ),

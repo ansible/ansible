@@ -381,7 +381,7 @@ class AnsibleMixin(object):
         if not request_value:
             return
 
-        sample_obj = self.model_class_from_name(obj_class)()
+        model_class = self.model_class_from_name(obj_class)
 
         # Try to determine the unique key for the array
         key_names = [
@@ -390,7 +390,7 @@ class AnsibleMixin(object):
         ]
         key_name = None
         for key in key_names:
-            if hasattr(sample_obj, key):
+            if hasattr(model_class, key):
                 key_name = key
                 break
 
@@ -421,14 +421,14 @@ class AnsibleMixin(object):
                         found = True
                         for key, value in iteritems(item):
                             snake_key = self.attribute_to_snake(key)
-                            item_kind = sample_obj.swagger_types.get(snake_key)
+                            item_kind = model_class.swagger_types.get(snake_key)
                             if item_kind and item_kind in PRIMITIVES or type(value).__name__ in PRIMITIVES:
                                 setattr(obj, snake_key, value)
                             elif item_kind and item_kind.startswith('list['):
                                 obj_type = item_kind.replace('list[', '').replace(']', '')
                                 if getattr(obj, snake_key) is None:
                                     setattr(obj, snake_key, [])
-                                if obj_type not in ('str', 'int', 'bool'):
+                                if obj_type not in ('str', 'int', 'bool', 'object'):
                                     self.__compare_obj_list(getattr(obj, snake_key), value, obj_type, param_name)
                                 else:
                                     # Straight list comparison
@@ -462,7 +462,7 @@ class AnsibleMixin(object):
                                     )
                 if not found:
                     # Requested item not found. Adding.
-                    obj = self.__update_object_properties(self.model_class_from_name(obj_class)(), item)
+                    obj = self.model_class_from_name(obj_class)(**item)
                     src_value.append(obj)
         else:
             # There isn't a key, or we don't know what it is, so check for all properties to match
@@ -480,7 +480,7 @@ class AnsibleMixin(object):
                         found = True
                         break
                 if not found:
-                    obj = self.__update_object_properties(self.model_class_from_name(obj_class)(), item)
+                    obj = self.model_class_from_name(obj_class)(**item)
                     src_value.append(obj)
 
     def __update_object_properties(self, obj, item):
@@ -512,7 +512,7 @@ class AnsibleMixin(object):
         """
         Convert a list of properties to an argument_spec dictionary
 
-        :param properties: List of properties from self.properties_from_model_obj()
+        :param properties: List of properties from self.properties_from_model_class()
         :param prefix: String to prefix to argument names.
         :param path: List of property names providing the recursive path through the model to the property
         :param alternate_prefix: a more minimal version of prefix
@@ -598,7 +598,7 @@ class AnsibleMixin(object):
                     }
                     args.update(self.__transform_properties(sub_props, prefix=p, path=paths, alternate_prefix=a))
                 else:
-                    sub_props = self.properties_from_model_obj(prop_attributes['class']())
+                    sub_props = self.properties_from_model_class(prop_attributes['class'])
                     args.update(self.__transform_properties(sub_props, prefix=p, path=paths, alternate_prefix=a))
             else:
                 # Adds a primitive property
@@ -608,7 +608,7 @@ class AnsibleMixin(object):
                 paths.append(prop)
 
                 property_type = prop_attributes['class'].__name__
-                if property_type == 'IntstrIntOrString':
+                if property_type == 'object':
                     property_type = 'str'
 
                 args[arg_prefix + prop] = {

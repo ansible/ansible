@@ -4,6 +4,7 @@
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
 # Copyright: (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright: (c) 2016, Dag Wieers <dag@wieers.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -641,9 +642,17 @@ class TgzArchive(object):
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
             # filename = filename.decode('string_escape')
-            filename = codecs.escape_decode(filename)[0]
+            filename = to_native(codecs.escape_decode(filename)[0])
+
             if filename and filename not in self.excludes:
-                self._files_in_archive.append(to_native(filename))
+                # We don't allow absolute filenames.  If the user wants to unarchive rooted in "/"
+                # they need to use "dest: '/'".  This follows the defaults for gtar, pax, etc.
+                # Allowing absolute filenames here also causes bugs: https://github.com/ansible/ansible/issues/21397
+                if filename.startswith('/'):
+                    filename = filename[1:]
+
+                self._files_in_archive.append(filename)
+
         return self._files_in_archive
 
     def is_unarchived(self):
@@ -868,6 +877,7 @@ def main():
         # do we need to change perms?
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
+
             try:
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:

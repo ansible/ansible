@@ -53,8 +53,8 @@ options:
     choices: [ maximized, minimized, normal ]
   state:
     description:
-    - When C(present), creates or updates the shortcut.
     - When C(absent), removes the shortcut if it exists.
+    - When C(present), creates or updates the shortcut.
     choices: [ absent, present ]
     default: present
 author:

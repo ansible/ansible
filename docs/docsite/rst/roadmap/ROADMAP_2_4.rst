@@ -1,6 +1,6 @@
-============================
-Ansible by Red Hat, Core 2.4
-============================
+===========
+Ansible 2.4
+===========
 **Core Engine Freeze and Module Freeze: 15 August 2017**
 
 **Core and Curated Module Freeze: 15 August 2017**

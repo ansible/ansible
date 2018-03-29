@@ -15,6 +15,11 @@
     affinity_group: "{{ cs_resource_prefix }}-ag"
     security_group: "{{ cs_resource_prefix }}-sg"
     ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    user_data: |
+        #cloud-config
+        package_upgrade: true
+        packages:
+          - tmux
     tags: []
   register: instance
   check_mode: true
@@ -32,6 +37,11 @@
     affinity_group: "{{ cs_resource_prefix }}-ag"
     security_group: "{{ cs_resource_prefix }}-sg"
     ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    user_data: |
+        #cloud-config
+        package_upgrade: true
+        packages:
+          - tmux
     tags: []
   register: instance
 - name: verify create instance
@@ -54,6 +64,11 @@
     affinity_group: "{{ cs_resource_prefix }}-ag"
     security_group: "{{ cs_resource_prefix }}-sg"
     ssh_key: "{{ cs_resource_prefix }}-sshkey"
+    user_data: |
+        #cloud-config
+        package_upgrade: true
+        packages:
+          - tmux
     tags: []
   register: instance
 - name: verify create instance idempotence
@@ -83,7 +98,6 @@
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
-
 
 - name: test running instance not updated
   cs_instance:

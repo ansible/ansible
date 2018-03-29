@@ -6,7 +6,7 @@ args: "*DEPRECATED*, A secondary way to add arguments into a task. Takes a dicti
 always: List of tasks, in a block, that execute no matter if there is an error in the block or not.
 always_run: "*DEPRECATED*, forces a task to run even in check mode. Use :term:`check_mode` directive instead."
 any_errors_fatal: Force any un-handled task errors on any host to propagate to all hosts and end the play.
-async: Run a task asyncronouslly if the C(action) supports this.
+async: Run a task asynchronously if the C(action) supports this; value is maximum runtime in seconds.
 become: Boolean that controls if privilege escalation is used or not on :term:`Task` execution.
 become_flags: A string of flag(s) to pass to the privilege escalation program when :term:`become` is True.
 become_method: Which method of privilege escalation to use (such as sudo or su).
@@ -57,7 +57,7 @@ register: Name of variable that will contain task status and module return data.
 rescue: List of tasks in a :term:`block` that run if there is a task error in the main :term:`block` list.
 retries: "Number of retries before giving up in a :term:`until` loop. This setting is only used in combination with :term:`until`."
 roles: List of roles to be imported into the play
-run_once: Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
+run_once: Boolean that will bypass the host loop, forcing the task to attempt to execute on the first host available and afterwards apply any results and facts to all active hosts in the same batch.
 serial: |
     Explicitly define how Ansible batches the execution of the current play on the play's target
 

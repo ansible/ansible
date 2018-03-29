@@ -1,20 +1,18 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_domain_group
 version_added: '2.4'
-short_description: creates, modifies or removes domain groups
+short_description: Creates, modifies or removes domain groups
 description:
 - Creates, modifies or removes groups in Active Directory.
 - For local groups, use the M(win_group) module instead.
@@ -57,7 +55,7 @@ options:
     - Will ignore the C(ProtectedFromAccidentalDeletion) flag when deleting or
       moving a group.
     - The module will fail if one of these actions need to occur and this value
-      is set to no.
+      is set to C(no).
     type: bool
     default: 'no'
   managed_by:
@@ -94,8 +92,8 @@ options:
     - If C(state=present) this module will ensure the group is created and is
       configured accordingly.
     - If C(state=absent) this module will delete the group if it exists
-    default: present
     choices: [ absent, present ]
+    default: present
 notes:
 - This must be run on a host that has the ActiveDirectory powershell module
   installed.
@@ -104,24 +102,24 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: ensure the group Cow exists using sAMAccountName
+- name: Ensure the group Cow exists using sAMAccountName
   win_domain_group:
     name: Cow
     scope: global
     path: OU=groups,DC=ansible,DC=local
 
-- name: ensure the group Cow does't exist using the Distinguished Name
+- name: Ensure the group Cow does't exist using the Distinguished Name
   win_domain_group:
     name: CN=Cow,OU=groups,DC=ansible,DC=local
     state: absent
 
-- name: delete group ignoring the protection flag
+- name: Delete group ignoring the protection flag
   win_domain_group:
     name: Cow
     state: absent
     ignore_protection: yes
 
-- name: create group with delete protection enabled and custom attributes
+- name: Create group with delete protection enabled and custom attributes
   win_domain_group:
     name: Ansible Users
     scope: domainlocal
@@ -131,19 +129,19 @@ EXAMPLES = r'''
       wWWHomePage: www.ansible.com
     ignore_protection: yes
 
-- name: change the OU of a group using the SID and ignore the protection flag
+- name: Change the OU of a group using the SID and ignore the protection flag
   win_domain_group:
     name: S-1-5-21-2171456218-3732823212-122182344-1189
     scope: global
     organizational_unit: OU=groups,DC=ansible,DC=local
-    ignore_protection: True
+    ignore_protection: yes
 
-- name: add managed_by user
+- name: Add managed_by user
   win_domain_group:
     name: Group Name Here
     managed_by: Domain Admins
 
-- name: add group and specify the AD domain services to use for the create
+- name: Add group and specify the AD domain services to use for the create
   win_domain_group:
     name: Test Group
     domain_username: user@CORP.ANSIBLE.COM

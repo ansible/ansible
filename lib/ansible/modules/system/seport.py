@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 module: seport
 short_description: Manages SELinux network port type definitions
 description:
-     - Manages SELinux network port type definitions.
+    - Manages SELinux network port type definitions.
 version_added: "2.0"
 options:
   ports:
     description:
-      - Ports or port ranges, separated by a comma.
+      - Ports or port ranges. Can be a list (since 2.6) or comma separated string.
     required: true
   proto:
     description:
@@ -70,6 +70,15 @@ EXAMPLES = '''
 - name: Allow memcached to listen on tcp ports 10000-10100 and 10112
   seport:
     ports: 10000-10100,10112
+    proto: tcp
+    setype: memcache_port_t
+    state: present
+
+- name: Allow memcached to listen on tcp ports 10000-10100 and 10112
+  seport:
+    ports:
+      - 10000-10100
+      - 10112
     proto: tcp
     setype: memcache_port_t
     state: present
@@ -231,7 +240,7 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ports=dict(type='str', required=True),
+            ports=dict(type='list', required=True),
             proto=dict(type='str', required=True, choices=['tcp', 'udp']),
             setype=dict(type='str', required=True),
             state=dict(type='str', required=True, choices=['absent', 'present']),
@@ -249,7 +258,7 @@ def main():
     if not selinux.is_selinux_enabled():
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    ports = [x.strip() for x in str(module.params['ports']).split(',')]
+    ports = module.params['ports']
     proto = module.params['proto']
     setype = module.params['setype']
     state = module.params['state']

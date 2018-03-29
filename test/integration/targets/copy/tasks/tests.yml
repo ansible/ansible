@@ -9,10 +9,6 @@
   set_fact:
     remote_file: "{{ remote_dir }}/foo.txt"
 
-- name: Locate sha1sum/shasum
-  shell: which sha1sum || which shasum
-  register: sha1sum
-
 - name: Initiate a basic copy, and also test the mode
   copy:
     src: foo.txt
@@ -37,6 +33,7 @@
 
 - set_fact:
     remote_dir_expanded: '{{ echo.stdout }}'
+    remote_file_expanded: '{{ echo.stdout }}/foo.txt'
 
 - debug:
     var: copy_result
@@ -46,7 +43,7 @@
   assert:
     that:
       - "'changed' in copy_result"
-      - "'dest' in copy_result"
+      - copy_result.dest == remote_file_expanded
       - "'group' in copy_result"
       - "'gid' in copy_result"
       - "'md5sum' in copy_result"
@@ -110,6 +107,19 @@
   assert:
     that:
       - "copy_result2 is not changed"
+
+- name: Assert basic copy worked
+  assert:
+    that:
+      - "'changed' in copy_result2"
+      - copy_result2.dest == remote_file_expanded
+      - "'group' in copy_result2"
+      - "'gid' in copy_result2"
+      - "'checksum' in copy_result2"
+      - "'owner' in copy_result2"
+      - "'size' in copy_result2"
+      - "'state' in copy_result2"
+      - "'uid' in copy_result2"
 
 - name: Overwrite the file using the content system
   copy:
@@ -1127,7 +1137,7 @@
     - stat_link_result.stat.islnk
 
 - name: Get the checksum of the link target
-  shell: "{{ sha1sum.stdout }} {{remote_dir}}/follow_test | cut -f1 -sd ' '"
+  shell: "{{ ansible_python_interpreter }} -c 'import hashlib; print(hashlib.sha1(open(\"{{remote_dir | expanduser}}/follow_test\", \"rb\").read()).hexdigest())'"
   register: target_file_result
 
 - name: Assert that the link target was updated
@@ -1261,6 +1271,60 @@
     - stat_file_in_dir_result.stat.isreg
     - stat_circular_symlink_result.stat.exists
     - stat_circular_symlink_result.stat.islnk
+
+# Relative paths in dest:
+- name: Smoketest that copying content to an implicit relative path works
+  copy:
+    content: 'testing'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying to an implicit relative path reported changed
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Test that copying the same content with an implicit relative path reports no change
+  copy:
+    content: 'testing'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying the same content with an implicit relative path reports no change
+  assert:
+    that:
+      - 'not relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Test that copying different content with an implicit relative path reports change
+  copy:
+    content: 'testing2'
+    dest: 'ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that copying different content with an implicit relative path reports changed
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "596b29ec9afea9e461a20610d150939b9c399d93"'
+
+- name: Smoketest that explicit relative path works
+  copy:
+    content: 'testing'
+    dest: './ansible-testing.txt'
+  register: relative_results
+
+- name: Assert that explicit relative paths reports change
+  assert:
+    that:
+      - 'relative_results["changed"]'
+      - 'relative_results["checksum"] == "dc724af18fbdd4e59189f5fe768a5f8311527050"'
+
+- name: Cleanup relative path tests
+  file:
+    path: 'ansible-testing.txt'
+    state: absent
 
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # checks that dest is created

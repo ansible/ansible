@@ -26,7 +26,7 @@ from itertools import chain
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
-from ansible.plugins.cliconf import CliconfBase, enable_mode
+from ansible.plugins.cliconf import CliconfBase
 
 
 class Cliconf(CliconfBase):
@@ -51,7 +51,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self):
+    def get_config(self, source='running', format='text'):
         return self.send_command(b'show configuration commands')
 
     def edit_config(self, command):
@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
         self.send_command(to_bytes(command))
 
     def discard_changes(self, *args, **kwargs):
-        self.send_command(b'discard')
+        self.send_command(b'exit discard')
 
     def get_capabilities(self):
         result = {}

@@ -9,6 +9,8 @@ from lib.util import (
     CommonConfig,
     is_shippable,
     docker_qualify_image,
+    find_python,
+    generate_pip_command,
 )
 
 from lib.metadata import (
@@ -44,6 +46,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
+        self.docker_memory = args.docker_memory if 'docker_memory' in args else None
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
@@ -66,6 +69,20 @@ class EnvironmentConfig(CommonConfig):
 
         if self.delegate:
             self.requirements = True
+
+    @property
+    def python_executable(self):
+        """
+        :rtype: str
+        """
+        return find_python(self.python_version)
+
+    @property
+    def pip_command(self):
+        """
+        :rtype: list[str]
+        """
+        return generate_pip_command(self.python_executable)
 
 
 class TestConfig(EnvironmentConfig):
@@ -193,6 +210,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
         self.platform = args.platform  # type: list [str]
         self.inventory = args.inventory  # type: str
+        self.testcase = args.testcase  # type: str
 
 
 class UnitsConfig(TestConfig):
@@ -228,3 +246,5 @@ class CoverageReportConfig(CoverageConfig):
         super(CoverageReportConfig, self).__init__(args)
 
         self.show_missing = args.show_missing  # type: bool
+        self.include = args.include  # type: str
+        self.omit = args.omit  # type: str

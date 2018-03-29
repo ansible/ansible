@@ -46,14 +46,17 @@ options:
         description:
             - Service engines in active/standby mode for ha failover.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     advertise_backend_networks:
         description:
             - Advertise reach-ability of backend server networks via adc through bgp for default gateway feature.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     aggressive_failure_detection:
         description:
             - Enable aggressive failover configuration for ha.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     algo:
         description:
             - In compact placement, virtual services are placed on existing ses until max_vs_per_se limit is reached.
@@ -64,6 +67,7 @@ options:
             - Allow ses to be created using burst license.
             - Field introduced in 17.2.5.
         version_added: "2.5"
+        type: bool
     archive_shm_limit:
         description:
             - Amount of se memory in gb until which shared memory is collected in core archive.
@@ -75,10 +79,11 @@ options:
             - Ssl handshakes will be handled by dedicated ssl threads.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.4"
+        type: bool
     async_ssl_threads:
         description:
             - Number of async ssl threads per se_dp.
-            - Allowed values are 1-4.
+            - Allowed values are 1-16.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
         version_added: "2.4"
     auto_rebalance:
@@ -86,6 +91,7 @@ options:
             - If set, virtual services will be automatically migrated when load on an se is less than minimum or more than maximum thresholds.
             - Only alerts are generated when the auto_rebalance is not set.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     auto_rebalance_capacity_per_se:
         description:
             - Capacities of se for auto rebalance for each criteria.
@@ -94,7 +100,7 @@ options:
     auto_rebalance_criteria:
         description:
             - Set of criteria for se auto rebalance.
-            - Enum options - SE_AUTO_REBALANCE_CPU, SE_AUTO_REBALANCE_PPS, SE_AUTO_REBALANCE_MBPS, SE_AUTO_REBALANCE_OPEN_CONNS.
+            - Enum options - SE_AUTO_REBALANCE_CPU, SE_AUTO_REBALANCE_PPS, SE_AUTO_REBALANCE_MBPS, SE_AUTO_REBALANCE_OPEN_CONNS, SE_AUTO_REBALANCE_CPS.
             - Field introduced in 17.2.3.
         version_added: "2.5"
     auto_rebalance_interval:
@@ -107,6 +113,7 @@ options:
             - Redistribution of virtual services from the takeover se to the replacement se can cause momentary traffic loss.
             - If the auto-redistribute load option is left in its default off state, any desired rebalancing requires calls to rest api.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     buffer_se:
         description:
             - Excess service engine capacity provisioned for ha failover.
@@ -125,11 +132,13 @@ options:
         description:
             - Boolean flag to set cpu_reserve.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     cpu_socket_affinity:
         description:
             - Allocate all the cpu cores for the service engine virtual machines  on the same cpu socket.
             - Applicable only for vcenter cloud.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     custom_securitygroups_data:
         description:
             - Custom security groups to be associated with data vnics for se instances in openstack and aws clouds.
@@ -147,6 +156,7 @@ options:
             - Dedicate the core that handles packet receive/transmit from the network to just the dispatching function.
             - Don't use it for tcp/ip and ssl functions.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     description:
         description:
             - User defined description for the object.
@@ -156,20 +166,23 @@ options:
             - Field introduced in 17.1.14, 17.2.5.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     disable_gro:
         description:
             - Disable generic receive offload (gro) in dpdk poll-mode driver packet receive path.
             - Gro is on by default on nics that do not support lro (large receive offload) or do not gain performance boost from lro.
             - Field introduced in 17.2.5.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
+        type: bool
     disable_tso:
         description:
             - Disable tcp segmentation offload (tso) in dpdk poll-mode driver packet transmit path.
             - Tso is on by default on nics that support it.
             - Field introduced in 17.2.5.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
+        type: bool
     disk_per_se:
         description:
             - Amount of disk space for each of the service engine virtual machines.
@@ -179,19 +192,32 @@ options:
         description:
             - Use both the active and standby service engines for virtual service placement in the legacy active standby ha mode.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
+    enable_hsm_priming:
+        description:
+            - (this is a beta feature).
+            - Enable hsm key priming.
+            - If enabled, key handles on the hsm will be synced to se before processing client connections.
+            - Field introduced in 17.2.7.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.6"
+        type: bool
     enable_routing:
         description:
             - Enable routing for this serviceenginegroup .
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     enable_vip_on_all_interfaces:
         description:
             - Enable vip on all interfaces of se.
             - Field introduced in 17.1.1.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     enable_vmac:
         description:
             - Use virtual mac address for interfaces on which floating interface ips are placed.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     extra_config_multiplier:
         description:
             - Multiplier for extra config to support large vs/pool config.
@@ -230,6 +256,7 @@ options:
         description:
             - Enable active health monitoring from the standby se for all placed virtual services.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     host_attribute_key:
         description:
             - Key of a (key, value) pair identifying a label for a set of nodes usually in container clouds.
@@ -251,6 +278,7 @@ options:
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     hypervisor:
         description:
             - Override default hypervisor.
@@ -286,6 +314,7 @@ options:
         description:
             - Select core with least load for new flow.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     license_tier:
         description:
             - Specifies the license tier which would be used.
@@ -332,6 +361,7 @@ options:
         description:
             - Boolean flag to set mem_reserve.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     memory_per_se:
         description:
             - Amount of memory for each of the service engine virtual machines.
@@ -393,6 +423,7 @@ options:
             - In this mode, each se is limited to a max of 2 vss.
             - Vcpus in per-app ses count towards licensing usage at 25% rate.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     placement_mode:
         description:
             - If placement mode is 'auto', virtual services are automatically placed on service engines.
@@ -446,6 +477,7 @@ options:
             - Field introduced in 16.5.2, 17.1.9, 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     se_sb_threads:
         description:
             - Number of sideband threads per se.
@@ -535,6 +567,7 @@ options:
         description:
             - Boolean flag to set vcenter_datastores_include.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
     vcenter_folder:
         description:
             - Folder to place all the service engine virtual machines in vcenter.
@@ -550,6 +583,7 @@ options:
         description:
             - Ensure primary and secondary service engines are deployed on different physical hosts.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     vs_scalein_timeout:
         description:
             - Time to wait for the scaled in se to drain existing flows before marking the scalein done.
@@ -576,6 +610,7 @@ options:
             - Field introduced in 17.2.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
         version_added: "2.5"
+        type: bool
     waf_mempool_size:
         description:
             - Memory pool size used for waf.
@@ -647,6 +682,7 @@ def main():
         disable_tso=dict(type='bool',),
         disk_per_se=dict(type='int',),
         distribute_load_active_standby=dict(type='bool',),
+        enable_hsm_priming=dict(type='bool',),
         enable_routing=dict(type='bool',),
         enable_vip_on_all_interfaces=dict(type='bool',),
         enable_vmac=dict(type='bool',),

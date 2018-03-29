@@ -36,20 +36,17 @@ options:
         description:
             - The IP address of the backend to update / modify / delete
     state:
-        required: false
         default: present
         choices: ['present', 'absent']
         description:
             - Determines whether the backend is to be created/modified
               or deleted
     probe:
-        required: false
-        default: none
+        default: 'none'
         choices: ['none', 'http', 'icmp' , 'oco']
         description:
             - Determines the type of probe to use for this backend
     weight:
-        required: false
         default: 8
         description:
             - Determines the weight for this backend
@@ -70,7 +67,6 @@ options:
         description:
             - The consumer key to use
     timeout:
-        required: false
         default: 120
         description:
             - The timeout in seconds used to wait for a task to be

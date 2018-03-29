@@ -82,6 +82,7 @@ options:
     interface:
         description:
             - "Driver of the storage interface."
+            - "It's required parameter when creating the new disk."
         choices: ['virtio', 'ide', 'virtio_scsi']
         default: 'virtio'
     format:

@@ -73,6 +73,11 @@ class TestManager(unittest.TestCase):
 
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_create_iapp_template(self, *args):
         # Configure the arguments that would be sent to the Ansible module

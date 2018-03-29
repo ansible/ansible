@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Joseph Callen <jcallen () csc.com>
+# Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -47,6 +45,7 @@ options:
   mtu:
     description:
     - MTU to configure on vSwitch.
+    default: 1500
   state:
     description:
     - Add or remove the switch.

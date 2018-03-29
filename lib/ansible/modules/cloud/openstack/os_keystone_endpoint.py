@@ -59,7 +59,7 @@ EXAMPLES = '''
   os_keystone_endpoint:
      cloud: mycloud
      service: glance
-     interface: public
+     endpoint_interface: public
      url: http://controller:9292
      region: RegionOne
      state: present
@@ -68,7 +68,7 @@ EXAMPLES = '''
   os_keystone_endpoint:
      cloud: mycloud
      service: nova
-     interface: public
+     endpoint_interface: public
      region: RegionOne
      state: absent
 '''
@@ -107,14 +107,8 @@ endpoint:
 
 from distutils.version import StrictVersion
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, endpoint):
@@ -141,7 +135,7 @@ def _system_state_change(module, endpoint):
 def main():
     argument_spec = openstack_full_argument_spec(
         service=dict(type='str', required=True),
-        interface=dict(type='str', required=True, choices=['admin', 'public', 'internal']),
+        endpoint_interface=dict(type='str', required=True, choices=['admin', 'public', 'internal']),
         url=dict(type='str', required=True),
         region=dict(type='str'),
         enabled=dict(type='bool', default=True),
@@ -153,14 +147,10 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-    if StrictVersion(shade.__version__) < StrictVersion('1.11.0'):
-        module.fail_json(msg="To utilize this module, the installed version of"
-                             "the shade library MUST be >=1.11.0")
+    shade, cloud = openstack_cloud_from_module(module, min_version='1.11.0')
 
     service_name_or_id = module.params['service']
-    interface = module.params['interface']
+    interface = module.params['endpoint_interface']
     url = module.params['url']
     region = module.params['region']
     enabled = module.params['enabled']

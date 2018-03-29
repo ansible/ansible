@@ -30,72 +30,51 @@ options:
     description:
       description:
         - The description to use for the group.
-      required: False
-      default: null
     inventory:
       description:
         - Inventory the group should be made a member of.
       required: True
     variables:
       description:
-        - Variables to use for the group, use '@' for a file.
-      required: False
-      default: null
+        - Variables to use for the group, use C(@) for a file.
     credential:
       description:
         - Credential to use for the group.
-      required: False
-      default: null
     source:
       description:
         - The source to use for this group.
-      required: False
-      default: null,
       choices: ["manual", "file", "ec2", "rax", "vmware", "gce", "azure", "azure_rm", "openstack", "satellite6" , "cloudforms", "custom"]
     source_regions:
       description:
         - Regions for cloud provider.
-      required: False
-      default: null
     source_vars:
       description:
         - Override variables from source with variables from this field.
-      required: False
-      default: null
     instance_filters:
       description:
         - Comma-separated list of filter expressions for matching hosts.
-      required: False
-      default: null
     group_by:
       description:
         - Limit groups automatically created from inventory source.
-      required: False
-      default: null
     source_script:
       description:
-        - Inventory script to be used when group type is "custom".
-      required: False
-      default: null
+        - Inventory script to be used when group type is C(custom).
     overwrite:
       description:
-        - Delete child roups and hosts not found in source.
-      required: False
-      default: False
+        - Delete child groups and hosts not found in source.
+      type: bool
+      default: 'no'
     overwrite_vars:
       description:
         - Override vars in child groups and hosts with those from external source.
-      required: False
-      default: null
     update_on_launch:
       description:
         - Refresh inventory data from its source each time a job is run.
-      required: False
-      default: False
+      type: bool
+      default: 'no'
     state:
       description:
         - Desired state of the resource.
-      required: False
       default: "present"
       choices: ["present", "absent"]
 extends_documentation_fragment: tower
@@ -161,7 +140,8 @@ def main():
     if variables:
         if variables.startswith('@'):
             filename = os.path.expanduser(variables[1:])
-            variables = module.contents_from_file(filename)
+            with open(filename, 'r') as f:
+                variables = f.read()
 
     json_output = {'group': name, 'state': state}
 

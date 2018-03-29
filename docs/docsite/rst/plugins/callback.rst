@@ -14,7 +14,7 @@ Example Callback Plugins
 ++++++++++++++++++++++++
 
 The :doc:`log_plays <callback/log_plays>` callback is an example of how to record playbook events to a log file,
-and the :doc:`mail callback/mail` callback sends email on playbook failures.
+and the :doc:`mail <callback/mail>` callback sends email on playbook failures.
 
 The :doc:`osx_say <callback/oxs_say>` callback responds with computer synthesized speech on OS X in relation to playbook events.
 

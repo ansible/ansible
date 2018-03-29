@@ -26,18 +26,14 @@ options:
   policy:
     description:
       - "name of the SELinux policy to use (example: C(targeted)) will be required if state is not C(disabled)"
-    required: false
-    default: null
   state:
     description:
       - The SELinux mode
     required: true
-    default: null
     choices: [ "enforcing", "permissive", "disabled" ]
   conf:
     description:
       - path to the SELinux configuration file, if non-standard
-    required: false
     default: "/etc/selinux/config"
     aliases: ['configfile', 'file']
 notes:

@@ -13,17 +13,20 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_domain
-short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
+short_description: Bind EPGs to Domains (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:RsDomAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
+- OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
+  by the Cisco APIC Neutron plugin as part of the installation and configuration.
+  This module can be used to query status of an OpenStack VMM domain.
+- More information about the internal APIC class B(fv:RsDomAtt) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   allow_useg:
     description:
@@ -68,9 +71,9 @@ options:
   netflow:
     description:
     - Determines if netflow should be enabled.
-    - The APIC defaults new EPG to Domain binings to C(disabled).
-    choices: [ disabled, enabled ]
-    default: disabled
+    - The APIC defaults new EPG to Domain binings to C(no).
+    type: bool
+    default: 'no'
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
@@ -100,9 +103,155 @@ options:
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: present
 
-RETURN = r''' # '''
+- name: Remove an existing physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: absent
+
+- name: Query a specific physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: query
+
+- name: Query all domain to EPG bindings
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+'''
+
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -122,18 +271,18 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
         deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
-        epg=dict(type='str', aliases=['name', 'epg_name']),
-        netflow=dict(type='str', choices=['disabled', 'enabled']),
+        epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
+        netflow=dict(type='raw'),  # Turn into a boolean in v2.9
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
         protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
@@ -149,6 +298,8 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     allow_useg = module.params['allow_useg']
     ap = module.params['ap']
     deploy_immediacy = module.params['deploy_immediacy']
@@ -163,7 +314,7 @@ def main():
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
     encap_mode = module.params['encap_mode']
     epg = module.params['epg']
-    netflow = module.params['netflow']
+    netflow = aci.boolean(module.params['netflow'], 'enabled', 'disabled')
     primary_encap = module.params['primary_encap']
     if primary_encap is not None:
         if primary_encap in range(1, 4097):
@@ -185,7 +336,6 @@ def main():
     else:
         epg_domain = None
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
@@ -216,7 +366,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvRsDomAtt',
             class_config=dict(
@@ -230,16 +379,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsDomAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

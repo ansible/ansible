@@ -44,6 +44,8 @@ _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
 class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
@@ -110,7 +112,7 @@ class ActionModule(ActionBase):
         if 'fail_on_missing_module' not in self._task.args:
             self._task.args['fail_on_missing_module'] = False
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(task_vars=task_vars)
 
         module = self._get_implementation_module(play_context.network_os, self._task.action)
 

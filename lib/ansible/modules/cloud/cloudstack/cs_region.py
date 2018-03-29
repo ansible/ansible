@@ -41,18 +41,13 @@ options:
     description:
       - Name of the region.
       - Required if C(state=present)
-    required: false
-    default: null
   endpoint:
     description:
       - Endpoint URL of the region.
       - Required if C(state=present)
-    required: false
-    default: null
   state:
     description:
       - State of the region.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack

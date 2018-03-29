@@ -34,20 +34,16 @@ options:
     description:
       - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to
         convert your password protected keys if they do not use DES or 3DES. ex) C(openssl rsa -in current_key -out new_key -des3).
-    required: false
-    default: null
   wait:
     version_added: "2.0"
     description:
       - Whether or not to wait for the password to be available before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   wait_timeout:
     version_added: "2.0"
     description:
       - Number of seconds to wait before giving up.
-    required: false
     default: 120
 
 extends_documentation_fragment:

@@ -27,7 +27,7 @@ import pwd
 import re
 import time
 
-from collections import Sequence
+from collections import Sequence, Mapping
 from functools import wraps
 from io import StringIO
 from numbers import Number
@@ -292,7 +292,7 @@ class Templar:
         ))
         self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self):
+    def _get_filters(self, builtin_filters):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -300,15 +300,17 @@ class Templar:
         if self._filters is not None:
             return self._filters.copy()
 
-        plugins = [x for x in self._filter_loader.all()]
-
         self._filters = dict()
-        for fp in plugins:
-            self._filters.update(fp.filters())
 
         # TODO: Remove registering tests as filters in 2.9
         for name, func in self._get_tests().items():
+            if name in builtin_filters:
+                # If we have a custom test named the same as a builtin filter, don't register as a filter
+                continue
             self._filters[name] = tests_as_filters_warning(name, func)
+
+        for fp in self._filter_loader.all():
+            self._filters.update(fp.filters())
 
         return self._filters.copy()
 
@@ -320,10 +322,8 @@ class Templar:
         if self._tests is not None:
             return self._tests.copy()
 
-        plugins = [x for x in self._test_loader.all()]
-
         self._tests = dict()
-        for fp in plugins:
+        for fp in self._test_loader.all():
             self._tests.update(fp.tests())
 
         return self._tests.copy()
@@ -356,7 +356,7 @@ class Templar:
                 clean_list.append(self._clean_data(list_item))
             ret = clean_list
 
-        elif isinstance(orig_data, dict):
+        elif isinstance(orig_data, (dict, Mapping)):
             clean_dict = {}
             for k in orig_data:
                 clean_dict[self._clean_data(k)] = self._clean_data(orig_data[k])
@@ -509,7 +509,7 @@ class Templar:
                     overrides=overrides,
                     disable_lookups=disable_lookups,
                 ) for v in variable]
-            elif isinstance(variable, dict):
+            elif isinstance(variable, (dict, Mapping)):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
@@ -681,7 +681,7 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters())
+            myenv.filters.update(self._get_filters(myenv.filters))
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:

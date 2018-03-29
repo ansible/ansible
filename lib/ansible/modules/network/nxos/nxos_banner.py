@@ -39,14 +39,12 @@ options:
       - Specifies which banner that should be
         configured on the remote device.
     required: true
-    default: null
     choices: ['exec', 'motd']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration. This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is present in the current
@@ -94,6 +92,23 @@ from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_arg
 import re
 
 
+def execute_show_command(module, command):
+    format = 'json'
+    cmds = [{
+        'command': command,
+        'output': format,
+    }]
+    output = run_commands(module, cmds, False)
+    if len(output) == 0 or len(output[0]) == 0:
+        # If we get here the platform does not
+        # support structured output.  Resend as
+        # text.
+        cmds[0]['output'] = 'text'
+        output = run_commands(module, cmds, False)
+
+    return output
+
+
 def map_obj_to_commands(want, have, module):
     commands = list()
     state = module.params['state']
@@ -111,7 +126,8 @@ def map_obj_to_commands(want, have, module):
 
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']], False)[0]
+    command = 'show banner %s' % module.params['banner']
+    output = execute_show_command(module, command)[0]
 
     if "Invalid command" in output:
         module.fail_json(msg="banner: exec may not be supported on this platform.  Possible values are : exec | motd")
@@ -128,6 +144,8 @@ def map_config_to_obj(module):
                 output = output[0]
             else:
                 output = ''
+    else:
+        output = output.rstrip()
 
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:

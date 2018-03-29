@@ -47,11 +47,17 @@
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
-      register: loop_test
       with_items:
         - role1
         - role3
         - role2
+
+    - name: Assert that roles run with_items
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+          - _role2_result.msg == 'In role2'
+          - _role3_result.msg == 'In role3'
 
     - name: Test including a task file from a role
       include_role:
@@ -104,6 +110,18 @@
         tasks_from: vartest.yml
       vars:
         where_am_i_defined: "{{ test_var }}"
+
+    - name: Use a variable in tasks_from field
+      include_role:
+        name: role1
+        tasks_from: "{{ tasks_file_name }}.yml"
+      vars:
+        tasks_file_name: canary3
+
+    - name: Assert that tasks file was included
+      assert:
+        that:
+          - role1_canary3 == 'r1c3'
 
     ## FIXME This fails with the following error:
     ## The module {u'include_role': {u'name': u'role1'}} was not found in configured module paths.

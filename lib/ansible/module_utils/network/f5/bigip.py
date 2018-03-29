@@ -27,7 +27,8 @@ except ImportError:
 class F5Client(F5BaseClient):
     @property
     def api(self):
-        result = None
+        if self._client:
+            return self._client
         for x in range(0, 10):
             try:
                 result = ManagementRoot(
@@ -38,13 +39,11 @@ class F5Client(F5BaseClient):
                     verify=self.params['validate_certs'],
                     token='tmos'
                 )
-                break
+                self._client = result
+                return self._client
             except Exception:
                 time.sleep(3)
-        if result:
-            return result
-        else:
-            raise F5ModuleError(
-                'Unable to connect to {0} on port {1}. '
-                'Is "validate_certs" preventing this?'.format(self.params['server'], self.params['server_port'])
-            )
+        raise F5ModuleError(
+            'Unable to connect to {0} on port {1}. '
+            'Is "validate_certs" preventing this?'.format(self.params['server'], self.params['server_port'])
+        )

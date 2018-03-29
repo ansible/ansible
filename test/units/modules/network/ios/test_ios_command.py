@@ -109,7 +109,10 @@ class TestIosCommandModule(TestIosModule):
 
     def test_ios_command_configure_error(self):
         commands = ['configure terminal']
-        set_module_args(dict(commands=commands))
+        set_module_args({
+            'commands': commands,
+            '_ansible_check_mode': True,
+        })
         result = self.execute_module(failed=True)
         self.assertEqual(
             result['msg'],

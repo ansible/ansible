@@ -28,42 +28,33 @@ description:
   - The C(git_config) module changes git configuration by invoking 'git config'.
     This is needed if you don't want to use M(template) for the entire git
     config file (e.g. because you need to change just C(user.email) in
-    /etc/.git/config).  Solutions involving M(command) are cumbersone or
+    /etc/.git/config).  Solutions involving M(command) are cumbersome or
     don't work correctly in check mode.
 options:
   list_all:
     description:
       - List all settings (optionally limited to a given I(scope))
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
+    type: bool
+    default: 'no'
   name:
     description:
       - The name of the setting. If no value is supplied, the value will
         be read from the config if it has been set.
-    required: false
-    default: null
   repo:
     description:
       - Path to a git repository for reading and writing values from a
         specific repo.
-    required: false
-    default: null
   scope:
     description:
       - Specify which scope to read/set values from. This is required
         when setting config values. If this is set to local, you must
         also specify the repo parameter. It defaults to system only when
         not using I(list_all)=yes.
-    required: false
     choices: [ "local", "global", "system" ]
-    default: null
   value:
     description:
       - When specifying the name of a single setting, supply a value to
         set that setting to the given value.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''

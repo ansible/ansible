@@ -149,6 +149,11 @@ class TestParameters(unittest.TestCase):
 class TestManager(unittest.TestCase):
     def setUp(self):
         self.spec = ArgumentSpec()
+        self.patcher1 = patch('time.sleep')
+        self.patcher1.start()
+
+    def tearDown(self):
+        self.patcher1.stop()
 
     def test_create_vlan(self, *args):
         set_module_args(dict(

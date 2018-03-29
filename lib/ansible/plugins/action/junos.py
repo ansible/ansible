@@ -41,9 +41,11 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        del tmp  # tmp no longer has any effect
+
         module = module_loader._load_module_source(self._task.action, module_loader.find_plugin(self._task.action))
         if not getattr(module, 'USE_PERSISTENT_CONNECTION', False):
-            return super(ActionModule, self).run(tmp, task_vars)
+            return super(ActionModule, self).run(task_vars=task_vars)
 
         socket_path = None
 
@@ -95,5 +97,5 @@ class ActionModule(_ActionModule):
                 conn.send_command('exit')
                 out = conn.get_prompt()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(None, task_vars)
         return result

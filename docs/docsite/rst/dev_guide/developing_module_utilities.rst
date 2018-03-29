@@ -1,3 +1,5 @@
+.. _appendix_module_utilities:
+
 Appendix: Module Utilities
 ``````````````````````````
 

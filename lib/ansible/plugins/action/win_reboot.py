@@ -73,6 +73,7 @@ class ActionModule(ActionBase):
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
 
         if result.get('skipped', False) or result.get('failed', False):
             return result
@@ -84,7 +85,7 @@ class ActionModule(ActionBase):
         }
         for arg, version in deprecated_args.items():
             if self._task.args.get(arg) is not None:
-                display.warning("Since Ansible %s, %s is no longer used with win_reboot" % (arg, version))
+                display.warning("Since Ansible %s, %s is no longer used with win_reboot" % (version, arg))
 
         if self._task.args.get('connect_timeout') is not None:
             connect_timeout = int(self._task.args.get('connect_timeout', self.DEFAULT_CONNECT_TIMEOUT))

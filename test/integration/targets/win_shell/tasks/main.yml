@@ -144,6 +144,19 @@
     that:
     - statout.stat.exists == true
 
+# https://github.com/ansible/ansible/issues/37967
+- name: test creates with file in missing directory
+  win_shell: echo hi
+  args:
+    creates: c:\fakefolder\fakefolder2\fakefile.txt
+  register: shellout
+
+- name: validate result
+  assert:
+    that:
+    - shellout.skipped is not defined
+    - shellout.changed
+
 - name: run with removes, should remove
   win_shell: Remove-Item c:\testfile.txt
   args:

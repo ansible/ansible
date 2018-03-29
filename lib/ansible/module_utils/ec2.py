@@ -106,7 +106,7 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError as e:
         module.fail_json(msg="Couldn't connect to AWS: %s" % to_native(e))
-    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError, botocore.exceptions.NoCredentialsError) as e:
         module.fail_json(msg=to_native(e))
     except botocore.exceptions.NoRegionError as e:
         module.fail_json(msg="The %s module requires a region and none was found in configuration, "
@@ -449,7 +449,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     Args:
         filters_dict (dict): Dict of AWS filters.
     Basic Usage:
-        >>> filters = {'some-aws-id', 'i-01234567'}
+        >>> filters = {'some-aws-id': 'i-01234567'}
         >>> ansible_dict_to_boto3_filter_list(filters)
         {
             'some-aws-id': 'i-01234567'
@@ -776,8 +776,8 @@ def map_complex_type(complex_type, type_map):
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
     Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
-    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ t
-hese may not be able to be used out of the box.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove. Since the AWS APIs differ
+    these may not be able to be used out of the box.
 
     :param current_tags_dict:
     :param new_tags_dict:

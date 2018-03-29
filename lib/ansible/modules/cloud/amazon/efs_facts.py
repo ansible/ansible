@@ -25,25 +25,17 @@ options:
     name:
         description:
             - Creation Token of Amazon EFS file system.
-        required: false
-        default: None
     id:
         description:
             - ID of Amazon EFS.
-        required: false
-        default: None
     tags:
         description:
             - List of tags of Amazon EFS. Should be defined as dictionary
-        required: false
-        default: None
     targets:
         description:
           - list of targets on which to filter the returned results
           - result must match all of the specified targets, each of which can be
             a security group ID, a subnet ID or an IP address
-        required: false
-        default: None
 extends_documentation_fragment:
   - aws
   - ec2
@@ -186,7 +178,7 @@ class EFSConnection(object):
 
         self.region = region
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def list_file_systems(self, **kwargs):
         """
          Returns generator of file systems including all attributes of FS
@@ -194,7 +186,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_file_systems')
         return paginator.paginate(**kwargs).build_full_result()['FileSystems']
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_tags(self, file_system_id):
         """
          Returns tag list for selected instance of EFS
@@ -202,7 +194,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_tags')
         return boto3_tag_list_to_ansible_dict(paginator.paginate(FileSystemId=file_system_id).build_full_result()['Tags'])
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_mount_targets(self, file_system_id):
         """
          Returns mount targets for selected instance of EFS
@@ -210,7 +202,7 @@ class EFSConnection(object):
         paginator = self.connection.get_paginator('describe_mount_targets')
         return paginator.paginate(FileSystemId=file_system_id).build_full_result()['MountTargets']
 
-    @AWSRetry.exponential_backoff()
+    @AWSRetry.jittered_backoff(catch_extra_error_codes=['ThrottlingException'])
     def get_security_groups(self, mount_target_id):
         """
          Returns security groups for selected instance of EFS

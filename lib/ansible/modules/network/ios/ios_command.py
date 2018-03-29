@@ -37,6 +37,8 @@ description:
 extends_documentation_fragment: ios
 notes:
   - Tested against IOS 15.6
+  - If a command sent to the device requires answering a prompt, it is possible
+    to pass a dict containing I(command), I(answer) and I(prompt). See examples.
 options:
   commands:
     description:
@@ -53,8 +55,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
     version_added: "2.2"
   match:
@@ -65,7 +65,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
     version_added: "2.2"
@@ -75,7 +74,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -83,7 +81,6 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
@@ -112,6 +109,12 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+  - name: run command that requires answering a prompt
+    ios_command:
+      commands:
+        - command: 'clear counters GigabitEthernet0/2'
+          prompt: 'Clear "show interface" counters on this interface [confirm]'
+          answer: c
 """
 
 RETURN = """
@@ -158,17 +161,18 @@ def parse_commands(module, warnings):
     commands = command(module.params['commands'])
     for item in list(commands):
         configure_type = re.match(r'conf(?:\w*)(?:\s+(\w+))?', item['command'])
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
-                'only show commands are supported when using check mode, not '
-                'executing `%s`' % item['command']
-            )
-            commands.remove(item)
-        elif configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
-            module.fail_json(
-                msg='ios_command does not support running config mode '
-                    'commands.  Please use ios_config instead'
-            )
+        if module.check_mode:
+            if configure_type and configure_type.group(1) not in ('confirm', 'replace', 'revert', 'network'):
+                module.fail_json(
+                    msg='ios_command does not support running config mode '
+                        'commands.  Please use ios_config instead'
+                )
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'only show commands are supported when using check mode, not '
+                    'executing `%s`' % item['command']
+                )
+                commands.remove(item)
     return commands
 
 
@@ -222,7 +226,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

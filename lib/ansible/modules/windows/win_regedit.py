@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -41,7 +27,7 @@ options:
     - Name of the registry path.
     - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU,
       HKLM, HKU.'
-    required: true
+    required: yes
     aliases: [ key ]
   name:
     description:
@@ -73,12 +59,12 @@ options:
   state:
     description:
     - The state of the registry entry.
-    choices: [ present, absent ]
+    choices: [ absent, present ]
     default: present
   delete_key:
     description:
     - When C(state) is 'absent' then this will delete the entire key.
-    - If this is False then it will only clear out the '(Default)' property for
+    - If C(no) then it will only clear out the '(Default)' property for
       that key.
     type: bool
     default: 'yes'

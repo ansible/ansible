@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, VMware, Inc.
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -23,8 +23,8 @@ description:
     - This module can be used for placing a ESXi host into maintenance mode.
     - Support for VSAN compliant maintenance mode when selected.
 author:
-- "Jay Jahns <jjahns@vmware.com>"
-- "Abhijeet Kasurde (@akasurde)"
+- Jay Jahns (@jjahns) <jjahns@vmware.com>
+- Abhijeet Kasurde (@akasurde)
 version_added: "2.1"
 notes:
     - Tested on vSphere 5.5, 6.0 and 6.5
@@ -36,7 +36,7 @@ options:
         description:
             - Name of the host as defined in vCenter.
         required: True
-    vsan_mode:
+    vsan:
         description:
             - Specify which VSAN compliant mode to enter.
         choices:
@@ -44,14 +44,13 @@ options:
             - 'evacuateAllData'
             - 'noAction'
         required: False
+        aliases: [ 'vsan_mode' ]
     evacuate:
         description:
-            - If True, evacuate all powered off VMs.
-        choices:
-            - True
-            - False
+            - If set to C(True), evacuate all powered off VMs.
         default: False
         required: False
+        type: bool
     timeout:
         description:
             - Specify a timeout for the operation.
@@ -173,9 +172,11 @@ class VmwareMaintenanceMgr(PyVmomi):
 def main():
     spec = vmware_argument_spec()
     spec.update(dict(esxi_hostname=dict(type='str', required=True),
-                     vsan=dict(type='str', choices=['ensureObjectAccessibility',
-                                                    'evacuateAllData',
-                                                    'noAction']
+                     vsan=dict(type='str',
+                               choices=['ensureObjectAccessibility',
+                                        'evacuateAllData',
+                                        'noAction'],
+                               aliases=['vsan_mode'],
                                ),
                      evacuate=dict(type='bool', default=False),
                      timeout=dict(default=0, type='int'),

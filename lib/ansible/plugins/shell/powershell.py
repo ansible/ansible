@@ -12,7 +12,7 @@ DOCUMENTATION = '''
     description:
       - The only option when using 'winrm' as a connection plugin
     options:
-      remote_temp:
+      remote_tmp:
         description:
         - Temporary directory to use on targets when copying files to the host.
         default: '%TEMP%'
@@ -162,7 +162,10 @@ Function Run($payload) {
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
     ForEach ($env_kv in $payload.environment.GetEnumerator()) {
-        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        # need to escape ' in both the key and value
+        $env_key = $env_kv.Key.ToString().Replace("'", "''")
+        $env_value = $env_kv.Value.ToString().Replace("'", "''")
+        $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('{0}', '{1}')" -f $env_key, $env_value
         $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
     }
 
@@ -1883,7 +1886,7 @@ class ShellModule(ShellBase):
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
         basefile = self._escape(self._unquote(basefile))
-        basetmpdir = tmpdir if tmpdir else self.get_option('remote_temp')
+        basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
         script = '''
         $tmp_path = [System.Environment]::ExpandEnvironmentVariables('%s')

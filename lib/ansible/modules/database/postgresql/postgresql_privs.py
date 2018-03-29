@@ -33,18 +33,15 @@ options:
     description:
       - If C(present), the specified privileges are granted, if C(absent) they
         are revoked.
-    required: no
     default: present
     choices: [present, absent]
   privs:
     description:
       - Comma separated list of privileges to grant/revoke.
       - 'Alias: I(priv)'
-    required: no
   type:
     description:
       - Type of database object to set privileges on.
-    required: no
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group]
@@ -61,13 +58,11 @@ options:
         replaced with commas (needed to specify function signatures, see
         examples)'
       - 'Alias: I(obj)'
-    required: no
   schema:
     description:
       - Schema that contains the database objects specified via I(objs).
       - May only be provided if I(type) is C(table), C(sequence) or
         C(function). Defaults to  C(public) in these cases.
-    required: no
   roles:
     description:
       - Comma separated list of role (user/group) names to set permissions for.
@@ -83,25 +78,19 @@ options:
         make no changes.
       - I(grant_option) only has an effect if I(state) is C(present).
       - 'Alias: I(admin_option)'
-    required: no
-    choices: ['yes', 'no']
+    type: bool
   host:
     description:
       - Database host address. If unspecified, connect via Unix socket.
       - 'Alias: I(login_host)'
-    default: null
-    required: no
   port:
     description:
       - Database port to connect to.
-    required: no
     default: 5432
   unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
       - 'Alias: I(login_unix_socket)'
-    required: false
-    default: null
   login:
     description:
       - The username to authenticate with.
@@ -111,14 +100,11 @@ options:
     description:
       - The password to authenticate with.
       - 'Alias: I(login_password))'
-    default: null
-    required: no
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
@@ -126,8 +112,6 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
-    required: false
-    default: null
     version_added: '2.3'
 notes:
   - Default authentication assumes that postgresql_privs is run by the

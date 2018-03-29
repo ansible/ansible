@@ -66,7 +66,8 @@ EXAMPLES = '''
     state: inactive
 '''
 
-import pipes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def update_package_db(module, port_path):
@@ -83,7 +84,7 @@ def query_package(module, port_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (shlex_quote(port_path), shlex_quote(name)), use_unsafe_shell=True)
         if rc == 0:
             return True
 
@@ -91,7 +92,7 @@ def query_package(module, port_path, name, state="present"):
 
     elif state == "active":
 
-        rc, out, err = module.run_command("%s installed %s | grep -q active" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s installed %s | grep -q active" % (shlex_quote(port_path), shlex_quote(name)), use_unsafe_shell=True)
 
         if rc == 0:
             return True
@@ -225,8 +226,6 @@ def main():
     elif p["state"] == "inactive":
         deactivate_packages(module, port_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

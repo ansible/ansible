@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#
-# Copyright 2017, Thierry Sallé (@tsalle)
+
+# Copyright: (c) 2017, Thierry Sallé (@tsalle)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,80 +16,76 @@ DOCUMENTATION = '''
 ---
 module: grafana_dashboard
 author:
-  - "Thierry Sallé (@tsalle)"
+  - Thierry Sallé (@tsalle)
 version_added: "2.5"
-short_description: Manage grafana dashboards
+short_description: Manage Grafana dashboards
 description:
-  - Create, update, delete, export grafana dashboards via API
+  - Create, update, delete, export Grafana dashboards via API.
 options:
   grafana_url:
+    description:
+      - The Grafana URL.
     required: true
-    description:
-      - Grafana url
   grafana_user:
-    required: false
-    default: admin
     description:
-      - Grafana API user
+      - The Grafana API user.
+    default: admin
   grafana_password:
-    required: false
+    description:
+      - The Grafana API password.
     default: admin
-    description:
-      - Grafana API password
   grafana_api_key:
-    required: false
     description:
-      - Grafana API key
-      - If set, I(grafana_user) and I(grafana_password) will be ignored
+      - The Grafana API key.
+      - If set, I(grafana_user) and I(grafana_password) will be ignored.
   org_id:
-    required: false
     description:
-      - Grafana Organisation ID where the dashboard will be imported / exported
-      - Not used when I(grafana_api_key) is set, because the grafana_api_key only belong to one organisation.
+      - The Grafana Organisation ID where the dashboard will be imported / exported.
+      - Not used when I(grafana_api_key) is set, because the grafana_api_key only belong to one organisation..
     default: 1
   state:
-    required: true
-    default: present
     description:
       - State of the dashboard.
-    choices: ['present', 'absent', 'export']
+    required: true
+    choices: [ absent, export, present ]
+    default: present
   slug:
     description:
       - slug of the dashboard. It's the friendly url name of the dashboard.
-      - When state is present, this parameter can override the slug in the meta section of the json file.
+      - When C(state) is C(present), this parameter can override the slug in the meta section of the json file.
       - If you want to import a json dashboard exported directly from the interface (not from the api),
-      - you have to specify the slug parameter because there is no meta section in the exported json.
+        you have to specify the slug parameter because there is no meta section in the exported json.
   path:
     description:
-      - path to the json file containing the grafana dashboard to import or export.
+      - The path to the json file containing the Grafana dashboard to import or export.
   overwrite:
-    default: false
     description:
-      - override existing dashboard when state is present.
+      - Override existing dashboard when state is present.
+    type: bool
+    default: 'no'
   message:
     description:
       - Set a commit message for the version history.
-      - Only used when state is present
+      - Only used when C(state) is C(present).
   validate_certs:
-    default: true
-    type: bool
     description:
-      - If C(no), SSL certificates will not be validated. This should only be used
-      - on personally controlled sites using self-signed certificates.
+      - If C(no), SSL certificates will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
+    type: bool
+    default: 'yes'
 '''
 
 EXAMPLES = '''
----
-- name: import grafana dashboard foo
+- name: Import Grafana dashboard foo
   grafana_dashboard:
     grafana_url: http://grafana.company.com
     grafana_api_key: XXXXXXXXXXXX
     state: present
-    message: "updated by ansible"
-    overwrite: true
+    message: Updated by ansible
+    overwrite: yes
     path: /path/to/dashboards/foo.json
 
-- name: export dashboard
+- name: Export dashboard
   grafana_dashboard:
     grafana_url: http://grafana.company.com
     grafana_api_key: XXXXXXXXXXXX
@@ -242,8 +238,8 @@ def grafana_delete_dashboard(module, data):
         else:
             raise GrafanaAPIException('Unable to update the dashboard %s : %s' % (data['slug'], info))
     else:
-        # dashboard does not exists : do nothing
-        result = {'msg': "Dashboard %s does not exists" % data['slug'],
+        # dashboard does not exist, do nothing
+        result = {'msg': "Dashboard %s does not exist." % data['slug'],
                   'changed': False,
                   'slug': data['slug']}
 
@@ -274,7 +270,7 @@ def grafana_export_dashboard(module, data):
                   'slug': data['slug'],
                   'changed': True}
     else:
-        result = {'msg': "Dashboard %s does not exists" % data['slug'],
+        result = {'msg': "Dashboard %s does not exist." % data['slug'],
                   'slug': data['slug'],
                   'changed': False}
 

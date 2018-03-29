@@ -83,8 +83,7 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
-
+from ansible.module_utils._text import to_native
 
 try:
     import pan.xapi
@@ -171,14 +170,14 @@ def main():
 
     try:
         changed = add_dhcp_if(xapi, if_name, zone_name, create_default_route)
-    except PanXapiError:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except PanXapiError as exc:
+        module.fail_json(msg=to_native(exc))
 
     if changed and commit:
         xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
 
     module.exit_json(changed=changed, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

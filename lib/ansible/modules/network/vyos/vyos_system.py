@@ -42,12 +42,11 @@ options:
   domain_name:
     description:
       - The new domain name to apply to the device.
-  name_server:
+  name_servers:
     description:
       - A list of name servers to use with the device. Mutually exclusive with
         I(domain_search)
-    required: false
-    default: null
+    aliases: ['name_server']
   domain_search:
     description:
       - A list of domain names to search. Mutually exclusive with
@@ -72,7 +71,7 @@ commands:
 EXAMPLES = """
 - name: configure hostname and domain-name
   vyos_system:
-    hostname: vyos01
+    host_name: vyos01
     domain_name: test.example.com
 
 - name: remove all configuration
@@ -81,7 +80,7 @@ EXAMPLES = """
 
 - name: configure name servers
   vyos_system:
-    name_server:
+    name_servers
       - 8.8.8.8
       - 8.8.4.4
 

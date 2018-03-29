@@ -38,7 +38,6 @@ options:
               least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     excludes:
-        default: null
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - Excludes is a patterns should not be returned in list. Multiple patterns can be specified
@@ -60,10 +59,10 @@ options:
         choices: [ any, directory, file, link ]
         default: file
     recurse:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - If target is a directory, recursively descend into the directory looking for files.
+        type: bool
+        default: 'no'
     size:
         description:
             - Select files whose size is equal to or greater than the specified size.
@@ -77,25 +76,31 @@ options:
         description:
             - Choose the file property against which we compare age.
     hidden:
-        default: 'no'
-        choices: [ 'no', 'yes' ]
         description:
             - Set this to true to include hidden files, otherwise they'll be ignored.
-    follow:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    follow:
         description:
             - Set this to true to follow symlinks in path for systems with python 2.6+.
-    get_checksum:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    get_checksum:
         description:
             - Set this to true to retrieve a file's sha1 checksum.
-    use_regex:
+        type: bool
         default: 'no'
-        choices: [ 'no', 'yes' ]
+    use_regex:
         description:
             - If false the patterns are file globs (shell) if true they are python regexes.
+        type: bool
+        default: 'no'
+    depth:
+        description:
+            - Set the maximum number of levels to decend into. Setting recurse
+              to false will override this value, which is effectively depth 1.
+              Default is unlimited depth.
+        version_added: "2.6"
 notes:
     - For Windows targets, use the M(win_find) module instead.
 '''
@@ -328,6 +333,7 @@ def main():
             follow=dict(type='bool', default='no'),
             get_checksum=dict(type='bool', default='no'),
             use_regex=dict(type='bool', default='no'),
+            depth=dict(type='int', default=None),
         ),
         supports_check_mode=True,
     )
@@ -366,6 +372,13 @@ def main():
         if os.path.isdir(npath):
             ''' ignore followlinks for python version < 2.6 '''
             for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+                if params['depth']:
+                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
+                    if files or dirs:
+                        depth += 1
+                    if depth > params['depth']:
+                        del(dirs[:])
+                        continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))

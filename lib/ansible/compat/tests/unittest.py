@@ -27,7 +27,7 @@ import sys
 
 # Allow wildcard import because we really do want to import all of
 # unittests's symbols into this compat shim
-# pylint: disable=wildcard-import
+# pylint: disable=wildcard-import,unused-wildcard-import
 if sys.version_info < (2, 7):
     try:
         # Need unittest2 on python2.6

@@ -128,8 +128,6 @@ options:
     data_disks:
         description:
             - Describes list of data disks.
-        required: false
-        default: null
         version_added: "2.4"
         suboptions:
             lun:
@@ -156,6 +154,11 @@ options:
                     - ReadWrite
                 default: ReadOnly
                 version_added: "2.4"
+    virtual_network_resource_group:
+        description:
+            - When creating a virtual machine, if a specific virtual network from another resource group should be
+              used, use this parameter to specify the resource group to use.
+        version_added: "2.5"
     virtual_network_name:
         description:
             - Virtual Network name.
@@ -378,6 +381,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
             load_balancer=dict(type='str'),
+            virtual_network_resource_group=dict(type='str'),
             virtual_network_name=dict(type='str', aliases=['virtual_network']),
             remove_on_absent=dict(type='list', default=['all']),
         )
@@ -401,6 +405,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.data_disks = None
         self.os_type = None
         self.subnet_name = None
+        self.virtual_network_resource_group = None
         self.virtual_network_name = None
         self.tags = None
         self.differences = None
@@ -424,6 +429,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
         # make sure options are lower case
         self.remove_on_absent = set([resource.lower() for resource in self.remove_on_absent])
+
+        # default virtual_network_resource_group to resource_group
+        if not self.virtual_network_resource_group:
+            self.virtual_network_resource_group = self.resource_group
 
         changed = False
         results = dict()
@@ -721,7 +730,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
     def get_virtual_network(self, name):
         try:
-            vnet = self.network_client.virtual_networks.get(self.resource_group, name)
+            vnet = self.network_client.virtual_networks.get(self.virtual_network_resource_group, name)
             return vnet
         except CloudError as exc:
             self.fail("Error fetching virtual network {0} - {1}".format(name, str(exc)))
@@ -729,7 +738,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
     def get_subnet(self, vnet_name, subnet_name):
         self.log("Fetching subnet {0} in virtual network {1}".format(subnet_name, vnet_name))
         try:
-            subnet = self.network_client.subnets.get(self.resource_group, vnet_name, subnet_name)
+            subnet = self.network_client.subnets.get(self.virtual_network_resource_group, vnet_name, subnet_name)
         except CloudError as exc:
             self.fail("Error: fetching subnet {0} in virtual network {1} - {2}".format(
                 subnet_name,

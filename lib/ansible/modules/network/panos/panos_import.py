@@ -43,23 +43,17 @@ options:
     username:
         description:
             - Username for device authentication.
-        required: false
         default: "admin"
     category:
         description:
             - Category of file uploaded. The default is software.
-        required: false
         default: software
     file:
         description:
             - Location of the file to import into device.
-        required: false
-        default: None
     url:
         description:
             - URL of the file that will be imported to device.
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''
@@ -83,7 +77,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils._text import to_native
 
 import os.path
 import xml.etree
@@ -183,15 +177,15 @@ def main():
 
     try:
         changed, filename = import_file(xapi, module, ip_address, file_, category)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=exc.message)
+    except Exception as exc:
+        module.fail_json(msg=to_native(exc))
 
     # cleanup and delete file if local
     if url is not None:
         delete_file(file_)
 
     module.exit_json(changed=changed, filename=filename, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

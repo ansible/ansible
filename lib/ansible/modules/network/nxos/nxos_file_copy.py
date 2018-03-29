@@ -49,19 +49,14 @@ options:
     description:
       - Remote file path of the copy. Remote directories must exist.
         If omitted, the name of the local file will be used.
-    required: false
-    default: null
   file_system:
     description:
       - The remote file system of the device. If omitted,
         devices that support a I(file_system) parameter will use
         their default values.
-    required: false
-    default: null
   connect_ssh_port:
     description:
       - SSH port to connect to server during transfer of file
-    required: false
     default: 22
     version_added: "2.5"
 '''

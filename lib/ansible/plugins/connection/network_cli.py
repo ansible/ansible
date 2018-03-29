@@ -41,7 +41,6 @@ options:
       - Configures the device platform network operating system.  This value is
         used to load the correct terminal and cliconf plugins to communicate
         with the remote device
-    default: null
     vars:
       - name: ansible_network_os
   remote_user:
@@ -369,8 +368,11 @@ class Connection(ConnectionBase):
                 self._ssh_shell.close()
                 self._ssh_shell = None
                 display.debug("cli session is now closed")
+
+                self.paramiko_conn.close()
+                self.paramiko_conn = None
+                display.debug("ssh connection has been closed successfully")
             self._connected = False
-            display.debug("ssh connection has been closed successfully")
 
     def receive(self, command=None, prompts=None, answer=None, newline=True, prompt_retry_check=False):
         '''
@@ -487,6 +489,7 @@ class Connection(ConnectionBase):
                     match = regex.search(response)
                     if match:
                         errored_response = response
+                        self._matched_pattern = regex.pattern
                         self._matched_prompt = match.group()
                         break
 

@@ -42,16 +42,12 @@ options:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
-    required: false
-    default: null
   src:
     description:
       - The C(src) argument specifies the path to the source config
         file to load.  The source config file can either be in
         bracket format or set format.  The source file can include
         Jinja2 template variables.
-    required: no
-    default: null
   match:
     description:
       - The C(match) argument controls the method used to match
@@ -60,7 +56,6 @@ options:
         deltas are loaded.  If the C(match) argument is set to C(none)
         the active configuration is ignored and the configuration is
         always loaded.
-    required: false
     default: line
     choices: ['line', 'none']
   backup:
@@ -68,16 +63,14 @@ options:
       - The C(backup) argument will backup the current devices active
         configuration to the Ansible control host prior to making any
         changes.  The backup file will be located in the backup folder
-        in the root of the playbook
-    required: false
-    default: false
-    choices: ['yes', 'no']
+        in the root of the playbook.
+    type: bool
+    default: 'no'
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed.  If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by vyos_config'
   config:
     description:
@@ -85,17 +78,14 @@ options:
         to compare against the desired configuration.  If this value
         is not specified, the module will automatically retrieve the
         current active configuration from the remote device.
-    required: false
-    default: null
   save:
     description:
       - The C(save) argument controls whether or not changes made
         to the active configuration are saved to disk.  This is
         independent of committing the config.  When set to True, the
         active configuration is saved.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
 """
 
 EXAMPLES = """
@@ -205,11 +195,15 @@ def diff_config(commands, config):
 
 def sanitize_config(config, result):
     result['filtered'] = list()
+    index_to_filter = list()
     for regex in CONFIG_FILTERS:
         for index, line in enumerate(list(config)):
             if regex.search(line):
                 result['filtered'].append(line)
-                del config[index]
+                index_to_filter.append(index)
+    # Delete all filtered configs
+    for filter_index in sorted(index_to_filter, reverse=True):
+        del config[filter_index]
 
 
 def run(module, result):

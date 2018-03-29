@@ -16,16 +16,17 @@ DOCUMENTATION = r'''
 module: aci_aaa_user
 short_description: Manage AAA users (aaa:User)
 description:
-- Manage AAA users.
-- More information from the internal APIC class I(aaa:User) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
+- Manage AAA users on Cisco ACI fabrics.
 notes:
 - This module is not idempotent when C(aaa_password) is being used
   (even if that password was already set identically). This
   appears to be an inconsistency wrt. the idempotent nature
-  of the APIC REST API.
+  of the APIC REST API. The vendor has been informed.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- More information about the internal APIC class B(aaa:User) from
+  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+author:
+- Dag Wieers (@dagwieers)
 requirements:
   - python-dateutil
 version_added: '2.5'
@@ -124,7 +125,110 @@ EXAMPLES = r'''
     state: query
 '''
 
-RETURN = r''' # '''
+RETURN = r'''
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: string
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: string
+  sample: '?rsp-prop-include=config-only'
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: string
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: string
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
+'''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -143,7 +247,7 @@ def main():
         aaa_password=dict(type='str', no_log=True),
         aaa_password_lifetime=dict(type='int'),
         aaa_password_update_required=dict(type='bool'),
-        aaa_user=dict(type='str', required=True, aliases=['name']),
+        aaa_user=dict(type='str', required=True, aliases=['name']),  # Not required for querying all objects
         clear_password_history=dict(type='bool'),
         description=dict(type='str', aliases=['descr']),
         email=dict(type='str'),
@@ -166,30 +270,24 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
     aaa_password = module.params['aaa_password']
     aaa_password_lifetime = module.params['aaa_password_lifetime']
-    aaa_password_update_required = module.params['aaa_password_update_required']
+    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
     aaa_user = module.params['aaa_user']
     clear_password_history = module.params['clear_password_history']
     description = module.params['description']
     email = module.params['email']
-    enabled = module.params['enabled']
+    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
+    expires = aci.boolean(module.params['expires'])
     first_name = module.params['first_name']
     last_name = module.params['last_name']
     phone = module.params['phone']
     state = module.params['state']
-
-    aci = ACIModule(module)
-
-    if module.params['enabled'] is True:
-        enabled = 'active'
-    elif module.params['enabled'] is False:
-        enabled = 'inactive'
-    else:
-        enabled = None
 
     expiration = module.params['expiration']
     if expiration is not None and expiration != 'never':
@@ -197,18 +295,6 @@ def main():
             expiration = aci.iso8601_format(dateutil.parser.parse(expiration).replace(tzinfo=tzutc()))
         except Exception as e:
             module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params['expiration'], e))
-
-    expires = module.params['expires']
-    if expires is True:
-        expires = 'yes'
-    elif expires is False:
-        expires = 'no'
-
-    aaa_password_update_required = module.params['aaa_password_update_required']
-    if aaa_password_update_required is True:
-        aaa_password_update_required = 'yes'
-    elif aaa_password_update_required is False:
-        aaa_password_update_required = 'no'
 
     aci.construct_url(
         root_class=dict(
@@ -221,7 +307,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='aaaUser',
             class_config=dict(
@@ -240,16 +325,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='aaaUser')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

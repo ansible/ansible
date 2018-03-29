@@ -39,12 +39,10 @@ options:
         description:
             - The password for the mailbox
         required: true
-        default: null
 
     state:
         description:
             - Whether the mailbox should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -69,12 +67,12 @@ EXAMPLES = '''
       login_password={{webfaction_passwd}}
 '''
 
-import xmlrpclib
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():

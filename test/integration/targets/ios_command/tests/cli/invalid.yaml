@@ -4,7 +4,7 @@
 - name: run invalid command
   ios_command:
     commands: show foo
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 
@@ -17,7 +17,7 @@
     commands:
       - show version
       - show foo
-    authorize: yes
+    provider: "{{ cli }}"
   register: result
   ignore_errors: yes
 

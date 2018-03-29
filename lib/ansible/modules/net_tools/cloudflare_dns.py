@@ -35,69 +35,53 @@ options:
     required: true
   port:
     description: Service port. Required for C(type=SRV)
-    required: false
-    default: null
   priority:
     description: Record priority. Required for C(type=MX) and C(type=SRV)
-    required: false
     default: "1"
   proto:
-    description: Service protocol. Required for C(type=SRV)
-    required: false
-    choices: [ 'tcp', 'udp' ]
-    default: null
+    description:
+    - Service protocol. Required for C(type=SRV).
+    - Common values are tcp and udp.
+    - Before Ansible 2.6 only tcp and udp were available.
   proxied:
     description: Proxy through cloudflare network or just use DNS
-    required: false
-    default: no
+    type: bool
+    default: 'no'
     version_added: "2.3"
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
-    required: false
     default: "@"
     aliases: [ "name" ]
   service:
     description: Record service. Required for C(type=SRV)
-    required: false
-    default: null
   solo:
     description:
       - Whether the record should be the only one for that record type and record name. Only use with C(state=present)
       - This will delete all other records with the same record name and type.
-    required: false
-    default: null
   state:
     description:
       - Whether the record(s) should exist or not
-    required: false
     choices: [ 'present', 'absent' ]
     default: present
   timeout:
     description:
       - Timeout for Cloudflare API calls
-    required: false
     default: 30
   ttl:
     description:
       - The TTL to give the new record. Must be between 120 and 2,147,483,647 seconds, or 1 for automatic.
-    required: false
     default: 1 (automatic)
   type:
     description:
       - The type of DNS record to create. Required if C(state=present)
-    required: false
     choices: [ 'A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'MX', 'NS', 'SPF' ]
-    default: null
   value:
     description:
       - The record value. Required for C(state=present)
-    required: false
-    default: null
     aliases: [ "content" ]
   weight:
     description: Service weight. Required for C(type=SRV)
-    required: false
     default: "1"
   zone:
     description:
@@ -602,7 +586,7 @@ def main():
             account_email=dict(required=True, type='str'),
             port=dict(required=False, default=None, type='int'),
             priority=dict(required=False, default=1, type='int'),
-            proto=dict(required=False, default=None, choices=['tcp', 'udp'], type='str'),
+            proto=dict(required=False, default=None, type='str'),
             proxied=dict(required=False, default=False, type='bool'),
             record=dict(required=False, default='@', aliases=['name'], type='str'),
             service=dict(required=False, default=None, type='str'),

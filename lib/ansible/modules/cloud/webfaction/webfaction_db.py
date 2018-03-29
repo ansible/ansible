@@ -41,7 +41,6 @@ options:
     state:
         description:
             - Whether the database should exist
-        required: false
         choices: ['present', 'absent']
         default: "present"
 
@@ -54,8 +53,6 @@ options:
     password:
         description:
             - The password for the new database user.
-        required: false
-        default: None
 
     login_name:
         description:
@@ -70,7 +67,6 @@ options:
     machine:
         description:
             - The machine name to use (optional for accounts with only one machine)
-        required: false
 '''
 
 EXAMPLES = '''
@@ -91,12 +87,11 @@ EXAMPLES = '''
 
 '''
 
-import xmlrpclib
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import xmlrpc_client
 
 
-webfaction = xmlrpclib.ServerProxy('https://api.webfaction.com/')
+webfaction = xmlrpc_client.ServerProxy('https://api.webfaction.com/')
 
 
 def main():
@@ -106,11 +101,11 @@ def main():
             name=dict(required=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             # You can specify an IP address or hostname.
-            type=dict(required=True),
+            type=dict(required=True, choices=['mysql', 'postgresql']),
             password=dict(required=False, default=None, no_log=True),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),
-            machine=dict(required=False, default=False),
+            machine=dict(required=False, default=None),
         ),
         supports_check_mode=True
     )

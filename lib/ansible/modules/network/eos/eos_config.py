@@ -44,17 +44,13 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
     aliases: ['commands']
-    default: null
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - The I(src) argument provides a path to the configuration file
@@ -63,8 +59,8 @@ options:
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) and
         I(parents) arguments. It can be a Jinja2 template as well.
-    required: false
-    default: null
+        src file must have same indentation as a live switch config.
+        Arista EOS device config has 3 spaces indentation.
     version_added: "2.2"
   before:
     description:
@@ -73,16 +69,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -93,7 +85,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -104,7 +95,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block', 'config']
   force:
@@ -115,10 +105,9 @@ options:
         without first checking if already configured.
       - Note this argument should be considered deprecated.  To achieve
         the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
-    required: false
-    default: false
+        will be removed in Ansible 2.6.
     type: bool
+    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -126,9 +115,8 @@ options:
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
         exist, it is created.
-    required: false
-    default: no
     type: bool
+    default: 'no'
     version_added: "2.2"
   running_config:
     description:
@@ -139,8 +127,6 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for this module.
-    required: false
-    default: null
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -150,9 +136,8 @@ options:
         the command used to collect the running-config is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword
-    required: false
-    default: false
     type: bool
+    default: 'no'
     version_added: "2.2"
   save:
     description:
@@ -162,10 +147,10 @@ options:
         no changes are made, the configuration is still saved to the
         startup config.  This option will always cause the module to
         return changed.
-      - This option is deprecated as of Ansible 2.4, use C(save_when)
-    required: false
-    default: false
+      - This option is deprecated as of Ansible 2.4 and will be removed
+        in Ansible 2.8, use C(save_when) instead.
     type: bool
+    default: 'no'
     version_added: "2.2"
   save_when:
     description:
@@ -178,10 +163,11 @@ options:
         will only be copied to the startup-config if it has changed since
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
-        startup-config
-    required: false
+        startup-config. If the argument is set to I(changed), then the running-config
+        will only be copied to the startup-config if the task has made a change.
+        I(changed) was added in Ansible 2.5.
     default: never
-    choices: ['always', 'never', 'modified']
+    choices: ['always', 'never', 'modified', 'changed']
     version_added: "2.4"
   diff_against:
     description:
@@ -197,7 +183,6 @@ options:
         to any changes made to the device configuration.
       - When this option is configured as C(session), the diff returned will
         be based on the configuration session.
-    required: false
     default: session
     choices: ['startup', 'running', 'intended', 'session']
     version_added: "2.4"
@@ -207,7 +192,6 @@ options:
         ignored during the diff.  This is used for lines in the configuration
         that are automatically updated by the system.  This argument takes
         a list of regular expressions or exact line matches.
-    required: false
     version_added: "2.4"
   intended_config:
     description:
@@ -218,7 +202,6 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
-    required: false
     version_added: "2.4"
 """
 
@@ -279,7 +262,7 @@ from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
-    candidate = NetworkConfig(indent=2)
+    candidate = NetworkConfig(indent=3)
     if module.params['src']:
         candidate.load(module.params['src'])
     elif module.params['lines']:
@@ -298,7 +281,18 @@ def get_running_config(module, config=None):
             if module.params['defaults']:
                 flags.append('all')
             contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=2, contents=contents)
+    return NetworkConfig(indent=3, contents=contents)
+
+
+def save_config(module, result):
+    result['changed'] = True
+    if not module.check_mode:
+        cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
+        run_commands(module, [cmd])
+    else:
+        module.warn('Skipping command `copy running-config startup-config` '
+                    'due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
 
 
 def main():
@@ -319,7 +313,7 @@ def main():
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
 
-        save_when=dict(choices=['always', 'never', 'modified'], default='never'),
+        save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'session', 'intended', 'running'], default='session'),
         diff_ignore_lines=dict(type='list'),
@@ -328,10 +322,10 @@ def main():
         intended_config=dict(),
 
         # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.4'),
+        save=dict(default=False, type='bool', removed_in_version='2.8'),
 
         # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.2')
+        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(eos_argument_spec)
@@ -362,7 +356,7 @@ def main():
 
     if module.params['backup'] or (module._diff and module.params['diff_against'] == 'running'):
         contents = get_config(module)
-        config = NetworkConfig(indent=2, contents=contents)
+        config = NetworkConfig(indent=3, contents=contents)
         if module.params['backup']:
             result['__backup__'] = contents
 
@@ -410,22 +404,20 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
-    if module.params['save_when'] != 'never':
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'modified':
         output = run_commands(module, [{'command': 'show running-config', 'output': 'text'},
                                        {'command': 'show startup-config', 'output': 'text'}])
 
         running_config = NetworkConfig(indent=1, contents=output[0], ignore_lines=diff_ignore_lines)
         startup_config = NetworkConfig(indent=1, contents=output[1], ignore_lines=diff_ignore_lines)
 
-        if running_config.sha1 != startup_config.sha1 or module.params['save_when'] == 'always':
-            result['changed'] = True
-            if not module.check_mode:
-                cmd = {'command': 'copy running-config startup-config', 'output': 'text'}
-                run_commands(module, [cmd])
-            else:
-                module.warn('Skipping command `copy running-config startup-config` '
-                            'due to check_mode.  Configuration not copied to '
-                            'non-volatile storage')
+        if running_config.sha1 != startup_config.sha1:
+            save_config(module, result)
+
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
 
     if module._diff:
         if not running_config:

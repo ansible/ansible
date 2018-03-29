@@ -42,40 +42,28 @@ options:
     enable:
         description:
             - Set global DLDP enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     work_mode:
         description:
             - Set global DLDP work-mode.
-        required: false
-        default: null
         choices: ['enhance', 'normal']
     time_internal:
         description:
             - Specifies the interval for sending Advertisement packets.
               The value is an integer ranging from 1 to 100, in seconds.
               The default interval for sending Advertisement packets is 5 seconds.
-        required: false
-        default: null
     auth_mode:
         description:
             - Specifies authentication algorithm of DLDP.
-        required: false
-        default: null
         choices: ['md5', 'simple', 'sha', 'hmac-sha256', 'none']
     auth_pwd:
         description:
             - Specifies authentication password.
               The value is a string of 1 to 16 case-sensitive plaintexts or 24/32/48/108/128 case-sensitive encrypted
               characters. The string excludes a question mark (?).
-        required: false
-        default: null
     reset:
         description:
             - Specify whether reset DLDP state of disabled interfaces.
-        required: false
-        default: null
         choices: ['enable', 'disable']
 '''
 

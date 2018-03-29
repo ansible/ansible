@@ -49,7 +49,7 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', flags=None):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
 

@@ -15,7 +15,7 @@ DOCUMENTATION = """
       - Maykel Moya <mmoya@speedyrails.com>
     short_description: retrieve or generate a random password, stored in a file
     description:
-      -  generates a random plaintext password and stores it in a file at a given filepath.
+      - Generates a random plaintext password and stores it in a file at a given filepath.
       - If the file exists previously, it will retrieve its contents, behaving just like with_file.
       - 'Usage of variables like C("{{ inventory_hostname }}") in the filepath can be used to set up random passwords per host,
         which simplifies password management in C("host_vars") variables.'
@@ -36,7 +36,7 @@ DOCUMENTATION = """
       chars:
         version_added: "1.4"
         description:
-          - Define comma separeted list of names that compose a custom character set in the generated passwords.
+          - Define comma separated list of names that compose a custom character set in the generated passwords.
           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
           - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
@@ -79,7 +79,7 @@ EXAMPLES = """
 - name: create a mysql user with a random password using many different char sets
   mysql_user:
     name: "{{ client }}"
-    password" "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 """
 

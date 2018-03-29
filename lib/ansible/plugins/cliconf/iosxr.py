@@ -35,7 +35,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'iosxr'
-        reply = self.get(b'show version brief')
+        reply = self.get(b'show version | utility head -n 20')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+)$', data, re.M)
@@ -56,7 +56,7 @@ class Cliconf(CliconfBase):
 
         return device_info
 
-    def get_config(self, source='running', filter=None):
+    def get_config(self, source='running', format='text', filter=None):
         lookup = {'running': 'running-config'}
         if source not in lookup:
             return self.invalid_params("fetching configuration from %s is not supported" % source)

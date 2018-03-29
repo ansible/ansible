@@ -33,49 +33,36 @@ options:
     state:
         description:
             - Desired state of a plugin.
-        required: False
         choices: ["present", "absent"]
         default: present
     url:
         description:
             - Set exact URL to download the plugin from (Only works for ES 1.x)
-        required: False
-        default: None
     timeout:
         description:
             - "Timeout setting: 30s, 1m, 1h..."
             - Only valid for Elasticsearch < 5.0. This option is ignored for Elasticsearch > 5.0.
-        required: False
         default: 1m
     plugin_bin:
         description:
             - Location of the plugin binary. If this file is not found, the default plugin binaries will be used.
             - The default changed in Ansible 2.4 to None.
-        required: False
-        default: None
     plugin_dir:
         description:
             - Your configured plugin directory specified in Elasticsearch
-        required: False
         default: /usr/share/elasticsearch/plugins/
     proxy_host:
         description:
             - Proxy host to use during plugin installation
-        required: False
-        default: None
         version_added: "2.1"
     proxy_port:
         description:
             - Proxy port to use during plugin installation
-        required: False
-        default: None
         version_added: "2.1"
     version:
         description:
             - Version of the plugin to be installed.
               If plugin exists with previous version, it will NOT be updated
-        required: False
-        default: None
 '''
 
 EXAMPLES = '''
