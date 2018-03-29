@@ -57,6 +57,7 @@ class TestIosxrFacts(TestIosxrModule):
                     command = item
                 filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
+                filename = filename.replace('|', '_')
                 output.append(load_fixture(filename))
             return output
 
