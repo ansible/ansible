@@ -119,7 +119,7 @@
       that:
           - output.ansible_facts.azure_securitygroups | length == 1
 
-- name: Gather facts for all accounts
+- name: Gather facts for all security group in the resource group
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
   register: output
@@ -128,16 +128,16 @@
       that:
           - output.ansible_facts.azure_securitygroups | length > 0
 
-- name: Delete all security groups
+- name: Delete security group
   azure_rm_securitygroup:
       resource_group: "{{ resource_group }}"
-      name: "{{ item.name }}"
+      name: mysecgroup
       state: absent
-  with_items: "{{ output.ansible_facts.azure_securitygroups }}"
 
-- name: Should have no security groups remaining
+- name: Security group should be deleted
   azure_rm_securitygroup_facts:
       resource_group: "{{ resource_group }}"
+      name: mysecgroup
   register: output
 
 - assert:
