@@ -160,7 +160,55 @@ from ansible.module_utils.ovirt import (
 )
 
 
+def get_mode_type(mode_number):
+    """
+    Adaptive transmit load balancing (balance-tlb): mode=1 miimon=100
+    Dynamic link aggregation (802.3ad): mode=2 miimon=100
+    Load balance (balance-xor): mode=3 miimon=100
+    Active-Backup: mode=4 miimon=100 xmit_hash_policy=2
+    """
+    options = []
+    if mode_number is None:
+        return options
+
+    def get_type_name(mode_number):
+        """
+        We need to maintain this type strings, for the __compare_options method,
+        for easier comparision.
+        """
+        return [
+            'Active-Backup',
+            'Load balance (balance-xor)',
+            None,
+            'Dynamic link aggregation (802.3ad)',
+        ][mode_number]
+
+    try:
+        mode_number = int(mode_number)
+        if mode_number >= 1 and mode_number <= 4:
+            if mode_number == 4:
+                options.append(otypes.Option(name='xmit_hash_policy', value='2'))
+
+            options.append(otypes.Option(name='miimon', value='100'))
+            options.append(
+                otypes.Option(
+                    name='mode',
+                    type=get_type_name(mode_number - 1),
+                    value=str(mode_number)
+                )
+            )
+        else:
+            options.append(otypes.Option(name='mode', value=str(mode_number)))
+    except ValueError:
+        raise Exception("Bond mode must be a number.")
+
+    return options
+
+
 class HostNetworksModule(BaseModule):
+
+    def __compare_options(self, new_options, old_options):
+        return sorted(get_dict_of_struct(opt) for opt in new_options) != sorted(get_dict_of_struct(opt) for opt in old_options)
 
     def build_entity(self):
         return otypes.Host()
@@ -202,19 +250,17 @@ class HostNetworksModule(BaseModule):
 
         # Check if bond configuration should be updated:
         if bond:
-            update = not (
-                equal(str(bond.get('mode')), nic.bonding.options[0].value) and
-                equal(
-                    sorted(bond.get('interfaces')) if bond.get('interfaces') else None,
-                    sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
-                )
+            update = self.__compare_options(get_mode_type(bond.get('mode')), getattr(nic.bonding, 'options', []))
+            update = update or not equal(
+                sorted(bond.get('interfaces')) if bond.get('interfaces') else None,
+                sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
             )
 
         # Check if labels need to be updated on interface/bond:
         if labels:
             net_labels = nic_service.network_labels_service().list()
-            # If any passed label isn't in set of current labels, then add it:
-            if not set(labels).issubset([lbl.id for lbl in net_labels]):
+            # If any lables which user passed aren't assigned, relabel the interface:
+            if sorted(labels) != sorted([lbl.id for lbl in net_labels]):
                 return True
 
         if not networks:
@@ -322,12 +368,7 @@ def main():
                     otypes.HostNic(
                         name=bond.get('name'),
                         bonding=otypes.Bonding(
-                            options=[
-                                otypes.Option(
-                                    name="mode",
-                                    value=str(bond.get('mode')),
-                                )
-                            ],
+                            options=get_mode_type(bond.get('mode')),
                             slaves=[
                                 otypes.HostNic(name=i) for i in bond.get('interfaces', [])
                             ],
