@@ -130,7 +130,7 @@
     name: lbtestfromansible
     frontend_ip_configurations:
       - name: frontendipconf0
-        private_ip_address: 192.168.0.10
+        private_ip_address: 10.10.0.10
         private_ip_allocation_method: Static
         subnet: "{{ subnet.state.id }}"
     backend_address_pools:
