@@ -64,7 +64,7 @@
   always:
     - name: Clean up
       apt:
-        name: foo
+        name: "{{ item }}"
         state: absent
         allow_unauthenticated: yes
       with_items:
