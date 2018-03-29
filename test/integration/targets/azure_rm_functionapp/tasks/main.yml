@@ -1,6 +1,6 @@
 - name: Fix resource prefix
   set_fact:
-    fixed_resource_prefix: "{{ resource_prefix | replace('-','x') }}"
+    fixed_resource_prefix: "{{ (resource_prefix | replace('-','x'))[-22:] }}"
 
 - name: create storage account for function apps
   azure_rm_storageaccount:
@@ -45,7 +45,7 @@
 - name: create a function with app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ fixed_resource_prefix }}
+    name: af{{ fixed_resource_prefix }}x
     storage_account: sa{{ fixed_resource_prefix }}
     app_settings:
       hello: world
@@ -59,7 +59,7 @@
 - name: change app settings
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ fixed_resource_prefix }}
+    name: af{{ fixed_resource_prefix }}x
     storage_account: sa{{ fixed_resource_prefix }}
     app_settings:
       hello: world
@@ -74,7 +74,7 @@
 - name: delete the function app
   azure_rm_functionapp:
     resource_group: '{{ resource_group }}'
-    name: af{{ fixed_resource_prefix }}
+    name: af{{ fixed_resource_prefix }}x
     state: absent
   register: output
 
