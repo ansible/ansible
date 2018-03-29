@@ -121,6 +121,7 @@ Ansible Changes By Release
   (https://github.com/ansible/ansible/pull/37646)
 * Fix output of the interfaces_file module:
   https://github.com/ansible/ansible/pull/37818/files
+* Fix haproxy traceback on Python 3 https://github.com/ansible/ansible/pull/35176
 
 
 <a id="2.4.3"></a>
