@@ -45,9 +45,10 @@ options:
       - Name of VLAN.
     required: false
     default: null
+      - Name of VLAN or keyword 'default'.
   interfaces:
     description:
-      - List of interfaces that should be associated to the VLAN.
+      - List of interfaces that should be associated to the VLAN or keyword 'default'.
     version_added: "2.5"
   associated_interfaces:
     description:
@@ -79,10 +80,8 @@ options:
   state:
     description:
       - Manage the state of the resource.
-        Active and Suspend will assume the vlan is present.
-    required: false
     default: present
-    choices: ['present','absent', 'active', 'suspend']
+    choices: ['present','absent']
   mode:
     description:
       - Set VLAN mode to classical ethernet or fabricpath.
@@ -173,17 +172,26 @@ def search_obj_in_list(vlan_id, lst):
 
 def get_diff(w, obj):
     c = deepcopy(w)
-    entries = ('interfaces', 'associated_interfaces', 'name', 'delay', 'vlan_range')
+    entries = ('interfaces', 'associated_interfaces', 'delay', 'vlan_range')
     for key in entries:
         if key in c:
             del c[key]
 
     o = deepcopy(obj)
     del o['interfaces']
-    del o['name']
     if o['vlan_id'] == w['vlan_id']:
         diff_dict = dict(set(c.items()) - set(o.items()))
         return diff_dict
+
+
+def is_default_name(obj, vlan_id):
+    cname = obj['name']
+    if ('VLAN' in cname):
+        vid = int(cname[4:])
+        if vid == int(vlan_id):
+            return True
+
+    return False
 
 
 def map_obj_to_commands(updates, module, os_platform):
@@ -219,13 +227,13 @@ def map_obj_to_commands(updates, module, os_platform):
             if not obj_in_have:
                 commands.append('vlan {0}'.format(vlan_id))
 
-                if name:
+                if name and name != 'default':
                     commands.append('name {0}'.format(name))
                 if mode:
                     commands.append('mode {0}'.format(mode))
                 if vlan_state:
                     commands.append('state {0}'.format(vlan_state))
-                if mapped_vni != 'None':
+                if mapped_vni != 'None' and mapped_vni != 'default':
                     commands.append('vn-segment {0}'.format(mapped_vni))
                 if admin_state == 'up':
                     commands.append('no shutdown')
@@ -233,7 +241,7 @@ def map_obj_to_commands(updates, module, os_platform):
                     commands.append('shutdown')
                 commands.append('exit')
 
-                if interfaces:
+                if interfaces and interfaces[0] != 'default':
                     for i in interfaces:
                         commands.append('interface {0}'.format(i))
                         commands.append('switchport')
@@ -241,7 +249,38 @@ def map_obj_to_commands(updates, module, os_platform):
                         commands.append('switchport access vlan {0}'.format(vlan_id))
 
             else:
-                if interfaces:
+                diff = get_diff(w, obj_in_have)
+                if diff:
+                    commands.append('vlan {0}'.format(vlan_id))
+                    for key, value in diff.items():
+                        if key == 'name':
+                            if name != 'default':
+                                if name is not None:
+                                    commands.append('name {0}'.format(value))
+                            else:
+                                if not is_default_name(obj_in_have, vlan_id):
+                                    commands.append('no name')
+                        if key == 'vlan_state':
+                            commands.append('state {0}'.format(value))
+                        if key == 'mapped_vni':
+                            if value == 'default':
+                                if obj_in_have['mapped_vni'] != 'None':
+                                    commands.append('no vn-segment')
+                            elif value != 'None':
+                                commands.append('vn-segment {0}'.format(value))
+                        if key == 'admin_state':
+                            if value == 'up':
+                                commands.append('no shutdown')
+                            elif value == 'down':
+                                commands.append('shutdown')
+                        if key == 'mode':
+                            commands.append('mode {0}'.format(value))
+                    if len(commands) > 1:
+                        commands.append('exit')
+                    else:
+                        del commands[:]
+
+                if interfaces and interfaces[0] != 'default':
                     if not obj_in_have['interfaces']:
                         for i in interfaces:
                             commands.append('vlan {0}'.format(vlan_id))
@@ -270,24 +309,15 @@ def map_obj_to_commands(updates, module, os_platform):
                             commands.append('switchport mode access')
                             commands.append('no switchport access vlan {0}'.format(vlan_id))
 
-                else:
-                    diff = get_diff(w, obj_in_have)
-                    if diff:
-                        commands.append('vlan {0}'.format(vlan_id))
-                        for key, value in diff.items():
-                            if key == 'vlan_state':
-                                commands.append('state {0}'.format(value))
-                            if key == 'mapped_vni':
-                                if value != 'None':
-                                    commands.append('vn-segment {0}'.format(value))
-                            if key == 'admin_state':
-                                if value == 'up':
-                                    commands.append('no shutdown')
-                                elif value == 'down':
-                                    commands.append('shutdown')
-                            if key == 'mode':
-                                commands.append('mode {0}'.format(value))
-                        commands.append('exit')
+                elif interfaces and interfaces[0] == 'default':
+                    if obj_in_have['interfaces']:
+                        for i in obj_in_have['interfaces']:
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('switchport')
+                            commands.append('switchport mode access')
+                            commands.append('no switchport access vlan {0}'.format(vlan_id))
 
     return commands
 
@@ -504,9 +534,9 @@ def main():
         interfaces=dict(type='list'),
         associated_interfaces=dict(type='list'),
         vlan_state=dict(choices=['active', 'suspend'], required=False, default='active'),
-        mapped_vni=dict(required=False, type='int'),
+        mapped_vni=dict(required=False),
         delay=dict(default=10, type='int'),
-        state=dict(choices=['present', 'absent', 'active', 'suspend'], default='present', required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False, default='up'),
         mode=dict(choices=['ce', 'fabricpath'], required=False, default='ce'),
     )
