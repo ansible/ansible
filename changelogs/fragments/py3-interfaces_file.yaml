@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - interfaces_file - Fix a crash on python3 when writing a changed interfaces file https://github.com/ansible/ansible/pull/37504
