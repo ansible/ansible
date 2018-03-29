@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -31,6 +32,11 @@ version_added: "2.6"
 author: "Ulrich Fink (fink@netzlink.com)"
 description:
     - Retrieve facts about all security groups from OpenStack.
+options:
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -98,8 +104,7 @@ openstack_security_groups:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_argument_spec
-
+from ansible.module_utils.openstack import openstack_full_argument_spec
 
 try:
     import shade
@@ -109,7 +114,7 @@ except ImportError:
 
 
 def main():
-    argument_spec = openstack_argument_spec()
+    argument_spec = openstack_full_argument_spec()
     module = AnsibleModule(argument_spec)
 
     if not HAS_SHADE:
