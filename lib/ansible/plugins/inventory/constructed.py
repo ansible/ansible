@@ -43,7 +43,8 @@ EXAMPLES = '''
         multi_group: (group_names|intersection(['alpha', 'beta', 'omega']))|length >= 2
 
     keyed_groups:
-        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it
+        # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it,
+        # using the default separator "_"
         - prefix: distro
           key: ansible_distribution
 
