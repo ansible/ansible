@@ -61,7 +61,7 @@ options:
                     - Dynamic
                 version_added: 2.6                    
             subnet:
-                description：
+                description:
                     - The reference of the subnet resource.
                     - Should be an existing subnet's resource id.
                 version_added: 2.6                    
