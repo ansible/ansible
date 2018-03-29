@@ -51,6 +51,7 @@ __all__ = ['PlayContext']
 
 # TODO: needs to be configurable
 b_SU_PROMPT_LOCALIZATIONS = [
+    to_bytes('Please enter your password'),
     to_bytes('Password'),
     to_bytes('암호'),
     to_bytes('パスワード'),
