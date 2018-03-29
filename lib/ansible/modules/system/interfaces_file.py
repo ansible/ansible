@@ -150,6 +150,7 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_bytes
 
 
 def lineDict(line):
@@ -330,7 +331,7 @@ def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd, 'wb')
-    f.writelines(lines)
+    f.write(to_bytes(''.join(lines), errors='surrogate_or_strict'))
     f.close()
     module.atomic_move(tmpfile, os.path.realpath(dest))
 
