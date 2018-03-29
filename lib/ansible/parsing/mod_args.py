@@ -315,4 +315,8 @@ class ModuleArgsParser:
                                                                                                                                   ", ".join(RAW_PARAM_MODULES)),
                                          obj=self._task_ds)
 
+        # common user error
+        if any(arg.startswith('with_') for arg in args):
+            raise AnsibleParserError("with_* is not a module argument, fix the indentation so the with_* keyword is indented with the task.")
+
         return (action, args, delegate_to)

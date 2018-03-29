@@ -125,3 +125,11 @@ class TestModArgsDwim:
         assert err.value.args[0].startswith("conflicting action statements: ")
         conflicts = set(err.value.args[0][len("conflicting action statements: "):].split(', '))
         assert conflicts == set(('ping', 'shell'))
+
+    def test_with_as_mod_arg(self):
+        args_dict = dict(action=dict(module='debug', args=dict(msg='{{ item }}', with_items=['a'])))
+        m = ModuleArgsParser(args_dict)
+        with pytest.raises(AnsibleParserError) as err:
+            m.parse()
+
+        assert err.value.args[0] == "with_* is not a module argument, fix the indentation so the with_* keyword is indented with the task."
