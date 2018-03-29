@@ -10,6 +10,11 @@ import os
 from ansible.module_utils.urls import open_url, urllib_request, HAS_SSLCONTEXT
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
+import pytest
+
+if HAS_SSLCONTEXT:
+    import ssl
+
 
 def test_open_url(mocker):
     urlopen_mock = mocker.patch('ansible.module_utils.urls.urllib_request.urlopen')
@@ -94,8 +99,29 @@ def test_open_url_username(mocker):
     for handler in handlers:
         if isinstance(handler, expected_handlers):
             found_handlers.append(handler)
-
     assert len(found_handlers) == 2
+    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user', None)}
+
+
+def test_open_url_username_in_url(mocker):
+    urlopen_mock = mocker.patch('ansible.module_utils.urls.urllib_request.urlopen')
+    install_opener_mock = mocker.patch('ansible.module_utils.urls.urllib_request.install_opener')
+
+    r = open_url('http://user2@ansible.com/')
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    expected_handlers = (
+        urllib_request.HTTPBasicAuthHandler,
+        urllib_request.HTTPDigestAuthHandler,
+    )
+
+    found_handlers = []
+    for handler in handlers:
+        if isinstance(handler, expected_handlers):
+            found_handlers.append(handler)
+    assert found_handlers[0].passwd.passwd[None] == {(('ansible.com', '/'),): ('user2', '')}
 
 
 def test_open_url_username_force_basic(mocker):
@@ -185,3 +211,28 @@ def test_open_url_no_proxy(mocker):
             found_handlers.append(handler)
 
     assert len(found_handlers) == 1
+
+
+@pytest.mark.skipif(not HAS_SSLCONTEXT, reason="requires SSLContext")
+def test_open_url_no_validate_certs(mocker):
+    urlopen_mock = mocker.patch('ansible.module_utils.urls.urllib_request.urlopen')
+    install_opener_mock = mocker.patch('ansible.module_utils.urls.urllib_request.install_opener')
+
+    r = open_url('https://ansible.com/', validate_certs=False)
+
+    opener = install_opener_mock.call_args[0][0]
+    handlers = opener.handlers
+
+    ssl_handler = None
+    for handler in handlers:
+        if isinstance(handler, HTTPSClientAuthHandler):
+            ssl_handler = handler
+            break
+
+    assert ssl_handler is not None
+    context = ssl_handler._context
+    assert context.protocol == ssl.PROTOCOL_SSLv23
+    assert context.options & ssl.OP_NO_SSLv2
+    assert context.options & ssl.OP_NO_SSLv3
+    assert context.verify_mode == ssl.CERT_NONE
+    assert context.check_hostname is False
