@@ -61,7 +61,7 @@ def test_fetch_url_no_urlparse(mocker, fake_ansible_module):
 def test_fetch_url(open_url_mock, fake_ansible_module):
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
-    _, kwargs = open_url_mock.call_args
+    dummy, kwargs = open_url_mock.call_args
 
     open_url_mock.assert_called_once_with('http://ansible.com/', client_cert=None, client_key=None, cookies=kwargs['cookies'], data=None,
                                           follow_redirects='urllib2', force=False, force_basic_auth='', headers=None,
@@ -83,7 +83,7 @@ def test_fetch_url_params(open_url_mock, fake_ansible_module):
 
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
-    _, kwargs = open_url_mock.call_args
+    dummy, kwargs = open_url_mock.call_args
 
     open_url_mock.assert_called_once_with('http://ansible.com/', client_cert='client.pem', client_key='client.key', cookies=kwargs['cookies'], data=None,
                                           follow_redirects='all', force=False, force_basic_auth=True, headers=None,
