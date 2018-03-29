@@ -388,3 +388,15 @@
     url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
   environment:
     NETRC: "{{ output_dir|expanduser }}/netrc"
+
+- name: Test follow_redirects=none
+  include_tasks: redirect-none.yml
+
+- name: Test follow_redirects=safe
+  include_tasks: redirect-safe.yml
+
+- name: Test follow_redirects=urllib2
+  include_tasks: redirect-urllib2.yml
+
+- name: Test follow_redirects=all
+  include_tasks: redirect-all.yml

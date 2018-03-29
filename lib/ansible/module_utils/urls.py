@@ -1050,6 +1050,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except httplib.BadStatusLine as e:
+        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
                     exception=traceback.format_exc())
