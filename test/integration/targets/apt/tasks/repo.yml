@@ -34,9 +34,39 @@
         - "dpkg_result is success"
         - "'1.0.1' in dpkg_result.stdout"
 
+  # https://github.com/ansible/ansible/issues/35900
+  - name: Clean up
+    apt:
+      name: foo
+      state: absent
+
+  - name: Install foobar, installs foo as a dependency
+    apt:
+      name: foobar=1.0.0
+      allow_unauthenticated: yes
+
+  - name: Upgrade foobar to a version which does not depend on foo, autoremove should remove foo
+    apt:
+      upgrade: dist
+      autoremove: yes
+      force: yes  # workaround for --allow-unauthenticated used along with upgrade
+
+  - name: Check foo with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+    ignore_errors: yes
+
+  - name: Check that foo was removed by autoremove
+    assert:
+      that:
+        - "dpkg_result is failed"
+
   always:
     - name: Clean up
       apt:
         name: foo
         state: absent
         allow_unauthenticated: yes
+      with_items:
+        - foo
+        - foobar
