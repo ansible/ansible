@@ -124,6 +124,8 @@ Ansible Changes By Release
 * Fix haproxy traceback on Python 3 https://github.com/ansible/ansible/pull/35176
 * Fix the csvfile lookup plugin for python3 tracebacks: https://github.com/ansible/ansible/pull/37665
 * Fix ec2 user_data parameter to properly convert to base64 on python3 (https://github.com/ansible/ansible/pull/37628)
+* ansible-pull - fixed a bug checking for changes when we've pulled from the
+  git repository on python3 https://github.com/ansible/ansible/issues/36962
 
 
 <a id="2.4.3"></a>
