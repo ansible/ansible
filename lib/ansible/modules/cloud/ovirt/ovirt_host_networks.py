@@ -57,7 +57,7 @@ options:
             - "C(name) - Name of the logical network to be assigned to bond or interface."
             - "C(boot_protocol) - Boot protocol one of the I(none), I(static) or I(dhcp)."
             - "C(address) - IP address in case of I(static) boot protocol is used."
-            - "C(prefix) - Routing prefix in case of I(static) boot protocol is used."
+            - "C(netmask) - Subnet mask in case of I(static) boot protocol is used."
             - "C(gateway) - Gateway in case of I(static) boot protocol is used."
             - "C(version) - IP version. Either v4 or v6. Default is v4."
     labels:
@@ -92,7 +92,7 @@ EXAMPLES = '''
       - name: myvlan
         boot_protocol: static
         address: 1.2.3.4
-        prefix: 24
+        netmask: 255.255.255.0
         gateway: 1.2.3.4
         version: v4
 
@@ -228,8 +228,8 @@ class HostNetworksModule(BaseModule):
                 if not equal(network.get('gateway'), ip.ip.gateway):
                     ip.ip.gateway = network.get('gateway')
                     changed = True
-                if not equal(network.get('prefix'), sum([bin(int(x)).count('1') for x in ip.ip.netmask.split('.')]) if ip.ip.netmask else None):
-                    ip.ip.netmask = str(network.get('prefix'))
+                if not equal(network.get('netmask'), ip.ip.netmask):
+                    ip.ip.netmask = network.get('netmask')
                     changed = True
 
                 if changed:
@@ -340,7 +340,6 @@ def main():
             state == 'present' and
             (nic is None or host_networks_module.has_update(nics_service.service(nic.id)))
         ):
-            removed_bonds = []
             # Remove networks which are attached to different interface then user want:
             attachments_service = host_service.network_attachments_service()
 
@@ -353,9 +352,11 @@ def main():
                             n['id'] = a.id
 
             # Check if we have to break some bonds:
-            for host_nic in nics_service.list():
-                if host_nic.bonding and nic.id in [slave.id for slave in host_nic.bonding.slaves]:
-                    removed_bonds.append(otypes.HostNic(id=host_nic.id))
+            removed_bonds = []
+            if nic is not None:
+                for host_nic in nics_service.list():
+                    if host_nic.bonding and nic.id in [slave.id for slave in host_nic.bonding.slaves]:
+                        removed_bonds.append(otypes.HostNic(id=host_nic.id))
 
             # Assign the networks:
             host_networks_module.action(
