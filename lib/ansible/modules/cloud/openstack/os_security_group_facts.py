@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 module: os_security_group_facts
 short_description: Retrieve facts about all OpenStack security groups.
-version_added: "2.4"
+version_added: "2.5"
 author: "Ulrich Fink (fink@netzlink.com)"
 description:
     - Retrieve facts about all security groups from OpenStack.
