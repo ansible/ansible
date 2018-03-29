@@ -8,6 +8,7 @@
 
 - assert:
     that:
+    - http_301_head is successful
     - http_301_head.json is not defined
     - http_301_head.redirected == true
     - http_301_head.status == 200
@@ -23,6 +24,7 @@
 
 - assert:
     that:
+    - http_301_get is successful
     - http_301_get.json.data == ''
     - http_301_get.json.method == 'GET'
     - http_301_get.json.url == 'http://{{ httpbin_host }}/anything'
@@ -43,6 +45,7 @@
 
 - assert:
     that:
+    - http_301_post is successful
     - http_301_post.json.data == ''
     - http_301_post.json.method == 'GET'
     - http_301_post.json.url == 'http://{{ httpbin_host }}/anything'
@@ -60,6 +63,7 @@
 
 - assert:
     that:
+    - http_302_head is successful
     - http_302_head.json is not defined
     - http_302_head.redirected == true
     - http_302_head.status == 200
@@ -75,6 +79,7 @@
 
 - assert:
     that:
+    - http_302_get is successful
     - http_302_get.json.data == ''
     - http_302_get.json.method == 'GET'
     - http_302_get.json.url == 'http://{{ httpbin_host }}/anything'
@@ -95,6 +100,7 @@
 
 - assert:
     that:
+    - http_302_post is successful
     - http_302_post.json.data == ''
     - http_302_post.json.method == 'GET'
     - http_302_post.json.url == 'http://{{ httpbin_host }}/anything'
@@ -112,6 +118,7 @@
 
 - assert:
     that:
+    - http_303_head is successful
     - http_303_head.json is not defined
     - http_303_head.redirected == true
     - http_303_head.status == 200
@@ -127,6 +134,7 @@
 
 - assert:
     that:
+    - http_303_get is successful
     - http_303_get.json.data == ''
     - http_303_get.json.method == 'GET'
     - http_303_get.json.url == 'http://{{ httpbin_host }}/anything'
@@ -147,6 +155,7 @@
 
 - assert:
     that:
+    - http_303_post is successful
     - http_303_post.json.data == ''
     - http_303_post.json.method == 'GET'
     - http_303_post.json.url == 'http://{{ httpbin_host }}/anything'
@@ -164,6 +173,7 @@
 
 - assert:
     that:
+    - http_307_head is successful
     - http_307_head.json is not defined
     - http_307_head.redirected == true
     - http_307_head.status == 200
@@ -179,6 +189,7 @@
 
 - assert:
     that:
+    - http_307_get is successful
     - http_307_get.json.data == ''
     - http_307_get.json.method == 'GET'
     - http_307_get.json.url == 'http://{{ httpbin_host }}/anything'
@@ -198,6 +209,7 @@
 
 - assert:
     that:
+    - http_307_post is successful
     - http_307_post.json.json.foo == 'bar'
     - http_307_post.json.method == 'POST'
     - http_307_post.json.url == 'http://{{ httpbin_host }}/anything'
@@ -215,12 +227,12 @@
 
 - assert:
     that:
+    - http_308_head is successful
     - http_308_head.json is undefined
     - http_308_head.redirected == true
     - http_308_head.status == 200
     - http_308_head.url == 'http://{{ httpbin_host }}/anything'
 
-# FIXME: This is fixed in https://github.com/ansible/ansible/pull/36809
 - name: Test HTTP 308 using GET
   uri:
     url: http://{{ httpbin_host }}/redirect-to?status_code=308&url=http://{{ httpbin_host }}/anything
@@ -231,6 +243,7 @@
 
 - assert:
     that:
+    - http_308_get is successful
     - http_308_get.json.data == ''
     - http_308_get.json.method == 'GET'
     - http_308_get.json.url == 'http://{{ httpbin_host }}/anything'
@@ -250,6 +263,7 @@
 
 - assert:
     that:
+    - http_308_post is successful
     - http_308_post.json.json.foo == 'bar'
     - http_308_post.json.method == 'POST'
     - http_308_post.json.url == 'http://{{ httpbin_host }}/anything'
