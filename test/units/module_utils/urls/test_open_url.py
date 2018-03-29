@@ -12,7 +12,6 @@ from ansible.module_utils.urls import open_url, urllib_request, HAS_SSLCONTEXT, 
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
-from mock import MagicMock
 
 
 if HAS_SSLCONTEXT:
