@@ -129,6 +129,8 @@ Ansible Changes By Release
 * Fix digital_ocean module unique_name parameter for a python3 bug:
   https://github.com/ansible/ansible/issues/37114
 * Fix a Python3 bug in the vagrant dynamic inventory script: https://github.com/ansible/ansible/pull/37631
+* Fix python3 bug in the jira module: https://github.com/ansible/ansible/pull/33862
+
 
 <a id="2.4.3"></a>
 
