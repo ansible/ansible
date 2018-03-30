@@ -74,6 +74,16 @@ EXAMPLES = r'''
     src: /home/cisco/ansible/aci/configs/aci_config.xml
   delegate_to: localhost
 
+- name: Add a tenant from a templated payload file from templates/
+  aci_rest:
+    host: apic
+    username: admin
+    private_key: pki/admin.key
+    method: post
+    path: /api/mo/uni.xml
+    content: "{{ lookup('template', 'aci/tenant.xml.j2') }}"
+  delegate_to: localhost
+
 - name: Add a tenant using inline YAML
   aci_rest:
     host: apic
