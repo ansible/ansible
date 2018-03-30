@@ -65,6 +65,10 @@ options:
     description:
       - The value specifies the initial database (which is also called as maintenance DB) that Ansible connects to.
     default: postgres
+  tablespace:
+    version_added: "2.6"
+    description: |
+        The tablespace to set for the database. If you want to move a database back to the default tablespace, explicitly set this to pg_default.
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -141,6 +145,14 @@ def set_owner(cursor, db, owner):
     return True
 
 
+def set_tablespace(cursor, db, tablespace):
+    query = "ALTER DATABASE %s SET TABLESPACE %s" % (
+            pg_quote_identifier(db, 'database'),
+            pg_quote_identifier(tablespace, 'tablespace'))
+    cursor.execute(query)
+    return True
+
+
 def get_encoding_id(cursor, encoding):
     query = "SELECT pg_char_to_encoding(%(encoding)s) AS encoding_id;"
     cursor.execute(query, {'encoding': encoding})
@@ -151,8 +163,10 @@ def get_db_info(cursor, db):
     query = """
     SELECT rolname AS owner,
     pg_encoding_to_char(encoding) AS encoding, encoding AS encoding_id,
-    datcollate AS lc_collate, datctype AS lc_ctype
+    datcollate AS lc_collate, datctype AS lc_ctype,
+    spcname AS tablespace
     FROM pg_database JOIN pg_roles ON pg_roles.oid = pg_database.datdba
+    JOIN pg_tablespace ON pg_tablespace.oid = pg_database.dattablespace
     WHERE datname = %(db)s
     """
     cursor.execute(query, {'db': db})
@@ -174,8 +188,8 @@ def db_delete(cursor, db):
         return False
 
 
-def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
-    params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype)
+def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, tablespace):
+    params = dict(enc=encoding, collate=lc_collate, ctype=lc_ctype, tablespace=tablespace)
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
@@ -188,34 +202,38 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
             query_fragments.append('LC_COLLATE %(collate)s')
         if lc_ctype:
             query_fragments.append('LC_CTYPE %(ctype)s')
+        if tablespace:
+            query_fragments.append('TABLESPACE %s' % pg_quote_identifier(tablespace, 'tablespace'))
         query = ' '.join(query_fragments)
         cursor.execute(query, params)
         return True
     else:
         db_info = get_db_info(cursor, db)
+        changed = False
         if (encoding and
                 get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
                 'Current encoding: %s' % db_info['encoding']
             )
-        elif lc_collate and lc_collate != db_info['lc_collate']:
+        if lc_collate and lc_collate != db_info['lc_collate']:
             raise NotSupportedError(
                 'Changing LC_COLLATE is not supported. '
                 'Current LC_COLLATE: %s' % db_info['lc_collate']
             )
-        elif lc_ctype and lc_ctype != db_info['lc_ctype']:
+        if lc_ctype and lc_ctype != db_info['lc_ctype']:
             raise NotSupportedError(
                 'Changing LC_CTYPE is not supported.'
                 'Current LC_CTYPE: %s' % db_info['lc_ctype']
             )
-        elif owner and owner != db_info['owner']:
-            return set_owner(cursor, db, owner)
-        else:
-            return False
+        if owner and owner != db_info['owner']:
+            changed |= set_owner(cursor, db, owner)
+        if tablespace and tablespace != db_info['tablespace']:
+            changed |= set_tablespace(cursor, db, tablespace)
+        return changed
 
 
-def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
+def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, tablespace):
     if not db_exists(cursor, db):
         return False
     else:
@@ -228,6 +246,8 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         elif lc_ctype and lc_ctype != db_info['lc_ctype']:
             return False
         elif owner and owner != db_info['owner']:
+            return False
+        elif tablespace and tablespace != db_info['tablespace']:
             return False
         else:
             return True
@@ -367,6 +387,7 @@ def main():
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
         state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
+        tablespace=dict(default=""),
         target=dict(default="", type="path"),
         target_opts=dict(default=""),
         maintenance_db=dict(default="postgres"),
@@ -386,6 +407,7 @@ def main():
     encoding = module.params["encoding"]
     lc_collate = module.params["lc_collate"]
     lc_ctype = module.params["lc_ctype"]
+    tablespace = module.params["tablespace"]
     target = module.params["target"]
     target_opts = module.params["target_opts"]
     state = module.params["state"]
@@ -401,7 +423,7 @@ def main():
         "login_password": "password",
         "port": "port",
         "ssl_mode": "sslmode",
-        "ssl_rootcert": "sslrootcert"
+        "ssl_rootcert": "sslrootcert",
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
@@ -444,7 +466,7 @@ def main():
             if state == "absent":
                 changed = db_exists(cursor, db)
             elif state == "present":
-                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
+                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, tablespace)
             module.exit_json(changed=changed, db=db)
 
         if state == "absent":
@@ -455,7 +477,7 @@ def main():
 
         elif state == "present":
             try:
-                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
+                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, tablespace)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 

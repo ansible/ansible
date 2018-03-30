@@ -72,6 +72,19 @@
   service: name=postgresql state=restarted
   when: ansible_os_family == 'Suse'
 
+- name: delete old directory for custom tablespace
+  file:
+    path: "{{ db_tablespace_location }}"
+    state: absent
+
+- name: create directory for custom tablespace
+  file:
+    path: "{{ db_tablespace_location }}"
+    state: directory
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    mode: "0711"
+
 - name: Copy pg_hba into place
   template:
     src: files/pg_hba.conf
