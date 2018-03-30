@@ -54,11 +54,15 @@ options:
   content:
     description:
     - When used instead of C(src), sets the payload of the API request directly.
-    - This may be convenient to template simple requests, for anything complex use the M(template) module.
+    - This may be convenient to template simple requests.
+    - For anything complex use the C(template) lookup plugin (see examples)
+      or the M(template) module with parameter C(src).
   src:
     description:
     - Name of the absolute path of the filname that includes the body
-      of the http request being sent to the ACI fabric.
+      of the HTTP request being sent to the ACI fabric.
+    - If you require a templated payload, use the C(content) parameter
+      together with the C(template) lookup plugin, or use M(template).
     aliases: [ config_file ]
 extends_documentation_fragment: aci
 '''
