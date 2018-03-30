@@ -25,9 +25,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
-# This is a modification of @bcoca's `svc` module
-
 DOCUMENTATION = '''
 ---
 module: perp
@@ -96,8 +93,7 @@ state:
     sample: started
 '''
 
-import re
-
+from re import search
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -130,17 +126,17 @@ class Perp(object):
         else:
             self.full_state = out
 
-            m = re.search(r'main.*\(pid (\d+)\)', out)
+            m = search(r'main.*\(pid (\d+)\)', out)
             if m:
                 self.pid = m.group(1)
 
-            m = re.search(r': activated (\d+)s', out)
+            m = search(r': activated (\d+)s', out)
             if m:
                 self.duration = m.group(1)
 
-            if re.search(r': activated', out):
+            if search(r': activated', out):
                 self.state = 'started'
-            elif re.search(r'not activated', out):
+            elif search(r'not activated', out):
                 self.state = 'stopped'
             else:
                 self.state = 'unknown'
