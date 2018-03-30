@@ -22,7 +22,7 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat, ocfs2 ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
@@ -229,6 +229,7 @@ class Btrfs(Filesystem):
 
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
+
 
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
