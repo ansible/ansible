@@ -89,6 +89,14 @@ options:
     default: default
     version_added: '2.6'
 
+  thin:
+    description:
+    - Newly created volume is provisioned as thin (no space reserved)
+    required: false
+    type: bool
+    default: False
+    version_added: '2.6'
+
 '''
 
 EXAMPLES = """
@@ -168,6 +176,7 @@ class NetAppCDOTVolume(object):
             junction_path=dict(required=False, type='str', default=None),
             export_policy=dict(required=False, type='str', default='default'),
             snapshot_policy=dict(required=False, type='str', default='default'),
+            thin=dict(required=False, type=bool, default=False)
         ))
 
         self.module = AnsibleModule(
@@ -190,6 +199,7 @@ class NetAppCDOTVolume(object):
         self.junction_path = p['junction_path']
         self.export_policy = p['export_policy']
         self.snapshot_policy = p['snapshot_policy']
+        self.thin = p['thin']
 
         if p['size'] is not None:
             self.size = p['size'] * self._size_unit_map[self.size_unit]
@@ -265,6 +275,8 @@ class NetAppCDOTVolume(object):
             create_parameters['export-policy'] = str(self.export_policy)
         if self.snapshot_policy != 'default':
             create_parameters['snapshot-policy'] = str(self.snapshot_policy)
+        if self.thin:
+            create_parameters['space-reserve'] = 'none'
 
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **create_parameters)
