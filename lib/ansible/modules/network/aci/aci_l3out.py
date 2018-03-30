@@ -68,7 +68,8 @@ options:
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
-    choices: [ absent, present ]
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
 '''
@@ -86,6 +87,23 @@ EXAMPLES = r'''
     vrf: prod
     l3protocol: ospf
 
+- name: Delete L3Out
+  aci_l3out:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    name: prod_l3out
+    state: absent
+
+- name: Query L3Out information
+  aci_l3out:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    name: prod_l3out
+    state: query
 '''
 
 RETURN = r'''
@@ -215,7 +233,7 @@ def main():
         l3protocol=dict(type='list',
                         choices=['static', 'bgp', 'ospf', 'pim']),
         state=dict(type='str', default='present',
-                   choices=['absent', 'present'])
+                   choices=['absent', 'present', 'query'])
     )
 
     module = AnsibleModule(
