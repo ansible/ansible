@@ -97,7 +97,16 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         self.module_args = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            cloud_environment=dict(
+                type='str',
+                default='AzureCloud'
+            ),
+            auth_source=dict(
+                type='str',
+                choices=['auto', 'cli', 'credential_file', 'env', 'msi'],
+                default='auto'
+            ),
         )
 
         self.results = dict(

@@ -39,7 +39,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     dns_prefix:
         description:
             - DNS prefix specified when creating the managed cluster.
@@ -317,6 +316,15 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
+            cloud_environment=dict(
+                type='str',
+                default='AzureCloud'
+            ),
+            auth_source=dict(
+                type='str',
+                choices=['auto', 'cli', 'credential_file', 'env', 'msi'],
+                default='auto'
+            ),
             resource_group=dict(
                 type='str',
                 required=True
