@@ -90,25 +90,25 @@ class MerakiModule(object):
         self.response = None
         self.status = None
         self.url = None
-#        self.url_list = {'org_get_all': '/organizations/',
-#                         'org_get_one': '/organizations/replace_org_id',
-#                         'org_post': '/organizations/',
-#                         'org_put': '/organizations/replace_org_id',
-#                         'net_get_all': '/organizations/replace_org_id/networks',
-#                         'net_get_one': '/networks/replace_net_id',
-#                         'net_post': '/organizations/replace_org_id/networks',
-#                         'net_put': '/networks/replace_net_id',
-#                         }
 
         self.get_urls = {'organizations': '/organizations',
                          'networks': '/organizations/replace_org_id/networks',
+                         'admins': '/organizations/replace_org_id/admins',
+                         'configTemplates': '/organizations/replace_org_id/configTemplates',
+                         'samlRoles': '/organizations/replace_org_id/samlRoles',
+                         'ssids': '/networks/replace_net_id/ssids',
+                         'groupPolicies': '/networks/replace_net_id/groupPolicies',
+                         'staticRoutes': '/networks/replace_net_id/staticRoutes',
+                         'vlans': '/networks/replace_net_id/vlans',
+                         'devices': '/networks/replace_net_id/devices',
+                         'ssids': '/networks/replace_net_id/ssids',
+                         'staticRoutes': '/networks/replace_net_id/staticRoutes',
+                         'groupPolicies': '/networks/replace_net_id/groupPolicies',
                          }
 
         self.get_one_urls = {'organizations': '/organizations/replace_org_id',
                              'networks': 'networks/replace_net_id',
                              }
-
-#        self.create_urls = dict()
 
         # Module should add URLs which are required by the module
         self.url_catalog = {'get_all': self.get_urls,
@@ -218,7 +218,8 @@ class MerakiModule(object):
 
     def get_orgs(self):
         ''' Downloads all organizations '''
-        return self.response_json(self.request('GET', '/organizations'))
+        return json.loads(self.request('GET', '/organizations'))
+        # return self.response_json(self.request('GET', '/organizations'))
 
     def is_org(self, org_id):
         ''' Checks whether an organization exists based on its id '''
@@ -268,13 +269,21 @@ class MerakiModule(object):
                 net = self.get_net(org_name, net_name)
                 return net['id']
 
-    def construct_path(self, action):
-        built_path = self.url_catalog[action][self.function]
-        if 'replace_org_id' in built_path:
-            built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
-        if 'replace_net_id' in built_path:
-            built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
-        return built_path
+    def construct_path(self, action, function=None, org_id=None, net_id=None):
+        if function is None:
+            built_path = self.url_catalog[action][self.function]
+        else:
+            self.function = function
+            built_path = self.url_catalog[action][function]
+
+        if 'replace_org_id' in built_path and org_id is None:
+            return built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
+        elif 'replace_net_id' in built_path and net_id is None:
+            return built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
+        elif 'replace_org_id' in built_path and org_id is not None:
+            return built_path.replace('replace_org_id', str(org_id))
+        elif 'replace_net_id' in built_path and net_id is not None:
+            return built_path.replace('replace_net_id', str(net_id))
 
     def create_object(self, payload):
         create_path = self.construct_path('create')
@@ -292,6 +301,8 @@ class MerakiModule(object):
             return
 
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
+        # if 'ssid' in self.url:
+        #     self.fail_json(msg='URL debugging', data=self.url)
 
         if payload is None:
             resp, info = fetch_url(self.module, self.url,
@@ -310,9 +321,12 @@ class MerakiModule(object):
                                    )
         self.response = info['msg']
         self.status = info['status']
-        response = json.loads(to_native(resp.read()))
 
-        if self.status >= 300:
+        if self.status >= 400:
+            if self.function == 'vlans':
+                if self.status == 400:
+                    return to_native(info['body'])
+        elif self.status >= 300:
             try:
                 self.error['text'] = self.response_json(info['body'])
                 self.error['code'] = info['status']
@@ -321,6 +335,7 @@ class MerakiModule(object):
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
         if self.status >= 201 and self.status <= 299 and method in self.modifiable_methods:
             self.result['changed'] = True
+        response = to_native(resp.read())
         return response
 
     def exit_json(self, **kwargs):
