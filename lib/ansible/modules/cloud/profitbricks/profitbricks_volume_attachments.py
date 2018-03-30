@@ -14,7 +14,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: profitbricks_volume_attachments
-deprecated: Deprecated in 2.6. Use M(profitbricks) instead.
+deprecated:
+  removed_in: "2.10"
+  why: The module is redundant.
+  alternative: Use M(profitbricks) instead.
 short_description: Attach or detach a volume.
 description:
      - Allows you to attach or detach a volume from a ProfitBricks server. This module has a dependency on profitbricks >= 1.0.0
