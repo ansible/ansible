@@ -61,6 +61,23 @@ options:
             promiscuous_mode: false,
             forged_transmits: false,
         }
+    teaming_policy:
+        description:
+            - Dictionary which configures the different teaming values for portgroup.
+            - 'Valid attributes are:'
+            - '- C(load_balance_policy) (string): Network adapter teaming policy. (default: loadbalance_srcid)'
+            - '   - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit ]'
+            - '- C(inbound_policy) (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)'
+            - '- C(notify_switches) (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)'
+            - '- C(rolling_order) (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)'
+        required: False
+        version_added: '2.6'
+        default: {
+            'notify_switches': True,
+            'load_balance_policy': 'loadbalance_srcid',
+            'inbound_policy': False,
+            'rolling_order': False
+        }
     cluster_name:
         description:
             - Name of cluster name for host membership.
@@ -134,6 +151,18 @@ EXAMPLES = r'''
     portgroup_name: portgroup_name
     vlan_id: vlan_id
     state: absent
+
+- name: Add Portgroup with teaming policy
+  vmware_portgroup:
+    hostname: esxi_hostname
+    username: esxi_username
+    password: esxi_password
+    switch_name: vswitch_name
+    portgroup_name: portgroup_name
+    teaming_policy:
+      load_balance_policy: 'failover_explicit'
+      inbound_policy: True
+  register: teaming_result
 '''
 
 RETURN = r'''
@@ -142,12 +171,12 @@ result:
     returned: always
     type: dict
     sample: {
-                "esxi01.example.com": {
-                    "portgroup_name": "pg0010",
-                    "switch_name": "vswitch_0001",
-                    "vlan_id": 1
-                }
-            }
+        "esxi01.example.com": {
+            "portgroup_name": "pg0010",
+            "switch_name": "vswitch_0001",
+            "vlan_id": 1
+        }
+    }
 '''
 
 
@@ -219,7 +248,11 @@ class PyVmomiHelper(PyVmomi):
         ret = False
         if (current_policy.security.allowPromiscuous != desired_policy.security.allowPromiscuous) or \
                 (current_policy.security.forgedTransmits != desired_policy.security.forgedTransmits) or \
-                (current_policy.security.macChanges != desired_policy.security.macChanges):
+                (current_policy.security.macChanges != desired_policy.security.macChanges) or \
+                (current_policy.nicTeaming.policy != desired_policy.nicTeaming.policy) or \
+                (current_policy.nicTeaming.reversePolicy != desired_policy.nicTeaming.reversePolicy) or \
+                (current_policy.nicTeaming.notifySwitches != desired_policy.nicTeaming.notifySwitches) or \
+                (current_policy.nicTeaming.rollingOrder != desired_policy.nicTeaming.rollingOrder):
             ret = True
         return ret
 
@@ -257,6 +290,7 @@ class PyVmomiHelper(PyVmomi):
 
         port_group = vim.host.PortGroup.Config()
         port_group.spec = vim.host.PortGroup.Specification()
+        port_changed = False
 
         if not desired_pgs:
             # Add new portgroup
@@ -267,11 +301,11 @@ class PyVmomiHelper(PyVmomi):
 
             try:
                 host_system.configManager.networkSystem.AddPortGroup(portgrp=port_group.spec)
-                self.changed = True
+                port_changed = True
             except vim.fault.AlreadyExists as e:
                 # To match with other vmware_* modules if portgroup
                 # exists, we proceed, as user may want idempotency
-                self.changed = False
+                pass
             except vim.fault.NotFound as not_found:
                 self.module.fail_json(msg="Failed to add Portgroup as vSwitch"
                                           " was not found: %s" % to_native(not_found.msg))
@@ -285,24 +319,21 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Failed to add Portgroup due to generic"
                                           " exception : %s" % to_native(generic_exception))
         else:
-            self.changed = False
             # Change portgroup
-            if desired_pgs[0].spec.vlanId != vlan_id:
-                port_group.spec.vlanId = vlan_id
-                self.changed = True
-            if self.check_network_policy_diff(desired_pgs[0].spec.policy, network_policy):
-                port_group.spec.policy = network_policy
-                self.changed = True
-
-            if self.changed:
+            port_group.spec.name = portgroup_name
+            port_group.spec.vlanId = vlan_id
+            port_group.spec.policy = network_policy
+            port_group.spec.vswitchName = desired_pgs[0].spec.vswitchName
+            if self.check_network_policy_diff(desired_pgs[0].spec.policy, network_policy) or \
+                    desired_pgs[0].spec.vlanId != vlan_id:
+                port_changed = True
                 try:
                     host_system.configManager.networkSystem.UpdatePortGroup(pgName=self.portgroup_name,
                                                                             portgrp=port_group.spec)
-                    self.changed = True
                 except vim.fault.AlreadyExists as e:
                     # To match with other vmware_* modules if portgroup
                     # exists, we proceed, as user may want idempotency
-                    self.changed = False
+                    pass
                 except vim.fault.NotFound as not_found:
                     self.module.fail_json(msg="Failed to update Portgroup as"
                                               " vSwitch was not found: %s" % to_native(not_found.msg))
@@ -315,7 +346,7 @@ class PyVmomiHelper(PyVmomi):
                 except Exception as generic_exception:
                     self.module.fail_json(msg="Failed to update Portgroup due to generic"
                                               " exception : %s" % to_native(generic_exception))
-        return self.changed
+        return port_changed
 
     def create_network_policy(self):
         """
@@ -329,7 +360,17 @@ class PyVmomiHelper(PyVmomi):
             security_policy.forgedTransmits = self.forged_transmits
         if self.mac_changes:
             security_policy.macChanges = self.mac_changes
-        network_policy = vim.host.NetworkPolicy(security=security_policy)
+
+        # Teaming Policy
+        teaming_policy = vim.host.NetworkPolicy.NicTeamingPolicy()
+        teaming_policy.policy = self.module.params['teaming_policy']['load_balance_policy']
+        teaming_policy.reversePolicy = self.module.params['teaming_policy']['inbound_policy']
+        teaming_policy.notifySwitches = self.module.params['teaming_policy']['notify_switches']
+        teaming_policy.rollingOrder = self.module.params['teaming_policy']['rolling_order']
+
+        network_policy = vim.host.NetworkPolicy(nicTeaming=teaming_policy,
+                                                security=security_policy)
+
         return network_policy
 
     def remove_hosts_port_group(self):
@@ -404,6 +445,29 @@ def main():
                                 mac_changes=False,
                             )
                             ),
+        teaming_policy=dict(
+            type='dict',
+            options=dict(
+                inbound_policy=dict(type='bool', default=False),
+                notify_switches=dict(type='bool', default=True),
+                rolling_order=dict(type='bool', default=False),
+                load_balance_policy=dict(type='str',
+                                         default='loadbalance_srcid',
+                                         choices=[
+                                             'loadbalance_ip',
+                                             'loadbalance_srcmac',
+                                             'loadbalance_srcid',
+                                             'failover_explicit',
+                                         ],
+                                         )
+            ),
+            default=dict(
+                inbound_policy=False,
+                notify_switches=True,
+                rolling_order=False,
+                load_balance_policy='loadbalance_srcid',
+            ),
+        ),
     )
     )
 
