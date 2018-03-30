@@ -156,8 +156,9 @@ except ImportError:
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
-network_os_device_param_map = {
-    "nxos": "nexus"
+NETWORK_OS_DEVICE_PARAM_MAP = {
+    "nxos": "nexus",
+    "ios": "default"
 }
 
 
@@ -241,7 +242,7 @@ class Connection(ConnectionBase):
                 if network_os:
                     display.display('discovered network_os %s' % network_os, log_only=True)
 
-        device_params = {'name': (network_os_device_param_map.get(network_os) or network_os or 'default')}
+        device_params = {'name': (NETWORK_OS_DEVICE_PARAM_MAP.get(network_os) or network_os or 'default')}
 
         ssh_config = os.getenv('ANSIBLE_NETCONF_SSH_CONFIG', False)
         if ssh_config in BOOLEANS_TRUE:
@@ -266,6 +267,7 @@ class Connection(ConnectionBase):
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(str(exc))
         except ImportError as exc:
+            raise
             raise AnsibleError("connection=netconf is not supported on {0}".format(network_os))
 
         if not self._manager.connected:
