@@ -47,7 +47,7 @@ def my_represent_scalar(self, tag, value, style=None):
             # ...no trailing space
             value = value.rstrip()
             # ...and non-printable characters
-            value = filter(lambda x: x in string.printable, value)
+            value = ''.join(x for x in value if x in string.printable)
             # ...tabs prevent blocks from expanding
             value = value.expandtabs()
             # ...and odd bits of whitespace
