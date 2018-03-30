@@ -90,9 +90,9 @@ class CallbackModule(CallbackBase):
         self.items = defaultdict(list)
         self.start_time = int(time.time())
 
-    def set_options(self, options):
+    def set_options(self, task_keys=None, var_options=None, direct=None):
 
-        super(CallbackModule, self).set_options(options)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         self.FOREMAN_URL = self._plugin_options['url']
         self.FOREMAN_SSL_CERT = (self._plugin_options['ssl_cert'], self._plugin_options['ssl_key'])
