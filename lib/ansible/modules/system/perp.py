@@ -98,7 +98,6 @@ state:
 
 import re
 
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -174,8 +173,7 @@ class Perp(object):
     def execute_command(self, cmd):
         try:
             (rc, out, err) = self.module.run_command(' '.join(cmd))
-        except Exception:
-            e = get_exception()
+        except Exception as e:
             self.module.fail_json(msg="failed to execute: %s" % str(e))
         return (rc, out, err)
 
