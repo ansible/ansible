@@ -14,10 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: profitbricks_volume_attachments
-deprecated:
-  removed_in: "2.10"
-  why: The module is redundant.
-  alternative: Use M(profitbricks) instead.
+deprecated: Deprecated in 2.6. Use M(profitbricks) instead.
 short_description: Attach or detach a volume.
 description:
      - Allows you to attach or detach a volume from a ProfitBricks server. This module has a dependency on profitbricks >= 1.0.0
@@ -35,6 +32,11 @@ options:
     description:
       - The volume name or ID.
     required: true
+  api_url:
+    description:
+      - The ProfitBricks API base URL.
+    default: null
+    version_added: "2.6"
   username:
     description:
       - The ProfitBricks username. Overrides the PROFITBRICKS_USERNAME environment variable.
@@ -61,7 +63,7 @@ options:
     description:
       - Indicate desired state of the resource
     required: false
-    default: 'present'
+    default: "present"
     choices: ["present", "absent"]
 
 requirements: [ "profitbricks" ]
@@ -198,9 +200,9 @@ def detach_volume(module, profitbricks):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            datacenter=dict(),
-            server=dict(),
-            volume=dict(),
+            datacenter=dict(type='str'),
+            server=dict(type='str'),
+            volume=dict(type='str'),
             api_url=dict(type='str', default=None),
             username=dict(
                 required=True,
@@ -215,7 +217,7 @@ def main():
             ),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
-            state=dict(default='present'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
         )
     )
 
