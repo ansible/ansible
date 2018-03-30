@@ -30,11 +30,11 @@
       - python-xml
       - btrfsprogs
 
-  - name: install ocfs2 (Ubuntu)
+  - name: install ocfs2 (Debian)
     package:
       name: ocfs2-tools
       state: present
-    when: ansible_os_family == 'Ubuntu'
+    when: ansible_os_family == 'Debian'
   when: ansible_system == 'Linux'
 
 - block:
