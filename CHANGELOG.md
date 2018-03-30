@@ -126,6 +126,8 @@ Ansible Changes By Release
 * Fix ec2 user_data parameter to properly convert to base64 on python3 (https://github.com/ansible/ansible/pull/37628)
 * ansible-pull - fixed a bug checking for changes when we've pulled from the
   git repository on python3 https://github.com/ansible/ansible/issues/36962
+* Fix digital_ocean module unique_name parameter for a python3 bug:
+  https://github.com/ansible/ansible/issues/37114
 
 
 <a id="2.4.3"></a>
