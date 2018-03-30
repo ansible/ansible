@@ -130,7 +130,7 @@ Ansible Changes By Release
   https://github.com/ansible/ansible/issues/37114
 * Fix a Python3 bug in the vagrant dynamic inventory script: https://github.com/ansible/ansible/pull/37631
 * Fix python3 bug in the jira module: https://github.com/ansible/ansible/pull/33862
-
+* Fix consul module's state=absent: https://github.com/ansible/ansible/issues/34628
 
 <a id="2.4.3"></a>
 
