@@ -70,6 +70,29 @@ EXAMPLES = '''
     state: reloaded
 '''
 
+RETURN = '''
+full_state:
+    description: The full output from perpstat
+    returned: always
+    type: string
+    sample: "service_name: activated 1910849 seconds\n  main: up 1910849 seconds (pid 14383)\n   log: up 1910849 seconds (pid 14382)\n"
+name:
+    description: The name of the service being managed
+    returned: always
+    type: string
+    sample: service_name
+pid:
+    description: The pid of the service in question
+    returned: always
+    type: int
+    sample: 14383
+state:
+    description: The state of the service
+    returned: always
+    type: string
+    sample: started
+'''
+
 import re
 
 from ansible.module_utils.pycompat24 import get_exception
