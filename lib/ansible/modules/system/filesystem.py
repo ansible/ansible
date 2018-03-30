@@ -230,12 +230,6 @@ class Btrfs(Filesystem):
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
->>>>>>> 02a7eb4... Update filesystem.py
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
         MKFS = "newfs_msdos"
@@ -257,12 +251,6 @@ class VFAT(Filesystem):
         return [cmd, "-s", str(dev.size()), str(dev.path)]
 
 
-=======
-    
->>>>>>> 5128847... Update filesystem.py
-=======
-
->>>>>>> e8781e5... delete trailing spaces
 class LVM(Filesystem):
     MKFS = 'pvcreate'
     MKFS_FORCE_FLAGS = '-f'
