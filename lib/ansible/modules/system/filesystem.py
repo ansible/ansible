@@ -22,13 +22,14 @@ description:
 version_added: "1.2"
 options:
   fstype:
-    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat ]
+    choices: [ btrfs, ext2, ext3, ext4, ext4dev, lvm, reiserfs, xfs, vfat, ocfs2 ]
     description:
     - Filesystem type to be created.
     - reiserfs support was added in 2.2.
     - lvm support was added in 2.5.
     - since 2.5, I(dev) can be an image file.
     - vfat support was added in 2.5
+    - ocfs2 support was added in 2.6
     required: yes
     aliases: [type]
   dev:
@@ -230,12 +231,7 @@ class Btrfs(Filesystem):
 class Ocfs2(Filesystem):
     MKFS = 'mkfs.ocfs2'
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 
->>>>>>> 02a7eb4... Update filesystem.py
 class VFAT(Filesystem):
     if get_platform() == 'FreeBSD':
         MKFS = "newfs_msdos"
@@ -257,12 +253,6 @@ class VFAT(Filesystem):
         return [cmd, "-s", str(dev.size()), str(dev.path)]
 
 
-=======
-    
->>>>>>> 5128847... Update filesystem.py
-=======
-
->>>>>>> e8781e5... delete trailing spaces
 class LVM(Filesystem):
     MKFS = 'pvcreate'
     MKFS_FORCE_FLAGS = '-f'

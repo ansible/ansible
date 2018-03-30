@@ -11,9 +11,6 @@ tested_filesystems:
   ext2: {fssize: 10, grow: True}
   xfs: {fssize: 20, grow: False}  # grow requires a mounted filesystem
   btrfs: {fssize: 100, grow: False}  # grow not implemented
-<<<<<<< HEAD
   vfat: {fssize: 20, grow: True}
-=======
-  ocfs2: {fssize: 10, grow: False}  # grow not implemented
->>>>>>> 6bf2591... add ocsfs2 defaut var
+  ocfs2: {fssize: 20, grow: False}  # grow not implemented
   # untested: lvm, requires a block device
