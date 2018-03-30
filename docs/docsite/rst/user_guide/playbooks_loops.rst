@@ -191,7 +191,7 @@ During iteration, the result of the current item will be placed in the variable:
 Looping over the inventory
 ``````````````````````````
 
-If you wish to loop over the inventory, or just a subset of it, there is multiple ways.
+If you wish to loop over the inventory, or just a subset of it, there are multiple ways.
 One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
