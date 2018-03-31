@@ -1,22 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -65,27 +52,29 @@ options:
       - If API keys of the user should be generated.
       - "Note: Keys can not be removed by the API again."
     version_added: "2.4"
+    type: bool
+    default: no
   domain:
     description:
       - Domain the user is related to.
-    default: 'ROOT'
+    default: ROOT
   state:
     description:
       - State of the user.
       - C(unlocked) is an alias for C(enabled).
-    default: 'present'
-    choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
+    default: present
+    choices: [ present, absent, enabled, disabled, locked, unlocked ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create an user in domain 'CUSTOMERS'
-- local_action:
+- name: Create an user in domain 'CUSTOMERS'
+  local_action:
     module: cs_user
     account: developers
     username: johndoe
@@ -95,29 +84,29 @@ EXAMPLES = '''
     email: john.doe@example.com
     domain: CUSTOMERS
 
-# Lock an existing user in domain 'CUSTOMERS'
-- local_action:
+- name: Lock an existing user in domain 'CUSTOMERS'
+  local_action:
     module: cs_user
     username: johndoe
     domain: CUSTOMERS
     state: locked
 
-# Disable an existing user in domain 'CUSTOMERS'
-- local_action:
+- name: Disable an existing user in domain 'CUSTOMERS'
+  local_action:
     module: cs_user
     username: johndoe
     domain: CUSTOMERS
     state: disabled
 
-# Enable/unlock an existing user in domain 'CUSTOMERS'
-- local_action:
+- name: Enable/unlock an existing user in domain 'CUSTOMERS'
+  local_action:
     module: cs_user
     username: johndoe
     domain: CUSTOMERS
     state: enabled
 
-# Remove an user in domain 'CUSTOMERS'
-- local_action:
+- name: Remove an user in domain 'CUSTOMERS'
+  local_action:
     module: cs_user
     name: customer_xy
     domain: CUSTOMERS
@@ -406,7 +395,7 @@ def main():
         last_name=dict(),
         password=dict(no_log=True),
         timezone=dict(),
-        keys_registered=dict(type='bool'),
+        keys_registered=dict(type='bool', default=False),
         poll_async=dict(type='bool', default=True),
     ))
 
@@ -420,16 +409,16 @@ def main():
 
     state = module.params.get('state')
 
-    if state in ['absent']:
+    if state == 'absent':
         user = acs_acc.absent_user()
 
     elif state in ['enabled', 'unlocked']:
         user = acs_acc.enable_user()
 
-    elif state in ['disabled']:
+    elif state == 'disabled':
         user = acs_acc.disable_user()
 
-    elif state in ['locked']:
+    elif state == 'locked':
         user = acs_acc.lock_user()
 
     else:
