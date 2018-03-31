@@ -24,8 +24,10 @@ description:
       free, automated, and open certificate authority (CA), run for the
       public's benefit. For details see U(https://letsencrypt.org). The current
       implementation supports the http-01, tls-sni-02 and dns-01 challenges."
-   - "To use this module, it has to be executed at least twice. Either as two
-      different tasks in the same run or during multiple runs."
+   - "To use this module, it has to be executed twice. Either as two
+      different tasks in the same run or during two runs. Note that the output
+      of the first run needs to be recorded and passed to the second run as the
+      module argument C(data)."
    - "Between these two tasks you have to fulfill the required steps for the
       chosen challenge by whatever means necessary. For http-01 that means
       creating the necessary challenge file on the destination webserver. For
@@ -33,7 +35,8 @@ description:
       you to create a SSL certificate with the appropriate subjectAlternativeNames.
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
-      U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8)"
+      U(https://tools.ietf.org/html/draft-ietf-acme-acme-09#section-8).
+      Also, consider the examples provided for this module."
    - "Although the defaults are chosen so that the module can be used with
       the Let's Encrypt CA, the module can be used with any service using the ACME
       v1 or v2 protocol. I(Warning): ACME v2 support is currently experimental, as
@@ -122,9 +125,10 @@ options:
     aliases: ['src']
   data:
     description:
-      - "The data to validate ongoing challenges."
+      - "The data to validate ongoing challenges. This must be specified for
+         the second run of the module only."
       - "The value that must be used here will be provided by a previous use
-         of this module."
+         of this module. See the examples for more details."
   dest:
     description:
       - "The destination file for the certificate."
