@@ -598,40 +598,44 @@ class ACMEAccount(object):
             }
         elif account_key_type == 'ec':
             pub_data = re.search(
-                r"pub:\s*\n\s+04:([a-f0-9\:\s]+?)\nASN1 OID: (\S+)\nNIST CURVE: (\S+)",
+                r"pub:\s*\n\s+04:([a-f0-9\:\s]+?)\nASN1 OID: (\S+)(?:\nNIST CURVE: (\S+))?",
                 to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
             if pub_data is None:
                 return 'cannot parse elliptic curve key', {}
             pub_hex = binascii.unhexlify(re.sub(r"(\s|:)", "", pub_data.group(1)).encode("utf-8"))
-            curve = pub_data.group(3).lower()
-            if curve == 'p-256':
+            asn1_oid_curve = pub_data.group(2).lower()
+            nist_curve = pub_data.group(3).lower() if pub_data.group(3) else None
+            if asn1_oid_curve == 'prime256v1' or nist_curve == 'p-256':
                 bits = 256
                 alg = 'ES256'
                 hash = 'sha256'
                 point_size = 32
-            elif curve == 'p-384':
+                curve = 'P-256'
+            elif asn1_oid_curve == 'secp384r1' or nist_curve == 'p-384':
                 bits = 384
                 alg = 'ES384'
                 hash = 'sha384'
                 point_size = 48
-            elif curve == 'p-521':
+                curve = 'P-384'
+            elif asn1_oid_curve == 'secp521r1' or nist_curve == 'p-521':
                 # Not yet supported on Let's Encrypt side, see
                 # https://github.com/letsencrypt/boulder/issues/2217
                 bits = 521
                 alg = 'ES512'
                 hash = 'sha512'
                 point_size = 66
+                curve = 'P-521'
             else:
-                return 'unknown elliptic curve: %s' % curve, {}
+                return 'unknown elliptic curve: %s / %s' % (asn1_oid_curve, nist_curve), {}
             bytes = (bits + 7) // 8
             if len(pub_hex) != 2 * bytes:
-                return 'bad elliptic curve point (%s)' % curve, {}
+                return 'bad elliptic curve point (%s / %s)' % (asn1_oid_curve, nist_curve), {}
             return None, {
                 'type': 'ec',
                 'alg': alg,
                 'jwk': {
                     "kty": "EC",
-                    "crv": curve.upper(),
+                    "crv": curve,
                     "x": nopad_b64(pub_hex[:bytes]),
                     "y": nopad_b64(pub_hex[bytes:]),
                 },
