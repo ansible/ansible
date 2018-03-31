@@ -143,7 +143,7 @@ class RabbitMqUser(object):
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
-            if self.node is not None:
+            if self.node:
                 cmd.extend(['-n', self.node])
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
             return out.splitlines()
@@ -245,7 +245,7 @@ def main():
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default=None),
+        node=dict(default='rabbit'),
         update_password=dict(default='on_create', choices=['on_create', 'always'])
     )
     module = AnsibleModule(
