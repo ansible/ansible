@@ -27,7 +27,7 @@ description:
     - Import file on PAN-OS device
 notes:
     - API reference documentation can be read from the C(/api/) directory of your appliance
-    - SSL validation is enabled by default as of Ansible 2.6. This may break existing playbooks but should be disabled with caution.
+    - Certificate validation is enabled by default as of Ansible 2.6. This may break existing playbooks but should be disabled with caution.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
