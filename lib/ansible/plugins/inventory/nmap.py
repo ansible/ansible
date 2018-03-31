@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: nmap
     plugin_type: inventory
-    version_added: "2.5"
+    version_added: "2.6"
     short_description: Uses nmap to find hosts to target
     description:
         - Uses a YAML configuration file with a valid YAML extension.
