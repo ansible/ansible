@@ -59,7 +59,7 @@ options:
         description:
             - URL of the file that will be imported to device.
         default: None
-    validate_ssl:
+    validate_cert:
         description:
             - If C(no), SSL certificates will not be validated. This should only set to no used on personally controlled sites using self-signed certificates.
         default: yes
@@ -124,7 +124,7 @@ def import_file(xapi, module, ip_address, file_, category):
 
     r = requests.post(
         'https://' + ip_address + '/api/',
-        verify=module.params['validate_ssl'],
+        verify=module.params['validate_cert'],
         params=params,
         headers={'Content-Type': mef.content_type},
         data=mef
@@ -162,7 +162,7 @@ def main():
         category=dict(default='software'),
         file=dict(),
         url=dict(),
-        validate_ssl=dict(type='bool', default=True),
+        validate_cert=dict(type='bool', default=True),
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_one_of=[['file', 'url']])
     if not HAS_LIB:
