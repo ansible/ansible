@@ -58,7 +58,6 @@ options:
     url:
         description:
             - URL of the file that will be imported to device.
-        default: None
     validate_cert:
         description:
             - If C(no), SSL certificates will not be validated. This should only set to no used on personally controlled sites using self-signed certificates.
