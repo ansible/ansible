@@ -103,7 +103,7 @@ class InventoryCLI(CLI):
 
         # stderr
         self.parser.add_option("--show-stderr", action="store_true", default=False, dest='show_stderr',
-                               help="Aways print the stderr from scripts")
+                               help="Print the stderr from scripts")
 
         super(InventoryCLI, self).parse()
 
