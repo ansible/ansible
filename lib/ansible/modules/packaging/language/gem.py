@@ -150,7 +150,9 @@ def get_installed_versions(module, remote=False):
         if match:
             versions = match.group(1)
             for version in versions.split(', '):
-                installed_versions.append(version.split()[0])
+                version_match = re.match(r"\s*(?:default:\s+)?(\S+)", version)
+                if version_match:
+                    installed_versions.append(version_match.group(1))
     return installed_versions
 
 
