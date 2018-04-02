@@ -110,23 +110,12 @@
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
-    admin_username: testuser
     capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    upgrade_policy: Manual
-    tier: Standard
-    os_disk_caching: ReadWrite
     image:
       offer: CoreOS
       publisher: CoreOS
       sku: Stable
       version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
 
 - name: Create VMSS (check mode)
   azure_rm_virtualmachine_scaleset:
@@ -161,38 +150,6 @@
   assert:
     that: results.changed
 
-- name: Create VMSS (check mode)
-  azure_rm_virtualmachine_scaleset:
-    resource_group: "{{ resource_group }}"
-    name: testVMSS{{ rpfx }}1
-    vm_size: Standard_DS1_v2
-    admin_username: testuser
-    ssh_password_enabled: true
-    admin_password: "Password1234!"
-    capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    load_balancer: testLB
-    upgrade_policy: Manual
-    tier: Standard
-    managed_disk_type: Standard_LRS
-    os_disk_caching: ReadWrite
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
-  register: results
-
-- name: Assert that VMSS ran
-  assert:
-    that: results.changed
-
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
@@ -200,30 +157,19 @@
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
-    admin_username: testuser
     capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    upgrade_policy: Manual
-    tier: Standard
-    os_disk_caching: ReadWrite
     image:
       offer: CoreOS
       publisher: CoreOS
       sku: Stable
       version: latest
-    data_disks:
-      - lun: 0
-        disk_size_gb: 64
-        caching: ReadWrite
-        managed_disk_type: Standard_LRS
 
 - name: Create VMSS with security group in same resource group, with accelerated networking.
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSWithAccNetworking
     vm_size: Standard_D3_v2
-    capacity: 2
+    capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -252,12 +198,8 @@
     name: testVMSWithAccNetworking
     state: absent
     remove_on_absent: ['all']
-    vm_size: Standard_DS1_v2
-    admin_username: testuser
-    capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    upgrade_policy: Manual
+    vm_size: Standard_D3_v2
+    capacity: 1
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -269,7 +211,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSSNsgInDiffRscGrp
     vm_size: Standard_DS1_v2
-    capacity: 2
+    capacity: 1
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -298,11 +240,7 @@
     state: absent
     remove_on_absent: ['all']
     vm_size: Standard_DS1_v2
-    admin_username: testuser
-    capacity: 2
-    virtual_network_name: testVnet
-    subnet_name: testSubnet
-    upgrade_policy: Manual
+    capacity: 1
     image:
       offer: CoreOS
       publisher: CoreOS
