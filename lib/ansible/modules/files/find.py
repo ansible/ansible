@@ -255,14 +255,12 @@ def contentfilter(fsname, pattern):
         return True
 
     try:
-        f = open(fsname)
-        prog = re.compile(pattern)
-        for line in f:
-            if prog.match(line):
-                f.close()
-                return True
+        with open(fsname) as f:
+            prog = re.compile(pattern)
+            for line in f:
+                if prog.match(line):
+                    return True
 
-        f.close()
     except:
         pass
 
