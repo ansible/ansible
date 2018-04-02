@@ -1,0 +1,2 @@
+minor_changes:
+- Updated virtual machine facts with instanceUUID which is unique for each VM irrespective of name and BIOS UUID.
