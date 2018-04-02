@@ -196,13 +196,12 @@ try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    postgresqldb_found = False
-else:
-    postgresqldb_found = True
+    pass
 
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.postgres import ensure_libs, LibraryError
 from ansible.module_utils.six import iteritems
 
 
@@ -743,7 +742,9 @@ def main():
     sslrootcert = module.params["ssl_rootcert"]
     conn_limit = module.params["conn_limit"]
 
-    if not postgresqldb_found:
+    try:
+        ensure_libs()
+    except LibraryError:
         module.fail_json(msg="the python psycopg2 module is required")
 
     # To use defaults values, keyword arguments must be absent, so
