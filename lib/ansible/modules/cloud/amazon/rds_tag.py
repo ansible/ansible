@@ -142,6 +142,10 @@ def add_rds_tags(module, client, configured_tags, tags):
             botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't add tag to %s"
                              % configured_tags['arn'])
+
+    response['message'] = 'Add %s tag to %s instance' % (
+        add_tags, configured_tags['arn'])
+
     return response
 
 
@@ -161,6 +165,10 @@ def remove_rds_tags(module, client, configured_tags, tags):
         module.fail_json_aws(e,
                              msg="Couldn't remove tag to %s instance"
                              % configured_tags['arn'])
+
+    response['message'] = 'Remove %s tag to %s instance' % (
+        tags.keys(), configured_tags['arn'])
+
     return response
 
 
@@ -237,7 +245,7 @@ def main():
     list_tags = list_rds_tags(client, list_arn)
 
     if state == 'list':
-        module.exit_json(tags=list_tags, changed=False)
+        module.exit_json(response_tags=list_tags, changed=False)
 
     if not instance_name:
         module.fail_json(
