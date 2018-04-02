@@ -80,3 +80,12 @@ def test_maybe_add_ssl_handler(mocker):
 def test_basic_auth_header():
     header = urls.basic_auth_header('user', 'passwd')
     assert header == b'Basic dXNlcjpwYXNzd2Q='
+
+
+def test_ParseResultDottedDict():
+    url = 'https://ansible.com/blog'
+    parts = urls.urlparse(url)
+    dotted_parts = urls.ParseResultDottedDict(parts._asdict())
+    assert parts[0] == dotted_parts.scheme
+
+    assert dotted_parts.as_list() == list(parts)

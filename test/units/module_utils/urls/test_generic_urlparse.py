@@ -5,17 +5,8 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils.urls import ParseResultDottedDict, generic_urlparse
+from ansible.module_utils.urls import generic_urlparse
 from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
-
-
-def test_ParseResultDottedDict():
-    url = 'https://ansible.com/blog'
-    parts = urlparse(url)
-    dotted_parts = ParseResultDottedDict(parts._asdict())
-    assert parts[0] == dotted_parts.scheme
-
-    assert dotted_parts.as_list() == list(parts)
 
 
 def test_generic_urlparse():
