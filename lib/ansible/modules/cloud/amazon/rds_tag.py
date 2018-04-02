@@ -221,9 +221,10 @@ def main():
         dict(
             instance_name=dict(type='str'),
             tags=dict(type='dict'),
-            state=dict(type='str',
-                       choices=['present', 'absent', 'list'],
-                       required=True)
+            state=dict(default='present',
+                       type='str',
+                       choices=['present', 'absent', 'list']
+            )
         )
     )
 
