@@ -253,11 +253,49 @@
       # FIXME: fixed in #32876
       ignore_errors: yes
 
-    - name: obtain ECS service facts
+    - name: obtain facts for all ECS services in the cluster
       ecs_service_facts:
-        service: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
+        details: yes
+        events: no
         <<: *aws_connection_info
+      register: ecs_service_facts
+
+    - name: assert that facts are useful
+      assert:
+        that:
+          - "'services' in ecs_service_facts"
+          - ecs_service_facts.services | length > 0
+          - "'events' not in ecs_service_facts.services[0]"
+
+    - name: obtain facts for existing service in the cluster
+      ecs_service_facts:
+        cluster: "{{ ecs_cluster_name }}"
+        service: "{{ ecs_service_name }}"
+        details: yes
+        events: no
+        <<: *aws_connection_info
+      register: ecs_service_facts
+
+    - name: assert that existing service is available and running
+      assert:
+        that:
+          - "ecs_service_facts.services|length == 1"
+          - "ecs_service_facts.services_not_running|length == 0"
+
+    - name: obtain facts for non-existent service in the cluster
+      ecs_service_facts:
+        cluster: "{{ ecs_cluster_name }}"
+        service: madeup
+        details: yes
+        events: no
+        <<: *aws_connection_info
+      register: ecs_service_facts
+
+    - name: assert that non-existent service is missing
+      assert:
+        that:
+          - "ecs_service_facts.services_not_running[0].reason == 'MISSING'"
 
     - name: attempt to get facts from missing task definition
       ecs_taskdefinition_facts:
