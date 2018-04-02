@@ -139,6 +139,7 @@ config_values:
     alias.remotev: "remote -v"
 '''
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def main():
@@ -219,10 +220,12 @@ def main():
             module.exit_json(changed=False, msg="")
 
     if not module.check_mode:
-        new_value_quoted = "'" + new_value + "'"
-        (rc, out, err) = module.run_command(' '.join(args + [new_value_quoted]), cwd=dir)
+        new_value_quoted = shlex_quote(new_value)
+        cmd = ' '.join(args + [new_value_quoted])
+        (rc, out, err) = module.run_command(cmd, cwd=dir)
         if err:
-            module.fail_json(rc=rc, msg=err, cmd=' '.join(args + [new_value_quoted]))
+            module.fail_json(rc=rc, msg=err, cmd=cmd)
+
     module.exit_json(
         msg='setting changed',
         diff=dict(
