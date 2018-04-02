@@ -223,8 +223,7 @@ def main():
             tags=dict(type='dict'),
             state=dict(default='present',
                        type='str',
-                       choices=['present', 'absent', 'list']
-            )
+                       choices=['present', 'absent', 'list'])
         )
     )
 
