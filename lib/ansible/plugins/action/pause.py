@@ -177,16 +177,15 @@ class ActionModule(ActionBase):
                     # See man termios for details on these flags
                     if not seconds:
                         new_settings = termios.tcgetattr(fd)
-                        new_settings[0] = new_settings[0] | termios.ICRNL
                         if 'prompt' in self._task.args:
+                            new_settings[0] = new_settings[0] | termios.ICRNL
                             new_settings[3] = new_settings[3] | termios.ICANON
-                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                         if echo:
-                            # Enable ECHO since tty.setraw() disables it
-                            new_settings = termios.tcgetattr(fd)
+                            # Enable ECHO based on option, since tty.setraw() disables it
                             new_settings[3] = new_settings[3] | termios.ECHO
-                            termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+
+                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
 
                     # flush the buffer to make sure no previous key presses
                     # are read in below
