@@ -125,12 +125,38 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
+    try:
+        response = client.add_tags_to_resource(
+            ResourceName=configured_tags['arn'],
+            Tags=add_tags)
+    except (botocore.exceptions.ClientError,
+            botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't add tag to %s"
+                             % configured_tags['arn'])
+    try:
+        response = client.remove_tags_from_resource(
+            ResourceName=configured_tags['arn'],
+            TagKeys=list(tags.keys()))
+    except (botocore.exceptions.ClientError,
+            botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e,
+                             msg="Couldn't remove tag to %s instance"
+                             % configured_tags['arn'])
 def list_rds_arn(client, instance_name):
     if instance_name is None:
-        response_instances = client.describe_db_instances()
+        try:
+            response_instances = client.describe_db_instances()
+        except (botocore.exceptions.ClientError,
+                botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't find RDS instance")
     else:
-        response_instances = client.describe_db_instances(
-            DBInstanceIdentifier=instance_name)
+        try:
+            response_instances = client.describe_db_instances(
+                DBInstanceIdentifier=instance_name)
+        except (botocore.exceptions.ClientError,
+                botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't find %s instance"
+                                 % instance_name)
 
     list_arn = [{'arn': instance['DBInstanceArn'],
                  'identifier': instance['DBInstanceIdentifier']}
@@ -142,8 +168,13 @@ def list_rds_arn(client, instance_name):
 def list_rds_tags(client, list_arn):
     list_tags = []
     for map_arn in list_arn:
-        response_tags = client.list_tags_for_resource(
-            ResourceName=map_arn['arn'])
+        try:
+            response_tags = client.list_tags_for_resource(
+                ResourceName=map_arn['arn'])
+        except (botocore.exceptions.ClientError,
+                botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg="Couldn't get %s instance's tag"
+                                 % instance_name)
         tags = {}
         for datum in response_tags['TagList']:
             tags[datum['Key']] = datum['Value']
@@ -205,9 +236,6 @@ def main():
 
         add_tags = [{'Key': datum[0], 'Value': datum[1]}
                     for datum in tags.items()]
-        response = client.add_tags_to_resource(
-            ResourceName=configured_tags['arn'],
-            Tags=add_tags)
         module.exit_json(msg="tags %s created for resource %s." %
                          (add_tags, instance_name), changed=True)
 
