@@ -540,10 +540,7 @@ class ActionModule(ActionBase):
 
         if module_executed and len(source_files['files']) == 1:
 
-            if self._task.no_log:
-                module_return['invocation'].update({'content': '<CENSORED BY no_log>'})
-            else:
-                module_return['invocation'].update({'content': content})
+            module_return['invocation'].update({'content': content})
 
             result.update(module_return)
 
