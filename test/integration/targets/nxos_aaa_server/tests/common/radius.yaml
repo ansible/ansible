@@ -73,7 +73,7 @@
   - assert: *false
 
   - name: "Remove radius server configuration"
-    nxos_aaa_server:
+    nxos_aaa_server: &rad_def
       server_type: radius
       deadtime: default
       server_timeout: default
@@ -85,6 +85,12 @@
 
   - assert: *true
 
+  - name: "Check Idempotence"
+    nxos_aaa_server: *rad_def
+    register: result
+
+  - assert: *false
+
   rescue:
 
   - debug: msg="connection={{ ansible_connection }} nxos_aaa_server failure detected"
@@ -94,4 +100,4 @@
     nxos_aaa_server: *remove
     register: result
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"  
+- debug: msg="END connection={{ ansible_connection }} nxos_aaa_server radius.yaml sanity test"
