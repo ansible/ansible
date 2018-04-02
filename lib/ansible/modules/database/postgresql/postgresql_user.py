@@ -200,8 +200,8 @@ except ImportError:
 
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import pg_quote_identifier, SQLParseError
-from ansible.module_utils.postgres import ensure_libs, LibraryError
+from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.postgres import ensure_libs, escape_identifier_cursor, LibraryError
 from ansible.module_utils.six import iteritems
 
 
@@ -245,8 +245,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     query_password_data = dict(password=password, expires=expires)
-    query = ['CREATE USER %(user)s' %
-             {"user": pg_quote_identifier(user, 'role')}]
+    query = ['CREATE USER ${user}']
     if password is not None:
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
@@ -256,7 +255,7 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
         query.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
     query.append(role_attr_flags)
     query = ' '.join(query)
-    cursor.execute(query, query_password_data)
+    cursor.execute(query, vars=query_password_data, identifiers={'user': user})
     return True
 
 
@@ -295,7 +294,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=escape_identifier_cursor(module, cursor=psycopg2.extras.DictCursor))
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     if user == 'PUBLIC':
@@ -357,7 +356,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not pwchanging and not role_attr_flags_changing and not expires_changing and not conn_limit_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER ${user}']
         if pwchanging:
             alter.append("WITH %(crypt)s" % {"crypt": encrypted})
             alter.append("PASSWORD %(password)s")
@@ -371,7 +370,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
 
         query_password_data = dict(password=password, expires=expires)
         try:
-            cursor.execute(' '.join(alter), query_password_data)
+            cursor.execute(' '.join(alter), vars=query_password_data, identifiers={'user': user})
             changed = True
         except psycopg2.InternalError as e:
             if e.pgcode == '25006':
@@ -407,13 +406,12 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not role_attr_flags_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' %
-                 {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER ${user}']
         if role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
 
         try:
-            cursor.execute(' '.join(alter))
+            cursor.execute(' '.join(alter), identifiers={'user': user})
         except psycopg2.InternalError as e:
             if e.pgcode == '25006':
                 # Handle errors due to read-only transactions indicated by pgcode 25006
@@ -438,7 +436,7 @@ def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
     try:
-        cursor.execute("DROP USER %s" % pg_quote_identifier(user, 'role'))
+        cursor.execute("DROP USER ${user}", identifiers={'user': user})
     except:
         cursor.execute("ROLLBACK TO SAVEPOINT ansible_pgsql_user_delete")
         cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
@@ -479,17 +477,15 @@ def get_table_privileges(cursor, user, table):
 def grant_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'GRANT %s ON TABLE %s TO %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
-    cursor.execute(query)
+    query = 'GRANT %s ON TABLE ${table} TO ${user}' % privs
+    cursor.execute(query, identifiers={'table': table, 'user': user})
 
 
 def revoke_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'REVOKE %s ON TABLE %s FROM %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
-    cursor.execute(query)
+    query = 'REVOKE %s ON TABLE ${table} FROM ${user}' % privs
+    cursor.execute(query, identifiers={'table': table, 'user': user})
 
 
 def get_database_privileges(cursor, user, db):
@@ -533,26 +529,20 @@ def grant_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     if user == "PUBLIC":
-        query = 'GRANT %s ON DATABASE %s TO PUBLIC' % (
-                privs, pg_quote_identifier(db, 'database'))
+        query = 'GRANT %s ON DATABASE ${db} TO PUBLIC' % privs
     else:
-        query = 'GRANT %s ON DATABASE %s TO %s' % (
-                privs, pg_quote_identifier(db, 'database'),
-                pg_quote_identifier(user, 'role'))
-    cursor.execute(query)
+        query = 'GRANT %s ON DATABASE ${db} TO ${user}' % privs
+    cursor.execute(query, identifiers={'db': db, 'user': user})
 
 
 def revoke_database_privileges(cursor, user, db, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
     if user == "PUBLIC":
-        query = 'REVOKE %s ON DATABASE %s FROM PUBLIC' % (
-                privs, pg_quote_identifier(db, 'database'))
+        query = 'REVOKE %s ON DATABASE ${db} FROM PUBLIC' % privs
     else:
-        query = 'REVOKE %s ON DATABASE %s FROM %s' % (
-                privs, pg_quote_identifier(db, 'database'),
-                pg_quote_identifier(user, 'role'))
-    cursor.execute(query)
+        query = 'REVOKE %s ON DATABASE ${db} FROM ${user}' % privs
+    cursor.execute(query, identifiers={'db': db, 'user': user})
 
 
 def revoke_privileges(cursor, user, privs):
@@ -773,8 +763,7 @@ def main():
 
     try:
         db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=escape_identifier_cursor(module, cursor=psycopg2.extras.DictCursor))
 
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
