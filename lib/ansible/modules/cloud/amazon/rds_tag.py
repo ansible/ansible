@@ -172,7 +172,7 @@ def remove_rds_tags(module, client, configured_tags, tags):
     return response
 
 
-def list_rds_arn(client, instance_name):
+def list_rds_arn(module, client, instance_name):
     if instance_name is None:
         try:
             response_instances = client.describe_db_instances()
@@ -195,7 +195,7 @@ def list_rds_arn(client, instance_name):
     return list_arn
 
 
-def list_rds_tags(client, list_arn):
+def list_rds_tags(module, client, list_arn, instance_name):
     list_tags = []
     for map_arn in list_arn:
         try:
@@ -241,8 +241,8 @@ def main():
     tags = module.params.get('tags')
     state = module.params.get('state')
 
-    list_arn = list_rds_arn(client, instance_name)
-    list_tags = list_rds_tags(client, list_arn)
+    list_arn = list_rds_arn(module, client, instance_name)
+    list_tags = list_rds_tags(module, client, list_arn, instance_name)
 
     if state == 'list':
         module.exit_json(response_tags=list_tags, changed=False)
