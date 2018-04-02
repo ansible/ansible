@@ -26,15 +26,20 @@ class TestOnyxLinkaggModule(TestOnyxModule):
         self.mock_load_config = patch(
             'ansible.module_utils.network.onyx.onyx.load_config')
         self.load_config = self.mock_load_config.start()
+        self.mock_get_version = patch.object(
+            onyx_linkagg.OnyxLinkAggModule, "_get_os_version")
+        self.get_version = self.mock_get_version.start()
 
     def tearDown(self):
         super(TestOnyxLinkaggModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
+        self.mock_get_version.stop()
 
     def load_fixture(self, config_file):
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
+        self.get_version.return_value = "3.6.5000"
 
     def load_port_channel_fixture(self):
         config_file = 'onyx_port_channel_show.cfg'
