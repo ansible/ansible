@@ -149,6 +149,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
@@ -530,19 +531,22 @@ def subnets_to_associate(nacl, client, module):
     params = list(module.params.get('subnets'))
     if not params:
         return []
-    if params[0].startswith("subnet-"):
+    all_found = []
+    if any(x.startswith("subnet-") for x in params):
         try:
             subnets = client.describe_subnets(Filters=[
                 {'Name': 'subnet-id', 'Values': params}])
+            all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
-    else:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    if len(params) != len(all_found):
         try:
             subnets = client.describe_subnets(Filters=[
                 {'Name': 'tag:Name', 'Values': params}])
+            all_found.extend(subnets.get('Subnets', []))
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
-    return [s['SubnetId'] for s in subnets['Subnets'] if s['SubnetId']]
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
+    return list(set(s['SubnetId'] for s in all_found if s.get('SubnetId')))
 
 
 def main():
