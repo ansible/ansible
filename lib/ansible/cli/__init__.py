@@ -801,7 +801,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = InventoryManager(loader=loader, sources=options.inventory)
+        inventory = InventoryManager(loader=loader, sources=options.inventory, options=options)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables

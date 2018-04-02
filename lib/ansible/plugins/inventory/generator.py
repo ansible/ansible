@@ -118,7 +118,7 @@ class InventoryModule(BaseInventoryPlugin):
             inventory.add_child(groupname, child)
             self.add_parents(inventory, groupname, parent.get('parents', []), template_vars)
 
-    def parse(self, inventory, loader, path, cache=False):
+    def parse(self, inventory, loader, path, cache=False, options=None):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)

@@ -85,7 +85,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=False):
+    def parse(self, inventory, loader, path, cache=False, options=None):
 
         if self._nmap is None:
             raise AnsibleParserError('nmap inventory plugin requires the nmap cli tool to work')

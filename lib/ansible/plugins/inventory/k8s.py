@@ -110,7 +110,7 @@ from ansible.module_utils.k8s.inventory import K8sInventoryHelper
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sInventoryHelper):
     NAME = 'k8s'
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory, loader, path, cache=True, options=None):
         super(InventoryModule, self).parse(inventory, loader, path)
         cache_key = self._get_cache_prefix(path)
         config_data = self._read_config_data(path)

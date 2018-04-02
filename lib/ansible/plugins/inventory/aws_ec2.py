@@ -498,7 +498,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return option_value
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory, loader, path, cache=True, options=None):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = self._read_config_data(path)

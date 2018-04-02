@@ -37,7 +37,7 @@ class InventoryModule(BaseInventoryPlugin):
             return False
         return super(InventoryModule, self).verify_file(path)
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory, loader, path, cache=True, options=None):
         config_data = loader.load_from_file(path)
 
         plugin_name = config_data.get('plugin')
