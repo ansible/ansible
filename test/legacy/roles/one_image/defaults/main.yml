@@ -1,0 +1,9 @@
+---
+# This is a role for running integration test of the one_image module.
+# For this role to be used you need to meet the following prerequisites:
+#   1. Environment variables ONE_URL, ONE_USERNAME and ONE_PASSWORD
+#      need to be set.
+#   2. Image needs to exist.
+#   3. Play vars need to be set bellow to reflect the image IDs, image names, etc.
+
+one_image_name: 'one_image_test'
