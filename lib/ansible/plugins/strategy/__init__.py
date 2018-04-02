@@ -367,6 +367,15 @@ class StrategyBase:
             else:
                 return self._inventory.get_host(host_name)
 
+        def notify_handler(handler, original_host, notify_type):
+            if notify_type == '_ansible_cancel':
+                if handler.cancel_host(original_host):
+                    self._tqm.send_callback('v2_playbook_on_cancel', handler, original_host)
+
+            elif notify_type == '_ansible_notify':
+                if handler.notify_host(original_host):
+                    self._tqm.send_callback('v2_playbook_on_notify', handler, original_host)
+
         def search_handler_blocks_by_name(handler_name, handler_blocks):
             # iterate in reversed order since last handler loaded with the same name wins
             for handler_block in reversed(handler_blocks):
@@ -509,13 +518,16 @@ class StrategyBase:
                     result_items = [task_result._result]
 
                 for result_item in result_items:
-                    if '_ansible_notify' in result_item:
-                        if task_result.is_changed():
+                    if task_result.is_changed():
+                        for notify_type in ['_ansible_notify', '_ansible_cancel']:
+                            if notify_type not in result_item:
+                                continue
+
                             # The shared dictionary for notified handlers is a proxy, which
                             # does not detect when sub-objects within the proxy are modified.
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
-                            for handler_name in result_item['_ansible_notify']:
+                            for handler_name in result_item[notify_type]:
                                 found = False
                                 # Find the handler using the above helper.  First we look up the
                                 # dependency chain of the current task (if it's from a role), otherwise
@@ -524,8 +536,7 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if target_handler.notify_host(original_host):
-                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                    notify_handler(target_handler, original_host, notify_type)
 
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
@@ -535,8 +546,7 @@ class StrategyBase:
                                         else:
                                             found = True
 
-                                        if listening_handler.notify_host(original_host):
-                                            self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
+                                        notify_handler(listening_handler, original_host, notify_type)
 
                                 # and if none were found, then we raise an error
                                 if not found:

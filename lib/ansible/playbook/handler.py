@@ -49,6 +49,12 @@ class Handler(Task):
             return True
         return False
 
+    def cancel_host(self, host):
+        if self.is_host_notified(host):
+            self.notified_hosts.remove(host)
+            return True
+        return False
+
     def is_host_notified(self, host):
         return host in self.notified_hosts
 

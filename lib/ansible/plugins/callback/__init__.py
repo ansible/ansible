@@ -371,6 +371,9 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_notify(self, handler, host):
         self.playbook_on_notify(host, handler)
 
+    def v2_playbook_on_cancel(self, handler, host):
+        pass  # no v1 correspondence
+
     def v2_playbook_on_no_hosts_matched(self):
         self.playbook_on_no_hosts_matched()
 

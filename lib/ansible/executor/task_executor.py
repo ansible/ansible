@@ -766,6 +766,9 @@ class TaskExecutor:
         if self._task.notify is not None:
             result['_ansible_notify'] = self._task.notify
 
+        if self._task.cancel is not None:
+            result['_ansible_cancel'] = self._task.cancel
+
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
         # FIXME: we only want a limited set of variables here, so this is currently

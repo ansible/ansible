@@ -1,0 +1,151 @@
+---
+- name: test cancellation of in-flight notifications
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: notify handlers
+      command: uptime
+      notify:
+        - test_handler_1_1
+        - test_handler_1_2
+    - name: cancel a handler
+      command: uptime
+      cancel:
+        - test_handler_1_2
+    - meta: flush_handlers
+    - assert:
+        that:
+          - test_handler_1_1 is defined
+          - test_handler_1_2 is not defined
+  handlers:
+    - name: test_handler_1_1
+      set_fact:
+        test_handler_1_1: True
+    - name: test_handler_1_2
+      set_fact:
+        test_handler_1_2: True
+
+- name: test cancellation of in-flight notifications
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: notify handlers
+      command: uptime
+      notify:
+        - test_handler
+    - name: cancel a handler
+      command: uptime
+      cancel:
+        - test_handler_2_2
+    - meta: flush_handlers
+    - assert:
+        that:
+          - test_handler_2_1 is defined
+          - test_handler_2_2 is not defined
+  handlers:
+    - name: test_handler_2_1
+      set_fact:
+        test_handler_2_1: True
+      listen: test_handler
+    - name: test_handler_2_2
+      set_fact:
+        test_handler_2_2: True
+      listen: test_handler
+
+- name: test cancellation of unnamed handler
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: notify listening handler
+      command: uptime
+      notify:
+        - test_handler
+    - name: cancel notification
+      command: uptime
+      cancel:
+        - test_handler
+    - meta: flush_handlers
+    - assert:
+        that:
+          - test_handler_3 is not defined
+  handlers:
+    - set_fact:
+        test_handler_3: True
+      listen: test_handler
+
+- name: test cancellation with mixed notifications
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: notify handlers by name and topic
+      command: uptime
+      notify:
+        - test_handler_topic_1
+        - test_handler_4_1
+        - test_handler_topic_2
+        - test_handler_4_3
+    - name: cancel some of the notifications
+      command: uptime
+      cancel:
+        - test_handler_topic_1
+        - test_handler_4_2
+        - test_handler_4_4
+        - test_handler_4_5
+    - meta: flush_handlers
+    - assert:
+        that:
+          - test_handler_4_1 is not defined
+          - test_handler_4_2 is not defined
+          - test_handler_4_3 is defined
+          - test_handler_4_4 is not defined
+          - test_handler_4_5 is not defined
+  handlers:
+    - name: test_handler_4_1
+      set_fact:
+        test_handler_4_1: True
+      listen: test_handler_topic_1
+    - name: test_handler_4_2
+      set_fact:
+        test_handler_4_2: True
+      listen: test_handler_topic_1
+    - name: test_handler_4_3
+      set_fact:
+        test_handler_4_3: True
+      listen: test_handler_topic_2
+    - name: test_handler_4_4
+      set_fact:
+        test_handler_4_4: True
+      listen: test_handler_topic_2
+    - name: test_handler_4_5
+      # This one just isn't notified
+      set_fact:
+        test_handler_4_5: True
+
+- name: test cancellation from a handler
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: notify handlers
+      command: uptime
+      notify:
+        - test_handler_5_1
+        - test_handler_5_2
+    - meta: flush_handlers
+    - assert:
+        that:
+          - test_handler_5_1 is defined
+          - test_handler_5_2 is not defined
+  handlers:
+    - name: test_handler_5_1
+      set_fact:
+        test_handler_5_1: True
+      changed_when: true
+      cancel: test_handler_5_2
+    - name: test_handler_5_2
+      set_fact:
+        test_handler_5_2: True

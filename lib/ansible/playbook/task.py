@@ -71,6 +71,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
+    _cancel = FieldAttribute(isa='list')
     _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
     _delegate_to = FieldAttribute(isa='string')

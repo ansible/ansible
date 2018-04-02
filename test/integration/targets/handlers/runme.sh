@@ -57,6 +57,9 @@ ansible-playbook test_listening_handlers.yml -i inventory.handlers -v "$@"
 # Notify handler listen
 ansible-playbook test_handlers_listen.yml -i inventory.handlers -v "$@"
 
+# Handler cancellation
+ansible-playbook test_handlers_cancel.yml -i inventory.handlers -v "$@"
+
 # Notify inexistent handlers results in error
 set +e
 result="$(ansible-playbook test_handlers_inexistent_notify.yml -i inventory.handlers "$@" 2>&1)"
