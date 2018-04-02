@@ -120,10 +120,9 @@ from ansible.module_utils.ec2 import (
     camel_dict_to_snake_dict, snake_dict_to_camel_dict)
 
 try:
-    import boto3
-    HAS_BOTO = True
+    import botocore
 except ImportError:
-    HAS_BOTO = False
+    pass  # handled by AnsibleAWSModule
 
 
 def list_rds_arn(client, instance_name):
@@ -167,15 +166,13 @@ def main():
         )
     )
 
-    module = AnsibleModule(
+    module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
-
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module,
                                                                   boto3=True)
+
     client = boto3_conn(module, conn_type='client', resource='rds',
                         region=region, **aws_connect_kwargs)
 
