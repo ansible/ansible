@@ -54,7 +54,8 @@
 
 - assert:
     that:
-      - result.changed == false
+      - "result.changed == true"
+      - "result.failed == false"
 
 
 # hit field_top in map_obj_to_ele
