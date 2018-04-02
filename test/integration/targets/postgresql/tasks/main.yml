@@ -754,6 +754,11 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+- import_tasks: postgresql_user_role_with_dots.yml
+  # RHEL/CentOS 6: psycopg2.extensions.quote_ident and PQescapeIdentifier aren't available,
+  # only unquoted identifiers are allowed
+  when: "ansible_distribution not in ['RedHat', 'CentOS'] or ansible_distribution_version is version('7', '>=')"
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql

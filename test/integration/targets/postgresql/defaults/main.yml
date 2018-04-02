@@ -3,6 +3,6 @@
 db_name: 'ansible_db'
 db_user1: 'ansible_db_user1'
 db_user2: 'ansible_db_user2'
-db_user3: 'ansible_db_user3'
+db_user3: 'ansible.db.user3' # use identifiers with one dot and two dots (#22568)
 
 tmp_dir: '/tmp'

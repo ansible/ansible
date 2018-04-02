@@ -1,0 +1,48 @@
+###################################
+# Create a role containing two dots
+# nor db_user1 neither db_user2 can be used since only
+# postgresql_user module handles role with dots
+#
+- name: Create a user with dots in name
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+    db: postgres
+
+- name: Check that it was created
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Remove user
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: 'absent'
+    priv: "ALL"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+    db: postgres
+
+- name: Check that they were removed
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+#
+# end of test of role name with dots
+####################################
