@@ -220,7 +220,7 @@ class SanityCodeSmellTest(SanityTest):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         if self.path.endswith('.py'):
             cmd = [args.python_executable, self.path]
@@ -327,7 +327,7 @@ class SanitySingleVersion(SanityFunc):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
@@ -340,7 +340,7 @@ class SanityMultipleVersion(SanityFunc):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         pass
 
