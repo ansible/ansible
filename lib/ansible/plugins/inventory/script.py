@@ -19,6 +19,16 @@ DOCUMENTATION = '''
              key: cache
         env:
            - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_CACHE
+      always_show_stderr:
+        description: Toggle display of stderr even when script was successful
+        version_added: "2.6"
+        default: True
+        type: boolean
+        ini:
+           - section: inventory_plugin_script
+             key: always_show_stderr
+        env:
+           - name: ANSIBLE_INVENTORY_PLUGIN_SCRIPT_STDERR
     description:
         - The source provided must an executable that returns Ansible inventory JSON
         - The source must accept C(--list) and C(--host <hostname>) as arguments.
@@ -64,7 +74,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     initial_chars = inv_file.read(2)
                     if initial_chars.startswith(b'#!'):
                         shebang_present = True
-            except:
+            except Exception:
                 pass
 
             if not os.access(path, os.X_OK) and not shebang_present:
@@ -98,6 +108,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+
+                if err and self.get_option('always_show_stderr'):
+                    self.display.error(msg=err)
 
                 # make sure script output is unicode so that json loader will output
                 # unicode strings itself
