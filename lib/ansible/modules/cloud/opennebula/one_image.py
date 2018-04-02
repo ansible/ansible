@@ -62,16 +62,14 @@ options:
     description:
       - C(present) - state that is used to manage the image
       - C(absent) - delete the image
-    choices: ["present", "absent"]
+      - C(cloned) - clone the image
+      - C(renamed) - rename the image to the C(new_name)
+    choices: ["present", "absent", "cloned", "renamed"]
     default: present
   enabled:
     description:
       - Whether the image should be enabled or disabled.
     type: bool
-  action:
-    description:
-      - Action that will be performed on the image
-    choices: ["clone", "rename"]
   new_name:
     description:
       - A name that will be assigned to the existing or new image.
@@ -92,8 +90,8 @@ EXAMPLES = '''
 
 # Rename existing IMAGE
 - one_image:
-    name: foo-image
-    action: rename
+    id: 34
+    state: renamed
     new_name: bar-image
 
 # Disable the IMAGE by id
@@ -109,7 +107,7 @@ EXAMPLES = '''
 # Clone the IMAGE by name
 - one_image:
     name: bar-image
-    action: clone
+    state: cloned
     new_name: bar-image-clone
   register: result
 
@@ -275,17 +273,19 @@ def enable_image(module, client, image, enable):
 
 
 def clone_image(module, client, image, new_name):
+    if new_name is None:
+        new_name = "Copy of " + image.name
+
+    tmp_image = get_image_by_name(module, client, new_name)
+    if tmp_image:
+        result = get_image_info(tmp_image)
+        result['changed'] = False
+        return result
+
+    if image.state == IMAGE_STATES.index('DISABLED'):
+        module.fail_json(msg="Cannot clone DISABLED image")
+
     if not module.check_mode:
-        if new_name is None:
-            new_name = "Copy of " + image.name
-
-        tmp_image = get_image_by_name(module, client, new_name)
-        if tmp_image:
-            module.fail_json(msg="Name '" + new_name + "' is already taken by IMAGE with id=" + str(tmp_image.id))
-
-        if image.state == IMAGE_STATES.index('DISABLED'):
-            module.fail_json(msg="Cannot clone DISABLED image")
-
         new_id = client.call('image.clone', image.id, new_name)
         image = get_image_by_id(module, client, new_id)
         wait_for_ready(module, image)
@@ -298,7 +298,7 @@ def clone_image(module, client, image, new_name):
 
 def rename_image(module, client, image, new_name):
     if new_name is None:
-        module.fail_json(msg="'new_name' option has to be specified when the action is 'rename'")
+        module.fail_json(msg="'new_name' option has to be specified when the state is 'renamed'")
 
     if new_name == image.name:
         result = get_image_info(image)
@@ -365,11 +365,7 @@ def main():
         "name": {"required": False, "type": "str"},
         "state": {
             "default": "present",
-            "choices": ['present', 'absent'],
-            "type": "str"
-        },
-        "action": {
-            "choices": ['clone', 'rename'],
+            "choices": ['present', 'absent', 'cloned', 'renamed'],
             "type": "str"
         },
         "enabled": {"required": False, "type": "bool"},
@@ -380,11 +376,6 @@ def main():
                            mutually_exclusive=[['id', 'name']],
                            supports_check_mode=True)
 
-    actions = {
-        'clone': clone_image,
-        'rename': rename_image
-    }
-
     if not HAS_OCA:
         module.fail_json(msg='This module requires python-oca to work!')
 
@@ -394,12 +385,13 @@ def main():
     name = params.get('name')
     state = params.get('state')
     enabled = params.get('enabled')
-    rename = params.get('rename')
-    action = params.get('action')
     new_name = params.get('new_name')
     client = oca.Client(auth.username + ':' + auth.password, auth.url)
 
     result = {}
+
+    if not id and state == 'renamed':
+        module.fail_json(msg="Option 'id' is required when the state is 'renamed'")
 
     image = get_image_instance(module, client, id, name)
     if not image and state != 'absent':
@@ -413,14 +405,16 @@ def main():
     else:
         result = get_image_info(image)
         changed = False
+        result['changed'] = False
 
         if enabled is not None:
             result = enable_image(module, client, image, enabled)
-            changed = changed or result['changed']
-        if action:
-            result = actions[action](module, client, image, new_name)
-            changed = changed or result['changed']
+        if state == "cloned":
+            result = clone_image(module, client, image, new_name)
+        elif state == "renamed":
+            result = rename_image(module, client, image, new_name)
 
+        changed = changed or result['changed']
         result['changed'] = changed
 
     module.exit_json(**result)

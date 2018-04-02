@@ -83,7 +83,7 @@
     - name: Try to clone disabled image
       one_image:
         name: '{{ one_image_name }}'
-        action: clone
+        state: cloned
         new_name: '{{ one_image_name }}-clone'
       register: clone_image
       failed_when: not clone_image is failed
@@ -99,10 +99,16 @@
     enabled: yes
 
 - block:
+    - name: Check that clone image doesn't exist
+      one_image:
+        name: '{{ one_image_name }}-clone'
+      register: clone_image_result
+      failed_when: not clone_image_result is failed
+
     - name: Clone the image in check-mode
       one_image:
         name: '{{ one_image_name }}'
-        action: clone
+        state: cloned
         new_name: '{{ one_image_name }}-clone'
       register: new_image
       check_mode: yes
@@ -121,7 +127,7 @@
     - name: Clone the image
       one_image:
         name: '{{ one_image_name }}'
-        action: clone
+        state: cloned
         new_name: '{{ one_image_name }}-clone'
       register: new_image
 
@@ -133,14 +139,54 @@
           - new_image.state == "READY"
           - not new_image.used|bool
 
+    - name: Clone the image again to check idempotence
+      one_image:
+        name: '{{ one_image_name }}'
+        state: cloned
+        new_name: '{{ one_image_name }}-clone'
+      register: new_image
+
+    - name: Verify cloning of the image
+      assert:
+        that:
+          - not new_image is changed
+          - new_image.name == '{{ one_image_name }}-clone'
+          - new_image.state == "READY"
+          - not new_image.used|bool
+
+    - name: Try to rename an image without a passed new name
+      one_image:
+        id: '{{ new_image.id }}'
+        state: renamed
+      register: rename_fail
+      failed_when: not rename_fail is failed
+      
+    - name: Verify a fail message
+      assert:
+        that:
+          - rename_fail.msg == "'new_name' option has to be specified when the state is 'renamed'"
+
     - name: Set the image's new name                                    
       set_fact:                                                 
         image_new_name: test-{{ ansible_date_time.iso8601_basic_short }}
 
-    - name: Rename cloned instance in check-mode
+    - name: Try to rename an image without specified id
       one_image:
         name: '{{ new_image.name }}'
-        action: rename
+        state: renamed
+        new_name: '{{ image_new_name }}'
+      register: rename_fail
+      failed_when: not rename_fail is failed
+      
+    - name: Verify a fail message
+      assert:
+        that:
+          - rename_fail.msg == "Option 'id' is required when the state is 'renamed'"
+
+    - name: Rename cloned instance in check-mode
+      one_image:
+        id: '{{ new_image.id }}'
+        state: renamed
         new_name: '{{ image_new_name }}'
       register: new_name_check
       check_mode: yes
@@ -157,8 +203,8 @@
 
     - name: Rename cloned instance
       one_image:
-        name: '{{ new_image.name }}'
-        action: rename
+        id: '{{ new_image.id }}'
+        state: renamed
         new_name: '{{ image_new_name }}'
       register: new_name
 
@@ -173,7 +219,7 @@
     - name: Rename cloned instance again to check idempotence
       one_image:
         id: '{{ new_name.id }}'
-        action: rename
+        state: renamed
         new_name: '{{ image_new_name }}'
       register: new_name
 
@@ -185,7 +231,7 @@
     - name: Try to assigned name of the existent image
       one_image:
         id: '{{ new_name.id }}'
-        action: rename
+        state: renamed
         new_name: '{{ one_image_name }}'
       register: existent_name
       failed_when: not existent_name is failed
