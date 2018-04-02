@@ -79,10 +79,23 @@
   - assert: *false
 
   - name: "Remove tacacs server configuration"
-    nxos_aaa_server: *remove
+    nxos_aaa_server: &tac_def
+      server_type: tacacs
+      deadtime: default
+      server_timeout: default
+      global_key: default
+      directed_request: default
+      state: default
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_aaa_server: *tac_def
+    register: result
+
+  - assert: *false
 
   rescue:
 
@@ -100,4 +113,4 @@
       state: disabled
       provider: "{{ connection }}"
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server tacacs.yaml sanity test"  
+- debug: msg="END connection={{ ansible_connection }} nxos_aaa_server tacacs.yaml sanity test"
