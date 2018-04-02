@@ -50,6 +50,20 @@ def test_all_redir(urllib_req, request_body, mocker):
     req_mock.assert_called_once_with('https://docs.ansible.com/', headers={}, origin_req_host='ansible.com', unverifiable=True)
 
 
+def test_all_redir_post(request_body, mocker):
+    handler = RedirectHandlerFactory('all', False)
+    inst = handler()
+
+    req = urllib_request.Request(
+        'https://ansible.com/',
+        'POST'
+    )
+
+    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    inst.redirect_request(req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
+    req_mock.assert_called_once_with('https://docs.ansible.com/', headers={}, origin_req_host='ansible.com', unverifiable=True)
+
+
 def test_redir_headers_removal(urllib_req, request_body, mocker):
     req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
     handler = RedirectHandlerFactory('all', False)
