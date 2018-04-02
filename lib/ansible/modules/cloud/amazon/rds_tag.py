@@ -7,7 +7,9 @@ from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, 
 
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
