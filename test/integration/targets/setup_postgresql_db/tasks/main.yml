@@ -23,7 +23,9 @@
   ignore_errors: True
 
 - name: remove old db (RedHat or Suse)
-  command: rm -rf "{{ pg_dir }}"
+  file:
+    state: absent
+    path: "{{ pg_dir }}"
   ignore_errors: True
   when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
 
