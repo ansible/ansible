@@ -473,7 +473,7 @@ Developing Windows Modules
 ``````````````````````````
 Because Ansible modules for Windows are written in PowerShell, the development
 guides for Windows modules differ substantially from those for standard standard modules. Please see
-:doc:`dev_guide/developing_modules_general_windows` for more information.
+:ref:`developing_modules_general_windows` for more information.
 
 .. seealso::
 

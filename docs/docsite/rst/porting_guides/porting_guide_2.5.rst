@@ -99,7 +99,7 @@ In addition to the deprecation warnings, many new tests have been introduced tha
 
     when: result is successful
 
-See :doc:`playbooks_tests` for more information.
+See :ref:`playbook_tests` for more information.
 
 Additionally, a script was created to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks. The script can be found at `https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py <https://github.com/ansible/ansible/blob/devel/hacking/fix_test_syntax.py>`_.
 
@@ -306,4 +306,4 @@ If your module uses shared module utilities, you must update all references. For
    from ansible.module_utils.network.vyos.vyos import get_config, load_config
 
 
-See the module utilities developer guide see :doc:`dev_guide/developing_module_utilities` for more information.
+See the module utilities developer guide see :ref:`appendix_module_utilities` for more information.

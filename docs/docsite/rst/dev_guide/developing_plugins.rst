@@ -1,3 +1,5 @@
+.. _developing_plugins:
+
 Developing Plugins
 ==================
 
@@ -149,7 +151,7 @@ Connection plugins allow Ansible to connect to the target hosts so it can execut
 
 By default, Ansible ships with several plugins. The most commonly used are the 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection types.  All of these can be used in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  
 
-The basics of these connection types are covered in the :doc:`../intro_getting_started` section.  
+The basics of these connection types are covered in the :ref:`intro_getting_started` section.  
 
 Should you want to extend Ansible to support other transports (SNMP, Message bus, etc) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins directory.  
 
@@ -362,8 +364,8 @@ When shipped as part of a role, the plugin will be available as soon as the role
 
 .. seealso::
 
-   :doc:`../modules`
-       List of built-in modules
+   :ref:`all_modules`
+       List of all modules
    :doc:`developing_api`
        Learn about the Python API for task execution
    :doc:`developing_inventory`

@@ -1,3 +1,5 @@
+.. _ansible_community_guide:
+
 ***********************
 Ansible Community Guide
 ***********************
