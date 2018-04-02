@@ -17,7 +17,7 @@ description: >
   The instance is referenced by its instance name.
   It is designed to be used with complex args (tags), see the examples.
   This module has a dependency on python-boto3.
-version_added: "2.5"
+version_added: "2.6"
 options:
   instance_name:
     description:
