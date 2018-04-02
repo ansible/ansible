@@ -2,9 +2,6 @@
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec, get_aws_connection_info)
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -115,6 +112,12 @@ response_metadata:
     request_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     retry_attempts: 0
 '''
+
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import (
+    HAS_BOTO3, ec2_argument_spec, boto3_conn, get_aws_connection_info)
+from ansible.module_utils.ec2 import (
+    camel_dict_to_snake_dict, snake_dict_to_camel_dict)
 
 try:
     import boto3
