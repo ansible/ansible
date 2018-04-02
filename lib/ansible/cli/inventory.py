@@ -101,6 +101,10 @@ class InventoryCLI(CLI):
         # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
         #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
+        # stderr
+        self.parser.add_option("--show-stderr", action="store_true", default=False, dest='show_stderr',
+                               help="Aways print the stderr from scripts")
+
         super(InventoryCLI, self).parse()
 
         display.verbosity = self.options.verbosity

@@ -31,6 +31,7 @@ DOCUMENTATION = '''
 
 import os
 import subprocess
+import sys
 from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -72,7 +73,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=None):
+    def parse(self, inventory, loader, path, cache=None, options=None):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
@@ -98,6 +99,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
+                elif options.show_stderr and err:
+                    sys.stderr.write(err)
 
                 # make sure script output is unicode so that json loader will output
                 # unicode strings itself

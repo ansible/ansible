@@ -118,10 +118,11 @@ def split_host_pattern(pattern):
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
-    def __init__(self, loader, sources=None):
+    def __init__(self, loader, sources=None, options=None):
 
         # base objects
         self._loader = loader
+        self._options = options
         self._inventory = InventoryData()
 
         # a list of host(names) to contain current inquiries to
@@ -237,7 +238,7 @@ class InventoryManager(object):
 
                 # recursively deal with directory entries
                 b_fullpath = os.path.join(b_source, i)
-                parsed_this_one = self.parse_source(b_fullpath, cache=cache)
+                parsed_this_one = self.parse_source(b_fullpath, cache=cache, options=self._options)
                 display.debug(u'parsed %s as %s' % (to_text(b_fullpath), parsed_this_one))
                 if not parsed:
                     parsed = parsed_this_one
@@ -266,7 +267,7 @@ class InventoryManager(object):
                 if plugin_wants:
                     try:
                         # in case plugin fails 1/2 way we dont want partial inventory
-                        plugin.parse(self._inventory, self._loader, source, cache=cache)
+                        plugin.parse(self._inventory, self._loader, source, cache=cache, options=self._options)
                         parsed = True
                         display.vvv('Parsed %s inventory source with %s plugin' % (to_text(source), plugin_name))
                         break
