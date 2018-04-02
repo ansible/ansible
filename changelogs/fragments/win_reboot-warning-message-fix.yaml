@@ -1,0 +1,3 @@
+bugfixes:
+- win_reboot - fix deprecated warning message to show version in correct spot
+  https://github.com/ansible/ansible/pull/37898
