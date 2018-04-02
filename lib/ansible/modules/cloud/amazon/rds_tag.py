@@ -125,6 +125,15 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
+def add_rds_tags(module, client, configured_tags, tags):
+    if set(tags.items()) <= set(configured_tags['tags'].items()):
+        module.exit_json(message='tags already exists.', changed=False)
+
+    if module.check_mode:
+        module.exit_json(message='check mode.', changed=True)
+
+    add_tags = [{'Key': datum[0], 'Value': datum[1]}
+                for datum in tags.items()]
     try:
         response = client.add_tags_to_resource(
             ResourceName=configured_tags['arn'],
@@ -133,6 +142,16 @@ except ImportError:
             botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't add tag to %s"
                              % configured_tags['arn'])
+    return response
+
+
+def remove_rds_tags(module, client, configured_tags, tags):
+    if not set(tags.keys()) <= set(configured_tags['tags'].keys()):
+        module.exit_json(message='nothing to tags.', changed=False)
+
+    if module.check_mode:
+        module.exit_json(message='check mode.', changed=True)
+
     try:
         response = client.remove_tags_from_resource(
             ResourceName=configured_tags['arn'],
@@ -142,6 +161,9 @@ except ImportError:
         module.fail_json_aws(e,
                              msg="Couldn't remove tag to %s instance"
                              % configured_tags['arn'])
+    return response
+
+
 def list_rds_arn(client, instance_name):
     if instance_name is None:
         try:
@@ -225,35 +247,16 @@ def main():
         module.fail_json(
             msg="tags argument is required when state is %s." % state)
 
+    configured_tags = list_tags[0]
     if state == 'present':
-        configured_tags = list_tags[0]
-
-        if set(tags.items()) <= set(configured_tags['tags'].items()):
-            module.exit_json(message='tags already exists.', changed=False)
-
-        if module.check_mode:
-            module.exit_json(message='check mode.', changed=True)
-
-        add_tags = [{'Key': datum[0], 'Value': datum[1]}
-                    for datum in tags.items()]
-        module.exit_json(msg="tags %s created for resource %s." %
-                         (add_tags, instance_name), changed=True)
+        response = add_rds_tags(module, client, configured_tags, tags)
+        module.exit_json(changed=True,
+                         **camel_dict_to_snake_dict(response))
 
     if state == 'absent':
-        configured_tags = list_tags[0]
-
-        if not set(tags.keys()) <= set(configured_tags['tags'].keys()):
-            module.exit_json(message='nothing to tags.', changed=False)
-
-        if module.check_mode:
-            module.exit_json(message='check mode.', changed=True)
-
-        response = client.remove_tags_from_resource(
-            ResourceName=configured_tags['arn'],
-            TagKeys=tags.keys())
-
-        module.exit_json(msg="tags %s remove for resource %s." %
-                         (tags.keys(), instance_name), changed=True)
+        response = remove_rds_tags(module, client, configured_tags, tags)
+        module.exit_json(changed=True,
+                         **camel_dict_to_snake_dict(response))
 
 if __name__ == '__main__':
     main()
