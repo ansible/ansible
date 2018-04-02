@@ -41,7 +41,7 @@ class InventoryModule(BaseInventoryPlugin):
             valid = True
         return valid
 
-    def parse(self, inventory, loader, host_list, cache=True):
+    def parse(self, inventory, loader, host_list, cache=True, options=None):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, host_list)

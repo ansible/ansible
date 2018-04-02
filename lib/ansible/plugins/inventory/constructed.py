@@ -85,7 +85,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         return valid
 
-    def parse(self, inventory, loader, path, cache=False):
+    def parse(self, inventory, loader, path, cache=False, options=None):
         ''' parses the inventory file '''
 
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
