@@ -30,7 +30,10 @@
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
 # defaults to the system's hostname and generally should not be specified.
-
+#
+# Use option -UseMyCert to use existing SSL certificate from your
+# internal CA
+#
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
@@ -39,6 +42,7 @@
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
 # Updated by Erwan Quélin <erwan.quelin@gmail.com>
+# Updated by Gene Tomilko <gtomilko@getty.edu>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
@@ -48,6 +52,7 @@
 # Version 1.5 - 2017-02-09
 # Version 1.6 - 2017-04-18
 # Version 1.7 - 2017-11-23
+# Version 1.8 - 2018-04-02
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -61,6 +66,7 @@ Param (
     [switch]$GlobalHttpFirewallAccess,
     [switch]$DisableBasicAuth = $false,
     [switch]$EnableCredSSP
+	[switch]$UseMyCert
 )
 
 Function Write-Log
@@ -81,6 +87,12 @@ Function Write-HostLog
     $Message = $args[0]
     Write-Output $Message
     Write-Log $Message
+}
+
+Function Get-MyCert
+{
+   Get-ChildItem Cert:localmachine\My
+   
 }
 
 Function New-LegacySelfSignedCert
@@ -264,7 +276,10 @@ Else
 # Make sure there is a SSL listener.
 $listeners = Get-ChildItem WSMan:\localhost\Listener
 If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
-{
+{  If ($UseMyCert)
+    {
+	
+	}
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
     $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
     Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
