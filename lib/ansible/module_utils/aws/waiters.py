@@ -97,6 +97,24 @@ ec2_data = {
                 },
             ]
         },
+        "SubnetDeleted": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(Subnets[]) > `0`",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidSubnetID.NotFound",
+                    "state": "success"
+                },
+            ]
+        },
     }
 }
 
@@ -140,6 +158,12 @@ waiters_by_name = {
     ('EC2', 'subnet_no_assign_ipv6'): lambda ec2: core_waiter.Waiter(
         'subnet_no_assign_ipv6',
         model_for('SubnetNoAssignIpv6'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_deleted'): lambda ec2: core_waiter.Waiter(
+        'subnet_deleted',
+        model_for('SubnetDeleted'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
