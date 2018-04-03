@@ -83,6 +83,7 @@ options:
   purge:
     description:
       - Purge VLANs not defined in the I(aggregate) parameter.
+        This parameter can be used without aggregate as well.
     type: bool
     default: 'no'
   delay:
@@ -131,6 +132,14 @@ EXAMPLES = '''
     aggregate:
       - { vlan_id: 4000, mode: ce }
       - { vlan_id: 4001, name: vlan-4001 }
+
+- name: purge vlans - removes all other vlans except the ones mentioned in aggregate)
+  nxos_vlan:
+    aggregate:
+      - vlan_id: 1
+      - vlan_id: 4001
+    purge: yes
+
 '''
 
 RETURN = '''
@@ -184,6 +193,7 @@ def is_default_name(obj, vlan_id):
 
 def map_obj_to_commands(updates, module, os_platform):
     commands = list()
+    purge = module.params['purge']
     want, have = updates
 
     for w in want:
@@ -306,6 +316,12 @@ def map_obj_to_commands(updates, module, os_platform):
                             commands.append('switchport')
                             commands.append('switchport mode access')
                             commands.append('no switchport access vlan {0}'.format(vlan_id))
+
+    if purge:
+        for h in have:
+            obj_in_want = search_obj_in_list(h['vlan_id'], want)
+            if not obj_in_want:
+                commands.append('no vlan {0}'.format(h['vlan_id']))
 
     return commands
 
