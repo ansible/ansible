@@ -92,7 +92,8 @@ response_metadata:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
-    ec2_argument_spec, camel_dict_to_snake_dict)
+    ec2_argument_spec, camel_dict_to_snake_dict, compare_aws_tags,
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 
 try:
     import botocore
@@ -100,26 +101,26 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-def add_rds_tags(module, client, configured_tags, tags):
     if set(tags.items()) <= set(configured_tags['tags'].items()):
+def add_rds_tags(module, client, tags_configured, tags_operate):
         module.exit_json(message='tags already exists.', changed=False)
 
     if module.check_mode:
         module.exit_json(message='check mode.', changed=True)
 
-    add_tags = [{'Key': datum[0], 'Value': datum[1]}
-                for datum in tags.items()]
+    tags_add = lst_compare[0]
     try:
         response = client.add_tags_to_resource(
-            ResourceName=configured_tags['arn'],
-            Tags=add_tags)
+            ResourceName=tags_configured['arn'],
+            Tags=ansible_dict_to_boto3_tag_list(tags_add))
     except (botocore.exceptions.ClientError,
             botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't add tag to %s"
-                             % configured_tags['arn'])
+                             % tags_configured['arn'])
 
     response['message'] = 'Add %s tag to %s instance' % (
-        add_tags, configured_tags['arn'])
+        tags_add,
+        tags_configured['arn'])
 
     return response
 
@@ -139,7 +140,7 @@ def remove_rds_tags(module, client, configured_tags, tags):
             botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e,
                              msg="Couldn't remove tag to %s instance"
-                             % configured_tags['arn'])
+                             % tags_configured['arn'])
 
     response['message'] = 'Remove %s tag to %s instance' % (
         tags.keys(), configured_tags['arn'])
@@ -147,55 +148,42 @@ def remove_rds_tags(module, client, configured_tags, tags):
     return response
 
 
-def list_rds_arn(module, client, instance_name):
-    if instance_name is None:
-        try:
-            response_instances = client.describe_db_instances()
-        except (botocore.exceptions.ClientError,
-                botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Couldn't find RDS instance")
-    else:
-        try:
-            response_instances = client.describe_db_instances(
-                DBInstanceIdentifier=instance_name)
-        except (botocore.exceptions.ClientError,
-                botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Couldn't find %s instance"
-                                 % instance_name)
+def get_rds_arn(module, client, instance_name):
+    try:
+        response_instances = client.describe_db_instances(
+            DBInstanceIdentifier=instance_name)
+    except (botocore.exceptions.ClientError,
+            botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't find %s instance"
+                             % instance_name)
 
-    list_arn = [{'arn': instance['DBInstanceArn'],
-                 'identifier': instance['DBInstanceIdentifier']}
-                for instance in response_instances['DBInstances']]
-
-    return list_arn
+    return {'arn': response_instances['DBInstances'][0]['DBInstanceArn'],
+            'identifier':
+            response_instances['DBInstances'][0]['DBInstanceIdentifier']}
 
 
-def list_rds_tags(module, client, list_arn, instance_name):
-    list_tags = []
-    for map_arn in list_arn:
-        try:
-            response_tags = client.list_tags_for_resource(
-                ResourceName=map_arn['arn'])
-        except (botocore.exceptions.ClientError,
-                botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Couldn't get %s instance's tag"
-                                 % instance_name)
-        tags = {}
-        for datum in response_tags['TagList']:
-            tags[datum['Key']] = datum['Value']
+def get_rds_tags(module, client, instance_name, map_rds_arn):
+    try:
+        response_tags = client.list_tags_for_resource(
+            ResourceName=map_rds_arn['arn'])
+    except (botocore.exceptions.ClientError,
+            botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Couldn't get %s instance's tag"
+                             % instance_name)
 
-        list_tags.append({'identifier': map_arn['identifier'],
-                          'tags': tags,
-                          'arn': map_arn['arn']})
-    return list_tags
+    tags = boto3_tag_list_to_ansible_dict(response_tags['TagList'])
+
+    return {'identifier': map_rds_arn['identifier'],
+            'tags': tags,
+            'arn': map_rds_arn['arn']}
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            instance_name=dict(type='str'),
-            tags=dict(type='dict'),
+            instance_name=dict(required=True),
+            tags=dict(type='dict', required=True),
             state=dict(default='present',
                        type='str',
                        choices=['present', 'absent'])
@@ -209,24 +197,17 @@ def main():
     client = module.client('rds')
 
     instance_name = module.params.get('instance_name')
-    tags = module.params.get('tags')
+    tags_operate = module.params.get('tags')
     state = module.params.get('state')
 
-    list_arn = list_rds_arn(module, client, instance_name)
-    list_tags = list_rds_tags(module, client, list_arn, instance_name)
+    map_rds_arn = get_rds_arn(module, client, instance_name)
+    tags_configured = get_rds_tags(module,
+                                   client,
+                                   instance_name,
+                                   map_rds_arn)
 
-
-    if not instance_name:
-        module.fail_json(
-            msg="instance_name argument is required when state is %s." % state)
-
-    if not tags:
-        module.fail_json(
-            msg="tags argument is required when state is %s." % state)
-
-    configured_tags = list_tags[0]
     if state == 'present':
-        response = add_rds_tags(module, client, configured_tags, tags)
+        response = add_rds_tags(module, client, tags_configured, tags_operate)
         module.exit_json(changed=True,
                          **camel_dict_to_snake_dict(response))
 
