@@ -149,18 +149,9 @@ application:
       sample: false
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
-import traceback
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
+from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
 
 def get_codedeploy_application(client, name, module):
     """Get the details of the CodeDeploy application."""
@@ -188,9 +179,9 @@ def get_codedeploy_application_deployment_group(client, name, deployment_group, 
     return None
 
 
-def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups,
-                                       service_role_arn, trigger_configs, alarm_config, auto_rollback_config, deployment_style, bluegreen_deployment_config,
-                                       load_balancer_info, module):
+def create_codedeploy_deployment_group(client, name, module, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters,
+                                       auto_scaling_groups, service_role_arn, trigger_configs, alarm_config, auto_rollback_config, deployment_style,
+                                       bluegreen_deployment_config, load_balancer_info):
     """Create a CodeDeploy deployment group for the application."""
     changed = False
     try:
@@ -231,9 +222,9 @@ def create_codedeploy_deployment_group(client, name, deployment_group, deploymen
     return changed
 
 
-def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters,
+def create_codedeploy_application(client, name, module, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters,
                                   auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style,
-                                  bluegreen_deployment_config, load_balancer_info, module):
+                                  bluegreen_deployment_config, load_balancer_info):
     """Create a CodeDeploy application. Return true if changed, else false"""
     changed = False
     try:
@@ -241,24 +232,24 @@ def create_codedeploy_application(client, name, deployment_group, new_deployment
         # Check if the deployment group already exists, if it does, update it.
         has_deployment_group = get_codedeploy_application_deployment_group(client, name, deployment_group, module)
         if not has_deployment_group:
-            create_codedeploy_deployment_group(client, name, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups,
-                                               service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style,
-                                               bluegreen_deployment_config, load_balancer_info, module)
+            create_codedeploy_deployment_group(client, name, module, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters,
+                                               auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config,
+                                               deployment_style, bluegreen_deployment_config, load_balancer_info)
             changed = True
         else:
-            changed = update_codedeploy_deployment_group(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters,
+            changed = update_codedeploy_deployment_group(client, name, module, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters,
                                                          on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration,
-                                                         auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
+                                                         auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info)
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, "Client error: Could not create CodeDeploy application.")
 
     cda = get_codedeploy_application(client, name, module)
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 
-def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters,
+def update_codedeploy_deployment_group(client, name, module, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters,
                                        on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config,
-                                       deployment_style, bluegreen_deployment_config, load_balancer_info, module):
+                                       deployment_style, bluegreen_deployment_config, load_balancer_info):
     """Update a CodeDeploy deployment group. Return true if changed, else false."""
     changed = False
     try:
@@ -340,7 +331,8 @@ def main():
         bg_deployment_config=dict(required=False, type='dict', default=None),
         load_balance_info=dict(required=False, type='dict', default=None)
     ))
-    module = AnsibleModule(argument_spec=argument_spec)
+    
+    module = AnsibleAWSModule(argument_spec=argument_spec)
 
     name = module.params.get('application_name')
     deployment_group = module.params.get('deployment_group')
@@ -359,11 +351,8 @@ def main():
     bg_deployment_config = module.params.get('bg_deployment_config')
     load_balance_info = module.params.get('load_balance_info')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto required for this module')
-
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='codedeploy', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('codedeploy')
 
     changed = False
     if state == 'present':
@@ -372,62 +361,53 @@ def main():
         # Check if the deployment group already exists, if it does, update it.
         has_deployment_group = get_codedeploy_application_deployment_group(connection, name, deployment_group, module)
         if not has_application:
-            cd_properties = create_codedeploy_application(
-                connection,
-                name,
-                deployment_group,
-                new_deployment_group,
-                deployment_config,
-                ec2_tag_filters,
-                on_premise_filters,
-                auto_scaling_groups,
-                service_role_arn,
-                trigger_configs,
-                alarm_configuration,
-                auto_rollback_config,
-                deployment_style,
-                bg_deployment_config,
-                load_balance_info,
-                module)
+            kwargs = {'deployment_group': deployment_group,
+                      'new_deployment_group': new_deployment_group,
+                      'deployment_config': deployment_config,
+                      'ec2_tag_filters': ec2_tag_filters,
+                      'on_premise_filters': on_premise_filters,
+                      'auto_scaling_groups': auto_scaling_groups,
+                      'service_role_arn': service_role_arn,
+                      'trigger_configs': trigger_configs,
+                      'alarm_configuration': alarm_configuration,
+                      'auto_rollback_config': auto_rollback_config,
+                      'deployment_style': deployment_style,
+                      'bg_deployment_config': bg_deployment_config,
+                      'load_balance_info': load_balance_info}
+            cd_properties = create_codedeploy_application(connection, name, module, **kwargs)
         else:
             # Update the application name if a new name was given.
             if new_application_name:
                 cd_properties = update_codedeploy_application(connection, name, new_application_name, module)
         if has_deployment_group:
-            cd_properties = update_codedeploy_deployment_group(
-                connection,
-                name,
-                deployment_group,
-                new_deployment_group,
-                deployment_config,
-                ec2_tag_filters,
-                on_premise_filters,
-                auto_scaling_groups,
-                service_role_arn,
-                trigger_configs,
-                alarm_configuration,
-                auto_rollback_config,
-                deployment_style,
-                bg_deployment_config,
-                load_balance_info,
-                module)
+            kwargs = {'deployment_group': deployment_group,
+                      'new_deployment_group': new_deployment_group,
+                      'deployment_config': deployment_config,
+                      'ec2_tag_filters': ec2_tag_filters,
+                      'on_premise_filters': on_premise_filters,
+                      'auto_scaling_groups': auto_scaling_groups,
+                      'service_role_arn': service_role_arn,
+                      'trigger_configs': trigger_configs,
+                      'alarm_configuration': alarm_configuration,
+                      'auto_rollback_config': auto_rollback_config,
+                      'deployment_style': deployment_style,
+                      'bg_deployment_config': bg_deployment_config,
+                      'load_balance_info': load_balance_info}
+            cd_properties = update_codedeploy_deployment_group(connection, name, module, **kwargs)
         else:
-            cd_properties = create_codedeploy_deployment_group(
-                connection,
-                name,
-                deployment_group,
-                deployment_config,
-                ec2_tag_filters,
-                on_premise_filters,
-                auto_scaling_groups,
-                service_role_arn,
-                trigger_configs,
-                alarm_configuration,
-                auto_rollback_config,
-                deployment_style,
-                bg_deployment_config,
-                load_balance_info,
-                module)
+            kwargs = {'deployment_group': deployment_group,
+                      'deployment_config': deployment_config,
+                      'ec2_tag_filters': ec2_tag_filters,
+                      'on_premise_filters': on_premise_filters,
+                      'auto_scaling_groups': auto_scaling_groups,
+                      'service_role_arn': service_role_arn,
+                      'trigger_configs': trigger_configs,
+                      'alarm_configuration': alarm_configuration,
+                      'auto_rollback_config': auto_rollback_config,
+                      'deployment_style': deployment_style,
+                      'bg_deployment_config': bg_deployment_config,
+                      'load_balance_info': load_balance_info}
+            cd_properties = create_codedeploy_deployment_group(connection, name, module, **kwargs)
     elif state == 'absent':
         changed = delete_codedeploy_application(connection, name, module)
         module.exit_json(changed=changed)
