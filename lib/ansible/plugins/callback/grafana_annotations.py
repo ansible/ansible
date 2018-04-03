@@ -35,7 +35,7 @@ DOCUMENTATION = """
     author: "Rémi REY (@rrey)"
     description:
       - This callback will report start, failed and stats events to Grafana as annotations (https://grafana.com)
-    version_added: "2.5"
+    version_added: "2.6"
     requirements:
       - whitelisting in configuration
     options:
