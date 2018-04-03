@@ -384,7 +384,7 @@ class PamdService(object):
             self.fname = self.path + "/" + self.name
         # If the file is a symbollic link, we'll write to the source.
         pamd_file = os.path.realpath(self.fname)
-        temp_file = "/tmp/" + self.name + "_" + time.strftime("%y%m%d%H%M%S")
+        temp_file = os.path.join(self.ansible.tmpdir, self.name + "_" + time.strftime("%y%m%d%H%M%S"))
         try:
             f = open(temp_file, 'w')
             f.write(str(self))
