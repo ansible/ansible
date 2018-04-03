@@ -101,8 +101,11 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 
-    if set(tags.items()) <= set(configured_tags['tags'].items()):
 def add_rds_tags(module, client, tags_configured, tags_operate):
+    lst_compare = compare_aws_tags(tags_configured['tags'],
+                                   tags_operate,
+                                   False)
+    if 0 == len(lst_compare[0]):
         module.exit_json(message='tags already exists.', changed=False)
 
     if module.check_mode:
