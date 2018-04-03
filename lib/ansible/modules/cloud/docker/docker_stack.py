@@ -44,7 +44,7 @@ options:
         default: false
         description:
         -   >
-            If true will add the `--prune` option to the docker command.
+            If true will add the `--prune` option to the `docker stack deploy` command.
             This will have docker remove the services not present in the
             current stack definition.
     with_registry_auth:
@@ -52,8 +52,16 @@ options:
         default: false
         description:
         -   >
-            If true will add the `--with-registry-auth` option to the docker command.
+            If true will add the `--with-registry-auth` option to the `docker stack deploy` command.
             This will have docker send registry authentication details to Swarm agents.
+    resolve_image:
+        required: false
+        choices: ["always", "changed", "never"]
+        description:
+        -   >
+            If set will add the `--resolve-image` option to the `docker stack deploy` command.
+            This will have docker query the registry to resolve image digest and
+            supported platforms. If not set, docker use "always" by default.
 
 requirements:
 -   "jsondiff"
@@ -135,6 +143,9 @@ def docker_stack_deploy(module, stack_name, compose_file):
         command += ["--prune"]
     if module.params["with_registry_auth"]:
         command += ["--with-registry-auth"]
+    if module.params["resolve_image"]:
+        command += ["--resolve-image",
+                    module.params["resolve_image"]]
     command += ["--compose-file",
                 compose_file,
                 stack_name]
@@ -156,6 +167,7 @@ def main():
             'compose_file': dict(),
             'prune': dict(default=False, type='bool'),
             'with_registry_auth': dict(default=False, type='bool'),
+            'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
             'state': dict(default='present', choices=['present', 'absent'])
         },
         supports_check_mode=False,
