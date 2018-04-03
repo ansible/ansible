@@ -151,7 +151,10 @@ application:
 
 from ansible.module_utils.ec2 import ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
+try:
+    from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
+except ImportError:
+    pass  # Handled by AnsibleAWSModule
 
 def get_codedeploy_application(client, name, module):
     """Get the details of the CodeDeploy application."""
