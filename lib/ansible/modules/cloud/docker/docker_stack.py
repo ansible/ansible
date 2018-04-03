@@ -110,10 +110,17 @@ EXAMPLES = '''
         state: absent
 '''
 
-from ansible.module_utils.basic import AnsibleModule, os
-from tempfile import mkstemp
+
 import json
-from jsondiff import diff as json_diff
+import tempfile
+
+try:
+    from jsondiff import diff as json_diff
+    HAS_JSONDIFF = True
+except ImportError:
+    HAS_JSONDIFF = False
+
+from ansible.module_utils.basic import AnsibleModule, os
 
 
 def docker_stack_services(module, stack_name):
@@ -180,6 +187,9 @@ def main():
         mutually_exclusive=[['compose_yaml', 'compose_file']]
     )
 
+    if not HAS_JSONDIFF:
+        return module.fail_json(msg="jsondiff is not installed, try `pip install jsondiff`")
+
     state = module.params['state']
     compose_yaml = module.params['compose_yaml']
     compose_file = module.params['compose_file']
@@ -188,7 +198,7 @@ def main():
     if state == 'present':
         try:
             if compose_yaml:
-                compose_file_fd, compose_file = mkstemp()
+                compose_file_fd, compose_file = tempfile.mkstemp()
                 with os.fdopen(compose_file_fd, 'w') as stack_file:
                     stack_file.write(compose_yaml)
             elif not compose_file:
