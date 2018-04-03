@@ -206,11 +206,7 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module,
-                                                                  boto3=True)
-
-    client = boto3_conn(module, conn_type='client', resource='rds',
-                        region=region, **aws_connect_kwargs)
+    client = module.client('rds')
 
     instance_name = module.params.get('instance_name')
     tags = module.params.get('tags')
