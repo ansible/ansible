@@ -128,8 +128,9 @@ def add_rds_tags(module, client, tags_configured, tags_operate):
     return response
 
 
-def remove_rds_tags(module, client, configured_tags, tags):
-    if not set(tags.keys()) <= set(configured_tags['tags'].keys()):
+def remove_rds_tags(module, client, tags_configured, tags_operate):
+    tags_inter = set(tags_operate.keys()) & set(tags_configured['tags'].keys())
+    if 0 == len(tags_inter):
         module.exit_json(message='nothing to tags.', changed=False)
 
     if module.check_mode:
@@ -137,8 +138,8 @@ def remove_rds_tags(module, client, configured_tags, tags):
 
     try:
         response = client.remove_tags_from_resource(
-            ResourceName=configured_tags['arn'],
-            TagKeys=list(tags.keys()))
+            ResourceName=tags_configured['arn'],
+            TagKeys=list(tags_inter))
     except (botocore.exceptions.ClientError,
             botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e,
@@ -146,7 +147,7 @@ def remove_rds_tags(module, client, configured_tags, tags):
                              % tags_configured['arn'])
 
     response['message'] = 'Remove %s tag to %s instance' % (
-        tags.keys(), configured_tags['arn'])
+        list(tags_inter), tags_configured['arn'])
 
     return response
 
