@@ -172,7 +172,9 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         config = {}
         try:
-            config = self.loader.load_from_file(path)
+            # avoid loader cache so meta: refresh_inventory can pick up config changes
+            # if we read more than once, fs cache should be good enough
+            config = self.loader.load_from_file(path, cache=False)
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
