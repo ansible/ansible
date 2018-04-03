@@ -185,8 +185,9 @@ def get_codedeploy_application_deployment_group(client, name, deployment_group, 
     return None
 
 
-def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups, 
-        service_role_arn, trigger_configs, alarm_config, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module):
+def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups,
+                                       service_role_arn, trigger_configs, alarm_config, auto_rollback_config, deployment_style, bluegreen_deployment_config,
+                                       load_balancer_info, module):
     """Create a CodeDeploy deployment group for the application."""
     changed = False
     try:
@@ -227,9 +228,9 @@ def create_codedeploy_deployment_group(client, name, deployment_group, deploymen
     return changed
 
 
-def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, 
-        auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, 
-        load_balancer_info, module):
+def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters,
+                                  auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style,
+                                  bluegreen_deployment_config, load_balancer_info, module):
     """Create a CodeDeploy application. Return true if changed, else false"""
     changed = False
     try:
@@ -238,13 +239,13 @@ def create_codedeploy_application(client, name, deployment_group, new_deployment
         has_deployment_group = get_codedeploy_application_deployment_group(client, name, deployment_group, module)
         if not has_deployment_group:
             create_codedeploy_deployment_group(client, name, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups,
-                    service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, 
-                    load_balancer_info, module)
+                                               service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style,
+                                               bluegreen_deployment_config, load_balancer_info, module)
             changed = True
         else:
             changed = update_codedeploy_deployment_group(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters,
-                    on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config,
-                    deployment_style, bluegreen_deployment_config, load_balancer_info, module)
+                                                         on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration,
+                                                         auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -252,9 +253,9 @@ def create_codedeploy_application(client, name, deployment_group, new_deployment
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 
-def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters, 
-        on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, 
-        bluegreen_deployment_config, load_balancer_info, module):
+def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters,
+                                       on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config,
+                                       deployment_style, bluegreen_deployment_config, load_balancer_info, module):
     """Update a CodeDeploy deployment group. Return true if changed, else false."""
     changed = False
     try:
