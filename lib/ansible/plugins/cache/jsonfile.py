@@ -49,7 +49,7 @@ try:
 except ImportError:
     import json
 
-from ansible.parsing.utils.jsonify import jsonify
+from ansible.module_utils.basic import jsonify
 from ansible.plugins.cache import BaseFileCacheModule
 
 
@@ -65,4 +65,4 @@ class CacheModule(BaseFileCacheModule):
 
     def _dump(self, value, filepath):
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
-            f.write(jsonify(value, format=True))
+            f.write(jsonify(value, sort_keys=True, indent=4))
