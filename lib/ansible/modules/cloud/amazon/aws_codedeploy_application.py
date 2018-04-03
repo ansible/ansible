@@ -185,12 +185,13 @@ def get_codedeploy_application_deployment_group(client, name, deployment_group, 
     return None
 
 
-def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, blue_green_deployment_config, load_balancer_info, module):
+def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups, 
+        service_role_arn, trigger_configs, alarm_config, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module):
     """Create a CodeDeploy deployment group for the application."""
     changed = False
     try:
         dg_params = dict()
-        if deployment_config is not None:
+        if deployment_config_name is not None:
             dg_params['deploymentConfigName'] = deployment_config_name
         if ec2_tag_filters is not None:
             dg_params['ec2TagFilters'] = ec2_tag_filters
@@ -200,8 +201,8 @@ def create_codedeploy_deployment_group(client, name, deployment_group, deploymen
             dg_params['autoScalingGroups'] = auto_scaling_groups
         if trigger_configs is not None:
             dg_params['triggerConfigurations'] = trigger_configs
-        if alarm_configuration is not None:
-            dg_params['alarmConfiguration'] = alarm_configuration
+        if alarm_config is not None:
+            dg_params['alarmConfiguration'] = alarm_config
         if auto_rollback_config is not None:
             dg_params['autoRollbackConfiguration'] = auto_rollback_config
         if deployment_style is not None:
@@ -226,7 +227,9 @@ def create_codedeploy_deployment_group(client, name, deployment_group, deploymen
     return changed
 
 
-def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module):
+def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, 
+        auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, 
+        load_balancer_info, module):
     """Create a CodeDeploy application. Return true if changed, else false"""
     changed = False
     try:
@@ -234,10 +237,14 @@ def create_codedeploy_application(client, name, deployment_group, new_deployment
         # Check if the deployment group already exists, if it does, update it.
         has_deployment_group = get_codedeploy_application_deployment_group(client, name, deployment_group, module)
         if not has_deployment_group:
-            create_codedeploy_deployment_group(client, name, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
+            create_codedeploy_deployment_group(client, name, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups,
+                    service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, 
+                    load_balancer_info, module)
             changed = True
         else:
-            changed = update_codedeploy_deployment_group(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
+            changed = update_codedeploy_deployment_group(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters,
+                    on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config,
+                    deployment_style, bluegreen_deployment_config, load_balancer_info, module)
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -245,7 +252,9 @@ def create_codedeploy_application(client, name, deployment_group, new_deployment
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 
-def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, ds, bluegreen_deployment_config, load_balancer_info, module):
+def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters, 
+        on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, 
+        bluegreen_deployment_config, load_balancer_info, module):
     """Update a CodeDeploy deployment group. Return true if changed, else false."""
     changed = False
     try:
@@ -261,7 +270,7 @@ def update_codedeploy_deployment_group(client, name, current_deployment_group_na
         if auto_scaling_groups is not None:
             dg_params['autoScalingGroups'] = auto_scaling_groups
         if trigger_configs is not None:
-            dg_params['triggerConfigurations'] = trigger_config
+            dg_params['triggerConfigurations'] = trigger_configs
         if alarm_configuration is not None:
             dg_params['alarmConfiguration'] = alarm_configuration
         if auto_rollback_config is not None:
@@ -298,7 +307,7 @@ def update_codedeploy_application(client, name, new_name, module):
     return changed
 
 
-def delete_codedeploy_application(client, name):
+def delete_codedeploy_application(client, name, module):
     """Delete a CodeDeploy application. Return true if changed, else false"""
     try:
         response = client.delete_application(applicationName=name)
@@ -416,7 +425,7 @@ def main():
                 load_balance_info,
                 module)
     elif state == 'absent':
-        changed = delete_codedeploy_application(connection, name)
+        changed = delete_codedeploy_application(connection, name, module)
         module.exit_json(changed=changed)
     cda = get_codedeploy_application(connection, name, module)
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
