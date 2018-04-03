@@ -143,9 +143,9 @@ def copy_snapshot(module, ec2):
             )
 
     except WaiterError as we:
-        module.fail_json(msg='An error occurred (%s) waiting for the snapshot to become available. (%s)' % (we.message, we.reason))
+        module.fail_json(msg='An error occurred waiting for the snapshot to become available. (%s)' % str(we), exception=traceback.format_exc())
     except ClientError as ce:
-        module.fail_json(msg=ce.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(ce.response))
+        module.fail_json(msg=str(ce), exception=traceback.format_exc(), **camel_dict_to_snake_dict(ce.response))
 
     module.exit_json(changed=True, snapshot_id=snapshot_id)
 
