@@ -331,7 +331,7 @@ def main():
         bg_deployment_config=dict(required=False, type='dict', default=None),
         load_balance_info=dict(required=False, type='dict', default=None)
     ))
-    
+
     module = AnsibleAWSModule(argument_spec=argument_spec)
 
     name = module.params.get('application_name')
@@ -351,7 +351,6 @@ def main():
     bg_deployment_config = module.params.get('bg_deployment_config')
     load_balance_info = module.params.get('load_balance_info')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = module.client('codedeploy')
 
     changed = False
