@@ -62,11 +62,11 @@ Ansible releases a new major release of Ansible approximately every two months. 
    scenario_guides/guide_vmware
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Ansible for Network Automation
+   :maxdepth: 1
+   :caption: Ansible Network
 
    network/index
-   network/getting_started
+   network/product_guides/guide_aci
 
 .. toctree::
    :maxdepth: 2
