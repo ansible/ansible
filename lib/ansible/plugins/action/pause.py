@@ -280,7 +280,7 @@ class ActionModule(ActionBase):
             stop = datetime.datetime.now()
             duration = stop - start
             result['stop'] = to_text(stop)
-            result['delta'] = int(timedelta.total_seconds(duration))
+            result['delta'] = int(timedelta.from_timedelta(duration).total_seconds())
 
             result['stdout'] = human_time_delta(duration, past_tense='Paused for {0}')
 

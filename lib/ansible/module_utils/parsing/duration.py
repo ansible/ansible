@@ -26,13 +26,22 @@ UNIT_MAP = {
 }
 
 
+def _total_seconds(delta):
+    return ((delta.days * 86400 + delta.seconds) * 10**6 +
+            delta.microseconds) / 10**6
+
+
 class timedelta(datetime.timedelta):
     """Compat class that provides total_seconds for python<2.7"""
 
     def total_seconds(self):
         """Total seconds in the duration."""
-        return ((self.days * 86400 + self.seconds) * 10**6 +
-                self.microseconds) / 10**6
+        return _total_seconds(self)
+
+    @classmethod
+    def from_timedelta(cls, delta):
+        """Return an instance of this class, created from a ``datetime.timedelta`` instance"""
+        return cls(seconds=_total_seconds(delta))
 
 
 def timedelta_to_dict(delta):
