@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_image - Allow Azure images to be created with tags, bug was introduced in Ansible v2.5.0
