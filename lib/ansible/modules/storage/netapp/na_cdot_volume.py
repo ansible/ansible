@@ -91,7 +91,7 @@ options:
 
   thin:
     description:
-    - Newly created volume is provisioned as thin (no space reserved)
+    - Volume is provisioned as thin (no space reserved)
     required: false
     type: bool
     default: False
@@ -246,6 +246,7 @@ class NetAppCDOTVolume(object):
             volume_space_attributes = volume_attributes.get_child_by_name(
                 'volume-space-attributes')
             current_size = volume_space_attributes.get_child_content('size')
+            is_thin = True if volume_space_attributes.get_child_content('space-guarantee') == 'none' else False
 
             # Get volume's state (online/offline)
             volume_state_attributes = volume_attributes.get_child_by_name(
@@ -260,6 +261,7 @@ class NetAppCDOTVolume(object):
                 'name': self.name,
                 'size': current_size,
                 'is_online': is_online,
+                'thin': is_thin,
             }
 
         return return_value
@@ -275,8 +277,7 @@ class NetAppCDOTVolume(object):
             create_parameters['export-policy'] = str(self.export_policy)
         if self.snapshot_policy != 'default':
             create_parameters['snapshot-policy'] = str(self.snapshot_policy)
-        if self.thin:
-            create_parameters['space-reserve'] = 'none'
+        create_parameters['space-reserve'] = 'none' if self.thin else 'volume'
 
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **create_parameters)
@@ -388,11 +389,37 @@ class NetAppCDOTVolume(object):
                                   (self.name, state_requested, to_native(e)),
                                   exception=traceback.format_exc())
 
+    def change_volume_guarantee(self):
+        """
+        Change volume's guarantee (thin = none / thick = volume).
+        """
+        state_requested = None
+        if self.thin:
+            # Requested guarantee is thin ('none').
+            state_requested = "none"
+            volume_set_option = netapp_utils.zapi.NaElement.create_node_with_children(
+                'volume-set-option',
+                **{'volume': self.name, 'option-name': 'guarantee', 'option-value': 'none'})
+        else:
+            # Requested guarantee is thick ('volume').
+            state_requested = "volume"
+            volume_set_option = netapp_utils.zapi.NaElement.create_node_with_children(
+                'volume-set-option',
+                **{'volume': self.name, 'option-name': 'guarantee', 'option-value': 'volume'})
+        try:
+            self.server.invoke_successfully(volume_set_option,
+                                            enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error changing the guarantee option of volume %s to %s: %s' %
+                                  (self.name, state_requested, to_native(e)),
+                                  exception=traceback.format_exc())
+
     def apply(self):
         changed = False
         volume_exists = False
         rename_volume = False
         resize_volume = False
+        reserve_volume = False
         volume_detail = self.get_volume()
 
         if volume_detail:
@@ -413,6 +440,9 @@ class NetAppCDOTVolume(object):
                     else:
                         # Volume is offline but requested state is online
                         pass
+                if (volume_detail['thin'] and not self.thin) or (not volume_detail['thin'] and self.thin):
+                        changed = True
+                        reserve_volume = True
 
         else:
             if self.state == 'present':
@@ -436,6 +466,8 @@ class NetAppCDOTVolume(object):
                         # Ensure re-naming is the last change made.
                         if rename_volume:
                             self.rename_volume()
+                        if reserve_volume:
+                            self.change_volume_guarantee()
 
                 elif self.state == 'absent':
                     self.delete_volume()
