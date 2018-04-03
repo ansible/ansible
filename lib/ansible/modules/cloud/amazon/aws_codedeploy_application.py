@@ -156,6 +156,7 @@ try:
 except ImportError:
     pass  # Handled by AnsibleAWSModule
 
+
 def get_codedeploy_application(client, name, module):
     """Get the details of the CodeDeploy application."""
     try:
