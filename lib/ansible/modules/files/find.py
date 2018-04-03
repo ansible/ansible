@@ -250,13 +250,20 @@ def sizefilter(st, size):
 
 
 def contentfilter(fsname, pattern):
-    '''filter files which contain the given expression'''
+    """
+    Filter files which contain the given expression
+    :arg fsname: Filename to scan for lines matching a pattern
+    :arg pattern: Pattern to look for inside of line
+    :rtype: bool
+    :returns: True if one of the lines in fsname matches the pattern. Otherwise False
+    """
+    prog = re.compile(pattern)
+
     if pattern is None:
         return True
 
     try:
         with open(fsname) as f:
-            prog = re.compile(pattern)
             for line in f:
                 if prog.match(line):
                     return True
