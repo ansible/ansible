@@ -83,6 +83,9 @@ options:
     description:
       - Information about the load balancer used in a deployment.
     required: false
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
