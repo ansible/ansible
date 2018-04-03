@@ -1,4 +1,5 @@
 cloud/aws
+posix/ci/cloud/group4/aws
 aws_waf_facts
 aws_waf_web_acl
 aws_waf_web_match
