@@ -110,9 +110,7 @@ response_metadata:
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
-    HAS_BOTO3, ec2_argument_spec, boto3_conn, get_aws_connection_info)
-from ansible.module_utils.ec2 import (
-    camel_dict_to_snake_dict, snake_dict_to_camel_dict)
+    ec2_argument_spec, camel_dict_to_snake_dict)
 
 try:
     import botocore
