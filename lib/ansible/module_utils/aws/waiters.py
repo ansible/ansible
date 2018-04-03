@@ -26,7 +26,95 @@ ec2_data = {
                     "state": "retry"
                 },
             ]
-        }
+        },
+        "SubnetExists": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(Subnets[]) > `0`",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidSubnetID.NotFound",
+                    "state": "retry"
+                },
+            ]
+        },
+        "SubnetHasMapPublic": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": True,
+                    "argument": "Subnets[].MapPublicIpOnLaunch",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetNoMapPublic": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": False,
+                    "argument": "Subnets[].MapPublicIpOnLaunch",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetHasAssignIpv6": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": True,
+                    "argument": "Subnets[].AssignIpv6AddressOnCreation",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetNoAssignIpv6": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "pathAll",
+                    "expected": False,
+                    "argument": "Subnets[].AssignIpv6AddressOnCreation",
+                    "state": "success"
+                },
+            ]
+        },
+        "SubnetDeleted": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeSubnets",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "length(Subnets[]) > `0`",
+                    "state": "retry"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "InvalidSubnetID.NotFound",
+                    "state": "success"
+                },
+            ]
+        },
     }
 }
 
@@ -42,7 +130,43 @@ waiters_by_name = {
         model_for('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
-        ))
+        )),
+    ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
+        'subnet_exists',
+        model_for('SubnetExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_map_public'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_map_public',
+        model_for('SubnetHasMapPublic'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_no_map_public'): lambda ec2: core_waiter.Waiter(
+        'subnet_no_map_public',
+        model_for('SubnetNoMapPublic'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_has_assign_ipv6'): lambda ec2: core_waiter.Waiter(
+        'subnet_has_assign_ipv6',
+        model_for('SubnetHasAssignIpv6'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_no_assign_ipv6'): lambda ec2: core_waiter.Waiter(
+        'subnet_no_assign_ipv6',
+        model_for('SubnetNoAssignIpv6'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
+    ('EC2', 'subnet_deleted'): lambda ec2: core_waiter.Waiter(
+        'subnet_deleted',
+        model_for('SubnetDeleted'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_subnets
+        )),
 }
 
 
