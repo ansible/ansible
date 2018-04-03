@@ -28,7 +28,7 @@ from os import isatty
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.parsing.duration import parse_duration, human_time_delta
+from ansible.module_utils.parsing.duration import parse_duration, human_time_delta, timedelta
 from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
 
@@ -280,7 +280,7 @@ class ActionModule(ActionBase):
             stop = datetime.datetime.now()
             duration = stop - start
             result['stop'] = to_text(stop)
-            result['delta'] = int(duration.total_seconds())
+            result['delta'] = int(timedelta.total_seconds(duration))
 
             result['stdout'] = human_time_delta(duration, past_tense='Paused for {0}')
 
