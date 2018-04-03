@@ -109,6 +109,9 @@ class Task(Base, Conditional, Taggable, Become):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
+    def get_args_string(self):
+        return u', '.join(u'%s=%s' % a for a in self.args.items())
+
     def get_name(self, display_args=True):
         ''' return the name of the task '''
 
@@ -125,20 +128,19 @@ class Task(Base, Conditional, Taggable, Become):
             else:
                 name = u"%s" % (self.action,)
 
-        '''
-         args can be specified as no_log in several places: in the task or in the argument spec.
-         We can check whether the task is no_log but the argument spec can't be because
-         that is only run on the target machine and we haven't run it thereyet at this time.
-
-         So we give people a config option to affect display of the args so that they can secure this
-         if they feel that their stdout is insecure (shoulder surfing, logging stdout straight to a file, etc).
-        '''
         if display_args and not self.no_log and C.DISPLAY_ARGS_TO_STDOUT:
-            args = u', '.join(u'%s=%s' % a for a in self.args.items())
+            '''
+             args can be specified as no_log in several places: in the task or in the argument spec.
+             We can check whether the task is no_log but the argument spec can't be because
+             that is only run on the target machine and we haven't run it thereyet at this time.
+
+             So we give people a config option to affect display of the args so that they can secure this
+             if they feel that their stdout is insecure (shoulder surfing, logging stdout straight to a file, etc).
+            '''
+            args = self.get_args_string()
             name += u' %s' % args
 
         return name
-
 
     def _merge_kv(self, ds):
         if ds is None:
