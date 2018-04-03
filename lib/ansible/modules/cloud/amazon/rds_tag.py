@@ -75,24 +75,6 @@ message:
   returned: always
   type: string
   sample: Add tag to arn:aws:rds:eu-west-1:xxxxxxxxxxxx:db:db_name instance
-invocation:
-  description: Parameters used during invocation.
-  returned: always
-  type: dict
-  sample:
-    module_args:
-      aws_access_key: null
-      aws_secret_key: null
-      ec2_url: null
-      instance_name: xxx-instance
-      profile: your profile
-      region: eu-west-1
-      security_token: null
-      state: present
-      tags:
-        your_setting_key_a: your_setting_value_a
-        your_setting_key_b: your_setting_value_b
-      validate_certs: true
 response_metadata:
   description: Value returned by boto3.
   returned: When not in dry run mode.
