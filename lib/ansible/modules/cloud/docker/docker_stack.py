@@ -47,6 +47,13 @@ options:
             If true will add the `--prune` option to the docker command.
             This will have docker remove the services not present in the
             current stack definition.
+    with_registry_auth:
+        required: false
+        default: false
+        description:
+        -   >
+            If true will add the `--with-registry-auth` option to the docker command.
+            This will have docker send registry authentication details to Swarm agents.
 
 requirements:
 -   "jsondiff"
@@ -126,6 +133,8 @@ def docker_stack_deploy(module, stack_name, compose_file):
     command = [docker_bin, "stack", "deploy"]
     if module.params["prune"]:
         command += ["--prune"]
+    if module.params["with_registry_auth"]:
+        command += ["--with-registry-auth"]
     command += ["--compose-file",
                 compose_file,
                 stack_name]
@@ -146,6 +155,7 @@ def main():
             'compose_yaml': dict(),
             'compose_file': dict(),
             'prune': dict(default=False, type='bool'),
+            'with_registry_auth': dict(default=False, type='bool'),
             'state': dict(default='present', choices=['present', 'absent'])
         },
         supports_check_mode=False,
