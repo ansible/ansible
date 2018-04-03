@@ -4,7 +4,6 @@
 from __future__ import absolute_import, print_function
 
 import os
-import random
 
 from . import (
     CloudProvider,
@@ -53,6 +52,8 @@ class ForemanProvider(CloudProvider):
     https://github.com/ansible/foreman-test-container
     """
 
+    DOCKER_REGISTRY = 'quay'
+
     def __init__(self, args):
         """Set up container references for provider.
 
@@ -76,7 +77,7 @@ class ForemanProvider(CloudProvider):
                 # to guarantee CI passes with the version used:
                 '{registry_url}/{img_name}:{img_tag}'
             ).format(
-                **(image_src or random.choice(self.DOCKER_IMAGES))
+                **(image_src or self.DOCKER_IMAGES[self.DOCKER_REGISTRY])
             )
         self.container_name = ''
 
