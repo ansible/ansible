@@ -53,3 +53,9 @@ class Handler(Task):
         result = super(Handler, self).serialize()
         result['is_handler'] = True
         return result
+
+    def get_name(self, display_args=False):
+        ''' return the name of the handler, never display args'''
+
+        return super(Handler, self).get_name(display_args=False)
+

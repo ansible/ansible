@@ -138,20 +138,7 @@ class CallbackModule(CallbackBase):
             self._print_task_banner(task)
 
     def _print_task_banner(self, task):
-        # args can be specified as no_log in several places: in the task or in
-        # the argument spec.  We can check whether the task is no_log but the
-        # argument spec can't be because that is only run on the target
-        # machine and we haven't run it thereyet at this time.
-        #
-        # So we give people a config option to affect display of the args so
-        # that they can secure this if they feel that their stdout is insecure
-        # (shoulder surfing, logging stdout straight to a file, etc).
-        args = ''
-        if not task.no_log and C.DISPLAY_ARGS_TO_STDOUT:
-            args = u', '.join(u'%s=%s' % a for a in task.args.items())
-            args = u' %s' % args
-
-        self._display.banner(u"TASK [%s%s]" % (task.get_name().strip(), args))
+        self._display.banner(u"TASK [%s]" % (task.get_name().strip()))
         if self._display.verbosity >= 2:
             path = task.get_path()
             if path:
