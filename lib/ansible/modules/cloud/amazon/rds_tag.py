@@ -27,7 +27,7 @@ options:
       Whether the tags should be present or absent on the resource.
       Use list to interrogate the tags of an instance.
     default: present
-    choices: ['present', 'absent', 'list']
+    choices: ['present', 'absent']
   tags:
     description: >-
       a hash/dictionary of tags to add to the resource;
@@ -43,11 +43,6 @@ author: "Akane Morikawa (@cahlchang)"
 EXAMPLES = '''
 # Note: None of these examples set aws_access_key, aws_secret_key, or region.
 # It is assumed that their matching environment variables are set.
-- name: Ensure tags are present on a instance
-  rds_tag:
-    region: eu-west-1
-    instance_name: name-database
-    state: list
 
 - name: add tags to instance
   rds_tag:
@@ -244,8 +239,6 @@ def main():
     list_arn = list_rds_arn(module, client, instance_name)
     list_tags = list_rds_tags(module, client, list_arn, instance_name)
 
-    if state == 'list':
-        module.exit_json(response_tags=list_tags, changed=False)
 
     if not instance_name:
         module.fail_json(
