@@ -1233,12 +1233,14 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    docker_image = args.docker.split('@')[0]  # strip SHA for proper tag comparison
+
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    if args.docker.endswith('py3'):
+    if docker_image.endswith('py3'):
         python_version = 3  # docker images ending in 'py3' are expected to default to python 3
 
-    if args.docker.endswith(':default'):
+    if docker_image.endswith(':default'):
         python_version = 3  # docker images tagged 'default' are expected to default to python 3
 
     if args.python:  # specifying a numeric --python option overrides the default python
