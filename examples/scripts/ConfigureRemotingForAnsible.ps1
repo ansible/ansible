@@ -32,7 +32,7 @@
 # defaults to the system's hostname and generally should not be specified.
 #
 # Use option -UseMyCert to use existing SSL certificate from your
-# internal CA
+# internal CA for WinRM listener.
 #
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
