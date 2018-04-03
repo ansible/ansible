@@ -205,6 +205,7 @@ anti_affinity_with:
 import os
 from datetime import datetime, timedelta
 from time import sleep
+from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
@@ -296,8 +297,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s.' %
                                    ' '.join(missing_parameters))
 
+        # Deepcopy: Duplicate the data object for iteration, because
+        # iterating an object and changing it at the same time is insecure
+
         # Sanitize data dictionary
-        for k, v in data.items():
+        for k, v in deepcopy(data).items():
 
             # Remove items not relevant to the create server call
             if k in ('api_token', 'api_timeout', 'uuid', 'state'):
