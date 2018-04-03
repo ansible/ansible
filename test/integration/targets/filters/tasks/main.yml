@@ -185,3 +185,16 @@
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
+
+- name: Invoke password_hash with a wrong algorithm
+  debug:
+    var: "'somestring' | password_hash('WRONG_ALGORITHM')"
+  register: _bad_password_hash_filter
+  ignore_errors: yes
+
+- name: Verify password_hash filter failed when invoked with wrong algorithm
+  assert:
+    that:
+      - _bad_password_hash_filter is failed
+      - "'invalid hashtype' in _bad_password_hash_filter.msg"
+    msg: "password_hash('WRONG_ALGORITHM') has to fail with 'invalid hashtype'"
