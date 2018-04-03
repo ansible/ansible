@@ -525,13 +525,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # get user specifications
         regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
 
+        cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used
         if cache:
             # get the user-specified directive
             cache = self._options.get('cache')
-            cache_key = self.get_cache_key(path)
-        else:
-            cache_key = None
 
         # Generate inventory
         formatted_inventory = {}
@@ -550,5 +548,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._populate(results, hostnames)
             formatted_inventory = self._format_inventory(results, hostnames)
 
-        if cache_needs_update:
+        # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
+        # when the user is using caching, update the cached inventory
+        if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, formatted_inventory)
