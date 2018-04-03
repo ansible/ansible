@@ -410,6 +410,9 @@
           AWS_SESSION_TOKEN: '{{security_token}}'
           AWS_DEFAULT_REGION: '{{aws_region}}'
 
+    - name: wait for the IPv6 CIDR to be assigned
+      command: sleep 5
+
     - name: Get the assigned IPv6 CIDR
       command: aws ec2 describe-vpcs --vpc-ids '{{ vpc_result.vpc.id }}'
       environment:
