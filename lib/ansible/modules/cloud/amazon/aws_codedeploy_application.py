@@ -1,29 +1,20 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: aws_codedeploy_application
-short_description: Creates/modifies a CodeDeploy application and deployment group.
+short_description: Creates/modifies a CodeDeploy application and deployment group
 description:
   - Creates/modifies a CodeDeploy application and deployment group.
-version_added: 2.4
+version_added: 2.6
 author: Kurt Knudsen
 options:
   application_name:
@@ -157,11 +148,12 @@ application:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
 import traceback
 
 try:
     import boto3
-    from botocore.exceptions import ClientError, NoCredentialsError
+    from botocore.exceptions import ClientError, NoCredentialsError, BotoCoreError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -175,53 +167,53 @@ def get_codedeploy_application(client, name, module):
         if e.response['Error']['Code'] == 'ApplicationDoesNotExistException':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, "Could not get CodeDeploy application.")
     return None
 
 
-def get_codedeploy_application_deployment_group(client, name, dg, module):
+def get_codedeploy_application_deployment_group(client, name, deployment_group, module):
     """Get the details of the CodeDeploy deployment group."""
     try:
-        return client.get_deployment_group(applicationName=name, deploymentGroupName=dg)
-    except (ClientError, NoCredentialsError) as e:
+        return client.get_deployment_group(applicationName=name, deploymentGroupName=deployment_group)
+    except (ClientError, BotoCoreError) as e:
         if e.response['Error']['Code'] == 'ApplicationDoesNotExistException':
             return None
         if e.response['Error']['Code'] == 'DeploymentGroupDoesNotExistException':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, "Could not get CodeDeploy application deployment group.")
     return None
 
 
-def create_codedeploy_deployment_group(client, name, dg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module):
+def create_codedeploy_deployment_group(client, name, deployment_group, deployment_config_name, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, blue_green_deployment_config, load_balancer_info, module):
     """Create a CodeDeploy deployment group for the application."""
     changed = False
     try:
         dg_params = dict()
-        if dc is not None:
-            dg_params['deploymentConfigName'] = dc
-        if ec2_tf is not None:
-            dg_params['ec2TagFilters'] = ec2_tf
-        if opf is not None:
-            dg_params['onPremisesInstanceTagFilters'] = opf
-        if asg is not None:
-            dg_params['autoScalingGroups'] = asg
-        if tc is not None:
-            dg_params['triggerConfigurations'] = tc
-        if ac is not None:
-            dg_params['alarmConfiguration'] = ac
-        if arc is not None:
-            dg_params['autoRollbackConfiguration'] = arc
-        if ds is not None:
-            dg_params['deploymentStyle'] = ds
-        if bgdc is not None:
-            dg_params['blueGreenDeploymentConfiguration'] = bgdc
-        if lbi is not None:
-            dg_params['loadBalancerInfo'] = lbi
+        if deployment_config is not None:
+            dg_params['deploymentConfigName'] = deployment_config_name
+        if ec2_tag_filters is not None:
+            dg_params['ec2TagFilters'] = ec2_tag_filters
+        if on_premises_filters is not None:
+            dg_params['onPremisesInstanceTagFilters'] = on_premises_filters
+        if auto_scaling_groups is not None:
+            dg_params['autoScalingGroups'] = auto_scaling_groups
+        if trigger_configs is not None:
+            dg_params['triggerConfigurations'] = trigger_configs
+        if alarm_configuration is not None:
+            dg_params['alarmConfiguration'] = alarm_configuration
+        if auto_rollback_config is not None:
+            dg_params['autoRollbackConfiguration'] = auto_rollback_config
+        if deployment_style is not None:
+            dg_params['deploymentStyle'] = deployment_style
+        if bluegreen_deployment_config is not None:
+            dg_params['blueGreenDeploymentConfiguration'] = bluegreen_deployment_config
+        if load_balancer_info is not None:
+            dg_params['loadBalancerInfo'] = load_balancer_info
         response = client.create_deployment_group(
             applicationName=name,
-            deploymentGroupName=dg,
-            serviceRoleArn=sra,
+            deploymentGroupName=deployment_group,
+            serviceRoleArn=service_role_arn,
             **dg_params)
         changed = True
     except (ClientError, NoCredentialsError) as e:
@@ -230,22 +222,22 @@ def create_codedeploy_deployment_group(client, name, dg, dc, ec2_tf, opf, asg, s
         if e.response['Error']['Code'] == 'DeploymentGroupDoesNotExistException':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json_aws(e, "Could not create CodeDeploy deployment group.")
     return changed
 
 
-def create_codedeploy_application(client, name, dg, ndg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module):
+def create_codedeploy_application(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module):
     """Create a CodeDeploy application. Return true if changed, else false"""
     changed = False
     try:
         response = client.create_application(applicationName=name)
         # Check if the deployment group already exists, if it does, update it.
-        has_deployment_group = get_codedeploy_application_deployment_group(client, name, dg, module)
+        has_deployment_group = get_codedeploy_application_deployment_group(client, name, deployment_group, module)
         if not has_deployment_group:
-            create_codedeploy_deployment_group(client, name, dg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module)
+            create_codedeploy_deployment_group(client, name, deployment_group, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
             changed = True
         else:
-            changed = update_codedeploy_deployment_group(client, name, dg, ndg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module)
+            changed = update_codedeploy_deployment_group(client, name, deployment_group, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, deployment_style, bluegreen_deployment_config, load_balancer_info, module)
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
@@ -253,43 +245,43 @@ def create_codedeploy_application(client, name, dg, ndg, dc, ec2_tf, opf, asg, s
     module.exit_json(changed=changed, **camel_dict_to_snake_dict(cda))
 
 
-def update_codedeploy_deployment_group(client, name, cdg, ndg, dc, ec2_tf, opf, asg, sra, tc, ac, arc, ds, bgdc, lbi, module):
+def update_codedeploy_deployment_group(client, name, current_deployment_group_name, new_deployment_group_name, deployment_config, ec2_tag_filters, on_premises_filters, auto_scaling_groups, service_role_arn, trigger_configs, alarm_configuration, auto_rollback_config, ds, bluegreen_deployment_config, load_balancer_info, module):
     """Update a CodeDeploy deployment group. Return true if changed, else false."""
     changed = False
     try:
         dg_params = dict()
-        if dc is not None:
-            dg_params['deploymentConfigName'] = dc
-        if ndg is not None:
-            dg_params['newDeploymentGroupName'] = ndg
-        if ec2_tf is not None:
-            dg_params['ec2TagFilters'] = ec2_tf
-        if opf is not None:
-            dg_params['onPremisesInstanceTagFilters'] = opf
-        if asg is not None:
-            dg_params['autoScalingGroups'] = asg
-        if tc is not None:
-            dg_params['triggerConfigurations'] = tc
-        if ac is not None:
-            dg_params['alarmConfiguration'] = ac
-        if arc is not None:
-            dg_params['autoRollbackConfiguration'] = arc
-        if ds is not None:
-            dg_params['deploymentStyle'] = ds
-        if bgdc is not None:
-            dg_params['blueGreenDeploymentConfiguration'] = bgdc
-        if lbi is not None:
-            dg_params['loadBalancerInfo'] = lbi
+        if deployment_config is not None:
+            dg_params['deploymentConfigName'] = deployment_config
+        if new_deployment_group_name is not None:
+            dg_params['newDeploymentGroupName'] = new_deployment_group_name
+        if ec2_tag_filters is not None:
+            dg_params['ec2TagFilters'] = ec2_tag_filters
+        if on_premises_filters is not None:
+            dg_params['onPremisesInstanceTagFilters'] = on_premises_filters
+        if auto_scaling_groups is not None:
+            dg_params['autoScalingGroups'] = auto_scaling_groups
+        if trigger_configs is not None:
+            dg_params['triggerConfigurations'] = trigger_config
+        if alarm_configuration is not None:
+            dg_params['alarmConfiguration'] = alarm_configuration
+        if auto_rollback_config is not None:
+            dg_params['autoRollbackConfiguration'] = auto_rollback_config
+        if deployment_style is not None:
+            dg_params['deploymentStyle'] = deployment_style
+        if bluegreen_deployment_config is not None:
+            dg_params['blueGreenDeploymentConfiguration'] = bluegreen_deployment_config
+        if load_balancer_info is not None:
+            dg_params['loadBalancerInfo'] = load_balancer_info
 
         response = client.update_deployment_group(
             applicationName=name,
-            currentDeploymentGroupName=cdg,
-            serviceRoleArn=sra,
+            currentDeploymentGroupName=current_deployment_group_name,
+            serviceRoleArn=service_role_arn,
             **dg_params)
         changed = True
     except ClientError as e:
         changed = False
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, "Could not update CodeDeploy deployment group.")
     return changed
 
 
@@ -302,7 +294,7 @@ def update_codedeploy_application(client, name, new_name, module):
             newApplicationName=new_name)
         changed = True
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, "Could not update CodeDeploy application name.")
     return changed
 
 
@@ -312,7 +304,7 @@ def delete_codedeploy_application(client, name):
         response = client.delete_application(applicationName=name)
         return True
     except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, "Could not delete CodeDeploy application.")
 
 
 def main():
