@@ -1,9 +1,23 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# (c) 2018 Extreme Networks Inc.
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
+# (c) 2018 Extreme Networks Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+from __future__ import (absolute_import, division, print_function)
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -22,7 +36,6 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(slxos_config) to configure SLX-OS devices.
-extends_documentation_fragment: slxos
 notes:
   - Tested against SLX-OS 17s.1.02
   - If a command sent to the device requires answering a prompt, it is possible
@@ -133,6 +146,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import ComplexList
 from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.six import string_types
+
+
+__metaclass__ = type
 
 
 def to_lines(stdout):
