@@ -215,10 +215,9 @@ def main():
         module.exit_json(changed=True,
                          **camel_dict_to_snake_dict(response))
 
-    if state == 'absent':
-        response = remove_rds_tags(module, client, configured_tags, tags)
-        module.exit_json(changed=True,
-                         **camel_dict_to_snake_dict(response))
+    response = remove_rds_tags(module, client, tags_configured, tags_operate)
+    module.exit_json(changed=True,
+                     **camel_dict_to_snake_dict(response))
 
 if __name__ == '__main__':
     main()
