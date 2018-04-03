@@ -80,8 +80,8 @@ A module can also be used to query a specific object.
         username: admin
         password: my-password
     
-      tenant: customer-xyz
-      state: query
+        tenant: customer-xyz
+        state: query
 
 Or query all objects.
 
