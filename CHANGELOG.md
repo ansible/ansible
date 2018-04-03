@@ -134,7 +134,8 @@ Ansible Changes By Release
 * fix required args for nxos_snapshot: https://github.com/ansible/ansible/pull/37232
 * Properly check that nxos_snapshot parameters that are required in certain circumstances are present:
   https://github.com/ansible/ansible/pull/37232
-
+* Call DataLoader.load with the correct signature to prevent hang on error processing in include_vars
+  (https://github.com/ansible/ansible/pull/38194)
 
 <a id="2.4.3"></a>
 
