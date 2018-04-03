@@ -165,7 +165,7 @@ class ActionModule(ActionBase):
                         intr = termios.tcgetattr(fd)[6][termios.VINTR]
                     except Exception:
                         # unsupported/not present, use default
-                        intr =  b'\x03'  # value for Ctrl+C
+                        intr = b'\x03'  # value for Ctrl+C
 
                     old_settings = termios.tcgetattr(fd)
                     tty.setraw(fd)
@@ -190,7 +190,6 @@ class ActionModule(ActionBase):
                     # flush the buffer to make sure no previous key presses
                     # are read in below
                     termios.tcflush(stdin, termios.TCIFLUSH)
-
 
             while True:
                 try:
@@ -248,3 +247,5 @@ class ActionModule(ActionBase):
                 return False
             elif key_pressed.lower() == b'c':
                 return True
+            else:
+                display.display("Invalid keypress detected, please press 'C' to continue or 'A' to abort \r")
