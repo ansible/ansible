@@ -111,8 +111,8 @@ extends_documentation_fragment:
     - docker
 
 requirements:
-  - "docker >= 2.7.0"
-  - "Docker API >= 1.35"
+    - "python >= 2.7"
+    - "Docker API >= 1.20"
 
 author:
   - Thierry Bouvet
