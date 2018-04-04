@@ -50,18 +50,17 @@
 
 - debug: msg="END cli/common_utils.yaml on connection={{ ansible_connection }}"
 
-# FIXME: uncomment when https://github.com/ansible/ansible/issues/36919 is fixed
 # hit conditional()
-# - name: Set test interface
-#   set_fact:
-#     test_interface_1: ethernet1
-#
-# - name: Check intent arguments
-#   eos_interface:
-#     name: "{{ test_interface_1 }}"
-#     state: up
-#     tx_rate: ge(0)
-#     rx_rate: ge(0)
-#     authorize: yes
-#     provider: "{{ eapi }}"
-#   register: result
+- name: Set test interface
+  set_fact:
+    test_interface_1: ethernet1
+
+- name: Check intent arguments
+  eos_interface:
+    name: "{{ test_interface_1 }}"
+    state: up
+    tx_rate: ge(0)
+    rx_rate: ge(0)
+    authorize: yes
+    provider: "{{ eapi }}"
+  register: result
