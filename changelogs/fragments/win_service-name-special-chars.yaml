@@ -1,0 +1,3 @@
+bugfixes:
+- win_service - Fix bug with win_service not being able to handle special chars like [ 
+  (https://github.com/ansible/ansible/pull/37897)
