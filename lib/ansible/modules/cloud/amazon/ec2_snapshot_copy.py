@@ -142,7 +142,9 @@ def copy_snapshot(module, ec2):
         snapshot_id = ec2.copy_snapshot(**params)['SnapshotId']
         if module.params.get('wait'):
             delay = 15
-            max_attempts = module.params.get('wait_timeout') // delay
+            # Add one to max_attempts as wait() increment
+            # its counter before assessing it for time.sleep()
+            max_attempts = (module.params.get('wait_timeout') // delay) + 1
             ec2.get_waiter('snapshot_completed').wait(
                 SnapshotIds=[snapshot_id],
                 WaiterConfig=dict(Delay=delay, MaxAttempts=max_attempts)
