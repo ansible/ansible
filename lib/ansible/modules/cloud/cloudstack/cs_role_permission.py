@@ -97,7 +97,7 @@ permission:
   returned: success
   type: string
   sample: allow
-roleid:
+role_id:
   description: The ID of the role to which the role permission belongs.
   returned: success
   type: string
@@ -127,7 +127,7 @@ class AnsibleCloudStackRolePermission(AnsibleCloudStack):
 
         self.returns = {
             'id': 'id',
-            'roleid': 'roleid',
+            'roleid': 'role_id',
             'rule': 'name',
             'permission': 'permission',
             'description': 'description',
