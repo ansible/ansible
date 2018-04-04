@@ -622,6 +622,7 @@ import re
 import uuid
 import string
 import textwrap
+import time
 from collections import namedtuple
 
 try:
@@ -1378,7 +1379,7 @@ def ensure_present(existing_matches, changed, ec2, state):
             )
     try:
         instance_spec = build_run_instance_spec(module.params)
-        instance_response = AWSRetry.jittered_backoff()(ec2.run_instances)(**instance_spec)
+        instance_response = run_instances(ec2, **instance_spec)
         instances = instance_response['Instances']
         instance_ids = [i['InstanceId'] for i in instances]
 
@@ -1403,6 +1404,20 @@ def ensure_present(existing_matches, changed, ec2, state):
         )
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to create new EC2 instance")
+
+
+@AWSRetry.jittered_backoff()
+def run_instances(ec2, **instance_spec):
+    try:
+        return ec2.run_instances(**instance_spec)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'InvalidParameterValue' and "Invalid IAM Instance Profile ARN" in e.response['Error']['Message']:
+            # If the instance profile has just been created, it takes some time to be visible by ec2
+            # So we wait 10 second and retry the run_instances
+            time.sleep(10)
+            return ec2.run_instances(**instance_spec)
+        else:
+            raise e
 
 
 def main():
