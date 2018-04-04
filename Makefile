@@ -111,6 +111,11 @@ RPMNVR = "$(NAME)-$(RPMVERSION)-$(RPMRELEASE)$(RPMDIST)$(REPOTAG)"
 MOCK_BIN ?= mock
 MOCK_CFG ?=
 
+# dynamically add repotag define only if specified
+ifneq ($(REPOTAG),)
+    EXTRA_RPM_DEFINES += --define "repotag $(REPOTAG)"
+endif
+
 # ansible-test parameters
 ANSIBLE_TEST ?= test/runner/ansible-test
 TEST_FLAGS ?=
@@ -249,7 +254,7 @@ mock-srpm: /etc/mock/$(MOCK_CFG).cfg rpmcommon
     --define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
-	--define "repotag $(REPOTAG)"
+	$(EXTRA_RPM_DEFINES)
 	@echo "#############################################"
 	@echo "Ansible SRPM is built:"
 	@echo rpm-build/*.src.rpm
@@ -261,7 +266,7 @@ mock-rpm: /etc/mock/$(MOCK_CFG).cfg mock-srpm
     --define "rpmversion $(RPMVERSION)" \
 	--define "upstream_version $(VERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
-	--define "repotag $(REPOTAG)"
+	$(EXTRA_RPM_DEFINES)
 	@echo "#############################################"
 	@echo "Ansible RPM is built:"
 	@echo rpm-build/*.noarch.rpm
@@ -278,7 +283,7 @@ srpm: rpmcommon
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
-	--define "repotag $(REPOTAG)" \
+	$(EXTRA_RPM_DEFINES) \
 	-bs rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
@@ -299,7 +304,7 @@ rpm: rpmcommon
 	--define "upstream_version $(VERSION)" \
 	--define "rpmversion $(RPMVERSION)" \
 	--define "rpmrelease $(RPMRELEASE)" \
-	--define "repotag $(REPOTAG)" \
+	$(EXTRA_RPM_DEFINES) \
 	-ba rpm-build/$(NAME).spec
 	@rm -f rpm-build/$(NAME).spec
 	@echo "#############################################"
