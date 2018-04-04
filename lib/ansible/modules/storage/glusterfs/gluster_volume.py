@@ -354,6 +354,39 @@ def add_bricks(name, new_bricks, stripe, replica, force):
     run_gluster(args)
 
 
+def remove_bricks(name, removed_bricks, force):
+    # max-tries=12 with default_interval=10 secs
+    max_tries = 12
+    retries = 0
+    success = False
+    args = ['volume', 'remove-brick', name]
+    args.extend(removed_bricks)
+    # create a copy of args to use for commit operation
+    args_c = args[:]
+    args.append('start')
+    run_gluster(args)
+    # remove-brick operation needs to be followed by commit operation.
+    if not force:
+        while retries < max_tries:
+            last_brick = removed_bricks[-1]
+            out = run_gluster(['volume', 'remove-brick', name, last_brick, 'status'])
+            for row in out.split('\n')[1:]:
+                if 'completed' in row:
+                    # remove-brick successful, call commit operation.
+                    args_c.append('commit')
+                    out = run_gluster(args_c)
+                    success = True
+                    break
+                else:
+                    time.sleep(10)
+            if success:
+                break
+            retries += 1
+            #remove-brick still in process, needs to be committed after completion.
+            module.fail_json(msg="Exceeded number of tries, check remove-brick status.\n"
+                                 "Commit operation needs to be followed.")
+
+
 def do_rebalance(name):
     run_gluster(['volume', 'rebalance', name, 'start'])
 
@@ -383,6 +416,7 @@ def main():
             redundancies=dict(type='int'),
             transport=dict(type='str', default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
             bricks=dict(type='str', aliases=['brick']),
+            remove_bricks=dict(type='bool', default=False),
             start_on_create=dict(type='bool', default=True),
             rebalance=dict(type='bool', default=False),
             options=dict(type='dict', default={}),
@@ -401,6 +435,7 @@ def main():
     volume_name = module.params['name']
     cluster = module.params['cluster']
     brick_paths = module.params['bricks']
+    remove_bricks_flag = module.boolean(module.params['remove_bricks'])
     stripes = module.params['stripes']
     replicas = module.params['replicas']
     arbiters = module.params['arbiters']
@@ -465,20 +500,25 @@ def main():
             new_bricks = []
             removed_bricks = []
             all_bricks = []
-            for node in cluster:
-                for brick_path in brick_paths:
-                    brick = '%s:%s' % (node, brick_path)
-                    all_bricks.append(brick)
-                    if brick not in volumes[volume_name]['bricks']:
-                        new_bricks.append(brick)
-
-            # this module does not yet remove bricks, but we check those anyways
-            for brick in volumes[volume_name]['bricks']:
-                if brick not in all_bricks:
-                    removed_bricks.append(brick)
+            if not remove_bricks_flag:
+                for node in cluster:
+                    for brick_path in brick_paths:
+                        brick = '%s:%s' % (node, brick_path)
+                        all_bricks.append(brick)
+                        if brick not in volumes[volume_name]['bricks']:
+                            new_bricks.append(brick)
+            else:
+                for node in cluster:
+                    for brick_path in brick_paths:
+                        brick = '%s:%s' % (node, brick_path)
+                        removed_bricks.append(brick)
 
             if new_bricks:
                 add_bricks(volume_name, new_bricks, stripes, replicas, force)
+                changed = True
+
+            if removed_bricks:
+                remove_bricks(volume_name, removed_bricks, force)
                 changed = True
 
             # handle quotas
