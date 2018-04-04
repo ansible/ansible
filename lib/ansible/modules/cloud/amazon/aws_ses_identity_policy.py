@@ -92,7 +92,7 @@ except ImportError:
 
 def get_identity_policy(connection, module, identity, policy_name):
     try:
-        response = connection.get_identity_policies(Identity=identity, PolicyNames=[policy_name])
+        response = connection.get_identity_policies(Identity=identity, PolicyNames=[policy_name], aws_retry=True)
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to retrieve identity policy {policy}'.format(policy=policy_name))
     policies = response['Policies']
@@ -114,7 +114,7 @@ def create_or_update_identity_policy(connection, module):
         changed = True
         try:
             if not module.check_mode:
-                connection.put_identity_policy(Identity=identity, PolicyName=policy_name, Policy=required_policy)
+                connection.put_identity_policy(Identity=identity, PolicyName=policy_name, Policy=required_policy, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to put identity policy {policy}'.format(policy=policy_name))
 
@@ -127,7 +127,7 @@ def create_or_update_identity_policy(connection, module):
     #
     # As a nice side benefit this also means the return is correct in check mode
     try:
-        policies_present = connection.list_identity_policies(Identity=identity)['PolicyNames']
+        policies_present = connection.list_identity_policies(Identity=identity, aws_retry=True)['PolicyNames']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to list identity policies')
     if policy_name is not None and policy_name not in policies_present:
@@ -145,13 +145,13 @@ def delete_identity_policy(connection, module):
 
     changed = False
     try:
-        policies_present = connection.list_identity_policies(Identity=identity)['PolicyNames']
+        policies_present = connection.list_identity_policies(Identity=identity, aws_retry=True)['PolicyNames']
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to list identity policies')
     if policy_name in policies_present:
         try:
             if not module.check_mode:
-                connection.delete_identity_policy(Identity=identity, PolicyName=policy_name)
+                connection.delete_identity_policy(Identity=identity, PolicyName=policy_name, aws_retry=True)
         except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg='Failed to delete identity policy {policy}'.format(policy=policy_name))
         changed = True
