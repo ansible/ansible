@@ -314,13 +314,6 @@
     - win_service_stopped_again is not changed
     - win_service_stopped_again.state == 'stopped'
 
-- name: set username without password
-  win_service:
-    name: "{{test_win_service_name}}"
-    username: username
-  register: win_service_change_user_without_password
-  failed_when: win_service_change_user_without_password.msg != "The argument 'password' must be supplied with 'username'"
-
 - name: set password without username
   win_service:
     name: "{{test_win_service_name}}"
@@ -332,7 +325,6 @@
   win_service:
     name: "{{test_win_service_name}}"
     username: NT AUTHORITY\NetworkService
-    password: ""
     desktop_interact: True
   register: win_desktop_interact_not_local_system
   failed_when: win_desktop_interact_not_local_system.msg != "Can only set 'desktop_interact' to true when 'username' equals 'LocalSystem'"
@@ -341,28 +333,26 @@
   win_service:
     name: "{{test_win_service_name}}"
     username: NT AUTHORITY\NetworkService
-    password: ""
   register: win_service_change_password_network_service
 
 - name: check that the service user has been set to Network Service
   assert:
     that:
     - win_service_change_password_network_service is changed
-    - win_service_change_password_network_service.username == 'NT AUTHORITY\\NetworkService'
+    - win_service_change_password_network_service.username == 'NT AUTHORITY\\NETWORK SERVICE'
     - win_service_change_password_network_service.desktop_interact == False
 
 - name: set service username to Network Service again
   win_service:
     name: "{{test_win_service_name}}"
     username: NT AUTHORITY\NetworkService
-    password: ""
   register: win_service_change_password_network_service_again
 
 - name: check that the service user has been set to Network Service and nothing changed
   assert:
     that:
     - win_service_change_password_network_service_again is not changed
-    - win_service_change_password_network_service_again.username == 'NT AUTHORITY\\NetworkService'
+    - win_service_change_password_network_service_again.username == 'NT AUTHORITY\\NETWORK SERVICE'
     - win_service_change_password_network_service_again.desktop_interact == False
 
 - name: set service username to interact with desktop with existing user to fail
@@ -376,35 +366,32 @@
   win_service:
     name: "{{test_win_service_name}}"
     username: NT AUTHORITY\LocalService
-    password: ""
   register: win_service_change_password_local_service
 
 - name: check that the service user has been set to Local Service
   assert:
     that:
     - win_service_change_password_local_service is changed
-    - win_service_change_password_local_service.username == 'NT AUTHORITY\\LocalService'
+    - win_service_change_password_local_service.username == 'NT AUTHORITY\\LOCAL SERVICE'
     - win_service_change_password_local_service.desktop_interact == False
 
 - name: set service username to Local Service again
   win_service:
     name: "{{test_win_service_name}}"
     username: NT AUTHORITY\LocalService
-    password: ""
   register: win_service_change_password_local_service_again
 
 - name: check that the service user has been set to Local Service and nothing changed
   assert:
     that:
     - win_service_change_password_local_service_again is not changed
-    - win_service_change_password_local_service_again.username == 'NT AUTHORITY\\LocalService'
+    - win_service_change_password_local_service_again.username == 'NT AUTHORITY\\LOCAL SERVICE'
     - win_service_change_password_local_service_again.desktop_interact == False
 
 - name: set service username to Local System
   win_service:
     name: "{{test_win_service_name}}"
     username: LocalSystem
-    password: ""
   register: win_service_change_password_local_system
 
 - name: check that the service user has been set to Local System
@@ -418,7 +405,6 @@
   win_service:
     name: "{{test_win_service_name}}"
     username: LocalSystem
-    password: ""
   register: win_service_change_password_local_system_again
 
 - name: check that the service user has been set to Local System and nothing changed
@@ -431,8 +417,7 @@
 - name: set service username to Local System with desktop interaction
   win_service:
     name: "{{test_win_service_name}}"
-    username: LocalSystem
-    password: ""
+    username: SYSTEM  # tests that you can also set it this way
     desktop_interact: True
   register: win_service_local_system_desktop
 
@@ -446,8 +431,7 @@
 - name: set service username to Local System with desktop interaction again
   win_service:
     name: "{{test_win_service_name}}"
-    username: LocalSystem
-    password: ""
+    username: SYSTEM
     desktop_interact: True
   register: win_service_local_system_desktop_again
 
@@ -513,7 +497,7 @@
 - name: set service username to current user
   win_service:
     name: "{{test_win_service_name}}"
-    username: ".\\{{ansible_user}}"
+    username: "{{ansible_user}}"
     password: "{{ansible_password}}"
   register: win_service_change_password_current_user
 
@@ -521,13 +505,13 @@
   assert:
     that:
     - win_service_change_password_current_user is changed
-    - win_service_change_password_current_user.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user.username|lower == '.\\{{ansible_user|lower}}'
     - win_service_change_password_current_user.desktop_interact == False
 
 - name: set service username to current user again
   win_service:
     name: "{{test_win_service_name}}"
-    username: ".\\{{ansible_user}}"
+    username: "{{ansible_user}}"
     password: "{{ansible_password}}"
   register: win_service_change_password_current_user_again
 
@@ -535,7 +519,7 @@
   assert:
     that:
     - win_service_change_password_current_user_again is not changed
-    - win_service_change_password_current_user_again.username == '.\\{{ansible_user}}'
+    - win_service_change_password_current_user_again.username|lower == '.\\{{ansible_user|lower}}'
     - win_service_change_password_current_user_again.desktop_interact == False
 
 - name: set service display name
@@ -689,7 +673,7 @@
   assert:
     that:
     - win_service_dependency_add is changed
-    - win_service_dependency_add.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+    - win_service_dependency_add.dependencies == ['TestServiceParent2', '{{test_win_service_name}}']
 
 - name: add another dependency to service again
   win_service:
@@ -702,7 +686,7 @@
   assert:
     that:
     - win_service_dependency_add_again is not changed
-    - win_service_dependency_add_again.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+    - win_service_dependency_add_again.dependencies == ['TestServiceParent2', '{{test_win_service_name}}']
 
 - name: remove another dependency to service
   win_service:
@@ -741,7 +725,7 @@
   assert:
     that:
     - win_service_dependency_set_list is changed
-    - win_service_dependency_set_list.dependencies == ['{{test_win_service_name}}', 'TestServiceParent2']
+    - win_service_dependency_set_list.dependencies == ['TestServiceParent2', '{{test_win_service_name}}']
 
 - name: make sure all services are stopped, set to LocalSystem and set to auto start before next test
   win_service:
@@ -794,7 +778,7 @@
     name: "{{test_win_service_name}}"
     state: absent
   register: win_service_removed_failed
-  failed_when: win_service_removed_failed.msg != "Cannot stop service 'Test Service New (TestService)' because it has dependent services. It can only be stopped if the Force flag is set."
+  failed_when: win_service_removed_failed.msg != "Cannot stop service 'Test Service New (" + test_win_service_name + ")' because it has dependent services. It can only be stopped if the Force flag is set."
 
 - name: remove the service while ignoring dependencies
   win_service:
