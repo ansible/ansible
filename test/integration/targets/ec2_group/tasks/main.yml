@@ -317,7 +317,7 @@
                - 'result.group_id.startswith("sg-")'
 
         # ============================================================
-        - name: test state=present for ipv6 (expected changed=true) (CHECK MODE)
+        - name: test state=present for ipv6 (expected changed=false) (CHECK MODE)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
             description: '{{ ec2_group_description }}-2'
@@ -338,7 +338,7 @@
               - 'not result.changed'
 
         # ============================================================
-        - name: test state=present for ipv6 (expected changed=true)
+        - name: test state=present for ipv6 (expected changed=false)
           ec2_group:
             name: '{{ ec2_group_name }}-2'
             description: '{{ ec2_group_description }}-2'
@@ -1259,7 +1259,7 @@
       assert:
         that:
           - 'not result.changed'
-      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined and result.ip_permissions_egress[1].ip_ranges[0].description is undefined
 
     # ============================================================
     - name: test modifying rule and egress rule descriptions (expected changed=true)

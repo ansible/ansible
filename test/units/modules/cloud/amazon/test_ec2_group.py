@@ -75,3 +75,25 @@ def test_from_rule_param():
     assert len(perms) == 1
     assert perms[0].target == '10.0.0.0/8'
     assert perms[0].port_range == (443, 443)
+    v6_rule = {
+        'cidr_ipv6': '64:ff9b::/96',
+        'to_port': 443,
+        'from_port': '443',
+        'proto': 'tcp'
+    }
+    perms = list(group_module.rule_from_rule_params([v6_rule]))
+    assert len(perms) == 1
+    assert perms[0].target == '64:ff9b::/96'
+    assert perms[0].port_range == (443, 443)
+
+    sg_id_rule = {
+        'group_id': 'sg-1234',
+        'to_port': 443,
+        'from_port': '443',
+        'proto': 'tcp'
+    }
+    perms = list(group_module.rule_from_rule_params([sg_id_rule]))
+    assert len(perms) == 1
+    assert perms[0].target == 'sg-1234'
+    assert perms[0].target_type == 'group'
+    assert perms[0].port_range == (443, 443)
