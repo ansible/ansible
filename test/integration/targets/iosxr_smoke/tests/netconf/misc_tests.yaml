@@ -1,0 +1,39 @@
+- debug: msg="START iosxr netconf/misc_tests.yaml on connection={{ ansible_connection }}"
+
+
+# hit module_utils.network.iosxr -> get_oper()
+- name: Setup (interface is up)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    description: test_interface_1
+    enabled: True
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- name: Check intent arguments
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: up
+    delay: 10
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  iosxr_interface:
+    name: GigabitEthernet0/0/0/1
+    state: down
+    provider: "{{ netconf }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'state eq(down)' in result.failed_conditions"
+
+- debug: msg="END iosxr netconf/misc_tests.yaml on connection={{ ansible_connection }}"
