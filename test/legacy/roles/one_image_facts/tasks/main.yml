@@ -23,7 +23,7 @@
 
 - name: Gather facts about the image using ID
   one_image_facts:
-    ids: '{{ image_with_name.images[0].id }}'
+    id: '{{ image_with_name.images[0].id }}'
   register: image_with_ids
 
 - name: Verify image's facts
@@ -38,7 +38,7 @@
 - name: Try to gather facts about an image using a name and ids
   one_image_facts:
     name: '{{ one_image_name }}'
-    ids: '{{ image_with_name.images[0].id }}'
+    id: '{{ image_with_name.images[0].id }}'
   register: image_name_ids
   failed_when: not image_name_ids is failed
 
@@ -69,13 +69,13 @@
     - name: Clone the image first time
       one_image:
         name: '{{ one_image_name }}'
-        action: clone
+        state: cloned
         new_name: '{{ one_image_name }}-clone-1'
 
     - name: Clone the image second time
       one_image:
         name: '{{ one_image_name }}'
-        action: clone
+        state: cloned
         new_name: '{{ one_image_name }}-clone-2'
 
     - name: Fetch all images whose name matches regex
@@ -110,8 +110,8 @@
 
     - name: Rename the second image
       one_image:
-        name: '{{ one_image_name }}-clone-2'
-        action: rename
+        id: '{{ cloned_instances_with_ids.images[1].id }}'
+        state: renamed
         new_name: '{{ one_image_name }}-CLONE-2'
 
     - name: Fetch all images whose name matches regex

@@ -55,6 +55,7 @@ options:
   ids:
     description:
       - A list of images ids whose facts you want to gather.
+    aliases: ['id']
   name:
     description:
       - A C(name) of the image whose facts will be gathered.
@@ -253,7 +254,7 @@ def main():
         "api_url": {"required": False, "type": "str"},
         "api_username": {"required": False, "type": "str"},
         "api_password": {"required": False, "type": "str", "no_log": True},
-        "ids": {"required": False, "type": "list"},
+        "ids": {"required": False, "aliases": ['id'], "type": "list"},
         "name": {"required": False, "type": "str"},
     }
 
