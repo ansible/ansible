@@ -32,8 +32,10 @@ import time
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+from distutils.version import LooseVersion
 
 from ansible import constants as C
+from ansible.release import __version__
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.utils.color import stringc
@@ -101,7 +103,7 @@ class Display:
                 self.cows_available = set([to_text(c) for c in out.split()])
                 if C.ANSIBLE_COW_WHITELIST:
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
-            except:
+            except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
 
@@ -208,24 +210,24 @@ class Display:
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
-        if not removed and not C.DEPRECATION_WARNINGS:
-            return
+        if version and LooseVersion(version) >= LooseVersion(__version__):
+            # not deprecated anymore, its now an error
+            raise AnsibleError("[REMOVED]: %s.\nThis feature's deprecation cycle has ended, please update your playbooks." % msg)
 
-        if not removed:
+        if C.DEPRECATION_WARNINGS:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                removed_in = " This feature will be removed in version %s." % (version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-            new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
-        else:
-            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
+                removed_in = " This feature will be removed in a future release."
+            new_msg = "[DEPRECATION WARNING]: %s. %s Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n" % \
+                      (msg, removed_in)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
-        new_msg = "\n".join(wrapped) + "\n"
+            wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
+            new_msg = "\n".join(wrapped) + "\n"
 
-        if new_msg not in self._deprecations:
-            self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
-            self._deprecations[new_msg] = 1
+            if new_msg not in self._deprecations:
+                self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+                self._deprecations[new_msg] = 1
 
     def warning(self, msg, formatted=False):
 
