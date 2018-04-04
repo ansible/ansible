@@ -479,7 +479,7 @@ def main():
             )
             # check the diff in the other way just in case
             if not doptions:
-                delta_options = dict(
+                doptions = dict(
                     set(existing_options.items()).difference(
                         proposed_options.items())
                 )
