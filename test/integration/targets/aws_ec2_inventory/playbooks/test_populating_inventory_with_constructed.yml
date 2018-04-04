@@ -1,0 +1,142 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  vars:
+    images:
+      us-east-1: ami-4fffc834
+      us-east-2: ami-ea87a78f
+  tasks:
+
+    - name: set up and run refresh_inventory tests
+
+      block:
+
+        - name: set connection information for all tasks
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: yes
+
+        - name: create a VPC to work in
+          ec2_vpc_net:
+            cidr_block: 10.10.0.0/24
+            state: present
+            name: '{{ resource_prefix }}_setup'
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          register: setup_vpc
+
+        - name: create a subnet to use for creating an ec2 instance
+          ec2_vpc_subnet:
+            az: '{{ aws_region }}a'
+            tags: '{{ resource_prefix }}_setup'
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            cidr: 10.10.0.0/24
+            state: present
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          register: setup_subnet
+
+        - name: create a security group to use for creating an ec2 instance
+          ec2_group:
+            name: '{{ resource_prefix }}_setup'
+            description: 'created by Ansible integration tests'
+            state: present
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            <<: *aws_connection_info
+          register: setup_sg
+
+        - name: create an instance, add it to inventory, clean up
+
+          block:
+
+            - name: create a new host
+              ec2:
+                image: "{{ images[aws_region] }}"
+                exact_count: 1
+                count_tag:
+                  Name: '{{ resource_prefix }}'
+                instance_tags:
+                  Name: '{{ resource_prefix }}'
+                  tag1: value1
+                  tag2: value2
+                instance_type: t2.micro
+                wait: yes
+                group_id: '{{ setup_sg.group_id }}'
+                vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+                <<: *aws_connection_info
+
+            - meta: refresh_inventory
+
+            - name: register the keyed sg group name
+              set_fact:
+                sg_group_name: "security_groups_{{ setup_sg.group_id | replace('-', '_') }}"
+
+            - name: register one of the keyed tag groups name
+              set_fact:
+                tag_group_name: "tag_Name_{{ resource_prefix | replace('-', '_') }}"
+
+            - name: assert the keyed groups and groups from constructed config were added to inventory and composite var added to hostvars
+              assert:
+                that:
+                  # There are 9 groups: all, ungrouped, aws_ec2, sg keyed group, 3 tag keyed group (one per tag), arch keyed group, constructed group
+                  - "groups | length == 9"
+                  - "groups[tag_group_name] | length == 1"
+                  - "groups[sg_group_name] | length == 1"
+                  - "groups.arch_x86_64 | length == 1"
+                  - "groups.tag_with_name_key | length == 1"
+                  - vars.hostvars[groups.aws_ec2.0]['test_compose_var_sum'] == 'value1value2'
+
+          always:
+
+            - name: remove setup ec2 instances
+              ec2:
+                image: "{{ images[aws_region] }}"
+                exact_count: 0
+                count_tag:
+                  Name: '{{ resource_prefix }}'
+                instance_type: t2.micro
+                wait: yes
+                group_id: '{{ setup_sg.group_id }}'
+                vpc_subnet_id: '{{ setup_subnet.subnet.id }}'
+                <<: *aws_connection_info
+              ignore_errors: yes
+
+      always:
+
+        - name: remove setup security group
+          ec2_group:
+            name: '{{ resource_prefix }}_setup'
+            description: 'created by Ansible integration tests'
+            state: absent
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove setup subnet
+          ec2_vpc_subnet:
+            az: '{{ aws_region }}a'
+            tags: '{{ resource_prefix }}_setup'
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            cidr: 10.10.0.0/24
+            state: absent
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove setup VPC
+          ec2_vpc_net:
+            cidr_block: 10.10.0.0/24
+            state: absent
+            name: '{{ resource_prefix }}_setup'
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          ignore_errors: yes

@@ -1,0 +1,88 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  vars:
+    images:
+      us-east-1: ami-4fffc834
+      us-east-2: ami-ea87a78f
+  tasks:
+
+    - name: set up and run refresh_inventory tests
+
+      block:
+
+        - name: set connection information for all tasks
+          set_fact:
+            aws_connection_info: &aws_connection_info
+              aws_access_key: "{{ aws_access_key }}"
+              aws_secret_key: "{{ aws_secret_key }}"
+              security_token: "{{ security_token }}"
+              region: "{{ aws_region }}"
+          no_log: yes
+
+        - name: create a VPC to work in
+          ec2_vpc_net:
+            cidr_block: 10.10.0.0/24
+            state: present
+            name: '{{ resource_prefix }}_setup'
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          register: setup_vpc
+
+        - name: create a subnet to use for creating an ec2 instance
+          ec2_vpc_subnet:
+            az: '{{ aws_region }}a'
+            tags: '{{ resource_prefix }}_setup'
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            cidr: 10.10.0.0/24
+            state: present
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          register: setup_subnet
+
+        - name: create a security group to use for creating an ec2 instance
+          ec2_group:
+            name: '{{ resource_prefix }}_setup'
+            description: 'created by Ansible integration tests'
+            state: present
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            <<: *aws_connection_info
+          register: setup_sg
+
+        - include_tasks: test_refresh_inventory.yml
+
+      always:
+
+        - name: remove setup security group
+          ec2_group:
+            name: '{{ resource_prefix }}_setup'
+            description: 'created by Ansible integration tests'
+            state: absent
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove setup subnet
+          ec2_vpc_subnet:
+            az: '{{ aws_region }}a'
+            tags: '{{ resource_prefix }}_setup'
+            vpc_id: '{{ setup_vpc.vpc.id }}'
+            cidr: 10.10.0.0/24
+            state: absent
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          ignore_errors: yes
+
+        - name: remove setup VPC
+          ec2_vpc_net:
+            cidr_block: 10.10.0.0/24
+            state: absent
+            name: '{{ resource_prefix }}_setup'
+            resource_tags:
+              Name: '{{ resource_prefix }}_setup'
+            <<: *aws_connection_info
+          ignore_errors: yes

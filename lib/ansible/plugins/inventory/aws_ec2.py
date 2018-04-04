@@ -307,6 +307,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for connection, region in self._boto3_conn(regions):
             try:
+                # This is important if hostnames are used other than IP addresses; once a host
+                # is terminated those attributes no longer exist, but others may:
+                # if an instance-state-name filter has not been specified, find the running instances
+                if not any([f['Name'] == 'instance_state-name' for f in filters]):
+                    filters.append({'Name': 'instance-state-name', 'Values': ['running']})
                 paginator = connection.get_paginator('describe_instances')
                 reservations = paginator.paginate(Filters=filters).build_full_result().get('Reservations')
                 instances = []
