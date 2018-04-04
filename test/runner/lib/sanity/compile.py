@@ -35,7 +35,7 @@ class CompileTest(SanityMultipleVersion):
         :type args: SanityConfig
         :type targets: SanityTargets
         :type python_version: str
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         # optional list of regex patterns to exclude from tests
         skip_file = 'test/sanity/compile/python%s-skip.txt' % python_version

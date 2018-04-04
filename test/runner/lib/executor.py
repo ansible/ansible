@@ -1183,23 +1183,23 @@ def get_integration_local_filter(args, targets):
     """
     exclude = []
 
-    if os.getuid() != 0:
+    if not args.allow_root and os.getuid() != 0:
         skip = 'needs/root/'
         skipped = [target.name for target in targets if skip in target.aliases]
         if skipped:
             exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require running as root: %s'
+            display.warning('Excluding tests marked "%s" which require --allow-root or running as root: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
-    # consider explicit testing of destructive as though --allow-destructive was given
-    include_destructive = any(target.startswith('destructive/') for target in args.include)
+    override_destructive = set(target for target in args.include if target.startswith('destructive/'))
 
-    if not args.allow_destructive and not include_destructive:
+    if not args.allow_destructive:
         skip = 'destructive/'
-        skipped = [target.name for target in targets if skip in target.aliases]
+        override = [target.name for target in targets if override_destructive & set(target.aliases)]
+        skipped = [target.name for target in targets if skip in target.aliases and target.name not in override]
         if skipped:
-            exclude.append(skip)
-            display.warning('Excluding tests marked "%s" which require --allow-destructive to run locally: %s'
+            exclude.extend(skipped)
+            display.warning('Excluding tests marked "%s" which require --allow-destructive or prefixing with "destructive/" to run locally: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
     if args.python_version.startswith('3'):
@@ -1233,12 +1233,14 @@ def get_integration_docker_filter(args, targets):
             display.warning('Excluding tests marked "%s" which require --docker-privileged to run under docker: %s'
                             % (skip.rstrip('/'), ', '.join(skipped)))
 
+    docker_image = args.docker.split('@')[0]  # strip SHA for proper tag comparison
+
     python_version = 2  # images are expected to default to python 2 unless otherwise specified
 
-    if args.docker.endswith('py3'):
+    if docker_image.endswith('py3'):
         python_version = 3  # docker images ending in 'py3' are expected to default to python 3
 
-    if args.docker.endswith(':default'):
+    if docker_image.endswith(':default'):
         python_version = 3  # docker images tagged 'default' are expected to default to python 3
 
     if args.python:  # specifying a numeric --python option overrides the default python
