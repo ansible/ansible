@@ -1835,6 +1835,47 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 .rst-content .versionmodified{font-style:italic}
 @media screen and (max-width: 480px){.rst-content .sidebar{width:100%}
 }
+@media screen and (min-width: 768px) {
+    
+    .DocSite-globalNav{
+        display: block
+    }
+    
+    #sideBanner{
+        display: block;
+    }
+    
+    .DocSite-sideNav{
+        display: none;
+    }
+    
+    .ansibleNav{
+        height: 45px;
+        width: 100%;
+        font-size: 13px;
+        padding: 0px 60px 0px 0px;
+    }
+
+    .ansibleNav ul {
+        float: right;
+        display: flex;
+        flex-wrap: nowrap;
+        margin-top: 13px;
+    }
+    
+        
+    .ansibleNav ul li{
+        padding: 0px;
+        border-bottom: none;
+    }
+    
+    .ansibleNav ul li a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+        padding: 8px 13px;
+    }
+}
 span[id*='MathJax-Span']{color:#404040}
 .math{text-align:center}
 @font-face{font-family:"Inconsolata";font-style:normal;font-weight:400;src:local("Inconsolata"),local("Inconsolata-Regular"),url(../fonts/Inconsolata-Regular.ttf) format("truetype")}
