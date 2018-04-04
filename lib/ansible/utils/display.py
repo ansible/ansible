@@ -210,17 +210,20 @@ class Display:
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
-        if version and LooseVersion(version) >= LooseVersion(__version__):
+        if not removed and version and LooseVersion(version) >= LooseVersion(__version__):
             # not deprecated anymore, its now an error
             raise AnsibleError("[REMOVED]: %s.\nThis feature's deprecation cycle has ended, please update your playbooks." % msg)
 
         if C.DEPRECATION_WARNINGS:
-            if version:
-                removed_in = " This feature will be removed in version %s." % (version)
+            if removed:
+                new_msg = "[REMOVED]: %s.\nThis feature's deprecation cycle has ended, please update your playbooks." % msg
             else:
-                removed_in = " This feature will be removed in a future release."
-            new_msg = "[DEPRECATION WARNING]: %s. %s Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n" % \
-                      (msg, removed_in)
+                if version:
+                    removed_in = " This feature will be removed in version %s." % (version)
+                else:
+                    removed_in = " This feature will be removed in a future release."
+                new_msg = "[DEPRECATION WARNING]: %s. %s Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n" % \
+                          (msg, removed_in)
 
             wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
             new_msg = "\n".join(wrapped) + "\n"
