@@ -100,7 +100,6 @@ lib/ansible/modules/windows/win_security_policy.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_security_policy.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_service.ps1 PSAvoidUsingPlainTextForPassword
 lib/ansible/modules/windows/win_service.ps1 PSAvoidUsingUserNameAndPassWordParams
-lib/ansible/modules/windows/win_service.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_shell.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_shell.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_stat.ps1 PSAvoidUsingWMICmdlet
