@@ -1,4 +1,4 @@
-.. network-best-practices:
+.. _network-best-practices:
 
 **************************************
 Network Best Practices for Ansible 2.5
@@ -247,7 +247,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
              #jinja2: lstrip_blocks: True
              EOS device info:
                {% for host in groups['eos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
@@ -255,7 +255,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
              IOS device info:
                {% for host in groups['ios'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
@@ -263,7 +263,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
              VyOS device info:
                {% for host in groups['vyos'] %}
-               Hostname: {{ hostvars[host].ansible_net_version }}
+               Hostname: {{ hostvars[host].ansible_net_hostname }}
                Version: {{ hostvars[host].ansible_net_version }}
                Model: {{ hostvars[host].ansible_net_model }}
                Serial: {{ hostvars[host].ansible_net_serialnum }}
