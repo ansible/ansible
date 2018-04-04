@@ -16,11 +16,21 @@
     provider: "{{ connection }}"
   ignore_errors: yes
 
+- name: "Setup: Put interface into no switch port mode"
+  nxos_config:
+    commands:
+      - "no switchport"
+    parents:
+      - "interface {{ intname }}"
+    match: none
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
 - name: "Setup: Cleanup possibly existing acl"
   nxos_acl: &remove
     name: ANSIBLE_ACL
     seq: 10
-    state: absent
+    state: delete_acl
     provider: "{{ connection }}"
   ignore_errors: yes
 
@@ -112,9 +122,9 @@
     nxos_config: *default
     ignore_errors: yes
 
+  always:
   - name: Remove possible configured ACL
     nxos_acl: *remove
     ignore_errors: yes
 
-  always:
   - debug: msg="END connection={{ ansible_connection }} nxos_acl_interface sanity test"
