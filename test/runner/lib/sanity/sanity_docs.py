@@ -23,7 +23,7 @@ class SanityDocsTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         sanity_dir = 'docs/docsite/rst/dev_guide/testing/sanity'
         sanity_docs = set(part[0] for part in (os.path.splitext(name) for name in os.listdir(sanity_dir)) if part[1] == '.rst')

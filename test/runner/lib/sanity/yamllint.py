@@ -29,7 +29,7 @@ class YamllintTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         paths = [
             [i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml')],
