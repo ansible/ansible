@@ -1,0 +1,2 @@
+bufixes:
+- azure_rm_common - change SecurityRule init to use kwargs instead of positional args
