@@ -12,7 +12,7 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: fetch data from Redis
     description:
-      - This looup returns a list of results from a Redis DB corresponding to a list of items given to it
+      - This lookup returns a list of results from a Redis DB corresponding to a list of items given to it
     requirements:
       - redis (python library https://github.com/andymccurdy/redis-py/)
     options:

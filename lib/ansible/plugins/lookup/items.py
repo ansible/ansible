@@ -10,7 +10,7 @@ DOCUMENTATION = """
     version_added: historical
     short_description: list of items
     description:
-      - this looup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
+      - this lookup returns a list of items given to it, if any of the top level items is also a list it will flatten it, but it will not recurse
     notes:
       - this is the standard lookup used for loops in most examples
       - check out the 'flattened' lookup for recursive flattening
