@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 <a id="2.4.4"></a>
 
-## 2.4.4 "Dancing Days" - TBD
+## 2.4.4 "Dancing Days" - 2018-04-04
 
 ### Bugfixes
 * Fix python 3 dictionary runtime error in ios_confg and eos_config

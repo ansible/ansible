@@ -40,9 +40,10 @@ Release status
 ===============   ==========================   =================================================
 Ansible Release   Latest Version               Status
 ===============   ==========================   =================================================
-devel             `2.5`_ (unreleased, trunk)   In development
-2.4               `2.4.3`_ (2018-01-31)        Supported (security **and** general bug fixes)
-2.3               `2.3.2`_ (2017-08-08)        Supported (security **and** critical bug fixes)
+devel             `2.6` (unreleased, trunk)    In development
+2.5               `2.5.0`_ (2018-03-23)        Supported (security **and** general bug fixes)
+2.4               `2.4.4`_ (2018-04-04)        Supported (security **and** critical bug fixes)
+2.3               `2.3.2`_ (2017-08-08)        Unsupported (end of life)
 2.2               `2.2.3`_ (2017-05-09)        Unsupported (end of life)
 2.1               `2.1.6`_ (2017-06-01)        Unsupported (end of life)
 2.0               `2.0.2`_ (2016-04-19)        Unsupported (end of life)
@@ -54,8 +55,10 @@ devel             `2.5`_ (unreleased, trunk)   In development
     security and general bug fixes when it is first released, security and critical bug fixes when
     2.5 is released, and **only** security fixes once 2.6 is released.
 
-.. _2.5: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.4.3: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
+.. Comment: devel used to point here but we're currently revamping our changelog process and have no
+   link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.5.0: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.4.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
 .. _2.3.2: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
 .. _2.1.6: https://github.com/ansible/ansible/blob/stable-2.1/CHANGELOG.md
