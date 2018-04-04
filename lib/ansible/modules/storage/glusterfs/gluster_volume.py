@@ -153,6 +153,16 @@ EXAMPLES = """
       - 192.0.2.10
       - 192.0.2.11
   run_once: true
+
+- name: Remove the bricks from gluster volume
+  gluster_volume:
+    state: present
+    name: testvol
+    bricks: /bricks/brick1/b1,/bricks/brick2/b2
+    cluster:
+      - 10.70.42.85
+    force: true
+  run_once: true
 """
 
 import re
@@ -367,6 +377,8 @@ def remove_bricks(name, removed_bricks, force):
     run_gluster(args)
     # remove-brick operation needs to be followed by commit operation.
     if not force:
+        module.fail_json(msg="Force option is mandatory.")
+    else:
         while retries < max_tries:
             last_brick = removed_bricks[-1]
             out = run_gluster(['volume', 'remove-brick', name, last_brick, 'status'])
@@ -382,7 +394,8 @@ def remove_bricks(name, removed_bricks, force):
             if success:
                 break
             retries += 1
-            #remove-brick still in process, needs to be committed after completion.
+        if not success:
+            # remove-brick still in process, needs to be committed after completion.
             module.fail_json(msg="Exceeded number of tries, check remove-brick status.\n"
                                  "Commit operation needs to be followed.")
 
@@ -416,7 +429,6 @@ def main():
             redundancies=dict(type='int'),
             transport=dict(type='str', default='tcp', choices=['tcp', 'rdma', 'tcp,rdma']),
             bricks=dict(type='str', aliases=['brick']),
-            remove_bricks=dict(type='bool', default=False),
             start_on_create=dict(type='bool', default=True),
             rebalance=dict(type='bool', default=False),
             options=dict(type='dict', default={}),
@@ -435,7 +447,6 @@ def main():
     volume_name = module.params['name']
     cluster = module.params['cluster']
     brick_paths = module.params['bricks']
-    remove_bricks_flag = module.boolean(module.params['remove_bricks'])
     stripes = module.params['stripes']
     replicas = module.params['replicas']
     arbiters = module.params['arbiters']
@@ -500,17 +511,18 @@ def main():
             new_bricks = []
             removed_bricks = []
             all_bricks = []
-            if not remove_bricks_flag:
-                for node in cluster:
-                    for brick_path in brick_paths:
-                        brick = '%s:%s' % (node, brick_path)
-                        all_bricks.append(brick)
-                        if brick not in volumes[volume_name]['bricks']:
-                            new_bricks.append(brick)
-            else:
-                for node in cluster:
-                    for brick_path in brick_paths:
-                        brick = '%s:%s' % (node, brick_path)
+            bricks_in_volume = volumes[volume_name]['bricks']
+
+            for node in cluster:
+                for brick_path in brick_paths:
+                    brick = '%s:%s' % (node, brick_path)
+                    all_bricks.append(brick)
+                    if brick not in bricks_in_volume:
+                        new_bricks.append(brick)
+
+            if not new_bricks and len(all_bricks) < bricks_in_volume:
+                for brick in bricks_in_volume:
+                    if brick not in all_bricks:
                         removed_bricks.append(brick)
 
             if new_bricks:
