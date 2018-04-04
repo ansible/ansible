@@ -584,12 +584,6 @@ class Condition(object):
             func = getattr(self.client, 'update_' + self.method_suffix)
             try:
                 result = run_func_with_change_token_backoff(self.client, self.module, update, func, wait=True)
-            except botocore.exceptions.WaiterError as e:
-                self.module.fail_json_aws(
-                    e,
-                    msg='Change token did not sync, or took too long %s : %s' % (
-                        result['ChangeToken'],
-                        self.client.get_change_token_status(ChangeToken=result['ChangeToken'])))
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not update condition')
         return changed, self.get_condition_by_id(condition_set_id)
