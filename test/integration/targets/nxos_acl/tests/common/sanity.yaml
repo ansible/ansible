@@ -195,7 +195,7 @@
     name: TEST_ACL
     seq: 40
     action: permit
-    proto: 33
+    proto: udp
     src: any
     dest: any
     precedence: network
