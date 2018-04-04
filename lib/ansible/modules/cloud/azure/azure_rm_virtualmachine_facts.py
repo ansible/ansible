@@ -1,8 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018
-# Gustavo Muniz do Carmo <gustavo@esign.com.br>
-# Zim Kalinowski <zikalino@microsoft.com>
+# Copyright (c) 2018 Gustavo Muniz do Carmo <gustavo@esign.com.br>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -19,57 +17,192 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachine_facts
 
-version_added: "2.7"
+version_added: "2.6"
 
 short_description: Get virtual machine facts.
 
 description:
-  - Get facts for all virtual machines of a resource group.
+    - Get facts for all virtual machines of a resource group.
 
 options:
     resource_group:
         description:
-        - Name of the resource group containing the virtual machines (required when filtering by vm name).
-    name:
-        description:
-        - Name of the virtual machine.
+            - Name of the resource group containing the virtual machines.
+        required: true
     tags:
         description:
-        - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
-  - azure
+    - azure
 
 author:
-  - "Gustavo Muniz do Carmo (@gustavomcarmo)"
-  - "Zim Kalinowski (@zikalino)"
+    - "Gustavo Muniz do Carmo (@gustavomcarmo)"
 
 '''
 
 EXAMPLES = '''
-  - name: Get facts for all virtual machines of a resource group
-    azure_rm_virtualmachine_facts:
-      resource_group: Testing
+    - name: Get facts for all virtual machines of a resource group
+      azure_rm_virtualmachine_facts:
+        resource_group: Testing
 
-  - name: Get facts by name
-    azure_rm_virtualmachine_facts:
-      resource_group: Testing
-      name: vm
-
-  - name: Get facts by tags
-    azure_rm_virtualmachine_facts:
-      resource_group: Testing
-      tags:
-        - testing
-        - foo:bar
+    - name: Get facts by tags
+      azure_rm_virtualmachine_facts:
+        resource_group: Testing
+        tags:
+          - testing
+          - foo:bar
 '''
-
 RETURN = '''
-azure_virtualmachines:
+azure_rvirtualmachines:
     description: List of resource group's virtual machines dicts.
     returned: always
     type: list
-    example: [{}]
+    example: [{
+                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/vm-example", 
+                "location": "brazilsouth", 
+                "name": "vm-example", 
+                "properties": {
+                    "hardwareProfile": {
+                        "vmSize": "Standard_A0"
+                    }, 
+                    "instanceView": {
+                        "disks": [
+                            {
+                                "name": "vm-example.vhd", 
+                                "statuses": [
+                                    {
+                                        "code": "ProvisioningState/succeeded", 
+                                        "displayStatus": "Provisioning succeeded", 
+                                        "level": "Info", 
+                                        "time": "2018-04-03T22:22:13.933101Z"
+                                    }
+                                ]
+                            }
+                        ], 
+                        "extensions": [
+                            {
+                                "name": "OmsAgentForLinux", 
+                                "statuses": [
+                                    {
+                                        "code": "ProvisioningState/succeeded", 
+                                        "displayStatus": "Provisioning succeeded", 
+                                        "level": "Info", 
+                                        "message": "Enable succeeded"
+                                    }
+                                ], 
+                                "type": "Microsoft.EnterpriseCloud.Monitoring.OmsAgentForLinux", 
+                                "typeHandlerVersion": "1.4.60.2"
+                            }
+                        ], 
+                        "statuses": [
+                            {
+                                "code": "ProvisioningState/succeeded", 
+                                "displayStatus": "Provisioning succeeded", 
+                                "level": "Info", 
+                                "time": "2018-04-03T22:24:05.21931199999999998Z"
+                            }, 
+                            {
+                                "code": "PowerState/running", 
+                                "displayStatus": "VM running", 
+                                "level": "Info"
+                            }
+                        ], 
+                        "vmAgent": {
+                            "extensionHandlers": [
+                                {
+                                    "status": {
+                                        "code": "ProvisioningState/succeeded", 
+                                        "displayStatus": "Ready", 
+                                        "level": "Info", 
+                                        "message": "Plugin enabled"
+                                    }, 
+                                    "type": "Microsoft.EnterpriseCloud.Monitoring.OmsAgentForLinux", 
+                                    "typeHandlerVersion": "1.4.60.2"
+                                }
+                            ], 
+                            "statuses": [
+                                {
+                                    "code": "ProvisioningState/succeeded", 
+                                    "displayStatus": "Ready", 
+                                    "level": "Info", 
+                                    "message": "Guest Agent is running", 
+                                    "time": "2018-04-04T14:13:41.000Z"
+                                }
+                            ], 
+                            "vmAgentVersion": "2.2.25"
+                        }
+                    }, 
+                    "networkProfile": {
+                        "networkInterfaces": [
+                            {
+                                "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/networkInterfaces/vm-example-nic"
+                            }
+                        ]
+                    }, 
+                    "osProfile": {
+                        "adminUsername": "ubuntu", 
+                        "computerName": "vm-example", 
+                        "linuxConfiguration": {
+                            "disablePasswordAuthentication": true, 
+                            "ssh": {
+                                "publicKeys": [
+                                    {
+                                        "keyData": "ssh-rsa XXXXXXXXXX", 
+                                        "path": "/home/ubuntu/.ssh/authorized_keys"
+                                    }
+                                ]
+                            }
+                        }, 
+                        "secrets": []
+                    }, 
+                    "provisioningState": "Succeeded", 
+                    "storageProfile": {
+                        "dataDisks": [], 
+                        "imageReference": {
+                            "offer": "UbuntuServer", 
+                            "publisher": "Canonical", 
+                            "sku": "16.04-LTS", 
+                            "version": "16.04.201801220"
+                        }, 
+                        "osDisk": {
+                            "caching": "ReadOnly", 
+                            "createOption": "FromImage", 
+                            "diskSizeGB": 30, 
+                            "name": "vm-example.vhd", 
+                            "osType": "Linux", 
+                            "vhd": {
+                                "uri": "https://ubuntu1842.blob.core.windows.net/vhds/vm-example.vhd"
+                            }
+                        }
+                    }, 
+                    "vmId": "77f0006c-0874-42ca-9ec9-e920b36263cf"
+                }, 
+                "resources": [
+                    {
+                        "id": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/virtualMachines/vm-example/extensions/OmsAgentForLinux", 
+                        "location": "brazilsouth", 
+                        "name": "OmsAgentForLinux", 
+                        "properties": {
+                            "autoUpgradeMinorVersion": true, 
+                            "provisioningState": "Succeeded", 
+                            "publisher": "Microsoft.EnterpriseCloud.Monitoring", 
+                            "settings": {
+                                "azureResourceId": "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourcegroups/Testing/providers/microsoft.compute/virtualmachines/vm-example", 
+                                "stopOnMultipleConnections": true, 
+                                "workspaceId": "43ac2095-42c7-4488-924f-bc4cbca63f8d"
+                            }, 
+                            "type": "OmsAgentForLinux", 
+                            "typeHandlerVersion": "1.0"
+                        }, 
+                        "type": "Microsoft.Compute/virtualMachines/extensions"
+                    }
+                ], 
+                "tags": {
+                    "cluster_name": "cluster"
+                }, 
+                "type": "Microsoft.Compute/virtualMachines"
+            }]
 '''
 
 try:
@@ -78,24 +211,16 @@ except:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase, azure_id_to_dict
-from ansible.module_utils.common.dict_transformations import camel_dict_to_snake_dict
-from ansible.module_utils.six.moves.urllib.parse import urlparse
-import re
-
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 AZURE_OBJECT_CLASS = 'VirtualMachine'
-
-AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
-
 
 class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group=dict(type='str'),
-            name=dict(type='str'),
+            resource_group=dict(type='str', required=True),
             tags=dict(type='list')
         )
 
@@ -105,41 +230,20 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         )
 
         self.resource_group = None
-        self.name = None
         self.tags = None
 
         super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec,
-                                                         supports_tags=False,
-                                                         facts_module=True)
+                                                        supports_tags=False,
+                                                        facts_module=True)
 
     def exec_module(self, **kwargs):
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if self.name and not self.resource_group:
-            self.fail("Parameter error: resource group required when filtering by name.")
-        if self.name:
-            self.results['ansible_facts']['azure_virtualmachines'] = self.get_item()
-        else:
-            self.results['ansible_facts']['azure_virtualmachines'] = self.list_items()
+        self.results['ansible_facts']['azure_virtualmachines'] = self.list_items()
 
         return self.results
-
-    def get_item(self):
-        self.log('Get properties for {0}'.format(self.name))
-        item = None
-        result = []
-
-        try:
-            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
-        except CloudError as err:
-            self.module.warn("Error getting virtual machine {0} - {1}".format(self.name, str(err)))
-
-        if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(item)]
-
-        return result
 
     def list_items(self):
         self.log('List all items')
@@ -151,74 +255,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         results = []
         for item in items:
             if self.has_tags(item.tags, self.tags):
-                results.append(self.serialize_vm(self.get_vm(item.name)))
+                vm = self.compute_client.virtual_machines.get(self.resource_group, item.name, expand='instanceview')
+                results.append(self.serialize_obj(vm, AZURE_OBJECT_CLASS))
         return results
-
-    def get_vm(self, name):
-        '''
-        Get the VM with expanded instanceView
-
-        :return: VirtualMachine object
-        '''
-        try:
-            vm = self.compute_client.virtual_machines.get(self.resource_group, name, expand='instanceview')
-            return vm
-        except Exception as exc:
-            self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
-
-    def serialize_vm(self, vm):
-        '''
-        Convert a VirtualMachine object to dict.
-
-        :param vm: VirtualMachine object
-        :return: dict
-        '''
-
-        result = self.serialize_obj(vm, AZURE_OBJECT_CLASS, enum_modules=AZURE_ENUM_MODULES)
-
-        new_result = {}
-        new_result['id'] = vm.id
-        new_result['resource_group'] = re.sub('\\/.*', '', re.sub('.*resourceGroups\\/', '', result['id']))
-        new_result['name'] = vm.name
-        new_result['state'] = 'present'
-        new_result['location'] = vm.location
-        new_result['vm_size'] = result['properties']['hardwareProfile']['vmSize']
-        new_result['admin_username'] = result['properties']['osProfile']['adminUsername']
-        image = result['properties']['storageProfile'].get('imageReference')
-        if image is not None:
-            new_result['image'] = {
-                'publisher': image['publisher'],
-                'sku': image['sku'],
-                'offer': image['offer'],
-                'version': image['version']
-            }
-
-        vhd = result['properties']['storageProfile']['osDisk'].get('vhd')
-        if vhd is not None:
-            url = urlparse(vhd['uri'])
-            new_result['storage_account_name'] = url.netloc.split('.')[0]
-            new_result['storage_container_name'] = url.path.split('/')[1]
-            new_result['storage_blob_name'] = url.path.split('/')[-1]
-
-        new_result['os_disk_caching'] = result['properties']['storageProfile']['osDisk']['caching']
-        new_result['os_type'] = result['properties']['storageProfile']['osDisk']['osType']
-        new_result['data_disks'] = []
-        disks = result['properties']['storageProfile']['dataDisks']
-        for disk_index in range(len(disks)):
-            new_result['data_disks'].append({
-                'lun': disks[disk_index]['lun'],
-                'disk_size_gb': disks[disk_index]['diskSizeGB'],
-                'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
-                'caching': disks[disk_index]['caching']
-            })
-
-        new_result['network_interface_names'] = []
-        nics = result['properties']['networkProfile']['networkInterfaces']
-        for nic_index in range(len(nics)):
-            new_result['network_interface_names'].append(re.sub('.*networkInterfaces/', '', nics[nic_index]['id']))
-
-        new_result['tags'] = vm.tags
-        return new_result
 
 
 def main():
