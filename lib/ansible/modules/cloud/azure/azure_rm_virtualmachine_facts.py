@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachine_facts
 
-version_added: "2.5"
+version_added: "2.6"
 
 short_description: Get virtual machine facts.
 
@@ -224,7 +224,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
-            tags=dict(type='list')
+            tags=dict(type='list'),
+            auth_source=dict(type='str', choices=['auto', 'cli', 'env', 'credential_file', 'msi'], default='auto'),
+            cloud_environment=dict(type='str', default='AzureCloud')
         )
 
         self.results = dict(
