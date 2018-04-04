@@ -478,21 +478,25 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
             if handler:
                 urllib_request._opener.add_handler(handler)
 
+            # Preserve urllib2 compatibility
             if follow_redirects == 'urllib2':
                 return urllib_request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+
+            # Handle disabled redirects
             elif follow_redirects in ['no', 'none', False]:
                 raise urllib_error.HTTPError(newurl, code, msg, hdrs, fp)
 
             method = req.get_method()
 
-            do_redirect = False
+            # Handle non-redirect HTTP status or invalid follow_redirects
             if follow_redirects in ['all', 'yes', True]:
-                if 300 > code or code >= 400:
+                if code < 300 or code >= 400:
                     raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
-
-            if follow_redirects == 'safe':
-                if 300 > code or code >= 400 or method not in ('GET', 'HEAD'):
+            elif follow_redirects == 'safe':
+                if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
                     raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
+            else:
+                raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
 
             try:
                 # Python 2-3.3
@@ -508,8 +512,10 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
 
             # Suport redirect with payload and original headers
             if code in (307, 308):
+                # Preserve payload and headers
                 headers = req.headers
             else:
+                # Do not preserve payload and filter headers
                 data = None
                 headers = dict((k, v) for k, v in req.headers.items()
                                if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
