@@ -59,7 +59,7 @@ devel             `2.6` (unreleased, trunk)    In development
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
-.. _2.5.0: https://github.com/ansible/ansible/blob/stable-2.5/CHANGELOG.md
+.. _2.5.0: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
 .. _2.4.4: https://github.com/ansible/ansible/blob/stable-2.4/CHANGELOG.md
 .. _2.3.3: https://github.com/ansible/ansible/blob/stable-2.3/CHANGELOG.md
 .. _2.2.3: https://github.com/ansible/ansible/blob/stable-2.2/CHANGELOG.md
