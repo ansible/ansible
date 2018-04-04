@@ -149,7 +149,7 @@ class CallbackModule(CallbackBase):
     and put the plugin in <path_to_callback_plugins_folder>
     """
 
-    CALLBACK_VERSION = 1.0
+    CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'grafana_annotations'
     CALLBACK_NEEDS_WHITELIST = True
