@@ -53,6 +53,23 @@
       that:
         - update_origin_http_port.changed
 
+  - name: update restrictions
+    cloudfront_distribution:
+      alias: "{{ cloudfront_alias }}"
+      restrictions:
+        geo_restriction:
+          restriction_type: "whitelist"
+          items:
+            - "US"
+      state: present
+      <<: *aws_connection_info
+    register: update_restrictions
+
+  - name: ensure restrictions was updated
+    assert:
+      that:
+        - update_restrictions.changed
+
   - name: set a random comment
     set_fact:
       comment: "{{'ABCDEFabcdef123456'|shuffle|join }}"
