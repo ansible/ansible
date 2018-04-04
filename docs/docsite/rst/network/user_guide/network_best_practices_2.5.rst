@@ -55,7 +55,7 @@ An ``inventory`` file is an INI-like configuration file that defines the mapping
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file:
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file. Here's what it would look like if you specified your ssh passwords (encrypted with Ansible Vault) among your variables:
 
 .. code-block:: ini
 
@@ -121,6 +121,8 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
                      62633364653238323333633337313163616566383836643030336631333431623631396364663533
                      3665626431626532630a353564323566316162613432373738333064366130303637616239396438
                      9853
+
+If you use ssh-agent, you do not need the ``ansible_ssh_pass`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see the :ref:`behavioral_parameters`.
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
