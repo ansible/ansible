@@ -572,7 +572,7 @@ class ZipArchive(object):
     def unarchive(self):
         cmd = [self.cmd_path, '-o']
         if self.password:
-            cmd.extend(['-P' , self.password])
+            cmd.extend(['-P', self.password])
         if self.opts:
             cmd.extend(self.opts)
         cmd.append(self.src)
@@ -780,7 +780,7 @@ def main():
             src=dict(type='path', required=True),
             original_basename=dict(type='str'),  # used to handle 'dest is a directory' via template, a slight hack
             dest=dict(type='path', required=True),
-            password=dict(required=False, type='str' , default=None),
+            password=dict(required=False, type='str', default=None),
             remote_src=dict(type='bool', default=False),
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),
