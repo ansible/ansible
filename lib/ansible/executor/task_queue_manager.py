@@ -188,22 +188,21 @@ class TaskQueueManager:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
-            if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
-                # we only allow one callback of type 'stdout' to be loaded, so check
-                # the name of the current plugin and type to see if we need to skip
-                # loading this callback plugin
-                callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
-                callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
-                if callback_type == 'stdout':
-                    if callback_name != self._stdout_callback or stdout_callback_loaded:
-                        continue
-                    stdout_callback_loaded = True
-                elif callback_name == 'tree' and self._run_tree:
-                    pass
-                elif not self._run_additional_callbacks or (callback_needs_whitelist and (
-                        C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+            callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
+            callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
+            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+            if callback_type == 'stdout':
+                # we only allow one callback of type 'stdout' to be loaded,
+                if callback_name != self._stdout_callback or stdout_callback_loaded:
                     continue
+                stdout_callback_loaded = True
+            elif callback_name == 'tree' and self._run_tree:
+                # special case for ansible cli option
+                pass
+            elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                    C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
+                # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+                continue
 
             callback_obj = callback_plugin()
             try:
