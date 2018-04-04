@@ -165,6 +165,21 @@ meta_args = dict(
 )
 
 
+class FileException(Exception):
+    def __init__(self, reason, details):
+        self.reason = reason
+        self.details = details
+
+    def __str__(self):
+        return 'Reason: {0}. Details:{1}.'.format(self.reason, self.details)
+
+
+class InvalidSourceException(FileException):
+    def __init__(self, message):
+        super(InvalidSourceException, self).__init__(
+            'Error parsing file', repr(message))
+
+
 class VdirectFile(object):
     def __init__(self, params):
         self.client = rest_client.RestClient(params['vdirect_ip'],
@@ -185,26 +200,31 @@ class VdirectFile(object):
             runnable_file = open(fqn, 'r')
             file_content = runnable_file.read()
 
+            result_to_return = CONFIGURATION_TEMPLATE_CREATED_SUCCESS
             result = template.create_from_source(file_content, template_name, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
-                template.upload_source(file_content, template_name, fail_if_invalid=True)
-                result = CONFIGURATION_TEMPLATE_UPDATED_SUCCESS
-            else:
-                result = CONFIGURATION_TEMPLATE_CREATED_SUCCESS
+                result_to_return = CONFIGURATION_TEMPLATE_UPDATED_SUCCESS
+                result = template.upload_source(file_content, template_name, fail_if_invalid=True)
+
+            if result[rest_client.RESP_STATUS] == 400:
+                raise InvalidSourceException(str(result[rest_client.RESP_STR]))
         elif fqn.endswith(WORKFLOW_EXTENSION):
             workflow = rest_client.WorkflowTemplate(self.client)
 
             runnable_file = open(fqn, 'rb')
             file_content = runnable_file.read()
+
+            result_to_return = WORKFLOW_TEMPLATE_CREATED_SUCCESS
             result = workflow.create_template_from_archive(file_content, fail_if_invalid=True)
             if result[rest_client.RESP_STATUS] == 409:
-                workflow.update_archive(file_content, os.path.splitext(os.path.basename(fqn))[0])
-                result = WORKFLOW_TEMPLATE_UPDATED_SUCCESS
-            else:
-                result = WORKFLOW_TEMPLATE_CREATED_SUCCESS
+                result_to_return = WORKFLOW_TEMPLATE_UPDATED_SUCCESS
+                result = workflow.update_archive(file_content, os.path.splitext(os.path.basename(fqn))[0])
+
+            if result[rest_client.RESP_STATUS] == 400:
+                raise InvalidSourceException(str(result[rest_client.RESP_STR]))
         else:
-            result = WRONG_EXTENSION_ERROR
-        return result
+            result_to_return = WRONG_EXTENSION_ERROR
+        return result_to_return
 
 
 def main():
