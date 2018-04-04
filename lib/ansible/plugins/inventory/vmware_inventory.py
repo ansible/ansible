@@ -49,20 +49,21 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-simple_config_file:
+Sample configuration file for VMware dynamic inventory
 
-    plugin: vmware
-    strict: False
-    hostname: 10.65.223.31
-    username: administrator@vsphere.local
-    password: Esxi@123$%
-    validate_certs: False
-    with_tags: True
+plugin: vmware
+strict: False
+hostname: 10.65.223.31
+username: administrator@vsphere.local
+password: Esxi@123$%
+validate_certs: False
+with_tags: True
 
 '''
 
 import ssl
 import atexit
+from ansible.errors import AnsibleError, AnsibleParserError
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -70,13 +71,15 @@ try:
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
+    raise AnsibleError('"requests" Python module is required for VMware dynamic inventory plugin.'
+                       ' Install using "pip install requests"')
 
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
-    HAS_PYVMOMI = True
 except ImportError:
-    HAS_PYVMOMI = False
+    raise AnsibleError('"PyVmomi" Python module is required for VMware dynamic inventory plugin.'
+                       ' Install using "pip install pyvmomi"')
 
 try:
     from vmware.vapi.lib.connect import get_requests_connector
@@ -95,8 +98,8 @@ try:
 except ImportError:
     HAS_VSPHERE = False
 
-from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.module_utils.six import PY3
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
@@ -119,6 +122,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
                                " Please refer this URL for installation steps"
                                " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
+
         if not HAS_VCLOUD and self.with_tags:
             raise AnsibleError("Unable to find 'vCloud Suite SDK' Python library which is required."
                                " Please refer this URL for installation steps"
@@ -136,8 +140,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """
         session = requests.Session()
         session.verify = self.validate_certs
-        # Disable warning shown at stdout
-        requests.packages.urllib3.disable_warnings()
+        if not self.validate_certs:
+            # Disable warning shown at stdout
+            requests.packages.urllib3.disable_warnings()
 
         vcenter_url = "https://%s/api" % self.hostname
 
@@ -215,8 +220,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if super(InventoryModule, self).verify_file(path):
             if path.endswith(('vmware.yaml', 'vmware.yml')):
                 valid = True
-        if not HAS_REQUESTS or not HAS_PYVMOMI:
-            valid = False
+
+        if HAS_REQUESTS:
+            required_version = 2 if PY3 else 1
+            requests_version = requests.__version__
+            requests_major = int(requests_version.split('.')[0])
+            if requests_major < required_version:
+                raise AnsibleParserError("'requests' library version should"
+                                         " be >= %0.1f, found: %s." % (required_version,
+                                                                       requests_version))
+            valid = True
+
         return valid
 
     def parse(self, inventory, loader, path, cache=False):
@@ -233,7 +247,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self._set_params()
         self.content = self.login()
-        self.rest_content = self.login_vapi()
+        if self.with_tags:
+            self.rest_content = self.login_vapi()
 
         self._populate_from_source()
 
@@ -246,31 +261,32 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         hostvars = {}
         objects = self.get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
 
-        tag_svc = Tag(self.rest_content)
-        tag_association = TagAssociation(self.rest_content)
+        if self.with_tags:
+            tag_svc = Tag(self.rest_content)
+            tag_association = TagAssociation(self.rest_content)
 
-        tags_info = dict()
-        tags = tag_svc.list()
-        for tag in tags:
-            tag_obj = tag_svc.get(tag)
-            tags_info[tag_obj.id] = tag_obj.name
-            if tag_obj.name not in cacheable_results:
-                cacheable_results[tag_obj.name] = {'hosts': []}
-                self.inventory.add_group(tag_obj.name)
+            tags_info = dict()
+            tags = tag_svc.list()
+            for tag in tags:
+                tag_obj = tag_svc.get(tag)
+                tags_info[tag_obj.id] = tag_obj.name
+                if tag_obj.name not in cacheable_results:
+                    cacheable_results[tag_obj.name] = {'hosts': []}
+                    self.inventory.add_group(tag_obj.name)
 
         for temp_vm_object in objects:
             for temp_vm_object_property in temp_vm_object.propSet:
                 # VMware does not provide a way to uniquely identify VM by its name
                 # i.e. there can be two virtual machines with same name
                 # Appending "_" and VMware UUID to make it unique
-                current_host = temp_vm_object_property.val + "_" + temp_vm_object.obj.config.uuid
+                current_host = temp_vm_object_property.val + "_" + temp_vm_object.obj.config.instanceUuid
 
                 if current_host not in hostvars:
                     hostvars[current_host] = {}
                     self.inventory.add_host(current_host)
 
                     # Only gather facts related to tag if vCloud and vSphere is installed.
-                    if HAS_VCLOUD and HAS_VSPHERE:
+                    if HAS_VCLOUD and HAS_VSPHERE and self.with_tags:
                         # Add virtual machine to appropriate tag group
                         vm_mo_id = temp_vm_object.obj._GetMoId()
                         vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
@@ -287,6 +303,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         self.inventory.add_group(vm_power)
                     cacheable_results[vm_power].append(current_host)
                     self.inventory.add_child(vm_power, current_host)
+
+                    # Based on guest id
+                    vm_guest_id = temp_vm_object.obj.config.guestId
+                    if vm_guest_id and vm_guest_id not in cacheable_results:
+                        cacheable_results[vm_guest_id] = []
+                        self.inventory.add_group(vm_guest_id)
+                    cacheable_results[vm_guest_id].append(current_host)
+                    self.inventory.add_child(vm_guest_id, current_host)
+
         return cacheable_results
 
     def get_managed_objects_properties(self, vim_type, properties=None):
