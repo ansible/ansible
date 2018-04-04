@@ -32,7 +32,7 @@ class ShellcheckTest(SanitySingleVersion):
         """
         :type args: SanityConfig
         :type targets: SanityTargets
-        :rtype: SanityResult
+        :rtype: TestResult
         """
         with open('test/sanity/shellcheck/skip.txt', 'r') as skip_fd:
             skip_paths = set(skip_fd.read().splitlines())
