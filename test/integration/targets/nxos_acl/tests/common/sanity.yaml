@@ -151,7 +151,7 @@
     name: TEST_ACL
     seq: 30
     action: deny
-    proto: udp
+    proto: 24
     src: any
     dest: any
     precedence: network
