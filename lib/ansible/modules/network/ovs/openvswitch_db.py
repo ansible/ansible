@@ -127,7 +127,7 @@ def map_config_to_obj(module):
     col_value = match.group(3)
     col_value_to_dict = {}
     if col_value and col_value != '{}':
-        for kv in col_value[1:-1].split(','):
+        for kv in col_value[1:-1].split(', '):
             k, v = kv.split('=')
             col_value_to_dict[k.strip()] = v.strip()
 
