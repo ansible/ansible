@@ -690,7 +690,7 @@ def main():
         uuid = get_vm_uuid(module, p['name'])
         # Bit of a chicken and egg problem here for VMs with state == deleted.
         # If they're going to be removed in this play, we have to lookup the
-        # uuid. If they're already deleted there's nothing to looup.
+        # uuid. If they're already deleted there's nothing to lookup.
         # So if state == deleted and get_vm_uuid() returned '', the VM is already
         # deleted and there's nothing else to do.
         if uuid is None and vm_state == 'deleted':
