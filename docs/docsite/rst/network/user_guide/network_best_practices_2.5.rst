@@ -45,74 +45,82 @@ The examples on this page use the following structure:
 
    .
    ├── facts-demo.yml
-   ├── group_vars
-   │   ├── eos.yml
-   │   └── ios.yml
    └── inventory
 
 
-Inventory
----------
+Inventory, Connections, Credentials: Grouping Devices and Variables
+-------------------------------------------------------------------
 
 An ``inventory`` file is an INI-like configuration file that defines the mapping of hosts into groups.
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file:
 
-Connection & Credentials (group_vars)
--------------------------------------
+.. code-block:: ini
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using ``group_vars``.
+   [all:vars]
+   # these defaults can be overridden for any group in the [group:vars] section
+   ansible_connection=network_cli
+   ansible_user=ansible
 
-**group_vars/eos.yml**
+   [switches:children]
+   eos
+   ios
+   vyos
 
-.. code-block:: yaml
+   [eos]
+   veos01 ansible_host=veos-01.example.net
+   veos02 ansible_host=veos-02.example.net
+   veos03 ansible_host=veos-03.example.net
+   veos04 ansible_host=veos-04.example.net
 
-   ansible_connection: network_cli
-   ansible_network_os: eos
-   ansible_user: myuser
-   ansible_ssh_pass: !vault |
+   [eos:vars]
+   ansible_become=yes
+   ansible_become_method=enable
+   ansible_network_os=eos
+   ansible_user=my_eos_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      37373735393636643261383066383235363664386633386432343236663533343730353361653735
                      6131363539383931353931653533356337353539373165320a316465383138636532343463633236
                      37623064393838353962386262643230303438323065356133373930646331623731656163623333
                      3431353332343530650a373038366364316135383063356531633066343434623631303166626532
                      9562
-   ansible_become: yes
-   ansible_become_method: enable
 
-**group_vars/ios.yml**
+   [ios]
+   ios01 ansible_host=ios-01.example.net
+   ios02 ansible_host=ios-02.example.net
+   ios03 ansible_host=ios-03.example.net
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: ios
-   ansible_user: myiosuser
-   ansible_ssh_pass: !vault |
+   [ios:vars]
+   ansible_become=yes
+   ansible_become_method=enable
+   ansible_network_os=ios
+   ansible_user=my_ios_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      34623431313336343132373235313066376238386138316466636437653938623965383732373130
                      3466363834613161386538393463663861636437653866620a373136356366623765373530633735
                      34323262363835346637346261653137626539343534643962376139366330626135393365353739
                      3431373064656165320a333834613461613338626161633733343566666630366133623265303563
                      8472
-   ansible_become: yes
-   ansible_become_method: enable
 
-**group_vars/vyos.yml**
+   [vyos]
+   vyos01 ansible_host=vyos-01.example.net
+   vyos02 ansible_host=vyos-02.example.net
+   vyos03 ansible_host=vyos-03.example.net
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: vyos
-   ansible_user: myvyosuser
-   ansible_ssh_pass: !vault |
+   [vyos:vars]
+   ansible_network_os=vyos
+   ansible_user=my_vyos_user
+   ansible_ssh_pass= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      39336231636137663964343966653162353431333566633762393034646462353062633264303765
                      6331643066663534383564343537343334633031656538370a333737656236393835383863306466
                      62633364653238323333633337313163616566383836643030336631333431623631396364663533
                      3665626431626532630a353564323566316162613432373738333064366130303637616239396438
                      9853
-
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
@@ -139,14 +147,13 @@ Privilege escalation
 
 Certain network platforms, such as eos and ios, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible version 2.5 added support for ``become`` when using ``connection: network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
-**group_vars/eos.yml**
+.. code-block:: ini
 
-.. code-block:: yaml
-
-   ansible_connection: network_cli
-   ansible_network_os: eos
-   ansible_become: yes
-   ansible_become_method: enable
+   [eos:vars]
+   ansible_connection=network_cli
+   ansible_network_os=eos
+   ansible_become=yes
+   ansible_become_method=enable
 
 For more information, see the :ref:`using become with network modules<become-network>` guide.
 
