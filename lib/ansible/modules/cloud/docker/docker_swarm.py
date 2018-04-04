@@ -18,7 +18,7 @@ module: docker_swarm
 
 short_description: Manage Swarm cluster.
 
-version_added: "2.5"
+version_added: "2.6"
 
 description:
      - Init a new Swarm cluster
@@ -34,7 +34,7 @@ options:
                 ``advertise_addr`` is not specified, it will be automatically
                 detected when possible.
         required: false
-    listen_addr: 
+    listen_addr:
         description:
             - Listen address used for inter-manager
                 communication, as well as determining the networking interface
@@ -78,31 +78,31 @@ options:
             - Maximum number of tasks history stored.
     snapshot_interval:
         description: Number of logs entries between snapshot.
-    keep_old_snapshots: 
+    keep_old_snapshots:
         description: Number of snapshots to keep beyond the current snapshot.
-    log_entries_for_slow_followers: 
+    log_entries_for_slow_followers:
         description: Number of log entries to keep around to sync up slow followers after a snapshot is created.
     heartbeat_tick:
         description: Amount of ticks (in seconds) between each heartbeat.
-    election_tick: 
+    election_tick:
         description: Amount of ticks (in seconds) needed without a leader to trigger a new election.
-    dispatcher_heartbeat_period: 
+    dispatcher_heartbeat_period:
         description: The delay for an agent to send a heartbeat to the dispatcher.
-    node_cert_expiry: 
+    node_cert_expiry:
         description: Automatic expiry for nodes certificates.
-    name: 
+    name:
         description: Swarm's name
-    labels: 
+    labels:
         description: User-defined key/value metadata.
-    signing_ca_cert: 
+    signing_ca_cert:
         description: The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
-    signing_ca_key: 
+    signing_ca_key:
         description: The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
-    ca_force_rotate: 
+    ca_force_rotate:
         description: An integer whose purpose is to force swarm
                 to generate a new signing CA certificate and key, if none have
                 been specified.
-    autolock_managers: 
+    autolock_managers:
         description: If set, generate a key and use it to lock data stored on the managers.
         type: bool
 
@@ -140,7 +140,7 @@ EXAMPLES = '''
   docker_swarm:
     state: "remove"
     node_id: "mynode"
-    
+
 '''
 
 RETURN = '''
@@ -169,7 +169,7 @@ actions:
   returned: when action failed.
   type: list
   example: "['This cluster is already a swarm cluster']"
-  
+
 '''
 
 import json
@@ -182,6 +182,7 @@ except ImportError:
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 
+
 class TaskParameters(DockerBaseClass):
     def __init__(self, client):
         super(TaskParameters, self).__init__()
@@ -192,7 +193,7 @@ class TaskParameters(DockerBaseClass):
         self.force_new_cluster = None
         self.remote_addrs = None
         self.join_token = None
-        
+
         # Spec
         self.snapshot_interval = None
         self.task_history_retention_limit = None
@@ -242,7 +243,6 @@ class SwarmManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.parameters = TaskParameters(client)
-        
 
     def __call__(self):
         choice_map = {
@@ -251,9 +251,8 @@ class SwarmManager(DockerBaseClass):
             "leave": self.leave,
             "remove": self.remove
         }
-        
-        choice_map.get(self.parameters.state)()
 
+        choice_map.get(self.parameters.state)()
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -262,7 +261,7 @@ class SwarmManager(DockerBaseClass):
         try:
             data = self.client.inspect_swarm()
             if data:
-                json_str = json.dumps(data,ensure_ascii=False)
+                json_str = json.dumps(data, ensure_ascii=False)
                 self.swarm_info = json.loads(json_str)
                 return True
         except APIError:
@@ -273,10 +272,11 @@ class SwarmManager(DockerBaseClass):
             self.results['actions'].append("This cluster is already a swarm cluster: %s" % (self.swarm_info['ID']))
             self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
             return
-        
+
         try:
-            self.client.init_swarm(advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
-                   force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
+            self.client.init_swarm(
+                advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
+                force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
         except APIError as exc:
             self.fail("Can not create a new Swarm Cluster: %s" % exc)
 
@@ -284,7 +284,6 @@ class SwarmManager(DockerBaseClass):
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info['ID']))
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
-
 
     def __isSwarmNode(self):
         info = self.client.info()
@@ -298,10 +297,11 @@ class SwarmManager(DockerBaseClass):
     def join(self):
         if self.__isSwarmNode():
             self.results['actions'].append("This node is already part of a swarm.")
-            return 
+            return
         try:
-            self.client.join_swarm(remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
-                   advertise_addr=self.parameters.advertise_addr)
+            self.client.join_swarm(
+                remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
+                advertise_addr=self.parameters.advertise_addr)
         except APIError as exc:
             self.fail("Can not join the Swarm Cluster: %s" % exc)
         self.results['actions'].append("New node is added to swarm cluster")
@@ -310,14 +310,13 @@ class SwarmManager(DockerBaseClass):
     def leave(self):
         if not(self.__isSwarmNode()):
             self.results['actions'].append("This node is not part of a swarm.")
-            return 
+            return
         try:
             self.client.leave_swarm(force=self.parameters.force)
         except APIError as exc:
             self.fail("This node can not leave the Swarm Cluster: %s" % exc)
         self.results['actions'].append("Node has leaved the swarm cluster")
         self.results['changed'] = True
-
 
     def __get_node_info(self):
         try:
@@ -335,25 +334,26 @@ class SwarmManager(DockerBaseClass):
                 return True
             sleep(5)
         return False
-    
+
     def remove(self):
         if not(self.__isSwarmManager()):
             self.fail("This node is not a manager.")
-        
+
         try:
             status_down = self.__check_node_is_down()
         except APIError:
             return
-        
+
         if not(status_down):
             self.fail("Can not remove the node. The status node is ready and not down.")
 
         try:
-            self.client.remove_node(node_id=self.parameters.node_id,force=self.parameters.force)
+            self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
         except APIError as exc:
             self.fail("Can not remove the node from the Swarm Cluster: %s" % exc)
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
+
 
 def main():
     argument_spec = dict(
@@ -382,7 +382,7 @@ def main():
 
     required_if = [
         ('state', 'init', ['advertise_addr']),
-        ('state', 'join', ['advertise_addr','remote_addrs','join_token']),
+        ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
         ('state', 'remove', ['node_id']),
     ]
 
@@ -397,7 +397,7 @@ def main():
         result='',
         actions=[]
     )
-    
+
     SwarmManager(client, results)()
     client.module.exit_json(**results)
 
