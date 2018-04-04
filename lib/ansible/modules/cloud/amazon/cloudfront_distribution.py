@@ -1691,7 +1691,7 @@ class CloudFrontValidationManager(object):
                                               rest not in geo_restriction_items])
             valid_restrictions = ansible_list_to_cloudfront_list(geo_restriction_items)
             valid_restrictions['restriction_type'] = geo_restriction.get('restriction_type')
-            return valid_restrictions
+            return {'geo_restriction': valid_restrictions}
         except Exception as e:
             self.module.fail_json_aws(e, msg="Error validating restrictions")
 
