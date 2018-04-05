@@ -50,6 +50,7 @@ options:
         svn checkout --force; if force is specified then existing files with different content are reverted
     type: bool
     default: "no"
+    version_added: "2.6"
   username:
     description:
       - C(--username) parameter passed to svn.
