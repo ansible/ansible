@@ -141,23 +141,33 @@ EXAMPLES = '''
     name: foo
     update_cache: yes
 
-- name: Install apache service but avoid starting it immediately
-  apt: name=apache2 state=present
+- name: Install apache httpd but avoid starting it immediately (state=present is optional)
+  apt:
+    name: apache2
+    state: present
   environment:
     RUNLEVLEL: 1
 
 - name: Remove "foo" package
-  apt: name=foo state=absent
+  apt:
+    name: foo
+    state: absent
 
 - name: Install the package "foo"
   apt:
     name: foo
-    state: present
+
+- name: Install a list of packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - foo
+    - foo-tools
 
 - name: Install the version '1.00' of package "foo"
   apt:
     name: foo=1.00
-    state: present
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
   apt:
