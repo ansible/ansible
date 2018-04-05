@@ -11,3 +11,4 @@ ANSIBLE_CACHE_PLUGIN=jsonfile ANSIBLE_CACHE_PLUGIN_CONNECTION="${MYTMPDIR}" ansi
 
 ANSIBLE_CACHE_PLUGIN=jsonfile ANSIBLE_CACHE_PLUGIN_CONNECTION="${MYTMPDIR}" ansible-playbook -i ../../inventory --flush-cache "$@" set_fact_no_cache.yml
 
+ansible-playbook -i ../../inventory "$@" set_fact_loop.yml

@@ -1,0 +1,44 @@
+---
+- name: Run set_fact loop tests
+  hosts: localhost
+  tasks:
+    - name: debug items
+      debug:
+        var: item
+      loop:
+        - a
+        - b
+        - "{{ does_not_exist|default() }}"
+      when: item != ""
+
+    - name: set_fact loop with list
+      set_fact:
+        list_of_items: "{{ (list_of_items|default([])) + [item] }}"
+      loop:
+        - a
+        - b
+        - "{{ does_not_exist|default() }}"
+      when: item != ""
+
+    - name: assert that list_of_items is correct
+      assert:
+        that:
+          - "list_of_items == ['a', 'b']"
+          - "list_of_items|length == 2"
+
+    - name: set_fact loop with dict
+      set_fact:
+        dict_of_items: "{{ (dict_of_items|default({})) | combine({item.key: item.value }) }}"
+      # no idea how to do this with `loop`
+      with_dict:
+        a: b
+        b: d
+        c: "{{ does_not_exist|default() }}"
+      when: item.value != ""
+
+    - name: assert that dict_of_items is correct
+      assert:
+        that:
+          - "'a' in dict_of_items and dict_of_items.a == 'b'"
+          - "'b' in dict_of_items and dict_of_items.b == 'd'"
+          - "dict_of_items|length == 2"
