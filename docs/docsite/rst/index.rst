@@ -1,4 +1,4 @@
-:tocdepth: 3
+.. _ansible_documentation:
 
 Ansible Documentation
 =====================
@@ -28,19 +28,19 @@ Ansible releases a new major release of Ansible approximately every two months. 
    porting_guides/porting_guides
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Using Ansible
 
    user_guide/index
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contributing to Ansible
 
    community/index
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Extending Ansible
 
    dev_guide/index
