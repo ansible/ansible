@@ -451,7 +451,7 @@ class Condition(object):
         updates.extend([{'Action': 'DELETE', 'RegexPatternString': pattern} for pattern in extra])
         run_func_with_change_token_backoff(self.client, self.module,
                                            {'RegexPatternSetId': pattern_set['RegexPatternSetId'], 'Updates': updates},
-                                           self.client.update_regex_pattern_set)
+                                           self.client.update_regex_pattern_set, wait=True)
         return self.get_regex_pattern_set_with_backoff(pattern_set['RegexPatternSetId'])['RegexPatternSet']
 
     def delete_unused_regex_pattern(self, regex_pattern_set_id):
@@ -466,8 +466,10 @@ class Condition(object):
 
             run_func_with_change_token_backoff(self.client, self.module,
                                                {'RegexPatternSetId': regex_pattern_set_id},
-                                               self.client.delete_regex_pattern_set)
+                                               self.client.delete_regex_pattern_set, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            if e.response['Error']['Code'] == 'WAFNonexistentItemException':
+                return
             self.module.fail_json_aws(e, msg='Could not delete regex pattern')
 
     def get_condition_by_name(self, name):
@@ -537,6 +539,7 @@ class Condition(object):
             func = getattr(self.client, 'update_' + self.method_suffix)
             params = self.format_for_deletion(current_condition)
             try:
+                # We do not need to wait for the conditiontuple delete because we wait later for the delete_* call
                 run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not delete filters from condition')
@@ -544,7 +547,7 @@ class Condition(object):
         params = dict()
         params[self.conditionsetid] = condition_set_id
         try:
-            run_func_with_change_token_backoff(self.client, self.module, params, func)
+            run_func_with_change_token_backoff(self.client, self.module, params, func, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete condition')
         # tidy up regex patterns
@@ -580,7 +583,7 @@ class Condition(object):
             update['Updates'] = missing + extra
             func = getattr(self.client, 'update_' + self.method_suffix)
             try:
-                run_func_with_change_token_backoff(self.client, self.module, update, func)
+                result = run_func_with_change_token_backoff(self.client, self.module, update, func, wait=True)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not update condition')
         return changed, self.get_condition_by_id(condition_set_id)
