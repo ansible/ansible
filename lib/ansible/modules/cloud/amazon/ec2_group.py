@@ -769,7 +769,7 @@ def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, pu
             elif current_rules.issuperset(desired_rules) and not purge:
                 module.warn(group_id + " " + rule_key + " Current: {0}, issuperset Desired: {1}".format(current_rules, desired_rules))
                 return group
-            sleep(1)
+            sleep(10)
             group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
         module.fail_json(msg="Failed on " + group_id + " " + rule_key + " situation : {0}. Current: {1}, Desired: {2}".format(current_rules ^ set(desired_rules), current_rules, desired_rules))
         return group
@@ -854,7 +854,7 @@ def main():
 
     verify_rules_with_descriptions_permitted(client, module, rules, rules_egress)
     group, groups = group_exists(client, module, vpc_id, group_id, name)
-    group_created_new = bool(group)
+    group_created_new = not bool(group)
 
     # Ensure requested group is absent
     if state == 'absent':
@@ -928,6 +928,8 @@ def main():
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             rule = Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)
+            if rule in current_egress:
+                named_tuple_egress_list.append(rule)
             if rule not in current_egress:
                 current_egress.append(rule)
 
@@ -976,9 +978,6 @@ def main():
         new_egress_permissions = rules_to_permissions(set(named_tuple_egress_list) - set(current_egress))
         # Authorize new rules
         changed |= add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'], changed)
-
-        if not module.check_mode:
-            module.fail_json(msg=str(group_created_new))
 
         if group_created_new and module.params.get('rules') is None and module.params.get('rules_egress') is None:
             # A new group with no rules provided is already being awaited.
