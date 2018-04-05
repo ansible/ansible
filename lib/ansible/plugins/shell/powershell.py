@@ -1096,6 +1096,27 @@ $exec_wrapper = {
     $DebugPreference = "Continue"
     $ErrorActionPreference = "Stop"
 
+    # become process is run under a different console to the WinRM one so we
+    # need to set the UTF-8 codepage again
+    Add-Type -Debug:$false -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace Ansible
+{
+    public class ConsoleCP
+    {
+        [DllImport("kernel32.dll")]
+        public static extern bool SetConsoleCP(UInt32 wCodePageID);
+
+        [DllImport("kernel32.dll")]
+        public static extern bool SetConsoleOutputCP(UInt32 wCodePageID);
+    }
+}
+'@
+    [Ansible.ConsoleCP]::SetConsoleCP(65001) > $null
+    [Ansible.ConsoleCP]::SetConsoleOutputCP(65001) > $null
+
     Function ConvertTo-HashtableFromPsCustomObject($myPsObject) {
         $output = @{}
         $myPsObject | Get-Member -MemberType *Property | % {
@@ -1142,8 +1163,8 @@ $exec_wrapper = {
     }
 
     $output = $entrypoint.Run($payload)
-
-    Write-Output $output
+    # base64 encode the output so the non-ascii characters are preserved
+    Write-Output ([System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Write-Output $output))))
 } # end exec_wrapper
 
 Function Dump-Error ($excep) {
@@ -1262,10 +1283,11 @@ Function Run($payload) {
 
         $result = [Ansible.BecomeUtil]::RunAsUser($username, $password, $lp_command_line, $lp_current_directory, $payload_string, $logon_flags, $logon_type)
         $stdout = $result.StandardOut
+        $stdout = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($stdout.Trim()))
         $stderr = $result.StandardError
         $rc = $result.ExitCode
 
-        [Console]::Out.WriteLine($stdout.Trim())
+        [Console]::Out.WriteLine($stdout)
         [Console]::Error.WriteLine($stderr.Trim())
     } Catch {
         $excep = $_
