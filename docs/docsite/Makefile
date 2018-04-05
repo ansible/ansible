@@ -112,4 +112,4 @@ epub:
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
-	@echo "Output is in $(BUILDDIR)/$(rst:.rst=.html)"
+	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"
