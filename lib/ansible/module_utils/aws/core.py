@@ -125,11 +125,10 @@ class AnsibleAWSModule(object):
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
         return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
-    def resource(self, service, retry_decorator=None):
+    def resource(self, service):
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self, boto3=True)
-        conn = boto3_conn(self, conn_type='resource', resource=service,
+        return boto3_conn(self, conn_type='resource', resource=service,
                           region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        return conn if retry_decorator is None else _RetryingBotoClientWrapper(conn, retry_decorator)
 
     def fail_json_aws(self, exception, msg=None):
         """call fail_json with processed exception
