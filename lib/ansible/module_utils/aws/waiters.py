@@ -119,53 +119,89 @@ ec2_data = {
 }
 
 
-def model_for(name):
+waf_data = {
+    "version": 2,
+    "waiters": {
+        "ChangeTokenInSync": {
+            "delay": 20,
+            "maxAttempts": 60,
+            "operation": "GetChangeTokenStatus",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "ChangeTokenStatus == 'INSYNC'",
+                    "state": "success"
+                },
+                {
+                    "matcher": "error",
+                    "expected": "WAFInternalErrorException",
+                    "state": "retry"
+                }
+            ]
+        }
+    }
+}
+
+
+def ec2_model(name):
     ec2_models = core_waiter.WaiterModel(waiter_config=ec2_data)
     return ec2_models.get_waiter(name)
+
+
+def waf_model(name):
+    waf_models = core_waiter.WaiterModel(waiter_config=waf_data)
+    return waf_models.get_waiter(name)
 
 
 waiters_by_name = {
     ('EC2', 'route_table_exists'): lambda ec2: core_waiter.Waiter(
         'route_table_exists',
-        model_for('RouteTableExists'),
+        ec2_model('RouteTableExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_route_tables
         )),
     ('EC2', 'subnet_exists'): lambda ec2: core_waiter.Waiter(
         'subnet_exists',
-        model_for('SubnetExists'),
+        ec2_model('SubnetExists'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_has_map_public'): lambda ec2: core_waiter.Waiter(
         'subnet_has_map_public',
-        model_for('SubnetHasMapPublic'),
+        ec2_model('SubnetHasMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_no_map_public'): lambda ec2: core_waiter.Waiter(
         'subnet_no_map_public',
-        model_for('SubnetNoMapPublic'),
+        ec2_model('SubnetNoMapPublic'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_has_assign_ipv6'): lambda ec2: core_waiter.Waiter(
         'subnet_has_assign_ipv6',
-        model_for('SubnetHasAssignIpv6'),
+        ec2_model('SubnetHasAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_no_assign_ipv6'): lambda ec2: core_waiter.Waiter(
         'subnet_no_assign_ipv6',
-        model_for('SubnetNoAssignIpv6'),
+        ec2_model('SubnetNoAssignIpv6'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
         )),
     ('EC2', 'subnet_deleted'): lambda ec2: core_waiter.Waiter(
         'subnet_deleted',
-        model_for('SubnetDeleted'),
+        ec2_model('SubnetDeleted'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_subnets
+        )),
+    ('WAF', 'change_token_in_sync'): lambda waf: core_waiter.Waiter(
+        'change_token_in_sync',
+        waf_model('ChangeTokenInSync'),
+        core_waiter.NormalizedOperationMethod(
+            waf.get_change_token_status
         )),
 }
 
