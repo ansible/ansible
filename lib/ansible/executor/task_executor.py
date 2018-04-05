@@ -597,10 +597,13 @@ class TaskExecutor:
                     failed_when_result = False
                 return failed_when_result
 
-            if 'ansible_facts' in result and self._task.action not in ('set_fact', 'include_vars'):
-                vars_copy.update(namespace_facts(result['ansible_facts']))
-                if C.INJECT_FACTS_AS_VARS:
-                    vars_copy.update(clean_facts(result['ansible_facts']))
+            if 'ansible_facts' in result:
+                if self._task.action in ('set_fact', 'include_vars'):
+                    vars_copy.update(result['ansible_facts'])
+                else:
+                    vars_copy.update(namespace_facts(result['ansible_facts']))
+                    if C.INJECT_FACTS_AS_VARS:
+                        vars_copy.update(clean_facts(result['ansible_facts']))
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -655,10 +658,13 @@ class TaskExecutor:
         if self._task.register:
             variables[self._task.register] = wrap_var(result)
 
-        if 'ansible_facts' in result and self._task.action not in ('set_fact', 'include_vars'):
-            variables.update(namespace_facts(result['ansible_facts']))
-            if C.INJECT_FACTS_AS_VARS:
-                variables.update(clean_facts(result['ansible_facts']))
+        if 'ansible_facts' in result:
+            if self._task.action in ('set_fact', 'include_vars'):
+                variables.update(result['ansible_facts'])
+            else:
+                variables.update(namespace_facts(result['ansible_facts']))
+                if C.INJECT_FACTS_AS_VARS:
+                    variables.update(clean_facts(result['ansible_facts']))
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
