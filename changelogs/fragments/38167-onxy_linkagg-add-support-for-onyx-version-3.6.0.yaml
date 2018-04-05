@@ -1,0 +1,2 @@
+bugfixes:
+- Fix mlag summary json parsing for onyx version 3.6.6000 and above https://github.com/ansible/ansible/pull/38191
