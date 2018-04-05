@@ -620,6 +620,7 @@ files:
   $modules/system/getent.py: bcoca
   $modules/system/gluster_volume.py: rosmo
   $modules/system/group.py: $team_ansible sfromm
+  $modules/system/interfaces_file.py: hryamzik obourdon
   $modules/system/iptables.py: LinusU
   $modules/system/java_cert.py:
   $modules/system/kernel_blacklist.py: matze
