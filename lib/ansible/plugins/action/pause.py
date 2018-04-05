@@ -22,8 +22,10 @@ import signal
 import termios
 import time
 import tty
+import sys
 
-from os import isatty
+from os import isatty, ttyname
+
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_text
@@ -121,8 +123,6 @@ class ActionModule(ActionBase):
         result['start'] = to_text(datetime.datetime.now())
         result['user_input'] = b''
 
-        fd = None
-        old_settings = None
         try:
             if seconds is not None:
                 if seconds < 1:
@@ -133,89 +133,33 @@ class ActionModule(ActionBase):
                 signal.alarm(seconds)
 
                 # show the timer and control prompts
-                display.display("Pausing for %d seconds%s" % (seconds, echo_prompt))
-                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                prompt = "Pausing for %d seconds%s\n(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\n%s" % \
+                         (seconds, echo_prompt, self._task.args.get('prompt', ''))
 
-                # show the prompt specified in the task
-                if 'prompt' in self._task.args:
-                    display.display(prompt)
-
-            else:
-                display.display(prompt)
-
-            # save the attributes on the existing (duped) stdin so
-            # that we can restore them later after we set raw mode
-            fd = None
+            # figure stdin out
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
                 else:
                     stdin = self._connection._new_stdin
-                fd = stdin.fileno()
             except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 stdin = None
 
-            if fd is not None:
-                if isatty(fd):
-
-                    # grab actual Ctrl+C sequence
-                    try:
-                        intr = termios.tcgetattr(fd)[6][termios.VINTR]
-                    except Exception:
-                        # unsupported/not present, use default
-                        intr = b'\x03'  # value for Ctrl+C
-
-                    old_settings = termios.tcgetattr(fd)
-                    tty.setraw(fd)
-
-                    # Enable a few things turned off by tty.setraw()
-                    # ICANON -> Allows characters to be deleted and hides things like ^M.
-                    # ICRNL -> Makes the return key work when ICANON is enabled, otherwise
-                    #          you get stuck at the prompt with no way to get out of it.
-                    # See man termios for details on these flags
-                    if not seconds:
-                        new_settings = termios.tcgetattr(fd)
-                        if 'prompt' in self._task.args:
-                            new_settings[0] = new_settings[0] | termios.ICRNL
-                            new_settings[3] = new_settings[3] | termios.ICANON
-
-                        if echo:
-                            # Enable ECHO based on option, since tty.setraw() disables it
-                            new_settings[3] = new_settings[3] | termios.ECHO
-
-                        termios.tcsetattr(fd, termios.TCSANOW, new_settings)
-
-                    # flush the buffer to make sure no previous key presses
-                    # are read in below
-                    termios.tcflush(stdin, termios.TCIFLUSH)
-
+            sys.stdin = open(ttyname(stdin.fileno()))
             while True:
                 try:
-                    if fd is not None:
-                        key_pressed = stdin.read(1)
-                        if key_pressed == intr:  # value for Ctrl+C
-                            raise KeyboardInterrupt
-
-                    if not seconds:
-                        if fd is None or not isatty(fd):
-                            display.warning("Not waiting for response to prompt as stdin is not interactive")
-                            break
-
-                        # read key presses and act accordingly
-                        if key_pressed in (b'\r', b'\n'):
-                            break
-                        else:
-                            result['user_input'] += key_pressed
-
+                    result['user_input'] = display.prompt(prompt, private=(not echo))
                 except KeyboardInterrupt:
                     if seconds is not None:
                         signal.alarm(0)
-                        display.display("Press 'C' to continue the play or 'A' to abort \r"),
                         if self._c_or_a(stdin):
                             break
-                    raise AnsibleError('user requested abort!')
+                        else:
+                            raise AnsibleError('user requested abort!')
+                if not seconds:
+                   break
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal
@@ -223,9 +167,6 @@ class ActionModule(ActionBase):
             pass
         finally:
             # cleanup and save some information
-            # restore the old settings for the duped stdin fd
-            if not(None in (fd, old_settings)) and isatty(fd):
-                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
             result['stop'] = to_text(datetime.datetime.now())
@@ -241,11 +182,29 @@ class ActionModule(ActionBase):
         return result
 
     def _c_or_a(self, stdin):
-        while True:
-            key_pressed = stdin.read(1)
-            if key_pressed.lower() == b'a':
-                return False
-            elif key_pressed.lower() == b'c':
-                return True
-            else:
-                display.display("Invalid keypress detected, please press 'C' to continue or 'A' to abort \r")
+
+        try:
+            # save the attributes on the existing (duped) stdin so
+            # that we can restore them later after we set raw mode
+            old_settings = None
+            fd = stdin.fileno()
+            if fd is not None:
+                if isatty(fd):
+                    new_settings = old_settings = termios.tcgetattr(fd)
+                    new_settings[6][termios.VINTR] = '\0'
+                    tty.setraw(fd)
+                    termios.tcsetattr(fd, termios.TCSANOW, new_settings)
+                    termios.tcflush(stdin, termios.TCIFLUSH)
+
+            display.display("Press 'C' to continue the play or 'A' to abort \r"),
+            while True:
+                key_pressed = stdin.read(1)
+                if key_pressed.lower() == b'a':
+                    return False
+                elif key_pressed.lower() == b'c':
+                    return True
+                else:
+                    display.display("Invalid keypress detected, please press 'C' to continue or 'A' to abort \r")
+        finally:
+            if old_settings is not None:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
