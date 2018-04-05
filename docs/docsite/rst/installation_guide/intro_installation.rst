@@ -330,7 +330,7 @@ Using Bash:
 
 Using Fish::
 
-    $ . ./hacking/env-setup.fish
+    $ source ./hacking/env-setup.fish
 
 If you want to suppress spurious warnings/errors, use::
 
