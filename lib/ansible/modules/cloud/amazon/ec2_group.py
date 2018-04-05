@@ -291,6 +291,7 @@ import re
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 from ansible.module_utils.ec2 import AWSRetry
@@ -499,6 +500,11 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                 if vpc_id:
                     params['VpcId'] = vpc_id
                 auto_group = client.create_security_group(**params)
+                get_waiter(
+                    client, 'security_group_exists',
+                ).wait(
+                    GroupIds=[auto_group['GroupId']],
+                )
                 group_id = auto_group['GroupId']
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
