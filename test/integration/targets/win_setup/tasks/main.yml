@@ -45,6 +45,7 @@
       - setup_result.ansible_facts.ansible_interfaces
       - setup_result.ansible_facts.ansible_interfaces[0]
       - setup_result.ansible_facts.ansible_interfaces[0].interface_name
+      - setup_result.ansible_facts.ansible_interfaces[0].connection_name
       - setup_result.ansible_facts.ansible_interfaces[0].interface_index
       - setup_result.ansible_facts.ansible_architecture
       - setup_result.ansible_facts.ansible_os_name
@@ -114,6 +115,7 @@
     - setup_result.ansible_facts.ansible_interfaces
     - setup_result.ansible_facts.ansible_interfaces[0]
     - setup_result.ansible_facts.ansible_interfaces[0].interface_name
+    - setup_result.ansible_facts.ansible_interfaces[0].connection_name
     - setup_result.ansible_facts.ansible_interfaces[0].interface_index
     - setup_result.ansible_facts.keys() | union(['ansible_interfaces','gather_subset','module_setup']) | length == 3
 
