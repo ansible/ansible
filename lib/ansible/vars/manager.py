@@ -383,14 +383,6 @@ class VariableManager:
                 all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False))
             all_vars = combine_vars(all_vars, task.get_vars())
 
-        # next, we merge in the vars cache (include vars) and nonpersistent
-        # facts cache (set_fact/register), in that order
-        if host:
-            # include_vars non-persistent cache
-            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
-            # fact non-persistent cache
-            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
-
         # next, we merge in role params and task include params
         if task:
             if task._role:
@@ -400,6 +392,13 @@ class VariableManager:
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
             all_vars = combine_vars(all_vars, task.get_include_params())
+
+        # next, we merge in the vars cache (include vars) and nonpersistent facts cache (set_fact/register), in that order
+        if host:
+            # include_vars non-persistent cache
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            # fact non-persistent cache
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
         # extra vars
         all_vars = combine_vars(all_vars, self._extra_vars)
