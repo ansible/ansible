@@ -27,8 +27,7 @@ static ``import_*`` would be inherited by the tasks within.
 
 This separation was only partially implemented in Ansible version 2.4. As of Ansible version 2.5, this work is complete and the separation now behaves as designed; attributes applied to an ``include_*`` task will not be inherited by the tasks within.
 
-To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks
-should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
+To achieve an outcome similar to how Ansible worked prior to version 2.5, playbooks should use an explicit application of the attribute on the needed tasks, or use blocks to apply the attribute to many tasks. Another option is to use a static ``import_*`` when possible instead of a dynamic task.
 
 **OLD** In Ansible 2.4:
 
@@ -38,6 +37,17 @@ should use an explicit application of the attribute on the needed tasks, or use 
       tags:
         - distro_include
 
+Included file:
+
+.. code-block:: yaml
+
+    - block:
+        - debug:
+            msg: "In included file"
+
+        - apt:
+            name: nginx
+            state: latest
 
 **NEW** In Ansible 2.5:
 
@@ -62,6 +72,8 @@ Included file:
             state: latest
       tags:
         - distro_include
+
+The relevant change in those examples is, that in Ansible 2.5, the included file defines the tag ``distro_include`` again. The tag is not inherited automatically.
 
 Deprecated
 ==========
