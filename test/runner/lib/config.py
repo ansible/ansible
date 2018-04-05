@@ -46,7 +46,18 @@ class EnvironmentConfig(CommonConfig):
         self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
+        self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
+
+        if self.docker_seccomp is None:
+            # hack to provide default seccomp settings for existing containers
+            with open('test/runner/config/docker-seccomp-unconfined.txt', 'r') as config_fd:
+                unconfined = set(config_fd.read().splitlines())
+
+                if args.docker in unconfined:
+                    self.docker_seccomp = 'unconfined'
+                else:
+                    self.docker_seccomp = 'default'
 
         self.tox_sitepackages = args.tox_sitepackages  # type: bool
 
