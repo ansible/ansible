@@ -26,7 +26,7 @@ description:
   - This callback plugin will send task results as JSON formatted events to a Sumologic HTTP collector source
 version_added: "2.6"
 requirements:
-  - Whitelisting this callback plugin in ansible.cfg configuration
+  - Whitelisting this callback plugin
   - Create a HTTP collector source in Sumologic and specify a custom timestamp format of 'yyyy-MM-dd HH:mm:ss ZZZZ' and a custom timestamp locator
     of '"timestamp": "(.*)"'
 options:
@@ -48,7 +48,7 @@ examples: >
   Set the environment variable
     export SUMOLOGIC_URL=https://endpoint1.collection.us2.sumologic.com/receiver/v1/http/R8moSv1d8EW9LAUFZJ6dbxCFxwLH6kfCdcBfddlfxCbLuL-BN5twcTpMk__pYy_cDmp==
 
-  Set the ansible.cfg variable
+  Set the ansible.cfg variable in the callback_sumologic block
     [callback_sumologic]
     url = https://endpoint1.collection.us2.sumologic.com/receiver/v1/http/R8moSv1d8EW9LAUFZJ6dbxCFxwLH6kfCdcBfddlfxCbLuL-BN5twcTpMk__pYy_cDmp==
 '''
@@ -146,7 +146,7 @@ class CallbackModule(CallbackBase):
                                   'not provided. The Sumologic HTTP collector '
                                   'source URL can be provided using the '
                                   '`SUMOLOGIC_URL` environment variable or '
-                                  'in the ansible ini settings.')
+                                  'in the ansible.cfg file.')
 
     def v2_playbook_on_start(self, playbook):
         self.sumologic.ansible_playbook = basename(playbook._file_name)
