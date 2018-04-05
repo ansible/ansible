@@ -1,0 +1,2 @@
+bugfixes:
+- include_vars - Call DataLoader.load with the correct signature to prevent hang on error processing (https://github.com/ansible/ansible/pull/38194)
