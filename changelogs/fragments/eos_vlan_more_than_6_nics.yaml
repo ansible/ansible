@@ -1,0 +1,2 @@
+bugfixes:
+  - eos_vlan - fixed eos_vlan not working when having more than 6 interfaces (https://github.com/ansible/ansible/pull/38347)
