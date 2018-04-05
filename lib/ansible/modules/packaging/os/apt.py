@@ -144,7 +144,7 @@ EXAMPLES = '''
 - name: Install apache service but avoid starting it immediately
   apt: name=apache2 state=present
   environment:
-    RUNLEVLEL: 1
+    RUNLEVEL: 1
 
 - name: Remove "foo" package
   apt: name=foo state=absent
