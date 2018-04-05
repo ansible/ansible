@@ -6,21 +6,25 @@ Ansible
 
 Ansible is a radically simple IT automation system. It handles
 configuration-management, application deployment, cloud provisioning,
-ad-hoc task-execution, and multinode orchestration * including
-trivializing things like zero downtime rolling updates with load
+ad-hoc task-execution, and multinode orchestration -- including
+trivializing things like zero-downtime rolling updates with load
 balancers.
 
 Read the documentation and more at https://ansible.com/
 
-Many users run straight from the development branch (it's generally fine
-to do so), but you might also wish to consume a release.
-
-You can find instructions
-`here <https://docs.ansible.com/intro_getting_started.html>`__ for a
+You can find installation instructions
+`here <https://docs.ansible.com/intro_getting_started.html>`_ for a
 variety of platforms.
 
+Most users should probably install a released version of Ansible from ``pip``, a package manager or
+our `release repository <https://releases.ansible.com/ansible/>`_. `Officially supported
+<https://www.ansible.com/ansible-engine>`_ builds of Ansible are also available. Some power users
+run directly from the development branch - while significant efforts are made to ensure that
+``devel`` is reasonably stable, you're more likely to encounter breaking changes when running
+Ansible this way.
+
 If you want to download a tarball of a release, go to
-`releases.ansible.com <https://releases.ansible.com/ansible>`__, though
+`releases.ansible.com <https://releases.ansible.com/ansible>`_, though
 most users use ``yum`` (using the EPEL instructions linked above),
 ``apt`` (using the PPA instructions linked above), or
 ``pip install ansible``.
@@ -45,7 +49,7 @@ Get Involved
 ============
 
 *  Read `Community
-   Information <https://docs.ansible.com/community.html>`__ for all
+   Information <https://docs.ansible.com/community.html>`_ for all
    kinds of ways to contribute to and interact with the project,
    including mailing list information and how to submit bug reports and
    code to Ansible.
@@ -58,12 +62,12 @@ Get Involved
    know what's going on, it also helps save time and effort if we decide
    some changes are needed.
 *  Users list:
-   `ansible-project <https://groups.google.com/group/ansible-project>`__
+   `ansible-project <https://groups.google.com/group/ansible-project>`_
 *  Development list:
-   `ansible-devel <https://groups.google.com/group/ansible-devel>`__
+   `ansible-devel <https://groups.google.com/group/ansible-devel>`_
 *  Announcement list:
-   `ansible-announce <https://groups.google.com/group/ansible-announce>`__
-   * read only
+   `ansible-announce <https://groups.google.com/group/ansible-announce>`_
+   -- read only
 *  irc.freenode.net: #ansible
 
 Branch Info
@@ -73,28 +77,26 @@ Branch Info
    were named after Van Halen songs.)
 *  The devel branch corresponds to the release actively under
    development.
-*  For releases 1.8 - 2.2, modules are kept in different repos, you'll
-   want to follow
-   `core <https://github.com/ansible/ansible-modules-core>`__ and
-   `extras <https://github.com/ansible/ansible-modules-extras>`__
 *  Various release-X.Y branches exist for previous releases.
 *  We'd love to have your contributions, read `Community
-   Information <https://docs.ansible.com/community.html>`__ for notes on
+   Information <https://docs.ansible.com/community.html>`_ for notes on
    how to get started.
 
 Authors
 =======
 
-Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`__
+Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
 (michael.dehaan/gmail/com) and has contributions from over 1000 users
 (and growing). Thanks everyone!
 
-Ansible is sponsored by `Ansible, Inc <https://ansible.com>`__
+Ansible is sponsored by `Ansible, Inc <https://ansible.com>`_
 
 Licence
 =======
 
-GNU Click on the `Link <COPYING>`__ to see the full text.
+GNU General Public License v3.0
+
+See `COPYING <COPYING>`_ to see the full text.
 
 .. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
    :target: https://pypi.python.org/pypi/ansible
