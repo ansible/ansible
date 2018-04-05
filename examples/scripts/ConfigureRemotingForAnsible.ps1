@@ -30,10 +30,12 @@
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
 # defaults to the system's hostname and generally should not be specified.
-#
-# Use option -UseMyCert to use existing SSL certificate from your
-# internal CA for WinRM listener.
-#
+# 
+# Use option -UseMyCert to use existing SSL certificate for WinRM listener.
+# Script expects to find certificate in Cert:localmachine\My store.
+# If you have more then one certificate in this store you need to pass thumbprint
+# of certificate to use with -mycert CERTIFICATETUMBPRINGOESHERE 
+
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
 # Updated by Michael Crilly <mike@autologic.cm>
@@ -52,7 +54,7 @@
 # Version 1.5 - 2017-02-09
 # Version 1.6 - 2017-04-18
 # Version 1.7 - 2017-11-23
-# Version 1.8 - 2018-04-02
+# Version 1.8 - 2018-04-04
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -65,8 +67,9 @@ Param (
     [switch]$ForceNewSSLCert,
     [switch]$GlobalHttpFirewallAccess,
     [switch]$DisableBasicAuth = $false,
-    [switch]$EnableCredSSP
-	[switch]$UseMyCert
+    [switch]$EnableCredSSP,
+    [switch]$UseMyCert,
+    [string]$mycert
 )
 
 Function Write-Log
@@ -90,9 +93,33 @@ Function Write-HostLog
 }
 
 Function Get-MyCert
-{
-   Get-ChildItem Cert:localmachine\My
-   
+{    
+    # Check if existing certificate thumbprin was passed
+    If (-not($mycert)) {
+
+        $mycert = Get-ChildItem Cert:\LocalMachine\My
+        $mcl=$mycert.Length
+
+        # Check if more then one certificate
+        If ($mcl -gt 1) {
+            Write-Output 'You have more then one certificate in your computer store'
+            Write-Output 'Please re-run script with -UseMyCert -mycert CERTIFICATETUMBPRINGOESHERE'
+            Exit 2
+        }
+
+        # Check if no certificate exist
+        If ($mcl -lt 1) {
+            Write-Output 'You do not have any certificates in local computer store'
+            Write-Output 'You can run this script without -UseMyCert switch to generate new self-signed certificate'
+            Exit 2
+        }
+
+
+    return $mycert.Thumbprint
+    }
+    else {
+        return $mycert 
+    }
 }
 
 Function New-LegacySelfSignedCert
@@ -149,7 +176,7 @@ Function Enable-GlobalHttpFirewallAccess
 
     # try to find/enable the default rule first
     $add_rule = $false
-    $matching_rules = $fw.Rules | ? { $_.Name -eq "Windows Remote Management (HTTP-In)" }
+    $matching_rules = $fw.Rules | Where-Object { $_.Name -eq "Windows Remote Management (HTTP-In)" }
     $rule = $null
     If ($matching_rules) {
         If ($matching_rules -isnot [Array]) {
@@ -159,7 +186,7 @@ Function Enable-GlobalHttpFirewallAccess
         Else {
             # try to find one with the All or Public profile first
             Write-Verbose "Found multiple existing HTTP firewall rules..."
-            $rule = $matching_rules | % { $_.Profiles -band 4 }[0]
+            $rule = $matching_rules | ForEach-Object { $_.Profiles -band 4 }[0]
 
             If (-not $rule -or $rule -is [Array]) {
                 Write-Verbose "Editing an arbitrary single HTTP firewall rule (multiple existed)"
@@ -275,11 +302,28 @@ Else
 
 # Make sure there is a SSL listener.
 $listeners = Get-ChildItem WSMan:\localhost\Listener
-If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
-{  If ($UseMyCert)
+If (!($listeners | Where-Object {$_.Keys -like "TRANSPORT=HTTPS"}))
+{
+    If ($useMyCert) 
     {
-	
-	}
+    $thumbprint = Get-MyCert
+     # Create the hashtables of settings to be used.
+    $valueset = @{
+        Hostname = $SubjectName
+        CertificateThumbprint = $thumbprint
+    }
+
+    $selectorset = @{
+        Transport = "HTTPS"
+        Address = "*"
+    }
+
+    Write-Verbose "Enabling SSL listener."
+    New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
+    Write-Log "Enabled SSL listener."
+    }
+    Else
+    {
     # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
     $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
     Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
@@ -298,6 +342,7 @@ If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
     Write-Verbose "Enabling SSL listener."
     New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
     Write-Log "Enabled SSL listener."
+    }
 }
 Else
 {
@@ -324,6 +369,29 @@ Else
         Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
 
         # Add new Listener with new SSL cert
+        New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
+    }
+    # Reconfig for exisitng cert if UseMyCert
+    If ($UseMyCert)
+    {
+
+        # Get current cert
+        $thumbprint = Get-MyCert -SubjectName $SubjectName 
+        # Write-HostLog "Using existing certificate; thumbprint: $thumbprint"
+
+        $valueset = @{
+            CertificateThumbprint = $thumbprint
+            Hostname = $SubjectName
+        }
+
+        # Delete the listener for SSL
+        $selectorset = @{
+            Address = "*"
+            Transport = "HTTPS"
+        }
+        Remove-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset
+
+        # Add new Listener with existing SSL cert
         New-WSManInstance -ResourceURI 'winrm/config/Listener' -SelectorSet $selectorset -ValueSet $valueset
     }
 }
@@ -362,7 +430,7 @@ Else
 If ($EnableCredSSP)
 {
     # Check for CredSSP authentication
-    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
+    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where-Object {$_.Name -eq "CredSSP"}
     If (($credsspAuthSetting.Value) -eq $false)
     {
         Write-Verbose "Enabling CredSSP auth support."
