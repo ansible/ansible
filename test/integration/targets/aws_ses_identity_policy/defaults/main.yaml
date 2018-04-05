@@ -1,0 +1,3 @@
+---
+domain_identity: "{{ resource_prefix }}.example.com"
+policy_name: "TestPolicy"
