@@ -1,6 +1,17 @@
 Ansible Changes By Release
 ==========================
 
+<a id="2.4.5"></a>
+
+## 2.4.5 "Dancing Days" - TBD
+
+### Bugfixes
+
+* Fix win_copy to preserve the global Ansible local tmp path instead of
+  deleting it when dealing with multiple files
+  (https://github.com/ansible/ansible/pull/37964)
+
+
 <a id="2.4.4"></a>
 
 ## 2.4.4 "Dancing Days" - 2018-04-04
