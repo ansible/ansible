@@ -28,7 +28,7 @@ DOCUMENTATION = """
 module: slxos_command
 version_added: "2.6"
 author: "Lindsay Hill (@LindsayHill)"
-short_description: Run commands on remote devices running SLX-OS
+short_description: Run commands on remote devices running Extreme Networks SLX-OS
 description:
   - Sends arbitrary commands to an SLX node and returns the results
     read from the device. This module includes an
@@ -56,9 +56,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
     default: null
-    aliases: ['waitfor']
   match:
     description:
       - The I(match) argument is used in conjunction with the
@@ -188,7 +186,7 @@ def main():
     argument_spec = dict(
         commands=dict(type='list', required=True),
 
-        wait_for=dict(type='list', aliases=['waitfor']),
+        wait_for=dict(type='list'),
         match=dict(default='all', choices=['all', 'any']),
 
         retries=dict(default=10, type='int'),
