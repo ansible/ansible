@@ -277,6 +277,12 @@ APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 APT_MARK_INVALID_OP = 'Invalid operation'
 
+CLEAN_OP_CHANGED_STR = dict(
+    autoremove='The following packages will be REMOVED',
+    # "Del python3-q 2.4-1 [24 kB]"
+    autoclean='Del ',
+)
+
 HAS_PYTHON_APT = True
 try:
     import apt
@@ -710,6 +716,10 @@ def remove(m, pkgspec, cache, purge=False, force=False,
 
 def cleanup(m, purge=False, force=False, operation=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+
+    if operation not in frozenset(['autoremove', 'autoclean']):
+        raise AssertionError('Expected "autoremove" or "autoclean" cleanup operation, got %s' % operation)
+
     if force:
         force_yes = '--force-yes'
     else:
@@ -734,7 +744,10 @@ def cleanup(m, purge=False, force=False, operation=None,
         diff = {}
     if rc:
         m.fail_json(msg="'apt-get %s' failed: %s" % (operation, err), stdout=out, stderr=err, rc=rc)
-    m.exit_json(changed=bool(len(diff)), stdout=out, stderr=err, diff=diff)
+
+    changed = CLEAN_OP_CHANGED_STR[operation] in out
+
+    m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
 def upgrade(m, mode="yes", force=False, default_release=None,
