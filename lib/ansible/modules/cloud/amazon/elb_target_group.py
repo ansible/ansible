@@ -370,6 +370,12 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
     return status_achieved, result
 
 
+def fail_if_ip_target_type_not_supported(module):
+    if LooseVersion(botocore.__version__) < LooseVersion('1.7.2'):
+        module.fail_json(msg="target_type ip requires botocore version 1.7.2 or later. Version %s is installed" %
+                         botocore.__version__)
+
+
 def create_or_update_target_group(connection, module):
 
     changed = False
@@ -415,6 +421,8 @@ def create_or_update_target_group(connection, module):
     # Get target type
     if module.params.get("target_type") is not None:
         params['TargetType'] = module.params.get("target_type")
+        if params['TargetType'] == 'ip':
+            fail_if_ip_target_type_not_supported(module)
 
     # Get target group
     tg = get_target_group(connection, module)
