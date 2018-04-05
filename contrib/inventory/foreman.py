@@ -317,13 +317,13 @@ class ForemanInventory(object):
                         parent = self.hostgroups[parentid]
                         safe_key = self.to_safe('%s' % (parent['name'].lower()))
                         if safe_key not in self.inventory.keys():
-                            self.inventory[safe_key] = {}
+                            self.inventory[safe_key]={}
                         safe_hgname = self.to_safe('%s' % hgname.lower())
                         try:
                             if safe_hgname not in self.inventory[safe_key]['children']:
                                 self.inventory[safe_key]['children'].append(safe_hgname)
                         except KeyError:
-                            self.inventory[safe_key]['children'] = [safe_hgname]
+                            self.inventory[safe_key]['children']=[safe_hgname]
 
             else:
                 # Create ansible groups for hostgroup
