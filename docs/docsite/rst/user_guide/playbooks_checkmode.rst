@@ -98,3 +98,18 @@ Since the diff feature produces a large amount of output, it is best used when c
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
+.. versionadded:: 2.4
+
+The ``--diff`` option can reveal sensitive information. This option can disabled for tasks by specifying ``diff: no``. 
+
+Example::
+
+  tasks:
+    - name: this task will not report a diff when the file changes
+      template:
+        src: secret.conf.j2
+        dest: /etc/secret.conf
+        owner: root
+        group: root
+        mode: '0600'
+      diff: no
