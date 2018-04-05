@@ -491,7 +491,7 @@ class VMWareInventory(object):
                         keylist = map(lambda x: x.strip(), tv['value'].split(','))
                         for kl in keylist:
                             try:
-                                newkey = self.config.get('vmware', 'custom_field_group_prefix') + field_name + '_' + kl
+                                newkey = self.config.get('vmware', 'custom_field_group_prefix') + str(field_name) + '_' + kl
                                 newkey = newkey.strip()
                             except Exception as e:
                                 self.debugl(e)
