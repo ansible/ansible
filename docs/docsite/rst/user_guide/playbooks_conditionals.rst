@@ -169,7 +169,8 @@ Or with a role::
 
     - hosts: webservers
       roles:
-         - { role: debian_stock_config, when: ansible_os_family == 'Debian' }
+         - role: debian_stock_config
+           when: ansible_os_family == 'Debian'
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
 Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
