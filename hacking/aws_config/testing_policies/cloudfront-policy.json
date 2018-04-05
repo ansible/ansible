@@ -7,6 +7,7 @@
             "Action": [
                 "cloudfront:CreateDistribution",
                 "cloudfront:CreateDistributionWithTags",
+                "cloudfront:CreateCloudFrontOriginAccessIdentity",
                 "cloudfront:DeleteDistribution",
                 "cloudfront:GetDistribution",
                 "cloudfront:GetStreamingDistribution",
