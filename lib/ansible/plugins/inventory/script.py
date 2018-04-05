@@ -109,11 +109,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 if sp.returncode != 0:
                     raise AnsibleError("Inventory script (%s) had an execution error: %s " % (path, err))
 
-                if err and self.get_option('always_show_stderr'):
-                    self.display.error(msg=err)
-
-                # make sure script output is unicode so that json loader will output
-                # unicode strings itself
+                # make sure script output is unicode so that json loader will output unicode strings itself
                 try:
                     data = to_text(stdout, errors="strict")
                 except Exception as e:
@@ -123,6 +119,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     self._cache[cache_key] = self.loader.load(data, file_name=path)
                 except Exception as e:
                     raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
+
+                # if no other errors happened and you want to force displaying stderr, do so now
+                if err and self.get_option('always_show_stderr'):
+                    self.display.error(msg=err)
 
             processed = self._cache[cache_key]
             if not isinstance(processed, Mapping):
