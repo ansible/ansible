@@ -80,6 +80,10 @@ options:
     description:
       - One or more vpc endpoint ids to remove from the AWS account
     required: false
+  vpc_endpoint_type:
+    description:
+      - One of "Gateway" or "Interface". The default is "Gateway".
+    required: false
   client_token:
     description:
       - Optional client token to ensure idempotency
@@ -245,6 +249,10 @@ def create_vpc_endpoint(client, module):
     params['ServiceName'] = module.params.get('service')
     params['DryRun'] = module.check_mode
 
+    params['VpcEndpointType'] = module.params.get('vpc_endpoint_type')
+    if not params['VpcEndpointType']:
+        params['VpcEndpointType'] = "Gateway"
+
     if module.params.get('route_table_ids'):
         params['RouteTableIds'] = module.params.get('route_table_ids')
 
@@ -337,6 +345,7 @@ def main():
             wait_timeout=dict(type='int', default=320, required=False),
             route_table_ids=dict(type='list'),
             vpc_endpoint_id=dict(),
+            vpc_endpoint_type=dict(),
             client_token=dict(),
         )
     )

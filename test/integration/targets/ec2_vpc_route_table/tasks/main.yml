@@ -582,10 +582,26 @@
       that:
         - endpoint_details.vpc_endpoints[0].route_table_ids[0] == recreate_private_table.route_table.route_table_id
 
+  - name: create a Kinesis VPC endpoint
+    ec2_vpc_endpoint:
+      state: present
+      vpc_id: "{{ vpc.vpc.id }}"
+      service: "com.amazonaws.{{ aws_region }}.kinesis-streams"
+      <<: *aws_connection_info
+    register: kinesis_vpc_endpoint
+
   always:
   #############################################################################
   # TEAR DOWN STARTS HERE
   #############################################################################
+  - name: remove the Kinesis VPC endpoint
+    ec2_vpc_endpoint:
+      state: absent
+      vpc_endpoint_id: "{{ kinesis_vpc_endpoint.result.vpc_endpoint_id }}"
+      <<: *aws_connection_info
+    when: kinesis_vpc_endpoint is defined
+    ignore_errors: yes
+
   - name: remove the VPC endpoint
     ec2_vpc_endpoint:
       state: absent
