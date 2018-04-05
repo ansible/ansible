@@ -1,0 +1,2 @@
+bugfixes:
+- onyx_pfc_interface - Add support for changes in pfc output in onyx 3.6.6000 https://github.com/ansible/ansible/pull/37651
