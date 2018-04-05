@@ -60,7 +60,7 @@ class MockResponse(object):
         return self.body
 
 
-def mock_call(calls, url, timeout, data=None, headers=None, method=None):
+def mock_call(calls, url, data=None, headers=None, method=None):
     if len(calls) == 0:
         raise ValueError('no call mock for method {0}({1})'.format(
             url, data))
