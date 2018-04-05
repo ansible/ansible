@@ -40,7 +40,6 @@ class TestModule(object):
 
             # path testing
             'is_abs': isabs,
-            'abs': isabs,
             'is_same_file': samefile,
             'same_file': samefile,
             'is_mount': ismount,
