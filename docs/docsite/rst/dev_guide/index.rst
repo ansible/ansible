@@ -13,6 +13,8 @@ To get started, select one of the following topics.
    :maxdepth: 2
 
    overview_architecture
+   module_utils
+   module_utils/basic
    developing_modules
    developing_program_flow_modules
    developing_module_utilities
