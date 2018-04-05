@@ -268,7 +268,7 @@ class VMWareInventory(object):
         self.port = int(os.environ.get('VMWARE_PORT', config.get('vmware', 'port')))
         self.username = os.environ.get('VMWARE_USERNAME', config.get('vmware', 'username'))
         self.debugl('username is %s' % self.username)
-        self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password'))
+        self.password = os.environ.get('VMWARE_PASSWORD', config.get('vmware', 'password', raw=True))
         self.validate_certs = os.environ.get('VMWARE_VALIDATE_CERTS', config.get('vmware', 'validate_certs'))
         if self.validate_certs in ['no', 'false', 'False', False]:
             self.validate_certs = False
