@@ -302,7 +302,7 @@ Another option to loop control is ``pause``, which allows you to control the tim
       loop_control:
         pause: 3
 
-.. versionadded:: 2.7
+.. versionadded:: 2.5
 
 If you need to keep track of where you are in a loop, you can use the ``index_var`` option to loop control to specify a variable name to contain the current loop index.::
 
