@@ -377,6 +377,7 @@ def rule_from_group_permission(perm):
                 ('IpRanges', 'CidrIp', 'ipv4'),
                 ('Ipv6Ranges', 'CidrIpv6', 'ipv6'),
                 ('PrefixListIds', 'PrefixListId', 'ip_prefix'),
+                ('UserIdGroupPairs', 'GroupId', 'group'),  #TODO this doesn't handle cross-account groups
                 ]:
             if target_key not in perm:
                 continue
