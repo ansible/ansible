@@ -1478,23 +1478,23 @@
           cidr_ip: 2.2.2.2/32
           rule_desc:
       register: result
+      ignore_errors: true
 
-    - name: assert that rule descriptions were removed (expected changed=true)
+    - name: assert that rule descriptions were removed (expected changed=true with newer botocore)
       # Only assert this if rule description is defined as the botocore version may < 1.7.2.
       # It's still helpful to have these tests run on older versions since it verifies backwards
       # compatibility with this feature.
       assert:
         that:
-          - 'result.changed'
-          - 'not result.ip_permissions[0].ipv6_ranges[0].description'
-          - 'not result.ip_permissions_egress[0].ip_ranges[0].description'
-      when: result.ip_permissions_egress[0].ip_ranges[0].description is defined
+          - 'result.ip_permissions[0].ipv6_ranges[0].description is undefined'
+          - 'result.ip_permissions_egress[0].ip_ranges[0].description is undefined'
+      when: result is changed
 
     - name: if an older version of botocore is installed everything should stay the same (expected changed=false)
       assert:
         that:
           - 'not result.changed'
-      when: result.ip_permissions_egress[0].ip_ranges[0].description is undefined
+      when: result.failed
 
     # ============================================================
 

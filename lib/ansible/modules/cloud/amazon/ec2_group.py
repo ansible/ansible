@@ -653,18 +653,6 @@ def fix_port_and_protocol(permission):
     return permission
 
 
-def assemble_permissions_to_revoke(purge_ingress_rule_ids, purge_egress_rule_ids, current_ingress, current_egress):
-    revoke_ingress = []
-    revoke_egress = []
-    for rules_to_purge, revoke_list, current_rules in [(purge_ingress_rule_ids, revoke_ingress, current_ingress),
-                                                       (purge_egress_rule_ids, revoke_egress, current_egress)]:
-        for rule_id in rules_to_purge:
-            rule, grant = current_rules[rule_id]
-            ip_permission = serialize_revoke(grant, rule)
-            revoke_list.append(ip_permission)
-    return revoke_ingress, revoke_egress
-
-
 def remove_old_permissions(client, module, revoke_ingress, revoke_egress, group_id, changed):
     changed |= bool(revoke_ingress or revoke_egress)
     if revoke_ingress:
@@ -769,6 +757,28 @@ def create_security_group(client, module, name, description, vpc_id):
     return None
 
 
+def wait_for_rule_propagation(module, group, desired_ingress, desired_egress, purge_ingress, purge_egress):
+    group_id = group['GroupId']
+    tries = 6
+    def await_rules(group, desired_rules, purge, rule_key):
+        for i in range(tries):
+            current_rules = set(sum([list(rule_from_group_permission(p)) for p in group[rule_key]], []))
+            if purge and len(current_rules ^ set(desired_rules)) == 0:
+                module.warn(group_id + " " + rule_key + " set match : {0}. Current: {1}, Desired: {2}".format(current_rules ^ set(desired_rules), current_rules, desired_rules))
+                return group
+            elif current_rules.issuperset(desired_rules) and not purge:
+                module.warn(group_id + " " + rule_key + " Current: {0}, issuperset Desired: {1}".format(current_rules, desired_rules))
+                return group
+            sleep(1)
+            group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
+        module.fail_json(msg="Failed on " + group_id + " " + rule_key + " situation : {0}. Current: {1}, Desired: {2}".format(current_rules ^ set(desired_rules), current_rules, desired_rules))
+        return group
+    group = get_security_groups_with_backoff(module.client('ec2'), GroupIds=[group_id])['SecurityGroups'][0]
+    if 'VpcId' in group:
+        group = await_rules(group, desired_egress, purge_egress, 'IpPermissionsEgress')
+    return await_rules(group, desired_ingress, purge_ingress, 'IpPermissions')
+
+
 def group_exists(client, module, vpc_id, group_id, name):
     params = {'Filters': []}
     if group_id:
@@ -816,8 +826,7 @@ def main():
         purge_rules_egress=dict(default=True, required=False, type='bool'),
         tags=dict(required=False, type='dict', aliases=['resource_tags']),
         purge_tags=dict(default=True, required=False, type='bool')
-    )
-    )
+    ))
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -845,6 +854,7 @@ def main():
 
     verify_rules_with_descriptions_permitted(client, module, rules, rules_egress)
     group, groups = group_exists(client, module, vpc_id, group_id, name)
+    group_created_new = bool(group)
 
     # Ensure requested group is absent
     if state == 'absent':
@@ -876,7 +886,7 @@ def main():
 
         if tags is not None and group is not None:
             current_tags = boto3_tag_list_to_ansible_dict(group.get('Tags', []))
-            changed = update_tags(client, module, group['GroupId'], current_tags, tags, purge_tags, changed)
+            changed |= update_tags(client, module, group['GroupId'], current_tags, tags, purge_tags, changed)
 
     if group:
         named_tuple_ingress_list = []
@@ -917,7 +927,7 @@ def main():
             # when no egress rules are specified and we're in a VPC,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
-            rule = list(rule_from_group_permission({'IpProtocol': '-1', 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}))[0]
+            rule = Rule((None, None), '-1', '0.0.0.0/0', 'ipv4', None)
             if rule not in current_egress:
                 current_egress.append(rule)
 
@@ -953,26 +963,35 @@ def main():
 
         if ingress_needs_desc_update:
             update_rules_description(module, client, 'in', group['GroupId'], rules_to_permissions(ingress_needs_desc_update))
+            changed |= True
         if egress_needs_desc_update:
             update_rules_description(module, client, 'out', group['GroupId'], rules_to_permissions(egress_needs_desc_update))
+            changed |= True
 
         # Revoke old rules
-        changed = remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'], changed)
+        changed |= remove_old_permissions(client, module, revoke_ingress, revoke_egress, group['GroupId'], changed)
 
         new_ingress_permissions = [to_permission(r) for r in (set(named_tuple_ingress_list) - set(current_ingress))]
         new_ingress_permissions = rules_to_permissions(set(named_tuple_ingress_list) - set(current_ingress))
         new_egress_permissions = rules_to_permissions(set(named_tuple_egress_list) - set(current_egress))
         # Authorize new rules
-        changed = add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'], changed)
+        changed |= add_new_permissions(client, module, new_ingress_permissions, new_egress_permissions, group['GroupId'], changed)
 
+        if not module.check_mode:
+            module.fail_json(msg=str(group_created_new))
 
-        if changed:
-            sleep(5)
-        security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
+        if group_created_new and module.params.get('rules') is None and module.params.get('rules_egress') is None:
+            # A new group with no rules provided is already being awaited.
+            # When it is created we wait for the default egress rule to be added by AWS
+            security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
+        elif changed and not module.check_mode:
+            security_group = wait_for_rule_propagation(module, group, named_tuple_ingress_list, named_tuple_egress_list, purge_rules, purge_rules_egress)
+        else:
+            security_group = get_security_groups_with_backoff(client, GroupIds=[group['GroupId']])['SecurityGroups'][0]
         security_group = camel_dict_to_snake_dict(security_group)
         security_group['tags'] = boto3_tag_list_to_ansible_dict(security_group.get('tags', []),
                                                                 tag_name_key_name='key', tag_value_key_name='value')
-        module.exit_json(changed=changed, discovered_ingress=current_ingress, param_ingress=named_tuple_ingress_list, **security_group)
+        module.exit_json(changed=changed, **security_group)
     else:
         module.exit_json(changed=changed, group_id=None)
 
