@@ -521,6 +521,18 @@ class TaskExecutor:
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
+        # Apply default params for action/module, if present
+        # These are collected as a list of dicts, so we need to merge them
+        module_defaults = {}
+        for default in self._task.module_defaults:
+            module_defaults.update(default)
+        if module_defaults:
+            module_defaults = templar.template(module_defaults)
+        if self._task.action in module_defaults:
+            tmp_args = module_defaults[self._task.action].copy()
+            tmp_args.update(self._task.args)
+            self._task.args = tmp_args
+
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
