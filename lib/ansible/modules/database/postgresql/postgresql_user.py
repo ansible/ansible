@@ -112,7 +112,6 @@ options:
       - If C(yes), don't inspect database for password changes. Effective when
         C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
         password changes as necessary.
-    type: bool
     default: 'no'
     type: bool
     version_added: '2.0'
