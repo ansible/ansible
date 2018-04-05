@@ -58,15 +58,15 @@ options:
       - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
   neighbors:
     description:
-      - Check the operational state of given interface C(name) for LLDP neighbor.
+      - Check the operational state of given interface C(name) for CDP/LLDP neighbor.
       - The following suboptions are available.
     suboptions:
         host:
           description:
-            - "LLDP neighbor host for given interface C(name)."
+            - "CDP/LLDP neighbor host for given interface C(name)."
         port:
           description:
-            - "LLDP neighbor port to which given interface C(name) is connected."
+            - "CDP/LLDP neighbor port to which given interface C(name) is connected."
   aggregate:
     description: List of Interfaces definitions.
   delay:
