@@ -3,21 +3,24 @@
 
 
 # test become and unbecome
-- name: command that does require become (should fail)
-  eos_command:
-    commands: show running-config
-    provider: "{{ cli }}"
-  become: no
-  ignore_errors: yes
-  register: result
+- block:
+    - name: command that does require become (should fail)
+      eos_command:
+        commands: show running-config
+        provider: "{{ cli }}"
+      become: no
+      ignore_errors: yes
+      register: result
 
-- assert:
-    that:
-      - 'result.failed == true'
-      - '"privileged mode required" in result.module_stderr'
+    - assert:
+        that:
+          - 'result.failed == true'
+          - '"privileged mode required" in result.module_stderr'
 
-- name: command that doesn't require become
-  eos_command:
-    commands: show uptime
-    provider: "{{ cli }}"
-  become: no
+    - name: command that doesn't require become
+      eos_command:
+        commands: show uptime
+        provider: "{{ cli }}"
+      become: no
+
+  when: "ansible_connection != 'local'"
