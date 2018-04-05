@@ -862,10 +862,10 @@ Here is the order of precedence from least to greatest (the last listed variable
   * role vars (defined in role/vars/main.yml)
   * block vars (only for tasks in block)
   * task vars (only for the task)
-  * role (and include_role) params
-  * include params
   * include_vars
   * set_facts / registered vars
+  * role (and include_role) params
+  * include params
   * extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
