@@ -109,7 +109,7 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      address: 192.168.10.1
+      - address: 192.168.10.1
     state: present
     provider:
       host: "{{ inventory_hostname_short }}"
@@ -121,7 +121,7 @@ EXAMPLES = '''
   nios_host_record:
     name: host.ansible.com
     ipv4:
-      address: 192.168.10.1
+      - address: 192.168.10.1
     comment: this is a test comment
     state: present
     provider:
