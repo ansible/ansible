@@ -261,8 +261,7 @@ class GceInventory(object):
         # Caching
         cache_path = config.get('cache', 'cache_path')
         cache_max_age = config.getint('cache', 'cache_max_age')
-        # TOOD(supertom): support project-specific caches
-        cache_name = 'ansible-gce.cache'
+        cache_name = config.get('cache', 'cache_name')
         self.cache = CloudInventoryCache(cache_path=cache_path,
                                          cache_max_age=cache_max_age,
                                          cache_name=cache_name)
