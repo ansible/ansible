@@ -79,12 +79,10 @@ options:
         version_added: "2.0"
     password:
         description:
-            - Optionally set the user's password to this crypted value.  See
-              the user example in the github examples directory for what this looks
-              like in a playbook. See U(http://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
+            - Optionally set the user's password to this crypted value.
+            - On Darwin/OS X systems, this value has to be cleartext. Beware of security issues.
+            - See U(http://docs.ansible.com/ansible/faq.html#how-do-i-generate-crypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
-              Note on Darwin system, this value has to be cleartext.
-              Beware of security issues.
     state:
         description:
             - Whether the account should exist or not, taking action if the state is different from what is stated.
