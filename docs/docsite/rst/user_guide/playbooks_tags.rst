@@ -103,7 +103,7 @@ All of these apply the specified tags to EACH task inside the play, imported
 file, or role, so that these tasks can be selectively run when the playbook
 is invoked with the corresponding tags.
 
-There is no way to 'import only these tags', you probalby want to split into smaller roles/includes if you find yourself looking for such a feature.
+There is no way to 'import only these tags'; you probably want to split into smaller roles/includes if you find yourself looking for such a feature.
 
 The above information does not apply to `include_tasks` or other dynamic includes,
 as the attributes applied to an include, only affect the include itself.
