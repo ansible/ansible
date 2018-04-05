@@ -100,7 +100,7 @@ Since the diff feature produces a large amount of output, it is best used when c
 
 .. versionadded:: 2.4
 
-The ``--diff`` option can leak sensitive information. Therefore reporting changes can be disabled for tasks by specifying ``diff: no`` in case they deal with secrets.
+The ``--diff`` option can reveal sensitive information. This option can disabled for tasks by specifying ``diff: no``. 
 
 Example::
 
