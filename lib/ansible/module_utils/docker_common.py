@@ -61,23 +61,23 @@ DEFAULT_TLS = False
 DEFAULT_TLS_VERIFY = False
 DEFAULT_TLS_HOSTNAME = 'localhost'
 MIN_DOCKER_VERSION = "1.7.0"
-DEFAULT_SSL_VERSION="1.0"
+DEFAULT_SSL_VERSION = "1.0"
 try:
     DEFAULT_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 except NameError:
     DEFAULT_TIMEOUT = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url'],default='unix://var/run/docker.sock'),
-    tls_hostname=dict(type='str',default=DEFAULT_TLS_HOSTNAME),
-    api_version=dict(type='str', aliases=['docker_api_version'],default='auto'),
-    timeout=dict(type='int',default=DEFAULT_TIMEOUT),
+    docker_host=dict(type='str', aliases=['docker_url'], default='unix://var/run/docker.sock'),
+    tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME),
+    api_version=dict(type='str', aliases=['docker_api_version'], default='auto'),
+    timeout=dict(type='int', default=DEFAULT_TIMEOUT),
     cacert_path=dict(type='str', aliases=['tls_ca_cert']),
     cert_path=dict(type='str', aliases=['tls_client_cert']),
     key_path=dict(type='str', aliases=['tls_client_key']),
-    ssl_version=dict(type='str',default=DEFAULT_SSL_VERSION),
-    tls=dict(type='bool',default=DEFAULT_TLS),
-    tls_verify=dict(type='bool',default=DEFAULT_TLS_VERIFY),
+    ssl_version=dict(type='str', default=DEFAULT_SSL_VERSION),
+    tls=dict(type='bool', default=DEFAULT_TLS),
+    tls_verify=dict(type='bool', default=DEFAULT_TLS_VERIFY),
     debug=dict(type='bool', default=False)
 )
 
