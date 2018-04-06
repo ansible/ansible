@@ -134,19 +134,20 @@ EXAMPLES = '''
     service: '{{ pd_window.result.maintenance_window.id }}'
 '''
 
-import base64
 import datetime
 import json
+import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
 
 
 def auth_header(user, passwd, token):
     if token:
         return "Token token=%s" % token
 
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    auth = base64.b64encode(to_bytes('%s:%s' % (user, passwd)).replace('\n', ''))
     return "Basic %s" % auth
 
 
