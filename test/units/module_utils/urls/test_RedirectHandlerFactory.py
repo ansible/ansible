@@ -43,11 +43,11 @@ def test_urllib2_redir(urllib_req, request_body, mocker):
 
 
 def test_all_redir(urllib_req, request_body, mocker):
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    req_mock = mocker.patch('ansible.module_utils.urls.RequestWithMethod')
     handler = RedirectHandlerFactory('all', False)
     inst = handler()
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
-    req_mock.assert_called_once_with('https://docs.ansible.com/', headers={}, origin_req_host='ansible.com', unverifiable=True)
+    req_mock.assert_called_once_with('https://docs.ansible.com/', data=None, headers={}, method='GET', origin_req_host='ansible.com', unverifiable=True)
 
 
 def test_all_redir_post(request_body, mocker):
@@ -59,13 +59,13 @@ def test_all_redir_post(request_body, mocker):
         'POST'
     )
 
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    req_mock = mocker.patch('ansible.module_utils.urls.RequestWithMethod')
     inst.redirect_request(req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
-    req_mock.assert_called_once_with('https://docs.ansible.com/', headers={}, origin_req_host='ansible.com', unverifiable=True)
+    req_mock.assert_called_once_with('https://docs.ansible.com/', data=None, headers={}, method='GET', origin_req_host='ansible.com', unverifiable=True)
 
 
 def test_redir_headers_removal(urllib_req, request_body, mocker):
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    req_mock = mocker.patch('ansible.module_utils.urls.RequestWithMethod')
     handler = RedirectHandlerFactory('all', False)
     inst = handler()
 
@@ -76,30 +76,31 @@ def test_redir_headers_removal(urllib_req, request_body, mocker):
     }
 
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
-    req_mock.assert_called_once_with('https://docs.ansible.com/', headers={'Foo': 'bar'}, origin_req_host='ansible.com', unverifiable=True)
+    req_mock.assert_called_once_with('https://docs.ansible.com/', data=None, headers={'Foo': 'bar'}, method='GET', origin_req_host='ansible.com',
+                                     unverifiable=True)
 
 
 def test_redir_url_spaces(urllib_req, request_body, mocker):
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    req_mock = mocker.patch('ansible.module_utils.urls.RequestWithMethod')
     handler = RedirectHandlerFactory('all', False)
     inst = handler()
 
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/foo bar')
 
-    req_mock.assert_called_once_with('https://docs.ansible.com/foo%20bar', headers={}, origin_req_host='ansible.com', unverifiable=True)
+    req_mock.assert_called_once_with('https://docs.ansible.com/foo%20bar', data=None, headers={}, method='GET', origin_req_host='ansible.com',
+                                     unverifiable=True)
 
 
 def test_redir_safe(urllib_req, request_body, mocker):
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+    req_mock = mocker.patch('ansible.module_utils.urls.RequestWithMethod')
     handler = RedirectHandlerFactory('safe', False)
     inst = handler()
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
 
-    req_mock.assert_called_once_with('https://docs.ansible.com/', headers={}, origin_req_host='ansible.com', unverifiable=True)
+    req_mock.assert_called_once_with('https://docs.ansible.com/', data=None, headers={}, method='GET', origin_req_host='ansible.com', unverifiable=True)
 
 
-def test_redir_safe_not_safe(request_body, mocker):
-    req_mock = mocker.patch('ansible.module_utils.urls.urllib_request.Request')
+def test_redir_safe_not_safe(request_body):
     handler = RedirectHandlerFactory('safe', False)
     inst = handler()
 
