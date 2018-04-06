@@ -158,6 +158,17 @@ for extra_requirements_filename in os.listdir(extra_requirements_dir):
         with open(os.path.join(extra_requirements_dir, extra_requirements_filename)) as extra_requirements_file:
             extra_requirements[filename_match.group(1)] = extra_requirements_file.read().splitlines()
 
+try:
+    with open('README.rst', 'r') as readme_file:
+        longdesc = readme_file.read()
+except (IOError, OSError):
+    longdesc = ('Ansible is a radically simple IT automation system. It handles'
+                ' configuration-management, application deployment, cloud provisioning, ad-hoc'
+                ' task-execution, and multinode orchestration - including trivializing things like'
+                ' zero-downtime rolling updates with load balancers.\n'
+                '\n'
+                'Read the documentation and more at https://ansible.com/'
+                )
 
 setup(
     # Use the distutils SDist so that symlinks are not expanded
@@ -172,6 +183,7 @@ setup(
     name='ansible',
     version=__version__,
     description='Radically simple IT automation',
+    long_description=longdesc,
     author=__author__,
     author_email='info@ansible.com',
     url='https://ansible.com/',

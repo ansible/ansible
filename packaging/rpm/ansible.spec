@@ -131,7 +131,7 @@ rm -rf %{buildroot}
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING CHANGELOG.md
+%doc README.rst PKG-INFO COPYING CHANGELOG.md
 %doc %{_mandir}/man1/ansible*
 
 %changelog
