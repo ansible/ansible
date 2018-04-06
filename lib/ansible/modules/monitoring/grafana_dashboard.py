@@ -103,11 +103,12 @@ slug:
   sample: foo
 '''
 
-import base64
 import json
-import os
+import base64
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
 
 __metaclass__ = type
 
@@ -162,7 +163,7 @@ def grafana_create_dashboard(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.encodestring('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')
+        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
         headers['Authorization'] = 'Basic %s' % auth
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
@@ -220,7 +221,7 @@ def grafana_delete_dashboard(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.encodestring('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')
+        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
         headers['Authorization'] = 'Basic %s' % auth
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
@@ -253,7 +254,7 @@ def grafana_export_dashboard(module, data):
     if 'grafana_api_key' in data and data['grafana_api_key']:
         headers['Authorization'] = "Bearer %s" % data['grafana_api_key']
     else:
-        auth = base64.encodestring('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', '')
+        auth = base64.b64encode(to_bytes('%s:%s' % (data['grafana_user'], data['grafana_password'])).replace('\n', ''))
         headers['Authorization'] = 'Basic %s' % auth
         grafana_switch_organisation(module, data['grafana_url'], data['org_id'], headers)
 
