@@ -1,0 +1,117 @@
+---
+- name: Get facts
+  setup:
+
+- name: Add Pester module
+  win_psmodule:
+    name: Pester
+    state: present
+  when: ansible_powershell_version >= 5
+
+- name: Add Pester module with Chocolatey
+  win_chocolatey:
+    name: Pester
+    state: present
+  when: ansible_powershell_version < 5
+
+- name: Copy test file(s)
+  win_copy:
+    src: "{{ item }}"
+    dest: "{{ remote_test_folder[0] }}"
+  with_items: "{{local_test_files}}"
+
+- name: Run Pester test(s) specifying a fake test file
+  win_pester:
+    path: "{{ fake_remote_test_file }}"
+  register: result
+  ignore_errors: yes
+
+- name: Assert result
+  assert:
+    that: 
+      - result.failed == true
+
+- name: Run Pester test(s) specifying a fake folder
+  win_pester:
+    path: "{{ fake_remote_folder }}"
+  register: result
+  ignore_errors: yes
+
+- name: Assert result
+  assert:
+    that: 
+      - result.failed == true
+
+- name: Run Pester test(s) specifying a test file and a higher pester version
+  win_pester:
+    path: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+    minimum_version: 6.0.0
+  register: result
+  ignore_errors: yes
+
+- name: Assert result
+  assert:
+    that: 
+      - result.failed == true
+
+- name: Run Pester test(s) specifying a test file
+  win_pester:
+    path: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+  register: result
+
+- name: Assert result
+  assert:
+    that: 
+      - result.failed == false
+      - result.output.TotalCount == 1
+
+- name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
+  win_pester:
+    path: "{{ remote_test_folder[0] }}{{ remote_test_files[0] }}"
+    minimum_version: 3.0.0
+  register: result
+
+- name: Assert result
+  assert:
+    that: 
+      - result.failed == false
+      - result.output.TotalCount == 1
+
+- name: Run Pester test(s) located in a folder. Folder path end with '\'
+  win_pester:
+    path: "{{ remote_test_folder[0] }}"
+  register: result
+
+- name: Assert result 
+  assert:
+    that: 
+      - result.failed == false
+      - result.output.TotalCount == 2
+
+- name: Run Pester test(s) located in a folder. Folder path does not end with '\' 
+  win_pester:
+    path: "{{ remote_test_folder[1] }}"
+  register: result
+
+- name: Assert result 
+  assert:
+    that: 
+      - result.failed == false
+      - result.output.TotalCount == 2
+
+- name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
+  win_pester:
+    path: "{{ remote_test_folder[0] }}"
+    minimum_version: 3.0.0
+  register: result
+
+- name: Assert result 
+  assert:
+    that: 
+      - result.failed == false
+      - result.output.TotalCount == 2
+
+- name: Delete test folder
+  win_file:
+    path: "{{ remote_test_folder[0] }}"
+    state: absent
