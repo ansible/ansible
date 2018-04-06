@@ -1678,7 +1678,7 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 [data-menu-wrap].move-right{right:-100%;left:auto;opacity:0}
 .wy-body-for-nav{background:#fcfcfc}
 .wy-grid-for-nav{position:relative;width:100%;height:100%}
-.wy-nav-side{position:fixed;float: left;top:0;bottom:0;left:0;padding-bottom:2em;width:300px;overflow-x:hidden;overflow-y:hidden;min-height:100%;background:#343131;z-index:0;margin-top: 45px}
+.wy-nav-side{position:fixed;float: left;top:0;bottom:0;left:0;padding-bottom:2em;width:300px;overflow-x:hidden;overflow-y:hidden;min-height:100%;background:#343131;z-index:0;margin-top:0px;top:45px;}
 .wy-side-scroll{position:relative;overflow-x:hidden;overflow-y:scroll;height:100%}
 .wy-nav-top{display:none;background:#2980B9;color:#fff;padding:.4045em .809em;position:relative;line-height:50px;text-align:center;font-size:100%;*zoom:1}
 .wy-nav-top:before,.wy-nav-top:after{display:table;content:""}
@@ -1714,7 +1714,7 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 .wy-side-scroll{width:auto}
 .wy-side-nav-search{width:auto}
 .wy-menu.wy-menu-vertical{width:auto}
-.wy-nav-content-wrap{margin-left:0}
+.wy-nav-content-wrap{margin-left:0;top:15px;}
 .wy-nav-content-wrap .wy-nav-content{padding:1.618em}
 .wy-nav-content-wrap.shift{position:fixed;min-width:100%;left:85%;top:0;height:100%;overflow:hidden}
 }
@@ -1876,6 +1876,8 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
         padding: 8px 13px;
     }
 }
+
+
 span[id*='MathJax-Span']{color:#404040}
 .math{text-align:center}
 @font-face{font-family:"Inconsolata";font-style:normal;font-weight:400;src:local("Inconsolata"),local("Inconsolata-Regular"),url(../fonts/Inconsolata-Regular.ttf) format("truetype")}
