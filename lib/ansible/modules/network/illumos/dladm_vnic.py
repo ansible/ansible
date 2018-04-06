@@ -133,10 +133,7 @@ class VNIC(object):
         self.state = module.params['state']
 
     def vnic_exists(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('show-vnic')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('dladm', True), 'show-vnic', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -146,9 +143,7 @@ class VNIC(object):
             return False
 
     def create_vnic(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('create-vnic')
+        cmd = [self.module.get_bin_path('dladm', True), 'create-vnic']
 
         if self.temporary:
             cmd.append('-t')
@@ -168,9 +163,7 @@ class VNIC(object):
         return self.module.run_command(cmd)
 
     def delete_vnic(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('delete-vnic')
+        cmd = [self.module.get_bin_path('dladm', True), 'delete-vnic']
 
         if self.temporary:
             cmd.append('-t')

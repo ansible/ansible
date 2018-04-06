@@ -112,8 +112,7 @@ def insert_metadata(module_data, new_metadata, insertion_line, targets=('ANSIBLE
     assignments = ' = '.join(targets)
     pretty_metadata = pformat(new_metadata, width=1).split('\n')
 
-    new_lines = []
-    new_lines.append('{0} = {1}'.format(assignments, pretty_metadata[0]))
+    new_lines = ['{0} = {1}'.format(assignments, pretty_metadata[0])]
 
     if len(pretty_metadata) > 1:
         for line in pretty_metadata[1:]:

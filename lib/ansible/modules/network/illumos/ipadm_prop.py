@@ -103,12 +103,7 @@ class Prop(object):
         self.state = module.params['state']
 
     def property_exists(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-prop')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.protocol)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-prop', '-p', self.property, self.protocol]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -121,15 +116,8 @@ class Prop(object):
                                   property=self.property)
 
     def property_is_modified(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-prop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current,default')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.protocol)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-prop', '-c', '-o', 'current,default', '-p', self.property,
+               self.protocol]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -142,15 +130,8 @@ class Prop(object):
             return False
 
     def property_is_set(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-prop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.protocol)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-prop', '-c', '-o', 'current', '-p', self.property,
+               self.protocol]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -162,9 +143,7 @@ class Prop(object):
             return False
 
     def set_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('set-prop')
+        cmd = [self.module.get_bin_path('ipadm'), 'set-prop']
 
         if self.temporary:
             cmd.append('-t')
@@ -176,9 +155,7 @@ class Prop(object):
         return self.module.run_command(cmd)
 
     def reset_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('reset-prop')
+        cmd = [self.module.get_bin_path('ipadm'), 'reset-prop']
 
         if self.temporary:
             cmd.append('-t')

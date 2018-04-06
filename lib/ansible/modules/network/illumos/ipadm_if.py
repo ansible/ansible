@@ -84,10 +84,7 @@ class IPInterface(object):
         self.state = module.params['state']
 
     def interface_exists(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('show-if')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('ipadm', True), 'show-if', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
         if rc == 0:
@@ -96,12 +93,7 @@ class IPInterface(object):
             return False
 
     def interface_is_disabled(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('show-if')
-        cmd.append('-o')
-        cmd.append('state')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('ipadm', True), 'show-if', '-o', 'state', self.name]
 
         (rc, out, err) = self.module.run_command(cmd)
         if rc != 0:
@@ -110,9 +102,7 @@ class IPInterface(object):
         return 'disabled' in out
 
     def create_interface(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('create-if')
+        cmd = [self.module.get_bin_path('ipadm', True), 'create-if']
 
         if self.temporary:
             cmd.append('-t')
@@ -122,9 +112,7 @@ class IPInterface(object):
         return self.module.run_command(cmd)
 
     def delete_interface(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('delete-if')
+        cmd = [self.module.get_bin_path('ipadm', True), 'delete-if']
 
         if self.temporary:
             cmd.append('-t')
@@ -134,20 +122,12 @@ class IPInterface(object):
         return self.module.run_command(cmd)
 
     def enable_interface(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('enable-if')
-        cmd.append('-t')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('ipadm', True), 'enable-if', '-t', self.name]
 
         return self.module.run_command(cmd)
 
     def disable_interface(self):
-        cmd = [self.module.get_bin_path('ipadm', True)]
-
-        cmd.append('disable-if')
-        cmd.append('-t')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('ipadm', True), 'disable-if', '-t', self.name]
 
         return self.module.run_command(cmd)
 

@@ -177,11 +177,11 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
 def build_command(module, mode, path, follow, default, recursive, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
-        cmd = [module.get_bin_path('setfacl', True)]
-        cmd.append('-m "%s"' % entry)
+        cmd = [module.get_bin_path('setfacl', True), 
+               '-m "%s"' % entry]
     elif mode == 'rm':
-        cmd = [module.get_bin_path('setfacl', True)]
-        cmd.append('-x "%s"' % entry)
+        cmd = [module.get_bin_path('setfacl', True), 
+               '-x "%s"' % entry]
     else:  # mode == 'get'
         cmd = [module.get_bin_path('getfacl', True)]
         # prevents absolute path warnings and removes headers

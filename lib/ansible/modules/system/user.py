@@ -638,9 +638,7 @@ class User(object):
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, to_native(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
-        cmd.append('-t')
-        cmd.append(self.ssh_type)
+        cmd = [self.module.get_bin_path('ssh-keygen', True), '-t', self.ssh_type]
         if self.ssh_bits > 0:
             cmd.append('-b')
             cmd.append(self.ssh_bits)
@@ -666,10 +664,7 @@ class User(object):
         ssh_key_file = self.get_ssh_key_path()
         if not os.path.exists(ssh_key_file):
             return (1, 'SSH Key file %s does not exist' % ssh_key_file, '')
-        cmd = [self.module.get_bin_path('ssh-keygen', True)]
-        cmd.append('-l')
-        cmd.append('-f')
-        cmd.append(ssh_key_file)
+        cmd = [self.module.get_bin_path('ssh-keygen', True), '-l', '-f', ssh_key_file]
 
         return self.execute_command(cmd, obey_checkmode=False)
 
@@ -1877,10 +1872,7 @@ class AIX(User):
 
         # set password with chpasswd
         if self.password is not None:
-            cmd = []
-            cmd.append(self.module.get_bin_path('chpasswd', True))
-            cmd.append('-e')
-            cmd.append('-c')
+            cmd = [self.module.get_bin_path('chpasswd', True), '-e', '-c']
             self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
 
         return (rc, out, err)
@@ -1949,10 +1941,7 @@ class AIX(User):
 
         # set password with chpasswd
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            cmd = []
-            cmd.append(self.module.get_bin_path('chpasswd', True))
-            cmd.append('-e')
-            cmd.append('-c')
+            cmd = [self.module.get_bin_path('chpasswd', True), '-e', '-c']
             (rc2, out2, err2) = self.execute_command(cmd, data="%s:%s" % (self.name, self.password))
         else:
             (rc2, out2, err2) = (None, '', '')

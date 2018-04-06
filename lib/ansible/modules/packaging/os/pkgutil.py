@@ -70,9 +70,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def package_installed(module, name):
-    cmd = ['pkginfo']
-    cmd.append('-q')
-    cmd.append(name)
+    cmd = ['pkginfo', '-q', name]
     rc, out, err = run_command(module, cmd)
     if rc == 0:
         return True

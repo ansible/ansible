@@ -128,12 +128,11 @@ def _choose_id_value(module):
 # TODO(TheJulia): Change this over to use the machine patch method
 # in shade once it is available.
 def _prepare_instance_info_patch(instance_info):
-    patch = []
-    patch.append({
+    patch = [{
         'op': 'replace',
         'path': '/instance_info',
         'value': instance_info
-    })
+    }]
     return patch
 
 

@@ -81,7 +81,6 @@ class Hiera(object):
 class LookupModule(LookupBase):
     def run(self, terms, variables=''):
         hiera = Hiera()
-        ret = []
+        ret = [hiera.get(terms)]
 
-        ret.append(hiera.get(terms))
         return ret

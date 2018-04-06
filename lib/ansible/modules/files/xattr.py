@@ -81,9 +81,8 @@ from ansible.module_utils._text import to_native
 
 
 def get_xattr_keys(module, path, follow):
-    cmd = [module.get_bin_path('getfattr', True)]
+    cmd = [module.get_bin_path('getfattr', True), '--absolute-names']
     # prevents warning and not sure why it's not default
-    cmd.append('--absolute-names')
     if not follow:
         cmd.append('-h')
     cmd.append(path)
@@ -93,9 +92,8 @@ def get_xattr_keys(module, path, follow):
 
 def get_xattr(module, path, key, follow):
 
-    cmd = [module.get_bin_path('getfattr', True)]
+    cmd = [module.get_bin_path('getfattr', True), '--absolute-names']
     # prevents warning and not sure why it's not default
-    cmd.append('--absolute-names')
     if not follow:
         cmd.append('-h')
     if key is None:

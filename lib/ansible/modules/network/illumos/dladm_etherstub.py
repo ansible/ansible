@@ -83,10 +83,7 @@ class Etherstub(object):
         self.state = module.params['state']
 
     def etherstub_exists(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('show-etherstub')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('dladm', True), 'show-etherstub', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -96,9 +93,7 @@ class Etherstub(object):
             return False
 
     def create_etherstub(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('create-etherstub')
+        cmd = [self.module.get_bin_path('dladm', True), 'create-etherstub']
 
         if self.temporary:
             cmd.append('-t')
@@ -107,9 +102,7 @@ class Etherstub(object):
         return self.module.run_command(cmd)
 
     def delete_etherstub(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('delete-etherstub')
+        cmd = [self.module.get_bin_path('dladm', True), 'delete-etherstub']
 
         if self.temporary:
             cmd.append('-t')

@@ -260,10 +260,7 @@ class Flow(object):
         return True
 
     def flow_exists(self):
-        cmd = [self.module.get_bin_path('flowadm')]
-
-        cmd.append('show-flow')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('flowadm'), 'show-flow', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -273,9 +270,8 @@ class Flow(object):
             return False
 
     def delete_flow(self):
-        cmd = [self.module.get_bin_path('flowadm')]
+        cmd = [self.module.get_bin_path('flowadm'), 'remove-flow']
 
-        cmd.append('remove-flow')
         if self.temporary:
             cmd.append('-t')
         cmd.append(self.name)
@@ -283,11 +279,7 @@ class Flow(object):
         return self.module.run_command(cmd)
 
     def create_flow(self):
-        cmd = [self.module.get_bin_path('flowadm')]
-
-        cmd.append('add-flow')
-        cmd.append('-l')
-        cmd.append(self.link)
+        cmd = [self.module.get_bin_path('flowadm'), 'add-flow', '-l', self.link]
 
         if self.local_ip:
             cmd.append('-a')
@@ -324,13 +316,7 @@ class Flow(object):
         return self.module.run_command(cmd)
 
     def _query_flow_props(self):
-        cmd = [self.module.get_bin_path('flowadm')]
-
-        cmd.append('show-flowprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('property,possible')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('flowadm'), 'show-flowprop', '-c', '-o', 'property,possible', self.name]
 
         return self.module.run_command(cmd)
 
@@ -357,9 +343,7 @@ class Flow(object):
                                   rc=rc)
 
     def update_flow(self):
-        cmd = [self.module.get_bin_path('flowadm')]
-
-        cmd.append('set-flowprop')
+        cmd = [self.module.get_bin_path('flowadm'), 'set-flowprop']
 
         if self.maxbw and self._needs_updating['maxbw']:
             cmd.append('-p')

@@ -465,8 +465,7 @@ def get_default_command(key, value, existing_commands):
             elif key.startswith('maximum-prefix'):
                 command = 'no maximum-prefix'
             elif key == 'allowas-in max':
-                command = ['no allowas-in {0}'.format(existing_value)]
-                command.append('allowas-in')
+                command = ['no allowas-in {0}'.format(existing_value), 'allowas-in']
             else:
                 command = 'no {0} {1}'.format(key, existing_value)
     else:
