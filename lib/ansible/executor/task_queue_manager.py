@@ -80,8 +80,20 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        self._callbacks_loaded = False
-        self._callback_plugins = []
+        # callbacks
+        if self._list_mode:
+            self._stdout_callback = callback_loader.get('list')
+            self._run_additional_callbacks = False
+            self._run_tree = False
+            self._callbacks_loaded = True
+            self._callback_plugins = []
+        else:
+            self._stdout_callback = stdout_callback
+            self._run_additional_callbacks = run_additional_callbacks
+            self._run_tree = run_tree
+            self._callbacks_loaded = False
+            self._callback_plugins = []
+
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
@@ -235,7 +247,10 @@ class TaskQueueManager:
         self._initialize_processes(min(self._forks, iterator.batch_size))
 
         # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(new_play.strategy, self)
+        if self._list_mode:
+            strategy = strategy_loader.get('list', self)
+        else:
+            strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 

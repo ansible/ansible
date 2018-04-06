@@ -24,7 +24,7 @@ import os
 from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
@@ -52,17 +52,13 @@ class PlaybookExecutor:
         self.passwords = passwords
         self._unreachable_hosts = dict()
 
-        if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
-                context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
-            self._tqm = None
-        else:
-            self._tqm = TaskQueueManager(
-                inventory=inventory,
-                variable_manager=variable_manager,
-                loader=loader,
-                passwords=self.passwords,
-                forks=context.CLIARGS.get('forks'),
-            )
+        self._tqm = TaskQueueManager(
+            inventory=inventory,
+            variable_manager=variable_manager,
+            loader=loader,
+            passwords=self.passwords,
+            forks=context.CLIARGS.get('forks'),
+        )
 
         # Note: We run this here to cache whether the default ansible ssh
         # executable supports control persist.  Sometime in the future we may
@@ -131,12 +127,9 @@ class PlaybookExecutor:
                             unsafe = var.get("unsafe", None)
 
                             if vname not in self._variable_manager.extra_vars:
-                                if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
-                                                            default, unsafe)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
-                                else:  # we are either in --list-<option> or syntax check
-                                    play.vars[vname] = default
+                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
+                                                        default, unsafe)
+                                play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
@@ -146,54 +139,57 @@ class PlaybookExecutor:
                     if context.CLIARGS['syntax']:
                         continue
 
-                    if self._tqm is None:
-                        # we are just doing a listing
-                        entry['plays'].append(play)
+                    self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
-                    else:
-                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
+                    previously_failed = len(self._tqm._failed_hosts)
+                    previously_unreachable = len(self._tqm._unreachable_hosts)
 
-                        previously_failed = len(self._tqm._failed_hosts)
-                        previously_unreachable = len(self._tqm._unreachable_hosts)
+                    break_play = False
+                    # we are actually running plays
+                    batches = self._get_serialized_batches(play)
+                    if len(batches) == 0:
+                        self._tqm.send_callback('v2_playbook_on_play_start', play)
+                        self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
+                    for batch in batches:
+                        # restrict the inventory to the hosts in the serialized batch
+                        self._inventory.restrict_to_hosts(batch)
+                        # and run it...
+                        result = self._tqm.run(play=play)
 
-                        break_play = False
-                        # we are actually running plays
-                        batches = self._get_serialized_batches(play)
-                        if len(batches) == 0:
-                            self._tqm.send_callback('v2_playbook_on_play_start', play)
-                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                        for batch in batches:
-                            # restrict the inventory to the hosts in the serialized batch
-                            self._inventory.restrict_to_hosts(batch)
-                            # and run it...
-                            result = self._tqm.run(play=play)
+                        # break the play if the result equals the special return code
+                        if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:
+                            result = self._tqm.RUN_FAILED_HOSTS
+                            break_play = True
 
-                            # break the play if the result equals the special return code
-                            if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:
-                                result = self._tqm.RUN_FAILED_HOSTS
-                                break_play = True
+                        # check the number of failures here, to see if they're above the maximum
+                        # failure percentage allowed, or if any errors are fatal. If either of those
+                        # conditions are met, we break out, otherwise we only break out if the entire
+                        # batch failed
+                        failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
+                            (previously_failed + previously_unreachable)
 
-                            # check the number of failures here, to see if they're above the maximum
-                            # failure percentage allowed, or if any errors are fatal. If either of those
-                            # conditions are met, we break out, otherwise we only break out if the entire
-                            # batch failed
-                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
-                                (previously_failed + previously_unreachable)
-
-                            if len(batch) == failed_hosts_count:
-                                break_play = True
-                                break
-
-                            # update the previous counts so they don't accumulate incorrectly
-                            # over multiple serial batches
-                            previously_failed += len(self._tqm._failed_hosts) - previously_failed
-                            previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
-
-                            # save the unreachable hosts from this batch
-                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
-
-                        if break_play:
+                        if len(batch) == failed_hosts_count:
+                            break_play = True
                             break
+
+                        # update the previous counts so they don't accumulate incorrectly
+                        # over multiple serial batches
+                        previously_failed += len(self._tqm._failed_hosts) - previously_failed
+                        previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
+
+                        # save the unreachable hosts from this batch
+                        self._unreachable_hosts.update(self._tqm._unreachable_hosts)
+
+                    if break_play:
+                        break
+
+                    # update the previous counts so they don't accumulate incorrectly
+                    # over multiple serial batches
+                    previously_failed += len(self._tqm._failed_hosts) - previously_failed
+                    previously_unreachable += len(self._tqm._unreachable_hosts) - previously_unreachable
+
+                    # save the unreachable hosts from this batch
+                    self._unreachable_hosts.update(self._tqm._unreachable_hosts)
 
                     i = i + 1  # per play
 
@@ -201,25 +197,24 @@ class PlaybookExecutor:
                     entrylist.append(entry)  # per playbook
 
                 # send the stats callback for this playbook
-                if self._tqm is not None:
-                    if C.RETRY_FILES_ENABLED:
-                        retries = set(self._tqm._failed_hosts.keys())
-                        retries.update(self._tqm._unreachable_hosts.keys())
-                        retries = sorted(retries)
-                        if len(retries) > 0:
-                            if C.RETRY_FILES_SAVE_PATH:
-                                basedir = C.RETRY_FILES_SAVE_PATH
-                            elif playbook_path:
-                                basedir = os.path.dirname(os.path.abspath(playbook_path))
-                            else:
-                                basedir = '~/'
+                if C.RETRY_FILES_ENABLED:
+                    retries = set(self._tqm._failed_hosts.keys())
+                    retries.update(self._tqm._unreachable_hosts.keys())
+                    retries = sorted(retries)
+                    if len(retries) > 0:
+                        if C.RETRY_FILES_SAVE_PATH:
+                            basedir = C.RETRY_FILES_SAVE_PATH
+                        elif playbook_path:
+                            basedir = os.path.dirname(os.path.abspath(playbook_path))
+                        else:
+                            basedir = '~/'
 
-                            (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
-                            filename = os.path.join(basedir, "%s.retry" % retry_name)
-                            if self._generate_retry_inventory(filename, retries):
-                                display.display("\tto retry, use: --limit @%s\n" % filename)
+                        (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                        filename = os.path.join(basedir, "%s.retry" % retry_name)
+                        if self._generate_retry_inventory(filename, retries):
+                            display.display("\tto retry, use: --limit @%s\n" % filename)
 
-                    self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
+                self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
 
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:

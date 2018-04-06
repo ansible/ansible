@@ -14,7 +14,6 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
-from ansible.playbook.block import Block
 from ansible.utils.display import Display
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
@@ -125,75 +124,7 @@ class PlaybookCLI(CLI):
                                 variable_manager=variable_manager, loader=loader,
                                 passwords=passwords)
 
-        results = pbex.run()
-
-        if isinstance(results, list):
-            for p in results:
-
-                display.display('\nplaybook: %s' % p['playbook'])
-                for idx, play in enumerate(p['plays']):
-                    if play._included_path is not None:
-                        loader.set_basedir(play._included_path)
-                    else:
-                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
-                        loader.set_basedir(pb_dir)
-
-                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
-                    mytags = set(play.tags)
-                    msg += '\tTAGS: [%s]' % (','.join(mytags))
-
-                    if context.CLIARGS['listhosts']:
-                        playhosts = set(inventory.get_hosts(play.hosts))
-                        msg += "\n    pattern: %s\n    hosts (%d):" % (play.hosts, len(playhosts))
-                        for host in playhosts:
-                            msg += "\n      %s" % host
-
-                    display.display(msg)
-
-                    all_tags = set()
-                    if context.CLIARGS['listtags'] or context.CLIARGS['listtasks']:
-                        taskmsg = ''
-                        if context.CLIARGS['listtasks']:
-                            taskmsg = '    tasks:\n'
-
-                        def _process_block(b):
-                            taskmsg = ''
-                            for task in b.block:
-                                if isinstance(task, Block):
-                                    taskmsg += _process_block(task)
-                                else:
-                                    if task.action == 'meta':
-                                        continue
-
-                                    all_tags.update(task.tags)
-                                    if context.CLIARGS['listtasks']:
-                                        cur_tags = list(mytags.union(set(task.tags)))
-                                        cur_tags.sort()
-                                        if task.name:
-                                            taskmsg += "      %s" % task.get_name()
-                                        else:
-                                            taskmsg += "      %s" % task.action
-                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
-
-                            return taskmsg
-
-                        all_vars = variable_manager.get_vars(play=play)
-                        for block in play.compile():
-                            block = block.filter_tagged_tasks(all_vars)
-                            if not block.has_tasks():
-                                continue
-                            taskmsg += _process_block(block)
-
-                        if context.CLIARGS['listtags']:
-                            cur_tags = list(mytags.union(all_tags))
-                            cur_tags.sort()
-                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
-
-                        display.display(taskmsg)
-
-            return 0
-        else:
-            return results
+        return pbex.run()
 
     @staticmethod
     def _flush_cache(inventory, variable_manager):
