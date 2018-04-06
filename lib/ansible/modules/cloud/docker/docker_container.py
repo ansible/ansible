@@ -78,6 +78,7 @@ options:
   dns_opts:
     description:
       - list of DNS options
+    version_added: "2.6"
   dns_servers:
     description:
       - List of custom DNS servers.

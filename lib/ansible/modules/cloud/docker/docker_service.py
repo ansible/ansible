@@ -136,6 +136,10 @@ options:
       type: bool
       default: false
       version_added: 2.6
+  timeout:
+    description:
+        - timeout in seconds for container shutdown when attached or when containers are already running.
+    default: 10
 
 extends_documentation_fragment:
     - docker
@@ -455,7 +459,7 @@ try:
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
-    DEFAULT_TIMEOUT = 60
+    DEFAULT_TIMEOUT = 10
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 
