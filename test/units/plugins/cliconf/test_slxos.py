@@ -19,27 +19,36 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+from os import path
+
 from mock import MagicMock, call
+import json
 
 from ansible.compat.tests import unittest
 from ansible.plugins.cliconf import slxos
 
-FIXTURE_PATH = '%s/fixtures/slxos' % os.path.dirname(os.path.abspath(__file__))
+FIXTURE_DIR = b'%s/fixtures/slxos' % (
+    path.dirname(path.abspath(__file__)).encode('utf-8')
+)
 
 
 def _connection_side_effect(*args, **kwargs):
     try:
         if args:
-            value = args.pop(0)
+            value = args[0]
         else:
             value = kwargs.get('command')
-        with open('%s/%s' % (FIXTURE_PATH, '_'.join(value.split(' ')))) as file_desc:
+
+        fixture_path = path.abspath(
+            b'%s/%s' % (FIXTURE_DIR, b'_'.join(value.split(b' ')))
+        )
+        with open(fixture_path, 'rb') as file_desc:
             return file_desc.read()
-    except:
+    except (OSError, IOError):
         if args:
-            value = args.pop(0)
-        else:
+            value = args[0]
+            return value
+        elif kwargs.get('command'):
             value = kwargs.get('command')
             return value
 
@@ -70,24 +79,26 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
     def test_get_config(self):
         running_config = self._cliconf.get_config()
 
-        with open('%s/show_running-config' % FIXTURE_PATH) as file_desc:
+        fixture_path = path.abspath(b'%s/show_running-config' % FIXTURE_DIR)
+        with open(fixture_path, 'rb') as file_desc:
             mock_running_config = file_desc.read()
             self.assertEqual(running_config, mock_running_config)
 
         startup_config = self._cliconf.get_config()
 
-        with open('%s/show_startup-config' % FIXTURE_PATH) as file_desc:
+        fixture_path = path.abspath(b'%s/show_running-config' % FIXTURE_DIR)
+        with open(fixture_path, 'rb') as file_desc:
             mock_startup_config = file_desc.read()
             self.assertEqual(startup_config, mock_startup_config)
 
     def test_edit_config(self):
-        test_config_command = 'this\nis\nthe\nsong\nthat\nnever\nends'
+        test_config_command = b'this\nis\nthe\nsong\nthat\nnever\nends'
 
         self._cliconf.edit_config(test_config_command)
 
         send_calls = []
 
-        for command in ['configure terminal', test_config_command, 'end']:
+        for command in [b'configure terminal', test_config_command, b'end']:
             send_calls.append(call(
                 command=command,
                 prompt_retry_check=False,
@@ -98,12 +109,23 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         self._mock_connection.send.assert_has_calls(send_calls)
 
     def test_get_capabilities(self):
-        capabilities = self._cliconf.get_capabilities()
+        capabilities = json.loads(self._cliconf.get_capabilities())
+        mock_capabilities = {
+            'network_api': 'cliconf',
+            'rpc': [
+                'get_config',
+                'edit_config',
+                'get_capabilities',
+                'get'
+            ],
+            'device_info': {
+                'network_os_model': 'BR-SLX9140',
+                'network_os_version': '17s.1.02',
+                'network_os': 'slxos'
+            }
+        }
 
         self.assertEqual(
-            '{"network_api": "cliconf", "rpc": ["get_config", "edit_config", '
-            '"get_capabilities", "get"], "device_info": {"network_os_model": '
-            '"BR-SLX9140", "network_os_version": "17s.1.02", "network_os": "s'
-            'lxos"}}',
+            mock_capabilities,
             capabilities
         )
