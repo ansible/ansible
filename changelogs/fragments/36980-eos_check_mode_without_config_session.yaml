@@ -1,0 +1,2 @@
+bugfixes:
+- EOS can not check configuration without use of config session (ANSIBLE_EOS_USE_SESSIONS=0). Fix is to throw error when hiting into this exception case. Configs would neither be checked nor be played on the eos device.
