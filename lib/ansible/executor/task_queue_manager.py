@@ -82,7 +82,7 @@ class TaskQueueManager:
 
         # callbacks
         if self._list_mode:
-            self._stdout_callback = callback_loader.get('list')
+            self._stdout_callback = callback_loader.get(C.LIST_CALLBACK)
             self._run_additional_callbacks = False
             self._run_tree = False
             self._callbacks_loaded = True
@@ -248,7 +248,7 @@ class TaskQueueManager:
 
         # load the specified strategy (or the default linear one)
         if self._list_mode:
-            strategy = strategy_loader.get('list', self)
+            strategy = strategy_loader.get(C.LIST_STRATEGY, self)
         else:
             strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:

@@ -1652,6 +1652,23 @@ INVENTORY_UNPARSED_IS_FAILED:
   ini:
   - {key: unparsed_is_failed, section: inventory}
   type: bool
+LIST_CALLBACK:
+  name: Callback plugin used for list options
+  default: list
+  description:
+    - "Set the callback used to display CLI --list options"
+  env: [{name: ANSIBLE_LIST_CALLBACK}]
+  ini:
+  - {key: list_callback, section: defaults}
+  version_added: "2.6"
+LIST_STRATEGY:
+  name: Strategy used for list options
+  default: 'list'
+  description: Set the default strategy used when doing a 'list' operation.
+  env: [{name: ANSIBLE_LIST_STRATEGY}]
+  ini:
+  - {key: list_strategy, section: defaults}
+  version_added: "2.6"
 MAX_FILE_SIZE_FOR_DIFF:
   name: Diff maximum file size
   default: 104448
