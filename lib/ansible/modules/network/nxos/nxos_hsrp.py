@@ -61,7 +61,6 @@ options:
   preempt:
     description:
       - Enable/Disable preempt.
-    default: 'disabled'
     choices: ['enabled', 'disabled']
   vip:
     description:
