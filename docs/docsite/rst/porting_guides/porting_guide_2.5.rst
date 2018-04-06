@@ -83,7 +83,7 @@ Jinja tests used as filters
 
 Using Ansible-provided jinja tests as filters will be removed in Ansible 2.9.
 
-Prior to Ansible 2.5, jinja tests included within Ansible were most often used as filters. The large difference in use is that filters are referenced as ``variable | filter_name`` whereas jinja tests are referenced as ``variable is test_name``.
+Prior to Ansible 2.5, jinja tests included within Ansible were most often used as filters. The large difference in use is that filters are referenced as ``variable | filter_name`` while jinja tests are referenced as ``variable is test_name``.
 
 Jinja tests are used for comparisons, while filters are used for data manipulation and have different applications in jinja. This change is to help differentiate the concepts for a better understanding of jinja, and where each can be appropriately used.
 
