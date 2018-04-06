@@ -31,7 +31,6 @@ from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
@@ -80,14 +79,18 @@ class TaskQueueManager:
         self._run_tree = run_tree
         self._forks = forks or 5
 
-        # callbacks
         if self._list_mode:
+            if any([self._options.listtags, self._options.listtasks]) and all([self._options.tags == ['all'], not self._options.skip_tags]):
+                # when not passing tag options, show all possible tagged/untagged tasks
+                self._options.tags = ['untagged', 'tagged', 'never']
+            # callbacks
             self._stdout_callback = callback_loader.get(C.LIST_CALLBACK)
             self._run_additional_callbacks = False
             self._run_tree = False
             self._callbacks_loaded = True
             self._callback_plugins = []
         else:
+            # callbacks
             self._stdout_callback = stdout_callback
             self._run_additional_callbacks = run_additional_callbacks
             self._run_tree = run_tree
