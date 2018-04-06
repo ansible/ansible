@@ -1686,7 +1686,7 @@ code.code-large,.rst-content tt.code-large{font-size:90%}
 .wy-nav-top a{color:#fff;font-weight:bold}
 .wy-nav-top img{margin-right:12px;height:45px;width:45px;background-color:#2980B9;padding:5px;border-radius:100%}
 .wy-nav-top i{font-size:30px;float:left;cursor:pointer;padding-top:inherit}
-@media screen and (max-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: 100%;float:left;background:#fcfcfc;min-height:100%}
+@media screen and (max-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: 100%;float:left;background:#fcfcfc;min-height:100%;position:fixed;top:15px;}
 }
 @media screen and (min-width: 768px){.wy-nav-content-wrap{margin-top: 30px;margin-left: 300px;width: calc(100% - 300px);float:left;background:#fcfcfc;min-height:100%}
 }
