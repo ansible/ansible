@@ -235,8 +235,8 @@ class TaskExecutor:
             if not isinstance(items, list):
                 raise AnsibleError(
                        "Invalid data passed to 'loop', it requires a list, got this instead: %s."
-                       " Hint: If you passed a list/dict of just one element, try using q/query instead of lookup"
-                       " or add wantlist=True to your lookup invocation." % items
+                       " Hint: If you passed a list/dict of just one element,"
+                       " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
                 )
 
         # now we restore any old job variables that may have been modified,
