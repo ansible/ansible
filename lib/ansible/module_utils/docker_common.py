@@ -65,7 +65,7 @@ DEFAULT_SSL_VERSION="1.0"
 try:
     DEFAULT_TIMEOUT = DEFAULT_TIMEOUT_SECONDS
 except NameError:
-    DEFAULT_TIMEOUT = 60   
+    DEFAULT_TIMEOUT = 60
 
 DOCKER_COMMON_ARGS = dict(
     docker_host=dict(type='str', aliases=['docker_url'],default='unix://var/run/docker.sock'),
