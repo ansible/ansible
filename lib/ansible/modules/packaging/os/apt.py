@@ -737,9 +737,9 @@ def cleanup(m, purge=False, force=False, operation=None,
     m.exit_json(changed=bool(len(diff)), stdout=out, stderr=err, diff=diff)
 
 
-def upgrade(m, mode="yes", force=False, default_release=None,
-            use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
+def upgrade(m, mode="yes", force=False, default_release=None, use_apt_get=False,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+            allow_unauthenticated=False):
 
     if autoremove:
         autoremove = '--auto-remove'
@@ -779,6 +779,11 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
+    if allow_unauthenticated:
+        allow_unauthenticated = '--allow-unauthenticated'
+    else:
+        allow_unauthenticated = ''
+
     if apt_cmd is None:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
@@ -787,8 +792,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                 force_yes, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, allow_unauthenticated,
+                                    check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -1005,7 +1010,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -1025,7 +1030,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
 
         if packages:
             for package in packages:
