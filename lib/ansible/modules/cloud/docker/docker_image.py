@@ -158,7 +158,7 @@ options:
       - no
       - encrypt
       - verify
-    default: no
+    default: 'no'
     required: false
     version_added: "2.0"
 

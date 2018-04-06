@@ -75,7 +75,7 @@ options:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
-  dns_options:
+  dns_opts:
     description:
       - list of DNS options
   dns_servers:

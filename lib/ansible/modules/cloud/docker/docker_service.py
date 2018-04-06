@@ -135,6 +135,7 @@ options:
         - Remove containers for services not defined in the compose file.
       type: bool
       default: false
+      version_added: 2.6
 
 extends_documentation_fragment:
     - docker
