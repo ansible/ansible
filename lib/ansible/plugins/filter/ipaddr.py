@@ -272,7 +272,7 @@ def _next_usable_query(v, vtype):
         if v.size > 1:
             first_usable, last_usable = _first_last(v)
             next_ip = int(netaddr.IPAddress(int(v.ip) + 1))
-            if next_ip >= first_usable and next_ip <= last_usable:
+            if first_usable <= next_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) + 1))
 
 
@@ -288,7 +288,7 @@ def _previous_usable_query(v, vtype):
         if v.size > 1:
             first_usable, last_usable = _first_last(v)
             previous_ip = int(netaddr.IPAddress(int(v.ip) - 1))
-            if previous_ip >= first_usable and previous_ip <= last_usable:
+            if first_usable <= previous_ip <= last_usable:
                 return str(netaddr.IPAddress(int(v.ip) - 1))
 
 
@@ -789,7 +789,7 @@ def next_nth_usable(value, offset):
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) + offset))
-        if nth_ip >= first_usable and nth_ip <= last_usable:
+        if first_usable <= nth_ip <= last_usable:
             return str(netaddr.IPAddress(int(v.ip) + offset))
 
 
@@ -811,7 +811,7 @@ def previous_nth_usable(value, offset):
     if v.size > 1:
         first_usable, last_usable = _first_last(v)
         nth_ip = int(netaddr.IPAddress(int(v.ip) - offset))
-        if nth_ip >= first_usable and nth_ip <= last_usable:
+        if first_usable <= nth_ip <= last_usable:
             return str(netaddr.IPAddress(int(v.ip) - offset))
 
 
@@ -825,10 +825,7 @@ def _range_checker(ip_check, first, last):
 
     :return: bool
     '''
-    if ip_check >= first and ip_check <= last:
-        return True
-    else:
-        return False
+    return first <= ip_check <= last
 
 
 def _address_normalizer(value):

@@ -310,7 +310,7 @@ def is_valid_tag(tag):
 def is_valid_preference(pref):
     """check if the preference is valid"""
     if pref.isdigit():
-        return int(pref) > 0 and int(pref) < 256
+        return 0 < int(pref) < 256
     else:
         return False
 

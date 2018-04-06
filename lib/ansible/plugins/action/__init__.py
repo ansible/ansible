@@ -941,7 +941,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['before'] = ''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1
-            elif peek_result.get('size') and C.MAX_FILE_SIZE_FOR_DIFF > 0 and peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
+            elif peek_result.get('size') and 0 < C.MAX_FILE_SIZE_FOR_DIFF < peek_result['size']:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
                 display.debug("Slurping the file %s" % source)
@@ -957,7 +957,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             if source_file:
                 st = os.stat(source)
-                if C.MAX_FILE_SIZE_FOR_DIFF > 0 and st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+                if 0 < C.MAX_FILE_SIZE_FOR_DIFF < st[stat.ST_SIZE]:
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
                     display.debug("Reading local copy of the file %s" % source)

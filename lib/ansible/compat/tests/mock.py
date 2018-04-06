@@ -44,7 +44,7 @@ except ImportError:
 
 
 # Prior to 3.4.4, mock_open cannot handle binary read_data
-if sys.version_info >= (3,) and sys.version_info < (3, 4, 4):
+if (3,) <= sys.version_info < (3, 4, 4):
     file_spec = None
 
     def _iterate_read_data(read_data):

@@ -483,11 +483,11 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
 
             do_redirect = False
             if follow_redirects in ['all', 'yes', True]:
-                do_redirect = (code >= 300 and code < 400)
+                do_redirect = (300 <= code < 400)
 
             elif follow_redirects == 'safe':
                 m = req.get_method()
-                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
+                do_redirect = (300 <= code < 400 and m in ('GET', 'HEAD'))
 
             if do_redirect:
                 # be conciliant with URIs containing a space

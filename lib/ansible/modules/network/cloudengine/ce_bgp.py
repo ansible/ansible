@@ -415,7 +415,7 @@ def check_ip_addr(**kwargs):
     for i in range(4):
         addr[i] = int(addr[i])
 
-        if addr[i] <= 255 and addr[i] >= 0:
+        if 0 <= addr[i] <= 255:
             pass
         else:
             return FAILED

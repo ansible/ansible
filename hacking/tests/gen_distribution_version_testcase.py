@@ -40,7 +40,7 @@ fcont = {}
 for f in filelist:
     if os.path.exists(f):
         s = os.path.getsize(f)
-        if s > 0 and s < 10000:
+        if 0 < s < 10000:
             with open(f) as fh:
                 fcont[f] = fh.read()
 
