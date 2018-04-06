@@ -2309,6 +2309,13 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
+    def fail_dependency(self, msg):
+        ''' This is for reporting back failed dependencies along with the python executable
+        currently being used being.
+        '''
+
+        self.fail_json(msg=msg, python_executable=sys.executable)
+
     def fail_json(self, **kwargs):
         ''' return from the module, with an error message '''
 

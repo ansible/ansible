@@ -199,7 +199,7 @@ def main():
     m_args = module.params
 
     if not has_pysnmp:
-        module.fail_json(msg='Missing required pysnmp module (check docs)')
+        module.fail_dependency(msg='Missing required pysnmp module (check docs)')
 
     cmdGen = cmdgen.CommandGenerator()
 
