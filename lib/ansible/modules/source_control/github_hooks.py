@@ -80,15 +80,16 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-import base64
 import json
+import base64
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_bytes
 
 
 def request(module, url, user, oauthkey, data='', method='GET'):
-    auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
+    auth = base64.b64encode(to_bytes('%s:%s' % (user, oauthkey)).replace('\n', ''))
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
