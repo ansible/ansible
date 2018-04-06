@@ -1053,7 +1053,7 @@ class Nmcli(object):
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
                   'ipv4.address': self.ip4,
-                  'ipv4.geteway': self.gw4,
+                  'ipv4.gateway': self.gw4,
                   'ipv4.dns': self.dns4,
                   'ipv6.address': self.ip6,
                   'ipv6.gateway': self.gw6,
