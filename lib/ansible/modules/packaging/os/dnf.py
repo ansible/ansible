@@ -37,7 +37,7 @@ options:
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
-    choices: [ "present", "latest", "absent" ]
+    choices: [ "present", "latest", "absent", "installed", "removed", "enable", "disable" ]
     default: "present"
 
   enablerepo:
@@ -83,6 +83,18 @@ requirements:
   - "python >= 2.6"
   - python-dnf
   - for the autoremove option you need dnf >= 2.0.1"
+
+  modularity:
+    description:
+      - If C(yes), group install/upgrade/remove operations now apply to modules if set to false then those operations apply to "comps groups".
+    type: bool
+    version_added: "?.?"
+notes:
+  - This automatically sets itself to true on a system with a dnf that supports modularity.
+requirements:
+  - "python >= 2.6"
+  - python-dnf
+  - for the modularity option to be set you need dnf with modularity support
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
@@ -283,16 +295,27 @@ def _mark_package_install(module, base, pkg_spec):
         module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
-def _parse_spec_group_file(names):
-    pkg_specs, grp_specs, filenames = [], [], []
+__modularity_available = False
+try:
+    from dnf.module.exceptions import NoModuleException
+    __modularity_available = True
+except:
+    pass
+# __modularity = False
+__modularity = __modularity_available
+
+def _parse_ui_spec(names):
+    pkg_specs, mod_specs, grp_specs, filenames = [], [], [], []
     for name in names:
         if name.endswith(".rpm"):
             filenames.append(name)
+        elif __modularity and name.startswith("@"):
+            mod_specs.append(name[1:])
         elif name.startswith("@"):
             grp_specs.append(name[1:])
         else:
             pkg_specs.append(name)
-    return pkg_specs, grp_specs, filenames
+    return pkg_specs, mod_specs, grp_specs, filenames
 
 
 def _install_remote_rpms(base, filenames):
@@ -321,7 +344,7 @@ def ensure(module, base, state, names, autoremove):
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
-        pkg_specs, group_specs, filenames = _parse_spec_group_file(names)
+        pkg_specs, mod_specs, group_specs, filenames = _parse_ui_spec(names)
         if group_specs:
             base.read_comps()
 
@@ -344,6 +367,13 @@ def ensure(module, base, state, names, autoremove):
         if state in ['installed', 'present']:
             # Install files.
             _install_remote_rpms(base, filenames)
+
+            # Install modules.
+            if mod_specs:
+                try:
+                    base.repo_module_dict.install(mod_specs)
+                except dnf.exceptions.Error as e:
+                    failures.append((mod, to_native(e)))
 
             # Install groups.
             for group in groups:
@@ -368,6 +398,13 @@ def ensure(module, base, state, names, autoremove):
         elif state == 'latest':
             # "latest" is same as "installed" for filenames.
             _install_remote_rpms(base, filenames)
+
+            # Upgrade modules.
+            if mod_specs:
+                try:
+                    skipped_grps, _, _ = base.repo_module_dict.upgrade(mod_specs, True)
+                except dnf.exceptions.Error as e:
+                    failures.append((mod_specs, to_native(e)))
 
             for group in groups:
                 try:
@@ -395,14 +432,52 @@ def ensure(module, base, state, names, autoremove):
                 base.conf.best = True
                 base.install(pkg_spec)
 
+        elif state == 'enable':
+            # Enable modules.
+            if not mod_specs:
+                module.exit_json(msg="Nothing to do")
+            if module.check_mode:
+                module.exit_json(changed=True)
+            for mod in mod_specs:
+                try:
+                    base.repo_module_dict.enable(mod, True)
+                except dnf.exceptions.Error as e:
+                    failures.append((mod, to_native(e)))
+            response = {'changed': True, 'results': []}
+            # response = {'changed': True, 'failures': [skipped_grps]}
+            # FIXME: Work out enabled modules
+            module.exit_json(**response)
+
+        elif state == 'disable':
+            # Disable modules.
+            if not mod_specs:
+                module.exit_json(msg="Nothing to do")
+            if module.check_mode:
+                module.exit_json(changed=True)
+            for mod in mod_specs:
+                try:
+                    base.repo_module_dict.disable(mod,True)
+                except dnf.exceptions.Error as e:
+                    failures.append((mod_specs, to_native(e)))
+            response = {'changed': True, 'results': []}
+            # FIXME: Work out enabled modules
+            module.exit_json(**response)
+
         else:
-            # state == absent
+            # state == absent (or removed)
             if autoremove is not None:
                 base.conf.clean_requirements_on_remove = autoremove
 
             if filenames:
                 module.fail_json(
                     msg="Cannot remove paths -- please specify package name.")
+
+            # Remove modules.
+            if mod_specs:
+                try:
+                    skipped_grps = base.repo_module_dict.remove(mod_specs)
+                except dnf.exceptions.Error as e:
+                    failures.append((mod_specs, to_native(e)))
 
             for group in groups:
                 try:
@@ -430,7 +505,9 @@ def ensure(module, base, state, names, autoremove):
             if autoremove:
                 base.autoremove()
 
-    if not base.resolve(allow_erasing=allow_erasing):
+    if state in ['enable', 'disable']:
+        pass
+    elif not base.resolve(allow_erasing=allow_erasing):
         if failures:
             module.fail_json(msg='Failed to install some of the '
                                  'specified packages',
@@ -466,7 +543,8 @@ def main():
             name=dict(aliases=['pkg'], type='list'),
             state=dict(
                 choices=[
-                    'absent', 'present', 'installed', 'removed', 'latest']),
+                    'absent', 'present', 'installed', 'removed', 'latest',
+                    'enable', 'disable']),
             enablerepo=dict(type='list', default=[]),
             disablerepo=dict(type='list', default=[]),
             list=dict(),
@@ -474,6 +552,7 @@ def main():
             disable_gpg_check=dict(default=False, type='bool'),
             installroot=dict(default='/', type='path'),
             autoremove=dict(type='bool'),
+            modularity=dict(type='bool'),
         ),
         required_one_of=[['name', 'list', 'autoremove']],
         mutually_exclusive=[['name', 'list'], ['autoremove', 'list']],
@@ -481,6 +560,13 @@ def main():
     params = module.params
 
     _ensure_dnf(module)
+
+    if params['modularity'] is not None:
+        global __modularity
+        if __modularity_available and params['modularity']:
+            __modularity = True
+        else:
+            __modularity = False
 
     # Check if autoremove is called correctly
     if params['autoremove'] is not None:
