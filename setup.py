@@ -1,3 +1,4 @@
+##! /usr/bin/env python
 
 import json
 import os
@@ -18,6 +19,95 @@ except ImportError:
           " your package manager (usually python-setuptools) or via pip (pip"
           " install setuptools).")
     sys.exit(1)
+
+
+# shim for setuptools<30.3:
+try:
+    from setuptools.config import read_configuration
+except ImportError:
+    try:
+        from configparser import ConfigParser, NoSectionError
+    except ImportError:
+        from ConfigParser import ConfigParser, NoSectionError
+        ConfigParser.read_file = ConfigParser.readfp
+
+    def read_configuration(filepath):
+        """Read metadata and options from setup.cfg located at filepath."""
+        cfg = ConfigParser()
+        with open(filepath) as f:
+            cfg.read_file(f)
+
+        def maybe_read_files(d):
+            d = d.strip()
+            if not d.startswith('file:'):
+                return d
+
+            descs = []
+            for fname in map(str.strip, d[5:].split(',')):
+                with open(fname) as f:
+                    descs.append(f.read())
+
+            return ''.join(descs)
+
+        cfg_val_to_list = lambda _: list(filter(bool, map(str.strip, _.strip().splitlines())))
+        cfg_val_to_dict = lambda _: dict(map(lambda l: list(map(str.strip, l.split('=', 1))), filter(bool, map(str.strip, _.strip().splitlines()))))
+        cfg_val_to_primitive = lambda _: json.loads(_.strip().lower())
+
+        md = dict(cfg.items('metadata'))
+        for list_key in 'classifiers', 'keywords':
+            try:
+                md[list_key] = cfg_val_to_list(md[list_key])
+            except KeyError:
+                pass
+        try:
+            md['long_description'] = maybe_read_files(md['long_description'])
+        except KeyError:
+            pass
+
+        opt = dict(cfg.items('options'))
+        try:
+            opt['zip_safe'] = cfg_val_to_primitive(opt['zip_safe'])
+        except KeyError:
+            pass
+        for list_key in 'scripts', 'install_requires', 'setup_requires':
+            try:
+                opt[list_key] = cfg_val_to_list(opt[list_key])
+            except KeyError:
+                pass
+        try:
+            opt['package_dir'] = cfg_val_to_dict(opt['package_dir'])
+        except KeyError:
+            pass
+
+        opt_package_data = dict(cfg.items('options.package_data'))
+        try:
+            if not opt_package_data.get('', '').strip():
+                opt_package_data[''] = opt_package_data['*']
+                del opt_package_data['*']
+        except KeyError:
+            pass
+
+        try:
+            opt_extras_require = dict(cfg.items('options.extras_require'))
+            opt['extras_require'] = {}
+            for k, v in opt_extras_require.items():
+                opt['extras_require'][k] = cfg_val_to_list(v)
+        except NoSectionError:
+            pass
+
+        opt['package_data'] = {}
+        for k, v in opt_package_data.items():
+            opt['package_data'][k] = cfg_val_to_list(v)
+
+        cur_pkgs = opt.get('packages', '').strip()
+        if '\n' in cur_pkgs:
+            opt['packages'] = cfg_val_to_list(opt['packages'])
+        elif cur_pkgs.startswith('find:'):
+            opt_packages_find = dict(cfg.items('options.packages.find'))
+            opt['packages'] = find_packages(**opt_packages_find)
+
+        return {'metadata': md, 'options': opt}
+
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible.release import __version__, __author__
@@ -159,7 +249,7 @@ for extra_requirements_filename in os.listdir(extra_requirements_dir):
             extra_requirements[filename_match.group(1)] = extra_requirements_file.read().splitlines()
 
 
-setup(
+setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
     cmdclass={
@@ -169,60 +259,17 @@ setup(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible',
     version=__version__,
-    description='Radically simple IT automation',
     author=__author__,
-    author_email='info@ansible.com',
-    url='https://ansible.com/',
-    license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     install_requires=install_requirements,
-    package_dir={'': 'lib'},
-    packages=find_packages('lib'),
-    package_data={
-        '': [
-            'module_utils/powershell/*.psm1',
-            'module_utils/powershell/*/*.psm1',
-            'modules/windows/*.ps1',
-            'modules/windows/*/*.ps1',
-            'galaxy/data/*/*.*',
-            'galaxy/data/*/*/.*',
-            'galaxy/data/*/*/*.*',
-            'galaxy/data/*/tests/inventory',
-            'config/base.yml',
-        ],
-    },
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Information Technology',
-        'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Natural Language :: English',
-        'Operating System :: POSIX',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: System :: Installation/Setup',
-        'Topic :: System :: Systems Administration',
-        'Topic :: Utilities',
-    ],
-    scripts=[
-        'bin/ansible',
-        'bin/ansible-playbook',
-        'bin/ansible-pull',
-        'bin/ansible-doc',
-        'bin/ansible-galaxy',
-        'bin/ansible-console',
-        'bin/ansible-connection',
-        'bin/ansible-vault',
-        'bin/ansible-config',
-        'bin/ansible-inventory',
-    ],
-    data_files=[],
     extras_require=extra_requirements,
-    # Installing as zip files would break due to references to __file__
-    zip_safe=False
 )
+
+declarative_setup_params = read_configuration('setup.cfg')
+setup_params = dict(setup_params, **declarative_setup_params['metadata'])
+setup_params = dict(setup_params, **declarative_setup_params['options'])
+
+
+__name__ == '__main__' and setuptools.setup(**setup_params)
