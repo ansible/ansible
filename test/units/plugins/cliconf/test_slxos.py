@@ -20,9 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from os import path
+import json
 
 from mock import MagicMock, call
-import json
 
 from ansible.compat.tests import unittest
 from ansible.plugins.cliconf import slxos
@@ -56,7 +56,8 @@ def _connection_side_effect(*args, **kwargs):
 
 
 class TestPluginCLIConfSLXOS(unittest.TestCase):
-
+    """ Test class for SLX-OS CLI Conf Methods
+    """
     def setUp(self):
         self._mock_connection = MagicMock()
         self._mock_connection.send.side_effect = _connection_side_effect
@@ -66,6 +67,8 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         pass
 
     def test_get_device_info(self):
+        """ Test get_device_info
+        """
         device_info = self._cliconf.get_device_info()
 
         mock_device_info = {
@@ -77,6 +80,8 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         self.assertEqual(device_info, mock_device_info)
 
     def test_get_config(self):
+        """ Test get_config
+        """
         running_config = self._cliconf.get_config()
 
         fixture_path = path.abspath(b'%s/show_running-config' % FIXTURE_DIR)
@@ -92,6 +97,8 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
             self.assertEqual(startup_config, mock_startup_config)
 
     def test_edit_config(self):
+        """ Test edit_config
+        """
         test_config_command = b'this\nis\nthe\nsong\nthat\nnever\nends'
 
         self._cliconf.edit_config(test_config_command)
@@ -109,6 +116,8 @@ class TestPluginCLIConfSLXOS(unittest.TestCase):
         self._mock_connection.send.assert_has_calls(send_calls)
 
     def test_get_capabilities(self):
+        """ Test get_capabilities
+        """
         capabilities = json.loads(self._cliconf.get_capabilities())
         mock_capabilities = {
             'network_api': 'cliconf',
