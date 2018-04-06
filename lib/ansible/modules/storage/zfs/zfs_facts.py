@@ -178,10 +178,7 @@ class ZFSFacts(object):
         self.facts = []
 
     def dataset_exists(self):
-        cmd = [self.module.get_bin_path('zfs')]
-
-        cmd.append('list')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('zfs'), 'list', self.name]
 
         (rc, out, err) = self.module.run_command(cmd)
 
@@ -191,10 +188,8 @@ class ZFSFacts(object):
             return False
 
     def get_facts(self):
-        cmd = [self.module.get_bin_path('zfs')]
+        cmd = [self.module.get_bin_path('zfs'), 'get', '-H']
 
-        cmd.append('get')
-        cmd.append('-H')
         if self.parsable:
             cmd.append('-p')
         if self.recurse:

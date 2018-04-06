@@ -107,12 +107,7 @@ class LinkProp(object):
         self.dladm_bin = self.module.get_bin_path('dladm', True)
 
     def property_exists(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-linkprop')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.link)
+        cmd = [self.dladm_bin, 'show-linkprop', '-p', self.property, self.link]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -125,15 +120,7 @@ class LinkProp(object):
                                   link=self.link)
 
     def property_is_modified(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-linkprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('value,default')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.link)
+        cmd = [self.dladm_bin, 'show-linkprop', '-c', '-o', 'value,default', '-p', self.property, self.link]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -146,15 +133,7 @@ class LinkProp(object):
             return False
 
     def property_is_readonly(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-linkprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('perm')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.link)
+        cmd = [self.dladm_bin, 'show-linkprop', '-c', '-o', 'perm', '-p', self.property, self.link]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -166,15 +145,7 @@ class LinkProp(object):
             return False
 
     def property_is_set(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-linkprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('value')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.link)
+        cmd = [self.dladm_bin, 'show-linkprop', '-c', '-o', 'value', '-p', self.property, self.link]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -186,9 +157,7 @@ class LinkProp(object):
             return False
 
     def set_property(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('set-linkprop')
+        cmd = [self.dladm_bin, 'set-linkprop']
 
         if self.temporary:
             cmd.append('-t')
@@ -200,9 +169,7 @@ class LinkProp(object):
         return self.module.run_command(cmd)
 
     def reset_property(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('reset-linkprop')
+        cmd = [self.dladm_bin, 'reset-linkprop']
 
         if self.temporary:
             cmd.append('-t')

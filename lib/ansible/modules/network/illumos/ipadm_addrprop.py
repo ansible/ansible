@@ -101,12 +101,7 @@ class AddrProp(object):
         self.state = module.params['state']
 
     def property_exists(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-addrprop')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-addrprop', '-p', self.property, self.addrobj]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -119,15 +114,11 @@ class AddrProp(object):
                                   addrobj=self.addrobj)
 
     def property_is_modified(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-addrprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current,default')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'),
+               'show-addrprop', '-c',
+               '-o', 'current,default',
+               '-p', self.property,
+               self.addrobj]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -140,15 +131,11 @@ class AddrProp(object):
             return False
 
     def property_is_set(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-addrprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'),
+               'show-addrprop', '-c',
+               '-o', 'current',
+               '-p', self.property,
+               self.addrobj]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -160,9 +147,7 @@ class AddrProp(object):
             return False
 
     def set_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('set-addrprop')
+        cmd = [self.module.get_bin_path('ipadm'), 'set-addrprop']
 
         if self.temporary:
             cmd.append('-t')
@@ -174,9 +159,7 @@ class AddrProp(object):
         return self.module.run_command(cmd)
 
     def reset_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('reset-addrprop')
+        cmd = [self.module.get_bin_path('ipadm'), 'reset-addrprop']
 
         if self.temporary:
             cmd.append('-t')

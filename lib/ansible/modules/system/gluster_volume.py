@@ -290,8 +290,7 @@ def probe_all_peers(hosts, peers, myhostname):
 
 
 def create_volume(name, stripe, replica, arbiter, disperse, redundancy, transport, hosts, bricks, force):
-    args = ['volume', 'create']
-    args.append(name)
+    args = ['volume', 'create', name]
     if stripe:
         args.append('stripe')
         args.append(str(stripe))

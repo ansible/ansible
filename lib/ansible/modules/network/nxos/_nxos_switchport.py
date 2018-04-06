@@ -354,12 +354,11 @@ def is_switchport_default(existing):
 
 
 def default_switchport_config(interface):
-    commands = []
-    commands.append('interface ' + interface)
-    commands.append('switchport mode access')
-    commands.append('switch access vlan 1')
-    commands.append('switchport trunk native vlan 1')
-    commands.append('switchport trunk allowed vlan all')
+    commands = ['interface ' + interface,
+                'switchport mode access',
+                'switch access vlan 1',
+                'switchport trunk native vlan 1',
+                'switchport trunk allowed vlan all']
     return commands
 
 

@@ -101,10 +101,7 @@ class VLAN(object):
         self.state = module.params['state']
 
     def vlan_exists(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('show-vlan')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('dladm', True), 'show-vlan', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -114,9 +111,7 @@ class VLAN(object):
             return False
 
     def create_vlan(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('create-vlan')
+        cmd = [self.module.get_bin_path('dladm', True), 'create-vlan']
 
         if self.temporary:
             cmd.append('-t')
@@ -130,9 +125,7 @@ class VLAN(object):
         return self.module.run_command(cmd)
 
     def delete_vlan(self):
-        cmd = [self.module.get_bin_path('dladm', True)]
-
-        cmd.append('delete-vlan')
+        cmd = [self.module.get_bin_path('dladm', True), 'delete-vlan']
 
         if self.temporary:
             cmd.append('-t')

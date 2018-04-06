@@ -166,9 +166,7 @@ def nacl_entry_to_list(entry):
 
     # entry list format
     # [ rule_num, protocol name or number, allow or deny, ipv4/6 cidr, icmp type, icmp code, port from, port to]
-    elist = []
-
-    elist.append(entry['rule_number'])
+    elist = [entry['rule_number']]
 
     if entry.get('protocol') in PROTOCOL_NAMES:
         elist.append(PROTOCOL_NAMES[entry['protocol']])

@@ -137,10 +137,7 @@ class ZPoolFacts(object):
         self.facts = []
 
     def pool_exists(self):
-        cmd = [self.module.get_bin_path('zpool')]
-
-        cmd.append('list')
-        cmd.append(self.name)
+        cmd = [self.module.get_bin_path('zpool'), 'list', self.name]
 
         (rc, out, err) = self.module.run_command(cmd)
 
@@ -150,10 +147,8 @@ class ZPoolFacts(object):
             return False
 
     def get_facts(self):
-        cmd = [self.module.get_bin_path('zpool')]
+        cmd = [self.module.get_bin_path('zpool'), 'get', '-H']
 
-        cmd.append('get')
-        cmd.append('-H')
         if self.parsable:
             cmd.append('-p')
         cmd.append('-o')

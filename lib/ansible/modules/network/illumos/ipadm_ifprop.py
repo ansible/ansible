@@ -115,14 +115,8 @@ class IfProp(object):
         self.state = module.params['state']
 
     def property_exists(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-ifprop')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append('-m')
-        cmd.append(self.protocol)
-        cmd.append(self.interface)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-ifprop', '-p', self.property, '-m', self.protocol,
+               self.interface]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -136,17 +130,8 @@ class IfProp(object):
                                   interface=self.interface)
 
     def property_is_modified(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-ifprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current,default')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append('-m')
-        cmd.append(self.protocol)
-        cmd.append(self.interface)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-ifprop', '-c', '-o', 'current,default', '-p', self.property,
+               '-m', self.protocol, self.interface]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -159,17 +144,8 @@ class IfProp(object):
             return False
 
     def property_is_set(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-ifprop')
-        cmd.append('-c')
-        cmd.append('-o')
-        cmd.append('current')
-        cmd.append('-p')
-        cmd.append(self.property)
-        cmd.append('-m')
-        cmd.append(self.protocol)
-        cmd.append(self.interface)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-ifprop', '-c', '-o', 'current', '-p', self.property, '-m',
+               self.protocol, self.interface]
 
         (rc, out, _) = self.module.run_command(cmd)
 
@@ -181,9 +157,7 @@ class IfProp(object):
             return False
 
     def set_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('set-ifprop')
+        cmd = [self.module.get_bin_path('ipadm'), 'set-ifprop']
 
         if self.temporary:
             cmd.append('-t')
@@ -197,9 +171,7 @@ class IfProp(object):
         return self.module.run_command(cmd)
 
     def reset_property(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('reset-ifprop')
+        cmd = [self.module.get_bin_path('ipadm'), 'reset-ifprop']
 
         if self.temporary:
             cmd.append('-t')

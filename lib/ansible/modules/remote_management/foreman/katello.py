@@ -301,8 +301,7 @@ class NailGun(object):
             reposet = self._entities.RepositorySet(self._server, product=product, name=params['name'])
             reposet = reposet.search()[0]
 
-            formatted_name = [params['name'].replace('(', '').replace(')', '')]
-            formatted_name.append(params['basearch'])
+            formatted_name = [params['name'].replace('(', '').replace(')', ''), params['basearch']]
 
             if 'releasever' in params:
                 formatted_name.append(params['releasever'])

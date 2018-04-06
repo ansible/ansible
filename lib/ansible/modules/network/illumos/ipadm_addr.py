@@ -144,13 +144,7 @@ class Addr(object):
         return True
 
     def is_dhcp(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-addr')
-        cmd.append('-p')
-        cmd.append('-o')
-        cmd.append('type')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-addr', '-p', '-o', 'type', self.addrobj]
 
         (rc, out, err) = self.module.run_command(cmd)
 
@@ -165,10 +159,7 @@ class Addr(object):
                                   stderr=err)
 
     def addrobj_exists(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('show-addr')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'show-addr', self.addrobj]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -178,19 +169,12 @@ class Addr(object):
             return False
 
     def delete_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('delete-addr')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'delete-addr', self.addrobj]
 
         return self.module.run_command(cmd)
 
     def create_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('create-addr')
-        cmd.append('-T')
-        cmd.append(self.addrtype)
+        cmd = [self.module.get_bin_path('ipadm'), 'create-addr', '-T', self.addrtype]
 
         if self.temporary:
             cmd.append('-t')
@@ -208,9 +192,7 @@ class Addr(object):
         return self.module.run_command(cmd)
 
     def up_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('up-addr')
+        cmd = [self.module.get_bin_path('ipadm'), 'up-addr']
 
         if self.temporary:
             cmd.append('-t')
@@ -220,9 +202,7 @@ class Addr(object):
         return self.module.run_command(cmd)
 
     def down_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('down-addr')
+        cmd = [self.module.get_bin_path('ipadm'), 'down-addr']
 
         if self.temporary:
             cmd.append('-t')
@@ -232,28 +212,17 @@ class Addr(object):
         return self.module.run_command(cmd)
 
     def enable_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('enable-addr')
-        cmd.append('-t')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'enable-addr', '-t', self.addrobj]
 
         return self.module.run_command(cmd)
 
     def disable_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('disable-addr')
-        cmd.append('-t')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'disable-addr', '-t', self.addrobj]
 
         return self.module.run_command(cmd)
 
     def refresh_addr(self):
-        cmd = [self.module.get_bin_path('ipadm')]
-
-        cmd.append('refresh-addr')
-        cmd.append(self.addrobj)
+        cmd = [self.module.get_bin_path('ipadm'), 'refresh-addr', self.addrobj]
 
         return self.module.run_command(cmd)
 

@@ -125,8 +125,7 @@ class PluginLoader:
         return self.format_paths(self._get_paths(subdirs=False))
 
     def _all_directories(self, dir):
-        results = []
-        results.append(dir)
+        results = [dir]
         for root, subdirs, files in os.walk(dir, followlinks=True):
             if '__init__.py' in files:
                 for x in subdirs:

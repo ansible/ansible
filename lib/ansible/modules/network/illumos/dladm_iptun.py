@@ -125,10 +125,7 @@ class IPTun(object):
         self.dladm_bin = self.module.get_bin_path('dladm', True)
 
     def iptun_exists(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-iptun')
-        cmd.append(self.name)
+        cmd = [self.dladm_bin, 'show-iptun', self.name]
 
         (rc, _, _) = self.module.run_command(cmd)
 
@@ -138,9 +135,7 @@ class IPTun(object):
             return False
 
     def create_iptun(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('create-iptun')
+        cmd = [self.dladm_bin, 'create-iptun']
 
         if self.temporary:
             cmd.append('-t')
@@ -154,9 +149,7 @@ class IPTun(object):
         return self.module.run_command(cmd)
 
     def delete_iptun(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('delete-iptun')
+        cmd = [self.dladm_bin, 'delete-iptun']
 
         if self.temporary:
             cmd.append('-t')
@@ -165,9 +158,7 @@ class IPTun(object):
         return self.module.run_command(cmd)
 
     def update_iptun(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('modify-iptun')
+        cmd = [self.dladm_bin, 'modify-iptun']
 
         if self.temporary:
             cmd.append('-t')
@@ -178,13 +169,7 @@ class IPTun(object):
         return self.module.run_command(cmd)
 
     def _query_iptun_props(self):
-        cmd = [self.dladm_bin]
-
-        cmd.append('show-iptun')
-        cmd.append('-p')
-        cmd.append('-c')
-        cmd.append('link,type,flags,local,remote')
-        cmd.append(self.name)
+        cmd = [self.dladm_bin, 'show-iptun', '-p', '-c', 'link,type,flags,local,remote', self.name]
 
         return self.module.run_command(cmd)
 

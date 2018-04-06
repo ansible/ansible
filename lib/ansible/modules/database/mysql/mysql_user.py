@@ -501,13 +501,11 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     # Escape '%' since mysql db.execute() uses a format string
     db_table = db_table.replace('%', '%%')
     if grant_option:
-        query = ["REVOKE GRANT OPTION ON %s" % db_table]
-        query.append("FROM %s@%s")
+        query = ["REVOKE GRANT OPTION ON %s" % db_table, "FROM %s@%s"]
         query = ' '.join(query)
         cursor.execute(query, (user, host))
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
-    query = ["REVOKE %s ON %s" % (priv_string, db_table)]
-    query.append("FROM %s@%s")
+    query = ["REVOKE %s ON %s" % (priv_string, db_table), "FROM %s@%s"]
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
@@ -517,8 +515,7 @@ def privileges_grant(cursor, user, host, db_table, priv):
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
-    query = ["GRANT %s ON %s" % (priv_string, db_table)]
-    query.append("TO %s@%s")
+    query = ["GRANT %s ON %s" % (priv_string, db_table), "TO %s@%s"]
     if 'REQUIRESSL' in priv:
         query.append("REQUIRE SSL")
     if 'GRANT' in priv:

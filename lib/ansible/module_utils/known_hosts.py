@@ -102,11 +102,8 @@ def not_in_host_file(self, host):
         user_host_file = "~/.ssh/known_hosts"
     user_host_file = os.path.expanduser(user_host_file)
 
-    host_file_list = []
-    host_file_list.append(user_host_file)
-    host_file_list.append("/etc/ssh/ssh_known_hosts")
-    host_file_list.append("/etc/ssh/ssh_known_hosts2")
-    host_file_list.append("/etc/openssh/ssh_known_hosts")
+    host_file_list = [user_host_file, "/etc/ssh/ssh_known_hosts", "/etc/ssh/ssh_known_hosts2",
+                      "/etc/openssh/ssh_known_hosts"]
 
     hfiles_not_found = 0
     for hf in host_file_list:

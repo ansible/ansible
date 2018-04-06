@@ -114,12 +114,7 @@ class RabbitMqPolicy(object):
         return False
 
     def set(self):
-        args = ['set_policy']
-        args.append(self._name)
-        args.append(self._pattern)
-        args.append(json.dumps(self._tags))
-        args.append('--priority')
-        args.append(self._priority)
+        args = ['set_policy', self._name, self._pattern, json.dumps(self._tags), '--priority', self._priority]
         if self._apply_to != 'all':
             args.append('--apply-to')
             args.append(self._apply_to)

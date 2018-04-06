@@ -142,8 +142,7 @@ from ansible.module_utils.pure import get_blade, purefb_argument_spec
 
 def get_fs(module, blade):
     """Return Filesystem or None"""
-    fs = []
-    fs.append(module.params['name'])
+    fs = [module.params['name']]
     try:
         res = blade.file_systems.list_file_systems(names=fs)
         return res.items[0]

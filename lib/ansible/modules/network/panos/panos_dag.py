@@ -100,11 +100,7 @@ def add_dag(xapi, dag_name, dag_filter):
         return False
 
     # setup the non encrypted part of the monitor
-    exml = []
-
-    exml.append('<dynamic>')
-    exml.append('<filter>%s</filter>' % dag_filter)
-    exml.append('</dynamic>')
+    exml = ['<dynamic>', '<filter>%s</filter>' % dag_filter, '</dynamic>']
 
     exml = ''.join(exml)
     xapi.set(xpath=_ADDRGROUP_XPATH % dag_name, element=exml)

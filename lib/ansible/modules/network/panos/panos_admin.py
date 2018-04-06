@@ -140,11 +140,8 @@ def admin_set(xapi, module, admin_username, admin_password, role):
         return changed
 
     # setup the non encrypted part of the monitor
-    exml = []
-
-    exml.append('<phash>%s</phash>' % phash)
-    exml.append('<permissions><role-based><%s>%s</%s>'
-                '</role-based></permissions>' % (role, rbval, role))
+    exml = ['<phash>%s</phash>' % phash, '<permissions><role-based><%s>%s</%s>'
+                                         '</role-based></permissions>' % (role, rbval, role)]
 
     exml = ''.join(exml)
     # module.fail_json(msg=exml)

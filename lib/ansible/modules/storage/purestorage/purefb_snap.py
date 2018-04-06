@@ -94,8 +94,7 @@ except ImportError:
 
 def get_fs(module, blade):
     """Return Filesystem or None"""
-    fs = []
-    fs.append(module.params['name'])
+    fs = [module.params['name']]
     try:
         res = blade.file_systems.list_file_systems(names=fs)
         return res.items[0]
@@ -116,8 +115,7 @@ def get_fssnapshot(module, blade):
 def create_snapshot(module, blade):
     """Create Snapshot"""
     if not module.check_mode:
-        source = []
-        source.append(module.params['name'])
+        source = [module.params['name']]
         try:
             blade.file_system_snapshots.create_file_system_snapshots(sources=source, suffix=SnapshotSuffix(module.params['suffix']))
             changed = True

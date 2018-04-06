@@ -102,9 +102,8 @@ def check_for_acl_int_present(module, name, intf, direction):
 
 
 def apply_acl(proposed):
-    commands = []
+    commands = ['interface ' + proposed.get('interface')]
 
-    commands.append('interface ' + proposed.get('interface'))
     direction = proposed.get('direction')
     if direction == 'egress':
         cmd = 'ip access-group {0} {1}'.format(proposed.get('name'), 'out')
@@ -116,9 +115,8 @@ def apply_acl(proposed):
 
 
 def remove_acl(proposed):
-    commands = []
+    commands = ['interface ' + proposed.get('interface')]
 
-    commands.append('interface ' + proposed.get('interface'))
     direction = proposed.get('direction')
     if direction == 'egress':
         cmd = 'no ip access-group {0} {1}'.format(proposed.get('name'), 'out')

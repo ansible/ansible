@@ -1009,12 +1009,7 @@ class Nmcli(object):
         return cmd
 
     def create_connection_vlan(self):
-        cmd = [self.nmcli_bin]
-        cmd.append('con')
-        cmd.append('add')
-        cmd.append('type')
-        cmd.append('vlan')
-        cmd.append('con-name')
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'vlan', 'con-name']
 
         if self.conn_name is not None:
             cmd.append(self.conn_name)
@@ -1045,10 +1040,7 @@ class Nmcli(object):
         return cmd
 
     def modify_connection_vlan(self):
-        cmd = [self.nmcli_bin]
-        cmd.append('con')
-        cmd.append('mod')
-        cmd.append('con-name')
+        cmd = [self.nmcli_bin, 'con', 'mod', 'con-name']
 
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,

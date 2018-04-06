@@ -62,10 +62,7 @@ class ImageFacts(object):
         self.filters = module.params['filters']
 
     def return_all_installed_images(self):
-        cmd = [self.module.get_bin_path('imgadm')]
-
-        cmd.append('list')
-        cmd.append('-j')
+        cmd = [self.module.get_bin_path('imgadm'), 'list', '-j']
 
         if self.filters:
             cmd.append(self.filters)
