@@ -31,5 +31,13 @@ class StrategyModule(LinearStrategyModule):
         results = []
         while self.queue:
             (host, task) = self.queue.pop()
-            results.append(TaskResult(host, task, {}))
+            tr = TaskResult(host, task, {})
+            self._tqm.send_callback('v2_runner_on_ok', tr)
+            results.append(tr)
+
+        opts = {'tasks':  getattr(self._tqm._options, 'listtasks', False),
+                'tags':  getattr(self._tqm._options, 'listtags', False),
+                'hosts':  getattr(self._tqm._options, 'listhosts', False)}
+        self._tqm.send_callback('list_options', opts)
+
         return results
