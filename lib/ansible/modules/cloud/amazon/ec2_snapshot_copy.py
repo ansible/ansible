@@ -41,6 +41,11 @@ options:
       - Wait for the copied Snapshot to be in 'Available' state before returning.
     type: bool
     default: 'no'
+  wait_timeout:
+    version_added: "2.6"
+    description:
+      - How long before wait gives up, in seconds.
+    default: 600
   tags:
     description:
       - A hash/dictionary of tags to add to the new Snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
@@ -65,6 +70,7 @@ EXAMPLES = '''
     region: eu-west-1
     source_snapshot_id: snap-xxxxxxx
     wait: yes
+    wait_timeout: 1200   # Default timeout is 600
   register: snapshot_id
 
 # Tagged Snapshot copy
@@ -135,7 +141,14 @@ def copy_snapshot(module, ec2):
     try:
         snapshot_id = ec2.copy_snapshot(**params)['SnapshotId']
         if module.params.get('wait'):
-            ec2.get_waiter('snapshot_completed').wait(SnapshotIds=[snapshot_id])
+            delay = 15
+            # Add one to max_attempts as wait() increment
+            # its counter before assessing it for time.sleep()
+            max_attempts = (module.params.get('wait_timeout') // delay) + 1
+            ec2.get_waiter('snapshot_completed').wait(
+                SnapshotIds=[snapshot_id],
+                WaiterConfig=dict(Delay=delay, MaxAttempts=max_attempts)
+            )
         if module.params.get('tags'):
             ec2.create_tags(
                 Resources=[snapshot_id],
@@ -159,6 +172,7 @@ def main():
         encrypted=dict(type='bool', default=False, required=False),
         kms_key_id=dict(type='str', required=False),
         wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=600),
         tags=dict(type='dict')))
 
     module = AnsibleModule(argument_spec=argument_spec)
