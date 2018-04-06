@@ -130,6 +130,11 @@ options:
         - Include I(actions) in the return values.
       type: bool
       default: 'no'
+  remove_orphans:
+      description:
+        - Remove containers for services not defined in the compose file.
+      type: bool
+      default: false
 
 extends_documentation_fragment:
     - docker
@@ -449,7 +454,7 @@ try:
 except ImportError as exc:
     HAS_COMPOSE = False
     HAS_COMPOSE_EXC = str(exc)
-    DEFAULT_TIMEOUT = 10
+    DEFAULT_TIMEOUT = 60
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
 

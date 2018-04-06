@@ -38,7 +38,6 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
-    default: Dockerfile
     required: false
     version_added: "2.0"
   force:
