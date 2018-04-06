@@ -1568,7 +1568,7 @@ class DarwinUser(User):
             current_uid = int(line.split(' ')[-1])
             if max_uid < current_uid:
                 max_uid = current_uid
-            if max_system_uid < current_uid and current_uid < 500:
+            if max_system_uid < current_uid < 500:
                 max_system_uid = current_uid
 
         if system and (0 < max_system_uid < 499):

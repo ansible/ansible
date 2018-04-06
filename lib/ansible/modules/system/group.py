@@ -341,7 +341,7 @@ class DarwinGroup(Group):
                 parts = group_info.split(' ')
                 if len(parts) > 1:
                     gid = int(parts[-1])
-                    if gid > highest and gid < 500:
+                    if highest < gid < 500:
                         highest = gid
             if highest == 0 or highest == 499:
                 return False

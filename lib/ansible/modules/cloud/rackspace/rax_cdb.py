@@ -114,7 +114,7 @@ def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
             module.fail_json(msg='%s is required for the "rax_cdb"'
                                  ' module' % arg)
 
-    if not (volume >= 1 and volume <= 150):
+    if not 1 <= volume <= 150:
         module.fail_json(msg='volume is required to be between 1 and 150')
 
     cdb = pyrax.cloud_databases

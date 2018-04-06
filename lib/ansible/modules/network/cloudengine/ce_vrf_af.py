@@ -360,7 +360,7 @@ def is_valid_value(vrf_targe_value):
             return False
         elif int(value_list[0]) < 65536 and int(value_list[1]) < 4294967296:
             return True
-        elif int(value_list[0]) > 65535 and int(value_list[0]) < 4294967296:
+        elif 65535 < int(value_list[0]) < 4294967296:
             return bool(int(value_list[1]) < 65536)
         else:
             return False

@@ -185,7 +185,7 @@ def get_mode_type(mode_number):
 
     try:
         mode_number = int(mode_number)
-        if mode_number >= 1 and mode_number <= 4:
+        if 1 <= mode_number <= 4:
             if mode_number == 4:
                 options.append(otypes.Option(name='xmit_hash_policy', value='2'))
 
