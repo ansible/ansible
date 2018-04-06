@@ -167,9 +167,13 @@ config = ConfigManager()
 for setting in config.data.get_settings():
 
     value = setting.value
-    if setting.origin == 'default' and \
-       isinstance(setting.value, string_types) and \
-       (setting.value.startswith('{{') and setting.value.endswith('}}')):
+    setting_is_valid = (setting.origin == 'default'
+                        and isinstance(setting.value, string_types)
+                        and (
+                            setting.value.startswith('{{')
+                            and setting.value.endswith('}}'))
+                        )
+    if setting_is_valid:
         try:
             t = Template(setting.value)
             value = t.render(vars())
