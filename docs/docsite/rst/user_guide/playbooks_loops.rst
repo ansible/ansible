@@ -92,9 +92,17 @@ For example, using the 'nested' lookup, you can combine lists::
         password: "foo"
       loop: "{{ lookup('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
 
-.. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
+.. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.  To see a list of all of the lookups that ansible provides, run:
+
+.. code-block:: bash
+
+   $ ansible-doc -t lookup -l
+
 
 .. _do_until_loops:
+
+.. lookup_loops:
+
 
 Do-Until Loops
 ``````````````
