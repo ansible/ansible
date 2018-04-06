@@ -16,9 +16,11 @@ DOCUMENTATION = r'''
 module: vmware_guest
 short_description: Manages virtual machines in vCenter
 description:
-- Create new virtual machines from templates or other virtual machines.
-- Manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,.
-- Modify, rename or remove a virtual machine.
+- This module can be used to create new virtual machines from templates or other virtual machines.
+- This module can be used to manage power state of virtual machine such as power on, power off, suspend, shutdown, reboot, restart etc.,.
+- This module can be used to modify various virtual machine components like network, disk, customization etc.,.
+- This module can be used to rename a virtual machine.
+- This module can be used to remove a virtual machine with associated components.
 version_added: '2.2'
 author:
 - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
@@ -272,12 +274,39 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Create a VM from a template
+- name: Create a virtual machine
   vmware_guest:
-    hostname: 192.0.2.44
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    folder: /DC1/vm/
+    name: test_vm_0001
+    state: poweredon
+    disk:
+    - size_gb: 10
+      type: thin
+      datastore: datastore1
+    hardware:
+      memory_mb: 512
+      num_cpus: 4
+      scsi: paravirtual
+    networks:
+    - name: VM Network
+      mac: aa:bb:dd:aa:00:14
+      ip: 10.10.10.100
+      netmask: 255.255.255.0
+      device_type: vmxnet3
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  register: deploy_vm
+
+- name: Create a virtual machine from a template
+  vmware_guest:
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     folder: /testvms
     name: testvm_2
     state: poweredon
@@ -301,7 +330,7 @@ EXAMPLES = r'''
       hotadd_cpu: True
       hotremove_cpu: True
       hotadd_memory: False
-      version: 12 # Hardware version of VM
+      version: 12 # Hardware version of virtual machine
     cdrom:
       type: iso
       iso_path: "[datastore1] livecd.iso"
@@ -312,12 +341,12 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
-- name: Clone a VM from Template and customize
+- name: Clone a virtual machine from Template and customize
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     datacenter: datacenter1
     cluster: cluster
     name: testvm-2
@@ -345,54 +374,33 @@ EXAMPLES = r'''
       - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
   delegate_to: localhost
 
-- name: Create a VM template
+- name: Rename a virtual machine (requires the virtual machine's uuid)
   vmware_guest:
-    hostname: 192.0.2.88
-    username: administrator@vsphere.local
-    password: vmware
-    validate_certs: no
-    datacenter: datacenter1
-    cluster: vmware_cluster_esx
-    resource_pool: highperformance_pool
-    folder: /testvms
-    name: testvm_6
-    is_template: yes
-    guest_id: debian6_64Guest
-    disk:
-    - size_gb: 10
-      type: thin
-      datastore: g73_datastore
-    hardware:
-      memory_mb: 512
-      num_cpus: 1
-      scsi: lsilogic
-  delegate_to: localhost
-  register: deploy
-
-- name: Rename a VM (requires the VM's uuid)
-  vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     name: new_name
     state: present
   delegate_to: localhost
 
-- name: Remove a VM by uuid
+- name: Remove a virtual machine by uuid
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     uuid: 421e4592-c069-924d-ce20-7e7533fab926
     state: absent
   delegate_to: localhost
 
 - name: Manipulate vApp properties
   vmware_guest:
-    hostname: 192.168.1.209
-    username: administrator@vsphere.local
-    password: vmware
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
     name: vm_name
     state: present
     vapp_properties:
@@ -403,6 +411,16 @@ EXAMPLES = r'''
         value: 10.10.10.1
       - id: old_property
         operation: remove
+
+- name: Set powerstate of a virtual machine to poweroff by using UUID
+  vmware_guest:
+    hostname: "{{ vcenter_ip }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: False
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+    state: poweredoff
+  delegate_to: localhost
 '''
 
 RETURN = r'''
