@@ -25,7 +25,7 @@ description:
 options:
   name:
     description:
-      - A package name , or package specifier with version, like C(name-1.0).
+      - A package name or package specifier with version, like C(name-1.0).
       - If a previous version is specified, the task also needs to turn C(allow_downgrade) on.
         See the C(allow_downgrade) documentation for caveats with downgrading packages.
       - When using state=latest, this can be '*' which means run C(yum -y update).
@@ -179,6 +179,14 @@ EXAMPLES = '''
   yum:
     name: httpd
     state: latest
+
+- name: ensure a list of packages installed
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - httpd
+    - httpd-tools
 
 - name: remove the Apache package
   yum:
