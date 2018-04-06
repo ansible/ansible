@@ -38,6 +38,7 @@ based on the data obtained from the libcloud Node object:
  - gce_status
  - gce_zone
  - gce_tags
+ - gce_lables
  - gce_metadata
  - gce_network
  - gce_subnetwork
@@ -49,6 +50,10 @@ When run in --list mode, instances are grouped by the following categories:
    An entry is created for each tag.  For example, if you have two instances
    with a common tag called 'foo', they will both be grouped together under
    the 'tag_foo' name.
+ - instance labels:
+   An entry is created for each label key-value pair.  For example, if you have one instance
+   with labels {"env": "dev", "type": "webserver"}, second instance with labels {"env": "stage", "type": "webserver"},
+   they will both be grouped together under the 'label_type_webserver' name.
  - network name:
    the name of the network is appended to 'network_' (e.g. the 'default'
    network will result in a group named 'network_default')
@@ -223,6 +228,7 @@ class GceInventory(object):
             'gce_zone': '',
             'libcloud_secrets': '',
             'instance_tags': '',
+            'instance_labels': '',
             'inventory_ip_type': '',
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': '300'
@@ -257,6 +263,16 @@ class GceInventory(object):
                 'GCE_INSTANCE_TAGS', config.get('gce', 'instance_tags'))
         if self.instance_tags:
             self.instance_tags = self.instance_tags.split(',')
+
+        # Set the instance_labels filter, env var overrides config from file
+        # and cli param overrides all
+        if self.args.instance_labels:
+            self.instance_labels = self.args.instance_labels
+        else:
+            self.instance_labels = os.environ.get(
+                'GCE_INSTANCE_LABELS', config.get('gce', 'instance_labels'))
+        if self.instance_labels:
+            self.instance_labels = self.instance_labels.split(',')
 
         # Caching
         cache_path = config.get('cache', 'cache_path')
@@ -351,6 +367,8 @@ class GceInventory(object):
                             help='Get all information about an instance')
         parser.add_argument('--instance-tags', action='store',
                             help='Only include instances with this tags, separated by comma')
+        parser.add_argument('--instance-labels', action='store',
+                            help='Only include instances with this labels, separated by comma')
         parser.add_argument('--pretty', action='store_true', default=False,
                             help='Pretty format (default: False)')
         parser.add_argument(
@@ -390,6 +408,7 @@ class GceInventory(object):
             'gce_status': inst.extra['status'],
             'gce_zone': inst.extra['zone'].name,
             'gce_tags': inst.extra['tags'],
+            'gce_labels': inst.extra['labels'],
             'gce_metadata': md,
             'gce_network': net,
             'gce_subnetwork': subnet,
@@ -455,6 +474,22 @@ class GceInventory(object):
             if self.instance_tags and not set(self.instance_tags) & set(node.extra['tags']):
                 continue
 
+            # This check filters on the desired instance labels defined in the
+            # config file with the instance_labels config option, env var GCE_INSTANCE_LABLES,
+            # or as the cli param --instance-labels.
+            #
+            # If the instance_labels list is _empty_ then _ALL_ instances are returned.
+            #
+            # If the instance_labels list is _populated_ then check the current
+            # instance labels against the instance_labels list. If the instance has
+            # at least one label from the instance_labels list, it is returned.
+            if self.instance_labels:
+                node_label_list = []
+                for k, v in node.extra['labels'].items():
+                    node_label_list.append('%s_%s' % (k, v))
+                if self.instance_labels and not set(self.instance_labels) & set(node_label_list):
+                    continue
+
             name = node.name
 
             meta["hostvars"][name] = self.node_to_dict(node)
@@ -481,6 +516,14 @@ class GceInventory(object):
                     groups[tag].append(name)
                 else:
                     groups[tag] = [name]
+
+            labels = node.extra['labels']
+            for lab_key, lab_value in labels.items():
+                label = 'label_%s_%s' % (lab_key, lab_value)
+                if label in groups:
+                    groups[label].append(name)
+                else:
+                    groups[label] = [name]
 
             net = node.extra['networkInterfaces'][0]['network'].split('/')[-1]
             net = 'network_%s' % net
