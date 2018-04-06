@@ -9,8 +9,10 @@
 
 - assert:
     that:
+    - http_301_head is successful
     - http_301_head.json.data == ''
     - http_301_head.json.method == 'GET'
+    - http_301_head.json.url == 'http://{{ httpbin_host }}/anything'
     - http_301_head.redirected == true
     - http_301_head.status == 200
     - http_301_head.url == 'http://{{ httpbin_host }}/anything'
@@ -25,8 +27,10 @@
 
 - assert:
     that:
+    - http_301_get is successful
     - http_301_get.json.data == ''
     - http_301_get.json.method == 'GET'
+    - http_301_get.json.url == 'http://{{ httpbin_host }}/anything'
     - http_301_get.redirected == true
     - http_301_get.status == 200
     - http_301_get.url == 'http://{{ httpbin_host }}/anything'
@@ -44,8 +48,10 @@
 
 - assert:
     that:
+    - http_301_post is successful
     - http_301_post.json.data == ''
     - http_301_post.json.method == 'GET'
+    - http_301_post.json.url == 'http://{{ httpbin_host }}/anything'
     - http_301_post.redirected == true
     - http_301_post.status == 200
     - http_301_post.url == 'http://{{ httpbin_host }}/anything'
@@ -61,8 +67,10 @@
 
 - assert:
     that:
+    - http_302_head is successful
     - http_302_head.json.data == ''
     - http_302_head.json.method == 'GET'
+    - http_302_head.json.url == 'http://{{ httpbin_host }}/anything'
     - http_302_head.redirected == true
     - http_302_head.status == 200
     - http_302_head.url == 'http://{{ httpbin_host }}/anything'
@@ -77,8 +85,10 @@
 
 - assert:
     that:
+    - http_302_get is successful
     - http_302_get.json.data == ''
     - http_302_get.json.method == 'GET'
+    - http_302_get.json.url == 'http://{{ httpbin_host }}/anything'
     - http_302_get.redirected == true
     - http_302_get.status == 200
     - http_302_get.url == 'http://{{ httpbin_host }}/anything'
@@ -96,8 +106,10 @@
 
 - assert:
     that:
+    - http_302_post is successful
     - http_302_post.json.data == ''
     - http_302_post.json.method == 'GET'
+    - http_302_post.json.url == 'http://{{ httpbin_host }}/anything'
     - http_302_post.redirected == true
     - http_302_post.status == 200
     - http_302_post.url == 'http://{{ httpbin_host }}/anything'
@@ -113,8 +125,10 @@
 
 - assert:
     that:
+    - http_303_head is successful
     - http_303_head.json.data == ''
     - http_303_head.json.method == 'GET'
+    - http_303_head.json.url == 'http://{{ httpbin_host }}/anything'
     - http_303_head.redirected == true
     - http_303_head.status == 200
     - http_303_head.url == 'http://{{ httpbin_host }}/anything'
@@ -129,8 +143,10 @@
 
 - assert:
     that:
+    - http_303_get is successful
     - http_303_get.json.data == ''
     - http_303_get.json.method == 'GET'
+    - http_303_get.json.url == 'http://{{ httpbin_host }}/anything'
     - http_303_get.redirected == true
     - http_303_get.status == 200
     - http_303_get.url == 'http://{{ httpbin_host }}/anything'
@@ -148,8 +164,10 @@
 
 - assert:
     that:
+    - http_303_post is successful
     - http_303_post.json.data == ''
     - http_303_post.json.method == 'GET'
+    - http_303_post.json.url == 'http://{{ httpbin_host }}/anything'
     - http_303_post.redirected == true
     - http_303_post.status == 200
     - http_303_post.url == 'http://{{ httpbin_host }}/anything'
@@ -165,8 +183,10 @@
 
 - assert:
     that:
+    - http_307_head is successful
     - http_307_head.json.data == ''
     - http_307_head.json.method == 'GET'
+    - http_307_head.json.url == 'http://{{ httpbin_host }}/anything'
     - http_307_head.redirected == true
     - http_307_head.status == 200
     - http_307_head.url == 'http://{{ httpbin_host }}/anything'
@@ -181,8 +201,10 @@
 
 - assert:
     that:
+    - http_307_get is successful
     - http_307_get.json.data == ''
     - http_307_get.json.method == 'GET'
+    - http_307_get.json.url == 'http://{{ httpbin_host }}/anything'
     - http_307_get.redirected == true
     - http_307_get.status == 200
     - http_307_get.url == 'http://{{ httpbin_host }}/anything'
@@ -201,6 +223,7 @@
 
 - assert:
     that:
+    - http_307_post is failure
     - http_307_post.json is not defined
     - http_307_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_307_post.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
@@ -220,6 +243,7 @@
 
 - assert:
     that:
+    - http_308_head is failure
     - http_308_head.json is not defined
     - http_308_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_head.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
@@ -239,6 +263,7 @@
 
 - assert:
     that:
+    - http_308_get is failure
     - http_308_get.json is not defined
     - http_308_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_get.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
@@ -260,6 +285,7 @@
 
 - assert:
     that:
+    - http_308_post is failure
     - http_308_post.json is not defined
     - http_308_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_post.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
