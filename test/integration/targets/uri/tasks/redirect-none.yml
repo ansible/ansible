@@ -9,6 +9,7 @@
 
 - assert:
     that:
+    - http_301_head is failure
     - http_301_head.json is not defined
     - http_301_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_301_head.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
@@ -27,6 +28,7 @@
 
 - assert:
     that:
+    - http_301_get is failure
     - http_301_get.json is not defined
     - http_301_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_301_get.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
@@ -47,6 +49,7 @@
 
 - assert:
     that:
+    - http_301_post is failure
     - http_301_post.json is not defined
     - http_301_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_301_post.msg == 'Status code was 301 and not [200]: HTTP Error 301: MOVED PERMANENTLY'"
@@ -65,6 +68,7 @@
 
 - assert:
     that:
+    - http_302_head is failure
     - http_302_head.json is not defined
     - http_302_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_302_head.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
@@ -83,6 +87,7 @@
 
 - assert:
     that:
+    - http_302_get is failure
     - http_302_get.json is not defined
     - http_302_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_302_get.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
@@ -103,6 +108,7 @@
 
 - assert:
     that:
+    - http_302_post is failure
     - http_302_post.json is not defined
     - http_302_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_302_post.msg == 'Status code was 302 and not [200]: HTTP Error 302: FOUND'"
@@ -121,6 +127,7 @@
 
 - assert:
     that:
+    - http_303_head is failure
     - http_303_head.json is not defined
     - http_303_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_303_head.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
@@ -139,6 +146,7 @@
 
 - assert:
     that:
+    - http_303_get is failure
     - http_303_get.json is not defined
     - http_303_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_303_get.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
@@ -159,6 +167,7 @@
 
 - assert:
     that:
+    - http_303_post is failure
     - http_303_post.json is not defined
     - http_303_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_303_post.msg == 'Status code was 303 and not [200]: HTTP Error 303: SEE OTHER'"
@@ -177,6 +186,7 @@
 
 - assert:
     that:
+    - http_307_head is failure
     - http_307_head.json is not defined
     - http_307_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_307_head.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
@@ -195,6 +205,7 @@
 
 - assert:
     that:
+    - http_307_get is failure
     - http_307_get.json is not defined
     - http_307_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_307_get.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
@@ -215,6 +226,7 @@
 
 - assert:
     that:
+    - http_307_post is failure
     - http_307_post.json is not defined
     - http_307_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_307_post.msg == 'Status code was 307 and not [200]: HTTP Error 307: TEMPORARY REDIRECT'"
@@ -234,6 +246,7 @@
 
 - assert:
     that:
+    - http_308_head is failure
     - http_308_head.json is not defined
     - http_308_head.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_head.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
@@ -253,6 +266,7 @@
 
 - assert:
     that:
+    - http_308_get is failure
     - http_308_get.json is not defined
     - http_308_get.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_get.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
@@ -273,6 +287,7 @@
 
 - assert:
     that:
+    - http_308_post is failure
     - http_308_post.json is not defined
     - http_308_post.location == 'http://{{ httpbin_host }}/anything'
     - "http_308_post.msg == 'Status code was 308 and not [200]: HTTP Error 308: UNKNOWN'"
