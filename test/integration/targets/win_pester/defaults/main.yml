@@ -1,0 +1,12 @@
+---
+local_test_files:
+  - files/test01.test.ps1
+  - files/test02.test.ps1
+remote_test_files:
+  - test01.test.ps1
+  - test02.test.ps1
+fake_remote_test_file: C:\Pester\fake_test.test.ps1
+fake_remote_folder: C:\Fake_Pester
+remote_test_folder: 
+  - C:\Pester\
+  - C:\Pester
