@@ -291,6 +291,7 @@ import re
 from time import sleep
 from collections import namedtuple
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.iam import get_aws_account_id
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
@@ -371,33 +372,40 @@ def to_permission(rule):
 
 
 def rule_from_group_permission(perm):
+    def ports_from_permission(p):
+        if 'FromPort' not in p and 'ToPort' not in p:
+            return (None, None)
+        return (int(perm['FromPort']), int(perm['ToPort']))
+
     try:
         # outputs a rule tuple
         for target_key, target_subkey, target_type in [
                 ('IpRanges', 'CidrIp', 'ipv4'),
                 ('Ipv6Ranges', 'CidrIpv6', 'ipv6'),
                 ('PrefixListIds', 'PrefixListId', 'ip_prefix'),
-                ('UserIdGroupPairs', 'GroupId', 'group'),  #TODO this doesn't handle cross-account groups
                 ]:
             if target_key not in perm:
                 continue
             for r in perm[target_key]:
                 # there may be several IP ranges here, which is ok
-                description = r.get('Description')
-                if 'FromPort' not in perm and 'ToPort' not in perm:
-                    ports = (None, None)
-                else:
-                    ports = (int(perm['FromPort']), int(perm['ToPort']))
                 yield Rule(
-                    ports,
+                    ports_from_permission(perm),
                     perm['IpProtocol'],
                     r[target_subkey],
                     target_type,
-                    description
+                    r.get('Description')
                 )
         if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
             # security group targets are special, handle separately
-            pass
+            #TODO this doesn't handle cross-account groups yet
+            for pair in perm['UserIdGroupPairs']:
+                yield Rule(
+                    ports_from_permission(perm),
+                    perm['IpProtocol'],
+                    r[target_subkey],
+                    target_type,
+                    r.get('Description')
+                )
     except Exception as e:
         raise Exception("Oh no, failed on %s" % perm)
 
@@ -461,6 +469,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     group_id or a non-None ip range.
     """
 
+    current_account_id = get_aws_account_id(module) #TODO use this to set owner account on local SG IDs
     FOREIGN_SECURITY_GROUP_REGEX = r'^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
