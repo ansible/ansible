@@ -115,7 +115,7 @@ requirements:
     - "Docker API >= 1.35"
 
 author:
-  - Thierry Bouvet
+  - Thierry Bouvet (@tbouvet)
 '''
 
 EXAMPLES = '''
