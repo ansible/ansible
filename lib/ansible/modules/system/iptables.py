@@ -345,9 +345,11 @@ EXAMPLES = '''
 '''
 
 import re
+from pkg_resources import parse_version
 
 from ansible.module_utils.basic import AnsibleModule
 
+IPTABLES_WAIT_SUPPORT_ADDED = '1.4.20'
 
 BINS = dict(
     ipv4='iptables',
@@ -454,7 +456,8 @@ def construct_rule(params):
 
 def push_arguments(iptables_path, action, params, make_rule=True):
     cmd = [iptables_path]
-    cmd.append('-w')
+    if (check_iptables_wait_support):
+        cmd.append('-w')
     cmd.extend(['-t', params['table']])
     cmd.extend([action, params['chain']])
     if action == '-I' and params['rule_num']:
@@ -462,6 +465,13 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     if make_rule:
         cmd.extend(construct_rule(params))
     return cmd
+
+
+def check_iptables_wait_support(iptables_path):
+    cmd = [iptables_path, '--version']
+    rc, out, _ = module.run_command(cmd, check_rc=True)
+    iptables_version = out.split('v')[1].rstrip('\n')
+    return (parse_version(iptables_version) >= parse_version(IPTABLES_WAIT_SUPPORT_ADDED))
 
 
 def check_present(iptables_path, module, params):
