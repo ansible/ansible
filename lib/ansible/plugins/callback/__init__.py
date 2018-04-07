@@ -431,4 +431,5 @@ class CallbackBase(AnsiblePlugin):
 
         .. versionadded:: 2.8
         """
+    def list_options(self, opts):
         pass
