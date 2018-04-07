@@ -15,21 +15,9 @@ DOCUMENTATION = '''
       - set as stdout in configuration
 '''
 
-
-'''
-playbook: play.yml
-
-  play #1 (localhost): localhost        TAGS: []
-    tasks:
-      debug     TAGS: []
-      pause     TAGS: []
-      pause     TAGS: []
-      pause     TAGS: []
-      pause     TAGS: []
-      debug     TAGS: []
-'''
-from ansible import constants as C
 from os.path import basename
+
+from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 
 
@@ -62,21 +50,21 @@ class CallbackModule(CallbackBase):
         self._playbooks.append(pb)
 
     def v2_playbook_on_play_start(self, play):
-        name = play.get_name().strip() or 'play #%d' % len(self._current['playbook']['plays'] + 1)
+        name = play.get_name().strip() or 'play #%d' % (len(self._current['playbook']['plays']) + 1)
         play = {'name': name, 'pattern': ', '.join(play.hosts), 'tags': ', '.join(play.tags), 'tasks': [], 'hosts': []}
         self._current['playbook']['plays'].append(play)
         self._current['play'] = play
 
     def v2_playbook_on_include(self, included_file):
-        name = 'task #%d' % len(self._current['play']['tasks'] + 1)
+        name = 'task #%d' % (len(self._current['play']['tasks']) + 1)
         task = {'name': name, 'included': included_file._filename}
+        print(included_file)
         for host in included_file._hosts:
             self._add_host(host.name)
         self._current['play']['tasks'].append(task)
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        # if self._options and any([self._options.listtasks, self._options.listtags]):
-        name = task.get_name().strip() or 'task #%d' % len(self._current['play']['tasks'] + 1)
+        name = task.get_name().strip() or 'task #%d' % (len(self._current['play']['tasks']) + 1)
         task = {'name': name, 'tags': ', '.join(task.tags)}
         self._current['play']['tasks'].append(task)
 
@@ -109,7 +97,7 @@ class CallbackModule(CallbackBase):
                     self._display.display('    tasks:')
                     for task in play['tasks']:
                         if 'included' in task:
-                            self._display.display('      %(name)s included=%(included)' % (task), color=C.SKIP_COLOR)
+                            self._display.display('        included=%(included)s' % (task), color=C.COLOR_SKIP)
                         elif self._opts['tags']:
                             self._display.display('      %(name)s tags=[%(tags)s]' % (task))
                         elif self._opts['tasks']:
