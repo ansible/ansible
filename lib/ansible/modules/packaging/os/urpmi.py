@@ -26,7 +26,8 @@ options:
     description:
       - A list of package names to install, upgrade or remove.
     required: yes
-    aliases: ['package, pkg']
+    version_added: "2.6"
+    aliases: [ package, pkg ]
   state:
     description:
       - Indicates the desired package state.
@@ -200,7 +201,7 @@ def main():
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
             force=dict(type='bool', default=True),
             no_recommends=dict(type='bool', default=True, aliases=['no-recommends']),
-            package=dict(type='list', required=True, aliases=['name', 'pkg']),
+            name=dict(type='list', required=True, aliases=['package', 'pkg']),
             root=dict(type='str', aliases=['installroot']),
         ),
     )
