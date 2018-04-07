@@ -77,7 +77,7 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_task_start(self, task, is_conditional):
         # if self._options and any([self._options.listtasks, self._options.listtags]):
         name = task.get_name().strip() or 'task #%d' % len(self._current['play']['tasks'] + 1)
-        task = {'name': name, 'action': task.action, 'tags': ', '.join(task.tags)}
+        task = {'name': name, 'tags': ', '.join(task.tags)}
         self._current['play']['tasks'].append(task)
 
     def v2_runner_on_ok(self, result):
@@ -93,7 +93,13 @@ class CallbackModule(CallbackBase):
             self._display.display('\nplaybook: %s\n' % playbook['name'])
             for play in playbook['plays']:
 
-                self._display.display('  play: %(name)s  hosts=%(pattern)s tags=[%(tags)s]' % play)
+                msg = '  play: %(name)s'
+                if self._opts['hosts']:
+                    msg += ' hosts=%(pattern)s'
+                if self._opts['tags']:
+                    msg += ' tags=[%(tags)s]'
+                self._display.display(msg % play)
+
                 if self._opts['hosts']:
                     self._display.display('    selected: %d' % len(play['hosts']))
                     for host in play['hosts']:
@@ -104,7 +110,9 @@ class CallbackModule(CallbackBase):
                     for task in play['tasks']:
                         if 'included' in task:
                             self._display.display('      %(name)s included=%(included)' % (task), color=C.SKIP_COLOR)
-                        else:
-                            self._display.display('      %(name)s action=%(action)s tags=[%(tags)s]' % (task))
+                        elif self._opts['tags']:
+                            self._display.display('      %(name)s tags=[%(tags)s]' % (task))
+                        elif self._opts['tasks']:
+                            self._display.display('      %(name)s' % (task))
 
         self._display.display("", screen_only=True)
