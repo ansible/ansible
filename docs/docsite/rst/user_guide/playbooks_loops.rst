@@ -72,8 +72,23 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
-Also be aware that when combining :ref:`when: playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
+Also be aware that when combining :doc:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
 See :ref:`the_when_statement` for an example.
+
+To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
+
+    - name: create a tag dictionary of non-empty tags
+      set_fact:
+        tags_dict: "{{ (tags_dict|default({}))|combine({item.key: item.value}) }}"
+      with_items: "{{ tags|dict2items }}"
+      vars:
+        tags:
+          Environment: dev
+          Application: payment
+          Another: "{{ doesnotexist|default() }}"
+      when: item.value != ""
+
+Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
 
 
 .. _complex_loops:

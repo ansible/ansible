@@ -161,6 +161,31 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
     {{ list1 | symmetric_difference(list2) }}
 
 
+.. _dict_filter:
+
+Dict Filter
+```````````
+
+.. versionadded:: 2.6
+
+
+To turn a dictionary into a list of items, suitable for looping, use `dict2items`::
+
+    {{ dict | dict2items }}
+
+Which turns::
+
+    tags:
+      Application: payment
+      Environment: dev
+
+into::
+
+    - key: Application
+      value: payment
+    - key: Environment
+      value: dev
+
 .. _random_filter:
 
 Random Number Filter
