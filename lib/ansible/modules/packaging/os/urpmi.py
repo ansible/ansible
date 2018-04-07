@@ -22,12 +22,11 @@ description:
   - Manages packages with I(urpmi) (such as for Mageia or Mandriva)
 version_added: "1.3.4"
 options:
-  package:
+  name:
     description:
-      - Name of package to install, upgrade or remove.
+      - A list of package names to install, upgrade or remove.
     required: yes
-    type: list
-    aliases: ['pkg']
+    aliases: ['package, pkg']
   state:
     description:
       - Indicates the desired package state.
