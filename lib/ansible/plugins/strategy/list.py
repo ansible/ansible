@@ -24,20 +24,29 @@ class StrategyModule(LinearStrategyModule):
         return [TaskResult(host, task, {})]
 
     def _queue_task(self, host, task, task_vars, play_context):
-        self.queue.append((host, task))
+        if task.action in ('include', 'include_tasks', 'include_role'):
+            super(StrategyModule, self)._queue_task(host, task, task_vars, play_context)
+        else:
+            self.queue.append((host, task))
 
-    def _process_pending_results(self, iterator, max_passes):
+    def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
 
         results = []
         while self.queue:
             (host, task) = self.queue.pop()
             tr = TaskResult(host, task, {})
+            if task.action in ('include', 'include_tasks', 'include_role'):
+                continue
             self._tqm.send_callback('v2_runner_on_ok', tr)
             results.append(tr)
 
-        opts = {'tasks':  getattr(self._tqm._options, 'listtasks', False),
-                'tags':  getattr(self._tqm._options, 'listtags', False),
-                'hosts':  getattr(self._tqm._options, 'listhosts', False)}
+        # drain any 'real' results
+        results.extend(super(StrategyModule, self)._process_pending_results(iterator, one_pass, max_passes))
+
+        # give callback 'list optoins info'
+        opts = {'tasks': getattr(self._tqm._options, 'listtasks', False),
+                'tags': getattr(self._tqm._options, 'listtags', False),
+                'hosts': getattr(self._tqm._options, 'listhosts', False)}
         self._tqm.send_callback('list_options', opts)
 
         return results
