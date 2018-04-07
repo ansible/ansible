@@ -21,6 +21,8 @@ class StrategyModule(LinearStrategyModule):
     queue = []
 
     def _execute_meta(self, task, play_context, iterator, host):
+        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+        self.queue.append((host, task))
         return [TaskResult(host, task, {})]
 
     def _queue_task(self, host, task, task_vars, play_context):

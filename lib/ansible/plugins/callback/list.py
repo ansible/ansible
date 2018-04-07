@@ -18,6 +18,7 @@ DOCUMENTATION = '''
 from os.path import basename
 
 from ansible import constants as C
+from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 
 
@@ -63,7 +64,7 @@ class CallbackModule(CallbackBase):
         self._current['play']['tasks'].append(task)
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        name = task.get_name().strip() or 'task #%d' % (len(self._current['play']['tasks']) + 1)
+        name = to_text(task).strip() or 'task #%d' % (len(self._current['play']['tasks']) + 1)
         task = {'name': name, 'tags': ', '.join(task.tags), 'path': task.get_path()}
         self._current['play']['tasks'].append(task)
 
