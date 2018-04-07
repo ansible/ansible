@@ -30,7 +30,7 @@ from flask import request
 
 
 app = Flask(__name__)
-GOPATH = os.path.expanduser('/opt/gocode')
+GOPATH = os.path.abspath(os.environ['GOPATH'])
 VCSIMPATH = os.path.join(GOPATH, 'bin', 'vcsim')
 GOVCPATH = os.path.join(GOPATH, 'bin', 'govc')
 GOVCURL = None
