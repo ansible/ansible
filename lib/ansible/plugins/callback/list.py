@@ -58,14 +58,13 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_include(self, included_file):
         name = 'task #%d' % (len(self._current['play']['tasks']) + 1)
         task = {'name': name, 'included': included_file._filename}
-        print(included_file)
         for host in included_file._hosts:
             self._add_host(host.name)
         self._current['play']['tasks'].append(task)
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         name = task.get_name().strip() or 'task #%d' % (len(self._current['play']['tasks']) + 1)
-        task = {'name': name, 'tags': ', '.join(task.tags)}
+        task = {'name': name, 'tags': ', '.join(task.tags), 'path': task.get_path()}
         self._current['play']['tasks'].append(task)
 
     def v2_runner_on_ok(self, result):
@@ -94,13 +93,21 @@ class CallbackModule(CallbackBase):
                         self._display.display('      %s' % host)
 
                 if self._opts['tags'] or self._opts['tasks']:
+                    last_path = ''
                     self._display.display('    tasks:')
                     for task in play['tasks']:
                         if 'included' in task:
                             self._display.display('        included=%(included)s' % (task), color=C.COLOR_SKIP)
-                        elif self._opts['tags']:
-                            self._display.display('      %(name)s tags=[%(tags)s]' % (task))
-                        elif self._opts['tasks']:
-                            self._display.display('      %(name)s' % (task))
+                        else:
+                            msg = '      %(name)s'
+                            if self._opts['tags']:
+                                msg += ' tags=[%(tags)s]'
+                            if self._display.verbosity > 0 and 'path' in task:
+                                cur_path, line = task['path'].split(':')
+                                if cur_path != last_path:
+                                    self._display.display('      %s' % (cur_path), color=C.COLOR_DEBUG)
+                                    last_path = cur_path
+                                msg += ' line=%s' % line
 
+                            self._display.display(msg % (task))
         self._display.display("", screen_only=True)
