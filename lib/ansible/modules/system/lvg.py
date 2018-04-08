@@ -158,7 +158,12 @@ def main():
 
         # get pv list
         pvs_cmd = module.get_bin_path('pvs', True)
-        rc, current_pvs, err = module.run_command("%s --noheadings -o pv_name,vg_name --separator ';'" % pvs_cmd)
+        if dev_list:
+            pvs_filter = ' || '. join(['pv_name = {0}'.format(x) for x in dev_list])
+            pvs_filter = "--select '%s'" % pvs_filter
+        else:
+            pvs_filter = ''
+        rc, current_pvs, err = module.run_command("%s --noheadings -o pv_name,vg_name --separator ';' %s" % (pvs_cmd, pvs_filter))
         if rc != 0:
             module.fail_json(msg="Failed executing pvs command.", rc=rc, err=err)
 
