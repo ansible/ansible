@@ -69,7 +69,7 @@ options:
       - Add password for unarchive password protected file.
     version_added: "2.6"
     required: false
-    default: none
+    default: 'none'
   extra_opts:
     description:
       - Specify additional options by passing in an array.
