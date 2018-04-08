@@ -64,6 +64,12 @@ options:
     type: 'bool'
     default: 'no'
     version_added: "2.1"
+  password:
+    description:
+      - Add password for unarchive password protected file.
+    version_added: "2.6"
+    required: false
+    default: none
   extra_opts:
     description:
       - Specify additional options by passing in an array.
@@ -76,12 +82,6 @@ options:
     type: 'bool'
     default: 'no'
     version_added: "2.2"
-  password:
-    description:
-      - Add password to unarchive password protected file
-      type: string
-      required: false
-      version_added: "2.6"
   validate_certs:
     description:
       - This only applies if using a https URL as the source of the file.
