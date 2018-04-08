@@ -68,7 +68,7 @@ options:
     default: 75
   description:
     description:
-      - A human readable string describing the repository.
+      - A human readable string describing the repository. Note that it corresponds to the "name" parameter in the yum repo file.
       - This parameter is only required if I(state) is set to C(present).
   enabled:
     description:
@@ -200,7 +200,7 @@ options:
     default: 21600
   name:
     description:
-      - Unique repository ID.
+      - Unique repository ID. In relation to the yum file, it's the ID of the section of the repository
       - This parameter is only required if I(state) is set to C(present) or
         C(absent).
     required: true
