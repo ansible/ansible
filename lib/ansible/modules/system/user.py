@@ -2215,7 +2215,6 @@ def main():
         result['comment'] = info[4]
         result['home'] = info[5]
         result['shell'] = info[6]
-        result['uid'] = info[2]
         if user.groups is not None:
             result['groups'] = user.groups
 
