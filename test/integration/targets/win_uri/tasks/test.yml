@@ -250,7 +250,9 @@
 - name: validate status_codes are correct
   win_uri:
     url: http://{{httpbin_host}}/status/202
-    status_code: 202, 418
+    status_code:
+    - 202
+    - 418
     method: POST
     body: foo
   register: status_code_check
@@ -358,3 +360,35 @@
     - post_request_with_custom_headers.json.headers['Content-Type'] == "application/json"
     - post_request_with_custom_headers.json.headers['Test-Header'] == 'hello'
     - post_request_with_custom_headers.json.headers['Another-Header'] == 'world'
+
+- name: validate status codes as list of strings
+  win_uri:
+    url: https://httpbin.org/status/202
+    status_code:
+    - '202'
+    - '418'
+    method: POST
+    body: foo
+    return_content: yes
+  register: request_status_code_string
+
+- name: assert status codes as list of strings
+  assert:
+    that:
+    - not request_status_code_string.changed
+    - request_status_code_string.status_code == 202
+
+- name: validate status codes as comma separated list
+  win_uri:
+    url: https://httpbin.org/status/202
+    status_code: 202, 418
+    method: POST
+    body: foo
+    return_content: yes
+  register: request_status_code_comma
+
+- name: assert status codes as comma separated list
+  assert:
+    that:
+    - not request_status_code_comma.changed
+    - request_status_code_comma.status_code == 202
