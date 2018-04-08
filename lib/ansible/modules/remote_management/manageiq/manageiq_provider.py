@@ -694,7 +694,7 @@ class ManageIQProvider(object):
     def edit_provider(self, provider, name, provider_type, endpoints, zone_id, provider_region,
                       host_default_vnc_port_start, host_default_vnc_port_end,
                       subscription, project, uid_ems, tenant_mapping_enabled, api_version):
-        """ Edit a user from manageiq.
+        """ Edit a provider from manageiq.
 
         Returns:
             a short message describing the operation executed.
@@ -737,11 +737,10 @@ class ManageIQProvider(object):
     def create_provider(self, name, provider_type, endpoints, zone_id, provider_region,
                         host_default_vnc_port_start, host_default_vnc_port_end,
                         subscription, project, uid_ems, tenant_mapping_enabled, api_version):
-        """ Creates the user in manageiq.
+        """ Creates the provider in manageiq.
 
         Returns:
-            the created user id, name, created_on timestamp,
-            updated_on timestamp, userid and current_group_id.
+            a short message describing the operation executed.
         """
         # clean nulls, we do not send nulls to the api
         endpoints = delete_nulls(endpoints)
