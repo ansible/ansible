@@ -79,7 +79,7 @@ options:
   password:
     description:
       - Add password to unarchive password protected file
-      type: 'string'
+      type: string
       default: 'no'
       version_added: "2.6"
   validate_certs:
