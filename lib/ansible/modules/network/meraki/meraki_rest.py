@@ -267,8 +267,6 @@ def main():
         except (ValueError, KeyError) as e:
             result['data'] = to_native(info['body'])
             module.fail_json(msg=result['response'], **result)
-    else:
-        module.fail_json(msg='Unknown Error', info=info, **result)
 
     if method != 'get':
         result['changed'] = True
