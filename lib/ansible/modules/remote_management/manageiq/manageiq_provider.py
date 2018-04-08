@@ -742,9 +742,6 @@ class ManageIQProvider(object):
         Returns:
             a short message describing the operation executed.
         """
-        # clean nulls, we do not send nulls to the api
-        endpoints = delete_nulls(endpoints)
-
         resource = dict(
             name=name,
             zone={'id': zone_id},
@@ -758,6 +755,9 @@ class ManageIQProvider(object):
             api_version=api_version,
             connection_configurations=endpoints,
         )
+
+        # clean nulls, we do not send nulls to the api
+        resource = delete_nulls(resource)
 
         # try to create a new provider
         try:
