@@ -80,7 +80,7 @@ options:
     description:
       - Add password to unarchive password protected file
       type: string
-      default: 'no'
+      required: false
       version_added: "2.6"
   validate_certs:
     description:
