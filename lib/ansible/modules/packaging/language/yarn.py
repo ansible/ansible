@@ -148,17 +148,9 @@ out:
 
 import os
 import re
+import json
 
 from ansible.module_utils.basic import AnsibleModule
-
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
 
 
 class Yarn(object):
