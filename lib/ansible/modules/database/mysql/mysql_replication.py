@@ -62,6 +62,7 @@ options:
     connection_name:
         description:
             - Name of the connection in case you are using MariaDB multi-source replication
+        version_added: "2.6"
     relay_log_file:
         description:
             - same as mysql variable
