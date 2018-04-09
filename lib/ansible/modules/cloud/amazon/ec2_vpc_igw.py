@@ -106,6 +106,7 @@ from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_a
 from ansible.module_utils.six import string_types
 
 
+@AWSRetry.exponential_backoff()
 def igw_check(connection, module, vpc_id):
 
     try:
@@ -117,6 +118,7 @@ def igw_check(connection, module, vpc_id):
         module.fail_json_aws(e, msg="Failed to describe internet gateways")
 
 
+@AWSRetry.exponential_backoff()
 def get_igw(connection, module, igw_id):
     try:
         igw = connection.describe_internet_gateways(InternetGatewayIds=[igw_id])['InternetGateways'][0]
@@ -144,6 +146,7 @@ def update_igw_tags(connection, module, igw_id, name, tags):
         module.fail_json_aws(e, msg="Failed to update tags")
 
 
+@AWSRetry.exponential_backoff()
 def ensure_igw_present(connection, module, vpc_id, name, tags):
 
     changed = False
@@ -169,6 +172,7 @@ def ensure_igw_present(connection, module, vpc_id, name, tags):
     return igw, changed
 
 
+@AWSRetry.exponential_backoff()
 def ensure_igw_absent(connection, module, vpc_id):
 
     changed = False
