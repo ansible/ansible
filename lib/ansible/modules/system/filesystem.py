@@ -29,6 +29,7 @@ options:
     - lvm support was added in 2.5.
     - since 2.5, I(dev) can be an image file.
     - vfat support was added in 2.5
+    - ocfs2 support was added in 2.6
     required: yes
     aliases: [type]
   dev:
