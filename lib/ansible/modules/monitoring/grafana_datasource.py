@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: grafana_datasource
 author:
-  - Thierry Sallé (@tsalle)
+  - Thierry Sallé (@seuf)
 version_added: "2.5"
 short_description: Manage Grafana datasources
 description:
