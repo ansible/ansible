@@ -151,6 +151,9 @@ options:
                     - Dynamic
                     - Static
                 default: Dynamic
+            load_balancer_backend_address_pools:
+                description:
+                    - List of an existing load-balancer backend address pool id to associate with the network interface.
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
@@ -283,7 +286,7 @@ state:
 '''
 
 try:
-    from msrestazure.tools import parse_resource_id
+    from msrestazure.tools import parse_resource_id, resource_id
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
     # This is handled in azure_rm_common
@@ -311,6 +314,7 @@ def nic_to_dict(nic):
             private_ip_allocation_method=config.private_ip_allocation_method,
             subnet=subnet_to_dict(config.subnet),
             primary=config.primary,
+            load_balancer_backend_address_pools=config.load_balancer_backend_address_pools,
             public_ip_address=dict(
                 id=config.public_ip_address.id,
                 name=azure_id_to_dict(config.public_ip_address.id).get('publicIPAddresses'),
@@ -343,12 +347,25 @@ def nic_to_dict(nic):
     )
 
 
+def construct_ip_configuration_set(raw):
+    configurations = [str(dict(
+        private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
+        public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
+                                if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
+        primary=item.get('primary'),
+        load_balancer_backend_address_pools = (set(item.get('load_balancer_backend_address_pools'))
+                                               if item.get('load_balancer_backend_address_pools') else None),
+        name=to_native(item.get('name'))
+    )) for item in raw]
+    return set(configurations)
+
 ip_configuration_spec = dict(
     name=dict(type='str', required=True),
     private_ip_address=dict(type='str'),
     private_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
     public_ip_address_name=dict(type='str', aliases=['public_ip_address', 'public_ip_name']),
     public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+    load_balancer_backend_address_pools=dict(type='list'),
     primary=dict(type='bool', default=False)
 )
 
@@ -523,6 +540,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                         name=ip_config.get('name'),
                         subnet=subnet,
                         public_ip_address=self.get_or_create_public_ip_address(ip_config),
+                        load_balancer_backend_address_pools=[self.backend_addr_pool_id(bap_id) for bap_id in ip_config.load_balancer_backend_address_pools],
                         primary=ip_config.get('primary')
                     ) for ip_config in self.ip_configurations
                 ]
@@ -598,15 +616,19 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         except Exception as exc:
             return None
 
-    def construct_ip_configuration_set(self, raw):
-        configurations = [str(dict(
-            private_ip_allocation_method=to_native(item.get('private_ip_allocation_method')),
-            public_ip_address_name=(to_native(item.get('public_ip_address').get('name'))
-                                    if item.get('public_ip_address') else to_native(item.get('public_ip_address_name'))),
-            primary=item.get('primary'),
-            name=to_native(item.get('name'))
-        )) for item in raw]
-        return set(configurations)
+    def backend_addr_pool_id(self, val):
+        if type(val) is dict:
+            lb = val.get('load_balancer', None)
+            name = val.get('name', None)
+            if lb and name:
+                return resource_id(subscription=self.subscription_id,
+                                   resource_group=self.resource_group,
+                                   namespace='Microsoft.Network',
+                                   type='loadBalancers',
+                                   name=lb,
+                                   child_type_1='backendAddressPools',
+                                   child_name_1=name)
+        return val
 
 
 def main():
