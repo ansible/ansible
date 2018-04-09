@@ -1,23 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -45,15 +39,17 @@ options:
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+    aliases: ['droplet_id']
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
   unique_name:
     description:
-     - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
+     - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host
+       per name.  Useful for idempotence.
+    type: bool
+    default: 'no'
     version_added: "1.4"
-    default: "no"
-    choices: [ "yes", "no" ]
   size_id:
     description:
      - This is the slug of the size you would like the droplet created with.
@@ -69,39 +65,36 @@ options:
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
+    type: bool
+    default: 'yes'
     version_added: "1.4"
-    default: "yes"
-    choices: [ "yes", "no" ]
   private_networking:
     description:
      - "Bool, add an additional, private network interface to droplet for inter-droplet communication."
+    type: bool
+    default: 'no'
     version_added: "1.4"
-    default: "no"
-    choices: [ "yes", "no" ]
   backups_enabled:
     description:
      - Optional, Boolean, enables backups for your droplet.
+    type: bool
+    default: 'no'
     version_added: "1.6"
-    default: "no"
-    choices: [ "yes", "no" ]
   user_data:
     description:
       - opaque blob of data which is made available to the droplet
     version_added: "2.0"
-    required: false
-    default: None
   ipv6:
     description:
       - Optional, Boolean, enable IPv6 for your droplet.
+    type: bool
+    default: 'no'
     version_added: "2.2"
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
      - How long before wait gives up, in seconds.
@@ -191,6 +184,7 @@ import traceback
 from distutils.version import LooseVersion
 
 try:
+    # Imported as a dependency for dopy
     import six
     HAS_SIX = True
 except ImportError:
@@ -205,16 +199,18 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 
 
 class TimeoutError(Exception):
+
     def __init__(self, msg, id_):
         super(TimeoutError, self).__init__(msg)
         self.id = id_
 
 
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
 
@@ -233,13 +229,20 @@ class Droplet(JsonfyMixIn):
         if attrs:
             for k, v in attrs.items():
                 setattr(self, k, v)
+            networks = attrs.get('networks', {})
+            for network in networks.get('v6', []):
+                if network['type'] == 'public':
+                    setattr(self, 'public_ipv6_address', network['ip_address'])
+                else:
+                    setattr(self, 'private_ipv6_address', network['ip_address'])
         else:
             json = self.manager.show_droplet(self.id)
             if json['ip_address']:
                 self.update_attr(json)
 
     def power_on(self):
-        assert self.status == 'off', 'Can only power on a closed one.'
+        if self.status != 'off':
+            raise AssertionError('Can only power on a closed one.')
         json = self.manager.power_on_droplet(self.id)
         self.update_attr(json)
 
@@ -268,13 +271,14 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None, ipv6=False):
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None,
+            ipv6=False):
         private_networking_lower = str(private_networking).lower()
         backups_enabled_lower = str(backups_enabled).lower()
         ipv6_lower = str(ipv6).lower()
         json = cls.manager.new_droplet(name, size_id, image_id, region_id,
-            ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
-            backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
+                                       ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
+                                       backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
         droplet = cls(json)
         return droplet
 
@@ -300,7 +304,7 @@ class Droplet(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_active_droplets()
-        return map(cls, json)
+        return list(map(cls, json))
 
 
 class SSH(JsonfyMixIn):
@@ -331,7 +335,7 @@ class SSH(JsonfyMixIn):
     @classmethod
     def list_all(cls):
         json = cls.manager.all_ssh_keys()
-        return map(cls, json)
+        return list(map(cls, json))
 
     @classmethod
     def add(cls, name, key_pub):
@@ -346,11 +350,7 @@ def core(module):
             module.fail_json(msg='Unable to load %s' % k)
         return v
 
-    try:
-        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
-    except KeyError as e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
+    api_token = module.params['api_token']
     changed = True
     command = module.params['command']
     state = module.params['state']
@@ -429,40 +429,45 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            command = dict(choices=['droplet', 'ssh'], default='droplet'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            api_token = dict(aliases=['API_TOKEN'], no_log=True),
-            name = dict(type='str'),
-            size_id = dict(),
-            image_id = dict(),
-            region_id = dict(),
-            ssh_key_ids = dict(type='list'),
-            virtio = dict(type='bool', default='yes'),
-            private_networking = dict(type='bool', default='no'),
-            backups_enabled = dict(type='bool', default='no'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            unique_name = dict(type='bool', default='no'),
-            user_data = dict(default=None),
-            ipv6 = dict(type='bool', default='no'),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(default=300, type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            command=dict(choices=['droplet', 'ssh'], default='droplet'),
+            state=dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            api_token=dict(
+                aliases=['API_TOKEN'],
+                no_log=True,
+                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY'])
+            ),
+            name=dict(type='str'),
+            size_id=dict(),
+            image_id=dict(),
+            region_id=dict(),
+            ssh_key_ids=dict(type='list'),
+            virtio=dict(type='bool', default='yes'),
+            private_networking=dict(type='bool', default='no'),
+            backups_enabled=dict(type='bool', default='no'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            unique_name=dict(type='bool', default='no'),
+            user_data=dict(default=None),
+            ipv6=dict(type='bool', default='no'),
+            wait=dict(type='bool', default=True),
+            wait_timeout=dict(default=300, type='int'),
+            ssh_pub_key=dict(type='str'),
         ),
-        required_together = (
+        required_together=(
             ['size_id', 'image_id', 'region_id'],
         ),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['size_id', 'ssh_pub_key'],
             ['image_id', 'ssh_pub_key'],
             ['region_id', 'ssh_pub_key'],
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )
     if not HAS_DOPY and not HAS_SIX:
-        module.fail_json(msg='dopy >= 0.3.2 is required for this module.  dopy requires six but six is not installed.  Make sure both dopy and six are installed.')
+        module.fail_json(msg='dopy >= 0.3.2 is required for this module. dopy requires six but six is not installed. '
+                             'Make sure both dopy and six are installed.')
     if not HAS_DOPY:
         module.fail_json(msg='dopy >= 0.3.2 required for this module')
 
@@ -472,6 +477,7 @@ def main():
         module.fail_json(msg=str(e), id=e.id)
     except (DoError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
+
 
 if __name__ == '__main__':
     main()

@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Benjamin Copeland (@bhcopeland) <ben@copeland.me.uk>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -39,17 +30,14 @@ options:
     title:
         description:
             - A descriptive title for the maintenance window
-        required: false
         default: "A new maintenance window"
     desc:
         description:
             - Message describing the maintenance window
-        required: false
         default: "Created by Ansible"
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent"]
     api_id:
@@ -67,73 +55,61 @@ options:
     url:
         description:
             - Status.io API URL. A private apiary can be used instead.
-        required: false
         default: "https://api.status.io"
     components:
         description:
             - The given name of your component (server name)
-        required: false
         aliases: ['component']
-        default: None
     containers:
         description:
             - The given name of your container (data center)
-        required: false
         aliases: ['container']
-        default: None
     all_infrastructure_affected:
         description:
             - If it affects all components and containers
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     automation:
         description:
             - Automatically start and end the maintenance window
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_now:
         description:
             - Notify subscribers now
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_72_hr:
         description:
             - Notify subscribers 72 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_24_hr:
         description:
             - Notify subscribers 24 hours before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_notify_1_hr:
         description:
             - Notify subscribers 1 hour before maintenance start time
-        required: false
-        default: false
+        type: bool
+        default: 'no'
     maintenance_id:
         description:
             - The maintenance id number when deleting a maintenance window
-        required: false
-        default: None
     minutes:
         description:
             - The length of time in UTC that the maintenance will run \
             (starting from playbook runtime)
-        required: false
         default: 10
     start_date:
         description:
             - Date maintenance is expected to start (Month/Day/Year) (UTC)
             - End Date is worked out from start_date + minutes
-        required: false
-        default: None
     start_time:
         description:
             - Time maintenance is expected to start (Hour:Minutes) (UTC)
             - End Time is worked out from start_time + minutes
-        required: false
-        default: None
 '''
 
 EXAMPLES = '''
@@ -189,6 +165,11 @@ EXAMPLES = '''
 RETURN = ''' # '''
 
 import datetime
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.urls import open_url
 
 
 def get_api_auth_headers(api_id, api_key, url, statuspage):
@@ -201,7 +182,7 @@ def get_api_auth_headers(api_id, api_key, url, statuspage):
 
     try:
         response = open_url(
-                url + "/v2/component/list/" + statuspage, headers=headers)
+            url + "/v2/component/list/" + statuspage, headers=headers)
         data = json.loads(response.read())
         if data['status']['message'] == 'Authentication failed':
             return 1, None, None, "Authentication failed: " \
@@ -209,8 +190,8 @@ def get_api_auth_headers(api_id, api_key, url, statuspage):
         else:
             auth_headers = headers
             auth_content = data
-    except:
-        return 1, None, None, e
+    except Exception as e:
+        return 1, None, None, to_native(e)
     return 0, auth_headers, auth_content, None
 
 
@@ -265,7 +246,7 @@ def get_date_time(start_date, start_time, minutes):
         try:
             # Work out end date/time based on minutes
             date_time_start = datetime.datetime.strptime(
-                    start_time + start_date, '%H:%M%m/%d/%Y')
+                start_time + start_date, '%H:%M%m/%d/%Y')
             delta = date_time_start + datetime.timedelta(minutes=minutes)
             returned_date.append(delta.strftime("%m/%d/%Y"))
             returned_date.append(delta.strftime("%H:%M"))
@@ -296,33 +277,31 @@ def create_maintenance(auth_headers, url, statuspage, host_ids,
         container_id.append(val['container_id'])
     try:
         values = json.dumps({
-                "statuspage_id": statuspage,
-                "components": component_id,
-                "containers": container_id,
-                "all_infrastructure_affected":
-                    str(int(all_infrastructure_affected)),
-                "automation": str(int(automation)),
-                "maintenance_name": title,
-                "maintenance_details": desc,
-                "date_planned_start": returned_dates[0],
-                "time_planned_start": returned_dates[1],
-                "date_planned_end": returned_dates[2],
-                "time_planned_end": returned_dates[3],
-                "maintenance_notify_now": str(int(maintenance_notify_now)),
-                "maintenance_notify_72_hr": str(int(maintenance_notify_72_hr)),
-                "maintenance_notify_24_hr": str(int(maintenance_notify_24_hr)),
-                "maintenance_notify_1_hr": str(int(maintenance_notify_1_hr))
-            })
+            "statuspage_id": statuspage,
+            "components": component_id,
+            "containers": container_id,
+            "all_infrastructure_affected": str(int(all_infrastructure_affected)),
+            "automation": str(int(automation)),
+            "maintenance_name": title,
+            "maintenance_details": desc,
+            "date_planned_start": returned_dates[0],
+            "time_planned_start": returned_dates[1],
+            "date_planned_end": returned_dates[2],
+            "time_planned_end": returned_dates[3],
+            "maintenance_notify_now": str(int(maintenance_notify_now)),
+            "maintenance_notify_72_hr": str(int(maintenance_notify_72_hr)),
+            "maintenance_notify_24_hr": str(int(maintenance_notify_24_hr)),
+            "maintenance_notify_1_hr": str(int(maintenance_notify_1_hr))
+        })
         response = open_url(
-                url + "/v2/maintenance/schedule", data=values,
-                headers=auth_headers)
+            url + "/v2/maintenance/schedule", data=values,
+            headers=auth_headers)
         data = json.loads(response.read())
 
         if data["status"]["error"] == "yes":
             return 1, None, data["status"]["message"]
-    except Exception:
-        e = get_exception()
-        return 1, None, str(e)
+    except Exception as e:
+        return 1, None, to_native(e)
     return 0, None, None
 
 
@@ -333,15 +312,14 @@ def delete_maintenance(auth_headers, url, statuspage, maintenance_id):
             "maintenance_id": maintenance_id,
         })
         response = open_url(
-                url=url + "/v2/maintenance/delete",
-                data=values,
-                headers=auth_headers)
+            url=url + "/v2/maintenance/delete",
+            data=values,
+            headers=auth_headers)
         data = json.loads(response.read())
         if data["status"]["error"] == "yes":
             return 1, None, "Invalid maintenance_id"
-    except Exception:
-        e = get_exception()
-        return 1, None, str(e)
+    except Exception as e:
+        return 1, None, to_native(e)
     return 0, None, None
 
 
@@ -412,7 +390,7 @@ def main():
 
         if minutes or start_time and start_date:
             (rc, returned_date, error) = get_date_time(
-                    start_date, start_time, minutes)
+                start_date, start_time, minutes)
             if rc != 0:
                 module.fail_json(msg="Failed to set date/time: %s" % error)
 
@@ -439,11 +417,11 @@ def main():
             module.exit_json(changed=True)
         else:
             (rc, _, error) = create_maintenance(
-                    auth_headers, url, statuspage, host_ids,
-                    all_infrastructure_affected, automation,
-                    title, desc, returned_date, maintenance_notify_now,
-                    maintenance_notify_72_hr, maintenance_notify_24_hr,
-                    maintenance_notify_1_hr)
+                auth_headers, url, statuspage, host_ids,
+                all_infrastructure_affected, automation,
+                title, desc, returned_date, maintenance_notify_now,
+                maintenance_notify_72_hr, maintenance_notify_24_hr,
+                maintenance_notify_1_hr)
             if rc == 0:
                 module.exit_json(changed=True, result="Successfully created "
                                                       "maintenance")
@@ -465,17 +443,16 @@ def main():
             module.exit_json(changed=True)
         else:
             (rc, _, error) = delete_maintenance(
-                    auth_headers, url, statuspage, maintenance_id)
+                auth_headers, url, statuspage, maintenance_id)
             if rc == 0:
                 module.exit_json(
-                        changed=True,
-                        result="Successfully deleted maintenance"
+                    changed=True,
+                    result="Successfully deleted maintenance"
                 )
             else:
                 module.fail_json(
-                        msg="Failed to delete maintenance: %s" % error)
+                    msg="Failed to delete maintenance: %s" % error)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()

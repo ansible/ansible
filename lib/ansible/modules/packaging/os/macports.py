@@ -5,22 +5,16 @@
 # Based on okpg (Patrick Pelletier <pp.pelletier@gmail.com>), pacman
 # (Afterburn) and pkgin (Shaun Zinck) modules
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -72,7 +66,9 @@ EXAMPLES = '''
     state: inactive
 '''
 
-import pipes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
+
 
 def update_package_db(module, port_path):
     """ Updates packages list. """
@@ -88,7 +84,7 @@ def query_package(module, port_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (shlex_quote(port_path), shlex_quote(name)), use_unsafe_shell=True)
         if rc == 0:
             return True
 
@@ -96,7 +92,7 @@ def query_package(module, port_path, name, state="present"):
 
     elif state == "active":
 
-        rc, out, err = module.run_command("%s installed %s | grep -q active" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s installed %s | grep -q active" % (shlex_quote(port_path), shlex_quote(name)), use_unsafe_shell=True)
 
         if rc == 0:
             return True
@@ -202,10 +198,10 @@ def deactivate_packages(module, port_path, packages):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
+            update_cache=dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
 
@@ -230,8 +226,6 @@ def main():
     elif p["state"] == "inactive":
         deactivate_packages(module, port_path, pkgs)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -19,27 +19,30 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 
+from itertools import chain
+
+
 class Group:
     ''' a group of ansible hosts '''
 
-    #__slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
 
         self.depth = 0
         self.name = name
         self.hosts = []
+        self._hosts = None
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
         self.priority = 1
 
-        #self.clear_hosts_cache()
-        #if self.name is None:
-        #    raise Exception("group name is required")
-
     def __repr__(self):
+        return self.get_name()
+
+    def __str__(self):
         return self.get_name()
 
     def __getstate__(self):
@@ -53,11 +56,14 @@ class Group:
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
+        self._hosts = None
+
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
             depth=self.depth,
+            hosts=self.hosts,
         )
 
         return result
@@ -67,12 +73,52 @@ class Group:
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
+        self.hosts = data.get('hosts', [])
+        self._hosts = None
 
         parent_groups = data.get('parent_groups', [])
         for parent_data in parent_groups:
             g = Group()
             g.deserialize(parent_data)
             self.parent_groups.append(g)
+
+    def _walk_relationship(self, rel):
+        '''
+        Given `rel` that is an iterable property of Group,
+        consitituting a directed acyclic graph among all groups,
+        Returns a set of all groups in full tree
+        A   B    C
+        |  / |  /
+        | /  | /
+        D -> E
+        |  /    vertical connections
+        | /     are directed upward
+        F
+        Called on F, returns set of (A, B, C, D, E)
+        '''
+        seen = set([])
+        unprocessed = set(getattr(self, rel))
+
+        while unprocessed:
+            seen.update(unprocessed)
+            unprocessed = set(chain.from_iterable(
+                getattr(g, rel) for g in unprocessed
+            ))
+            unprocessed.difference_update(seen)
+
+        return seen
+
+    def get_ancestors(self):
+        return self._walk_relationship('parent_groups')
+
+    def get_descendants(self):
+        return self._walk_relationship('child_groups')
+
+    @property
+    def host_names(self):
+        if self._hosts is None:
+            self._hosts = set(self.hosts)
+        return self._hosts
 
     def get_name(self):
         return self.name
@@ -83,60 +129,94 @@ class Group:
             raise Exception("can't add group to itself")
 
         # don't add if it's already there
-        if not group in self.child_groups:
+        if group not in self.child_groups:
+
+            # prepare list of group's new ancestors this edge creates
+            start_ancestors = group.get_ancestors()
+            new_ancestors = self.get_ancestors()
+            if group in new_ancestors:
+                raise AnsibleError(
+                    "Adding group '%s' as child to '%s' creates a recursive "
+                    "dependency loop." % (group.name, self.name))
+            new_ancestors.add(self)
+            new_ancestors.difference_update(start_ancestors)
+
             self.child_groups.append(group)
 
             # update the depth of the child
-            group.depth = max([self.depth+1, group.depth])
+            group.depth = max([self.depth + 1, group.depth])
 
             # update the depth of the grandchildren
             group._check_children_depth()
 
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
-            if not self.name in [g.name for g in group.parent_groups]:
+            if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
+                for h in group.get_hosts():
+                    h.populate_ancestors(additions=new_ancestors)
 
             self.clear_hosts_cache()
 
     def _check_children_depth(self):
 
-        try:
-            for group in self.child_groups:
-                group.depth = max([self.depth+1, group.depth])
-                group._check_children_depth()
-        except RuntimeError:
-            raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
+        depth = self.depth
+        start_depth = self.depth  # self.depth could change over loop
+        seen = set([])
+        unprocessed = set(self.child_groups)
+
+        while unprocessed:
+            seen.update(unprocessed)
+            depth += 1
+            to_process = unprocessed.copy()
+            unprocessed = set([])
+            for g in to_process:
+                if g.depth < depth:
+                    g.depth = depth
+                    unprocessed.update(g.child_groups)
+            if depth - start_depth > len(seen):
+                raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
+        if host.name not in self.host_names:
+            self.hosts.append(host)
+            self._hosts.add(host.name)
+            host.add_group(self)
+            self.clear_hosts_cache()
 
-        self.hosts.append(host)
-        host.add_group(self)
-        self.clear_hosts_cache()
+    def remove_host(self, host):
+
+        if host.name in self.host_names:
+            self.hosts.remove(host)
+            self._hosts.remove(host.name)
+            host.remove_group(self)
+            self.clear_hosts_cache()
 
     def set_variable(self, key, value):
 
-        self.vars[key] = value
+        if key == 'ansible_group_priority':
+            self.set_priority(int(value))
+        else:
+            self.vars[key] = value
 
     def clear_hosts_cache(self):
 
         self._hosts_cache = None
-        for g in self.parent_groups:
-            g.clear_hosts_cache()
+        for g in self.get_ancestors():
+            g._hosts_cache = None
 
     def get_hosts(self):
 
         if self._hosts_cache is None:
             self._hosts_cache = self._get_hosts()
-
         return self._hosts_cache
 
     def _get_hosts(self):
 
         hosts = []
         seen = {}
-        for kid in self.child_groups:
-            kid_hosts = kid.get_hosts()
+        for kid in self.get_descendants():
+            kid_hosts = kid.hosts
             for kk in kid_hosts:
                 if kk not in seen:
                     seen[kk] = 1
@@ -154,22 +234,9 @@ class Group:
     def get_vars(self):
         return self.vars.copy()
 
-    def _get_ancestors(self):
-
-        results = {}
-        for g in self.parent_groups:
-            results[g.name] = g
-            results.update(g._get_ancestors())
-        return results
-
-    def get_ancestors(self):
-
-        return self._get_ancestors().values()
-
     def set_priority(self, priority):
         try:
             self.priority = int(priority)
         except TypeError:
-            #FIXME: warn about invalid priority
+            # FIXME: warn about invalid priority
             pass
-

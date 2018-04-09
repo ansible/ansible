@@ -1,0 +1,7 @@
+# This contain sample show sys info tasks
+---
+
+- name: Test Sys Info
+  cnos_facts: host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]['password']}} enablePassword='{{item.enablePassword}}' outputfile=./results/cnos_facts_{{ inventory_hostname }}_output.txt
+  with_items: "{{test_showsysinfo_data}}"
+# Completed file

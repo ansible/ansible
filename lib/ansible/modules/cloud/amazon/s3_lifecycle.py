@@ -1,21 +1,15 @@
 #!/usr/bin/python
-#
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
@@ -37,53 +31,43 @@ options:
     required: true
   expiration_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified."
-    required: false
-    default: null
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must
+        be midnight and a GMT timezone must be specified.
   expiration_days:
     description:
       - "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer."
-    required: false
-    default: null
   prefix:
     description:
       - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
-    required: false
-    default: null
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
-    required: false
-    default: null
   state:
     description:
       - "Create or remove the lifecycle rule"
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
   status:
     description:
       - "If 'enabled', the rule is currently being applied. If 'disabled', the rule is not currently being applied."
-    required: false
     default: enabled
     choices: [ 'enabled', 'disabled' ]
   storage_class:
     description:
       - "The storage class to transition to. Currently there are two supported values - 'glacier' or 'standard_ia'."
       - "The 'standard_ia' class is only being available from Ansible version 2.2."
-    required: false
     default: glacier
     choices: [ 'glacier', 'standard_ia']
   transition_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified, this parameter is required."
-    required: false
-    default: null
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class.
+        The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified,
+        this parameter is required."
   transition_days:
     description:
       - "Indicates when, in days, an object transitions to a different storage class. If transition_date is not specified, this parameter is required."
-    required: false
-    default: null
 extends_documentation_fragment:
     - aws
     - ec2
@@ -109,7 +93,8 @@ EXAMPLES = '''
     status: enabled
     state: present
 
-# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030. Note that midnight GMT must be specified.
+# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030.
+# Note that midnight GMT must be specified.
 # Be sure to quote your date strings
 - s3_lifecycle:
     name: mybucket
@@ -158,13 +143,14 @@ try:
     import boto.ec2
     from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.lifecycle import Lifecycle, Rule, Expiration, Transition
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
+    from boto.exception import BotoServerError, S3ResponseError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, ec2_argument_spec, get_aws_connection_info
+
 
 def create_lifecycle_rule(connection, module):
 
@@ -255,6 +241,7 @@ def create_lifecycle_rule(connection, module):
 
     module.exit_json(changed=changed)
 
+
 def compare_rule(rule_a, rule_b):
 
     # Copy objects
@@ -294,7 +281,9 @@ def compare_rule(rule_a, rule_b):
     if rule2_expiration is None:
         rule2_expiration = Expiration()
 
-    if (rule1.__dict__ == rule2.__dict__) and (rule1_expiration.__dict__ == rule2_expiration.__dict__) and (rule1_transition.__dict__ == rule2_transition.__dict__):
+    if (rule1.__dict__ == rule2.__dict__ and
+            rule1_expiration.__dict__ == rule2_expiration.__dict__ and
+            rule1_transition.__dict__ == rule2_transition.__dict__):
         return True
     else:
         return False
@@ -361,27 +350,27 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True, type='str'),
-            expiration_days = dict(default=None, required=False, type='int'),
-            expiration_date = dict(default=None, required=False, type='str'),
-            prefix = dict(default=None, required=False),
-            requester_pays = dict(default='no', type='bool'),
-            rule_id = dict(required=False, type='str'),
-            state = dict(default='present', choices=['present', 'absent']),
-            status = dict(default='enabled', choices=['enabled', 'disabled']),
-            storage_class = dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
-            transition_days = dict(default=None, required=False, type='int'),
-            transition_date = dict(default=None, required=False, type='str')
+            name=dict(required=True, type='str'),
+            expiration_days=dict(default=None, required=False, type='int'),
+            expiration_date=dict(default=None, required=False, type='str'),
+            prefix=dict(default=None, required=False),
+            requester_pays=dict(default='no', type='bool'),
+            rule_id=dict(required=False, type='str'),
+            state=dict(default='present', choices=['present', 'absent']),
+            status=dict(default='enabled', choices=['enabled', 'disabled']),
+            storage_class=dict(default='glacier', type='str', choices=['glacier', 'standard_ia']),
+            transition_days=dict(default=None, required=False, type='int'),
+            transition_date=dict(default=None, required=False, type='str')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive = [
-                                                 [ 'expiration_days', 'expiration_date' ],
-                                                 [ 'expiration_days', 'transition_date' ],
-                                                 [ 'transition_days', 'transition_date' ],
-                                                 [ 'transition_days', 'expiration_date' ]
-                                                 ]
+                           mutually_exclusive=[
+                               ['expiration_days', 'expiration_date'],
+                               ['expiration_days', 'transition_date'],
+                               ['transition_days', 'transition_date'],
+                               ['transition_days', 'expiration_date']
+                           ]
                            )
 
     if not HAS_BOTO:
@@ -425,7 +414,7 @@ def main():
         except ValueError as e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
 
-    boto_required_version = (2,40,0)
+    boto_required_version = (2, 40, 0)
     if storage_class == 'standard_ia' and tuple(map(int, (boto.__version__.split(".")))) < boto_required_version:
         module.fail_json(msg="'standard_ia' class requires boto >= 2.40.0")
 

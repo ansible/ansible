@@ -1,0 +1,121 @@
+---
+- debug: msg="START cli/set_domain_search.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  iosxr_config:
+    lines:
+      - no domain list ansible.com
+      - no domain list redhat.com
+    match: none
+    provider: "{{ cli }}"
+
+- name: configure domain_search
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'domain list ansible.com' in result.commands"
+      - "'domain list redhat.com' in result.commands"
+
+- name: verify domain_search
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no domain list redhat.com' in result.commands"
+
+- name: verify remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'domain list redhat.com' in result.commands"
+
+- name: verify add one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - redhat.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: add and remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == true
+      - "'no domain list redhat.com' in result.commands"
+      - "'domain list eng.ansible.com' in result.commands"
+      - result.commands|length == 2
+
+- name: verify add and remove one entry
+  iosxr_system:
+    domain_search:
+      - ansible.com
+      - eng.ansible.com
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - result.changed == false
+
+- name: teardown
+  iosxr_config:
+    lines:
+      - no domain list ansible.com
+      - no domain list eng.ansible.com
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/set_domain_search.yaml on connection={{ ansible_connection }}"

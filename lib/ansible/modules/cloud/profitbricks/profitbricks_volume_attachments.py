@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -90,22 +83,24 @@ EXAMPLES = '''
 '''
 
 import re
-import uuid
 import time
 
 HAS_PB_SDK = True
-
 try:
-    from profitbricks.client import ProfitBricksService, Volume
+    from profitbricks.client import ProfitBricksService
 except ImportError:
     HAS_PB_SDK = False
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 uuid_match = re.compile(
-    '[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
+    r'[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}', re.I)
 
 
 def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         time.sleep(5)
@@ -123,7 +118,8 @@ def _wait_for_completion(profitbricks, promise, wait_timeout, msg):
     raise Exception(
         'Timed out waiting for async operation ' + msg + ' "' + str(
             promise['requestId']
-            ) + '" to complete.')
+        ) + '" to complete.')
+
 
 def attach_volume(module, profitbricks):
     """
@@ -155,7 +151,7 @@ def attach_volume(module, profitbricks):
         server_list = profitbricks.list_servers(datacenter)
         for s in server_list['items']:
             if server == s['properties']['name']:
-                server= s['id']
+                server = s['id']
                 break
 
     # Locate UUID for Volume
@@ -168,11 +164,12 @@ def attach_volume(module, profitbricks):
 
     return profitbricks.attach_volume(datacenter, server, volume)
 
+
 def detach_volume(module, profitbricks):
     """
     Detaches a volume.
 
-    This will remove a volume from the server. 
+    This will remove a volume from the server.
 
     module : AnsibleModule object
     profitbricks: authenticated profitbricks object.
@@ -198,7 +195,7 @@ def detach_volume(module, profitbricks):
         server_list = profitbricks.list_servers(datacenter)
         for s in server_list['items']:
             if server == s['properties']['name']:
-                server= s['id']
+                server = s['id']
                 break
 
     # Locate UUID for Volume
@@ -211,6 +208,7 @@ def detach_volume(module, profitbricks):
 
     return profitbricks.detach_volume(datacenter, server, volume)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -218,7 +216,7 @@ def main():
             server=dict(),
             volume=dict(),
             subscription_user=dict(),
-            subscription_password=dict(),
+            subscription_password=dict(no_log=True),
             wait=dict(type='bool', default=True),
             wait_timeout=dict(type='int', default=600),
             state=dict(default='present'),
@@ -261,7 +259,6 @@ def main():
         except Exception as e:
             module.fail_json(msg='failed to set volume_attach state: %s' % str(e))
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

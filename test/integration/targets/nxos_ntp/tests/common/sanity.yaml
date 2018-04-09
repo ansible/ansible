@@ -1,0 +1,58 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_ntp sanity test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- name: Setup - Remove ntp if configured
+  nxos_ntp: &remove
+    server: 1.2.3.4
+    key_id: 32
+    prefer: disabled
+    vrf_name: management
+    source_addr: 5.5.5.5
+    state: absent
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+- block:
+
+  - name: Configure ntp
+    nxos_ntp: &config
+      server: 1.2.3.4
+      key_id: 32
+      prefer: enabled
+      vrf_name: management
+      source_addr: 5.5.5.5
+      state: present
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Idempotence Check
+    nxos_ntp: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove ntp config
+    nxos_ntp: *remove
+    register: result
+
+  - assert: *true
+
+  - name: Remove Idempotence Check
+    nxos_ntp: *remove
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: Remove ntp config
+    nxos_ntp: *remove
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_ntp sanity test"

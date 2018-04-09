@@ -1,131 +1,103 @@
 #!/usr/bin/python
 
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import os
-import pipes
-import stat
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-try:
-    import json
-except ImportError:
-    try:
-        import simplejson as json
-    except ImportError:
-        # Let snippet from module_utils/basic.py return a proper error in this case
-        pass
-
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: puppet
 short_description: Runs puppet
 description:
-  - Runs I(puppet) agent or apply in a reliable manner
+  - Runs I(puppet) agent or apply in a reliable manner.
 version_added: "2.0"
 options:
   timeout:
     description:
       - How long to wait for I(puppet) to finish.
-    required: false
     default: 30m
   puppetmaster:
     description:
       - The hostname of the puppetmaster to contact.
-    required: false
-    default: None
+  modulepath:
+    description:
+      - Path to an alternate location for puppet modules.
+    version_added: "2.4"
   manifest:
     description:
       - Path to the manifest file to run puppet apply on.
-    required: false
-    default: None
   facts:
     description:
-      - A dict of values to pass in as persistent external facter facts
-    required: false
-    default: None
+      - A dict of values to pass in as persistent external facter facts.
   facter_basename:
     description:
-      - Basename of the facter output file
-    required: false
+      - Basename of the facter output file.
     default: ansible
   environment:
     description:
       - Puppet environment to be used.
-    required: false
-    default: None
   logdest:
     description:
-      - Where the puppet logs should go, if puppet apply is being used
-    required: false
+      - Where the puppet logs should go, if puppet apply is being used.
+    choices: [ stdout, syslog ]
     default: stdout
-    choices: [ 'stdout', 'syslog' ]
     version_added: "2.1"
   certname:
     description:
       - The name to use when handling certificates.
-    required: false
-    default: None
     version_added: "2.1"
   tags:
     description:
       - A comma-separated list of puppet tags to be used.
-    required: false
-    default: None
     version_added: "2.1"
   execute:
     description:
-      - Execute a specific piece of Puppet code. It has no effect with
-        a puppetmaster.
-    required: false
-    default: None
+      - Execute a specific piece of Puppet code.
+      - It has no effect with a puppetmaster.
     version_added: "2.1"
-requirements: [ puppet ]
-author: "Monty Taylor (@emonty)"
+requirements:
+- puppet
+author:
+- Monty Taylor (@emonty)
 '''
 
 EXAMPLES = '''
-# Run puppet agent and fail if anything goes wrong
-- puppet
+- name: Run puppet agent and fail if anything goes wrong
+  puppet:
 
-# Run puppet and timeout in 5 minutes
-- puppet:
+- name: Run puppet and timeout in 5 minutes
+  puppet:
     timeout: 5m
 
-# Run puppet using a different environment
-- puppet:
+- name: Run puppet using a different environment
+  puppet:
     environment: testing
 
-# Run puppet using a specific certname
-- puppet:
+- name: Run puppet using a specific certname
+  puppet:
     certname: agent01.example.com
 
-# Run puppet using a specific piece of Puppet code. Has no effect with a
-# puppetmaster.
-- puppet:
-    execute: 'include ::mymodule'
+- name: Run puppet using a specific piece of Puppet code. Has no effect with a puppetmaster
+  puppet:
+    execute: include ::mymodule
 
-# Run puppet using a specific tags
-- puppet:
+- name: Run puppet using a specific tags
+  puppet:
     tags: update,nginx
 '''
+
+import json
+import os
+import pipes
+import stat
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _get_facter_dir():
@@ -153,26 +125,25 @@ def _write_structured_data(basedir, basename, data):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            timeout=dict(default="30m"),
-            puppetmaster=dict(required=False, default=None),
-            manifest=dict(required=False, default=None),
-            logdest=dict(
-                required=False, default='stdout',
-                choices=['stdout', 'syslog']),
-            show_diff=dict(
-                # internal code to work with --diff, do not use
-                default=False, aliases=['show-diff'], type='bool'),
-            facts=dict(default=None),
-            facter_basename=dict(default='ansible'),
-            environment=dict(required=False, default=None),
-            certname=dict(required=False, default=None),
-            tags=dict(required=False, default=None, type='list'),
-            execute=dict(required=False, default=None),
+            timeout=dict(type='str', default='30m'),
+            puppetmaster=dict(type='str'),
+            modulepath=dict(type='str'),
+            manifest=dict(type='str'),
+            logdest=dict(type='str', default='stdout', choices=['stdout', 'syslog']),
+            # internal code to work with --diff, do not use
+            show_diff=dict(type='bool', default=False, aliases=['show-diff']),
+            facts=dict(type='dict'),
+            facter_basename=dict(type='str', default='ansible'),
+            environment=dict(type='str'),
+            certname=dict(type='str'),
+            tags=dict(type='list'),
+            execute=dict(type='str'),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
             ('puppetmaster', 'manifest'),
             ('puppetmaster', 'manifest', 'execute'),
+            ('puppetmaster', 'modulepath')
         ],
     )
     p = module.params
@@ -219,12 +190,10 @@ def main():
     else:
         base_cmd = PUPPET_CMD
 
-    if not p['manifest']:
+    if not p['manifest'] and not p['execute']:
         cmd = ("%(base_cmd)s agent --onetime"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
-               " --detailed-exitcodes --verbose --color 0") % dict(
-                   base_cmd=base_cmd,
-                   )
+               " --detailed-exitcodes --verbose --color 0") % dict(base_cmd=base_cmd)
         if p['puppetmaster']:
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
@@ -243,19 +212,22 @@ def main():
         cmd = "%s apply --detailed-exitcodes " % base_cmd
         if p['logdest'] == 'syslog':
             cmd += "--logdest syslog "
+        if p['modulepath']:
+            cmd += "--modulepath='%s'" % p['modulepath']
         if p['environment']:
             cmd += "--environment '%s' " % p['environment']
         if p['certname']:
             cmd += " --certname='%s'" % p['certname']
-        if p['execute']:
-            cmd += " --execute '%s'" % p['execute']
         if p['tags']:
             cmd += " --tags '%s'" % ','.join(p['tags'])
         if module.check_mode:
             cmd += "--noop "
         else:
             cmd += "--no-noop "
-        cmd += pipes.quote(p['manifest'])
+        if p['execute']:
+            cmd += " --execute '%s'" % p['execute']
+        else:
+            cmd += pipes.quote(p['manifest'])
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
@@ -285,8 +257,6 @@ def main():
             rc=rc, msg="%s failed with return code: %d" % (cmd, rc),
             stdout=stdout, stderr=stderr)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

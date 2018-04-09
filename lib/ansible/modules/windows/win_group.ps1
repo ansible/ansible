@@ -20,19 +20,15 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$description = Get-AnsibleParam -obj $params -name "description" -type "str"
 
-$name = Get-Attr $params "name" -failifempty $true
-
-$state = Get-Attr $params "state" "present"
-$state = $state.ToString().ToLower()
-If (($state -ne "present") -and ($state -ne "absent")) {
-    Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
+$result = @{
+    changed = $false
 }
-
-$description = Get-Attr $params "description" $null
 
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
 $group = $adsi.Children | Where-Object {$_.SchemaClassName -eq 'group' -and $_.Name -eq $name }
@@ -40,23 +36,29 @@ $group = $adsi.Children | Where-Object {$_.SchemaClassName -eq 'group' -and $_.N
 try {
     If ($state -eq "present") {
         If (-not $group) {
-            $group = $adsi.Create("Group", $name)
-            $group.SetInfo()
+            If (-not $check_mode) {
+                $group = $adsi.Create("Group", $name)
+                $group.SetInfo()
+            }
 
-            Set-Attr $result "changed" $true
+            $result.changed = $true
         }
 
         If ($null -ne $description) {
             IF (-not $group.description -or $group.description -ne $description) {
                 $group.description = $description
-                $group.SetInfo()
-                Set-Attr $result "changed" $true
+                If (-not $check_mode) {
+                    $group.SetInfo()
+                }
+                $result.changed = $true
             }
         }
     }
     ElseIf ($state -eq "absent" -and $group) {
-        $adsi.delete("Group", $group.Name.Value)
-        Set-Attr $result "changed" $true
+        If (-not $check_mode) {
+            $adsi.delete("Group", $group.Name.Value)
+        }
+        $result.changed = $true
     }
 }
 catch {

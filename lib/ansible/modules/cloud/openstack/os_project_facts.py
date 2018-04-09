@@ -1,29 +1,15 @@
 #!/usr/bin/python
 # Copyright (c) 2016 Hewlett-Packard Enterprise Corporation
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -45,14 +31,13 @@ options:
    domain:
      description:
         - Name or ID of the domain containing the project if the cloud supports domains
-     required: false
-     default: None
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
           this dictionary may be additional dictionaries.
-     required: false
-     default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatibility
 '''
 
 EXAMPLES = '''
@@ -70,16 +55,15 @@ EXAMPLES = '''
     var: openstack_projects
 
 # Gather facts about a previously created project in a specific domain
-- os_project_facts
+- os_project_facts:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
 - debug:
     var: openstack_projects
 
-# Gather facts about a previously created project in a specific domain
-  with filter
-- os_project_facts
+# Gather facts about a previously created project in a specific domain with filter
+- os_project_facts:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
@@ -96,7 +80,7 @@ openstack_projects:
     returned: always, but can be null
     type: complex
     contains:
-        id: 
+        id:
             description: Unique UUID.
             returned: success
             type: string
@@ -118,6 +102,10 @@ openstack_projects:
             type: bool
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_cloud_from_module
+
+
 def main():
 
     argument_spec = openstack_full_argument_spec(
@@ -128,15 +116,11 @@ def main():
 
     module = AnsibleModule(argument_spec)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    shade, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         domain = module.params['domain']
         filters = module.params['filters']
-
-        opcloud = shade.operator_cloud(**module.params)
 
         if domain:
             try:
@@ -164,8 +148,6 @@ def main():
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.openstack import *
 
 if __name__ == '__main__':
     main()

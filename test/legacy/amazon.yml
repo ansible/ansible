@@ -1,0 +1,35 @@
+- hosts: amazon
+  gather_facts: true
+  roles:
+    - { role: test_ec2_key, tags: test_ec2_key }
+    - { role: test_ec2_group, tags: test_ec2_group }
+    #- { role: test_ec2_vpc, tags: test_ec2_vpc }
+    #- { role: test_ec2_vol, tags: test_ec2_vol }
+    #- { role: test_ec2_tag, tags: test_ec2_tag }
+    #- { role: test_ec2_facts, tags: test_ec2_facts }
+    - { role: test_ec2_elb_lb, tags: test_ec2_elb_lb }
+    - { role: test_ec2_eip, tags: test_ec2_eip }
+    #- { role: test_ec2_ami, tags: test_ec2_ami }
+    #- { role: test_ec2, tags: test_ec2 }
+    - { role: test_ec2_asg, tags: test_ec2_asg }
+    - { role: test_ec2_vpc_nat_gateway, tags: test_ec2_vpc_nat_gateway }
+    - { role: test_ecs_ecr, tags: test_ecs_ecr }
+
+# complex test for ec2_elb, split up over multiple plays
+# since there is a setup component as well as the test which
+# runs on a different set of hosts (ec2 instances)
+
+- hosts: amazon
+  roles:
+    - { role: ec2_provision_instances, tags: test_ec2_elb, count: 5 }
+
+- hosts: ec2
+  gather_facts: no
+  remote_user: ec2-user
+  become: true
+  roles:
+    - { role: ec2_elb_instance_setup, tags: test_ec2_elb }
+
+- hosts: amazon
+  roles:
+    - { role: test_ec2_elb, tags: test_ec2_elb }

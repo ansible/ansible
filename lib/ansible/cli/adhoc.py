@@ -26,15 +26,11 @@ from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.inventory import Inventory
 from ansible.module_utils._text import to_text
-from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
+from ansible.playbook import Playbook
 from ansible.playbook.play import Play
-from ansible.plugins import get_all_plugin_loaders
-from ansible.utils.vars import load_extra_vars
-from ansible.utils.vars import load_options_vars
-from ansible.vars import VariableManager
+from ansible.plugins.loader import get_all_plugin_loaders
 
 try:
     from __main__ import display
@@ -46,7 +42,9 @@ except ImportError:
 ########################################################
 
 class AdHocCLI(CLI):
-    ''' code behind ansible ad-hoc cli'''
+    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+        this command allows you to define and run a single task 'playbook' against a set of hosts
+    '''
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -63,85 +61,65 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            basedir_opts=True,
+            desc="Define and run a single task 'playbook' against a set of hosts",
+            epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
 
         # options unique to ansible ad-hoc
         self.parser.add_option('-a', '--args', dest='module_args',
-            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+                               help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_option('-m', '--module-name', dest='module_name',
-            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-            default=C.DEFAULT_MODULE_NAME)
+                               help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
+                               default=C.DEFAULT_MODULE_NAME)
 
         super(AdHocCLI, self).parse()
 
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
         elif len(self.args) > 1:
-            raise AnsibleOptionsError("Extranous options or arguments")
+            raise AnsibleOptionsError("Extraneous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
-    def _play_ds(self, pattern, async, poll):
+    def _play_ds(self, pattern, async_val, poll):
         check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
-            name = "Ansible Ad-Hoc",
-            hosts = pattern,
-            gather_facts = 'no',
-            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async=async, poll=poll) ]
+            name="Ansible Ad-Hoc",
+            hosts=pattern,
+            gather_facts='no',
+            tasks=[dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args, check_raw=check_raw)), async_val=async_val,
+                        poll=poll)]
         )
 
     def run(self):
-        ''' use Runner lib to do SSH things '''
+        ''' create and execute the single task playbook '''
 
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
         pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
-        # ignore connection password cause we are local
-        if self.options.connection == "local":
-            self.options.ask_pass = False
-
-        sshpass    = None
+        sshpass = None
         becomepass = None
-        vault_pass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
-        passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
+        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        loader = DataLoader()
+        # dynamically load any plugins
+        get_all_plugin_loaders()
 
-        if self.options.vault_password_file:
-            # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
-        elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(vault_pass)
+        loader, inventory, variable_manager = self._play_prereqs(self.options)
 
-        variable_manager = VariableManager()
-        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
-
-        variable_manager.options_vars = load_options_vars(self.options)
-
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
-        variable_manager.set_inventory(inventory)
-
-        no_hosts = False
-        if len(inventory.list_hosts()) == 0:
-            # Empty inventory
-            display.warning("provided hosts list is empty, only localhost is available")
-            no_hosts = True
-
-        inventory.subset(self.options.subset)
-        hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0:
-            if no_hosts is False and self.options.subset:
-                # Invalid limit
-                raise AnsibleError("Specified --limit does not match any hosts")
+        try:
+            hosts = CLI.get_host_list(inventory, self.options.subset, pattern)
+        except AnsibleError:
+            if self.options.subset:
+                raise
             else:
+                hosts = []
                 display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
@@ -157,47 +135,52 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if self.options.module_name in ('include', 'include_role'):
+        if self.options.module_name.startswith(('include', 'import_')):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands" % self.options.module_name)
-
-        # dynamically load any plugins from the playbook directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join('.', obj.subdir)
-                if os.path.isdir(plugin_path):
-                    obj.add_directory(plugin_path)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
+
+        # used in start callback
+        playbook = Playbook(loader)
+        playbook._entries.append(play)
+        playbook._file_name = '__adhoc_playbook__'
 
         if self.callback:
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
+        # Respect custom 'stdout_callback' only with enabled 'bin_ansible_callbacks'
+        elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
+            cb = C.DEFAULT_STDOUT_CALLBACK
         else:
             cb = 'minimal'
 
-        run_tree=False
+        run_tree = False
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
-            run_tree=True
+            run_tree = True
 
         # now create a task queue manager to execute the play
         self._tqm = None
         try:
             self._tqm = TaskQueueManager(
-                    inventory=inventory,
-                    variable_manager=variable_manager,
-                    loader=loader,
-                    options=self.options,
-                    passwords=passwords,
-                    stdout_callback=cb,
-                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
-                    run_tree=run_tree,
-                )
+                inventory=inventory,
+                variable_manager=variable_manager,
+                loader=loader,
+                options=self.options,
+                passwords=passwords,
+                stdout_callback=cb,
+                run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                run_tree=run_tree,
+            )
+
+            self._tqm.send_callback('v2_playbook_on_start', playbook)
 
             result = self._tqm.run(play)
+
+            self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()

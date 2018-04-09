@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Chatham Financial <oss@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,20 +26,15 @@ options:
     description:
       - Name of user to add
     required: true
-    default: null
     aliases: [username, name]
   password:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
         C(force=yes).
-    required: false
-    default: null
   tags:
     description:
       - User tags specified as comma delimited
-    required: false
-    default: null
   permissions:
     description:
       - a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
@@ -56,18 +42,15 @@ options:
       - This option should be preferable when you care about all permissions of the user.
       - You should use vhost, configure_priv, write_priv, and read_priv options instead
         if you care about permissions for just some vhosts.
-    required: false
     default: []
   vhost:
     description:
       - vhost to apply access privileges.
       - This option will be ignored when permissions option is used.
-    required: false
     default: /
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    required: false
     default: rabbit
     version_added: "1.2"
   configure_priv:
@@ -76,7 +59,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   write_priv:
     description:
@@ -84,7 +66,6 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   read_priv:
     description:
@@ -92,18 +73,15 @@ options:
         for the specified vhost.
       - By default all actions are restricted.
       - This option will be ignored when permissions option is used.
-    required: false
     default: ^$
   force:
     description:
       - Deletes and recreates the user.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   state:
     description:
       - Specify if user is to be added or removed
-    required: false
     default: present
     choices: [present, absent]
 '''
@@ -133,6 +111,9 @@ EXAMPLES = '''
     state: present
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+
+
 class RabbitMqUser(object):
     def __init__(self, module, username, password, tags, permissions,
                  node, bulk_permissions=False):
@@ -153,7 +134,7 @@ class RabbitMqUser(object):
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args, run_in_check_mode=False):
-        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+        if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node is not None:
                 cmd.extend(['-n', self.node])
@@ -171,7 +152,7 @@ class RabbitMqUser(object):
             user, tags = user_tag.split('\t')
 
             if user == self.username:
-                for c in ['[',']',' ']:
+                for c in ['[', ']', ' ']:
                     tags = tags.replace(c, '')
 
                 if tags != '':
@@ -233,12 +214,13 @@ class RabbitMqUser(object):
         return set(self.tags) != set(self._tags)
 
     def has_permissions_modifications(self):
-        return self._permissions != self.permissions
+        return sorted(self._permissions) != sorted(self.permissions)
+
 
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         tags=dict(default=None),
         permissions=dict(default=list(), type='list'),
         vhost=dict(default='/'),
@@ -267,7 +249,7 @@ def main():
     node = module.params['node']
 
     bulk_permissions = True
-    if permissions == []:
+    if not permissions:
         perm = {
             'vhost': vhost,
             'configure_priv': configure_priv,
@@ -280,35 +262,33 @@ def main():
     rabbitmq_user = RabbitMqUser(module, username, password, tags, permissions,
                                  node, bulk_permissions=bulk_permissions)
 
-    changed = False
+    result = dict(changed=False, user=username, state=state)
+
     if rabbitmq_user.get():
         if state == 'absent':
             rabbitmq_user.delete()
-            changed = True
+            result['changed'] = True
         else:
             if force:
                 rabbitmq_user.delete()
                 rabbitmq_user.add()
                 rabbitmq_user.get()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
                 rabbitmq_user.set_tags()
-                changed = True
+                result['changed'] = True
 
             if rabbitmq_user.has_permissions_modifications():
                 rabbitmq_user.set_permissions()
-                changed = True
+                result['changed'] = True
     elif state == 'present':
         rabbitmq_user.add()
         rabbitmq_user.set_tags()
         rabbitmq_user.set_permissions()
-        changed = True
+        result['changed'] = True
 
-    module.exit_json(changed=changed, user=username, state=state)
-
-# import module snippets
-from ansible.module_utils.basic import *
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()

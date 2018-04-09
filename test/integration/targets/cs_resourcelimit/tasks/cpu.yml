@@ -1,0 +1,122 @@
+---
+- name: setup cpu limits account
+  cs_resourcelimit:
+    type: cpu
+    limit: 20
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup cpu limits account
+  assert:
+    that:
+    - rl is successful
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 20
+    - rl.resource_type == "cpu"
+
+- name: setup cpu limits for domain
+  cs_resourcelimit:
+    type: cpu
+    limit: -1
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify setup cpu limits for domain
+  assert:
+    that:
+    - rl is successful
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == -1
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for domain in check mode
+  cs_resourcelimit:
+    type: cpu
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  check_mode: true
+- name: verify set cpu limits for domain in check mode
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == -1
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for domain
+  cs_resourcelimit:
+    type: cpu
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set cpu limits for domain
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 12
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for domain idempotence
+  cs_resourcelimit:
+    type: cpu
+    limit: 12
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set cpu limits for domain
+  assert:
+    that:
+    - rl is not changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.limit == 12
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for account in check mode
+  cs_resourcelimit:
+    type: cpu
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+  check_mode: true
+- name: verify set cpu limits for account in check mode
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 20
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for account
+  cs_resourcelimit:
+    type: cpu
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set cpu limits for account
+  assert:
+    that:
+    - rl is changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 10
+    - rl.resource_type == "cpu"
+
+- name: set cpu limits for account idempotence
+  cs_resourcelimit:
+    type: cpu
+    limit: 10
+    account: "{{ cs_resource_prefix }}_user"
+    domain: "{{ cs_resource_prefix }}-domain"
+  register: rl
+- name: verify set cpu limits for account idempotence
+  assert:
+    that:
+    - rl is not changed
+    - rl.domain == "{{ cs_resource_prefix }}-domain"
+    - rl.account == "{{ cs_resource_prefix }}_user"
+    - rl.limit == 10
+    - rl.resource_type == "cpu"

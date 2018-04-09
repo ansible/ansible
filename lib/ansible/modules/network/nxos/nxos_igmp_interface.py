@@ -16,22 +16,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_igmp_interface
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages IGMP interface configuration.
 description:
     - Manages IGMP interface configuration settings.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), supported params will be reset to a default state.
       These include C(version), C(startup_query_interval),
       C(startup_query_count), C(robustness), C(querier_timeout), C(query_mrt),
@@ -54,77 +56,56 @@ options:
     version:
         description:
             - IGMP version. It can be 2 or 3.
-        required: false
-        default: null
         choices: ['2', '3']
     startup_query_interval:
         description:
             - Query interval used when the IGMP process starts up.
               The range is from 1 to 18000. The default is 31.
-        required: false
-        default: null
     startup_query_count:
         description:
             - Query count used when the IGMP process starts up.
               The range is from 1 to 10. The default is 2.
-        required: false
-        default: null
     robustness:
         description:
             - Sets the robustness variable. Values can range from 1 to 7.
               The default is 2.
-        required: false
-        default: null
     querier_timeout:
         description:
             - Sets the querier timeout that the software uses when deciding
               to take over as the querier. Values can range from 1 to 65535
               seconds. The default is 255 seconds.
-        required: false
-        default: null
     query_mrt:
         description:
             - Sets the response time advertised in IGMP queries.
               Values can range from 1 to 25 seconds. The default is 10 seconds.
-        required: false
-        default: null
     query_interval:
         description:
             - Sets the frequency at which the software sends IGMP host query
               messages. Values can range from 1 to 18000 seconds.
-              he default is 125 seconds.
-        required: false
-        default: null
+              The default is 125 seconds.
     last_member_qrt:
         description:
             - Sets the query interval waited after sending membership reports
               before the software deletes the group state. Values can range
               from 1 to 25 seconds. The default is 1 second.
-        required: false
-        default: null
     last_member_query_count:
         description:
             - Sets the number of times that the software sends an IGMP query
               in response to a host leave message.
               Values can range from 1 to 5. The default is 2.
-        required: false
-        default: null
     group_timeout:
         description:
             - Sets the group membership timeout for IGMPv2.
               Values can range from 3 to 65,535 seconds.
               The default is 260 seconds.
-        required: false
-        default: null
     report_llg:
         description:
             - Configures report-link-local-groups.
               Enables sending reports for groups in 224.0.0.0/24.
               Reports are always sent for nonlink local groups.
               By default, reports are not sent for link local groups.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     immediate_leave:
         description:
             - Enables the device to remove the group entry from the multicast
@@ -133,34 +114,24 @@ options:
               IGMPv2 group memberships on a given IGMP interface because the
               device does not send group-specific queries.
               The default is disabled.
-        required: false
-        choices: ['true', 'false']
-        default: false
+        type: bool
+        default: 'no'
     oif_routemap:
         description:
             - Configure a routemap for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_prefix:
         description:
             - Configure a prefix for static outgoing interface (OIF).
-        required: false
-        default: null
     oif_source:
         description:
             - Configure a source for static outgoing interface (OIF).
-        required: false
-        default: null
     restart:
         description:
             - Restart IGMP.
-        required: false
-        choices: ['true', 'false']
-        default: null
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''
@@ -169,11 +140,7 @@ EXAMPLES = '''
     interface: ethernet1/32
     startup_query_interval: 30
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
-
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
@@ -182,6 +149,7 @@ proposed:
     sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
 existing:
     description: k/v pairs of existing BGP configuration
+    returned: always
     type: dict
     sample: {"asn": "65535", "bestpath_always_compare_med": false,
             "bestpath_aspath_multipath_relax": false,
@@ -233,227 +201,26 @@ changed:
     sample: true
 '''
 
-import json
-import collections
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
-# COMMON CODE FOR MIGRATION
 import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0]:
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
-        try:
-            response = response[0].replace(command + '\n\n', '').strip()
-            body = [json.loads(response)]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
 
 
 def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
+    if command_type == 'cli_show_ascii':
+        cmds = [{
+            'command': command,
+            'output': 'text',
+        }]
+    else:
+        cmds = [{
+            'command': command,
+            'output': 'json',
+        }]
 
-    return body
+    return run_commands(module, cmds)
 
 
 def get_interface_mode(interface, intf_type, module):
@@ -521,7 +288,7 @@ def get_igmp_interface(module, interface):
         'ConfiguredStartupQueryInterval': 'startup_query_interval',
         'StartupQueryCount': 'startup_query_count',
         'RobustnessVariable': 'robustness',
-        'QuerierTimeout': 'querier_timeout',
+        'ConfiguredQuerierTimeout': 'querier_timeout',
         'ConfiguredMaxResponseTime': 'query_mrt',
         'ConfiguredQueryInterval': 'query_interval',
         'LastMemberMTR': 'last_member_qrt',
@@ -534,16 +301,16 @@ def get_igmp_interface(module, interface):
     if body:
         resource = body['TABLE_vrf']['ROW_vrf']['TABLE_if']['ROW_if']
         igmp = apply_key_map(key_map, resource)
-        report_llg = str(resource['ReportingForLinkLocal'])
+        report_llg = str(resource['ReportingForLinkLocal']).lower()
         if report_llg == 'true':
             igmp['report_llg'] = True
         elif report_llg == 'false':
             igmp['report_llg'] = False
 
-        immediate_leave = str(resource['ImmediateLeave'])  # returns en or dis
-        if immediate_leave == 'en':
+        immediate_leave = str(resource['ImmediateLeave']).lower()  # returns en or dis
+        if re.search(r'^en|^true|^enabled', immediate_leave):
             igmp['immediate_leave'] = True
-        elif immediate_leave == 'dis':
+        elif re.search(r'^dis|^false|^disabled', immediate_leave):
             igmp['immediate_leave'] = False
 
     # the  next block of code is used to retrieve anything with:
@@ -552,16 +319,16 @@ def get_igmp_interface(module, interface):
     command = 'show run interface {0} | inc oif'.format(interface)
 
     body = execute_show_command(
-                        command, module, command_type='cli_show_ascii')[0]
+        command, module, command_type='cli_show_ascii')[0]
 
     staticoif = []
     if body:
         split_body = body.split('\n')
-        route_map_regex = ('.*ip igmp static-oif route-map\s+'
-                           '(?P<route_map>\S+).*')
-        prefix_source_regex = ('.*ip igmp static-oif\s+(?P<prefix>'
-                               '((\d+.){3}\d+))(\ssource\s'
-                               '(?P<source>\S+))?.*')
+        route_map_regex = (r'.*ip igmp static-oif route-map\s+'
+                           r'(?P<route_map>\S+).*')
+        prefix_source_regex = (r'.*ip igmp static-oif\s+(?P<prefix>'
+                               r'((\d+.){3}\d+))(\ssource\s'
+                               r'(?P<source>\S+))?.*')
 
         for line in split_body:
             temp = {}
@@ -573,7 +340,7 @@ def get_igmp_interface(module, interface):
 
             try:
                 match_prefix_source = re.match(
-                                        prefix_source_regex, line, re.DOTALL)
+                    prefix_source_regex, line, re.DOTALL)
                 prefix_source_group = match_prefix_source.groupdict()
                 prefix = prefix_source_group['prefix']
                 source = prefix_source_group['source']
@@ -694,17 +461,17 @@ def config_remove_oif(existing, existing_oif_prefix_source):
     command = None
     if existing.get('routemap'):
         command = 'no ip igmp static-oif route-map {0}'.format(
-                                                    existing.get('routemap'))
+            existing.get('routemap'))
     if existing_oif_prefix_source:
         for each in existing_oif_prefix_source:
             if each.get('prefix') and each.get('source'):
                 command = 'no ip igmp static-oif {0} source {1} '.format(
                     each.get('prefix'), each.get('source')
-                    )
+                )
             elif each.get('prefix'):
                 command = 'no ip igmp static-oif {0}'.format(
                     each.get('prefix')
-                    )
+                )
             if command:
                 commands.append(command)
             command = None
@@ -712,51 +479,36 @@ def config_remove_oif(existing, existing_oif_prefix_source):
     return commands
 
 
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
 def main():
     argument_spec = dict(
-            interface=dict(required=True, type='str'),
-            version=dict(required=False, type='str'),
-            startup_query_interval=dict(required=False, type='str'),
-            startup_query_count=dict(required=False, type='str'),
-            robustness=dict(required=False, type='str'),
-            querier_timeout=dict(required=False, type='str'),
-            query_mrt=dict(required=False, type='str'),
-            query_interval=dict(required=False, type='str'),
-            last_member_qrt=dict(required=False, type='str'),
-            last_member_query_count=dict(required=False, type='str'),
-            group_timeout=dict(required=False, type='str'),
-            report_llg=dict(type='bool'),
-            immediate_leave=dict(type='bool'),
-            oif_routemap=dict(required=False, type='str'),
-            oif_prefix=dict(required=False, type='str'),
-            oif_source=dict(required=False, type='str'),
-            restart=dict(type='bool', default=False),
-            state=dict(choices=['present', 'absent', 'default'],
-                       default='present'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        interface=dict(required=True, type='str'),
+        version=dict(required=False, type='str'),
+        startup_query_interval=dict(required=False, type='str'),
+        startup_query_count=dict(required=False, type='str'),
+        robustness=dict(required=False, type='str'),
+        querier_timeout=dict(required=False, type='str'),
+        query_mrt=dict(required=False, type='str'),
+        query_interval=dict(required=False, type='str'),
+        last_member_qrt=dict(required=False, type='str'),
+        last_member_query_count=dict(required=False, type='str'),
+        group_timeout=dict(required=False, type='str'),
+        report_llg=dict(type='bool'),
+        immediate_leave=dict(type='bool'),
+        oif_routemap=dict(required=False, type='str'),
+        oif_prefix=dict(required=False, type='str'),
+        oif_source=dict(required=False, type='str'),
+        restart=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent', 'default'],
+                   default='present')
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     state = module.params['state']
     interface = module.params['interface']
@@ -817,7 +569,7 @@ def main():
     changed = False
     commands = []
     proposed = dict((k, v) for k, v in module.params.items()
-                     if v is not None and k in args)
+                    if v is not None and k in args)
 
     CANNOT_ABSENT = ['version', 'startup_query_interval',
                      'startup_query_count', 'robustness', 'querier_timeout',
@@ -891,7 +643,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            execute_config_command(cmds, module)
+            load_config(module, cmds)
             changed = True
             end_state = get_igmp_interface(module, interface)
             if 'configure' in cmds:
@@ -901,6 +653,7 @@ def main():
     results['existing'] = existing_copy
     results['updates'] = cmds
     results['changed'] = changed
+    results['warnings'] = warnings
     results['end_state'] = end_state
 
     module.exit_json(**results)

@@ -1,25 +1,16 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,182 +22,148 @@ description:
   - Manage the life cycle of docker containers.
   - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
 
-version_added: "2.1.0"
+version_added: "2.1"
 
 options:
+  auto_remove:
+    description:
+      - enable auto-removal of the container on daemon side when the container's process exits
+    type: bool
+    default: 'no'
+    version_added: "2.4"
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
-    default: null
-    required: false
   capabilities:
     description:
       - List of capabilities to add to the container.
-    default: null
-    required: false
   cleanup:
     description:
-      - Use with I(detach) to remove the container after successful execution.
-    default: false
-    required: false
+      - Use with I(detach=false) to remove the container after successful execution.
+    type: bool
+    default: 'no'
     version_added: "2.2"
   command:
     description:
       - Command to execute when the container starts.
-    default: null
-    required: false
+        A command may be either a string or a list.
+        Prior to version 2.4, strings were split on commas.
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
     default: 0
-    required: false
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
     default: 0
-    required: false
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
-    default: null
-    required: false
   cpuset_mems:
     description:
       - Memory nodes (MEMs) in which to allow execution C(0-3) or C(0,1)
-    default: null
-    required: false
   cpu_shares:
     description:
       - CPU shares (relative weight).
-    default: null
-    required: false
   detach:
     description:
       - Enable detached mode to leave the container running in background.
         If disabled, the task will reflect the status of the container run (failed if the command failed).
-    default: true
-    required: false
   devices:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
-    default: null
-    required: false
   dns_servers:
     description:
       - List of custom DNS servers.
-    default: null
-    required: false
   dns_search_domains:
     description:
       - List of custom DNS search domains.
-    default: null
-    required: false
+  domainname:
+    description:
+      - Container domainname.
+    version_added: "2.5"
   env:
     description:
       - Dictionary of key,value pairs.
-    default: null
-    required: false
   env_file:
     version_added: "2.2"
     description:
       - Path to a file containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
       - Requires docker-py >= 1.4.0.
-    default: null
-    required: false
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
-    default: null
-    required: false
   etc_hosts:
     description:
       - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
         Each host name will be added to the container's /etc/hosts file.
-    default: null
-    required: false
   exposed_ports:
     description:
       - List of additional container ports which informs Docker that the container
         listens on the specified network ports at runtime.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
         need to be exposed again.
-    default: null
-    required: false
     aliases:
       - exposed
   force_kill:
     description:
-      - Use the kill command when stopping a running container. 
-    default: false
-    required: false
+      - Use the kill command when stopping a running container.
+    type: bool
+    default: 'no'
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
-    default: null
-    required: false
   hostname:
     description:
       - Container hostname.
-    default: null
-    required: false
   ignore_image:
     description:
       - When C(state) is I(present) or I(started) the module compares the configuration of an existing
         container to requested configuration. The evaluation includes the image version. If
         the image version in the registry does not match the container, the container will be
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
-    default: false
-    required: false
-    version_added: "2.2"      
+    type: bool
+    default: 'no'
+    version_added: "2.2"
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
         will be pulled from the registry. If no tag is included, 'latest' will be used.
-    default: null
-    required: false
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   ipc_mode:
     description:
       - Set the IPC mode for the container. Can be one of 'container:<name|id>' to reuse another
         container's IPC namespace or 'host' to use the host's IPC namespace within the container.
-    default: null
-    required: false
   keep_volumes:
     description:
       - Retain volumes associated with a removed container.
-    default: true
-    required: false
+    type: bool
+    default: 'yes'
   kill_signal:
     description:
       - Override default signal used to kill a running container.
-    default null:
-    required: false
   kernel_memory:
     description:
       - "Kernel memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g. Minimum is 4M."
     default: 0
-    required: false
   labels:
      description:
        - Dictionary of key value pairs.
-     default: null
-     required: false
   links:
     description:
       - List of name aliases for linked containers in the format C(container_name:alias)
-    default: null
-    required: false
   log_driver:
     description:
       - Specify the logging driver. Docker uses json-file by default.
     choices:
+      - none
       - json-file
       - syslog
       - journald
@@ -214,42 +171,32 @@ options:
       - fluentd
       - awslogs
       - splunk
-    default: null
-    required: false
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
-    required: false
-    default: null
   mac_address:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
-    default: null
-    required: false
   memory:
     description:
       - "Memory limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
-    required: false
   memory_reservation:
     description:
       - "Memory soft limit (format: <number>[<unit>]). Number is a positive integer.
         Unit can be one of b, k, m, or g"
     default: 0
-    required: false
   memory_swap:
     description:
       - Total memory limit (memory + swap, format:<number>[<unit>]).
         Number is a positive integer. Unit can be one of b, k, m, or g.
     default: 0
-    required: false
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
     default: 0
-    required: false
   name:
     description:
       - Assign a name to a new container or match an existing container.
@@ -263,8 +210,10 @@ options:
       - container:<name|id>
       - host
       - none
-    default: null
-    required: false
+  userns_mode:
+     description:
+       - User namespace to use
+     version_added: "2.5"
   networks:
      description:
        - List of networks the container belongs to.
@@ -273,80 +222,73 @@ options:
        - If included, C(links) or C(aliases) are lists.
        - For examples of the data structure and usage see EXAMPLES below.
        - To remove a container from one or more networks, use the C(purge_networks) option.
-     default: null
-     required: false
      version_added: "2.2"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   oom_score_adj:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     default: 0
-    required: false
     version_added: "2.2"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   pid_mode:
     description:
       - Set the PID namespace mode for the container. Currently only supports 'host'.
-    default: null
-    required: false
   privileged:
     description:
       - Give extended privileges to the container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   published_ports:
     description:
       - List of ports to publish from the container to the host.
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of ALL will publish all exposed container ports to random host ports, ignoring
+      - A value of all will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
-        If such a network is found, then published ports where no host IP address is specified 
+        If such a network is found, then published ports where no host IP address is specified
         will be bound to the host IP pointed to by com.docker.network.bridge.host_binding_ipv4.
-        Note that the first bridge network with a com.docker.network.bridge.host_binding_ipv4 
-        value encountered in the list of C(networks) is the one that will be used. 
+        Note that the first bridge network with a com.docker.network.bridge.host_binding_ipv4
+        value encountered in the list of C(networks) is the one that will be used.
     aliases:
       - ports
-    required: false
-    default: null
   pull:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image when missing.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   purge_networks:
     description:
        - Remove the container from ALL networks not included in C(networks) parameter.
        - Any default networks such as I(bridge), if not found in C(networks), will be removed as well.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
     version_added: "2.2"
   read_only:
     description:
       - Mount the container's root file system as read-only.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
-    default: false
-    required: false
+    type: bool
+    default: 'no'
   restart_policy:
     description:
       - Container restart policy. Place quotes around I(no) option.
@@ -356,24 +298,18 @@ options:
       - on-failure
       - unless-stopped
     default: on-failure
-    required: false
   restart_retries:
     description:
        - Use with restart policy to control maximum number of restart attempts.
     default: 0
-    required: false
   shm_size:
     description:
       - Size of `/dev/shm`. The format is `<number><unit>`. `number` must be greater than `0`.
         Unit is optional and can be `b` (bytes), `k` (kilobytes), `m` (megabytes), or `g` (gigabytes).
       - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses `64m`.
-    default: null
-    required: false
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
-    default: null
-    required: false
   state:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
@@ -393,9 +329,8 @@ options:
         re-create a matching container, even if it is running. Use restart to force a matching container to be stopped and
         restarted. Use force_kill to kill a container rather than stopping it. Use keep_volumes to retain volumes associated
         with a removed container.'
-      - 'I(stopped) - Asserts that the container is first I(present), and then if the container is running moves it to a stopped 
+      - 'I(stopped) - Asserts that the container is first I(present), and then if the container is running moves it to a stopped
         state. Use force_kill to kill a container rather than stopping it.'
-    required: false
     default: started
     choices:
       - absent
@@ -405,39 +340,37 @@ options:
   stop_signal:
     description:
       - Override default signal used to stop the container.
-    default: null
-    required: false
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
-    required: false
-    default: null
   trust_image_content:
     description:
-      - If true, skip image verification.
-    default: false
-    required: false
+      - If C(yes), skip image verification.
+    type: bool
+    default: 'no'
+  tmpfs:
+    description:
+      - Mount a tmpfs directory
+    version_added: 2.4
   tty:
     description:
-      - Allocate a psuedo-TTY.
-    default: false
-    required: false
+      - Allocate a pseudo-TTY.
+    type: bool
+    default: 'no'
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
-    default: null
-    required: false
+  sysctls:
+    description:
+      - Dictionary of key,value pairs.
+    version_added: 2.4
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
       - "Can be [ user | user:group | uid | uid:gid | user:gid | uid:group ]"
-    default: null
-    required: false
   uts:
     description:
       - Set the UTS namespace mode for the container.
-    default: null
-    required: false
   volumes:
     description:
       - List of volumes to mount within the container.
@@ -445,18 +378,16 @@ options:
       - You can specify a read mode for the mount with either C(ro) or C(rw).
       - SELinux hosts can additionally use C(z) or C(Z) to use a shared or
         private label for the volume.
-    default: null
-    required: false
   volume_driver:
     description:
       - The container volume driver.
-    default: none
-    required: false
   volumes_from:
     description:
       - List of container names or Ids to get volumes from.
-    default: null
-    required: false
+  working_dir:
+    description:
+      - Path to the working directory.
+    version_added: "2.4"
 extends_documentation_fragment:
     - docker
 
@@ -469,6 +400,7 @@ author:
     - "Daan Oosterveld (@dusdanig)"
     - "James Tanner (@jctanner)"
     - "Chris Houseknecht (@chouseknecht)"
+    - "Kassian Sun (@kassiansun)"
 
 requirements:
     - "python >= 2.6"
@@ -517,7 +449,7 @@ EXAMPLES = '''
     name: mycontainer
     state: present
     image: ubuntu:14.04
-    command: sleep infinity 
+    command: sleep infinity
 
 - name: Stop a container
   docker_container:
@@ -545,7 +477,9 @@ EXAMPLES = '''
     log_options:
       syslog-address: tcp://my-syslog-server:514
       syslog-facility: daemon
-      syslog-tag: myservice
+      # NOTE: in Docker 1.13+ the "syslog-tag" option was renamed to "tag" for
+      # older docker installs, use "syslog-tag" instead
+      tag: myservice
 
 - name: Create db container and connect to network
   docker_container:
@@ -571,7 +505,7 @@ EXAMPLES = '''
   docker_container:
     name: sleepy
     image: ubuntu:14.04
-    command: sleep infinity
+    command: ["sleep", "infinity"]
 
 - name: Add container to networks
   docker_container:
@@ -608,8 +542,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-ansible_docker_container:
+docker_container:
     description:
+      - Before 2.3 this was 'ansible_docker_container' but was renamed due to conflicts with the connection plugin.
       - Facts representing the current state of the container. Matches the docker inspection output.
       - Note that facts are not part of registered vars but accessible directly.
       - Empty if C(state) is I(absent)
@@ -650,13 +585,20 @@ ansible_docker_container:
     }'
 '''
 
+import os
 import re
+import shlex
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.basic import human_to_bytes
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    from docker.utils.types import Ulimit
+    if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+        from docker.types import Ulimit, LogConfig
+    else:
+        from docker.utils.types import Ulimit, LogConfig
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -671,6 +613,7 @@ REQUIRES_CONVERSION_TO_BYTES = [
 
 VOLUME_PERMISSIONS = ('rw', 'ro', 'z', 'Z')
 
+
 class TaskParameters(DockerBaseClass):
     '''
     Access and parse module parameters
@@ -680,6 +623,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
+        self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
         self.cleanup = None
@@ -695,6 +639,7 @@ class TaskParameters(DockerBaseClass):
         self.dns_servers = None
         self.dns_opts = None
         self.dns_search_domains = None
+        self.domainname = None
         self.env = None
         self.env_file = None
         self.entrypoint = None
@@ -721,6 +666,7 @@ class TaskParameters(DockerBaseClass):
         self.memory_swappiness = None
         self.name = None
         self.network_mode = None
+        self.userns_mode = None
         self.networks = None
         self.oom_killer = None
         self.oom_score_adj = None
@@ -739,6 +685,7 @@ class TaskParameters(DockerBaseClass):
         self.state = None
         self.stop_signal = None
         self.stop_timeout = None
+        self.tmpfs = None
         self.trust_image_content = None
         self.tty = None
         self.user = None
@@ -747,6 +694,7 @@ class TaskParameters(DockerBaseClass):
         self.volume_binds = dict()
         self.volumes_from = None
         self.volume_driver = None
+        self.working_dir = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
@@ -760,7 +708,7 @@ class TaskParameters(DockerBaseClass):
 
         self.publish_all_ports = False
         self.published_ports = self._parse_publish_ports()
-        if self.published_ports == 'all':
+        if self.published_ports in ('all', 'ALL'):
             self.publish_all_ports = True
             self.published_ports = None
 
@@ -773,8 +721,10 @@ class TaskParameters(DockerBaseClass):
         if self.volumes:
             self.volumes = self._expand_host_paths()
 
+        self.tmpfs = self._parse_tmpfs()
         self.env = self._get_environment()
         self.ulimits = self._parse_ulimits()
+        self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
@@ -794,6 +744,19 @@ class TaskParameters(DockerBaseClass):
                 if network.get('links'):
                     network['links'] = self._parse_links(network['links'])
 
+        if self.mac_address:
+            # Ensure the MAC address uses colons instead of hyphens for later comparison
+            self.mac_address = self.mac_address.replace('-', ':')
+
+        if self.entrypoint:
+            # convert from list to str.
+            self.entrypoint = ' '.join([str(x) for x in self.entrypoint])
+
+        if self.command:
+            # convert from list to str
+            if isinstance(self.command, list):
+                self.command = ' '.join([str(x) for x in self.command])
+
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
 
@@ -810,9 +773,9 @@ class TaskParameters(DockerBaseClass):
             cpu_shares='cpu_shares',
             cpuset_cpus='cpuset_cpus',
             mem_limit='memory',
-            mem_reservation='mem_reservation',
+            mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
-            kernel_memory='kernel_memory'
+            kernel_memory='kernel_memory',
         )
         result = dict()
         for key, value in update_parameters.items():
@@ -827,6 +790,7 @@ class TaskParameters(DockerBaseClass):
         '''
         create_params = dict(
             command='command',
+            domainname='domainname',
             hostname='hostname',
             user='user',
             detach='detach',
@@ -836,12 +800,15 @@ class TaskParameters(DockerBaseClass):
             environment='env',
             name='name',
             entrypoint='entrypoint',
-            cpu_shares='cpu_shares',
             mac_address='mac_address',
             labels='labels',
             stop_signal='stop_signal',
-            volume_driver='volume_driver',
+            working_dir='working_dir',
         )
+
+        if not HAS_DOCKER_PY_3:
+            create_params['cpu_shares'] = 'cpu_shares'
+            create_params['volume_driver'] = 'volume_driver'
 
         result = dict(
             host_config=self._host_config(),
@@ -900,7 +867,7 @@ class TaskParameters(DockerBaseClass):
         Returns parameters used to create a HostConfig object
         '''
 
-        host_config_params=dict(
+        host_config_params = dict(
             port_bindings='published_ports',
             publish_all_ports='publish_all_ports',
             links='links',
@@ -910,22 +877,36 @@ class TaskParameters(DockerBaseClass):
             binds='volume_binds',
             volumes_from='volumes_from',
             network_mode='network_mode',
+            userns_mode='userns_mode',
             cap_add='capabilities',
             extra_hosts='etc_hosts',
             read_only='read_only',
             ipc_mode='ipc_mode',
             security_opt='security_opts',
             ulimits='ulimits',
+            sysctls='sysctls',
             log_config='log_config',
             mem_limit='memory',
             memswap_limit='memory_swap',
             mem_swappiness='memory_swappiness',
             oom_score_adj='oom_score_adj',
+            oom_kill_disable='oom_killer',
             shm_size='shm_size',
             group_add='groups',
             devices='devices',
-            pid_mode='pid_mode'
+            pid_mode='pid_mode',
+            tmpfs='tmpfs'
         )
+
+        if HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3:
+            # auto_remove is only supported in docker>=2
+            host_config_params['auto_remove'] = 'auto_remove'
+
+        if HAS_DOCKER_PY_3:
+            # cpu_shares and volume_driver moved to create_host_config in > 3
+            host_config_params['cpu_shares'] = 'cpu_shares'
+            host_config_params['volume_driver'] = 'volume_driver'
+
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
@@ -1031,14 +1012,14 @@ class TaskParameters(DockerBaseClass):
             # Any published port should also be exposed
             for publish_port in published_ports:
                 match = False
-                if isinstance(publish_port, basestring) and '/' in publish_port:
+                if isinstance(publish_port, string_types) and '/' in publish_port:
                     port, protocol = publish_port.split('/')
                     port = int(port)
                 else:
                     protocol = 'tcp'
                     port = int(publish_port)
                 for exposed_port in exposed:
-                    if isinstance(exposed_port[0], basestring) and '-' in exposed_port[0]:
+                    if isinstance(exposed_port[0], string_types) and '-' in exposed_port[0]:
                         start_port, end_port = exposed_port[0].split('-')
                         if int(start_port) <= port <= int(end_port):
                             match = True
@@ -1056,13 +1037,13 @@ class TaskParameters(DockerBaseClass):
         if links is None:
             return None
 
-        result = {}
+        result = []
         for link in links:
             parsed_link = link.split(':', 1)
             if len(parsed_link) == 2:
-                result[parsed_link[0]] = parsed_link[1]
+                result.append((parsed_link[0], parsed_link[1]))
             else:
-                result[parsed_link[0]] = parsed_link[0]
+                result.append((parsed_link[0], parsed_link[0]))
         return result
 
     def _parse_ulimits(self):
@@ -1088,6 +1069,12 @@ class TaskParameters(DockerBaseClass):
                 self.fail("Error parsing ulimits value %s - %s" % (limit, exc))
         return results
 
+    def _parse_sysctls(self):
+        '''
+        Turn sysctls into an hash of Sysctl objects
+        '''
+        return self.sysctls
+
     def _parse_log_config(self):
         '''
         Create a LogConfig object
@@ -1097,7 +1084,7 @@ class TaskParameters(DockerBaseClass):
 
         options = dict(
             Type=self.log_driver,
-            Config = dict()
+            Config=dict()
         )
 
         if self.log_options is not None:
@@ -1107,6 +1094,22 @@ class TaskParameters(DockerBaseClass):
             return LogConfig(**options)
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
+
+    def _parse_tmpfs(self):
+        '''
+        Turn tmpfs into a hash of Tmpfs objects
+        '''
+        result = dict()
+        if self.tmpfs is None:
+            return result
+
+        for tmpfs_spec in self.tmpfs:
+            split_spec = tmpfs_spec.split(":", 1)
+            if len(split_spec) > 1:
+                result[split_spec[0]] = split_spec[1]
+            else:
+                result[split_spec[0]] = ""
+        return result
 
     def _get_environment(self):
         """
@@ -1135,7 +1138,6 @@ class TaskParameters(DockerBaseClass):
         return network_id
 
 
-
 class Container(DockerBaseClass):
 
     def __init__(self, container, parameters):
@@ -1153,6 +1155,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_exposed = None
         self.parameters.expected_volumes = None
         self.parameters.expected_ulimits = None
+        self.parameters.expected_sysctls = None
         self.parameters.expected_etc_hosts = None
         self.parameters.expected_env = None
 
@@ -1182,6 +1185,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_volumes = self._get_expected_volumes(image)
         self.parameters.expected_binds = self._get_expected_binds(image)
         self.parameters.expected_ulimits = self._get_expected_ulimits(self.parameters.ulimits)
+        self.parameters.expected_sysctls = self._get_expected_sysctls(self.parameters.sysctls)
         self.parameters.expected_etc_hosts = self._convert_simple_dict_to_list('etc_hosts')
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
@@ -1204,7 +1208,7 @@ class Container(DockerBaseClass):
         # assuming if the container was running, it must have been detached.
         detach = not (config.get('AttachStderr') and config.get('AttachStdout'))
 
-        # "ExposedPorts": null returns None type & causes AttributeError - PR #5517 
+        # "ExposedPorts": null returns None type & causes AttributeError - PR #5517
         if config.get('ExposedPorts') is not None:
             expected_exposed = [re.sub(r'/.+$', '', p) for p in config.get('ExposedPorts', dict()).keys()]
         else:
@@ -1212,8 +1216,9 @@ class Container(DockerBaseClass):
 
         # Map parameters to container inspect results
         config_mapping = dict(
-            image=config.get('Image'),
+            auto_remove=host_config.get('AutoRemove'),
             expected_cmd=config.get('Cmd'),
+            domainname=config.get('Domainname'),
             hostname=config.get('Hostname'),
             user=config.get('User'),
             detach=detach,
@@ -1236,6 +1241,7 @@ class Container(DockerBaseClass):
             mac_address=network.get('MacAddress'),
             memory_swappiness=host_config.get('MemorySwappiness'),
             network_mode=host_config.get('NetworkMode'),
+            userns_mode=host_config.get('UsernsMode'),
             oom_killer=host_config.get('OomKillDisable'),
             oom_score_adj=host_config.get('OomScoreAdj'),
             pid_mode=host_config.get('PidMode'),
@@ -1246,15 +1252,18 @@ class Container(DockerBaseClass):
             restart_retries=restart_policy.get('MaximumRetryCount'),
             # Cannot test shm_size, as shm_size is not included in container inspection results.
             # shm_size=host_config.get('ShmSize'),
-            security_opts=host_config.get("SecuriytOpt"),
+            security_opts=host_config.get("SecurityOpt"),
             stop_signal=config.get("StopSignal"),
+            tmpfs=host_config.get('Tmpfs'),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
+            expected_sysctls=host_config.get('Sysctls'),
             uts=host_config.get('UTSMode'),
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
             volumes_from=host_config.get('VolumesFrom'),
-            volume_driver=host_config.get('VolumeDriver')
+            volume_driver=host_config.get('VolumeDriver'),
+            working_dir=host_config.get('WorkingDir')
         )
 
         differences = []
@@ -1271,11 +1280,20 @@ class Container(DockerBaseClass):
                         self.log("comparing lists: %s" % key)
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
-                        match = (set_a <= set_b)
+                        match = (set_b >= set_a)
+                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
+                        and value is None:
+                    # an empty list and None are ==
+                    continue
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
                     match = self._compare_dicts(getattr(self.parameters, key), value)
+
+                elif isinstance(getattr(self.parameters, key), dict) and \
+                        not len(list(getattr(self.parameters, key).keys())) and value is None:
+                    # an empty dict and None are ==
+                    continue
                 else:
                     # primitive compare
                     self.log("primitive compare: %s" % key)
@@ -1350,6 +1368,7 @@ class Container(DockerBaseClass):
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
             oom_score_adj=host_config.get('OomScoreAdj'),
+            oom_killer=host_config.get('OomKillDisable'),
         )
 
         differences = []
@@ -1402,7 +1421,7 @@ class Container(DockerBaseClass):
                     diff = True
                 if network.get('links') and connected_networks[network['name']].get('Links'):
                     expected_links = []
-                    for link, alias in network['links'].items():
+                    for link, alias in network['links']:
                         expected_links.append("%s:%s" % (link, alias))
                     for link in expected_links:
                         if link not in connected_networks[network['name']].get('Links', []):
@@ -1469,14 +1488,13 @@ class Container(DockerBaseClass):
             else:
                 expected_devices.append(
                     dict(
-                    CgroupPermissions=parts[2],
-                    PathInContainer=parts[1],
-                    PathOnHost=parts[0]
-                ))
+                        CgroupPermissions=parts[2],
+                        PathInContainer=parts[1],
+                        PathOnHost=parts[0]
+                    ))
         return expected_devices
 
     def _get_expected_entrypoint(self):
-        self.log('_get_expected_entrypoint')
         if not self.parameters.entrypoint:
             return None
         return shlex.split(self.parameters.entrypoint)
@@ -1489,7 +1507,10 @@ class Container(DockerBaseClass):
             if isinstance(container_port, int):
                 container_port = "%s/tcp" % container_port
             if len(config) == 1:
-                expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                if isinstance(config[0], int):
+                    expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': config[0]}]
+                else:
+                    expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': ""}]
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:
@@ -1504,7 +1525,7 @@ class Container(DockerBaseClass):
         self.log('parameter links:')
         self.log(self.parameters.links, pretty_print=True)
         exp_links = []
-        for link, alias in self.parameters.links.items():
+        for link, alias in self.parameters.links:
             exp_links.append("/%s:%s/%s" % (link, ('/' + self.parameters.name), alias))
         return exp_links
 
@@ -1625,6 +1646,15 @@ class Container(DockerBaseClass):
             ))
         return results
 
+    def _get_expected_sysctls(self, config_sysctls):
+        self.log('_get_expected_sysctls')
+        if config_sysctls is None:
+            return None
+        result = dict()
+        for key, value in config_sysctls.items():
+            result[key] = str(value)
+        return result
+
     def _get_expected_cmd(self):
         self.log('_get_expected_cmd')
         if not self.parameters.command:
@@ -1669,12 +1699,12 @@ class ContainerManager(DockerBaseClass):
             self.results['diff'] = self.diff
 
         if self.facts:
-            self.results['ansible_facts'] = {'ansible_docker_container': self.facts}
+            self.results['ansible_facts'] = {'docker_container': self.facts}
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
         image = self._get_image()
-
+        self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
@@ -1742,9 +1772,12 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             if not image or self.parameters.pull:
                 self.log("Pull the image.")
-                image = self.client.pull_image(repository, tag)
-                self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
-                self.results['changed'] = True
+                image, alreadyToLatest = self.client.pull_image(repository, tag)
+                if alreadyToLatest:
+                    self.results['changed'] = False
+                else:
+                    self.results['changed'] = True
+                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
         self.log("image")
         self.log(image, pretty_print=True)
         return image
@@ -1853,8 +1886,18 @@ class ContainerManager(DockerBaseClass):
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
             if not self.parameters.detach:
-                status = self.client.wait(container_id)
-                output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                if HAS_DOCKER_PY_3:
+                    status = self.client.wait(container_id)['StatusCode']
+                else:
+                    status = self.client.wait(container_id)
+                config = self.client.inspect_container(container_id)
+                logging_driver = config['HostConfig']['LogConfig']['Type']
+
+                if logging_driver == 'json-file' or logging_driver == 'journald':
+                    output = self.client.logs(container_id, stdout=True, stderr=True, stream=False, timestamps=False)
+                else:
+                    output = "Result logged using `%s` driver" % logging_driver
+
                 if status != 0:
                     self.fail(output, status=status)
                 if self.parameters.cleanup:
@@ -1868,7 +1911,7 @@ class ContainerManager(DockerBaseClass):
         return self._get_container(container_id)
 
     def container_remove(self, container_id, link=False, force=False):
-        volume_state = (not self.parameters.keep_volumes)  
+        volume_state = (not self.parameters.keep_volumes)
         self.log("remove container container:%s v:%s link:%s force%s" % (container_id, volume_state, link, force))
         self.results['actions'].append(dict(removed=container_id, volume_state=volume_state, link=link, force=force))
         self.results['changed'] = True
@@ -1927,10 +1970,11 @@ class ContainerManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
+        auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
-        command=dict(type='str'),
+        command=dict(type='raw'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
@@ -1941,9 +1985,10 @@ def main():
         dns_servers=dict(type='list'),
         dns_opts=dict(type='list'),
         dns_search_domains=dict(type='list'),
+        domainname=dict(type='str'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
-        entrypoint=dict(type='str'),
+        entrypoint=dict(type='list'),
         etc_hosts=dict(type='dict'),
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),
@@ -1958,7 +2003,9 @@ def main():
         kill_signal=dict(type='str'),
         labels=dict(type='dict'),
         links=dict(type='list'),
-        log_driver=dict(type='str', choices=['json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'], default=None),
+        log_driver=dict(type='str',
+                        choices=['none', 'json-file', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs', 'splunk'],
+                        default=None),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
         memory=dict(type='str', default='0'),
@@ -1967,6 +2014,7 @@ def main():
         memory_swappiness=dict(type='int'),
         name=dict(type='str', required=True),
         network_mode=dict(type='str'),
+        userns_mode=dict(type='str'),
         networks=dict(type='list'),
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
@@ -1986,14 +2034,17 @@ def main():
         state=dict(type='str', choices=['absent', 'present', 'started', 'stopped'], default='started'),
         stop_signal=dict(type='str'),
         stop_timeout=dict(type='int'),
+        tmpfs=dict(type='list'),
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
         ulimits=dict(type='list'),
+        sysctls=dict(type='dict'),
         user=dict(type='str'),
         uts=dict(type='str'),
         volumes=dict(type='list'),
         volumes_from=dict(type='list'),
         volume_driver=dict(type='str'),
+        working_dir=dict(type='str'),
     )
 
     required_if = [
@@ -2006,11 +2057,12 @@ def main():
         supports_check_mode=True
     )
 
+    if (not (HAS_DOCKER_PY_2 or HAS_DOCKER_PY_3)) and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg="'auto_remove' is not compatible with the 'docker-py' Python package. It requires the newer 'docker' Python package.")
+
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -1,24 +1,35 @@
-# Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
-# and chroot.py     (c) 2013, Maykel Moya <mmoya@speedyrails.com>
-# (c) 2013, Michael Scherer <misc@zarb.org>
-# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Based on local.py by Michael DeHaan <michael.dehaan@gmail.com>
+# and chroot.py by  Maykel Moya <mmoya@speedyrails.com>
+# Copyright (c) 2013, Michael Scherer <misc@zarb.org>
+# Copyright (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = """
+    author: Ansible Core Team
+    connection: jail
+    short_description: Run tasks in jails
+    description:
+        - Run commands or put/fetch files to an existing jail
+    version_added: "2.0"
+    options:
+      remote_addr:
+        description:
+            - Path to the jail
+        default: inventory_hostname
+        vars:
+            - name: ansible_host
+            - name: ansible_jail_host
+      remote_user:
+        description:
+            - User to execute as inside the jail
+        vars:
+            - name: ansible_user
+            - name: ansible_jail_user
+"""
 
 import distutils.spawn
 import os
@@ -26,9 +37,9 @@ import os.path
 import subprocess
 import traceback
 
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
 try:
@@ -56,7 +67,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.jail = self._play_context.remote_addr
-        if self.modified_jailname_key in kwargs :
+        if self.modified_jailname_key in kwargs:
             self.jail = kwargs[self.modified_jailname_key]
 
         if os.geteuid() != 0:
@@ -82,16 +93,7 @@ class Connection(ConnectionBase):
 
         stdout, stderr = p.communicate()
 
-        return stdout.split()
-
-    def get_jail_path(self):
-        p = subprocess.Popen([self.jls_cmd, '-j', to_bytes(self.jail), '-q', 'path'],
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        stdout, stderr = p.communicate()
-        # remove \n
-        return stdout[:-1]
+        return to_text(stdout, errors='surrogate_or_strict').split()
 
     def _connect(self):
         ''' connect to the jail; nothing to do here '''
@@ -122,7 +124,7 @@ class Connection(ConnectionBase):
         display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 
@@ -167,7 +169,7 @@ class Connection(ConnectionBase):
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
-                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, to_native(stdout), to_native(stderr)))
         except IOError:
             raise AnsibleError("file or module does not exist at: %s" % in_path)
 
@@ -193,7 +195,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, to_native(stdout), to_native(stderr)))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''

@@ -1,0 +1,23 @@
+- name: assert returned identity
+  assert:
+    that:
+      - result.identity == identity
+- name: assert returned identity_arn
+  assert:
+    that:
+      - "result.identity_arn|regex_search('^arn:aws:ses:' + ec2_region + ':[0-9]*:identity/' + identity + '$')"
+    msg: "'{{ result.identity_arn}}' doesn't match regex '^arn:aws:ses:{{ ec2_region }}:[0-9]*:identity/{{ identity }}'"
+- name: assert verification_attributes.verification_status == 'Pending'
+  assert:
+    that:
+      - result.verification_attributes.verification_status == 'Pending'
+- name: assert notification defaults
+  assert:
+    that:
+      - result.notification_attributes.forwarding_enabled == True
+      - result.notification_attributes.headers_in_bounce_notifications_enabled == False
+      - result.notification_attributes.headers_in_complaint_notifications_enabled == False
+      - result.notification_attributes.headers_in_delivery_notifications_enabled == False
+      - "'bounce_topic' not in result.notification_attributes"
+      - "'complaint_topic' not in result.notification_attributes"
+      - "'delivery_topic' not in result.notification_attributes"

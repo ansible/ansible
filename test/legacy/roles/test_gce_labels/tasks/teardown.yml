@@ -1,0 +1,18 @@
+# GCE Labels Teardown.
+# ============================================================
+- name: "Teardown instance used in gce_labels test"
+  gce:
+    instance_names: "{{ instance_name }}"
+    zone: "{{ zone }}"
+    project_id: "{{ project_id }}"
+    pem_file: "{{ pem_file }}"
+    service_account_email: "{{ service_account_email }}"
+    state: absent
+  register: result
+
+- name: assert VM removed
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.instance_names[0] == "{{ instance_name }}"'
+      - 'result.state == "absent"'

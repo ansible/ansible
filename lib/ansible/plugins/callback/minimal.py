@@ -1,23 +1,19 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+DOCUMENTATION = '''
+    callback: minimal
+    type: stdout
+    short_description: minimal Ansible screen output
+    version_added: historical
+    description:
+        - This is the default output callback used by the ansible command (ad-hoc)
+'''
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
@@ -38,22 +34,16 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc', -1))
-        buf += result.get('stdout','')
-        buf += result.get('stderr','')
-        buf += result.get('msg','')
+        buf += result.get('stdout', '')
+        buf += result.get('stderr', '')
+        buf += result.get('msg', '')
 
         return buf + "\n"
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if 'exception' in result._result:
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = result._result['exception'].strip().split('\n')[-1]
-                msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
-            self._display.display(msg, color=C.COLOR_ERROR)
+        self._handle_exception(result._result)
+        self._handle_warnings(result._result)
 
         if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "FAILED"), color=C.COLOR_ERROR)
@@ -62,6 +52,9 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
         self._clean_results(result._result, result._task.action)
+
+        self._handle_warnings(result._result)
+
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "SUCCESS"), color=C.COLOR_OK)
         else:
@@ -69,7 +62,6 @@ class CallbackModule(CallbackBase):
                 self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_CHANGED)
             else:
                 self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_OK)
-            self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color=C.COLOR_SKIP)

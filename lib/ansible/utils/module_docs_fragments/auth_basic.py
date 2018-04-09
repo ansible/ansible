@@ -20,23 +20,17 @@ class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
   api_url:
-    required: false
-    default: null
     description:
       - The resolvable endpoint for the API
   api_username:
-    required: false
-    default: null
     description:
       - The username to use for authentication against the API
   api_password:
-    required: false
-    default: null
     description:
       - The password to use for authentication against the API
   validate_certs:
-    required: false
-    default: yes
     description:
-      - Whether or not to validate SSL certs when supplying a https endpoint. 
+      - Whether or not to validate SSL certs when supplying a https endpoint.
+    type: bool
+    default: 'yes'
 """

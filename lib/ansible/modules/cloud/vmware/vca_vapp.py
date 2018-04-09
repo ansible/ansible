@@ -1,26 +1,14 @@
 #!/usr/bin/python
 
-# Copyright (c) 2015 Ansible, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Ansible, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -30,7 +18,8 @@ description:
   - This module will actively managed vCloud Air vApp instances.  Instances
     can be created and deleted as well as both deployed and undeployed.
 version_added: "2.0"
-author: Peter Sprygada (@privateip)
+author:
+- Peter Sprygada (@privateip)
 options:
   vapp_name:
     description:
@@ -42,94 +31,68 @@ options:
         the I(state) is not `absent` then the I(template_name) value must be
         provided.  The I(template_name) must be previously uploaded to the
         catalog specified by I(catalog_name)
-    required: no
-    default: None
   network_name:
     description:
       - The name of the network that should be attached to the virtual machine
         in the vApp.  The virtual network specified must already be created in
         the vCloud Air VDC.  If the I(state) is not 'absent' then the
         I(network_name) argument must be provided.
-    required: no
-    default: None
   network_mode:
     description:
       - Configures the mode of the network connection.
-    required: no
     default: pool
     choices: ['pool', 'dhcp', 'static']
   vm_name:
     description:
       - The name of the virtual machine instance in the vApp to manage.
-    required: no
-    default: None
   vm_cpus:
     description:
       - The number of vCPUs to configure for the VM in the vApp.   If the
         I(vm_name) argument is provided, then this becomes a per VM setting
         otherwise it is applied to all VMs in the vApp.
-    required: no
-    default: None
   vm_memory:
     description:
       - The amount of memory in MB to allocate to VMs in the vApp.  If the
         I(vm_name) argument is provided, then this becomes a per VM setting
         otherise it is applied to all VMs in the vApp.
-    required: no
-    default: None
   operation:
     description:
       - Specifies an operation to be performed on the vApp.
-    required: no
     default: noop
     choices: ['noop', 'poweron', 'poweroff', 'suspend', 'shutdown', 'reboot', 'reset']
   state:
     description:
       - Configures the state of the vApp.
-    required: no
     default: present
     choices: ['present', 'absent', 'deployed', 'undeployed']
   username:
     description:
       - The vCloud Air username to use during authentication
-    required: false
-    default: None
   password:
     description:
       - The vCloud Air password to use during authentication
-    required: false
-    default: None
   org:
     description:
       - The org to login to for creating vapp, mostly set when the service_type is vdc.
-    required: false
-    default: None
   instance_id:
     description:
       - The instance id in a vchs environment to be used for creating the vapp
-    required: false
-    default: None
   host:
     description:
       - The authentication host to be used when service type  is vcd.
-    required: false
-    default: None
   api_version:
     description:
       - The api version to be used with the vca
-    required: false
     default: "5.7"
   service_type:
     description:
       - The type of service we are authenticating against
-    required: false
     default: vca
     choices: [ "vca", "vchs", "vcd" ]
   vdc_name:
     description:
       - The name of the virtual data center (VDC) where the vm should be created or contains the vAPP.
-    required: false
-    default: None
+extends_documentation_fragment: vca
 '''
 
 EXAMPLES = '''
@@ -137,14 +100,17 @@ EXAMPLES = '''
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
     vapp_name: tower
-    state=present
-    template_name='Ubuntu Server 12.04 LTS (amd64 20150127)'
-    vdc_name=VDC1
-    instance_id=<your instance id here>
-    username=<your username here>
-    password=<your password here>
+    state: present
+    template_name: 'Ubuntu Server 12.04 LTS (amd64 20150127)'
+    vdc_name: VDC1
+    instance_id: '<your instance id here>'
+    username: '<your username here>'
+    password: '<your password here>'
 
 '''
+
+from ansible.module_utils.vca import VcaAnsibleModule, VcaError
+
 
 DEFAULT_VAPP_OPERATION = 'noop'
 
@@ -172,6 +138,7 @@ def get_instance(module):
     except VcaError:
         return inst
 
+
 def create(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
@@ -189,12 +156,17 @@ def create(module):
                                   catalog_name, network_name, network_mode,
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
 
+    if task is False:
+        module.fail('Failed to create vapp: ' + vapp_name)
+
     module.vca.block_until_completed(task)
+
 
 def delete(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
     module.vca.delete_vapp(vdc_name, vapp_name)
+
 
 def do_operation(module):
     vapp_name = module.params['vapp_name']
@@ -212,6 +184,7 @@ def do_operation(module):
 
     cmd = 'power:%s' % operation
     module.get_vapp(vapp_name).execute(cmd, 'post', targetVM=vm)
+
 
 def set_state(module):
     state = module.params['state']
@@ -279,8 +252,6 @@ def main():
 
     return module.exit(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
+
 if __name__ == '__main__':
     main()

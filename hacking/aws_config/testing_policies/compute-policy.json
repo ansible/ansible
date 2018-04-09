@@ -1,0 +1,289 @@
+{# Not all Autoscaling API Actions allow specified resources #}
+{# See http://docs.aws.amazon.com/autoscaling/latest/userguide/control-access-using-iam.html#policy-auto-scaling-resources #}
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DescribeAutoscaling",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:DescribeAutoScalingGroups",
+                "autoscaling:DescribeLaunchConfigurations",
+                "autoscaling:DescribePolicies"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAutoscaling",
+            "Effect": "Allow",
+            "Action": [
+                "autoscaling:CreateLaunchConfiguration",
+                "autoscaling:CreateAutoScalingGroup",
+                "autoscaling:UpdateAutoScalingGroup",
+                "autoscaling:DeleteAutoScalingGroup",
+                "autoscaling:DeleteLaunchConfiguration",
+                "autoscaling:PutScalingPolicy",
+                "autoscaling:DeletePolicy"
+            ],
+            "Resource": [
+                "arn:aws:autoscaling:{{aws_region}}:{{aws_account}}:*"
+            ]
+        },
+{# Note that not all EC2 API Actions allow a specific resource #}
+{# See http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ec2-api-permissions.html#ec2-api-unsupported-resource-permissions #}
+        {
+            "Sid": "AllowUnspecifiedEC2Resource",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AllocateAddress",
+                "ec2:AssociateAddress",
+                "ec2:AssociateDhcpOptions",
+                "ec2:AssociateRouteTable",
+                "ec2:AssociateVpcCidrBlock",
+                "ec2:AssociateSubnetCidrBlock",
+                "ec2:AttachInternetGateway",
+                "ec2:CreateDhcpOptions",
+                "ec2:CreateImage",
+                "ec2:CreateInternetGateway",
+                "ec2:CreateKeyPair",
+                "ec2:CreateNatGateway",
+                "ec2:CreateRoute",
+                "ec2:CreateRouteTable",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateSnapshot",
+                "ec2:CreateSubnet",
+                "ec2:CreateTags",
+                "ec2:CreateVpc",
+                "ec2:DeleteDhcpOptions",
+                "ec2:DeleteInternetGateway",
+                "ec2:DeleteKeyPair",
+                "ec2:DeleteNatGateway",
+                "ec2:DeleteRoute",
+                "ec2:DeleteRouteTable",
+                "ec2:DeleteSnapshot",
+                "ec2:DeleteSubnet",
+                "ec2:DeleteTags",
+                "ec2:DeleteVpc",
+                "ec2:DeleteTags",
+                "ec2:DeregisterImage",
+                "ec2:DetachInternetGateway",
+                "ec2:Describe*",
+                "ec2:DisassociateAddress",
+                "ec2:DisassociateRouteTable",
+                "ec2:ImportKeyPair",
+                "ec2:ModifyImageAttribute",
+                "ec2:ModifyVpcAttribute",
+                "ec2:RegisterImage",
+                "ec2:ReleaseAddress",
+                "ec2:ReplaceRouteTableAssociation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowSpecifiedEC2Resource",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:CreateTags",
+                "ec2:DeleteRouteTable",
+                "ec2:DeleteSecurityGroup",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:RunInstances",
+                "ec2:TerminateInstances",
+                "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+                "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
+            ],
+            "Resource": [
+                "arn:aws:ec2:{{aws_region}}::image/*",
+                "arn:aws:ec2:{{aws_region}}:{{aws_account}}:*"
+            ]
+        },
+        {
+            "Sid": "UnspecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeRepositories",
+                "ecr:CreateRepository"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "SpecifiedCodeRepositories",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetRepositoryPolicy",
+                "ecr:SetRepositoryPolicy",
+                "ecr:DeleteRepository",
+                "ecr:DeleteRepositoryPolicy",
+                "ecr:DeleteRepositoryPolicy"
+            ],
+            "Resource": [
+                "arn:aws:ecr:{{aws_region}}:{{aws_account}}:repository/ansible-*"
+            ]
+        },
+{# According to http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-authentication-access-control.html #}
+{# Resource level access control is not possible for the new ELB API (providing Application Load Balancer functionality #}
+{# While it remains possible for the old API, there is no distinction of the Actions between old API and new API #}
+        {
+            "Sid": "AllowLoadBalancerOperations",
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:ConfigureHealthCheck",
+                "elasticloadbalancing:CreateListener",
+                "elasticloadbalancing:CreateLoadBalancer",
+                "elasticloadbalancing:CreateLoadBalancerListeners",
+                "elasticloadbalancing:CreateTargetGroup",
+                "elasticloadbalancing:DeleteListener",
+                "elasticloadbalancing:DeleteLoadBalancer",
+                "elasticloadbalancing:DeleteLoadBalancerListeners",
+                "elasticloadbalancing:DeleteTargetGroup",
+                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                "elasticloadbalancing:DescribeInstanceHealth",
+                "elasticloadbalancing:DescribeLoadBalancerAttributes",
+                "elasticloadbalancing:DescribeLoadBalancerPolicies",
+                "elasticloadbalancing:DescribeLoadBalancerPolicyTypes",
+                "elasticloadbalancing:DescribeLoadBalancerTags",
+                "elasticloadbalancing:DescribeLoadBalancers",
+                "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+                "elasticloadbalancing:ModifyLoadBalancerAttributes",
+                "elasticloadbalancing:RegisterInstancesWithLoadBalancer"
+            ],
+            "Resource": "*"
+        },
+{# Only certain lambda actions can be restricted to a specific resource #}
+{# http://docs.aws.amazon.com/lambda/latest/dg/lambda-api-permissions-ref.html #}
+        {
+            "Sid": "AllowApiGateway",
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:*"
+            ],
+            "Resource": [
+                "arn:aws:apigateway:{{aws_region}}::/*"
+            ]
+        },
+        {
+            "Sid": "AllowGetUserForLambdaCreation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetUser"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:user/ansible_integration_tests"
+            ]
+        },
+        {
+            "Sid": "AllowLambdaManagementWithoutResource",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateEventSourceMapping",
+                "lambda:GetAccountSettings",
+                "lambda:GetEventSourceMapping",
+                "lambda:ListEventSourceMappings",
+                "lambda:ListFunctions",
+                "lambda:ListTags",
+                "lambda:TagResource",
+                "lambda:UntagResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowLambdaManagementWithResource",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:AddPermission",
+                "lambda:CreateAlias",
+                "lambda:CreateFunction",
+                "lambda:DeleteAlias",
+                "lambda:DeleteFunction",
+                "lambda:GetAlias",
+                "lambda:GetFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetPolicy",
+                "lambda:InvokeFunction",
+                "lambda:ListAliases",
+                "lambda:ListVersionsByFunction",
+                "lambda:PublishVersion",
+                "lambda:RemovePermission",
+                "lambda:UpdateAlias",
+                "lambda:UpdateEventSourceMapping",
+                "lambda:UpdateFunctionCode",
+                "lambda:UpdateFunctionConfiguration"
+            ],
+            "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:*"
+        },
+        {
+            "Sid": "AllowRoleManagement",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{aws_account}}:role/ansible_lambda_role",
+                "arn:aws:iam::{{aws_account}}:role/ecsInstanceRole",
+                "arn:aws:iam::{{aws_account}}:role/ecsServiceRole"
+            ]
+        },
+        {
+          "Sid": "AllowECSManagement",
+          "Effect": "Allow",
+          "Action": [
+            "application-autoscaling:Describe*",
+            "application-autoscaling:PutScalingPolicy",
+            "application-autoscaling:RegisterScalableTarget",
+            "cloudwatch:DescribeAlarms",
+            "cloudwatch:PutMetricAlarm",
+            "ecs:CreateCluster",
+            "ecs:CreateService",
+            "ecs:DeleteCluster",
+            "ecs:DeleteService",
+            "ecs:Describe*",
+            "ecs:DeregisterTaskDefinition",
+            "ecs:List*",
+            "ecs:RegisterTaskDefinition",
+            "ecs:UpdateService"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+          "Sid": "AllowSESManagement",
+          "Effect": "Allow",
+          "Action": [
+            "ses:VerifyEmailIdentity",
+            "ses:DeleteIdentity",
+            "ses:GetIdentityVerificationAttributes",
+            "ses:GetIdentityNotificationAttributes",
+            "ses:VerifyDomainIdentity",
+            "ses:SetIdentityNotificationTopic",
+            "ses:SetIdentityHeadersInNotificationsEnabled",
+            "ses:SetIdentityFeedbackForwardingEnabled",
+            "ses:GetIdentityPolicies",
+            "ses:PutIdentityPolicy",
+            "ses:DeleteIdentityPolicy",
+            "ses:ListIdentityPolicies"
+          ],
+          "Resource": [
+            "*"
+          ]
+        },
+        {
+            "Sid": "AllowSNSManagement",
+            "Effect": "Allow",
+            "Action": [
+              "SNS:CreateTopic",
+              "SNS:DeleteTopic",
+              "SNS:ListTopics",
+              "SNS:GetTopicAttributes",
+              "SNS:ListSubscriptionsByTopic"
+            ],
+            "Resource": [
+              "*"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,113 @@
+# test code for state dump and restore for postgresql_db module
+# copied from mysql_db/tasks/state_dump_import.yml
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- set_fact: db_file_name="{{tmp_dir}}/{{file}}"
+
+- set_fact:
+     admin_str: "psql -U {{ pg_user }}"
+     admin_map:
+         name: "{{ db_name }}"
+         owner: "{{ db_user1 }}"
+         login_user: "{{ pg_user }}"
+
+- set_fact:
+     user_str: "env PGPASSWORD=password psql -h localhost -U {{ db_user1 }} {{ db_name }}"
+     user_map:
+         name: "{{ db_name }}"
+         target: "{{ db_file_name }}"
+         target_opts: "-n public"
+         owner: "{{ db_user1 }}"
+         login_host: "localhost"
+         login_user: "{{ db_user1 }}"
+         login_password: "password"
+  when: test_fixture == "user"
+  # "-n public" is required to work around pg_restore issues with plpgsql
+
+- set_fact:
+     user_str: "psql -U {{ pg_user }} {{ db_name }}"
+     user_map:
+         name: "{{ db_name }}"
+         target: "{{ db_file_name }}"
+         owner: "{{ db_user1 }}"
+         login_user: "{{ pg_user }}"
+  when: test_fixture == "admin"
+
+- set_fact:
+     sql_create: "create table employee(id int, name varchar(100));"
+     sql_insert: "insert into employee values (47,'Joe Smith');"
+     sql_select: "select * from  employee;"
+
+- name: state dump/restore - create database
+  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
+
+- name: state dump/restore - create table employee
+  command: '{{ user_str }} -c "{{ sql_create }}"'
+
+- name: state dump/restore - insert data into table employee
+  command: '{{ user_str }} -c "{{ sql_insert }}"'
+
+- name: state dump/restore - file name should not exist
+  file: name={{ db_file_name }} state=absent
+
+- name: test state=dump to backup the database (expect changed=true)
+  postgresql_db: "{{ user_map | combine({'state': 'dump'}) }}"
+  register: result
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: assert output message backup the database
+  assert:
+    that:
+       - "result.changed == true"
+
+- name: assert database was backed up successfully
+  command: file {{ db_file_name }}
+  register: result
+
+- name: state dump/restore - remove database for restore
+  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
+
+- name: state dump/restore - re-create database
+  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
+
+- name: test state=restore to restore the database (expect changed=true)
+  postgresql_db: "{{ user_map | combine({'state': 'restore'}) }}"
+  register: result
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: assert output message restore the database
+  assert: { that: "result.changed == true" }
+
+- name: select data from table employee
+  command: '{{ user_str }} -c "{{ sql_select }}"'
+  register: result
+
+- name: assert data in database is from the restore database
+  assert:
+    that:
+       - "'47' in result.stdout"
+       - "'Joe Smith' in result.stdout"
+
+- name: state dump/restore - remove database name
+  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
+
+- name: remove file name
+  file: name={{ db_file_name }}  state=absent

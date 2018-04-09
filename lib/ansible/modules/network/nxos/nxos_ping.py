@@ -16,18 +16,22 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_ping
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Tests reachability using ping from Nexus switch.
 description:
     - Tests reachability using ping from switch to a remote destination.
-extends_documentation_fragment: nxos
+    - For a general purpose network module, see the M(net_ping) module.
+    - For Windows targets, use the M(win_ping) module instead.
+    - For targets running Python, use the M(ping) module instead.
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
@@ -39,18 +43,22 @@ options:
     count:
         description:
             - Number of packets to send.
-        required: false
         default: 2
     source:
         description:
             - Source IP Address.
-        required: false
-        default: null
     vrf:
         description:
             - Outgoing VRF.
-        required: false
-        default: null
+    state:
+        description:
+            - Determines if the expected result is success or fail.
+        choices: [ absent, present ]
+        default: present
+notes:
+    - For a general purpose network module, see the M(net_ping) module.
+    - For Windows targets, use the M(win_ping) module instead.
+    - For targets running Python, use the M(ping) module instead.
 '''
 
 EXAMPLES = '''
@@ -72,218 +80,48 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-action:
-    description:
-        - Show what action has been performed
-    returned: always
-    type: string
-    sample: "PING 8.8.8.8 (8.8.8.8): 56 data bytes"
-updates:
+commands:
     description: Show the command sent
     returned: always
     type: list
     sample: ["ping 8.8.8.8 count 2 vrf management"]
-count:
-    description: Show amount of packets sent
-    returned: always
-    type: string
-    sample: "2"
-dest:
-    description: Show the ping destination
-    returned: always
-    type: string
-    sample: "8.8.8.8"
 rtt:
     description: Show RTT stats
     returned: always
     type: dict
-    sample: {"avg": "6.264","max":"6.564",
-            "min": "5.978"}
+    sample: {"avg": 6.264, "max": 6.564, "min": 5.978}
 packets_rx:
     description: Packets successfully received
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packets_tx:
     description: Packets successfully transmitted
     returned: always
-    type: string
-    sample: "2"
+    type: int
+    sample: 2
 packet_loss:
     description: Percentage of packets lost
     returned: always
     type: string
     sample: "0.00%"
 '''
+from ansible.module_utils.network.nxos.nxos import run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
-import json
-import collections
-
-# COMMON CODE FOR MIGRATION
-import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
 
 def get_summary(results_list, reference_point):
-    summary_string = results_list[reference_point+1]
+    summary_string = results_list[reference_point + 1]
     summary_list = summary_string.split(',')
-    pkts_tx = summary_list[0].split('packets')[0].strip()
-    pkts_rx = summary_list[1].split('packets')[0].strip()
-    pkt_loss = summary_list[2].split('packet')[0].strip()
-    summary = dict(packets_tx=pkts_tx,
-                   packets_rx=pkts_rx,
-                   packet_loss=pkt_loss)
 
-    if 'bytes from' not in results_list[reference_point-2]:
+    summary = dict(
+        packets_tx=int(summary_list[0].split('packets')[0].strip()),
+        packets_rx=int(summary_list[1].split('packets')[0].strip()),
+        packet_loss=summary_list[2].split('packet')[0].strip(),
+    )
+
+    if 'bytes from' not in results_list[reference_point - 2]:
         ping_pass = False
     else:
         ping_pass = True
@@ -292,16 +130,16 @@ def get_summary(results_list, reference_point):
 
 
 def get_rtt(results_list, packet_loss, location):
+    rtt = dict(min=None, avg=None, max=None)
+
     if packet_loss != '100.00%':
         rtt_string = results_list[location]
         base = rtt_string.split('=')[1]
         rtt_list = base.split('/')
-        min_rtt = rtt_list[0].lstrip()
-        avg_rtt = rtt_list[1]
-        max_rtt = rtt_list[2][:-3]
-        rtt = dict(min=min_rtt, avg=avg_rtt, max=max_rtt)
-    else:
-        rtt = dict(min=None, avg=None, max=None)
+
+        rtt['min'] = float(rtt_list[0].lstrip())
+        rtt['avg'] = float(rtt_list[1])
+        rtt['max'] = float(rtt_list[2][:-3])
 
     return rtt
 
@@ -313,48 +151,9 @@ def get_statistics_summary_line(response_as_list):
     return index
 
 
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command_ping(command, module, command_type='cli_show_ascii'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = execute_show(cmds, module)
-    elif module.params['transport'] == 'nxapi':
-        body = execute_show(cmds, module, command_type=command_type)
-    return body
-
-
-def get_ping_results(command, module, transport):
-    ping = execute_show_command_ping(command, module)[0]
+def get_ping_results(command, module):
+    cmd = {'command': command, 'output': 'text'}
+    ping = run_commands(module, [cmd])[0]
 
     if not ping:
         module.fail_json(msg="An unexpected error occurred. Check all params.",
@@ -371,75 +170,52 @@ def get_ping_results(command, module, transport):
         splitted_ping = ping.split('\n')
         reference_point = get_statistics_summary_line(splitted_ping)
         summary, ping_pass = get_summary(splitted_ping, reference_point)
-        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point+2)
+        rtt = get_rtt(splitted_ping, summary['packet_loss'], reference_point + 2)
 
-    return (splitted_ping, summary, rtt, ping_pass)
+    return (summary, rtt, ping_pass)
 
 
 def main():
     argument_spec = dict(
-            dest=dict(required=True),
-            count=dict(required=False, default=2),
-            vrf=dict(required=False),
-            source=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'],
-                       default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        dest=dict(required=True),
+        count=dict(required=False, default=2),
+        vrf=dict(required=False),
+        source=dict(required=False),
+        state=dict(required=False, choices=['present', 'absent'], default='present'),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     destination = module.params['dest']
     count = module.params['count']
-    vrf = module.params['vrf']
-    source = module.params['source']
     state = module.params['state']
 
-    if count:
-        try:
-            if int(count) < 1 or int(count) > 655350:
-                raise ValueError
-        except ValueError:
-            module.fail_json(msg="'count' must be an integer between 1 "
-                                 "and 655350.", count=count)
-
-    OPTIONS = {
-        'vrf': vrf,
-        'count': count,
-        'source': source
-        }
+    if count and not 1 <= int(count) <= 655350:
+        module.fail_json(msg="'count' must be an integer between 1 and 655350.", count=count)
 
     ping_command = 'ping {0}'.format(destination)
-    for command, arg in OPTIONS.items():
+    for command in ['count', 'source', 'vrf']:
+        arg = module.params[command]
         if arg:
             ping_command += ' {0} {1}'.format(command, arg)
 
-    ping_results, summary, rtt, ping_pass = get_ping_results(
-                    ping_command, module, module.params['transport'])
+    summary, rtt, ping_pass = get_ping_results(ping_command, module)
 
-    packet_loss = summary['packet_loss']
-    packets_rx = summary['packets_rx']
-    packets_tx = summary['packets_tx']
-
-    results = {}
-    results['updates'] = [ping_command]
-    results['action'] = ping_results[1]
-    results['dest'] = destination
-    results['count'] = count
-    results['packets_tx'] = packets_tx
-    results['packets_rx'] = packets_rx
-    results['packet_loss'] = packet_loss
+    results = summary
     results['rtt'] = rtt
-    results['state'] = module.params['state']
+    results['commands'] = [ping_command]
 
     if ping_pass and state == 'absent':
-        module.fail_json(msg="Ping succeeded unexpectedly", results=results)
+        module.fail_json(msg="Ping succeeded unexpectedly")
     elif not ping_pass and state == 'present':
-        module.fail_json(msg="Ping failed unexpectedly", results=results)
-    else:
-        module.exit_json(**results)
+        module.fail_json(msg="Ping failed unexpectedly")
+
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':

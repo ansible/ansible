@@ -1,63 +1,44 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2014, Chris Hoffman <choffman@chathamfinancial.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_group
 version_added: "1.7"
 short_description: Add and remove local groups
 description:
-    - Add and remove local groups
+    - Add and remove local groups.
+    - For non-Windows targets, please use the M(group) module instead.
 options:
   name:
     description:
-      - Name of the group
-    required: true
-    default: null
-    aliases: []
+      - Name of the group.
+    required: yes
   description:
     description:
-      - Description of the group
-    required: false
-    default: null
-    aliases: []
+      - Description of the group.
   state:
     description:
-      - Create or remove the group
-    required: false
-    choices:
-      - present
-      - absent
+      - Create or remove the group.
+    choices: [ absent, present ]
     default: present
-    aliases: []
-author: "Chris Hoffman (@chrishoffman)"
+notes:
+    - For non-Windows targets, please use the M(group) module instead.
+author:
+- Chris Hoffman (@chrishoffman)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new group
   win_group:
     name: deploy

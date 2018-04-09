@@ -10,8 +10,6 @@ def main():
     with open('test/integration/target-prefixes.network', 'r') as prefixes_fd:
         network_prefixes = prefixes_fd.read().splitlines()
 
-    missing_aliases = []
-
     for target in sorted(os.listdir(targets_dir)):
         target_dir = os.path.join(targets_dir, target)
         aliases_path = os.path.join(target_dir, 'aliases')
@@ -22,7 +20,7 @@ def main():
             continue
 
         # don't require aliases for support directories
-        if any(os.path.splitext(f)[0] == 'test' for f in files):
+        if any(os.path.splitext(f)[0] == 'test' and os.access(os.path.join(target_dir, f), os.X_OK) for f in files):
             continue
 
         # don't require aliases for setup_ directories
@@ -38,39 +36,7 @@ def main():
         if any(target.startswith('%s_' % prefix) for prefix in network_prefixes):
             continue
 
-        missing_aliases.append(target_dir)
-
-    if missing_aliases:
-        message = '''
-        The following integration target directories are missing `aliases` files:
-
-        %s
-
-        Unless a test cannot run as part of CI, you'll want to add an appropriate CI alias, such as:
-
-        posix/ci/group1
-        windows/ci/group2
-
-        The CI groups are used to balance tests across multiple jobs to minimize test run time.
-
-        Aliases can also be used to express test requirements:
-
-        needs/privileged
-        needs/root
-        needs/ssh
-
-        Other aliases are used to skip tests under certain conditions:
-
-        skip/freebsd
-        skip/osx
-        skip/python3
-
-        Take a look at existing `aliases` files to see what aliases are available and how they're used.
-        ''' % '\n'.join(missing_aliases)
-
-        print(textwrap.dedent(message).strip())
-
-        exit(1)
+        print('%s: missing integration test `aliases` file' % aliases_path)
 
 
 if __name__ == '__main__':

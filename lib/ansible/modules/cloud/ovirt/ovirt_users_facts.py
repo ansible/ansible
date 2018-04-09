@@ -19,36 +19,26 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_dict_of_struct,
-    ovirt_facts_full_argument_spec,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_users_facts
-short_description: Retrieve facts about one or more oVirt users
+short_description: Retrieve facts about one or more oVirt/RHV users
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt users."
+    - "Retrieve facts about one or more oVirt/RHV users."
 notes:
     - "This module creates a new top-level C(ovirt_users) fact, which
        contains a list of users."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search user X use following pattern: name=X"
 extends_documentation_fragment: ovirt_facts
 '''
@@ -67,10 +57,20 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_users:
     description: "List of dictionaries describing the users. User attribues are mapped to dictionary keys,
-                  all users attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
+                  all users attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/user."
     returned: On success.
     type: list
 '''
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_dict_of_struct,
+    ovirt_facts_full_argument_spec,
+)
 
 
 def main():
@@ -81,7 +81,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         users_service = connection.system_service().users_service()
         users = users_service.list(search=module.params['pattern'])
         module.exit_json(
@@ -100,7 +101,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

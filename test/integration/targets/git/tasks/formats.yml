@@ -1,0 +1,40 @@
+- name: FORMATS | initial checkout
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ repo_dir }}/format1"
+  register: git_result
+
+- name: FORMATS | verify information about the initial clone
+  assert:
+    that:
+      - "'before' in git_result"
+      - "'after' in git_result"
+      - "not git_result.before"
+      - "git_result.changed"
+
+- name: FORMATS | repeated checkout
+  git:
+    repo: "{{ repo_format1 }}"
+    dest: "{{ repo_dir }}/format1"
+  register: git_result2
+
+- name: FORMATS | check for tags
+  stat:
+    path: "{{ repo_dir }}/format1/.git/refs/tags"
+  register: tags
+
+- name: FORMATS | check for HEAD
+  stat:
+    path: "{{ repo_dir }}/format1/.git/HEAD"
+  register: head
+
+- name: FORMATS | assert presence of tags/trunk/branches
+  assert:
+    that:
+      - "tags.stat.isdir"
+      - "head.stat.isreg"
+
+- name: FORMATS | verify on a reclone things are marked unchanged
+  assert:
+    that:
+      - "not git_result2.changed"

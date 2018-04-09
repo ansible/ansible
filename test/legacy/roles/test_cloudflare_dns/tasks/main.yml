@@ -1,0 +1,64 @@
+---
+- name: "Test: no args"
+  cloudflare_dns:
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: no args"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('missing required arguments: ') != -1"
+
+- name: "Test: only credentials"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: only credentials"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('missing required arguments: ') != -1"
+
+- name: "Test: credentials and zone"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: credentials and zone"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
+
+- name: "Test: credentials, zone and type"
+  cloudflare_dns:
+    account_email: "{{ cloudflare_email }}"
+    account_api_token: "{{ cloudflare_api_token }}"
+    zone: "{{ cloudflare_zone }}"
+    type: TXT
+  ignore_errors: true
+  register: cloudflare_dns
+
+- name: "Validate: credentials, zone and type"
+  assert:
+    that:
+      - cloudflare_dns is failed
+      - "cloudflare_dns.msg.find('but the following are missing: ') != -1"
+
+######## record tests #################
+
+- include: a_record.yml
+- include: aaaa_record.yml
+- include: cname_record.yml
+- include: txt_record.yml
+- include: ns_record.yml
+- include: spf_record.yml
+- include: mx_record.yml
+- include: srv_record.yml

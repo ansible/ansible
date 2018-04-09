@@ -15,16 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: ios_facts
 version_added: "2.2"
 author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote devices running IOS
+short_description: Collect facts from remote devices running Cisco IOS
 description:
   - Collects a base set of device facts from a remote device that
     is running IOS.  This module prepends all of the
@@ -32,6 +33,8 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: ios
+notes:
+  - Tested against IOS 15.6
 options:
   gather_subset:
     description:
@@ -46,31 +49,19 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 # Collect all facts from the device
 - ios_facts:
     gather_subset: all
-    provider: "{{ cli }}"
 
 # Collect only the config and default facts
 - ios_facts:
     gather_subset:
       - config
-    provider: "{{ cli }}"
 
 # Do not collect hardware facts
 - ios_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -83,15 +74,15 @@ ansible_net_gather_subset:
 ansible_net_model:
   description: The model name returned from the device
   returned: always
-  type: str
+  type: string
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always
-  type: str
+  type: string
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
@@ -100,6 +91,14 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: string
+ansible_net_stacked_models:
+  description: The model names of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
+ansible_net_stacked_serialnums:
+  description: The serial numbers of each device in the stack
+  returned: when multiple devices are configured in a stack
+  type: list
 
 # hardware
 ansible_net_filesystems:
@@ -119,7 +118,7 @@ ansible_net_memtotal_mb:
 ansible_net_config:
   description: The current active config from the device
   returned: when config is configured
-  type: str
+  type: string
 
 # interfaces
 ansible_net_all_ipv4_addresses:
@@ -140,41 +139,47 @@ ansible_net_neighbors:
   type: dict
 """
 import re
-import itertools
 
-import ansible.module_utils.ios
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.network.ios.ios import run_commands
+from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
 
 
 class FactsBase(object):
 
+    COMMANDS = list()
+
     def __init__(self, module):
         self.module = module
         self.facts = dict()
-        self.failed_commands = list()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, commands=self.COMMANDS, check_rc=False)
 
     def run(self, cmd):
-        try:
-            return self.module.cli(cmd)[0]
-        except:
-            self.failed_commands.append(cmd)
+        return run_commands(self.module, commands=cmd, check_rc=False)
 
 
 class Default(FactsBase):
 
+    COMMANDS = ['show version']
+
     def populate(self):
-        data = self.run('show version')
+        super(Default, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['version'] = self.parse_version(data)
             self.facts['serialnum'] = self.parse_serialnum(data)
             self.facts['model'] = self.parse_model(data)
             self.facts['image'] = self.parse_image(data)
             self.facts['hostname'] = self.parse_hostname(data)
+            self.parse_stacks(data)
 
     def parse_version(self, data):
-        match = re.search(r'Version (\S+),', data)
+        match = re.search(r'Version (\S+?)(?:,\s|\s)', data)
         if match:
             return match.group(1)
 
@@ -184,7 +189,7 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_model(self, data):
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
+        match = re.search(r'^[Cc]isco (\S+).+bytes of .*memory', data, re.M)
         if match:
             return match.group(1)
 
@@ -198,20 +203,37 @@ class Default(FactsBase):
         if match:
             return match.group(1)
 
+    def parse_stacks(self, data):
+        match = re.findall(r'^Model number\s+: (\S+)', data, re.M)
+        if match:
+            self.facts['stacked_models'] = match
+
+        match = re.findall(r'^System serial number\s+: (\S+)', data, re.M)
+        if match:
+            self.facts['stacked_serialnums'] = match
+
 
 class Hardware(FactsBase):
 
+    COMMANDS = [
+        'dir',
+        'show memory statistics'
+    ]
+
     def populate(self):
-        data = self.run('dir | include Directory')
+        super(Hardware, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.run('show memory statistics | include Processor')
+        data = self.responses[1]
         if data:
-            match = re.findall(r'\s(\d+)\s', data)
+            processor_line = [l for l in data.splitlines()
+                              if 'Processor' in l].pop()
+            match = re.findall(r'\s(\d+)\s', processor_line)
             if match:
                 self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[1]) / 1024
+                self.facts['memfree_mb'] = int(match[3]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
@@ -219,33 +241,50 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
+    COMMANDS = ['show running-config']
+
     def populate(self):
-        data = self.run('show running-config')
+        super(Config, self).populate()
+        data = self.responses[0]
         if data:
             self.facts['config'] = data
 
 
 class Interfaces(FactsBase):
 
+    COMMANDS = [
+        'show interfaces',
+        'show ip interface',
+        'show ipv6 interface',
+        'show lldp'
+    ]
+
     def populate(self):
+        super(Interfaces, self).populate()
+
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.run('show interfaces')
+        data = self.responses[0]
         if data:
             interfaces = self.parse_interfaces(data)
             self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.run('show ipv6 interface')
+        data = self.responses[1]
+        if data:
+            data = self.parse_interfaces(data)
+            self.populate_ipv4_interfaces(data)
+
+        data = self.responses[2]
         if data:
             data = self.parse_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        data = self.run('show lldp')
-        if 'LLDP is not enabled' not in data:
-            neighbors = self.run('show lldp neighbors detail')
+        data = self.responses[3]
+        if data:
+            neighbors = self.run(['show lldp neighbors detail'])
             if neighbors:
-                self.facts['neighbors'] = self.parse_neighbors(neighbors)
+                self.facts['neighbors'] = self.parse_neighbors(neighbors[0])
 
     def populate_interfaces(self, interfaces):
         facts = dict()
@@ -253,11 +292,6 @@ class Interfaces(FactsBase):
             intf = dict()
             intf['description'] = self.parse_description(value)
             intf['macaddress'] = self.parse_macaddress(value)
-
-            ipv4 = self.parse_ipv4(value)
-            intf['ipv4'] = self.parse_ipv4(value)
-            if ipv4:
-                self.add_ip_address(ipv4['address'], 'ipv4')
 
             intf['mtu'] = self.parse_mtu(value)
             intf['bandwidth'] = self.parse_bandwidth(value)
@@ -270,9 +304,28 @@ class Interfaces(FactsBase):
             facts[key] = intf
         return facts
 
+    def populate_ipv4_interfaces(self, data):
+        for key, value in data.items():
+            self.facts['interfaces'][key]['ipv4'] = list()
+            primary_address = addresses = []
+            primary_address = re.findall(r'Internet address is (.+)$', value, re.M)
+            addresses = re.findall(r'Secondary address (.+)$', value, re.M)
+            if len(primary_address) == 0:
+                continue
+            addresses.append(primary_address[0])
+            for address in addresses:
+                addr, subnet = address.split("/")
+                ipv4 = dict(address=addr.strip(), subnet=subnet.strip())
+                self.add_ip_address(addr.strip(), 'ipv4')
+                self.facts['interfaces'][key]['ipv4'].append(ipv4)
+
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
-            self.facts['interfaces'][key]['ipv6'] = list()
+            try:
+                self.facts['interfaces'][key]['ipv6'] = list()
+            except KeyError:
+                self.facts['interfaces'][key] = dict()
+                self.facts['interfaces'][key]['ipv6'] = list()
             addresses = re.findall(r'\s+(.+), subnet', value, re.M)
             subnets = re.findall(r', subnet is (.+)$', value, re.M)
             for addr, subnet in zip(addresses, subnets):
@@ -391,12 +444,18 @@ FACT_SUBSETS = dict(
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
+
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -438,23 +497,19 @@ def main():
     for key in runable_subsets:
         instances.append(FACT_SUBSETS[key](module))
 
-    failed_commands = list()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            failed_commands.extend(inst.failed_commands)
-            facts.update(inst.facts)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts, failed_commands=failed_commands)
+    warnings = list()
+    check_args(module, warnings)
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

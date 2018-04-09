@@ -2,24 +2,16 @@
 
 # (c) James Laska
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,56 +25,53 @@ notes:
     - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:
     - rhnreg_ks
+    - either libxml2 or lxml
 options:
     state:
         description:
           - whether to register (C(present)), or unregister (C(absent)) a system
-        required: false
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
             - Red Hat Network username
-        required: False
-        default: null
     password:
         description:
             - Red Hat Network password
-        required: False
-        default: null
     server_url:
         description:
             - Specify an alternative Red Hat Network server URL
-        required: False
         default: Current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date) is the default
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     profilename:
         description:
             - supply an profilename for use with registration
-        required: False
-        default: null
         version_added: "2.0"
     sslcacert:
         description:
             - supply a custom ssl CA certificate file for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     systemorgid:
         description:
             - supply an organizational id for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
-        required: false
         default: []
+    enable_eus:
+        description:
+            - If C(no), extended update support will be requested.
+        type: bool
+        default: 'no'
+    nopackages:
+        description:
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server
+        type: bool
+        default: 'no'
+        version_added: "2.5"
 '''
 
 EXAMPLES = '''
@@ -127,10 +116,12 @@ EXAMPLES = '''
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
+RETURN = '''
+# Default return values
+'''
+
+import os
 import sys
-import types
-import xmlrpclib
-import urlparse
 
 # Attempt to import rhn client tools
 sys.path.insert(0, '/usr/share/rhn')
@@ -142,15 +133,22 @@ except ImportError:
     HAS_UP2DATE_CLIENT = False
 
 # INSERT REDHAT SNIPPETS
-from ansible.module_utils.redhat import *
-# INSERT COMMON SNIPPETS
-from ansible.module_utils.basic import *
+from ansible.module_utils import redhat
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import urllib, xmlrpc_client
 
-class Rhn(RegistrationBase):
 
-    def __init__(self, username=None, password=None):
-        RegistrationBase.__init__(self, username, password)
+class Rhn(redhat.RegistrationBase):
+
+    def __init__(self, module=None, username=None, password=None):
+        redhat.RegistrationBase.__init__(self, module, username, password)
         self.config = self.load_config()
+        self.server = None
+        self.session = None
+
+    def logout(self):
+        if self.session is not None:
+            self.server.auth.logout(self.session)
 
     def load_config(self):
         '''
@@ -159,23 +157,13 @@ class Rhn(RegistrationBase):
         if not HAS_UP2DATE_CLIENT:
             return None
 
-        self.config = up2date_client.config.initUp2dateConfig()
+        config = up2date_client.config.initUp2dateConfig()
 
-        # Add support for specifying a default value w/o having to standup some
-        # configuration.  Yeah, I know this should be subclassed ... but, oh
-        # well
-        def get_option_default(self, key, default=''):
-            # the class in rhn-client-tools that this comes from didn't
-            # implement __contains__() until 2.5.x.  That's why we check if
-            # the key is present in the dictionary that is the actual storage
-            if key in self.dict:
-                return self[key]
-            else:
-                return default
+        return config
 
-        self.config.get_option = types.MethodType(get_option_default, self.config, up2date_client.config.Config)
-
-        return self.config
+    @property
+    def server_url(self):
+        return self.config['serverURL']
 
     @property
     def hostname(self):
@@ -185,8 +173,8 @@ class Rhn(RegistrationBase):
 
             Returns: str
         '''
-        url = urlparse.urlparse(self.config['serverURL'])
-        return url[1].replace('xmlrpc.','')
+        url = urllib.parse.urlparse(self.server_url)
+        return url[1].replace('xmlrpc.', '')
 
     @property
     def systemid(self):
@@ -218,7 +206,7 @@ class Rhn(RegistrationBase):
                     root = etree.fromstring(xml_data)
                     systemid = root.xpath(xpath_str)[0].text
                 except ImportError:
-                    pass
+                    raise Exception('"libxml2" or "lxml" is required for this module.')
 
             # Strip the 'ID-' prefix
             if systemid is not None and systemid.startswith('ID-'):
@@ -235,9 +223,9 @@ class Rhn(RegistrationBase):
         '''
         return os.path.isfile(self.config['systemIdPath'])
 
-    def configure(self, server_url):
+    def configure_server_url(self, server_url):
         '''
-            Configure system for registration
+            Configure server_url for registration
         '''
 
         self.config.set('serverURL', server_url)
@@ -249,20 +237,24 @@ class Rhn(RegistrationBase):
              * enabling the rhnplugin yum plugin
              * disabling the subscription-manager yum plugin
         '''
-        RegistrationBase.enable(self)
+        redhat.RegistrationBase.enable(self)
         self.update_plugin_conf('rhnplugin', True)
         self.update_plugin_conf('subscription-manager', False)
 
-    def register(self, enable_eus=False, activationkey=None, profilename=None, sslcacert=None, systemorgid=None):
+    def register(self, enable_eus=False, activationkey=None, profilename=None, sslcacert=None, systemorgid=None, nopackages=False):
         '''
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = ['/usr/sbin/rhnreg_ks', '--username', self.username, '--password', self.password, '--force']
-        if self.module.params.get('server_url', None):
-            register_cmd.extend(['--serverUrl', self.module.params.get('server_url')])
+        register_cmd = ['/usr/sbin/rhnreg_ks', '--force']
+        if self.username:
+            register_cmd.extend(['--username', self.username, '--password', self.password])
+        if self.server_url:
+            register_cmd.extend(['--serverUrl', self.server_url])
         if enable_eus:
             register_cmd.append('--use-eus-channel')
+        if nopackages:
+            register_cmd.append('--nopackages')
         if activationkey is not None:
             register_cmd.extend(['--activationkey', activationkey])
         if profilename is not None:
@@ -277,12 +269,12 @@ class Rhn(RegistrationBase):
         '''
             Convenience RPC wrapper
         '''
-        if not hasattr(self, 'server') or self.server is None:
+        if self.server is None:
             if self.hostname != 'rhn.redhat.com':
                 url = "https://%s/rpc/api" % self.hostname
             else:
                 url = "https://xmlrpc.%s/rpc/api" % self.hostname
-            self.server = xmlrpclib.Server(url, verbose=0)
+            self.server = xmlrpc_client.ServerProxy(url)
             self.session = self.server.auth.login(self.username, self.password)
 
         func = getattr(self.server, method)
@@ -299,9 +291,7 @@ class Rhn(RegistrationBase):
         # Remove systemid file
         os.unlink(self.config['systemIdPath'])
 
-    def subscribe(self, channels=[]):
-        if len(channels) <= 0:
-            return
+    def subscribe(self, channels):
         if self._is_hosted():
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             new_channels = [item['channel_label'] for item in current_channels]
@@ -328,102 +318,97 @@ class Rhn(RegistrationBase):
                 out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
             return out_base and out_childs
 
-    def _subscribe(self, channels=[]):
-        '''
-            Subscribe to requested yum repositories using 'rhn-channel' command
-        '''
-        rhn_channel_cmd = "rhn-channel --user='%s' --password='%s'" % (self.username, self.password)
-        rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --available-channels", check_rc=True)
-
-        # Enable requested repoid's
-        for wanted_channel in channels:
-            # Each inserted repo regexp will be matched. If no match, no success.
-            for available_channel in stdout.rstrip().split('\n'): # .rstrip() because of \n at the end -> empty string at the end
-                if re.search(wanted_repo, available_channel):
-                    rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel, check_rc=True)
-
     def _is_hosted(self):
         '''
             Return True if we are running against Hosted (rhn.redhat.com) or
             False otherwise (when running against Satellite or Spacewalk)
         '''
-        if 'rhn.redhat.com' in self.hostname:
-            return True
-        else:
-            return False
+        return 'rhn.redhat.com' in self.hostname
+
 
 def main():
 
-    # Read system RHN configuration
-    rhn = Rhn()
-
     module = AnsibleModule(
-                argument_spec = dict(
-                    state = dict(default='present', choices=['present', 'absent']),
-                    username = dict(default=None, required=False),
-                    password = dict(default=None, required=False, no_log=True),
-                    server_url = dict(default=None, required=False),
-                    activationkey = dict(default=None, required=False, no_log=True),
-                    profilename = dict(default=None, required=False),
-                    sslcacert = dict(default=None, required=False, type='path'),
-                    systemorgid = dict(default=None, required=False),
-                    enable_eus = dict(default=False, type='bool'),
-                    channels = dict(default=[], type='list'),
-                )
-            )
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'absent']),
+            username=dict(default=None, required=False),
+            password=dict(default=None, required=False, no_log=True),
+            server_url=dict(default=None, required=False),
+            activationkey=dict(default=None, required=False, no_log=True),
+            profilename=dict(default=None, required=False),
+            sslcacert=dict(default=None, required=False, type='path'),
+            systemorgid=dict(default=None, required=False),
+            enable_eus=dict(default=False, type='bool'),
+            nopackages=dict(default=False, type='bool'),
+            channels=dict(default=[], type='list'),
+        )
+    )
 
     if not HAS_UP2DATE_CLIENT:
         module.fail_json(msg="Unable to import up2date_client.  Is 'rhn-client-tools' installed?")
 
-    if not module.params['server_url']:
-        module.params['server_url'] = rhn.config.get_option('serverURL')
+    server_url = module.params['server_url']
+    username = module.params['username']
+    password = module.params['password']
 
     state = module.params['state']
-    rhn.username = module.params['username']
-    rhn.password = module.params['password']
-    rhn.configure(module.params['server_url'])
     activationkey = module.params['activationkey']
     profilename = module.params['profilename']
     sslcacert = module.params['sslcacert']
     systemorgid = module.params['systemorgid']
     channels = module.params['channels']
-    rhn.module = module
+    enable_eus = module.params['enable_eus']
+    nopackages = module.params['nopackages']
+
+    rhn = Rhn(module=module, username=username, password=password)
+
+    # use the provided server url and persist it to the rhn config.
+    if server_url:
+        rhn.configure_server_url(server_url)
+
+    if not rhn.server_url:
+        module.fail_json(
+            msg="No serverURL was found (from either the 'server_url' module arg or the config file option 'serverURL' in /etc/sysconfig/rhn/up2date)"
+        )
 
     # Ensure system is registered
     if state == 'present':
 
         # Check for missing parameters ...
         if not (activationkey or rhn.username or rhn.password):
-            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, rhn.username, rhn.password))
+            module.fail_json(msg="Missing arguments, must supply an activationkey (%s) or username (%s) and password (%s)" % (activationkey, rhn.username,
+                                                                                                                              rhn.password))
         if not activationkey and not (rhn.username and rhn.password):
             module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
 
         # Register system
         if rhn.is_registered:
             module.exit_json(changed=False, msg="System already registered.")
-        else:
-            try:
-                rhn.enable()
-                rhn.register(module.params['enable_eus'] == True, activationkey, profilename, sslcacert, systemorgid)
-                rhn.subscribe(channels)
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
 
-            module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
+        try:
+            rhn.enable()
+            rhn.register(enable_eus, activationkey, profilename, sslcacert, systemorgid, nopackages)
+            rhn.subscribe(channels)
+        except Exception as exc:
+            module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, exc))
+        finally:
+            rhn.logout()
+
+        module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
 
     # Ensure system is *not* registered
     if state == 'absent':
         if not rhn.is_registered:
             module.exit_json(changed=False, msg="System already unregistered.")
-        else:
-            try:
-                rhn.unregister()
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Failed to unregister: %s" % e)
 
-            module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
+        try:
+            rhn.unregister()
+        except Exception as exc:
+            module.fail_json(msg="Failed to unregister: %s" % exc)
+        finally:
+            rhn.logout()
+
+        module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
 
 
 if __name__ == '__main__':

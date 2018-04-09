@@ -1,32 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    from pyghmi.ipmi import command
-except ImportError:
-    command = None
-
-from ansible.module_utils.basic import *
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -43,8 +28,6 @@ options:
   port:
     description:
       - Remote RMCP port.
-    required: false
-    type: int
     default: 623
   user:
     description:
@@ -54,13 +37,13 @@ options:
     description:
       - Password to connect to the BMC.
     required: true
-    default: null
   bootdev:
     description:
       - Set boot device to use on next reboot
     required: true
     choices:
       - network -- Request network boot
+      - floppy -- Boot from floppy
       - hd -- Boot from hard drive
       - safe -- Boot from hard drive, requesting 'safe mode'
       - optical -- boot from CD/DVD/BD drive
@@ -77,17 +60,15 @@ options:
     description:
       - If set, ask that system firmware uses this device beyond next boot.
         Be aware many systems do not honor this.
-    required: false
-    type: boolean
-    default: false
+    type: bool
+    default: 'no'
   uefiboot:
     description:
       - If set, request UEFI boot explicitly.
         Strictly speaking, the spec suggests that if not set, the system should BIOS boot and offers no "don't care" option.
         In practice, this flag not being set does not preclude UEFI boot on any system I've encountered.
-    required: false
-    type: boolean
-    default: false
+    type: bool
+    default: 'no'
 requirements:
   - "python >= 2.6"
   - pyghmi
@@ -129,7 +110,12 @@ EXAMPLES = '''
     state: absent
 '''
 
-# ==================================================
+try:
+    from pyghmi.ipmi import command
+except ImportError:
+    command = None
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -140,7 +126,7 @@ def main():
             user=dict(required=True, no_log=True),
             password=dict(required=True, no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
-            bootdev=dict(required=True, choices=['network', 'hd', 'safe', 'optical', 'setup', 'default']),
+            bootdev=dict(required=True, choices=['network', 'hd', 'floppy', 'safe', 'optical', 'setup', 'default']),
             persistent=dict(default=False, type='bool'),
             uefiboot=dict(default=False, type='bool')
         ),

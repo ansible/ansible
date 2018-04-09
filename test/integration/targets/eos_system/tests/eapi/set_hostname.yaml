@@ -1,0 +1,40 @@
+---
+- debug: msg="START eapi/set_hostname.yaml"
+
+- name: setup
+  eos_config:
+    lines: hostname switch
+    match: none
+    timeout: 30
+    provider: "{{ eapi }}"
+
+- name: configure hostname
+  eos_system:
+    hostname: foo
+    timeout: 30
+    provider: "{{ eapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify hostname
+  eos_system:
+    hostname: foo
+    timeout: 30
+    provider: "{{ eapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: "hostname {{ inventory_hostname }}"
+    match: none
+    timeout: 30
+    provider: "{{ eapi }}"
+
+- debug: msg="END eapi/set_hostname.yaml"

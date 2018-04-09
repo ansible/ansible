@@ -4,26 +4,16 @@
 #          Chris Houseknecht, <house@redhat.com>
 #          James Tanner, <jtanner@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -58,33 +48,29 @@ options:
     description:
       - "The email address for the registry account. NOTE: private registries may not require this,
         but Docker Hub requires it."
-    default: None
   reauthorize:
-    required: False
     description:
       - Refresh exiting authentication found in the configuration file.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
     aliases:
       - reauth
   config_path:
     description:
       - Custom path to the Docker CLI configuration file.
     default: ~/.docker/config.json
-    required: False
     aliases:
       - self.config_path
       - dockercfg_path
   state:
     version_added: '2.3'
     description:
-      - This controls the current state of the user. C(present) will login in a user, C(absent) will log him out.
+      - This controls the current state of the user. C(present) will login in a user, C(absent) will log them out.
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
       - docker does not support 'logout' with a custom config file.
     choices: ['present', 'absent']
     default: 'present'
-    required: False
 
 extends_documentation_fragment:
     - docker
@@ -93,7 +79,7 @@ requirements:
     - "docker-py >= 1.7.0"
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
-authors:
+author:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
     - "James Tanner (@jctanner)"
@@ -134,15 +120,18 @@ login_results:
     type: dict
     sample: {
         "email": "testuer@yahoo.com",
-        "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
         "serveraddress": "localhost:5000",
         "username": "testuser"
     }
 '''
 
 import base64
+import json
+import os
+import re
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.docker_common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
 
 
 class LoginManager(DockerBaseClass):
@@ -196,6 +185,11 @@ class LoginManager(DockerBaseClass):
             )
         except Exception as exc:
             self.fail("Logging into %s for user %s failed - %s" % (self.registry_url, self.username, str(exc)))
+
+        # If user is already logged in, then response contains password for user
+        # This returns correct password if user is logged in and wrong password is given.
+        if 'password' in response:
+            del response['password']
         self.results['login_result'] = response
 
         if not self.check_mode:
@@ -210,9 +204,9 @@ class LoginManager(DockerBaseClass):
         '''
 
         cmd = "%s logout " % self.client.module.get_bin_path('docker', True)
-        #TODO: docker does not support config file in logout, restore this when they do
-        #if self.config_path and self.config_file_exists(self.config_path):
-        #    cmd += "--config '%s' " % self.config_path
+        # TODO: docker does not support config file in logout, restore this when they do
+        # if self.config_path and self.config_file_exists(self.config_path):
+        #     cmd += "--config '%s' " % self.config_path
         cmd += "'%s'" % self.registry_url
 
         (rc, out, err) = self.client.module.run_command(cmd)
@@ -256,7 +250,7 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
-        path = os.path.expanduser(self.config_path)
+        path = self.config_path
         if not self.config_file_exists(path):
             self.create_config_file(path)
 
@@ -275,8 +269,13 @@ class LoginManager(DockerBaseClass):
             self.log("Adding registry_url %s to auths." % (self.registry_url))
             config['auths'][self.registry_url] = dict()
 
+        b64auth = base64.b64encode(
+            to_bytes(self.username) + b':' + to_bytes(self.password)
+        )
+        auth = to_text(b64auth)
+
         encoded_credentials = dict(
-            auth=base64.b64encode(self.username + b':' + self.password),
+            auth=auth,
             email=self.email
         )
 
@@ -292,14 +291,14 @@ class LoginManager(DockerBaseClass):
 
 def main():
 
-    argument_spec=dict(
+    argument_spec = dict(
         registry_url=dict(type='str', required=False, default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
         username=dict(type='str', required=False),
         password=dict(type='str', required=False, no_log=True),
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        config_path=dict(type='str', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
+        config_path=dict(type='path', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
     )
 
     required_if = [
@@ -318,16 +317,14 @@ def main():
         login_result={}
     )
 
-    if module.params['state'] == 'present' and module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not module.params['email']:
-        module.fail_json(msg="'email' is required when loging into DockerHub")
+    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
+        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:
         del results['actions']
     client.module.exit_json(**results)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

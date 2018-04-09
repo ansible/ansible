@@ -1,0 +1,23 @@
+---
+- hosts: broken-group-vars
+  gather_facts: false
+  tasks:
+    - name: EXPECTED FAILURE
+      debug:
+        msg: "some_var_that_fails: {{ some_var_that_fails }}"
+
+    - name: EXPECTED FAILURE Display hostvars
+      debug:
+        msg: "{{inventory_hostname}} hostvars: {{ hostvars[inventory_hostname] }}"
+
+
+# ansible-vault --vault-password-file=vault-secret encrypt_string test
+# !vault |
+#           $ANSIBLE_VAULT;1.1;AES256
+#           64323332393930623633306662363165386332376638653035356132646165663632616263653366
+#           6233383362313531623238613461323861376137656265380a366464663835633065616361636231
+#           39653230653538366165623664326661653135306132313730393232343432333635326536373935
+#           3366323866663763660a323766383531396433663861656532373663373134376263383263316261
+#           3137
+
+# $ ansible-playbook -i inventory --vault-password-file=vault-secret tasks.yml 

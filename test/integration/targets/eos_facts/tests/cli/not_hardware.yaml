@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/not_hardware_facts.yaml"
+- debug: msg="START cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"
 
 
 - name: test not hardware
@@ -7,6 +7,7 @@
     provider: "{{ cli }}"
     gather_subset:
       - "!hardware"
+  become: yes
   register: result
 
 - assert:
@@ -23,8 +24,8 @@
       - "'hardware' not in result.ansible_facts.ansible_net_gather_subset"
 
       # Items from those subsets are present
-      - "result.ansible_facts.ansible_net_interfaces.Ethernet1.ipv4.masklen > 1" # interfaces
+      - "result.ansible_facts.ansible_net_interfaces.Management1.ipv4.masklen > 1" # interfaces
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END cli/not_hardware_facts.yaml"
+- debug: msg="END cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"

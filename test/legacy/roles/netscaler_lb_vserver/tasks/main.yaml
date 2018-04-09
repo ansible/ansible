@@ -1,0 +1,7 @@
+---
+
+- include: testbed_setup.yaml state=present
+
+- { include: nitro.yaml, tags: ['nitro'] }
+
+- include: testbed_setup.yaml state=absent

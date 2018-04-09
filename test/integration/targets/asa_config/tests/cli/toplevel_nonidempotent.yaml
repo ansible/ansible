@@ -32,7 +32,7 @@
 
 - name: teardown
   asa_config:
-    lines: ['hostname {{ inventory_hostname }}']
+    lines: ['hostname {{ inventory_hostname_short }}']
     provider: "{{ cli }}"
 
 - debug: msg="END cli/toplevel_nonidempotent.yaml"

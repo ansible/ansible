@@ -1,0 +1,3 @@
+---
+# defaults file for aws_lambda test
+lambda_function_name: '{{resource_prefix}}'

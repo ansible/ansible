@@ -1,0 +1,3 @@
+---
+conditional_template_data1:
+  - {flag: "pass", vlanid1: 13, slot_chassis_number1: "1/2", portchannel_interface_number1: 100, portchannel_mode1: "active"}

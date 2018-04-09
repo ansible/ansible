@@ -43,7 +43,7 @@
 
 - name: start SimpleHTTPServer
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 60 # this test set takes ~15 seconds to run
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
   poll: 0
 
 - wait_for: port={{ http_port }}
@@ -103,7 +103,7 @@
   assert:
     that:
       - "result.failed == true"
-      - "'Failed to validate the SSL certificate' in result.msg"
+      - "'Failed to validate the SSL certificate' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
       - "stat_result.stat.exists == false"
 
 - name: Clean up any cruft from the results directory
@@ -159,7 +159,7 @@
 - name: Ensure bad SSL site reidrect fails
   assert:
     that:
-      - result|failed
+      - result is failed
       - 'badssl_host in result.msg'
 
 - name: test basic auth
@@ -180,7 +180,8 @@
     url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
     user: user
     password: passwd
-    HEADER_Cookie: "fake=fake_value"
+    headers:
+      Cookie: "fake=fake_value"
 
 - name: test PUT
   uri:
@@ -197,7 +198,7 @@
 - name: Assert we got an allow header
   assert:
     that:
-      - 'result.allow|default("") == "HEAD, OPTIONS, GET"'
+      - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
@@ -215,7 +216,7 @@
 - name: Assert SNI verification succeeds on new python
   assert:
     that:
-      - result|success
+      - result is successful
       - 'sni_host in result.content'
   when: ansible_python.has_sslcontext
 
@@ -229,13 +230,13 @@
 - name: Assert SNI verification fails on old python
   assert:
     that:
-      - result|failed
-  when: not result|skipped
+      - result is failed
+  when: result is not skipped
 
 - name: install OS packages that are needed for SNI on old python
   package:
     name: "{{ item }}"
-  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: install python modules for Older Python SNI verification
@@ -255,11 +256,11 @@
 - name: Assert SNI verification succeeds on old python
   assert:
     that:
-      - result|success
+      - result is successful
       - 'sni_host in result.content'
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
-- name: Uninstall ndg-httpsclient and urllib3
+- name: Uninstall ndg-httpsclient
   pip:
     name: "{{ item }}"
     state: absent
@@ -271,7 +272,46 @@
   package:
     name: "{{ item }}"
     state: absent
-  with_items: "{{ uri_os_packages[ansible_os_family] | default([]) }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step1 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install OS packages that are needed for building cryptography
+  package:
+    name: "{{ item }}"
+  with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: install urllib3 and pyopenssl via pip
+  pip:
+    name: "{{ item }}"
+    state: latest
+    extra_args: "-c {{ role_path }}/files/constraints.txt"
+  with_items:
+    - urllib3
+    - PyOpenSSL
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Verify SNI verification succeeds on old python with pip urllib3 contrib
+  uri:
+    url: 'https://{{ sni_host }}'
+    return_content: true
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+  register: result
+
+- name: Assert SNI verification succeeds on old python with pip urllib3 contrib
+  assert:
+    that:
+      - result is successful
+      - 'sni_host in result.content'
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: Uninstall urllib3 and PyOpenSSL
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - urllib3
+    - PyOpenSSL
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
 - name: validate the status_codes are correct
@@ -280,3 +320,83 @@
     status_code: 202
     method: POST
     body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Test client cert auth, no certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:NONE"
+  when: has_httptester
+
+- name: Test client cert auth, with certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with no validation
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: no
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with validation and ssl mismatch
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: yes
+  register: result
+  failed_when: result is not failed
+  when: has_httptester
+
+- name: Write out netrc template
+  template:
+    src: netrc.j2
+    dest: "{{ output_dir }}/netrc"
+
+- debug:
+    msg: "{{ lookup('file', output_dir ~ '/netrc') }}"
+
+- name: Test netrc with port
+  uri:
+    url: "https://{{ httpbin_host }}:443/basic-auth/user/passwd"
+  environment:
+    NETRC: "{{ output_dir|expanduser }}/netrc"
+
+- name: Test follow_redirects=none
+  include_tasks: redirect-none.yml
+
+- name: Test follow_redirects=safe
+  include_tasks: redirect-safe.yml
+
+- name: Test follow_redirects=urllib2
+  include_tasks: redirect-urllib2.yml
+
+- name: Test follow_redirects=all
+  include_tasks: redirect-all.yml

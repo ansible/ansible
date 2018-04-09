@@ -1,0 +1,405 @@
+:source: @{ source }@
+
+.. _@{ module }@:
+{% for alias in aliases %}
+.. _@{ alias }@:
+{% endfor %}
+
+{% if short_description %}
+{%   set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{% else %}
+{%   set title = module %}
+{% endif %}
+
+@{ title }@
+@{ '+' * title|length }@
+
+{% if version_added is defined and version_added != '' -%}
+.. versionadded:: @{ version_added | default('') }@
+{% endif %}
+
+.. contents::
+   :local:
+   :depth: 2
+
+{# ------------------------------------------
+ #
+ # Please note: this looks like a core dump
+ # but it isn't one.
+ #
+ --------------------------------------------#}
+{% if deprecated is defined -%}
+
+
+DEPRECATED
+----------
+{# use unknown here? skip the fields? #}
+:Removed in Ansible: version: @{ deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@
+:Why: @{ deprecated['why'] | default('') | convert_symbols_to_format }@
+:Alternative: @{ deprecated['alternative'] | default('')|  convert_symbols_to_format }@
+
+
+{% endif %}
+
+Synopsis
+--------
+{% if description -%}
+
+{%   if description is string -%}
+- @{ description | convert_symbols_to_format }@
+{%   else %}
+{%     for desc in description %}
+- @{ desc | convert_symbols_to_format }@
+{%     endfor %}
+{%   endif %}
+
+{% endif %}
+
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
+
+{% if requirements -%}
+
+Requirements
+~~~~~~~~~~~~
+{%   if plugin_type == 'module' %}
+The below requirements are needed on the host that executes this @{ plugin_type }@.
+{%   else %}
+The below requirements are needed on the local master node that executes this @{ plugin_type }@.
+{%   endif %}
+
+{%   for req in requirements %}
+- @{ req | convert_symbols_to_format }@
+{%   endfor %}
+
+{% endif %}
+
+{% if options -%}
+
+Parameters
+----------
+
+.. raw:: html
+
+    <table  border=0 cellpadding=0 class="documentation-table">
+        {# Header of the documentation #}
+        <tr>
+            <th class="head"><div class="cell-border">Parameter</div></th>
+            <th class="head"><div class="cell-border">Choices/<font color="blue">Defaults</font></div></th>
+            {% if plugin_type != 'module' %}
+                <th class="head"><div class="cell-border">Configuration</div></th>
+            {% endif %}
+            <th class="head" width="100%"><div class="cell-border">Comments</div></th>
+        </tr>
+        {% for key, value in options|dictsort recursive %}
+            <tr class="return-value-column">
+                {# parameter name with required and/or introduced label #}
+                <td>
+                    <div class="outer-elbow-container">
+                        {% for i in range(1, loop.depth) %}
+                            <div class="elbow-placeholder">&nbsp;</div>
+                        {% endfor %}
+                        <div class="elbow-key">
+                            <b>@{ key }@</b>
+                            {% if value.get('required', False) %}<br/><div style="font-size: small; color: red">required</div>{% endif %}
+                            {% if value.version_added %}<br/><div style="font-size: small; color: darkgreen">(added in @{value.version_added}@)</div>{% endif %}
+                        </div>
+                    </div>
+                </td>
+                {# default / choices #}
+                <td>
+                    <div class="cell-border">
+                        {# Turn boolean values in 'yes' and 'no' values #}
+                        {% if value.default is defined %}
+                            {% if value.default == true %}
+                                {% set _x = value.update({'default': 'yes'}) %}
+                            {% elif value.default == false %}
+                                {% set _x = value.update({'default': 'no'}) %}
+                            {% endif %}
+                        {% endif %}
+                        {% if value.type == 'bool' %}
+                            {% set _x = value.update({'choices': ['no', 'yes']}) %}
+                        {% endif %}
+                        {# Show possible choices and highlight details #}
+                        {% if value.choices %}
+                            <ul><b>Choices:</b>
+                                {% for choice in value.choices %}
+                                    {# Turn boolean values in 'yes' and 'no' values #}
+                                    {% if choice == true %}
+                                        {% set choice = 'yes' %}
+                                    {% elif choice == false %}
+                                        {% set choice = 'no' %}
+                                    {% endif %}
+                                    {% if (value.default is string and value.default == choice) or (value.default is iterable and value.default is not string and choice in value.default) %}
+                                        <li><div style="color: blue"><b>@{ choice | escape }@</b>&nbsp;&larr;</div></li>
+                                    {% else %}
+                                        <li>@{ choice | escape }@</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {# Show default value, when multiple choice or no choices #}
+                        {% if value.default is defined and value.default not in value.choices %}
+                            <b>Default:</b><br/><div style="color: blue">@{ value.default | escape }@</div>
+                        {% endif %}
+                    </div>
+                </td>
+                {# configuration #}
+                {% if plugin_type != 'module' %}
+                    <td>
+                        <div class="cell-border">
+                            {% if 'ini' in value %}
+                                <div> ini entries:
+                                    {% for ini in value.ini %}
+                                        <p>[@{ ini.section }@ ]<br>@{ ini.key }@ = @{ value.default | default('VALUE') }@</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if 'env' in value %}
+                                {% for env in value.env %}
+                                    <div>env:@{ env.name }@</div>
+                                {% endfor %}
+                            {% endif %}
+                            {% if 'vars' in value %}
+                                {% for myvar in value.vars %}
+                                    <div>var: @{ myvar.name }@</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </td>
+                {% endif %}
+                {# description #}
+                <td>
+                    <div class="cell-border">
+                        {% if value.description is string %}
+                            <div>@{ value.description | replace('\n', '\n    ') | html_ify }@</div>
+                        {% else %}
+                            {% for desc in value.description %}
+                                <div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if 'aliases' in value and value.aliases %}
+                            <div style="font-size: small; color: darkgreen"><br/>aliases: @{ value.aliases|join(', ') }@</div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% if value.suboptions %}
+                {% if value.suboptions.items %}
+                    @{ loop(value.suboptions.items()) }@
+                {% elif value.suboptions[0].items %}
+                    @{ loop(value.suboptions[0].items()) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/>
+
+{% endif %}
+
+{% if notes -%}
+
+Notes
+-----
+
+.. note::
+{%   for note in notes %}
+    - @{ note | convert_symbols_to_format }@
+{%   endfor %}
+
+{% endif %}
+
+{% if examples or plainexamples -%}
+
+Examples
+--------
+
+.. code-block:: yaml
+
+{%   for example in examples %}
+{%     if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
+@{ example['code'] | escape | indent(4, True) }@
+{%   endfor %}
+{%   if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+
+{% endif %}
+
+{% if not returnfacts and returndocs and returndocs.ansible_facts is defined %}
+{%   set returnfacts = returndocs.ansible_facts.contains %}
+{%   set _x = returndocs.pop('ansible_facts', None) %}
+{% endif %}
+
+{% if returnfacts -%}
+
+Returned Facts
+--------------
+Facts returned by this module are added/updated in the ``hostvars`` host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
+
+.. raw:: html
+
+    <table border=0 cellpadding=0 class="documentation-table">
+        <tr>
+            <th class="head"><div class="cell-border">Fact</div></th>
+            <th class="head"><div class="cell-border">Returned</div></th>
+            <th class="head" width="100%"><div class="cell-border">Description</div></th>
+        </tr>
+        {% for key, value in returnfacts|dictsort recursive %}
+            <tr class="return-value-column">
+                <td>
+                    <div class="outer-elbow-container">
+                        {% for i in range(1, loop.depth) %}
+                            <div class="elbow-placeholder">&nbsp;</div>
+                        {% endfor %}
+                        <div class="elbow-key">
+                            <b>@{ key }@</b>
+                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
+                <td>
+                    <div class="cell-border">
+                        {% if value.description is string %}
+                            <div>@{ value.description | html_ify }@</div>
+                        {% else %}
+                            {% for desc in value.description %}
+                                <div>@{ desc | html_ify }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        <br/>
+                        {% if value.sample is defined and value.sample %}
+                            <div style="font-size: smaller"><b>Sample:</b></div>
+                            {# TODO: The sample should be escaped, using | escape or | htmlify, but both mess things up beyond repair with dicts #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {% if value.contains %}
+                {% if value.contains.items %}
+                    @{ loop(value.contains.items()) }@
+                {% elif value.contains[0].items %}
+                    @{ loop(value.contains[0].items()) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/><br/>
+
+{% endif %}
+
+{% if returndocs -%}
+
+Return Values
+-------------
+Common return values are documented :ref:`here <common_return_values>`, the following are the fields unique to this @{ plugin_type }@:
+
+.. raw:: html
+
+    <table border=0 cellpadding=0 class="documentation-table">
+        <tr>
+            <th class="head"><div class="cell-border">Key</div></th>
+            <th class="head"><div class="cell-border">Returned</div></th>
+            <th class="head" width="100%"><div class="cell-border">Description</div></th>
+        </tr>
+        {% for key, value in returndocs|dictsort recursive %}
+            <tr class="return-value-column">
+                <td>
+                    <div class="outer-elbow-container">
+                        {% for i in range(1, loop.depth) %}
+                            <div class="elbow-placeholder">&nbsp;</div>
+                        {% endfor %}
+                        <div class="elbow-key">
+                            <b>@{ key }@</b>
+                            <br/><div style="font-size: small; color: red">@{ value.type }@</div>
+                        </div>
+                    </div>
+                </td>
+                <td><div class="cell-border">@{ value.returned | html_ify }@</div></td>
+                <td>
+                    <div class="cell-border">
+                        {% if value.description is string %}
+                            <div>@{ value.description | html_ify }@</div>
+                        {% else %}
+                            {% for desc in value.description %}
+                                <div>@{ desc | html_ify }@</div>
+                            {% endfor %}
+                        {% endif %}
+                        <br/>
+                        {% if value.sample is defined and value.sample %}
+                            <div style="font-size: smaller"><b>Sample:</b></div>
+                            {# TODO: The sample should be escaped, using |escape or |htmlify, but both mess things up beyond repair with dicts #}
+                            <div style="font-size: smaller; color: blue; word-wrap: break-word; word-break: break-all;">@{ value.sample | replace('\n', '\n    ') | html_ify }@</div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {# ---------------------------------------------------------
+             # sadly we cannot blindly iterate through the child dicts,
+             # since in some documentations,
+             # lists are used instead of dicts. This handles both types
+             # ---------------------------------------------------------#}
+            {% if value.contains %}
+                {% if value.contains.items %}
+                    @{ loop(value.contains.items()) }@
+                {% elif value.contains[0].items %}
+                    @{ loop(value.contains[0].items()) }@
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </table>
+    <br/><br/>
+
+{% endif %}
+
+Status
+------
+{% if not deprecated %}
+
+{%   set support = { 'core': 'The Ansible Core Team', 'network': 'The Ansible Network Team', 'certified': 'an Ansible Partner', 'community': 'The Ansible Community', 'curated': 'A Third Party'} %}
+{%   set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+
+{%   if metadata %}
+{%     if metadata.status %}
+
+{%       for cur_state in metadata.status %}
+This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+{%       endfor %}
+
+{%     endif %}
+
+{%     if metadata.supported_by in ('core', 'network') %}
+
+Support
+~~~~~~~
+For more information about Red Hat's support of this @{ plugin_type }@,
+please refer to this `Knowledge Base article <https://access.redhat.com/articles/rhel-top-support-policies/>`_
+
+{%     endif %}
+{%   endif %}
+
+{% else %}
+
+This module is flagged as **deprecated** and will be removed in version { deprecated['removed_in'] | default('') | string | convert_symbols_to_format }@. For more information see :ref:`DEPRECATED`.
+
+{% endif %}
+
+{% if author is defined -%}
+
+Author
+~~~~~~
+
+{%   for author_name in author %}
+- @{ author_name }@
+{%   endfor %}
+
+{% endif %}
+
+.. hint::
+    If you notice any issues in this documentation you can `edit this document <https://github.com/ansible/ansible/edit/devel/lib/ansible/modules/@{ source }@?description=%3C!---%20Your%20description%20here%20--%3E%0A%0A%2Blabel:%20docsite_pr>`_ to improve it.

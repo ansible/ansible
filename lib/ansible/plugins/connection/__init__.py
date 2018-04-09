@@ -1,21 +1,7 @@
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2015 Toshio Kuratomi <tkuratomi@ansible.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-# Make coding more python3-ish
+# (c) 2017, Peter Sprygada <psprygad@redhat.com>
+# (c) 2017 Ansible Project
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -23,23 +9,22 @@ import fcntl
 import gettext
 import os
 import shlex
-from abc import ABCMeta, abstractmethod, abstractproperty
-
+from abc import abstractmethod, abstractproperty
 from functools import wraps
-from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.plugins import shell_loader
-
+from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import shell_loader
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -49,17 +34,20 @@ BUFSIZE = 65536
 def ensure_connect(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        self._connect()
+        if not self._connected:
+            self._connect()
         return func(self, *args, **kwargs)
     return wrapped
 
 
-class ConnectionBase(with_metaclass(ABCMeta, object)):
+class ConnectionBase(AnsiblePlugin):
     '''
     A base class for connections to contain common code.
     '''
 
     has_pipelining = False
+    has_native_async = False  # eg, winrm
+    always_pipeline_modules = False  # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -67,7 +55,15 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     module_implementation_preferences = ('',)
     allow_executable = True
 
-    def __init__(self, play_context, new_stdin, *args, **kwargs):
+    # the following control whether or not the connection supports the
+    # persistent connection framework or not
+    supports_persistence = False
+    force_persistence = False
+
+    def __init__(self, play_context, new_stdin, shell=None, *args, **kwargs):
+
+        super(ConnectionBase, self).__init__()
+
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
             self._play_context = play_context
@@ -82,6 +78,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         self.success_key = None
         self.prompt = None
         self._connected = False
+        self._socket_path = None
+
+        if shell is not None:
+            self._shell = shell
 
         # load the shell plugin for this action/connection
         if play_context.shell:
@@ -105,6 +105,11 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         '''Read-only property holding whether the connection to the remote host is active or closed.'''
         return self._connected
 
+    @property
+    def socket_path(self):
+        '''Read-only property holding the connection socket path for this remote host'''
+        return self._socket_path
+
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
@@ -112,17 +117,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
-
-    def set_host_overrides(self, host, hostvars=None):
-        '''
-        An optional method, which can be used to set connection plugin parameters
-        from variables set on the host (or groups to which the host belongs)
-
-        Any connection plugin using this should first initialize its attributes in
-        an overridden `def __init__(self):`, and then use `host.get_vars()` to find
-        variables which may be used to set those attributes in this method.
-        '''
-        pass
 
     @staticmethod
     def _split_ssh_args(argstring):
@@ -252,8 +246,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.prompt is None:
             return False
         elif isinstance(self._play_context.prompt, string_types):
-            b_prompt = to_bytes(self._play_context.prompt)
-            return b_output.startswith(b_prompt)
+            b_prompt = to_bytes(self._play_context.prompt).strip()
+            b_lines = b_output.splitlines()
+            return any(l.strip().startswith(b_prompt) for l in b_lines)
         else:
             return self._play_context.prompt(b_output)
 
@@ -275,3 +270,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def reset(self):
+        display.warning("Reset is not implemented for this connection")

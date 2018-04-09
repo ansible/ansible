@@ -4,24 +4,16 @@
 # (c) 2014, Jasper N. Brouwer <jasper@nerdsweide.nl>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -53,9 +45,6 @@ options:
         Returned in the C(deploy_helper.project_path) fact.
 
   state:
-    required: False
-    choices: [ present, finalize, absent, clean, query ]
-    default: present
     description:
       - the state of the project.
         C(query) will only gather facts,
@@ -64,57 +53,52 @@ options:
           deployed release and optionally clean old releases,
         C(clean) will remove failed & old releases,
         C(absent) will remove the project folder (synonymous to the M(file) module with C(state=absent))
+    choices: [ present, finalize, absent, clean, query ]
+    default: present
 
   release:
-    required: False
-    default: None
     description:
       - the release version that is being deployed. Defaults to a timestamp format %Y%m%d%H%M%S (i.e. '20141119223359').
         This parameter is optional during C(state=present), but needs to be set explicitly for C(state=finalize).
         You can use the generated fact C(release={{ deploy_helper.new_release }}).
 
   releases_path:
-    required: False
-    default: releases
     description:
       - the name of the folder that will hold the releases. This can be relative to C(path) or absolute.
         Returned in the C(deploy_helper.releases_path) fact.
+    default: releases
 
   shared_path:
-    required: False
-    default: shared
     description:
       - the name of the folder that will hold the shared resources. This can be relative to C(path) or absolute.
         If this is set to an empty string, no shared folder will be created.
         Returned in the C(deploy_helper.shared_path) fact.
+    default: shared
 
   current_path:
-    required: False
-    default: current
     description:
       - the name of the symlink that is created when the deploy is finalized. Used in C(finalize) and C(clean).
         Returned in the C(deploy_helper.current_path) fact.
+    default: current
 
   unfinished_filename:
-    required: False
-    default: DEPLOY_UNFINISHED
     description:
       - the name of the file that indicates a deploy has not finished. All folders in the releases_path that
         contain this file will be deleted on C(state=finalize) with clean=True, or C(state=clean). This file is
         automatically deleted from the I(new_release_path) during C(state=finalize).
+    default: DEPLOY_UNFINISHED
 
   clean:
-    required: False
-    default: True
     description:
       - Whether to run the clean procedure in case of C(state=finalize).
+    type: bool
+    default: 'yes'
 
   keep_releases:
-    required: False
-    default: 5
     description:
       - the number of old releases to keep when cleaning. Used in C(finalize) and C(clean). Any unfinished builds
         will be deleted first, so only correct releases will count. The current version will not count.
+    default: 5
 
 notes:
   - Facts are only returned for C(state=query) and C(state=present). If you use both, you should pass any overridden
@@ -130,42 +114,42 @@ EXAMPLES = '''
 
 # General explanation, starting with an example folder structure for a project:
 
-root:
-    releases:
-        - 20140415234508
-        - 20140415235146
-        - 20140416082818
-
-    shared:
-        - sessions
-        - uploads
-
-    current: -> releases/20140416082818
-
-
-The 'releases' folder holds all the available releases. A release is a complete build of the application being
-deployed. This can be a clone of a repository for example, or a sync of a local folder on your filesystem.
-Having timestamped folders is one way of having distinct releases, but you could choose your own strategy like
-git tags or commit hashes.
-
-During a deploy, a new folder should be created in the releases folder and any build steps required should be
-performed. Once the new build is ready, the deploy procedure is 'finalized' by replacing the 'current' symlink
-with a link to this build.
-
-The 'shared' folder holds any resource that is shared between releases. Examples of this are web-server
-session files, or files uploaded by users of your application. It's quite common to have symlinks from a release
-folder pointing to a shared/subfolder, and creating these links would be automated as part of the build steps.
-
-The 'current' symlink points to one of the releases. Probably the latest one, unless a deploy is in progress.
-The web-server's root for the project will go through this symlink, so the 'downtime' when switching to a new
-release is reduced to the time it takes to switch the link.
-
-To distinguish between successful builds and unfinished ones, a file can be placed in the folder of the release
-that is currently in progress. The existence of this file will mark it as unfinished, and allow an automated
-procedure to remove it during cleanup.
+# root:
+#     releases:
+#         - 20140415234508
+#         - 20140415235146
+#         - 20140416082818
+#
+#     shared:
+#         - sessions
+#         - uploads
+#
+#     current: releases/20140416082818
 
 
-# Typical usage:
+# The 'releases' folder holds all the available releases. A release is a complete build of the application being
+# deployed. This can be a clone of a repository for example, or a sync of a local folder on your filesystem.
+# Having timestamped folders is one way of having distinct releases, but you could choose your own strategy like
+# git tags or commit hashes.
+#
+# During a deploy, a new folder should be created in the releases folder and any build steps required should be
+# performed. Once the new build is ready, the deploy procedure is 'finalized' by replacing the 'current' symlink
+# with a link to this build.
+#
+# The 'shared' folder holds any resource that is shared between releases. Examples of this are web-server
+# session files, or files uploaded by users of your application. It's quite common to have symlinks from a release
+# folder pointing to a shared/subfolder, and creating these links would be automated as part of the build steps.
+#
+# The 'current' symlink points to one of the releases. Probably the latest one, unless a deploy is in progress.
+# The web-server's root for the project will go through this symlink, so the 'downtime' when switching to a new
+# release is reduced to the time it takes to switch the link.
+#
+# To distinguish between successful builds and unfinished ones, a file can be placed in the folder of the release
+# that is currently in progress. The existence of this file will mark it as unfinished, and allow an automated
+# procedure to remove it during cleanup.
+
+
+# Typical usage
 - name: Initialize the deploy root and gather facts
   deploy_helper:
     path: /path/to/root
@@ -281,52 +265,59 @@ procedure to remove it during cleanup.
 - debug:
     var: deploy_helper
 '''
+import os
+import shutil
+import time
+import traceback
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 class DeployHelper(object):
 
     def __init__(self, module):
-        self.module    = module
+        self.module = module
         self.file_args = module.load_file_common_arguments(module.params)
 
-        self.clean               = module.params['clean']
-        self.current_path        = module.params['current_path']
-        self.keep_releases       = module.params['keep_releases']
-        self.path                = module.params['path']
-        self.release             = module.params['release']
-        self.releases_path       = module.params['releases_path']
-        self.shared_path         = module.params['shared_path']
-        self.state               = module.params['state']
+        self.clean = module.params['clean']
+        self.current_path = module.params['current_path']
+        self.keep_releases = module.params['keep_releases']
+        self.path = module.params['path']
+        self.release = module.params['release']
+        self.releases_path = module.params['releases_path']
+        self.shared_path = module.params['shared_path']
+        self.state = module.params['state']
         self.unfinished_filename = module.params['unfinished_filename']
 
     def gather_facts(self):
-        current_path   = os.path.join(self.path, self.current_path)
-        releases_path  = os.path.join(self.path, self.releases_path)
+        current_path = os.path.join(self.path, self.current_path)
+        releases_path = os.path.join(self.path, self.releases_path)
         if self.shared_path:
-            shared_path    = os.path.join(self.path, self.shared_path)
+            shared_path = os.path.join(self.path, self.shared_path)
         else:
-            shared_path    = None
+            shared_path = None
 
         previous_release, previous_release_path = self._get_last_release(current_path)
 
         if not self.release and (self.state == 'query' or self.state == 'present'):
             self.release = time.strftime("%Y%m%d%H%M%S")
 
-        new_release_path = os.path.join(releases_path, self.release)
+        if self.release:
+            new_release_path = os.path.join(releases_path, self.release)
+        else:
+            new_release_path = None
 
         return {
-            'project_path':             self.path,
-            'current_path':             current_path,
-            'releases_path':            releases_path,
-            'shared_path':              shared_path,
-            'previous_release':         previous_release,
-            'previous_release_path':    previous_release_path,
-            'new_release':              self.release,
-            'new_release_path':         new_release_path,
-            'unfinished_filename':      self.unfinished_filename
+            'project_path': self.path,
+            'current_path': current_path,
+            'releases_path': releases_path,
+            'shared_path': shared_path,
+            'previous_release': previous_release,
+            'previous_release_path': previous_release_path,
+            'new_release': self.release,
+            'new_release_path': new_release_path,
+            'unfinished_filename': self.unfinished_filename
         }
 
     def delete_path(self, path):
@@ -339,9 +330,8 @@ class DeployHelper(object):
         if not self.module.check_mode:
             try:
                 shutil.rmtree(path, ignore_errors=False)
-            except Exception:
-                e = get_exception()
-                self.module.fail_json(msg="rmtree failed: %s" % str(e))
+            except Exception as e:
+                self.module.fail_json(msg="rmtree failed: %s" % to_native(e), exception=traceback.format_exc())
 
         return True
 
@@ -392,7 +382,7 @@ class DeployHelper(object):
 
     def remove_unfinished_file(self, new_release_path):
         changed = False
-        unfinished_file_path  = os.path.join(new_release_path, self.unfinished_filename)
+        unfinished_file_path = os.path.join(new_release_path, self.unfinished_filename)
         if os.path.lexists(unfinished_file_path):
             changed = True
             if not self.module.check_mode:
@@ -426,14 +416,14 @@ class DeployHelper(object):
         changes = 0
 
         if os.path.lexists(releases_path):
-            releases = [ f for f in os.listdir(releases_path) if os.path.isdir(os.path.join(releases_path,f)) ]
+            releases = [f for f in os.listdir(releases_path) if os.path.isdir(os.path.join(releases_path, f))]
             try:
                 releases.remove(reserve_version)
             except ValueError:
                 pass
 
             if not self.module.check_mode:
-                releases.sort( key=lambda x: os.path.getctime(os.path.join(releases_path,x)), reverse=True)
+                releases.sort(key=lambda x: os.path.getctime(os.path.join(releases_path, x)), reverse=True)
                 for release in releases[self.keep_releases:]:
                     changes += self.delete_path(os.path.join(releases_path, release))
             elif len(releases) > self.keep_releases:
@@ -451,31 +441,32 @@ class DeployHelper(object):
         previous_release_path = None
 
         if os.path.lexists(current_path):
-            previous_release_path   = os.path.realpath(current_path)
-            previous_release        = os.path.basename(previous_release_path)
+            previous_release_path = os.path.realpath(current_path)
+            previous_release = os.path.basename(previous_release_path)
 
         return previous_release, previous_release_path
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            path                = dict(aliases=['dest'], required=True, type='path'),
-            release             = dict(required=False, type='str', default=None),
-            releases_path       = dict(required=False, type='str', default='releases'),
-            shared_path         = dict(required=False, type='path', default='shared'),
-            current_path        = dict(required=False, type='path', default='current'),
-            keep_releases       = dict(required=False, type='int', default=5),
-            clean               = dict(required=False, type='bool', default=True),
-            unfinished_filename = dict(required=False, type='str', default='DEPLOY_UNFINISHED'),
-            state               = dict(required=False, choices=['present', 'absent', 'clean', 'finalize', 'query'], default='present')
+        argument_spec=dict(
+            path=dict(aliases=['dest'], required=True, type='path'),
+            release=dict(required=False, type='str', default=None),
+            releases_path=dict(required=False, type='str', default='releases'),
+            shared_path=dict(required=False, type='path', default='shared'),
+            current_path=dict(required=False, type='path', default='current'),
+            keep_releases=dict(required=False, type='int', default=5),
+            clean=dict(required=False, type='bool', default=True),
+            unfinished_filename=dict(required=False, type='str', default='DEPLOY_UNFINISHED'),
+            state=dict(required=False, choices=['present', 'absent', 'clean', 'finalize', 'query'], default='present')
         ),
-        add_file_common_args = True,
-        supports_check_mode  = True
+        add_file_common_args=True,
+        supports_check_mode=True
     )
 
     deploy_helper = DeployHelper(module)
-    facts  = deploy_helper.gather_facts()
+    facts = deploy_helper.gather_facts()
 
     result = {
         'state': deploy_helper.state
@@ -484,7 +475,7 @@ def main():
     changes = 0
 
     if deploy_helper.state == 'query':
-        result['ansible_facts'] = { 'deploy_helper': facts }
+        result['ansible_facts'] = {'deploy_helper': facts}
 
     elif deploy_helper.state == 'present':
         deploy_helper.check_link(facts['current_path'])
@@ -493,7 +484,7 @@ def main():
         if deploy_helper.shared_path:
             changes += deploy_helper.create_path(facts['shared_path'])
 
-        result['ansible_facts'] = { 'deploy_helper': facts }
+        result['ansible_facts'] = {'deploy_helper': facts}
 
     elif deploy_helper.state == 'finalize':
         if not deploy_helper.release:
@@ -515,7 +506,7 @@ def main():
 
     elif deploy_helper.state == 'absent':
         # destroy the facts
-        result['ansible_facts'] = { 'deploy_helper': [] }
+        result['ansible_facts'] = {'deploy_helper': []}
         changes += deploy_helper.delete_path(facts['project_path'])
 
     if changes > 0:
@@ -524,8 +515,6 @@ def main():
         result['changed'] = False
 
     module.exit_json(**result)
-
-
 
 
 if __name__ == '__main__':

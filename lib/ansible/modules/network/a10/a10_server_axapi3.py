@@ -1,29 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to manage A10 Networks slb server objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>, 2016, Eric Chou <ericc@a10networks.com>
+# (c) 2014, Mischa Peters <mpeters@a10networks.com>
+# (c) 2016, Eric Chou <ericc@a10networks.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-This file is part of Ansible
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
 
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -33,7 +23,9 @@ short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv3.
 author: "Eric Chou (@ericchou) based on previous work by Mischa Peters (@mischapeters)"
-extends_documentation_fragment: a10
+extends_documentation_fragment:
+  - a10
+  - url
 options:
   server_name:
     description:
@@ -48,7 +40,6 @@ options:
   server_status:
     description:
       - The SLB (Server Load Balancer) virtual server status.
-    required: false
     default: enable
     aliases: ['action']
     choices: ['enable', 'disable']
@@ -56,22 +47,19 @@ options:
     description:
       - A list of ports to create for the server. Each list item should be a dictionary which specifies the C(port:)
         and C(protocol:).
-    required: false
-    default: null
+    aliases: ['port']
   operation:
     description:
       - Create, Update or Remove SLB server. For create and update operation, we use the IP address and server
         name specified in the POST message. For delete operation, we use the server name in the request URI.
-    required: false
     default: create
     choices: ['create', 'update', 'remove']
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
 
 '''
 
@@ -81,7 +69,7 @@ RETURN = '''
 
 EXAMPLES = '''
 # Create a new server
-- a10_server: 
+- a10_server:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
@@ -99,8 +87,16 @@ EXAMPLES = '''
         protocol: TCP
 
 '''
+import json
+
+from ansible.module_utils.network.a10.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
+from ansible.module_utils.network.a10.a10 import AXAPI_PORT_PROTOCOLS
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+
 
 VALID_PORT_FIELDS = ['port-number', 'protocol', 'action']
+
 
 def validate_ports(module, ports):
     for item in ports:
@@ -173,7 +169,6 @@ def main():
     # validate the ports data structure
     validate_ports(module, slb_server_ports)
 
-
     json_post = {
         "server-list": [
             {
@@ -190,7 +185,7 @@ def main():
     if slb_server_status:
         json_post['server-list'][0]['action'] = slb_server_status
 
-    slb_server_data = axapi_call_v3(module, axapi_base_url+'slb/server/', method='GET', body='', signature=signature)
+    slb_server_data = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='GET', body='', signature=signature)
 
     # for empty slb server list
     if axapi_failure(slb_server_data):
@@ -204,8 +199,8 @@ def main():
 
     changed = False
     if operation == 'create':
-        if slb_server_exists == False:
-            result = axapi_call_v3(module, axapi_base_url+'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
+        if slb_server_exists is False:
+            result = axapi_call_v3(module, axapi_base_url + 'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])
             changed = True
@@ -236,19 +231,13 @@ def main():
 
     # if the config has changed, save the config unless otherwise requested
     if changed and write_config:
-        write_result = axapi_call_v3(module, axapi_base_url+'write/memory/', method='POST', body='', signature=signature)
+        write_result = axapi_call_v3(module, axapi_base_url + 'write/memory/', method='POST', body='', signature=signature)
         if axapi_failure(write_result):
             module.fail_json(msg="failed to save the configuration: %s" % write_result['response']['err']['msg'])
 
     # log out gracefully and exit
     axapi_call_v3(module, axapi_base_url + 'logoff/', method='POST', body='', signature=signature)
     module.exit_json(changed=changed, content=result)
-
-
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
 
 
 if __name__ == '__main__':

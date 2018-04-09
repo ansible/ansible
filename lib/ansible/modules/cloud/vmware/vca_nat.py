@@ -1,26 +1,14 @@
 #!/usr/bin/python
 
-# Copyright (c) 2015 VMware, Inc. All Rights Reserved.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, VMware, Inc. All Rights Reserved.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -33,8 +21,8 @@ author: Peter Sprygada (@privateip)
 options:
     purge_rules:
       description:
-        - If set to true, it will delete all rules in the gateway that are not given as paramter to this module.
-      required: false
+        - If set to true, it will delete all rules in the gateway that are not given as parameter to this module.
+      type: bool
       default: false
     nat_rules:
       description:
@@ -77,8 +65,9 @@ EXAMPLES = '''
 
 '''
 
-import time
-import xmltodict
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.vca import VcaError, vca_argument_spec, vca_login
+
 
 VALID_RULE_KEYS = ['rule_type', 'original_ip', 'original_port',
                    'translated_ip', 'translated_port', 'protocol']
@@ -121,27 +110,28 @@ def nat_rules_to_dict(nat_rules):
         )
     return result
 
+
 def rule_to_string(rule):
     strings = list()
     for key, value in rule.items():
         strings.append('%s=%s' % (key, value))
-    return ', '.join(string)
+    return ', '.join(strings)
+
 
 def main():
     argument_spec = vca_argument_spec()
     argument_spec.update(
         dict(
-            nat_rules = dict(type='list', default=[]),
-            gateway_name = dict(default='gateway'),
-            purge_rules = dict(default=False, type='bool'),
-            state = dict(default='present', choices=['present', 'absent'])
+            nat_rules=dict(type='list', default=[]),
+            gateway_name=dict(default='gateway'),
+            purge_rules=dict(default=False, type='bool'),
+            state=dict(default='present', choices=['present', 'absent'])
         )
     )
 
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     vdc_name = module.params.get('vdc_name')
-    state = module.params['state']
     nat_rules = module.params['nat_rules']
     gateway_name = module.params['gateway_name']
     purge_rules = module.params['purge_rules']
@@ -210,10 +200,6 @@ def main():
 
     module.exit_json(**result)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.vca import *
 
 if __name__ == '__main__':
     main()

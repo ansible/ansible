@@ -3,26 +3,16 @@
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = '''
 ---
@@ -43,21 +33,16 @@ options:
               a new virtual network or using purge_address_prefixes.
         aliases:
             - address_prefixes
-        default: null
-        required: false
     dns_servers:
         description:
             - Custom list of DNS servers. Maximum length of two. The first server in the list will be treated
               as the Primary server. This is an explicit list. Existing DNS servers will be replaced with the
               specified list. Use the purge_dns_servers option to remove all custom DNS servers and revert to
               default Azure servers.
-        default: null
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
         default: resource_group location
-        required: false
     name:
         description:
             - name of the virtual network.
@@ -65,13 +50,14 @@ options:
     purge_address_prefixes:
         description:
             - Use with state present to remove any existing address_prefixes.
-        default: false
+        type: bool
+        default: 'no'
     purge_dns_servers:
         description:
             - Use with state present to remove existing DNS servers, reverting to default Azure servers. Mutually
               exclusive with dns_servers.
-        default: false
-        required: false
+        type: bool
+        default: 'no'
     state:
         description:
             - Assert the state of the virtual network. Use 'present' to create or update and
@@ -80,7 +66,6 @@ options:
         choices:
             - absent
             - present
-        required: false
 
 extends_documentation_fragment:
     - azure
@@ -137,17 +122,13 @@ state:
     }
 '''
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.azure_rm_common import *
-
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.network.models import VirtualNetwork, AddressSpace, DhcpOptions
 except ImportError:
     # This is handled in azure_rm_common
     pass
 
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
 
 
 def virtual_network_to_dict(vnet):
@@ -208,7 +189,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
         self.dns_servers = None
         self.purge_dns_servers = None
 
-        self.results=dict(
+        self.results = dict(
             changed=False,
             state=dict()
         )
@@ -220,7 +201,7 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
 
     def exec_module(self, **kwargs):
 
-        for key in self.module_arg_spec.keys() + ['tags']:
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
 
         self.results['check_mode'] = self.check_mode
@@ -308,14 +289,14 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                     self.log("Create virtual network {0}".format(self.name))
                     if not self.address_prefixes_cidr:
                         self.fail('Parameter error: address_prefixes_cidr required when creating a virtual network')
-                    vnet = VirtualNetwork(
+                    vnet = self.network_models.VirtualNetwork(
                         location=self.location,
-                        address_space=AddressSpace(
+                        address_space=self.network_models.AddressSpace(
                             address_prefixes=self.address_prefixes_cidr
                         )
                     )
                     if self.dns_servers:
-                        vnet.dhcp_options = DhcpOptions(
+                        vnet.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=self.dns_servers
                         )
                     if self.tags:
@@ -324,15 +305,15 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                 else:
                     # update existing virtual network
                     self.log("Update virtual network {0}".format(self.name))
-                    vnet = VirtualNetwork(
+                    vnet = self.network_models.VirtualNetwork(
                         location=results['location'],
-                        address_space=AddressSpace(
+                        address_space=self.network_models.AddressSpace(
                             address_prefixes=results['address_prefixes']
                         ),
                         tags=results['tags']
                     )
                     if results.get('dns_servers'):
-                        vnet.dhcp_options = DhcpOptions(
+                        vnet.dhcp_options = self.network_models.DhcpOptions(
                             dns_servers=results['dns_servers']
                         )
                     self.results['state'] = self.create_or_update_vnet(vnet)
@@ -340,14 +321,13 @@ class AzureRMVirtualNetwork(AzureRMModuleBase):
                 self.delete_virtual_network()
                 self.results['state']['status'] = 'Deleted'
 
-
         return self.results
 
     def create_or_update_vnet(self, vnet):
         try:
             poller = self.network_client.virtual_networks.create_or_update(self.resource_group, self.name, vnet)
             new_vnet = self.get_poller_result(poller)
-        except Exception as  exc:
+        except Exception as exc:
             self.fail("Error creating or updating virtual network {0} - {1}".format(self.name, str(exc)))
         return virtual_network_to_dict(new_vnet)
 
@@ -365,4 +345,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

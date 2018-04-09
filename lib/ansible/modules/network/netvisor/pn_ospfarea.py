@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_ospfarea
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove ospf area to/from a vrouter.
 description:
   - Execute vrouter-ospf-add, vrouter-ospf-remove command.
@@ -101,6 +98,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the ospf command.
   returned: always
@@ -114,6 +113,8 @@ changed:
   returned: always
   type: bool
 """
+
+import shlex
 
 
 def get_command_from_state(state):
@@ -139,8 +140,8 @@ def main():
             pn_cliusername=dict(required=True, type='str'),
             pn_clipassword=dict(required=True, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str'),
-            state =dict(required=True, type='str',
-                        choices=['present', 'absent', 'update']),
+            state=dict(required=True, type='str',
+                       choices=['present', 'absent', 'update']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_ospf_area=dict(required=True, type='str'),
             pn_stub_type=dict(type='str', choices=['none', 'stub', 'nssa',

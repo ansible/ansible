@@ -1,24 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -32,6 +24,7 @@ options:
     description:
         - Name of the parameter to update.
     required: true
+    aliases: [parameter]
   value:
     description:
         - Value of the parameter to be set.
@@ -39,28 +32,21 @@ options:
   db:
     description:
         - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
         - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
         - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
         - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
         - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -78,6 +64,7 @@ EXAMPLES = """
 - name: updating load_balance_policy
   vertica_configuration: name=failovertostandbyafter value='8 hours'
 """
+import traceback
 
 try:
     import pyodbc
@@ -87,16 +74,18 @@ else:
     pyodbc_found = True
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 class NotSupportedError(Exception):
     pass
 
+
 class CannotDropError(Exception):
     pass
 
 # module specific functions
+
 
 def get_configuration_facts(cursor, parameter_name=''):
     facts = {}
@@ -116,12 +105,14 @@ def get_configuration_facts(cursor, parameter_name=''):
                 'current_value': row.current_value,
                 'default_value': row.default_value}
     return facts
-    
+
+
 def check(configuration_facts, parameter_name, current_value):
     parameter_key = parameter_name.lower()
     if current_value and current_value.lower() != configuration_facts[parameter_key]['current_value'].lower():
         return False
     return True
+
 
 def present(configuration_facts, cursor, parameter_name, current_value):
     parameter_key = parameter_name.lower()
@@ -135,6 +126,7 @@ def present(configuration_facts, cursor, parameter_name, current_value):
 
 # module logic
 
+
 def main():
 
     module = AnsibleModule(
@@ -145,8 +137,8 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
-        ), supports_check_mode = True)
+            login_password=dict(default=None, no_log=True),
+        ), supports_check_mode=True)
 
     if not pyodbc_found:
         module.fail_json(msg="The python pyodbc module is required.")
@@ -168,13 +160,13 @@ def main():
             "User={3};"
             "Password={4};"
             "ConnectionLoadBalance={5}"
-            ).format(module.params['cluster'], module.params['port'], db,
-                module.params['login_user'], module.params['login_password'], 'true')
+        ).format(module.params['cluster'], module.params['port'], db,
+                 module.params['login_user'], module.params['login_password'], 'true')
         db_conn = pyodbc.connect(dsn, autocommit=True)
         cursor = db_conn.cursor()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Unable to connect to database: {0}.".format(e))
+    except Exception as e:
+        module.fail_json(msg="Unable to connect to database: {0}.".format(to_native(e)),
+                         exception=traceback.format_exc())
 
     try:
         configuration_facts = get_configuration_facts(cursor)
@@ -183,21 +175,17 @@ def main():
         else:
             try:
                 changed = present(configuration_facts, cursor, parameter_name, current_value)
-            except pyodbc.Error:
-                e = get_exception()
-                module.fail_json(msg=str(e))
-    except NotSupportedError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_configuration': configuration_facts})
-    except CannotDropError:
-        e = get_exception()
-        module.fail_json(msg=str(e), ansible_facts={'vertica_configuration': configuration_facts})
+            except pyodbc.Error as e:
+                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+    except NotSupportedError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_configuration': configuration_facts})
+    except CannotDropError as e:
+        module.fail_json(msg=to_native(e), ansible_facts={'vertica_configuration': configuration_facts})
     except SystemExit:
         # avoid catching this on python 2.4
         raise
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg=e)
+    except Exception as e:
+        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, parameter=parameter_name, ansible_facts={'vertica_configuration': configuration_facts})
 

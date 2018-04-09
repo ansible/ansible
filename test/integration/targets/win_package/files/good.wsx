@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="223D9A13-653B-4231-A365-EDDC30B4F226" UpgradeCode="575580C0-AFA1-4C17-8A9C-3CB0CEDC6A05" Name="Bovine University" Manufacturer="Ansible" Version="1.0.0" Language="1033" Codepage="1252">
+        <Package InstallerVersion="200" Compressed="yes" Comments="When I grow up I want to go to Bovine University" />
+        <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLDIR" Name="Bovine University">
+                    <Component Id="MooFiles" Guid="D7BC586D-A23C-4002-BC20-76579F25C67D">
+                        <File Id="MooFile" Source="moo.exe" />
+                    </Component>
+                    <Component Id="CowFiles" Guid="D1801B2D-8E54-4F19-8B14-A42D8A122A24">
+                        <File Id="CowFile" Source="cow.exe" />
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature Id="Moo" Level="1">
+            <ComponentRef Id="MooFiles" />
+        </Feature>
+        <Feature Id="Cow" Level="1">
+            <ComponentRef Id="CowFiles" />
+        </Feature>
+    </Product>
+</Wix>

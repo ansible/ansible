@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Michael Warkentin <mwarkentin@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,19 +25,16 @@ options:
   name:
     description:
       - The name of a bower package to install
-    required: false
   offline:
     description:
       - Install packages from local cache, if the packages were installed before
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
   production:
     description:
       - Install with --production flag
-    required: false
-    default: no
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
     version_added: "2.0"
   path:
     description:
@@ -55,19 +43,15 @@ options:
   relative_execpath:
     description:
       - Relative path to bower executable from install path
-    default: null
-    required: false
     version_added: "2.1"
   state:
     description:
       - The state of the bower package
-    required: false
     default: present
     choices: [ "present", "absent", "latest" ]
   version:
     description:
       - The version to be installed
-    required: false
 '''
 
 EXAMPLES = '''
@@ -76,7 +60,7 @@ EXAMPLES = '''
     name: bootstrap
 
 - name: Install "bootstrap" bower package on version 3.1.1.
- bower:
+  bower:
     name: bootstrap
     version: '3.1.1'
 
@@ -103,6 +87,10 @@ EXAMPLES = '''
     path: /app/location
     relative_execpath: node_modules/.bin
 '''
+import json
+import os
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Bower(object):
@@ -209,7 +197,7 @@ def main():
     name = module.params['name']
     offline = module.params['offline']
     production = module.params['production']
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     relative_execpath = module.params['relative_execpath']
     state = module.params['state']
     version = module.params['version']
@@ -222,12 +210,12 @@ def main():
     changed = False
     if state == 'present':
         installed, missing, outdated = bower.list()
-        if len(missing):
+        if missing:
             changed = True
             bower.install()
     elif state == 'latest':
         installed, missing, outdated = bower.list()
-        if len(missing) or len(outdated):
+        if missing or outdated:
             changed = True
             bower.update()
     else:  # Absent
@@ -238,7 +226,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# Import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

@@ -1,0 +1,56 @@
+---
+- debug: msg="START cli/ping.yaml on connection={{ ansible_connection }}"
+
+- ios_command:
+    commands: show version
+    provider: "{{ cli }}"
+  register: show_version_result
+
+- set_fact: management_interface=GigabitEthernet0/0
+  when: "'Cisco IOS' in show_version_result.stdout[0]"
+
+- set_fact: management_interface=GigabitEthernet1
+  when: "'Cisco IOS-XE' in show_version_result.stdout[0]"
+
+- name: Get show ip management nterface output
+  ios_command:
+    commands:
+      - "show ip interface {{ management_interface }} | include Internet address"
+    provider: "{{ cli }}"
+  register: show_ip_interface_result
+
+- name: Extract the IP address from registered output
+  set_fact: management_ip="{{ show_ip_interface_result.stdout[0].split()[-1].split('/')[0] }}"
+
+- name: expected successful ping
+  ios_ping: &valid_ip
+    dest: '{{ management_ip }}'
+    provider: "{{ cli }}"
+  register: esp
+ 
+- name: unexpected unsuccessful ping
+  ios_ping: &invalid_ip
+    dest: '10.255.255.250'
+    timeout: 45
+    provider: "{{ cli }}"
+  register: uup
+  ignore_errors: yes
+
+- name: unexpected successful ping
+  ios_ping:
+    <<: *valid_ip
+    state: 'absent'
+  register: usp
+  ignore_errors: yes
+
+- name: expected unsuccessful ping
+  ios_ping:
+    <<: *invalid_ip
+    state: 'absent'
+  register: eup
+
+- name: assert
+  assert:
+    that:
+    - esp.failed == eup.failed == false
+    - usp.failed == uup.failed == true

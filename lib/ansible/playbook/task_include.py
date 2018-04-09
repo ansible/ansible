@@ -50,6 +50,8 @@ class TaskInclude(Task):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = TaskInclude(block=block, role=role, task_include=task_include)
+        if t.action == 'include_task':
+            t._inheritable = False
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
@@ -61,19 +63,21 @@ class TaskInclude(Task):
         '''
         We override the parent Task() classes get_vars here because
         we need to include the args of the include into the vars as
-        they are params to the included tasks.
+        they are params to the included tasks. But ONLY for 'include'
         '''
-        all_vars = dict()
-        if self._parent:
-            all_vars.update(self._parent.get_vars())
+        if self.action != 'include':
+            all_vars = super(TaskInclude, self).get_vars()
+        else:
+            all_vars = dict()
+            if self._parent:
+                all_vars.update(self._parent.get_vars())
 
-        all_vars.update(self.vars)
-        all_vars.update(self.args)
+            all_vars.update(self.vars)
+            all_vars.update(self.args)
 
-        if 'tags' in all_vars:
-            del all_vars['tags']
-        if 'when' in all_vars:
-            del all_vars['when']
+            if 'tags' in all_vars:
+                del all_vars['tags']
+            if 'when' in all_vars:
+                del all_vars['when']
 
         return all_vars
-

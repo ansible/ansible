@@ -3,27 +3,16 @@
 
 # (c) 2014, Jakub Jirutka <jakub@jirutka.cz>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import shutil
-from os import path
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -48,11 +37,9 @@ options:
       - An URL of the alternative overlays list that defines the overlay to install.
         This list will be fetched and saved under C(${overlay_defs})/${name}.xml), where
         C(overlay_defs) is readed from the Layman's configuration.
-    required: false
   state:
     description:
       - Whether to install (C(present)), sync (C(updated)), or uninstall (C(absent)) the overlay.
-    required: false
     default: present
     choices: [present, absent, updated]
   validate_certs:
@@ -60,9 +47,8 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.  Prior to 1.9.3 the code
         defaulted to C(no).
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: '1.9.3'
 '''
 
@@ -93,7 +79,9 @@ EXAMPLES = '''
     state: absent
 '''
 
-USERAGENT = 'ansible-httpget'
+import shutil
+
+from os import path
 
 try:
     from layman.api import LaymanAPI
@@ -102,8 +90,15 @@ try:
 except ImportError:
     HAS_LAYMAN_API = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
-class ModuleError(Exception): pass
+
+USERAGENT = 'ansible-httpget'
+
+
+class ModuleError(Exception):
+    pass
 
 
 def init_layman(config=None):
@@ -157,16 +152,16 @@ def install_overlay(module, name, list_url=None):
     layman = init_layman(layman_conf)
 
     if layman.is_installed(name):
-        return False    
-    
+        return False
+
     if module.check_mode:
         mymsg = 'Would add layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)
 
     if not layman.is_repo(name):
         if not list_url:
-            raise ModuleError("Overlay '%s' is not on the list of known " \
-                "overlays and URL of the remote list was not provided." % name)
+            raise ModuleError("Overlay '%s' is not on the list of known "
+                              "overlays and URL of the remote list was not provided." % name)
 
         overlay_defs = layman_conf.get_option('overlay_defs')
         dest = path.join(overlay_defs, name + '.xml')
@@ -195,13 +190,14 @@ def uninstall_overlay(module, name):
 
     if not layman.is_installed(name):
         return False
-    
+
     if module.check_mode:
         mymsg = 'Would remove layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)
 
     layman.delete_repos(name)
-    if layman.get_errors(): raise ModuleError(layman.get_errors())
+    if layman.get_errors():
+        raise ModuleError(layman.get_errors())
 
     return True
 
@@ -215,7 +211,7 @@ def sync_overlay(name):
     layman = init_layman()
 
     if not layman.sync(name):
-        messages = [ str(item[1]) for item in layman.sync_results[2] ]
+        messages = [str(item[1]) for item in layman.sync_results[2]]
         raise ModuleError(messages)
 
 
@@ -233,11 +229,11 @@ def sync_overlays():
 def main():
     # define module
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            list_url = dict(aliases=['url']),
-            state = dict(default="present", choices=['present', 'absent', 'updated']),
-            validate_certs = dict(required=False, default=True, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True),
+            list_url=dict(aliases=['url']),
+            state=dict(default="present", choices=['present', 'absent', 'updated']),
+            validate_certs=dict(required=False, default=True, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -268,8 +264,5 @@ def main():
         module.exit_json(changed=changed, name=name)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

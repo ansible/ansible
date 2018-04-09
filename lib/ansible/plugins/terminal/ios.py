@@ -19,64 +19,72 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import json
+import re
 
-from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.plugins.terminal import TerminalBase
 
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
+    terminal_stdout_re = [
+        re.compile(br"[\r\n][\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$")
     ]
 
-    terminal_errors_re = [
-        re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+    terminal_stderr_re = [
+        re.compile(br"% ?Error"),
+        # re.compile(br"^% \w+", re.M),
+        re.compile(br"% ?Bad secret"),
+        re.compile(br"[\r\n%] Bad passwords"),
+        re.compile(br"invalid input", re.I),
+        re.compile(br"(?:incomplete|ambiguous) command", re.I),
+        re.compile(br"connection timed out", re.I),
+        re.compile(br"[^\r\n]+ not found"),
+        re.compile(br"'[^']' +returned error code: ?\d+"),
+        re.compile(br"Bad mask", re.I),
+        re.compile(br"% ?(\S+) ?overlaps with ?(\S+)", re.I),
+        re.compile(br"[%\S] ?Error: ?[\s]+", re.I),
+        re.compile(br"[%\S] ?Informational: ?[\s]+", re.I)
     ]
-
-    supports_multiplexing = False
 
     def on_open_shell(self):
         try:
-            self._exec_cli_command('terminal length 0')
+            for cmd in (b'terminal length 0', b'terminal width 512'):
+                self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
 
-    def on_authorize(self, passwd=None):
-        if self._get_prompt().endswith('#'):
+    def on_become(self, passwd=None):
+        if self._get_prompt().endswith(b'#'):
             return
 
-        cmd = {'command': 'enable'}
+        cmd = {u'command': u'enable'}
         if passwd:
-            cmd['prompt'] = r"[\r\n]?password: $"
-            cmd['answer'] = passwd
-
+            # Note: python-3.5 cannot combine u"" and r"" together.  Thus make
+            # an r string and use to_text to ensure it's text on both py2 and py3.
+            cmd[u'prompt'] = to_text(r"[\r\n]password: ?$", errors='surrogate_or_strict')
+            cmd[u'answer'] = passwd
+            cmd[u'prompt_retry_check'] = True
         try:
-            self._exec_cli_command(json.dumps(cmd))
-        except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode')
+            self._exec_cli_command(to_bytes(json.dumps(cmd), errors='surrogate_or_strict'))
+            prompt = self._get_prompt()
+            if prompt is None or not prompt.endswith(b'#'):
+                raise AnsibleConnectionFailure('failed to elevate privilege to enable mode still at prompt [%s]' % prompt)
+        except AnsibleConnectionFailure as e:
+            prompt = self._get_prompt()
+            raise AnsibleConnectionFailure('unable to elevate privilege to enable mode, at prompt [%s] with error: %s' % (prompt, e.message))
 
-    def on_deauthorize(self):
+    def on_unbecome(self):
         prompt = self._get_prompt()
         if prompt is None:
             # if prompt is None most likely the terminal is hung up at a prompt
             return
 
-        if '(config' in prompt:
-            self._exec_cli_command('end')
-            self._exec_cli_command('disable')
+        if b'(config' in prompt:
+            self._exec_cli_command(b'end')
+            self._exec_cli_command(b'disable')
 
-        elif prompt.endswith('#'):
-            self._exec_cli_command('disable')
-
-
+        elif prompt.endswith(b'#'):
+            self._exec_cli_command(b'disable')

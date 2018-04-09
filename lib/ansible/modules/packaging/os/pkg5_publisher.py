@@ -3,22 +3,16 @@
 
 # Copyright 2014 Peter Oliver <ansible@mavit.org.uk>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,34 +33,25 @@ options:
   state:
     description:
       - Whether to ensure that a publisher is present or absent.
-    required: false
     default: present
     choices: [ present, absent ]
   sticky:
     description:
       - Packages installed from a sticky repository can only receive updates
         from that repository.
-    required: false
-    default: null
-    choices: [ true, false ]
+    type: bool
   enabled:
     description:
       - Is the repository enabled or disabled?
-    required: false
-    default: null
-    choices: [ true, false ]
+    type: bool
   origin:
     description:
       - A path or URL to the repository.
       - Multiple values may be provided.
-    required: false
-    default: null
   mirror:
     description:
       - A path or URL to the repository mirror.
       - Multiple values may be provided.
-    required: false
-    default: null
 '''
 EXAMPLES = '''
 # Fetch packages for the solaris publisher direct from Oracle:
@@ -80,6 +65,9 @@ EXAMPLES = '''
     name: site
     origin: 'https://pkg.example.com/site/'
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
     module = AnsibleModule(
@@ -111,7 +99,7 @@ def modify_publisher(module, params):
 
     if name in existing:
         for option in ['origin', 'mirror', 'sticky', 'enabled']:
-            if params[option] != None:
+            if params[option] is not None:
                 if params[option] != existing[name][option]:
                     return set_publisher(module, params)
     else:
@@ -124,21 +112,21 @@ def set_publisher(module, params):
     name = params['name']
     args = []
 
-    if params['origin'] != None:
+    if params['origin'] is not None:
         args.append('--remove-origin=*')
         args.extend(['--add-origin=' + u for u in params['origin']])
-    if params['mirror'] != None:
+    if params['mirror'] is not None:
         args.append('--remove-mirror=*')
         args.extend(['--add-mirror=' + u for u in params['mirror']])
 
-    if params['sticky'] != None and params['sticky']:
+    if params['sticky'] is not None and params['sticky']:
         args.append('--sticky')
-    elif params['sticky'] != None:
+    elif params['sticky'] is not None:
         args.append('--non-sticky')
 
-    if params['enabled'] != None and params['enabled']:
+    if params['enabled'] is not None and params['enabled']:
         args.append('--enable')
-    elif params['enabled'] != None:
+    elif params['enabled'] is not None:
         args.append('--disable')
 
     rc, out, err = module.run_command(
@@ -151,11 +139,13 @@ def set_publisher(module, params):
         'msg': err,
         'changed': True,
     }
+    if rc != 0:
+        module.fail_json(**response)
     module.exit_json(**response)
 
 
 def unset_publisher(module, publisher):
-    if not publisher in get_publishers(module):
+    if publisher not in get_publishers(module):
         module.exit_json()
 
     rc, out, err = module.run_command(
@@ -168,6 +158,8 @@ def unset_publisher(module, publisher):
         'msg': err,
         'changed': True,
     }
+    if rc != 0:
+        module.fail_json(**response)
     module.exit_json(**response)
 
 
@@ -182,7 +174,7 @@ def get_publishers(module):
         values = dict(zip(keys, map(unstringify, line.split("\t"))))
         name = values['publisher']
 
-        if not name in publishers:
+        if name not in publishers:
             publishers[name] = dict(
                 (k, values[k]) for k in ['sticky', 'enabled']
             )
@@ -205,8 +197,6 @@ def unstringify(val):
     else:
         return val
 
-
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

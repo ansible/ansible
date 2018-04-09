@@ -1,28 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Ansible module to manage mssql databases
 # (c) 2014, Vedit Firat Arig <firatarig@gmail.com>
 # Outline and parts are reused from Mark Theunissen's mysql_db module
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,51 +26,42 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
     aliases: [ db ]
   login_user:
     description:
       - The username used to authenticate with
-    required: false
-    default: null
   login_password:
     description:
       - The password used to authenticate with
-    required: false
-    default: null
   login_host:
     description:
       - Host running the database
-    required: false
   login_port:
     description:
       - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
-    required: false
     default: 1433
   state:
     description:
       - The database state
-    required: false
     default: present
     choices: [ "present", "absent", "import" ]
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) files are supported.
-    required: false
   autocommit:
     description:
-      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed within a transaction.
-    required: false
-    default: false
-    choices: [ "false", "true" ]
+      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed
+        within a transaction.
+    type: bool
+    default: 'no'
 notes:
    - Requires the pymssql Python package on the remote host. For Ubuntu, this
      is as easy as pip install pymssql (See M(pip).)
 requirements:
    - python >= 2.7
    - pymssql
-author: Vedit Firat Arig 
+author: Vedit Firat Arig
 '''
 
 EXAMPLES = '''
@@ -100,17 +81,20 @@ EXAMPLES = '''
     target: /tmp/dump.sql
 '''
 
-RETURN  = '''
+RETURN = '''
 #
 '''
 
 import os
+
 try:
     import pymssql
 except ImportError:
     mssql_found = False
 else:
     mssql_found = True
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 def db_exists(conn, cursor, db):
@@ -131,6 +115,7 @@ def db_delete(conn, cursor, db):
         pass
     cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)
+
 
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
@@ -159,7 +144,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True, aliases=['db']),
             login_user=dict(default=''),
-            login_password=dict(default=''),
+            login_password=dict(default='', no_log=True),
             login_host=dict(required=True),
             login_port=dict(default='1433'),
             target=dict(default=None),
@@ -181,7 +166,7 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-    
+
     login_querystring = login_host
     if login_port != "1433":
         login_querystring = "%s:%s" % (login_host, login_port)
@@ -194,10 +179,11 @@ def main():
         cursor = conn.cursor()
     except Exception as e:
         if "Unknown database" in str(e):
-                errno, errstr = e.args
-                module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
+            errno, errstr = e.args
+            module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your @sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
+            module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your "
+                                 "@sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
 
     conn.autocommit(True)
     changed = False
@@ -238,8 +224,6 @@ def main():
 
     module.exit_json(changed=changed, db=db)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
-

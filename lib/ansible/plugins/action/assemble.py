@@ -25,9 +25,10 @@ import os.path
 import re
 import tempfile
 
-from ansible.constants import mk_boolean as boolean
-from ansible.errors import AnsibleError
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -36,10 +37,10 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
         ''' assemble a file from a directory of fragments '''
 
-        tmpfd, temp_path = tempfile.mkstemp()
+        tmpfd, temp_path = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         tmp = os.fdopen(tmpfd, 'wb')
         delimit_me = False
         add_newline = False
@@ -51,7 +52,7 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment), 'rb').read()
+            fragment_content = open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb').read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
@@ -79,99 +80,91 @@ class ActionModule(ActionBase):
         return temp_path
 
     def run(self, tmp=None, task_vars=None):
+
+        self._supports_check_mode = False
+
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del tmp  # tmp no longer has any effect
+
         if task_vars is None:
             task_vars = dict()
 
-        result = super(ActionModule, self).run(tmp, task_vars)
-
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = "skipped, this module does not support check_mode."
-            return result
-
-        src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
-        delimiter  = self._task.args.get('delimiter', None)
+        src = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
+        delimiter = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
-        regexp     = self._task.args.get('regexp', None)
-        follow     = self._task.args.get('follow', False)
+        regexp = self._task.args.get('regexp', None)
+        follow = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
+        decrypt = self._task.args.get('decrypt', True)
 
-        if src is None or dest is None:
-            result['failed'] = True
-            result['msg'] = "src and dest are required"
-            return result
+        try:
+            if src is None or dest is None:
+                raise AnsibleActionFail("src and dest are required")
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-        if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            if boolean(remote_src, strict=False):
+                result.update(self._execute_module(task_vars=task_vars))
+                raise _AnsibleActionDone()
+            else:
+                try:
+                    src = self._find_needle('files', src)
+                except AnsibleError as e:
+                    raise AnsibleActionFail(to_native(e))
 
-        if boolean(remote_src):
-            result.update(self._execute_module(tmp=tmp, task_vars=task_vars, delete_remote_tmp=False))
-            self._remove_tmp_path(tmp)
-            return result
-        else:
-            try:
-                src = self._find_needle('files', src)
-            except AnsibleError as e:
-                result['failed'] = True
-                result['msg'] = to_native(e)
-                return result
+            if not os.path.isdir(src):
+                raise AnsibleActionFail(u"Source (%s) is not a directory" % src)
 
-        if not os.path.isdir(src):
-            result['failed'] = True
-            result['msg'] = u"Source (%s) is not a directory" % src
-            return result
+            _re = None
+            if regexp is not None:
+                _re = re.compile(regexp)
 
-        _re = None
-        if regexp is not None:
-            _re = re.compile(regexp)
+            # Does all work assembling the file
+            path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
 
-        # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+            path_checksum = checksum_s(path)
+            dest = self._remote_expand_user(dest)
+            dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow)
 
-        path_checksum = checksum_s(path)
-        dest = self._remote_expand_user(dest)
-        dest_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=follow, tmp=tmp)
+            diff = {}
 
-        diff = {}
+            # setup args for running modules
+            new_module_args = self._task.args.copy()
 
-        # setup args for running modules
-        new_module_args = self._task.args.copy()
+            # clean assemble specific options
+            for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
+                if opt in new_module_args:
+                    del new_module_args[opt]
 
-        # clean assemble specific options
-        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
-            if opt in new_module_args:
-                del new_module_args[opt]
-
-        new_module_args.update(
-            dict(
-                dest=dest,
-                original_basename=os.path.basename(src),
+            new_module_args.update(
+                dict(
+                    dest=dest,
+                    original_basename=os.path.basename(src),
+                )
             )
-        )
 
-        if path_checksum != dest_stat['checksum']:
+            if path_checksum != dest_stat['checksum']:
 
-            if self._play_context.diff:
-                diff = self._get_diff_data(dest, path, task_vars)
+                if self._play_context.diff:
+                    diff = self._get_diff_data(dest, path, task_vars)
 
-            remote_path = self._connection._shell.join_path(tmp, 'src')
-            xfered = self._transfer_file(path, remote_path)
+                remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
+                xfered = self._transfer_file(path, remote_path)
 
-            # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, remote_path), remote_user)
+                # fix file permissions when the copy is done as a different user
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
-            new_module_args.update( dict( src=xfered,))
+                new_module_args.update(dict(src=xfered,))
 
-            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False)
-            if diff:
-                res['diff'] = diff
-            result.update(res)
-        else:
-            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
+                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+                if diff:
+                    res['diff'] = diff
+                result.update(res)
+            else:
+                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
 
-        self._remove_tmp_path(tmp)
+        except AnsibleAction as e:
+            result.update(e.result)
+        finally:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

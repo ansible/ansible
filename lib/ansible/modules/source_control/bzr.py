@@ -1,67 +1,53 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, André Paramés <git@andreparames.com>
+# Copyright: (c) 2013, André Paramés <git@andreparames.com>
 # Based on the Git module by Michael DeHaan <michael.dehaan@gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = u'''
 ---
 module: bzr
-author: "André Paramés (@andreparames)"
+author:
+- André Paramés (@andreparames)
 version_added: "1.1"
 short_description: Deploy software (or files) from bzr branches
 description:
     - Manage I(bzr) branches to deploy files or software.
 options:
     name:
-        required: true
-        aliases: [ 'parent' ]
         description:
             - SSH or HTTP protocol address of the parent branch.
+        aliases: [ parent ]
+        required: yes
     dest:
-        required: true
         description:
             - Absolute path of where the branch should be cloned to.
+        required: yes
     version:
-        required: false
-        default: "head"
         description:
             - What version of the branch to clone.  This can be the
               bzr revno or revid.
+        default: head
     force:
-        required: false
-        default: "no"
-        choices: [ 'yes', 'no' ]
         description:
             - If C(yes), any modified files in the working
               tree will be discarded.  Before 1.9 the default
-              value was "yes".
+              value was C(yes).
+        type: bool
+        default: 'no'
     executable:
-        required: false
-        default: null
-        version_added: "1.4"
         description:
             - Path to bzr executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+        version_added: '1.4'
 '''
 
 EXAMPLES = '''
@@ -72,7 +58,10 @@ EXAMPLES = '''
     version: 22
 '''
 
+import os
 import re
+
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Bzr(object):
@@ -145,28 +134,29 @@ class Bzr(object):
             args_list = ["revert"]
         return self._command(args_list, check_rc=True, cwd=self.dest)
 
+
 # ===========================================
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            dest=dict(required=True, type='path'),
-            name=dict(required=True, aliases=['parent']),
-            version=dict(default='head'),
-            force=dict(default='no', type='bool'),
-            executable=dict(default=None),
+        argument_spec=dict(
+            dest=dict(type='path', required=True),
+            name=dict(type='str', required=True, aliases=['parent']),
+            version=dict(type='str', default='head'),
+            force=dict(type='bool', default='no'),
+            executable=dict(type='str'),
         )
     )
 
-    dest    = module.params['dest']
-    parent  = module.params['name']
+    dest = module.params['dest']
+    parent = module.params['name']
     version = module.params['version']
-    force   = module.params['force']
+    force = module.params['force']
     bzr_path = module.params['executable'] or module.get_bin_path('bzr', True)
 
     bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')
 
-    rc, out, err, status = (0, None, None, None)
+    rc, out, err = (0, None, None)
 
     bzr = Bzr(module, parent, dest, version, bzr_path)
 
@@ -201,8 +191,6 @@ def main():
 
     module.exit_json(changed=changed, before=before, after=after)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -18,24 +18,25 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import fcntl
-import textwrap
+import getpass
+import locale
+import logging
 import os
 import random
 import subprocess
 import sys
+import textwrap
 import time
-import locale
-import logging
-import getpass
-import errno
+
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.utils.color import stringc
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.color import stringc
 
 
 try:
@@ -46,8 +47,16 @@ except NameError:
     pass
 
 
+class FilterBlackList(logging.Filter):
+    def __init__(self, blacklist):
+        self.blacklist = [logging.Filter(name) for name in blacklist]
+
+    def filter(self, record):
+        return not any(f.filter(record) for f in self.blacklist)
+
+
 logger = None
-#TODO: make this a logging callback instead
+# TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
@@ -55,14 +64,19 @@ if C.DEFAULT_LOG_PATH:
         mypid = str(os.getpid())
         user = getpass.getuser()
         logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        for handler in logging.root.handlers:
+            handler.addFilter(FilterBlackList(C.DEFAULT_LOG_FILTER))
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
-b_COW_PATHS = (b"/usr/bin/cowsay",
-               b"/usr/games/cowsay",
-               b"/usr/local/bin/cowsay",  # BSD path for cowsay
-               b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
-              )
+b_COW_PATHS = (
+    b"/usr/bin/cowsay",
+    b"/usr/games/cowsay",
+    b"/usr/local/bin/cowsay",  # BSD path for cowsay
+    b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
+)
+
+
 class Display:
 
     def __init__(self, verbosity=0):
@@ -72,8 +86,8 @@ class Display:
 
         # list of all deprecation messages to prevent duplicate display
         self._deprecations = {}
-        self._warns        = {}
-        self._errors       = {}
+        self._warns = {}
+        self._errors = {}
 
         self.b_cowsay = None
         self.noncow = C.ANSIBLE_COW_SELECTION
@@ -84,7 +98,9 @@ class Display:
             try:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = [ to_bytes(c) for c in set(C.ANSIBLE_COW_WHITELIST).intersection(out.split())]
+                self.cows_available = set([to_text(c) for c in out.split()])
+                if C.ANSIBLE_COW_WHITELIST:
+                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
@@ -92,7 +108,12 @@ class Display:
         self._set_column_width()
 
     def set_cowsay_info(self):
-        if not C.ANSIBLE_NOCOWS:
+        if C.ANSIBLE_NOCOWS:
+            return
+
+        if C.ANSIBLE_COW_PATH:
+            self.b_cowsay = C.ANSIBLE_COW_PATH
+        else:
             for b_cow_path in b_COW_PATHS:
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
@@ -120,6 +141,8 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
 
+            # Note: After Display() class is refactored need to update the log capture
+            # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
                 fileobj = sys.stdout
             else:
@@ -187,14 +210,14 @@ class Display:
 
         if not removed:
             if version:
-                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in version %s." % (msg, version)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
             else:
-                new_msg = "[DEPRECATION WARNING]: %s.\nThis feature will be removed in a future release." % (msg)
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
         else:
             raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
+        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:
@@ -244,10 +267,10 @@ class Display:
         runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == b'random':
-                thecow = random.choice(self.cows_available)
+            if thecow == 'random':
+                thecow = random.choice(list(self.cows_available))
             runcmd.append(b'-f')
-            runcmd.append(thecow)
+            runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
@@ -273,7 +296,7 @@ class Display:
             prompt_string = to_text(prompt_string)
 
         if private:
-            return getpass.getpass(msg)
+            return getpass.getpass(prompt_string)
         else:
             return input(prompt_string)
 

@@ -1,25 +1,16 @@
 #!/usr/bin/python
 #
 # Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -37,7 +28,6 @@ options:
     description:
       - An image name or a list of image names. Name format will be name[:tag] or repository/name[:tag], where tag is
         optional. If a tag is not provided, 'latest' will be used.
-    default: null
     required: true
 
 extends_documentation_fragment:
@@ -48,7 +38,7 @@ requirements:
   - "docker-py >= 1.7.0"
   - "Docker API >= 1.20"
 
-authors:
+author:
   - Chris Houseknecht (@chouseknecht)
   - James Tanner (@jctanner)
 
@@ -160,14 +150,14 @@ images:
     ]
 '''
 
-from ansible.module_utils.docker_common import *
-
 try:
-    from docker import auth
     from docker import utils
 except ImportError:
     # missing docker-py handled in docker_common
     pass
+
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+
 
 class ImageManager(DockerBaseClass):
 
@@ -226,7 +216,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='list'),
-        )
+    )
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec
@@ -240,9 +230,6 @@ def main():
     ImageManager(client, results)
     client.module.exit_json(**results)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

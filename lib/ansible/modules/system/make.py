@@ -2,25 +2,16 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
-#
-# This file is part of Ansible
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,17 +26,17 @@ options:
   target:
     description:
       - The target to run
-    required: false
-    default: none
   params:
     description:
       - Any extra parameters to pass to make
-    required: false
-    default: none
   chdir:
     description:
       - cd into this directory before running make
     required: true
+  file:
+    description:
+      - Use file as a Makefile
+    version_added: 2.5
 '''
 
 EXAMPLES = '''
@@ -66,6 +57,12 @@ EXAMPLES = '''
     params:
       NUM_THREADS: 4
       BACKEND: lapack
+
+# Pass a file as a Makefile
+- make:
+    chdir: /home/ubuntu/cool-project
+    target: all
+    file: /some-project/Makefile
 '''
 
 # TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
@@ -112,6 +109,7 @@ def main():
             target=dict(required=False, default=None, type='str'),
             params=dict(required=False, default=None, type='dict'),
             chdir=dict(required=True, default=None, type='path'),
+            file=dict(required=False, default=None, type='path')
         ),
     )
     # Build up the invocation of `make` we are going to use
@@ -122,7 +120,10 @@ def main():
     else:
         make_parameters = []
 
-    base_command = [make_path, make_target]
+    if module.params['file'] is not None:
+        base_command = [make_path, "--file", module.params['file'], make_target]
+    else:
+        base_command = [make_path, make_target]
     base_command.extend(make_parameters)
 
     # Check if the target is already up to date
@@ -153,7 +154,8 @@ def main():
         stderr=err,
         target=module.params['target'],
         params=module.params['params'],
-        chdir=module.params['chdir']
+        chdir=module.params['chdir'],
+        file=module.params['file']
     )
 
 

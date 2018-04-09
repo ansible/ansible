@@ -16,6 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - 'default.yml'
+      paths: '../vars'
+
+- name: install dependencies for test
+  package: name={{ package_item }} state=present
+  with_items: "{{ test_packages }}"
+  loop_control:
+    loop_var: package_item
+  when: ansible_distribution != "MacOSX"
+
 - name: remove a gem
   gem: name=gist state=absent
 

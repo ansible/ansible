@@ -1,31 +1,24 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+# (c) 2017, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: junos_facts
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote device running Junos
+author: "Nathaniel Case (@qalthos)"
+short_description: Collect facts from remote devices running Juniper Junos
 description:
   - Collects fact information from a remote device running the Junos
     operating system.  By default, the module will collect basic fact
@@ -34,53 +27,48 @@ description:
     configured set of arguments.
 extends_documentation_fragment: junos
 options:
-  config:
+  gather_subset:
     description:
-      - The C(config) argument instructs the fact module to collect
-        the configuration from the remote device.  The configuration
-        is then included in return facts.  By default, the configuration
-        is returned as text.  The C(config_format) can be used to return
-        different Junos configuration formats.
+      - When supplied, this argument will restrict the facts collected
+        to a given subset.  Possible values for this argument include
+        all, hardware, config, and interfaces.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected. To maintain backward compatbility old style facts
+        can be retrieved using all value, this reqires junos-eznc to be installed
+        as a prerequisite.
     required: false
-    default: null
+    default: "!config"
+    version_added: "2.3"
   config_format:
     description:
-      - The C(config_format) argument is used to specify the desired
-        format of the configuration file.  Devices support three
-        configuration file formats.  By default, the configuration
-        from the device is returned as text.  The other option xml.
-        If the xml option is chosen, the configuration file is 
-        returned as both xml and json.
+      - The I(config_format) argument specifies the format of the configuration
+         when serializing output from the device. This argument is applicable
+         only when C(config) value is present in I(gather_subset).
+         The I(config_format) should be supported by the junos version running on
+         device.
     required: false
     default: text
-    choices: ['xml', 'text']
+    choices: ['xml', 'set', 'text', 'json']
+    version_added: "2.3"
 requirements:
-  - junos-eznc
+  - ncclient (>=v0.5.2)
 notes:
+  - Ensure I(config_format) used to retrieve configuration from device
+    is supported by junos version running on device.
+  - With I(config_format = json), configuration in the results will be a dictionary(and not a JSON string)
   - This module requires the netconf system service be enabled on
-    the remote device being managed
+    the remote device being managed.
+  - Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
 """
 
 EXAMPLES = """
-# the required set of connection arguments have been purposely left off
-# the examples for brevity
-
 - name: collect default set of facts
   junos_facts:
 
 - name: collect default set of facts and configuration
   junos_facts:
-    config: yes
-
-- name: collect default set of facts and configuration in text format
-  junos_facts:
-    config: yes
-    config_format: text
-
-- name: collect default set of facts and configuration in XML and JSON format
-  junos_facts:
-    config: yes
-    config_format: xml
+    gather_subset: config
 """
 
 RETURN = """
@@ -89,45 +77,300 @@ ansible_facts:
   returned: always
   type: dict
 """
-import ansible.module_utils.junos
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.netconf import exec_rpc
+from ansible.module_utils.network.junos.junos import junos_argument_spec, get_param
+from ansible.module_utils.network.junos.junos import get_configuration, get_connection
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.junos import xml_to_string, xml_to_json
+
+try:
+    from lxml.etree import Element, SubElement, tostring
+except ImportError:
+    from xml.etree.ElementTree import Element, SubElement, tostring
+
+try:
+    from jnpr.junos import Device
+    from jnpr.junos.exception import ConnectError
+    HAS_PYEZ = True
+except ImportError:
+    HAS_PYEZ = False
+
+USE_PERSISTENT_CONNECTION = True
+
+
+class FactsBase(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+
+    def populate(self):
+        raise NotImplementedError
+
+    def cli(self, command):
+        reply = command(self.module, command)
+        output = reply.find('.//output')
+        if not output:
+            self.module.fail_json(msg='failed to retrieve facts for command %s' % command)
+        return str(output.text).strip()
+
+    def rpc(self, rpc):
+        return exec_rpc(self.module, tostring(Element(rpc)))
+
+    def get_text(self, ele, tag):
+        try:
+            return str(ele.find(tag).text).strip()
+        except AttributeError:
+            pass
+
+
+class Default(FactsBase):
+
+    def populate(self):
+        reply = self.rpc('get-software-information')
+        data = reply.find('.//software-information')
+
+        self.facts.update({
+            'hostname': self.get_text(data, 'host-name'),
+            'version': self.get_text(data, 'junos-version'),
+            'model': self.get_text(data, 'product-model')
+        })
+
+        reply = self.rpc('get-chassis-inventory')
+        data = reply.find('.//chassis-inventory/chassis')
+        self.facts['serialnum'] = self.get_text(data, 'serial-number')
+
+
+class Config(FactsBase):
+
+    def populate(self):
+        config_format = self.module.params['config_format']
+        reply = get_configuration(self.module, format=config_format)
+
+        if config_format == 'xml':
+            config = tostring(reply.find('configuration')).strip()
+
+        elif config_format == 'text':
+            config = self.get_text(reply, 'configuration-text')
+
+        elif config_format == 'json':
+            config = self.module.from_json(reply.text.strip())
+
+        elif config_format == 'set':
+            config = self.get_text(reply, 'configuration-set')
+
+        self.facts['config'] = config
+
+
+class Hardware(FactsBase):
+
+    def populate(self):
+
+        reply = self.rpc('get-system-memory-information')
+        data = reply.find('.//system-memory-information/system-memory-summary-information')
+
+        self.facts.update({
+            'memfree_mb': int(self.get_text(data, 'system-memory-free')),
+            'memtotal_mb': int(self.get_text(data, 'system-memory-total'))
+        })
+
+        reply = self.rpc('get-system-storage')
+        data = reply.find('.//system-storage-information')
+
+        filesystems = list()
+        for obj in data:
+            filesystems.append(self.get_text(obj, 'filesystem-name'))
+        self.facts['filesystems'] = filesystems
+
+        reply = self.rpc('get-route-engine-information')
+        data = reply.find('.//route-engine-information')
+
+        routing_engines = dict()
+        for obj in data:
+            slot = self.get_text(obj, 'slot')
+            routing_engines.update({slot: {}})
+            routing_engines[slot].update({'slot': slot})
+            for child in obj:
+                if child.text != "\n":
+                    routing_engines[slot].update({child.tag.replace("-", "_"): child.text})
+
+        self.facts['routing_engines'] = routing_engines
+
+        if len(data) > 1:
+            self.facts['has_2RE'] = True
+        else:
+            self.facts['has_2RE'] = False
+
+        reply = self.rpc('get-chassis-inventory')
+        data = reply.findall('.//chassis-module')
+
+        modules = list()
+        for obj in data:
+            mod = dict()
+            for child in obj:
+                if child.text != "\n":
+                    mod.update({child.tag.replace("-", "_"): child.text})
+            modules.append(mod)
+
+        self.facts['modules'] = modules
+
+
+class Interfaces(FactsBase):
+
+    def populate(self):
+        ele = Element('get-interface-information')
+        SubElement(ele, 'detail')
+        reply = exec_rpc(self.module, tostring(ele))
+
+        interfaces = {}
+
+        for item in reply[0]:
+            name = self.get_text(item, 'name')
+            obj = {
+                'oper-status': self.get_text(item, 'oper-status'),
+                'admin-status': self.get_text(item, 'admin-status'),
+                'speed': self.get_text(item, 'speed'),
+                'macaddress': self.get_text(item, 'hardware-physical-address'),
+                'mtu': self.get_text(item, 'mtu'),
+                'type': self.get_text(item, 'if-type'),
+            }
+
+            interfaces[name] = obj
+
+        self.facts['interfaces'] = interfaces
+
+
+class Facts(FactsBase):
+    def _connect(self, module):
+        host = get_param(module, 'host')
+
+        kwargs = {
+            'port': get_param(module, 'port') or 830,
+            'user': get_param(module, 'username')
+        }
+
+        if get_param(module, 'password'):
+            kwargs['passwd'] = get_param(module, 'password')
+
+        if get_param(module, 'ssh_keyfile'):
+            kwargs['ssh_private_key_file'] = get_param(module, 'ssh_keyfile')
+
+        kwargs['gather_facts'] = False
+
+        try:
+            device = Device(host, **kwargs)
+            device.open()
+            device.timeout = get_param(module, 'timeout') or 10
+        except ConnectError as exc:
+            module.fail_json('unable to connect to %s: %s' % (host, to_native(exc)))
+
+        return device
+
+    def populate(self):
+
+        device = self._connect(self.module)
+        facts = dict(device.facts)
+
+        if '2RE' in facts:
+            facts['has_2RE'] = facts['2RE']
+            del facts['2RE']
+
+        facts['version_info'] = dict(facts['version_info'])
+        if 'junos_info' in facts:
+            for key, value in facts['junos_info'].items():
+                if 'object' in value:
+                    value['object'] = dict(value['object'])
+
+        return facts
+
+
+FACT_SUBSETS = dict(
+    default=Default,
+    hardware=Hardware,
+    config=Config,
+    interfaces=Interfaces
+)
+
+VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """ Main entry point for AnsibleModule
     """
-    spec = dict(
-        config=dict(type='bool'),
-        config_format=dict(default='text', choices=['xml', 'text']),
-        transport=dict(default='netconf', choices=['netconf'])
+    argument_spec = dict(
+        gather_subset=dict(default=['!config'], type='list'),
+        config_format=dict(default='text', choices=['xml', 'text', 'set', 'json']),
     )
 
-    module = NetworkModule(argument_spec=spec,
+    argument_spec.update(junos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    get_connection(module)
+    warnings = list()
+    gather_subset = module.params['gather_subset']
+    ofacts = False
 
-    facts = module.connection.get_facts()
+    runable_subsets = set()
+    exclude_subsets = set()
 
-    if '2RE' in facts:
-        facts['has_2RE'] = facts['2RE']
-        del facts['2RE']
+    for subset in gather_subset:
+        if subset == 'all':
+            runable_subsets.update(VALID_SUBSETS)
+            ofacts = True
+            continue
 
-    facts['version_info'] = dict(facts['version_info'])
+        if subset.startswith('!'):
+            subset = subset[1:]
+            if subset == 'all':
+                exclude_subsets.update(VALID_SUBSETS)
+                ofacts = False
+                continue
+            exclude = True
+        else:
+            exclude = False
 
-    if module.params['config'] is True:
-        config_format = module.params['config_format']
-        resp_config = module.config.get_config(config_format=config_format)
+        if subset not in VALID_SUBSETS:
+            module.fail_json(msg='Subset must be one of [%s], got %s' %
+                             (', '.join(VALID_SUBSETS), subset))
 
-        if config_format in ['text']:
-            facts['config'] = resp_config
-        elif config_format == "xml":
-            facts['config'] = xml_to_string(resp_config)
-            facts['config_json'] = xml_to_json(resp_config)
+        if exclude:
+            exclude_subsets.add(subset)
+        else:
+            runable_subsets.add(subset)
 
-    result['ansible_facts'] = facts
-    module.exit_json(**result)
+    if not runable_subsets:
+        runable_subsets.update(VALID_SUBSETS)
+
+    runable_subsets.difference_update(exclude_subsets)
+    runable_subsets.add('default')
+
+    facts = dict()
+    facts['gather_subset'] = list(runable_subsets)
+
+    instances = list()
+    for key in runable_subsets:
+        instances.append(FACT_SUBSETS[key](module))
+
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
+
+    ansible_facts = dict()
+    for key, value in iteritems(facts):
+        key = 'ansible_net_%s' % key
+        ansible_facts[key] = value
+
+    if ofacts:
+        if HAS_PYEZ:
+            ansible_facts.update(Facts(module).populate())
+        else:
+            warnings += ['junos-eznc is required to gather old style facts but does not appear to be installed. '
+                         'It can be installed using `pip  install junos-eznc`']
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

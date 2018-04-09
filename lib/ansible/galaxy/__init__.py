@@ -25,9 +25,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import string_types
-
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 
 #      default_readme_template
 #      default_meta_template
@@ -44,11 +43,11 @@ class Galaxy(object):
         # cli option handling is responsible for making roles_path a list
         self.roles_paths = roles_path
 
-        self.roles =  {}
+        self.roles = {}
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)
-        type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
+        type_path = getattr(self.options, 'role_type', "default")
         self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
 
     @property

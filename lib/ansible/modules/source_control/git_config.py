@@ -4,24 +4,16 @@
 # (c) 2015, Marius Gedminas <marius@pov.lt>
 # (c) 2016, Matthew Gamble <git@matthewgamble.net>
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,45 +25,36 @@ version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
 description:
-  - The M(git_config) module changes git configuration by invoking 'git config'.
+  - The C(git_config) module changes git configuration by invoking 'git config'.
     This is needed if you don't want to use M(template) for the entire git
     config file (e.g. because you need to change just C(user.email) in
-    /etc/.git/config).  Solutions involving M(command) are cumbersone or
+    /etc/.git/config).  Solutions involving M(command) are cumbersome or
     don't work correctly in check mode.
 options:
   list_all:
     description:
       - List all settings (optionally limited to a given I(scope))
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
+    type: bool
+    default: 'no'
   name:
     description:
       - The name of the setting. If no value is supplied, the value will
         be read from the config if it has been set.
-    required: false
-    default: null
   repo:
     description:
       - Path to a git repository for reading and writing values from a
         specific repo.
-    required: false
-    default: null
   scope:
     description:
       - Specify which scope to read/set values from. This is required
         when setting config values. If this is set to local, you must
         also specify the repo parameter. It defaults to system only when
         not using I(list_all)=yes.
-    required: false
     choices: [ "local", "global", "system" ]
-    default: null
   value:
     description:
       - When specifying the name of a single setting, supply a value to
         set that setting to the given value.
-    required: false
-    default: null
 '''
 
 EXAMPLES = '''
@@ -155,6 +138,8 @@ config_values:
     alias.diffc: "diff --cached"
     alias.remotev: "remote -v"
 '''
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 
 def main():
@@ -171,9 +156,7 @@ def main():
         required_one_of=[['list_all', 'name']],
         supports_check_mode=True,
     )
-    git_path = module.get_bin_path('git')
-    if not git_path:
-        module.fail_json(msg="Could not find git. Please ensure it is installed.")
+    git_path = module.get_bin_path('git', True)
 
     params = module.params
     # We check error message for a pattern, so we need to make sure the messages appear in the form we're expecting.
@@ -237,10 +220,12 @@ def main():
             module.exit_json(changed=False, msg="")
 
     if not module.check_mode:
-        new_value_quoted = "'" + new_value + "'"
-        (rc, out, err) = module.run_command(' '.join(args + [new_value_quoted]), cwd=dir)
+        new_value_quoted = shlex_quote(new_value)
+        cmd = ' '.join(args + [new_value_quoted])
+        (rc, out, err) = module.run_command(cmd, cwd=dir)
         if err:
-            module.fail_json(rc=rc, msg=err, cmd=' '.join(args + [new_value_quoted]))
+            module.fail_json(rc=rc, msg=err, cmd=cmd)
+
     module.exit_json(
         msg='setting changed',
         diff=dict(
@@ -252,7 +237,6 @@ def main():
         changed=True
     )
 
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

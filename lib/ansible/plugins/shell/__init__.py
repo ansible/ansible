@@ -18,34 +18,66 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
-import ansible.constants as C
-import time
+import os.path
 import random
+import re
+import time
 
-from ansible.compat.six import text_type
-from ansible.compat.six.moves import shlex_quote
+import ansible.constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_native
+from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 
-class ShellBase(object):
-
+class ShellBase(AnsiblePlugin):
     def __init__(self):
-        self.env = dict()
+
+        super(ShellBase, self).__init__()
+
+        self.env = {}
         if C.DEFAULT_MODULE_SET_LOCALE:
-            self.env.update(
-                dict(
-                    LANG        = C.DEFAULT_MODULE_LANG,
-                    LC_ALL      = C.DEFAULT_MODULE_LANG,
-                    LC_MESSAGES = C.DEFAULT_MODULE_LANG,
-                )
-            )
+            module_locale = C.DEFAULT_MODULE_LANG
+            self.env = {'LANG': module_locale,
+                        'LC_ALL': module_locale,
+                        'LC_MESSAGES': module_locale}
+
+        self.tmpdir = None
+
+    def _normalize_system_tmpdirs(self):
+        # Normalize the tmp directory strings. We don't use expanduser/expandvars because those
+        # can vary between remote user and become user.  Therefore the safest practice will be for
+        # this to always be specified as full paths)
+        normalized_paths = [d.rstrip('/') for d in self.get_option('system_tmpdirs')]
+
+        # Make sure all system_tmpdirs are absolute otherwise they'd be relative to the login dir
+        # which is almost certainly going to fail in a cornercase.
+        if not all(os.path.isabs(d) for d in normalized_paths):
+            raise AnsibleError('The configured system_tmpdirs contains a relative path: {0}. All'
+                               ' system_tmpdirs must be absolute'.format(to_native(normalized_paths)))
+
+        self.set_option('system_tmpdirs', normalized_paths)
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        # set env
+        self.env.update(self.get_option('environment'))
+
+        # We can remove the try: except in the future when we make ShellBase a proper subset of
+        # *all* shells.  Right now powershell and third party shells which do not use the
+        # shell_common documentation fragment (and so do not have system_tmpdirs) will fail
+        try:
+            self._normalize_system_tmpdirs()
+        except AnsibleError:
+            pass
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -91,29 +123,32 @@ class ShellBase(object):
         cmd = ['test', '-e', shlex_quote(path)]
         return ' '.join(cmd)
 
-    def mkdtemp(self, basefile=None, system=False, mode=None):
+    def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
         if not basefile:
             basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
 
         # When system is specified we have to create this in a directory where
-        # other users can read and access the temp directory.  This is because
-        # we use system to create tmp dirs for unprivileged users who are
-        # sudo'ing to a second unprivileged user.  The only dirctories where
-        # that is standard are the tmp dirs, /tmp and /var/tmp.  So we only
-        # allow one of those two locations if system=True.  However, users
-        # might want to have some say over which of /tmp or /var/tmp is used
-        # (because /tmp may be a tmpfs and want to conserve RAM or persist the
-        # tmp files beyond a reboot.  So we check if the user set REMOTE_TMP
-        # to somewhere in or below /var/tmp and if so use /var/tmp.  If
-        # anything else we use /tmp (because /tmp is specified by POSIX nad
-        # /var/tmp is not).
+        # other users can read and access the tmp directory.
+        # This is because we use system to create tmp dirs for unprivileged users who are
+        # sudo'ing to a second unprivileged user.
+        # The 'system_tmpdirs' setting defines dirctories we can use for this purpose
+        # the default are, /tmp and /var/tmp.
+        # So we only allow one of those locations if system=True, using the
+        # passed in tmpdir if it is valid or the first one from the setting if not.
+
         if system:
-            if C.DEFAULT_REMOTE_TMP.startswith('/var/tmp'):
-                basetmpdir = '/var/tmp'
+            tmpdir = tmpdir.rstrip('/')
+
+            if tmpdir in self.get_option('system_tmpdirs'):
+                basetmpdir = tmpdir
             else:
-                basetmpdir = '/tmp'
+                basetmpdir = self.get_option('system_tmpdirs')[0]
         else:
-            basetmpdir = C.DEFAULT_REMOTE_TMP
+            if tmpdir is None:
+                basetmpdir = self.get_option('remote_tmp')
+            else:
+                basetmpdir = tmpdir
+
         basetmp = self.join_path(basetmpdir, basefile)
 
         cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
@@ -127,13 +162,15 @@ class ShellBase(object):
 
         return cmd
 
-    def expand_user(self, user_home_path):
+    def expand_user(self, user_home_path, username=''):
         ''' Return a command to expand tildes in a path
 
-        It can be either "~" or "~username".  We use the POSIX definition of
-        a username:
+        It can be either "~" or "~username". We just ignore $HOME
+        We use the POSIX definition of a username:
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_426
             http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap03.html#tag_03_276
+
+            Falls back to 'current workind directory' as we assume 'home is where the remote user ends up'
         '''
 
         # Check that the user_path to expand is safe
@@ -141,9 +178,17 @@ class ShellBase(object):
             if not _USER_HOME_PATH_RE.match(user_home_path):
                 # shlex_quote will make the shell return the string verbatim
                 user_home_path = shlex_quote(user_home_path)
+        elif username:
+            # if present the user name is appended to resolve "that user's home"
+            user_home_path += username
+
         return 'echo %s' % user_home_path
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
+    def pwd(self):
+        """Return the working directory after connecting"""
+        return 'echo %spwd%s' % (self._SHELL_SUB_LEFT, self._SHELL_SUB_RIGHT)
+
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
             cmd = shlex_quote(cmd)
@@ -157,8 +202,6 @@ class ShellBase(object):
         if arg_path is not None:
             cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
-        if rm_tmp:
-            new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd
 
     def append_command(self, cmd, cmd_to_append):
@@ -167,4 +210,8 @@ class ShellBase(object):
         if self._SHELL_AND:
             cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
 
+        return cmd
+
+    def wrap_for_exec(self, cmd):
+        """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd

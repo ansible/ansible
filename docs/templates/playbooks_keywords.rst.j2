@@ -1,0 +1,30 @@
+Playbook Keywords
+=================
+
+These are the keywords available on common playbook objects.
+
+.. note:: Please note:
+
+    * Aliases for the directives are not reflected here, nor are mutable one. For example,
+      :term:`action` in task can be substituted by the name of any Ansible module.
+    * The keywords do not have ``version_added`` information at this time
+    * Some keywords set defaults for the objects inside of them rather than for the objects
+      themselves
+
+
+.. contents::
+   :local:
+   :depth: 1
+
+{% for name in clist %}
+
+{{ name }}
+{{ '-' * name|length }}
+.. glossary::
+
+{% for attribute in oblist[name]|sort %}
+    {{ attribute }}
+        {{ oblist[name][attribute] |indent(8) }}
+
+{% endfor %}
+{% endfor %}

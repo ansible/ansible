@@ -15,16 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = """
 ---
 module: vyos_facts
 version_added: "2.2"
-author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote devices running OS
+author: "Nathaniel Case (@qalthos)"
+short_description: Collect facts from remote devices running VyOS
 description:
   - Collects a base set of device facts from a remote device that
     is running VyOS.  This module prepends all of the
@@ -32,12 +33,14 @@ description:
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: vyos
+notes:
+  - Tested against VYOS 1.1.7
 options:
   gather_subset:
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  Can specify a list of
+        all, default, config, and neighbors.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
@@ -46,15 +49,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: vyos
-    password: vyos
-    transport: cli
-
 - name: collect all facts from the device
   vyos_facts:
     gather_subset: all
@@ -104,39 +98,41 @@ ansible_net_gather_subset:
 """
 import re
 
-import ansible.module_utils.vyos
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.vyos.vyos import run_commands
+from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
+    COMMANDS = frozenset()
+
+    def __init__(self, module):
+        self.module = module
         self.facts = dict()
+        self.responses = None
 
-        self.commands()
-
-    def commands(self):
-        raise NotImplementedError
+    def populate(self):
+        self.responses = run_commands(self.module, list(self.COMMANDS))
 
 
 class Default(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show version')
-        self.runner.add_command('show host name')
+    COMMANDS = [
+        'show version',
+        'show host name',
+    ]
 
     def populate(self):
-        data = self.runner.get_command('show version')
+        super(Default, self).populate()
+        data = self.responses[0]
 
         self.facts['version'] = self.parse_version(data)
         self.facts['serialnum'] = self.parse_serialnum(data)
         self.facts['model'] = self.parse_model(data)
 
-        self.facts['hostname'] = self.runner.get_command('show host name')
+        self.facts['hostname'] = self.responses[1]
 
     def parse_version(self, data):
         match = re.search(r'Version:\s*(\S+)', data)
@@ -156,16 +152,17 @@ class Default(FactsBase):
 
 class Config(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show configuration commands')
-        self.runner.add_command('show system commit')
+    COMMANDS = [
+        'show configuration commands',
+        'show system commit',
+    ]
 
     def populate(self):
+        super(Config, self).populate()
 
-        config = self.runner.get_command('show configuration commands')
-        self.facts['config'] = str(config).split('\n')
+        self.facts['config'] = self.responses
 
-        commits = self.runner.get_command('show system commit')
+        commits = self.responses[1]
         entries = list()
         entry = None
 
@@ -188,15 +185,18 @@ class Config(FactsBase):
 
 class Neighbors(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show lldp neighbors')
-        self.runner.add_command('show lldp neighbors detail')
+    COMMANDS = [
+        'show lldp neighbors',
+        'show lldp neighbors detail',
+    ]
 
     def populate(self):
-        all_neighbors = self.runner.get_command('show lldp neighbors')
+        super(Neighbors, self).populate()
+
+        all_neighbors = self.responses[0]
         if 'LLDP not configured' not in all_neighbors:
             neighbors = self.parse(
-                self.runner.get_command('show lldp neighbors detail')
+                self.responses[1]
             )
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
@@ -204,7 +204,7 @@ class Neighbors(FactsBase):
         parsed = list()
         values = None
         for line in data.split('\n'):
-            if len(line) == 0:
+            if not line:
                 continue
             elif line[0] == ' ':
                 values += '\n%s' % line
@@ -212,6 +212,8 @@ class Neighbors(FactsBase):
                 if values:
                     parsed.append(values)
                 values = line
+        if values:
+            parsed.append(values)
         return parsed
 
     def parse_neighbors(self, data):
@@ -250,11 +252,16 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 
 def main():
-    spec = dict(
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(vyos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
 
     gather_subset = module.params['gather_subset']
 
@@ -276,7 +283,8 @@ def main():
             exclude = False
 
         if subset not in VALID_SUBSETS:
-            module.fail_json(msg='Bad subset')
+            module.fail_json(msg='Subset must be one of [%s], got %s' %
+                             (', '.join(VALID_SUBSETS), subset))
 
         if exclude:
             exclude_subsets.add(subset)
@@ -292,28 +300,20 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](runner))
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        exc = get_exception()
-        module.fail_json(msg='unknown failure', output=runner.items, exc=str(exc))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

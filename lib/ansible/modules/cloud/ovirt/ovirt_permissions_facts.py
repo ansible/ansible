@@ -19,48 +19,32 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4 as sdk
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    check_sdk,
-    create_connection,
-    get_link_name,
-    ovirt_facts_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions_facts
-short_description: Retrieve facts about one or more oVirt permissions
+short_description: Retrieve facts about one or more oVirt/RHV permissions
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt permissions."
+    - "Retrieve facts about one or more oVirt/RHV permissions."
 notes:
     - "This module creates a new top-level C(ovirt_permissions) fact, which
        contains a list of permissions."
 options:
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
     namespace:
@@ -85,10 +69,26 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_permissions:
     description: "List of dictionaries describing the permissions. Permission attribues are mapped to dictionary keys,
-                  all permissions attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
+                  all permissions attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/permission."
     returned: On success.
     type: list
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4 as sdk
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    check_sdk,
+    create_connection,
+    get_link_name,
+    ovirt_facts_full_argument_spec,
+    search_by_name,
+)
 
 
 def _permissions_service(connection, module):
@@ -116,7 +116,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         permissions_service = _permissions_service(connection, module)
         permissions = []
         for p in permissions_service.list():
@@ -133,7 +134,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

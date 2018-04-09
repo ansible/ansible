@@ -16,645 +16,586 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_vlan
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages VLAN resources and attributes.
 description:
-    - Manages VLAN configurations on NX-OS switches.
+  - Manages VLAN configurations on NX-OS switches.
 author: Jason Edelman (@jedelman8)
-extends_documentation_fragment: nxos
 options:
-    vlan_id:
-        description:
-            - Single VLAN ID.
-        required: false
-        default: null
-    vlan_range:
-        description:
-            - Range of VLANs such as 2-10 or 2,5,10-15, etc.
-        required: false
-        default: null
-    name:
-        description:
-            - Name of VLAN.
-        required: false
-        default: null
-    vlan_state:
-        description:
-            - Manage the vlan operational state of the VLAN
-              (equivalent to state {active | suspend} command.
-        required: false
-        default: active
-        choices: ['active','suspend']
-    admin_state:
-        description:
-            - Manage the VLAN administrative state of the VLAN equivalent
-              to shut/no shut in VLAN config mode.
-        required: false
-        default: up
-        choices: ['up','down']
-    mapped_vni:
-        description:
-            - The Virtual Network Identifier (VNI) ID that is mapped to the
-              VLAN. Valid values are integer and keyword 'default'.
-        required: false
-        default: null
-        version_added: "2.2"
-    state:
-        description:
-            - Manage the state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
-
+  vlan_id:
+    description:
+      - Single VLAN ID.
+  vlan_range:
+    description:
+      - Range of VLANs such as 2-10 or 2,5,10-15, etc.
+  name:
+    description:
+      - Name of VLAN or keyword 'default'.
+  interfaces:
+    description:
+      - List of interfaces that should be associated to the VLAN or keyword 'default'.
+    version_added: "2.5"
+  associated_interfaces:
+    description:
+      - This is a intent option and checks the operational state of the for given vlan C(name)
+        for associated interfaces. If the value in the C(associated_interfaces) does not match with
+        the operational state of vlan interfaces on device it will result in failure.
+    version_added: "2.5"
+  vlan_state:
+    description:
+      - Manage the vlan operational state of the VLAN
+    default: active
+    choices: ['active','suspend']
+  admin_state:
+    description:
+      - Manage the VLAN administrative state of the VLAN equivalent
+        to shut/no shut in VLAN config mode.
+    default: up
+    choices: ['up','down']
+  mapped_vni:
+    description:
+      - The Virtual Network Identifier (VNI) ID that is mapped to the
+        VLAN. Valid values are integer and keyword 'default'. Range 4096-16773119.
+    version_added: "2.2"
+  state:
+    description:
+      - Manage the state of the resource.
+    default: present
+    choices: ['present','absent']
+  mode:
+    description:
+      - Set VLAN mode to classical ethernet or fabricpath.
+        This is a valid option for Nexus 5000 and 7000 series.
+    default: ce
+    choices: ['ce','fabricpath']
+    version_added: "2.4"
+  aggregate:
+    description: List of VLANs definitions.
+    version_added: "2.5"
+  purge:
+    description:
+      - Purge VLANs not defined in the I(aggregate) parameter.
+        This parameter can be used without aggregate as well.
+    type: bool
+    default: 'no'
+  delay:
+    description:
+      - Time in seconds to wait before checking for the operational state on remote
+        device. This wait is applicable for operational state arguments.
+    default: 10
 '''
+
 EXAMPLES = '''
 - name: Ensure a range of VLANs are not present on the switch
   nxos_vlan:
     vlan_range: "2-10,20,50,55-60,100-150"
-    host: 68.170.147.165
-    username: cisco
-    password: cisco
     state: absent
-    transport: nxapi
 
 - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     admin_state: down
     name: WEB
-    transport: nxapi
-    username: cisco
-    password: cisco
 
 - name: Ensure VLAN is NOT on the device
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     state: absent
-    transport: nxapi
-    username: cisco
-    password: cisco
+
+- name: Add interfaces to VLAN and check intent (config + intent)
+  nxos_vlan:
+    vlan_id: 100
+    interfaces:
+      - Ethernet2/1
+      - Ethernet2/5
+    associated_interfaces:
+      - Ethernet2/1
+      - Ethernet2/5
+
+- name: Check interfaces assigned to VLAN
+  nxos_vlan:
+    vlan_id: 100
+    associated_interfaces:
+      - Ethernet2/1
+      - Ethernet2/5
+
+- name: Create aggregate of vlans
+  nxos_vlan:
+    aggregate:
+      - { vlan_id: 4000, mode: ce }
+      - { vlan_id: 4001, name: vlan-4001 }
+
+- name: purge vlans - removes all other vlans except the ones mentioned in aggregate)
+  nxos_vlan:
+    aggregate:
+      - vlan_id: 1
+      - vlan_id: 4001
+    purge: yes
+
 '''
 
 RETURN = '''
-
-proposed_vlans_list:
-    description: list of VLANs being proposed
-    returned: always
-    type: list
-    sample: ["100"]
-existing_vlans_list:
-    description: list of existing VLANs on the switch prior to making changes
-    returned: always
-    type: list
-    sample: ["1", "2", "3", "4", "5", "20"]
-end_state_vlans_list:
-    description: list of VLANs after the module is executed
-    returned: always
-    type: list
-    sample:  ["1", "2", "3", "4", "5", "20", "100"]
-proposed:
-    description: k/v pairs of parameters passed into module (does not include
-                 vlan_id or vlan_range)
-    returned: always
-    type: dict or null
-    sample: {"admin_state": "down", "name": "app_vlan",
-            "vlan_state": "suspend", "mapped_vni": "5000"}
-existing:
-    description: k/v pairs of existing vlan or null when using vlan_range
-    returned: always
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan",
-             "vlan_id": "20", "vlan_state": "suspend", "mapped_vni": ""}
-end_state:
-    description: k/v pairs of the VLAN after executing module or null
-                 when using vlan_range
-    returned: always
-    type: dict or null
-    sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
-             "vlan_state": "suspend", "mapped_vni": "5000"}
-updates:
-    description: command string sent to the device
+commands:
+    description: Set of command strings to send to the remote device
     returned: always
     type: list
     sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
-
 '''
 
-import json
-import collections
-
-# COMMON CODE FOR MIGRATION
 import re
+import time
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
+from copy import deepcopy
 
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
+def search_obj_in_list(vlan_id, lst):
+    for o in lst:
+        if o['vlan_id'] == vlan_id:
+            return o
 
 
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
+def get_diff(w, obj):
+    c = deepcopy(w)
+    entries = ('interfaces', 'associated_interfaces', 'delay', 'vlan_range')
+    for key in entries:
+        if key in c:
+            del c[key]
 
-        ancestors = list()
-        offset = 0
-        obj = None
+    o = deepcopy(obj)
+    del o['interfaces']
+    if o['vlan_id'] == w['vlan_id']:
+        diff_dict = dict(set(c.items()) - set(o.items()))
+        return diff_dict
 
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
 
+def is_default_name(obj, vlan_id):
+    cname = obj['name']
+    if ('VLAN' in cname):
+        vid = int(cname[4:])
+        if vid == int(vlan_id):
+            return True
+
+    return False
+
+
+def map_obj_to_commands(updates, module, os_platform):
+    commands = list()
+    purge = module.params['purge']
+    want, have = updates
+
+    for w in want:
+        vlan_id = w['vlan_id']
+        name = w['name']
+        interfaces = w.get('interfaces') or []
+        mapped_vni = w['mapped_vni']
+        vlan_state = w['vlan_state']
+        admin_state = w['admin_state']
+        state = w['state']
+        del w['state']
+        if any(i in os_platform for i in ['5K', '7K']):
+            mode = w['mode']
         else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
+            w['mode'] = None
+            mode = w['mode']
 
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
+        obj_in_have = search_obj_in_list(vlan_id, have)
 
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
+        if state == 'absent':
+            if obj_in_have:
+                if obj_in_have['mapped_vni'] != 'None':
+                    commands.append('vlan {0}'.format(vlan_id))
+                    commands.append('no vn-segment')
+                    commands.append('exit')
+                commands.append('no vlan {0}'.format(vlan_id))
+
+        elif state == 'present':
+            if not obj_in_have:
+                commands.append('vlan {0}'.format(vlan_id))
+
+                if name and name != 'default':
+                    commands.append('name {0}'.format(name))
+                if mode:
+                    commands.append('mode {0}'.format(mode))
+                if vlan_state:
+                    commands.append('state {0}'.format(vlan_state))
+                if mapped_vni != 'None' and mapped_vni != 'default':
+                    commands.append('vn-segment {0}'.format(mapped_vni))
+                if admin_state == 'up':
+                    commands.append('no shutdown')
+                if admin_state == 'down':
+                    commands.append('shutdown')
+                commands.append('exit')
+
+                if interfaces and interfaces[0] != 'default':
+                    for i in interfaces:
+                        commands.append('interface {0}'.format(i))
+                        commands.append('switchport')
+                        commands.append('switchport mode access')
+                        commands.append('switchport access vlan {0}'.format(vlan_id))
+
+            else:
+                diff = get_diff(w, obj_in_have)
+                if diff:
+                    commands.append('vlan {0}'.format(vlan_id))
+                    for key, value in diff.items():
+                        if key == 'name':
+                            if name != 'default':
+                                if name is not None:
+                                    commands.append('name {0}'.format(value))
+                            else:
+                                if not is_default_name(obj_in_have, vlan_id):
+                                    commands.append('no name')
+                        if key == 'vlan_state':
+                            commands.append('state {0}'.format(value))
+                        if key == 'mapped_vni':
+                            if value == 'default':
+                                if obj_in_have['mapped_vni'] != 'None':
+                                    commands.append('no vn-segment')
+                            elif value != 'None':
+                                commands.append('vn-segment {0}'.format(value))
+                        if key == 'admin_state':
+                            if value == 'up':
+                                commands.append('no shutdown')
+                            elif value == 'down':
+                                commands.append('shutdown')
+                        if key == 'mode':
+                            commands.append('mode {0}'.format(value))
+                    if len(commands) > 1:
+                        commands.append('exit')
+                    else:
+                        del commands[:]
+
+                if interfaces and interfaces[0] != 'default':
+                    if not obj_in_have['interfaces']:
+                        for i in interfaces:
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('switchport')
+                            commands.append('switchport mode access')
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
+
+                    elif set(interfaces) != set(obj_in_have['interfaces']):
+                        missing_interfaces = list(set(interfaces) - set(obj_in_have['interfaces']))
+                        for i in missing_interfaces:
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('switchport')
+                            commands.append('switchport mode access')
+                            commands.append('switchport access vlan {0}'.format(vlan_id))
+
+                        superfluous_interfaces = list(set(obj_in_have['interfaces']) - set(interfaces))
+                        for i in superfluous_interfaces:
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('switchport')
+                            commands.append('switchport mode access')
+                            commands.append('no switchport access vlan {0}'.format(vlan_id))
+
+                elif interfaces and interfaces[0] == 'default':
+                    if obj_in_have['interfaces']:
+                        for i in obj_in_have['interfaces']:
+                            commands.append('vlan {0}'.format(vlan_id))
+                            commands.append('exit')
+                            commands.append('interface {0}'.format(i))
+                            commands.append('switchport')
+                            commands.append('switchport mode access')
+                            commands.append('no switchport access vlan {0}'.format(vlan_id))
+
+    if purge:
+        for h in have:
+            obj_in_want = search_obj_in_list(h['vlan_id'], want)
+            if not obj_in_want:
+                commands.append('no vlan {0}'.format(h['vlan_id']))
+
+    return commands
 
 
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-def vlan_range_to_list(vlans):
+def want_vlan_list(module):
     result = []
-    if vlans:
-        for part in vlans.split(','):
-            if part == 'none':
-                break
-            if '-' in part:
-                a, b = part.split('-')
-                a, b = int(a), int(b)
-                result.extend(range(a, b + 1))
-            else:
-                a = int(part)
-                result.append(a)
-        return numerical_sort(result)
+    vlan_range = module.params['vlan_range']
+    for part in vlan_range.split(','):
+        if part == 'none':
+            break
+        if '-' in part:
+            start, end = part.split('-')
+            start, end = int(start), int(end)
+            result.extend([str(i) for i in range(start, end + 1)])
+        else:
+            result.append(part)
     return result
 
 
-def numerical_sort(string_int_list):
-    """Sort list of strings (VLAN IDs) that are digits in numerical order.
-    """
-
-    as_int_list = []
-    as_str_list = []
-    for vlan in string_int_list:
-        as_int_list.append(int(vlan))
-    as_int_list.sort()
-    for vlan in as_int_list:
-        as_str_list.append(str(vlan))
-    return as_str_list
+def have_vlan_list(have):
+    result = []
+    if have:
+        for h in have:
+            result.append(str(h.get('vlan_id')))
+    return result
 
 
-def build_commands(vlans, state):
-    commands = []
-    for vlan in vlans:
-        if state == 'present':
-            command = 'vlan {0}'.format(vlan)
-            commands.append(command)
-        elif state == 'absent':
-            command = 'no vlan {0}'.format(vlan)
-            commands.append(command)
-    return commands
+def vlan_range_commands(module, have):
+    commands = list()
+    proposed_vlans_list = want_vlan_list(module)
+    existing_vlans_list = have_vlan_list(have)
 
+    if module.params['state'] == 'absent':
+        vlans = set(proposed_vlans_list).intersection(existing_vlans_list)
+        for vlan in vlans:
+            commands.append('no vlan {0}'.format(vlan))
 
-def get_vlan_config_commands(vlan, vid):
-    """Build command list required for VLAN configuration
-    """
-
-    reverse_value_map = {
-        "admin_state": {
-            "down": "shutdown",
-            "up": "no shutdown"
-        }
-    }
-
-    if vlan.get('admin_state'):
-        # apply value map when making change to the admin state
-        # note: would need to be a loop or more in depth check if
-        # value map has more than 1 key
-        vlan = apply_value_map(reverse_value_map, vlan)
-
-    VLAN_ARGS = {
-        'name': 'name {0}',
-        'vlan_state': 'state {0}',
-        'admin_state': '{0}',
-        'mode': 'mode {0}',
-        'mapped_vni': 'vn-segment {0}'
-    }
-
-    commands = []
-
-    for param, value in vlan.items():
-        if param == 'mapped_vni' and value == 'default':
-            command = 'no vn-segment'
-        else:
-            command = VLAN_ARGS.get(param).format(vlan.get(param))
-        if command:
-            commands.append(command)
-
-    commands.insert(0, 'vlan ' + vid)
-    commands.append('exit')
+    elif module.params['state'] == 'present':
+        vlans = set(proposed_vlans_list).difference(existing_vlans_list)
+        for vlan in vlans:
+            commands.append('vlan {0}'.format(vlan))
 
     return commands
 
 
-def get_list_of_vlans(module):
-    command = 'show vlan'
-    body = execute_show_command(command, module)
-    vlan_list = []
-    vlan_table = body[0].get('TABLE_vlanbrief')['ROW_vlanbrief']
+def map_params_to_obj(module):
+    obj = []
+    if module.params['vlan_range']:
+        return []
 
-    if isinstance(vlan_table, list):
-        for vlan in vlan_table:
-            vlan_list.append(str(vlan['vlanshowbr-vlanid-utf']))
+    aggregate = module.params.get('aggregate')
+    if aggregate:
+        for item in aggregate:
+            for key in item:
+                if item.get(key) is None:
+                    item[key] = module.params[key]
+
+            d = item.copy()
+            d['vlan_id'] = str(d['vlan_id'])
+            d['mapped_vni'] = str(d['mapped_vni'])
+
+            obj.append(d)
     else:
-        vlan_list.append('1')
+        obj.append({
+            'vlan_id': str(module.params['vlan_id']),
+            'name': module.params['name'],
+            'interfaces': module.params['interfaces'],
+            'vlan_state': module.params['vlan_state'],
+            'mapped_vni': str(module.params['mapped_vni']),
+            'state': module.params['state'],
+            'admin_state': module.params['admin_state'],
+            'mode': module.params['mode'],
+            'associated_interfaces': module.params['associated_interfaces']
+        })
 
-    return vlan_list
-
-
-def get_vni(vlanid, module):
-    command = 'show run all | section vlan.{0}'.format(vlanid)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
-    value = ''
-    if body:
-        REGEX = re.compile(r'(?:vn-segment\s)(?P<value>.*)$', re.M)
-        if 'vn-segment' in body:
-            value = REGEX.search(body).group('value')
-    return value
-
-
-def get_vlan(vlanid, module):
-    """Get instance of VLAN as a dictionary
-    """
-
-    command = 'show vlan id ' + vlanid
-
-    body = execute_show_command(command, module)
-
-    try:
-        vlan_table = body[0]['TABLE_vlanbriefid']['ROW_vlanbriefid']
-    except (TypeError, IndexError):
-        return {}
-
-    key_map = {
-        "vlanshowbr-vlanid-utf": "vlan_id",
-        "vlanshowbr-vlanname": "name",
-        "vlanshowbr-vlanstate": "vlan_state",
-        "vlanshowbr-shutstate": "admin_state"
-    }
-
-    vlan = apply_key_map(key_map, vlan_table)
-
-    value_map = {
-        "admin_state": {
-            "shutdown": "down",
-            "noshutdown": "up"
-        }
-    }
-
-    vlan = apply_value_map(value_map, vlan)
-    vlan['mapped_vni'] = get_vni(vlanid, module)
-    return vlan
+    return obj
 
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            new_dict[new_key] = str(value)
-    return new_dict
+def parse_admin_state(vlan):
+    shutstate = vlan.get('vlanshowbr-shutstate')
+    if shutstate == 'noshutdown':
+        return 'up'
+    elif shutstate == 'shutdown':
+        return 'down'
 
 
-def apply_value_map(value_map, resource):
-    for key, value in value_map.items():
-        resource[key] = value[resource.get(key)]
-    return resource
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet.
-    """
-    if 'show run' in command or response[0] == '\n':
-        body = response
-    elif 'xml' in response[0]:
-        body = []
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
+def parse_mode(os_platform, output, vlan_id):
+    if not any(i in os_platform for i in ['5K', '7K']):
+        return None
 
     try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
+        mtus = output['TABLE_mtuinfo']['ROW_mtuinfo']
+    except KeyError:
+        return None
+
+    if mtus:
+        if isinstance(mtus, list):
+            for mtu in mtus:
+                if mtu['vlanshowinfo-vlanid'] == vlan_id:
+                    mode = mtu.get('vlanshowinfo-vlanmode')
+                    if mode == 'ce-vlan':
+                        return 'ce'
+                    elif mode == 'fabricpath-vlan':
+                        return 'fabricpath'
+            return None
+
+        elif isinstance(mtus, dict):
+            if mtus['vlanshowinfo-vlanid'] == vlan_id:
+                    mode = mtus.get('vlanshowinfo-vlanmode')
+                    if mode == 'ce-vlan':
+                        return 'ce'
+                    elif mode == 'fabricpath-vlan':
+                        return 'fabricpath'
+            return None
+
         else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
+            return None
+    else:
+        return None
+
+
+def parse_vni(module, vlan_id):
+    vni = None
+    flags = ['| section vlan.{0}'.format(vlan_id)]
+    cfg = get_config(module, flags=flags)
+
+    match = re.search(r'vn-segment (\S+)', cfg, re.M)
+    if match:
+        vni = match.group(1)
+    return str(vni)
+
+
+def parse_interfaces(module, vlan):
+    vlan_int = []
+    interfaces = vlan.get('vlanshowplist-ifidx')
+    if interfaces:
+        for i in interfaces.split(','):
+            if 'eth' in i.lower() and '-' in i:
+                int_range = i.split('-')
+                stop = int((int_range)[1])
+                start = int(int_range[0].split('/')[1])
+                eth = int_range[0].split('/')[0]
+                for r in range(start, stop + 1):
+                    vlan_int.append(eth + '/' + str(r))
             else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
+                vlan_int.append(i)
+
+    return vlan_int
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
+def parse_vlan_options(module, os_platform, output, vlan):
+    obj = {}
+    vlan_id = vlan['vlanshowbr-vlanid-utf']
+    obj['vlan_id'] = str(vlan_id)
+    obj['name'] = vlan.get('vlanshowbr-vlanname')
+    obj['vlan_state'] = vlan.get('vlanshowbr-vlanstate')
+    obj['admin_state'] = parse_admin_state(vlan)
+    obj['mode'] = parse_mode(os_platform, output, vlan_id)
+    obj['mapped_vni'] = parse_vni(module, vlan_id)
+    obj['interfaces'] = parse_interfaces(module, vlan)
+    return obj
 
-    return body
+
+def map_config_to_obj(module, os_platform):
+    objs = list()
+    output = run_commands(module, ['show vlan | json'])[0]
+    try:
+        vlans = output['TABLE_vlanbrief']['ROW_vlanbrief']
+    except KeyError:
+        return objs
+
+    if vlans:
+        if isinstance(vlans, list):
+            for vlan in vlans:
+                obj = parse_vlan_options(module, os_platform, output, vlan)
+                objs.append(obj)
+
+        elif isinstance(vlans, dict):
+            obj = parse_vlan_options(module, os_platform, output, vlans)
+            objs.append(obj)
+
+    return objs
+
+
+def check_declarative_intent_params(want, module, os_platform, result):
+
+    have = None
+    is_delay = False
+
+    for w in want:
+        if w.get('associated_interfaces') is None:
+            continue
+
+        if result['changed'] and not is_delay:
+            time.sleep(module.params['delay'])
+            is_delay = True
+
+        if have is None:
+            have = map_config_to_obj(module, os_platform)
+
+        for i in w['associated_interfaces']:
+            obj_in_have = search_obj_in_list(w['vlan_id'], have)
+            if obj_in_have and 'interfaces' in obj_in_have and i not in obj_in_have['interfaces']:
+                module.fail_json(msg="Interface %s not configured on vlan %s" % (i, w['vlan_id']))
 
 
 def main():
-    argument_spec = dict(
-            vlan_id=dict(required=False, type='str'),
-            vlan_range=dict(required=False),
-            name=dict(required=False),
-            vlan_state=dict(choices=['active', 'suspend'], required=False),
-            mapped_vni=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
-            admin_state=dict(choices=['up', 'down'], required=False),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+    """ main entry point for module execution
+    """
+    element_spec = dict(
+        vlan_id=dict(required=False, type='int'),
+        vlan_range=dict(required=False),
+        name=dict(required=False),
+        interfaces=dict(type='list'),
+        associated_interfaces=dict(type='list'),
+        vlan_state=dict(choices=['active', 'suspend'], required=False, default='active'),
+        mapped_vni=dict(required=False),
+        delay=dict(default=10, type='int'),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
+        admin_state=dict(choices=['up', 'down'], required=False, default='up'),
+        mode=dict(choices=['ce', 'fabricpath'], required=False, default='ce'),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                 mutually_exclusive=[['vlan_range', 'name'],
-                                                     ['vlan_id', 'vlan_range']],
-                                 supports_check_mode=True)
 
-    vlan_range = module.params['vlan_range']
-    vlan_id = module.params['vlan_id']
-    name = module.params['name']
-    vlan_state = module.params['vlan_state']
-    admin_state = module.params['admin_state']
-    mapped_vni = module.params['mapped_vni']
-    state = module.params['state']
+    aggregate_spec = deepcopy(element_spec)
+    aggregate_spec['vlan_id'] = dict(required=True)
 
-    changed = False
+    # remove default in aggregate spec, to handle common arguments
+    remove_default_spec(aggregate_spec)
 
-    if vlan_id:
-        if not vlan_id.isdigit():
-            module.fail_json(msg='vlan_id must be a valid VLAN ID')
+    argument_spec = dict(
+        aggregate=dict(type='list', elements='dict', options=aggregate_spec),
+        purge=dict(default=False, type='bool')
+    )
 
-    args = dict(name=name, vlan_state=vlan_state,
-                admin_state=admin_state, mapped_vni=mapped_vni)
+    argument_spec.update(element_spec)
+    argument_spec.update(nxos_argument_spec)
 
-    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    required_one_of = [['vlan_id', 'aggregate', 'vlan_range']]
+    mutually_exclusive = [['vlan_id', 'aggregate'],
+                          ['vlan_range', 'name'],
+                          ['vlan_id', 'vlan_range']]
 
-    proposed_vlans_list = numerical_sort(vlan_range_to_list(
-        vlan_id or vlan_range))
-    existing_vlans_list = numerical_sort(get_list_of_vlans(module))
-    commands = []
-    existing = {}
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
-    if vlan_range:
-        if state == 'present':
-            # These are all of the VLANs being proposed that don't
-            # already exist on the switch
-            vlans_delta = list(
-                set(proposed_vlans_list).difference(existing_vlans_list))
-            commands = build_commands(vlans_delta, state)
-        elif state == 'absent':
-            # VLANs that are common between what is being proposed and
-            # what is on the switch
-            vlans_common = list(
-                set(proposed_vlans_list).intersection(existing_vlans_list))
-            commands = build_commands(vlans_common, state)
+    info = get_capabilities(module).get('device_info', {})
+    os_platform = info.get('network_os_platform', '')
+
+    warnings = list()
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
+
+    have = map_config_to_obj(module, os_platform)
+    want = map_params_to_obj(module)
+
+    if module.params['vlan_range']:
+        commands = vlan_range_commands(module, have)
+        result['commands'] = commands
     else:
-        existing = get_vlan(vlan_id, module)
-        if state == 'absent':
-            if existing:
-                commands = ['no vlan ' + vlan_id]
-        elif state == 'present':
-            if (existing.get('mapped_vni') == '0' and
-                proposed.get('mapped_vni') == 'default'):
-                proposed.pop('mapped_vni')
-            delta = dict(set(
-                proposed.items()).difference(existing.items()))
-            if delta or not existing:
-                commands = get_vlan_config_commands(delta, vlan_id)
-
-    end_state = existing
-    end_state_vlans_list = existing_vlans_list
+        commands = map_obj_to_commands((want, have), module, os_platform)
+        result['commands'] = commands
 
     if commands:
-        if existing.get('mapped_vni'):
-            if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
-                existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
-                commands.insert(1, 'no vn-segment')
-        if module.check_mode:
-            module.exit_json(changed=True,
-                             commands=commands)
-        else:
-            execute_config_command(commands, module)
-            changed = True
-            end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
-            if 'configure' in commands:
-                commands.pop(0)
-            if vlan_id:
-                end_state = get_vlan(vlan_id, module)
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
 
-    results = {}
-    results['proposed_vlans_list'] = proposed_vlans_list
-    results['existing_vlans_list'] = existing_vlans_list
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['end_state_vlans_list'] = end_state_vlans_list
-    results['updates'] = commands
-    results['changed'] = changed
+    if want:
+        check_declarative_intent_params(want, module, os_platform, result)
 
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

@@ -1,22 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
+
 
 DOCUMENTATION = """
 ---
@@ -46,39 +39,25 @@ options:
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
-    required: false
-    default: null
   message_retention_period:
     description:
       - The message retention period in seconds.
-    required: false
-    default: null
   maximum_message_size:
     description:
       - The maximum message size in bytes.
-    required: false
-    default: null
   delivery_delay:
     description:
       - The delivery delay in seconds.
-    required: false
-    default: null
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
-    required: false
-    default: null
   policy:
     description:
       - The json dict policy to attach to queue
-    required: false
-    default: null
     version_added: "2.1"
   redrive_policy:
     description:
       - json dict with the redrive_policy (see example)
-    required: false
-    default: null
     version_added: "2.2"
 extends_documentation_fragment:
     - aws
@@ -86,36 +65,44 @@ extends_documentation_fragment:
 """
 
 RETURN = '''
-default_visibility_timeout: 
+default_visibility_timeout:
     description: The default visibility timeout in seconds.
+    type: int
     returned: always
     sample: 30
-delivery_delay: 
+delivery_delay:
     description: The delivery delay in seconds.
+    type: int
     returned: always
     sample: 0
-maximum_message_size: 
+maximum_message_size:
     description: The maximum message size in bytes.
+    type: int
     returned: always
     sample: 262144
-message_retention_period: 
+message_retention_period:
     description: The message retention period in seconds.
+    type: int
     returned: always
     sample: 345600
 name:
     description: Name of the SQS Queue
+    type: string
     returned: always
     sample: "queuename-987d2de0"
 queue_arn:
     description: The queue's Amazon resource name (ARN).
+    type: string
     returned: on successful creation or update of the queue
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
-receive_message_wait_time: 
+receive_message_wait_time:
     description: The receive message wait time in seconds.
+    type: int
     returned: always
     sample: 0
 region:
     description: Region that the queue was created within
+    type: string
     returned: always
     sample: 'us-east-1'
 '''
@@ -179,7 +166,7 @@ def create_or_update_sqs_queue(connection, module):
     try:
         queue = connection.get_queue(queue_name)
         if queue:
-            # Update existing            
+            # Update existing
             result['changed'] = update_sqs_queue(queue, check_mode=module.check_mode, **queue_attributes)
         else:
             # Create new
@@ -187,7 +174,7 @@ def create_or_update_sqs_queue(connection, module):
                 queue = connection.create_queue(queue_name)
                 update_sqs_queue(queue, **queue_attributes)
             result['changed'] = True
-        
+
         if not module.check_mode:
             result['queue_arn'] = queue.get_attributes('QueueArn')['QueueArn']
             result['default_visibility_timeout'] = queue.get_attributes('VisibilityTimeout')['VisibilityTimeout']
@@ -195,7 +182,7 @@ def create_or_update_sqs_queue(connection, module):
             result['maximum_message_size'] = queue.get_attributes('MaximumMessageSize')['MaximumMessageSize']
             result['delivery_delay'] = queue.get_attributes('DelaySeconds')['DelaySeconds']
             result['receive_message_wait_time'] = queue.get_attributes('ReceiveMessageWaitTimeSeconds')['ReceiveMessageWaitTimeSeconds']
-          
+
     except BotoServerError:
         result['msg'] = 'Failed to create/update sqs queue due to error: ' + traceback.format_exc()
         module.fail_json(**result)
@@ -232,7 +219,7 @@ def update_sqs_queue(queue,
 
 
 def set_queue_attribute(queue, attribute, value, check_mode=False):
-    if not value:
+    if not value and value != 0:
         return False
 
     try:

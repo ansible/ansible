@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/sublevel_exact.yaml"
+- debug: msg="START cli/sublevel_exact.yaml on connection={{ ansible_connection }}"
 
 - name: setup
   ios_config:
@@ -62,4 +62,4 @@
     match: none
     provider: "{{ cli }}"
 
-- debug: msg="END cli/sublevel_exact.yaml"
+- debug: msg="END cli/sublevel_exact.yaml on connection={{ ansible_connection }}"

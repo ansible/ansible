@@ -16,22 +16,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_igmp
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages IGMP global configuration.
 description:
     - Manages IGMP global configuration configuration settings.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - When C(state=default), all supported params will be reset to a
       default state.
     - If restart is set to true with other params set, the restart will happen
@@ -41,26 +43,19 @@ options:
         description:
             - Removes routes when the IGMP process is restarted. By default,
               routes are not flushed.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     enforce_rtr_alert:
         description:
             - Enables or disables the enforce router alert option check for
               IGMPv2 and IGMPv3 packets.
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     restart:
         description:
             - Restarts the igmp process (using an exec config command).
-        required: false
-        default: null
-        choices: ['true', 'false']
+        type: bool
     state:
         description:
             - Manages desired state of the resource.
-        required: false
         default: present
         choices: ['present', 'default']
 '''
@@ -68,329 +63,89 @@ EXAMPLES = '''
 - name: Default igmp global params (all params except restart)
   nxos_igmp:
     state: default
-    host: "{{ inventory_hostname }}"
 
 - name: Ensure the following igmp global config exists on the device
   nxos_igmp:
     flush_routes: true
     enforce_rtr_alert: true
-    host: "{{ inventory_hostname }}"
 
 - name: Restart the igmp process
   nxos_igmp:
     restart: true
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": true}
-existing:
-    description: k/v pairs of existing IGMP configuration
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": false}
-end_state:
-    description: k/v pairs of IGMP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"enforce_rtr_alert": true, "flush_routes": true}
 updates:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["ip igmp flush-routes"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-
-# COMMON CODE FOR MIGRATION
-import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+def get_current(module):
+    output = run_commands(module, {'command': 'show running-config', 'output': 'text'})
+    return {
+        'flush_routes': 'ip igmp flush-routes' in output[0],
+        'enforce_rtr_alert': 'ip igmp enforce-router-alert' in output[0]
+    }
 
 
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-PARAM_TO_COMMAND_KEYMAP = {
-    'flush_routes': 'ip igmp flush-routes',
-    'enforce_rtr_alert': 'ip igmp enforce-router-alert'
-}
-
-
-def get_value(arg, config):
-    REGEX = re.compile(r'{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
-    value = False
-    try:
-        if REGEX.search(config):
-            value = True
-    except TypeError:
-        value = False
-    return value
-
-
-def get_existing(module, args):
-    existing = {}
-    config = str(get_config(module))
-
-    for arg in args:
-        existing[arg] = get_value(arg, config)
-    return existing
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
-def get_commands(module, existing, proposed, candidate):
-    commands = list()
-    proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
-    existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
-    if module.params['state'] == 'default':
-        for key, value in proposed_commands.items():
-            if existing_commands.get(key):
-                commands.append('no {0}'.format(key))
-    else:
-        for key, value in proposed_commands.items():
-            if value is True:
-                commands.append(key)
-            else:
-                if existing_commands.get(key):
-                    commands.append('no {0}'.format(key))
-
-    if module.params['restart']:
-        commands.append('restart igmp')
-
-    if commands:
-        parents = []
-        candidate.add(commands, parents=parents)
-
-
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
-    return new_dict
+def get_desired(module):
+    return {
+        'flush_routes': module.params['flush_routes'],
+        'enforce_rtr_alert': module.params['enforce_rtr_alert']
+    }
 
 
 def main():
     argument_spec = dict(
-            flush_routes=dict(type='bool'),
-            enforce_rtr_alert=dict(type='bool'),
-            restart=dict(type='bool', default=False),
-            state=dict(choices=['present', 'default'], default='present'),
-            include_defaults=dict(default=False),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        flush_routes=dict(type='bool'),
+        enforce_rtr_alert=dict(type='bool'),
+        restart=dict(type='bool', default=False),
+        state=dict(choices=['present', 'default'], default='present')
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
+    current = get_current(module)
+    desired = get_desired(module)
 
     state = module.params['state']
     restart = module.params['restart']
 
-    if (state == 'default' and (module.params['flush_routes'] is not None or
-            module.params['enforce_rtr_alert'] is not None)):
-        module.fail_json(msg='When state=default other params have no effect.')
+    commands = list()
 
-    args =  [
-            "flush_routes",
-            "enforce_rtr_alert",
-        ]
-
-    existing = invoke('get_existing', module, args)
-    end_state = existing
-
-    proposed = dict((k, v) for k, v in module.params.items()
-                if v is not None and k in args)
-
-    proposed_args = proposed.copy()
     if state == 'default':
-        proposed_args = dict((k, False) for k in args)
+        if current['flush_routes']:
+            commands.append('no ip igmp flush-routes')
+        if current['enforce_rtr_alert']:
+            commands.append('no ip igmp enforce-router-alert')
 
-    result = {}
-    if (state == 'present' or (state == 'default' and
-            True in existing.values()) or restart):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('get_commands', module, existing, proposed_args, candidate)
+    elif state == 'present':
+        if desired['flush_routes'] and not current['flush_routes']:
+            commands.append('ip igmp flush-routes')
+        if desired['enforce_rtr_alert'] and not current['enforce_rtr_alert']:
+            commands.append('ip igmp enforce-router-alert')
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
-    else:
-        result['updates'] = []
+    result = {'changed': False, 'updates': commands, 'warnings': warnings}
 
-    if restart:
-        proposed['restart'] = restart
-    result['connected'] = module.connected
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed
+    if commands:
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
+
+    if module.params['restart']:
+        run_commands(module, 'restart igmp')
 
     module.exit_json(**result)
 

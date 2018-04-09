@@ -1,24 +1,15 @@
 #!/usr/bin/python
 #
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -50,8 +41,6 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of retries, the task fails.
         See examples.
-    required: false
-    default: null
     aliases: ['waitfor']
   match:
     description:
@@ -61,7 +50,6 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
     default: all
     choices: ['any', 'all']
   retries:
@@ -70,7 +58,6 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
     default: 10
   interval:
     description:
@@ -78,13 +65,13 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
     default: 1
 """
 
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -92,6 +79,7 @@ vars:
     password: admin
     transport: cli
 
+---
 tasks:
   - name: run show version on remote devices
     sros_command:
@@ -105,7 +93,7 @@ tasks:
       provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     sros_command:
+    sros_command:
       commands:
         - show version
         - show port detail
@@ -124,13 +112,13 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 
@@ -140,34 +128,47 @@ failed_conditions:
   type: list
   sample: ['...', '...']
 """
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.netcli import AddCommandError, FailedConditionsError
-from ansible.module_utils.sros import NetworkModule, NetworkError
+import time
 
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.common.parsing import Conditional
+from ansible.module_utils.network.common.utils import ComplexList
+from ansible.module_utils.six import string_types
+from ansible.module_utils.network.sros.sros import run_commands, sros_argument_spec, check_args
+
 
 def to_lines(stdout):
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         yield item
 
-def parse_commands(module):
-    for cmd in module.params['commands']:
-        if isinstance(cmd, basestring):
-            cmd = dict(command=cmd, output=None)
-        elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text']:
-            module.fail_json(msg='invalid output specified for command')
-        elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown keyword specified')
-        yield cmd
+
+def parse_commands(module, warnings):
+    command = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+    commands = command(module.params['commands'])
+    for index, item in enumerate(commands):
+        if module.check_mode and not item['command'].startswith('show'):
+            warnings.append(
+                'only show commands are supported when using check mode, not '
+                'executing `%s`' % item['command']
+            )
+        elif item['command'].startswith('conf'):
+            module.fail_json(
+                msg='sros_command does not support running config mode '
+                    'commands.  Please use sros_config instead'
+            )
+    return commands
+
 
 def main():
-    spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -177,59 +178,51 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = NetworkModule(argument_spec=spec,
-                           connect_on_load=False,
+    argument_spec.update(sros_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    commands = list(parse_commands(module))
-    conditionals = module.params['wait_for'] or list()
+    result = {'changed': False}
 
     warnings = list()
-
-    runner = CommandRunner(module)
-
-    for cmd in commands:
-        if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='sros_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'sros_config instead')
-            try:
-                runner.add_command(**cmd)
-            except AddCommandError:
-                exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
-
-    for item in conditionals:
-        runner.add_conditional(item)
-
-    runner.retries = module.params['retries']
-    runner.interval = module.params['interval']
-    runner.match = module.params['match']
-
-    try:
-        runner.run()
-    except FailedConditionsError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
-
-    result = dict(changed=False, stdout=list())
-
-    for cmd in commands:
-        try:
-            output = runner.get_command(cmd['command'])
-        except ValueError:
-            output = 'command not executed due to check_mode, see warnings'
-        result['stdout'].append(output)
-
+    check_args(module, warnings)
+    commands = parse_commands(module, warnings)
     result['warnings'] = warnings
-    result['stdout_lines'] = list(to_lines(result['stdout']))
+
+    wait_for = module.params['wait_for'] or list()
+    conditionals = [Conditional(c) for c in wait_for]
+
+    retries = module.params['retries']
+    interval = module.params['interval']
+    match = module.params['match']
+
+    while retries > 0:
+        responses = run_commands(module, commands)
+
+        for item in list(conditionals):
+            if item(responses):
+                if match == 'any':
+                    conditionals = list()
+                    break
+                conditionals.remove(item)
+
+        if not conditionals:
+            break
+
+        time.sleep(interval)
+        retries -= 1
+
+    if conditionals:
+        failed_conditions = [item.raw for item in conditionals]
+        msg = 'One or more conditional statements have not been satisfied'
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
+
+    result = {
+        'changed': False,
+        'stdout': responses,
+        'stdout_lines': list(to_lines(responses))
+    }
 
     module.exit_json(**result)
 

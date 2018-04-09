@@ -39,11 +39,7 @@ class InvalidBranch(ApplicationError):
 
 class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
-    def __init__(self, message):
-        """
-        :type message: str
-        """
-        super(ChangeDetectionNotSupported, self).__init__(message)
+    pass
 
 
 class ShippableChanges(object):
@@ -68,16 +64,19 @@ class ShippableChanges(object):
             raise ChangeDetectionNotSupported('Change detection is not supported for tags.')
 
         if self.is_pr:
-            self.paths = sorted(git.get_diff_names([self.branch]))
+            self.paths = sorted(git.get_diff_names(['origin/%s' % self.branch, '--']))
+            self.diff = git.get_diff(['origin/%s' % self.branch, '--'])
         else:
             merge_runs = self.get_merge_runs(self.project_id, self.branch)
-            last_successful_commit = self.get_last_successful_commit(merge_runs)
+            last_successful_commit = self.get_last_successful_commit(git, merge_runs)
 
             if last_successful_commit:
                 self.paths = sorted(git.get_diff_names([last_successful_commit, self.commit]))
+                self.diff = git.get_diff([last_successful_commit, self.commit])
             else:
-                # tracked files (including unchanged)
-                self.paths = sorted(git.get_file_names(['--cached']))
+                # first run for branch
+                self.paths = None  # act as though change detection not enabled, do not filter targets
+                self.diff = []
 
     def get_merge_runs(self, project_id, branch):
         """
@@ -96,8 +95,9 @@ class ShippableChanges(object):
         return response.json()
 
     @staticmethod
-    def get_last_successful_commit(merge_runs):
+    def get_last_successful_commit(git, merge_runs):
         """
+        :type git: Git
         :type merge_runs: dict | list[dict]
         :rtype: str
         """
@@ -114,7 +114,11 @@ class ShippableChanges(object):
             if commit_sha not in known_commits:
                 known_commits.add(commit_sha)
                 if merge_run['statusCode'] == 30:
-                    last_successful_commit = commit_sha
+                    if git.is_valid_ref(commit_sha):
+                        last_successful_commit = commit_sha
+
+        if last_successful_commit is None:
+            display.warning('No successful commit found. All tests will be executed.')
 
         return last_successful_commit
 
@@ -159,6 +163,8 @@ class LocalChanges(object):
         self.staged = sorted(git.get_diff_names(['--cached']))
         # tracked changes (including deletions) which are not staged
         self.unstaged = sorted(git.get_diff_names([]))
+        # diff of all tracked files from fork point to working copy
+        self.diff = git.get_diff([self.fork_point])
 
     @staticmethod
     def is_official_branch(name):

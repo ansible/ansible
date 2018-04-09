@@ -1,10 +1,10 @@
 Coding Guidelines
 =================
 
-Hi!  Thanks for interest in contributing to Ansible.
+Hi!  Thanks for your interest in contributing to Ansible.
 
-Here are some guidelines for contributing code.  The purpose of this document are to establish what we're looking for in code contributions, and to make sure
-new contributions know some of the conventions that we've been using.
+Here are some guidelines for contributing code.  The purpose of this document is to establish what we're looking for in code contributions, and to make sure
+new contributors know some of the conventions that we've been using.
 
 We don't think much of this should be too strange to readers familiar with contributing to Python projects, though it helps if we all get on the same page.
 
@@ -14,16 +14,16 @@ Language
   * While not all components of Ansible must be in Python, core contributions to the Ansible repo must be written in Python.  This is to maximize the ability of everyone to contribute.
   * If you want to write non-Python ansible modules or inventory scripts, that's fine, but they are not going to get merged in most likely.  Sorry!!  
 
-PEP8 and basic style checks
-===========================
+PEP 8 and basic style checks
+============================
 
-  * PEP8 is a great Python style guide, which you should read.
-  * PEP8 must not be strictly followed in all aspects, but most of it is good advice
-  * In particular, we don't really care about line lengths.  Buy a bigger monitor!
-  * To run checks for things we care about, run "make pep8"
-  * Similarly, additional checks can be made with "make pyflakes"
-  * There is no need to submit code changes for pep8 and pyflake fixes, as these break attribution history.  Project leadership will make these periodically.
-  * Do not submit pull requests that simply adjust whitespace in the code
+  * [PEP 8](https://www.python.org/dev/peps/pep-0008/) is a great Python style guide, which you should read.
+  * PEP 8 must not be strictly followed in all aspects, but most of it is good advice.
+  * The line is limited to 160 characters.
+  * To run checks for things we care about, use [ansible-test](http://docs.ansible.com/ansible/dev_guide/testing_pep8.html#running-locally).
+  * Similarly, additional checks can be made with "make pyflakes".
+  * There is no need to submit code changes for PEP 8 and pyflakes fixes, as these break attribution history.  Project leadership will make these periodically.
+  * Do not submit pull requests that simply adjust whitespace in the code.
 
 Testing
 =======
@@ -32,7 +32,7 @@ Testing
   * That being said, there are unit tests too!
   * Code written must absolutely pass tests (i.e. "make tests")
   * You should anticipate any error paths in your code and test down those error paths.
-  * Additions to tests for core code is welcome, but not always possible.  Be sure things are at least well tested manually in that case.
+  * Additions to tests for core code are welcome, but not always possible.  Be sure things are at least well tested manually in that case.
 
 Whitespace
 ==========
@@ -74,7 +74,7 @@ Functions and Methods
 Variables
 =========
 
-  * Use descriptive variable names instead of variables like 'x', unless x is a obvious loop index
+  * Use descriptive variable names instead of variables like 'x', unless x is an obvious loop index
   * Ansible python code uses identifiers like 'ClassesLikeThis and variables_like_this
   * Module parameters should also use_underscores and not runtogether
 
@@ -83,7 +83,7 @@ Module Security
 
   * Modules must take steps to avoid passing user input from the shell and always check return codes
   * always use module.run_command instead of subprocess or Popen or os.system -- this is mandatory
-  * if you use need the shell you must pass use_unsafe_shell=True to module.run_command
+  * if you need to use the shell you must pass use_unsafe_shell=True to module.run_command
   * if you do not need the shell, avoid using the shell
   * any variables that can come from the user input with use_unsafe_shell=True must be wrapped by pipes.quote(x)
   * downloads of https:// resource urls must import module_utils.urls and use the fetch_url method
@@ -101,21 +101,21 @@ Use the dict constructor where possible when allocating dictionaries:
 
     # this:
     foo = dict(
-       a = 12,
-       b = 34
+       a=12,
+       b=34,
     )
 
-Line up variables
+Do not line up variables
 
     # not this
-    a  = 12
-    foosball = 34
-    xyz = 'dog'
-
-    # this
     a        = 12
     foosball = 34
     xyz      = 'dog'
+
+    # this
+    a = 12
+    foosball = 34
+    xyz = 'dog'
 
 Don't use line continuations:
 
@@ -131,13 +131,13 @@ Don't use line continuations:
 Spacing:
 
     # no
-    x=[1,2,3]
-
-    # no
     x = [1,2,3]
 
-    # yes
+    # no
     x = [ 1, 2, 3 ]
+
+    # yes
+    x = [1, 2, 3]
 
 Spacing continued:
 
@@ -277,7 +277,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    from ansible.compat.six import string_types
+    from ansible.module_utils.six import string_types
     if isinstance(x, string_types):
 
 Cleverness
@@ -294,7 +294,7 @@ Pull requests cannot be accepted that contain merge commits.
 
 Always do "git pull --rebase" and "git rebase" vs "git pull" or "git merge".
 
-Always create a new branch for each pull request to avoid intertwingling different features or fixes on the same branch.
+Always create a new branch for each pull request to avoid intermingling different features or fixes on the same branch.
 
    
 Python Version Compliance
@@ -302,7 +302,7 @@ Python Version Compliance
 
 All code in Ansible core must support a minimum version of Python 2.6.
 
-Module code must support a minimum of Python 2.4, with occasional exception for modules that require code that themselves require 2.6 and later.
+Module code must support a minimum of Python 2.4, with occasional exceptions for modules that require code that themselves require 2.6 and later.
 
 A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are no 'dict' comprehensions, and there is no 'with' statement.
 But otherwise it's pretty much all the same.
@@ -314,7 +314,3 @@ This was not meant to be a scary document, so we hope it wasn't, but we also hop
 If you have questions about this document, please ask on the ansible-devel mailing list.
 
 Thank you!
-
-
-
-

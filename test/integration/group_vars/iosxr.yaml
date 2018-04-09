@@ -1,6 +1,0 @@
----
-cli:
-  host: "{{ inventory_hostname }}"
-  username: "{{ iosxr_cli_user | default('root') }}"
-  password: "{{ iosxr_cli_pass | default('root') }}"
-  transport: cli

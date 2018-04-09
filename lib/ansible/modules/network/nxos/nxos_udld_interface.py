@@ -16,21 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_udld_interface
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages UDLD interface configuration params.
 description:
     - Manages UDLD interface configuration params.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Feature UDLD must be enabled on the device to use this module.
 options:
     mode:
@@ -86,6 +88,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"mode": "aggressive"}
 end_state:
@@ -97,7 +100,7 @@ updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface ethernet1/33", 
+    sample: ["interface ethernet1/33",
             "no udld aggressive ; no udld disable"]
 changed:
     description: check to see if a change was made on the device
@@ -107,245 +110,9 @@ changed:
 '''
 
 
-import json
-
-# COMMON CODE FOR MIGRATION
-import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0] or response[0] == '\n':
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 
 
 def flatten_list(command_lists):
@@ -359,74 +126,61 @@ def flatten_list(command_lists):
 
 
 def get_udld_interface(module, interface):
-    command = 'show udld {0}'.format(interface)
+    command = 'show run udld all | section ' + interface.title() + '$'
     interface_udld = {}
     mode = None
+    mode_str = None
     try:
-        body = execute_show_command(command, module)[0]
-        table = body['TABLE_interface']['ROW_interface']
-
-        status = str(table.get('mib-port-status', None))
-        # Note: 'mib-aggresive-mode' is NOT a typo
-        agg = str(table.get('mib-aggresive-mode', 'disabled'))
-
-        if agg == 'enabled':
+        body = run_commands(module, [{'command': command, 'output': 'text'}])[0]
+        if 'aggressive' in body:
             mode = 'aggressive'
-        else:
-            mode = status
-
+            mode_str = 'aggressive'
+        elif 'no udld enable' in body:
+            mode = 'disabled'
+            mode_str = 'no udld enable'
+        elif 'no udld disable' in body:
+            mode = 'enabled'
+            mode_str = 'no udld disable'
+        elif 'udld disable' in body:
+            mode = 'disabled'
+            mode_str = 'udld disable'
+        elif 'udld enable' in body:
+            mode = 'enabled'
+            mode_str = 'udld enable'
         interface_udld['mode'] = mode
 
     except (KeyError, AttributeError, IndexError):
         interface_udld = {}
 
-    return interface_udld
+    return interface_udld, mode_str
 
 
-def is_interface_copper(module, interface):
-    command = 'show interface status'
-    copper = []
-    try:
-        body = execute_show_command(command, module)[0]
-        table = body['TABLE_interface']['ROW_interface']
-        for each in table:
-            itype = each.get('type', 'DNE')
-            if 'CU' in itype or '1000' in itype or '10GBaseT' in itype:
-                copper.append(str(each['interface'].lower()))
-    except (KeyError, AttributeError):
-        pass
-
-    if interface in copper:
-        found = True
-    else:
-        found = False
-
-    return found
-
-
-def get_commands_config_udld_interface(delta, interface, module, existing):
+def get_commands_config_udld_interface1(delta, interface, module, existing):
     commands = []
-    copper = is_interface_copper(module, interface)
-    if delta:
-        mode = delta['mode']
-        if mode == 'aggressive':
-            command = 'udld aggressive'
-        elif copper:
-            if mode == 'enabled':
-                if existing['mode'] == 'aggressive':
-                    command = 'no udld aggressive ; udld enable'
-                else:
-                    command = 'udld enable'
-            elif mode == 'disabled':
-                command = 'no udld enable'
-        elif not copper:
-            if mode == 'enabled':
-                if existing['mode'] == 'aggressive':
-                    command = 'no udld aggressive ; no udld disable'
-                else:
-                    command = 'no udld disable'
-            elif mode == 'disabled':
-                command = 'udld disable'
+    mode = delta['mode']
+    if mode == 'aggressive':
+        commands.append('udld aggressive')
+    else:
+        commands.append('no udld aggressive')
+    commands.insert(0, 'interface {0}'.format(interface))
+
+    return commands
+
+
+def get_commands_config_udld_interface2(delta, interface, module, existing):
+    commands = []
+    existing, mode_str = get_udld_interface(module, interface)
+    mode = delta['mode']
+    if mode == 'enabled':
+        if mode_str == 'no udld enable':
+            command = 'udld enable'
+        else:
+            command = 'no udld disable'
+    else:
+        if mode_str == 'no udld disable':
+            command = 'udld disable'
+        else:
+            command = 'no udld enable'
     if command:
         commands.append(command)
         commands.insert(0, 'interface {0}'.format(interface))
@@ -436,22 +190,22 @@ def get_commands_config_udld_interface(delta, interface, module, existing):
 
 def get_commands_remove_udld_interface(delta, interface, module, existing):
     commands = []
-    copper = is_interface_copper(module, interface)
+    existing, mode_str = get_udld_interface(module, interface)
 
-    if delta:
-        mode = delta['mode']
-        if mode == 'aggressive':
-            command = 'no udld aggressive'
-        elif copper:
-            if mode == 'enabled':
+    mode = delta['mode']
+    if mode == 'aggressive':
+        command = 'no udld aggressive'
+    else:
+        if mode == 'enabled':
+            if mode_str == 'udld enable':
                 command = 'no udld enable'
-            elif mode == 'disabled':
-                command = 'udld enable'
-        elif not copper:
-            if mode == 'enabled':
+            else:
                 command = 'udld disable'
-            elif mode == 'disabled':
-                command = 'no udld disable'
+        elif mode == 'disabled':
+            if mode_str == 'no udld disable':
+                command = 'udld disable'
+            else:
+                command = 'no udld enable'
     if command:
         commands.append(command)
         commands.insert(0, 'interface {0}'.format(interface))
@@ -461,49 +215,72 @@ def get_commands_remove_udld_interface(delta, interface, module, existing):
 
 def main():
     argument_spec = dict(
-            mode=dict(choices=['enabled', 'disabled', 'aggressive'],
-                      required=True),
-            interface=dict(type='str', required=True),
-            state=dict(choices=['absent', 'present'], default='present'),
+        mode=dict(choices=['enabled', 'disabled', 'aggressive'],
+                  required=True),
+        interface=dict(type='str', required=True),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
 
     interface = module.params['interface'].lower()
     mode = module.params['mode']
     state = module.params['state']
 
     proposed = dict(mode=mode)
-    existing = get_udld_interface(module, interface)
+    existing, mode_str = get_udld_interface(module, interface)
     end_state = existing
 
     delta = dict(set(proposed.items()).difference(existing.items()))
 
     changed = False
     commands = []
+    cmds = []
     if state == 'present':
         if delta:
-            command = get_commands_config_udld_interface(delta, interface,
-                                                         module, existing)
+            command = get_commands_config_udld_interface1(delta, interface,
+                                                          module, existing)
             commands.append(command)
-    elif state == 'absent':
+            cmds = flatten_list(commands)
+            if module.check_mode:
+                module.exit_json(changed=True, commands=cmds)
+            else:
+                changed = True
+                load_config(module, cmds)
+
+            if delta['mode'] == 'enabled' or delta['mode'] == 'disabled':
+                commands = []
+                command = get_commands_config_udld_interface2(delta, interface,
+                                                              module, existing)
+                commands.append(command)
+                cmds = flatten_list(commands)
+                if module.check_mode:
+                    module.exit_json(changed=True, commands=cmds)
+                else:
+                    load_config(module, cmds)
+
+    else:
         common = set(proposed.items()).intersection(existing.items())
         if common:
             command = get_commands_remove_udld_interface(
                 dict(common), interface, module, existing
-                )
-            commands.append(command)
+            )
+            cmds = flatten_list(commands)
+            if module.check_mode:
+                module.exit_json(changed=True, commands=cmds)
+            else:
+                changed = True
+                load_config(module, cmds)
 
-    cmds = flatten_list(commands)
-    if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            execute_config_command(cmds, module)
-            end_state = get_udld_interface(module, interface)
-            if 'configure' in cmds:
-                cmds.pop(0)
+    if not module.check_mode:
+        end_state, mode_str = get_udld_interface(module, interface)
+        if 'configure' in cmds:
+            cmds.pop(0)
 
     results = {}
     results['proposed'] = proposed
@@ -511,8 +288,10 @@ def main():
     results['end_state'] = end_state
     results['updates'] = cmds
     results['changed'] = changed
+    results['warnings'] = warnings
 
     module.exit_json(**results)
+
 
 if __name__ == '__main__':
     main()

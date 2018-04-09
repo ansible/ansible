@@ -16,21 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_user
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages SNMP users for monitoring.
 description:
     - Manages SNMP user configuration.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - Authentication parameters not idempotent.
 options:
     user:
@@ -41,32 +43,23 @@ options:
         description:
             - Group to which the user will belong to.
         required: true
-    auth:
+    authentication:
         description:
-            - Auth parameters for the user.
-        required: false
-        default: null
+            - Authentication parameters for the user.
         choices: ['md5', 'sha']
     pwd:
         description:
-            - Auth password when using md5 or sha.
-        required: false
-        default: null
+            - Authentication password when using md5 or sha.
     privacy:
         description:
             - Privacy password for the user.
-        required: false
-        default: null
     encrypt:
         description:
             - Enables AES-128 bit encryption when using privacy password.
-        required: false
-        default: null
-        choices: ['true','false']
+        type: bool
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -75,282 +68,33 @@ EXAMPLES = '''
 - nxos_snmp_user:
     user: ntc
     group: network-operator
-    auth: md5
+    authentication: md5
     pwd: test_password
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"authentication": "md5", "group": "network-operator", 
-            "pwd": "test_password", "user": "ntc"}
-existing:
-    description:
-        - k/v pairs of existing configuration
-    type: dict
-    sample: {"authentication": "no", "encrypt": "none", 
-             "group": ["network-operator"], "user": "ntc"}
-end_state:
-    description: k/v pairs configuration vtp after module execution
-    returned: always
-    type: dict
-    sample: {"authentication": "md5", "encrypt": "none", 
-             "group": ["network-operator"], "user": "ntc"}
-updates:
-    description: command sent to the device
+commands:
+    description: commands sent to the device
     returned: always
     type: list
     sample: ["snmp-server user ntc network-operator auth md5 test_password"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
-import json
-
-# COMMON CODE FOR MIGRATION
-import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
 
 
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module, text=False):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0] or response[0] == '\n':
-        body = []
-    elif 'show run' in command or text:
-        body = response
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
+def execute_show_command(command, module, text=False):
+    command = {
+        'command': command,
+        'output': 'json',
     }
+    if text:
+        command['output'] = 'text'
 
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show', text=False):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command and text is False:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module, text=text)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
+    return run_commands(module, command)
 
 
 def flatten_list(command_lists):
@@ -364,19 +108,17 @@ def flatten_list(command_lists):
 
 
 def get_snmp_groups(module):
-    command = 'show snmp group'
-    body = execute_show_command(command, module)
-    g_list = []
+    data = execute_show_command('show snmp group', module)[0]
+    group_list = []
 
     try:
-        group_table = body[0]['TABLE_role']['ROW_role']
-        for each in group_table:
-            g_list.append(each['role_name'])
+        group_table = data['TABLE_role']['ROW_role']
+        for group in group_table:
+            group_list.append(group['role_name'])
+    except (KeyError, AttributeError):
+        return group_list
 
-    except (KeyError, AttributeError, IndexError):
-        return g_list
-
-    return g_list
+    return group_list
 
 
 def get_snmp_user(user, module):
@@ -387,25 +129,42 @@ def get_snmp_user(user, module):
         body = execute_show_command(command, module)
 
     resource = {}
-    group_list = []
     try:
-        resource_table = body[0]['TABLE_snmp_users']['ROW_snmp_users']
+        # The TABLE and ROW keys differ between NXOS platforms.
+        if body[0].get('TABLE_snmp_user'):
+            tablekey = 'TABLE_snmp_user'
+            rowkey = 'ROW_snmp_user'
+            tablegrpkey = 'TABLE_snmp_group_names'
+            rowgrpkey = 'ROW_snmp_group_names'
+            authkey = 'auth_protocol'
+            privkey = 'priv_protocol'
+            grpkey = 'group_names'
+        elif body[0].get('TABLE_snmp_users'):
+            tablekey = 'TABLE_snmp_users'
+            rowkey = 'ROW_snmp_users'
+            tablegrpkey = 'TABLE_groups'
+            rowgrpkey = 'ROW_groups'
+            authkey = 'auth'
+            privkey = 'priv'
+            grpkey = 'group'
+
+        resource_table = body[0][tablekey][rowkey]
         resource['user'] = str(resource_table['user'])
-        resource['authentication'] = str(resource_table['auth']).strip()
-        encrypt = str(resource_table['priv']).strip()
+        resource['authentication'] = str(resource_table[authkey]).strip()
+        encrypt = str(resource_table[privkey]).strip()
         if encrypt.startswith('aes'):
             resource['encrypt'] = 'aes-128'
         else:
             resource['encrypt'] = 'none'
 
-        group_table = resource_table['TABLE_groups']['ROW_groups']
+        group_table = resource_table[tablegrpkey][rowgrpkey]
 
         groups = []
         try:
             for group in group_table:
-                groups.append(str(group['group']).strip())
+                groups.append(str(group[grpkey]).strip())
         except TypeError:
-            groups.append(str(group_table['group']).strip())
+            groups.append(str(group_table[grpkey]).strip())
 
         resource['group'] = groups
 
@@ -454,18 +213,25 @@ def config_snmp_user(proposed, user, reset, new):
 
 def main():
     argument_spec = dict(
-            user=dict(required=True, type='str'),
-            group=dict(type='str', required=True),
-            pwd=dict(type='str'),
-            privacy=dict(type='str'),
-            authentication=dict(choices=['md5', 'sha']),
-            encrypt=dict(type='bool'),
-            state=dict(choices=['absent', 'present'], default='present'),
+        user=dict(required=True, type='str'),
+        group=dict(type='str', required=True),
+        pwd=dict(type='str'),
+        privacy=dict(type='str'),
+        authentication=dict(choices=['md5', 'sha']),
+        encrypt=dict(type='bool'),
+        state=dict(choices=['absent', 'present'], default='present'),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                required_together=[['authentication', 'pwd'],
-                                                  ['encrypt', 'privacy']],
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_together=[['authentication', 'pwd'],
+                                              ['encrypt', 'privacy']],
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     user = module.params['user']
     group = module.params['group']
@@ -484,18 +250,14 @@ def main():
         module.fail_json(msg='group not configured yet on switch.')
 
     existing = get_snmp_user(user, module)
-    end_state = existing
 
-    store = existing.get('group', None)
     if existing:
         if group not in existing['group']:
             existing['group'] = None
         else:
             existing['group'] = group
 
-    changed = False
     commands = []
-    proposed = {}
 
     if state == 'absent' and existing:
         commands.append(remove_snmp_user(user))
@@ -518,11 +280,7 @@ def main():
                 reset = True
                 proposed['encrypt'] = 'aes-128'
 
-            elif encrypt:
-                proposed['encrypt'] = 'aes-128'
-
-            delta = dict(
-                    set(proposed.items()).difference(existing.items()))
+            delta = dict(set(proposed.items()).difference(existing.items()))
 
             if delta.get('pwd'):
                 delta['authentication'] = authentication
@@ -530,32 +288,24 @@ def main():
             if delta:
                 delta['group'] = group
 
+            if delta and encrypt:
+                delta['encrypt'] = 'aes-128'
+
             command = config_snmp_user(delta, user, reset, new)
             commands.append(command)
 
     cmds = flatten_list(commands)
-    results = {}
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            execute_config_command(cmds, module)
-            end_state = get_snmp_user(user, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
+        results['changed'] = True
+        if not module.check_mode:
+            load_config(module, cmds)
 
-    if store:
-        existing['group'] = store
-
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['end_state'] = end_state
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

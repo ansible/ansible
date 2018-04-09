@@ -17,71 +17,66 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_hsrp
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages HSRP configuration on NX-OS switches.
 description:
-    - Manages HSRP configuration on NX-OS switches.
-extends_documentation_fragment: nxos
+  - Manages HSRP configuration on NX-OS switches.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 notes:
-    - HSRP feature needs to be enabled first on the system.
-    - SVIs must exist before using this module.
-    - Interface must be a L3 port before using this module.
-    - HSRP cannot be configured on loopback interfaces.
-    - MD5 authentication is only possible with HSRPv2 while it is ignored if
-      HSRPv1 is used instead, while it will not raise any error. Here we allow
-      MD5 authentication only with HSRPv2 in order to enforce better practice.
+  - Tested against NXOSv 7.3.(0)D1(1) on VIRL
+  - HSRP feature needs to be enabled first on the system.
+  - SVIs must exist before using this module.
+  - Interface must be a L3 port before using this module.
+  - HSRP cannot be configured on loopback interfaces.
+  - MD5 authentication is only possible with HSRPv2 while it is ignored if
+    HSRPv1 is used instead, while it will not raise any error. Here we allow
+    MD5 authentication only with HSRPv2 in order to enforce better practice.
 options:
-    group:
-        description:
-            - HSRP group number.
-        required: true
-    interface:
-        description:
-            - Full name of interface that is being managed for HSRP.
-        required: true
-    version:
-        description:
-            - HSRP version.
-        required: false
-        default: 2
-        choices: ['1','2']
-    priority:
-        description:
-            - HSRP priority.
-        required: false
-        default: null
-    vip:
-        description:
-            - HSRP virtual IP address.
-        required: false
-        default: null
-    auth_string:
-        description:
-            - Authentication string.
-        required: false
-        default: null
-    auth_type:
-        description:
-            - Authentication type.
-        required: false
-        default: null
-        choices: ['text','md5']
-    state:
-        description:
-            - Specify desired state of the resource.
-        required: false
-        choices: ['present','absent']
-        default: 'present'
+  group:
+    description:
+      - HSRP group number.
+    required: true
+  interface:
+    description:
+      - Full name of interface that is being managed for HSRP.
+    required: true
+  version:
+    description:
+      - HSRP version.
+    default: 2
+    choices: ['1','2']
+  priority:
+    description:
+      - HSRP priority.
+  preempt:
+    description:
+      - Enable/Disable preempt.
+    choices: ['enabled', 'disabled']
+  vip:
+    description:
+      - HSRP virtual IP address.
+  auth_string:
+    description:
+      - Authentication string.
+  auth_type:
+    description:
+      - Authentication type.
+    choices: ['text','md5']
+  state:
+    description:
+      - Specify desired state of the resource.
+    choices: ['present','absent']
+    default: 'present'
 '''
 
 EXAMPLES = '''
@@ -115,274 +110,36 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "30", "version": "2", "vip": "10.30.1.1"}
-existing:
-    description: k/v pairs of existing hsrp info on the interface
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of hsrp after module execution
-    returned: always
-    type: dict
-    sample: {"auth_string": "cisco", "auth_type": "text",
-            "group": "30", "interface": "vlan10", "preempt": "disabled",
-            "priority": "100", "version": "2", "vip": "10.30.1.1"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface vlan10", "hsrp version 2", "hsrp 30", "ip 10.30.1.1"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
-import json
-
-# COMMON CODE FOR MIGRATION
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import get_capabilities, nxos_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 
 
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+def execute_show_command(command, module):
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-def execute_config_command(commands, module):
-    try:
-        output = module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            output = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-    return output
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0]:
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
-        try:
-            response = response[0].replace(command + '\n\n', '').strip()
-            body = [json.loads(response)]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
+    if network_api == 'cliconf':
         command += ' | json'
         cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
+        body = run_commands(module, cmds)
+    elif network_api == 'nxapi':
         cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
+        body = run_commands(module, cmds)
 
     return body
 
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
             value = table.get(key)
@@ -414,9 +171,12 @@ def get_interface_mode(interface, intf_type, module):
     command = 'show interface {0}'.format(interface)
     interface = {}
     mode = 'unknown'
+    try:
+        body = execute_show_command(command, module)[0]
+    except IndexError:
+        return None
 
     if intf_type in ['ethernet', 'portchannel']:
-        body = execute_show_command(command, module)[0]
         interface_table = body['TABLE_interface']['ROW_interface']
         mode = str(interface_table.get('eth_mode', 'layer3'))
         if mode == 'access' or mode == 'trunk':
@@ -428,12 +188,12 @@ def get_interface_mode(interface, intf_type, module):
 
 def get_hsrp_groups_on_interfaces(device, module):
     command = 'show hsrp all'
-    body = execute_show_command(command, module)
     hsrp = {}
 
     try:
-        get_data = body[0]['TABLE_grp_detail']['ROW_grp_detail']
-    except (KeyError, AttributeError):
+        body = execute_show_command(command, module)[0]
+        get_data = body['TABLE_grp_detail']['ROW_grp_detail']
+    except (IndexError, KeyError, AttributeError):
         return {}
 
     for entry in get_data:
@@ -449,7 +209,6 @@ def get_hsrp_groups_on_interfaces(device, module):
 
 def get_hsrp_group(group, interface, module):
     command = 'show hsrp group {0}'.format(group)
-    body = execute_show_command(command, module)
     hsrp = {}
 
     hsrp_key = {
@@ -464,7 +223,8 @@ def get_hsrp_group(group, interface, module):
     }
 
     try:
-        hsrp_table = body[0]['TABLE_grp_detail']['ROW_grp_detail']
+        body = execute_show_command(command, module)[0]
+        hsrp_table = body['TABLE_grp_detail']['ROW_grp_detail']
     except (AttributeError, IndexError, TypeError):
         return {}
 
@@ -488,9 +248,7 @@ def get_hsrp_group(group, interface, module):
 
 
 def get_commands_remove_hsrp(group, interface):
-    commands = []
-    commands.append('interface {0}'.format(interface))
-    commands.append('no hsrp {0}'.format(group))
+    commands = ['interface {0}'.format(interface), 'no hsrp {0}'.format(group)]
     return commands
 
 
@@ -512,7 +270,7 @@ def get_commands_config_hsrp(delta, interface, args):
         elif preempt == 'disabled':
             delta['preempt'] = 'no preempt'
 
-    for key, value in delta.items():
+    for key in delta:
         command = config_args.get(key, 'DNE').format(**delta)
         if command and command != 'DNE':
             if key == 'group':
@@ -574,8 +332,8 @@ def is_default(interface, module):
 def validate_config(body, vip, module):
     new_body = ''.join(body)
     if "invalid ip address" in new_body.lower():
-            module.fail_json(msg="Invalid VIP. Possible duplicate IP address.",
-                             vip=vip)
+        module.fail_json(msg="Invalid VIP. Possible duplicate IP address.",
+                         vip=vip)
 
 
 def validate_params(param, module):
@@ -604,23 +362,23 @@ def validate_params(param, module):
 
 def main():
     argument_spec = dict(
-            group=dict(required=True, type='str'),
-            interface=dict(required=True),
-            version=dict(choices=['1', '2'], default='2', required=False),
-            priority=dict(type='str', required=False),
-            preempt=dict(type='str', choices=['disabled', 'enabled'],
-                         required=False),
-            vip=dict(type='str', required=False),
-            auth_type=dict(choices=['text', 'md5'], required=False),
-            auth_string=dict(type='str', required=False),
-            state=dict(choices=['absent', 'present'], required=False,
-                       default='present'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        group=dict(required=True, type='str'),
+        interface=dict(required=True),
+        version=dict(choices=['1', '2'], default='2', required=False),
+        priority=dict(type='str', required=False),
+        preempt=dict(type='str', choices=['disabled', 'enabled'], required=False),
+        vip=dict(type='str', required=False),
+        auth_type=dict(choices=['text', 'md5'], required=False),
+        auth_string=dict(type='str', required=False),
+        state=dict(choices=['absent', 'present'], required=False, default='present')
     )
-    module = get_network_module(argument_spec=argument_spec,
-                            supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    results = dict(changed=False, warnings=warnings)
 
     interface = module.params['interface'].lower()
     group = module.params['group']
@@ -632,7 +390,8 @@ def main():
     auth_type = module.params['auth_type']
     auth_string = module.params['auth_string']
 
-    transport = module.params['transport']
+    device_info = get_capabilities(module)
+    network_api = device_info.get('network_api', 'nxapi')
 
     if state == 'present' and not vip:
         module.fail_json(msg='the "vip" param is required when state=present')
@@ -642,7 +401,7 @@ def main():
             validate_params(param, module)
 
     intf_type = get_interface_type(interface)
-    if (intf_type != 'ethernet' and transport == 'cli'):
+    if (intf_type != 'ethernet' and network_api == 'cliconf'):
         if is_default(interface, module) == 'DNE':
             module.fail_json(msg='That interface does not exist yet. Create '
                                  'it first.', interface=interface)
@@ -680,12 +439,10 @@ def main():
             module.fail_json(msg="Existing auth_type is md5. It's recommended "
                                  "to use HSRP v2 when using md5")
 
-    changed = False
-    end_state = existing
     commands = []
     if state == 'present':
         delta = dict(
-                    set(proposed.items()).difference(existing.items()))
+            set(proposed.items()).difference(existing.items()))
         if delta:
             command = get_commands_config_hsrp(delta, interface, args)
             commands.extend(command)
@@ -697,23 +454,22 @@ def main():
 
     if commands:
         if module.check_mode:
-            module.exit_json(changed=True, commands=commands)
+            module.exit_json(**results)
         else:
-            body = execute_config_command(commands, module)
-            if transport == 'cli':
+            load_config(module, commands)
+
+            # validate IP
+            if network_api == 'cliconf' and state == 'present':
+                commands.insert(0, 'config t')
+                body = run_commands(module, commands)
                 validate_config(body, vip, module)
-            changed = True
-            end_state = get_hsrp_group(group, interface, module)
+
+            results['changed'] = True
+
             if 'configure' in commands:
                 commands.pop(0)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = commands
-    results['changed'] = changed
-
+    results['commands'] = commands
     module.exit_json(**results)
 
 

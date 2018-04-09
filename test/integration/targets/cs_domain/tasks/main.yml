@@ -1,0 +1,241 @@
+---
+- name: setup
+  cs_domain:
+    path: "{{ cs_resource_prefix }}_domain"
+    state: absent
+  register: dom
+- name: verify setup
+  assert:
+    that:
+    - dom is successful
+
+- name: test fail if missing name
+  action: cs_domain
+  register: dom
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - dom is failed
+    - 'dom.msg == "missing required arguments: path"'
+
+- name: test fail if ends with /
+  cs_domain:
+    path: "{{ cs_resource_prefix }}_domain/"
+  register: dom
+  ignore_errors: true
+- name: verify results of fail if ends with /
+  assert:
+    that:
+    - dom is failed
+    - dom.msg == "Path '{{ cs_resource_prefix }}_domain/' must not end with /"
+
+- name: test create a domain in check mode
+  cs_domain:
+    path: "{{ cs_resource_prefix }}_domain"
+  register: dom
+  check_mode: true
+- name: verify results of test create a domain in check mode
+  assert:
+    that:
+    - dom is changed
+
+- name: test create a domain
+  cs_domain:
+    path: "{{ cs_resource_prefix }}_domain"
+  register: dom
+- name: verify results of test create a domain
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
+    - dom.name == "{{ cs_resource_prefix }}_domain"
+
+- name: test create a domain idempotence
+  cs_domain:
+    path: "{{ cs_resource_prefix }}_domain"
+  register: dom
+- name: verify results of test create a domain idempotence
+  assert:
+    that:
+    - dom is not changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
+    - dom.name == "{{ cs_resource_prefix }}_domain"
+
+- name: test create a domain idempotence2
+  cs_domain:
+    path: "/{{ cs_resource_prefix }}_domain"
+  register: dom
+- name: verify results of test create a domain idempotence2
+  assert:
+    that:
+    - dom is not changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
+    - dom.name == "{{ cs_resource_prefix }}_domain"
+
+- name: test fail to create a subdomain for inexistent domain
+  cs_domain:
+    path: ROOT/inexistent/{{ cs_resource_prefix }}_subdomain
+  register: dom
+  ignore_errors: true
+- name: test fail to create a subdomain for inexistent domain
+  assert:
+    that:
+    - dom is failed
+    - dom.msg == "Parent domain path ROOT/inexistent does not exist"
+
+- name: test create a subdomain in check mode
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+  register: dom
+  check_mode: true
+- name: verify results of test create a domain in check mode
+  assert:
+    that:
+    - dom is changed
+
+- name: test create a subdomain
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+  register: dom
+- name: verify results of test create a domain
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test create a subdomain idempotence
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+  register: dom
+- name: verify results of test create a subdomain idempotence
+  assert:
+    that:
+    - dom is not changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test update a subdomain in check mode
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    network_domain: domain.example.com
+  register: dom
+  check_mode: true
+- name: verify results of test update a subdomain in check mode
+  assert:
+    that:
+    - dom is changed
+    - dom.network_domain is undefined
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test update a subdomain
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    network_domain: domain.example.com
+  register: dom
+- name: verify results of test update a subdomain
+  assert:
+    that:
+    - dom is changed
+    - dom.network_domain == "domain.example.com"
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test update a subdomain idempotence
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    network_domain: domain.example.com
+  register: dom
+- name: verify results of test update a subdomain idempotence
+  assert:
+    that:
+    - dom is not changed
+    - dom.network_domain == "domain.example.com"
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test delete a subdomain in check mode
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    state: absent
+  register: dom
+  check_mode: true
+- name: verify results of test delete a subdomain in check mode
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test delete a subdomain
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    state: absent
+  register: dom
+- name: verify results of test delete a subdomain
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test delete a subdomain idempotence
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+    state: absent
+  register: dom
+- name: verify results of test delete a subdomain idempotence
+  assert:
+    that:
+    - dom is not changed
+
+- name: test create a subdomain 2
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain
+  register: dom
+- name: verify results of test create a subdomain 2
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain/{{ cs_resource_prefix }}_subdomain"
+    - dom.name == "{{ cs_resource_prefix }}_subdomain"
+
+- name: test delete a domain with clean up in check mode
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain
+    state: absent
+    clean_up: true
+  register: dom
+  check_mode: true
+- name: verify results of test delete a domain with clean up in check mode
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
+    - dom.name == "{{ cs_resource_prefix }}_domain"
+
+- name: test delete a domain with clean up
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain
+    state: absent
+    clean_up: true
+  register: dom
+- name: verify results of test delete a domain with clean up
+  assert:
+    that:
+    - dom is changed
+    - dom.path == "ROOT/{{ cs_resource_prefix }}_domain"
+    - dom.name == "{{ cs_resource_prefix }}_domain"
+
+- name: test delete a domain with clean up idempotence
+  cs_domain:
+    path: ROOT/{{ cs_resource_prefix }}_domain
+    state: absent
+    clean_up: true
+  register: dom
+- name: verify results of test delete a domain with clean up idempotence
+  assert:
+    that:
+    - dom is not changed

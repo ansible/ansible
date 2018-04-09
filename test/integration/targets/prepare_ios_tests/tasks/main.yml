@@ -1,0 +1,52 @@
+---
+
+- name: Ensure we have loopback 888 for testing
+  ios_config:
+    src: config.j2
+  connection: network_cli
+  become: yes
+
+# Some AWS hostnames can be longer than those allowed by the system we are testing
+# Truncate the hostname
+# http://jinja.pocoo.org/docs/2.9/templates/#truncate
+- set_fact:
+    shorter_hostname: '{{ inventory_hostname_short| truncate(10, True, "") }}'
+
+- name: "Discover IOS L2/L3 switch type"
+  ios_command:
+    commands: ['show version']
+  connection: network_cli
+  become: yes
+  register: result
+
+- set_fact: switch_type=""
+
+- set_fact: switch_type="L2"
+  when: '"l2" in result.stdout[0]'
+
+- block:
+    - name: Set test interface to GigabitEthernet0/1 as we are on Cisco IOS
+      set_fact: test_interface=GigabitEthernet0/1
+    - name: Set test interface 2 to GigabitEthernet0/2 as we are on Cisco IOS
+      set_fact: test_interface2=GigabitEthernet0/2
+  when: "'Cisco IOS' in result.stdout[0]"
+
+- block:
+    - name: Set test interface to GigabitEthernet2 as we are on Cisco IOS-XE
+      set_fact: test_interface=GigabitEthernet2
+    - name: Disable autonegotiation on GigabitEthernet2
+      ios_config:
+        lines:
+          - no negotiation auto
+        parents: int GigabitEthernet2
+        authorize: yes
+
+    - name: Set test interface 2 to GigabitEthernet3 as we are on Cisco IOS-XE
+      set_fact: test_interface2=GigabitEthernet3
+    - name: Disable autonegotiation on GigabitEthernet3
+      ios_config:
+        lines:
+          - no negotiation auto
+        parents: int GigabitEthernet3
+        authorize: yes
+  when: "'Cisco IOS-XE' in result.stdout[0]"

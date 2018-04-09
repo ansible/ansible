@@ -1,142 +1,130 @@
 #!powershell
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright (c) 2017 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 # TODO: add check mode support
 
 Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 
-$helper_def = @"
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
+# Cleanse CLIXML from stderr (sift out error stream data, discard others for now)
+Function Cleanse-Stderr($raw_stderr) {
+    Try {
+        # NB: this regex isn't perfect, but is decent at finding CLIXML amongst other stderr noise
+        If($raw_stderr -match "(?s)(?<prenoise1>.*)#< CLIXML(?<prenoise2>.*)(?<clixml><Objs.+</Objs>)(?<postnoise>.*)") {
+            $clixml = [xml]$matches["clixml"]
 
-namespace Ansible.Shell
-{
-    public class ProcessUtil
-    {
-        public static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
-        {
-            var sowait = new EventWaitHandle(false, EventResetMode.ManualReset);
-            var sewait = new EventWaitHandle(false, EventResetMode.ManualReset);
+            $merged_stderr = "{0}{1}{2}{3}" -f @(
+               $matches["prenoise1"],
+               $matches["prenoise2"],
+               # filter out just the Error-tagged strings for now, and zap embedded CRLF chars
+               ($clixml.Objs.ChildNodes | ? { $_.Name -eq 'S' } | ? { $_.S -eq 'Error' } | % { $_.'#text'.Replace('_x000D__x000A_','') } | Out-String),
+               $matches["postnoise"]) | Out-String
 
-            string so = null, se = null;
+            return $merged_stderr.Trim()
 
-            ThreadPool.QueueUserWorkItem((s)=>
-            {
-                so = stdoutStream.ReadToEnd();
-                sowait.Set();
-            });
-
-            ThreadPool.QueueUserWorkItem((s) =>
-            {
-                se = stderrStream.ReadToEnd();
-                sewait.Set();
-            });
-
-            foreach(var wh in new WaitHandle[] { sowait, sewait })
-                wh.WaitOne();
-
-            stdout = so;
-            stderr = se;
+            # FUTURE: parse/return other streams
+        }
+        Else {
+            $raw_stderr
         }
     }
-}
-"@
-
-$parsed_args = Parse-Args $args $false
-
-$raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
-$chdir = Get-AnsibleParam $parsed_args "chdir"
-$executable = Get-AnsibleParam $parsed_args "executable"
-$creates = Get-AnsibleParam $parsed_args "creates"
-$removes = Get-AnsibleParam $parsed_args "removes"
-
-$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
-
-If($creates -and $(Test-Path $creates)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
+    Catch {
+        "***EXCEPTION PARSING CLIXML: $_***" + $raw_stderr
+    }
 }
 
-If($removes -and -not $(Test-Path $removes)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $removes does not exist"; changed=$false; skipped=$true; rc=0}
+$params = Parse-Args $args -supports_check_mode $false
+
+$raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str" -failifempty $true
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
+$stdin = Get-AnsibleParam -obj $params -name "stdin" -type "str"
+
+$raw_command_line = $raw_command_line.Trim()
+
+$result = @{
+    changed = $true
+    cmd = $raw_command_line
 }
 
-Add-Type -TypeDefinition $helper_def
+if ($creates -and $(Test-AnsiblePath -Path $creates)) {
+    Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
+}
+
+if ($removes -and -not $(Test-AnsiblePath -Path $removes)) {
+    Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
+}
 
 $exec_args = $null
-
 If(-not $executable -or $executable -eq "powershell") {
-    $exec_application = "powershell"
+    $exec_application = "powershell.exe"
+
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $raw_command_line = "[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false; " + $raw_command_line
 
     # Base64 encode the command so we don't have to worry about the various levels of escaping
     $encoded_command = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($raw_command_line))
 
-    $exec_args = @("-noninteractive", "-encodedcommand", $encoded_command)
+    if ($stdin) {
+        $exec_args = "-encodedcommand $encoded_command"
+    } else {
+        $exec_args = "-noninteractive -encodedcommand $encoded_command"
+    }
 }
 Else {
     # FUTURE: support arg translation from executable (or executable_args?) to process arguments for arbitrary interpreter?
     $exec_application = $executable
-    $exec_args = @("/c", $raw_command_line)
+    if (-not ($exec_application.EndsWith(".exe"))) {
+        $exec_application = "$($exec_application).exe"
+    }
+    $exec_args = "/c $raw_command_line"
 }
 
-$proc = New-Object System.Diagnostics.Process
-$psi = $proc.StartInfo
-$psi.FileName = $exec_application
-$psi.Arguments = $exec_args
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.UseShellExecute = $false
-
-If ($chdir) {
-    $psi.WorkingDirectory = $chdir
+$command = "$exec_application $exec_args"
+$run_command_arg = @{
+    command = $command
+}
+if ($chdir) {
+    $run_command_arg['working_directory'] = $chdir
+}
+if ($stdin) {
+    $run_command_arg['stdin'] = $stdin
 }
 
 $start_datetime = [DateTime]::UtcNow
-
-Try {
-    $proc.Start() | Out-Null # will always return $true for non shell-exec cases
+try {
+    $command_result = Run-Command @run_command_arg
+} catch {
+    $result.changed = $false
+    try {
+        $result.rc = $_.Exception.NativeErrorCode
+    } catch {
+        $result.rc = 2
+    }
+    Fail-Json -obj $result -message $_.Exception.Message
 }
-Catch [System.ComponentModel.Win32Exception] {
-    # fail nicely for "normal" error conditions
-    # FUTURE: this probably won't work on Nano Server
-    $excep = $_
-    Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
-}
-
-$stdout = $stderr = [string] $null
-
-[Ansible.Shell.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
-
-$result.stdout = $stdout
-$result.stderr = $stderr
 
 # TODO: decode CLIXML stderr output (and other streams?)
-
-$proc.WaitForExit() | Out-Null
-
-$result.rc = $proc.ExitCode
+$result.stdout = $command_result.stdout
+$result.stderr = Cleanse-Stderr $command_result.stderr 
+$result.rc = $command_result.rc
 
 $end_datetime = [DateTime]::UtcNow
-
 $result.start = $start_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.end = $end_datetime.ToString("yyyy-MM-dd hh:mm:ss.ffffff")
 $result.delta = $($end_datetime - $start_datetime).ToString("h\:mm\:ss\.ffffff")
+
+If ($result.rc -ne 0) {
+    Fail-Json -obj $result -message "non-zero return code"
+}
 
 Exit-Json $result

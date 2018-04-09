@@ -1,0 +1,42 @@
+---
+- name: setup - remove motd
+  iosxr_banner:
+    banner: motd
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: Set motd
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my motd banner' in result.xml"
+      - "'that has a multiline' in result.xml"
+
+- name: Set motd again (idempotent)
+  iosxr_banner:
+    banner: motd
+    text: |
+      this is my motd banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.xml | length == 0"

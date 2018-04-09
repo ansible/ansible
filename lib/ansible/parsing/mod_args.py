@@ -19,30 +19,46 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-
-from ansible.errors import AnsibleParserError,AnsibleError
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
-from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
+from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
 
+
 # For filtering out modules correctly below
-RAW_PARAM_MODULES = ([
+FREEFORM_ACTIONS = frozenset((
     'command',
     'win_command',
-    'net_command',
     'shell',
     'win_shell',
     'script',
+    'raw'
+))
+
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'include',
     'include_vars',
+    'include_tasks',
+    'include_role',
+    'import_tasks',
+    'import_role',
     'add_host',
     'group_by',
     'set_fact',
-    'raw',
     'meta',
-])
+))
+
+BUILTIN_TASKS = frozenset((
+    'meta',
+    'include',
+    'include_tasks',
+    'include_role',
+    'import_tasks',
+    'import_role'
+))
+
 
 class ModuleArgsParser:
 
@@ -73,7 +89,7 @@ class ModuleArgsParser:
           src: a
           dest: b
 
-    # extra gross, but also legal. in this case, the args specified
+    # Standard YAML form for command-type modules. In this case, the args specified
     # will act as 'defaults' and will be overridden by any args specified
     # in one of the other formats (complex args under the action, or
     # parsed from the k=v string
@@ -91,10 +107,12 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task_ds=dict()):
-        assert isinstance(task_ds, dict)
-        self._task_ds = task_ds
+    def __init__(self, task_ds=None):
+        task_ds = {} if task_ds is None else task_ds
 
+        if not isinstance(task_ds, dict):
+            raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
+        self._task_ds = task_ds
 
     def _split_module_string(self, module_string):
         '''
@@ -110,26 +128,12 @@ class ModuleArgsParser:
         else:
             return (tokens[0], "")
 
-
-    def _handle_shell_weirdness(self, action, args):
-        '''
-        given an action name and an args dictionary, return the
-        proper action name and args dictionary.  This mostly is due
-        to shell/command being treated special and nothing else
-        '''
-
-        # the shell module really is the command module with an additional
-        # parameter
-        if action == 'shell':
-            action = 'command'
-            args['_uses_shell'] = True
-
-        return (action, args)
-
-    def _normalize_parameters(self, thing, action=None, additional_args=dict()):
+    def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
         arguments can be fuzzy.  Deal with all the forms.
         '''
+
+        additional_args = {} if additional_args is None else additional_args
 
         # final args are the ones we'll eventually return, so first update
         # them with any additional args specified, which have lower priority
@@ -141,20 +145,21 @@ class ModuleArgsParser:
                 if templar._contains_vars(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
+                                             "('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
                 raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
-        # yet.  If we have already figured it out, it's an 'old style' invocation.
+        # yet.  If we have already figured it out, it's a 'new style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_old_style_args(thing, action)
+            args = self._normalize_new_style_args(thing, action)
         else:
-            (action, args) = self._normalize_new_style_args(thing)
+            (action, args) = self._normalize_old_style_args(thing)
 
             # this can occasionally happen, simplify
             if args and 'args' in args:
@@ -164,8 +169,8 @@ class ModuleArgsParser:
                 args.update(tmp_args)
 
         # only internal variables can start with an underscore, so
-        # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
+        # we don't allow users to set them directly in arguments
+        if args and action not in FREEFORM_ACTIONS:
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
@@ -178,25 +183,25 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_old_style_args(self, thing, action):
+    def _normalize_new_style_args(self, thing, action):
         '''
-        deals with fuzziness in old-style (action/local_action) module invocations
-        returns tuple of (module_name, dictionary_args)
+        deals with fuzziness in new style module invocations
+        accepting key=value pairs and dictionaries, and returns
+        a dictionary of arguments
 
         possible example inputs:
-            { 'local_action' : 'shell echo hi' }
-            { 'action'       : 'shell echo hi' }
-            { 'local_action' : { 'module' : 'ec2', 'x' : 1, 'y': 2 }}
+            'echo hi', 'shell'
+            {'region': 'xyz'}, 'ec2'
         standardized outputs like:
-            ( 'command', { _raw_params: 'echo hi', _uses_shell: True }
+            { _raw_params: 'echo hi', _uses_shell: True }
         '''
 
         if isinstance(thing, dict):
-            # form is like: local_action: { module: 'xyz', x: 2, y: 3 } ... uncommon!
+            # form is like: { xyz: { x: 2, y: 3 } }
             args = thing
         elif isinstance(thing, string_types):
-            # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+            # form is like: copy: src=a dest=b
+            check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -205,38 +210,36 @@ class ModuleArgsParser:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
-    def _normalize_new_style_args(self, thing):
+    def _normalize_old_style_args(self, thing):
         '''
-        deals with fuzziness in new style module invocations
-        accepting key=value pairs and dictionaries, and always returning dictionaries
+        deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
 
         possible example inputs:
            { 'shell' : 'echo hi' }
-           { 'ec2'   : { 'region' : 'xyz' }
-           { 'ec2'   : 'region=xyz' }
+           'shell echo hi'
+           {'module': 'ec2', 'x': 1 }
         standardized outputs like:
-           ('ec2', { region: 'xyz'} )
+           ('ec2', { 'x': 1} )
         '''
 
         action = None
         args = None
 
-        actions_allowing_raw = ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         if isinstance(thing, dict):
-            # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
+            # form is like:  action: { module: 'copy', src: 'a', dest: 'b' }
             thing = thing.copy()
             if 'module' in thing:
                 action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
-                check_raw = action in actions_allowing_raw
+                check_raw = action in FREEFORM_ACTIONS
                 args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
-            # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
+            # form is like:  action: copy src=a dest=b
             (action, args) = self._split_module_string(thing)
-            check_raw = action in actions_allowing_raw
+            check_raw = action in FREEFORM_ACTIONS
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -252,14 +255,13 @@ class ModuleArgsParser:
         task, dealing with all sorts of levels of fuzziness.
         '''
 
-        thing      = None
+        thing = None
 
-        action      = None
+        action = None
         delegate_to = self._task_ds.get('delegate_to', None)
-        args        = dict()
+        args = dict()
 
-
-        # this is the 'extra gross' scenario detailed above, so we grab
+        # This is the standard YAML form for command-type modules. We grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
         additional_args = self._task_ds.get('args', dict())
@@ -270,7 +272,6 @@ class ModuleArgsParser:
             # an old school 'action' statement
             thing = self._task_ds['action']
             action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
-
 
         # local_action
         if 'local_action' in self._task_ds:
@@ -285,34 +286,33 @@ class ModuleArgsParser:
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in module_loader or item in ['meta', 'include', 'include_role']:
+            if item in BUILTIN_TASKS or item in action_loader or item in module_loader:
                 # finding more than one module name is a problem
                 if action is not None:
-                    raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
+                    raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
                 action = item
                 thing = value
                 action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
-
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             if 'ping' not in module_loader:
                 raise AnsibleParserError("The requested action was not found in configured module paths. "
-                        "Additionally, core modules are missing. If this is a checkout, "
-                        "run 'git submodule update --init --recursive' to correct this problem.",
-                        obj=self._task_ds)
+                                         "Additionally, core modules are missing. If this is a checkout, "
+                                         "run 'git pull --rebase' to correct this problem.",
+                                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.",
+                                         obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
             if templar._contains_vars(raw_params):
                 args['_variable_params'] = raw_params
             else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
-
-        # shell modules require special handling
-        (action, args) = self._handle_shell_weirdness(action, args)
+                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
+                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
+                                         obj=self._task_ds)
 
         return (action, args, delegate_to)

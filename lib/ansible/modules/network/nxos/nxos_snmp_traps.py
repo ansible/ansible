@@ -16,22 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_traps
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages SNMP traps.
 description:
     - Manages SNMP traps configurations.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
+    - Tested against NXOSv 7.3.(0)D1(1) on VIRL
     - This module works at the group level for traps.  If you need to only
       enable/disable 1 specific trap within a group, use the M(nxos_command)
       module.
@@ -53,293 +54,39 @@ options:
         choices: ['enabled','disabled']
 '''
 
-EXAMPLES =  '''
+EXAMPLES = '''
 # ensure lldp trap configured
 - nxos_snmp_traps:
     group: lldp
     state: enabled
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 
 # ensure lldp trap is not configured
 - nxos_snmp_traps:
     group: lldp
     state: disabled
-    host: "{{ inventory_hostname }}"
-    username: "{{ un }}"
-    password: "{{ pwd }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"group": "lldp"}
-existing:
-    description: k/v pairs of existing trap status
-    type: dict
-    sample: {"lldp": [{"enabled": "No",
-            "trap": "lldpRemTablesChange"}]}
-end_state:
-    description: k/v pairs of trap info after module execution
-    returned: always
-    type: dict
-    sample: {"lldp": [{"enabled": "Yes",
-            "trap": "lldpRemTablesChange"}]}
-updates:
+commands:
     description: command sent to the device
     returned: always
     type: list
     sample: "snmp-server enable traps lldp ;"
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 
-import json
-
-# COMMON CODE FOR MIGRATION
-import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
+from ansible.module_utils.network.nxos.nxos import load_config, run_commands
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0]:
-        body = []
-    elif 'show run' in command:
-        body = response
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
+def execute_show_command(command, module):
+    command = {
+        'command': command,
+        'output': 'json',
     }
 
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
+    return run_commands(module, command)
 
 
 def apply_key_map(key_map, table):
@@ -365,27 +112,29 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-
 def get_snmp_traps(group, module):
-    command = 'show snmp trap'
-    body = execute_show_command(command, module)
+    body = execute_show_command('show snmp trap', module)
 
     trap_key = {
         'description': 'trap',
         'isEnabled': 'enabled'
     }
 
-    resource = {}
+    trap_key_5k = {
+        'trap': 'trap',
+        'enabled': 'enabled'
+    }
 
+    resource = {}
+    feature_list = ['aaa', 'bridge', 'callhome', 'cfs', 'config',
+                    'entity', 'feature-control', 'hsrp', 'license',
+                    'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
+                    'snmp', 'storm-control', 'stpx', 'sysmgr',
+                    'system', 'upgrade', 'vtp']
     try:
         resource_table = body[0]['TABLE_snmp_trap']['ROW_snmp_trap']
 
-        for each_feature in ['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                             'entity', 'feature-control', 'hsrp', 'license',
-                             'link', 'lldp', 'ospf', 'pim', 'rf', 'rmon',
-                             'snmp', 'storm-control', 'stpx', 'sysmgr',
-                             'system', 'upgrade', 'vtp']:
-
+        for each_feature in feature_list:
             resource[each_feature] = []
 
         for each_resource in resource_table:
@@ -394,8 +143,23 @@ def get_snmp_traps(group, module):
 
             if key != 'Generic':
                 resource[key].append(mapped_trap)
+    except KeyError:
+        try:
+            resource_table = body[0]['TABLE_mib']['ROW_mib']
 
-    except (KeyError, AttributeError):
+            for each_feature in feature_list:
+                resource[each_feature] = []
+
+            for each_resource in resource_table:
+                key = str(each_resource['mib'])
+                each_resource = each_resource['TABLE_trap']['ROW_trap']
+                mapped_trap = apply_key_map(trap_key_5k, each_resource)
+
+                if key != 'Generic':
+                    resource[key].append(mapped_trap)
+        except (KeyError, AttributeError):
+            return resource
+    except AttributeError:
         return resource
 
     find = resource.get(group, None)
@@ -420,14 +184,14 @@ def get_trap_commands(group, state, existing, module):
         if state == 'disabled':
             for feature in existing:
                 trap_commands = ['no snmp-server enable traps {0}'.format(feature) for
-                                    trap in existing[feature] if trap['enabled'] == 'Yes']
+                                 trap in existing[feature] if trap['enabled'] == 'Yes']
                 trap_commands = list(set(trap_commands))
                 commands.append(trap_commands)
 
         elif state == 'enabled':
             for feature in existing:
                 trap_commands = ['snmp-server enable traps {0}'.format(feature) for
-                                    trap in existing[feature] if trap['enabled'] == 'No']
+                                 trap in existing[feature] if trap['enabled'] == 'No']
                 trap_commands = list(set(trap_commands))
                 commands.append(trap_commands)
 
@@ -453,44 +217,38 @@ def get_trap_commands(group, state, existing, module):
 
 def main():
     argument_spec = dict(
-            state=dict(choices=['enabled', 'disabled'], default='enabled'),
-            group=dict(choices=['aaa', 'bridge', 'callhome', 'cfs', 'config',
-                                'entity', 'feature-control', 'hsrp',
-                                'license', 'link', 'lldp', 'ospf', 'pim', 'rf',
-                                'rmon', 'snmp', 'storm-control', 'stpx',
-                                'sysmgr', 'system', 'upgrade', 'vtp', 'all'],
-                       required=True),
+        state=dict(choices=['enabled', 'disabled'], default='enabled'),
+        group=dict(choices=['aaa', 'bridge', 'callhome', 'cfs', 'config',
+                            'entity', 'feature-control', 'hsrp',
+                            'license', 'link', 'lldp', 'ospf', 'pim', 'rf',
+                            'rmon', 'snmp', 'storm-control', 'stpx',
+                            'sysmgr', 'system', 'upgrade', 'vtp', 'all'],
+                   required=True),
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
-    
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+    results = {'changed': False, 'commands': [], 'warnings': warnings}
+
     group = module.params['group'].lower()
     state = module.params['state']
 
     existing = get_snmp_traps(group, module)
-    proposed = {'group': group}
 
-    changed = False
-    end_state = existing
     commands = get_trap_commands(group, state, existing, module)
-
     cmds = flatten_list(commands)
     if cmds:
-        if module.check_mode:
-            module.exit_json(changed=True, commands=cmds)
-        else:
-            changed = True
-            execute_config_command(cmds, module)
-            end_state = get_snmp_traps(group, module)
-            if 'configure' in cmds:
-                cmds.pop(0)
+        results['changed'] = True
+        if not module.check_mode:
+            load_config(module, cmds)
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
+        if 'configure' in cmds:
+            cmds.pop(0)
+        results['commands'] = cmds
 
     module.exit_json(**results)
 

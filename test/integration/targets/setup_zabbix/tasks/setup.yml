@@ -1,0 +1,48 @@
+# sets up and starts Zabbix with default settings (works on Ubuntu 14.04,
+# possibly more) using a MySQL database.
+
+- name: create mysql user {{ db_user }}
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    state: present
+    priv: "{{ db_name }}.*:ALL"
+
+- name: install zabbix repository
+  apt: deb={{ zabbix_release_deb }} state=present
+
+- name: install zabbix debian dependencies
+  apt: name={{ item }} state=latest update_cache=yes
+  with_items: "{{ zabbix_packages }}"
+
+- name: install zabbix-api python package
+  pip:
+    name: zabbix-api
+
+- name: import initial zabbix database
+  mysql_db:
+    name: "{{ db_name }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    state: import
+    target: /usr/share/doc/zabbix-server-mysql/create.sql.gz
+
+- name: deploy zabbix-server configuration
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    owner: zabbix
+    group: zabbix
+    mode: 0644
+
+- name: deploy zabbix web frontend configuration
+  template:
+    src: zabbix.conf.php.j2
+    dest: /etc/zabbix/web/zabbix.conf.php
+    mode: 0644
+
+- name: restart zabbix-server
+  service: name=zabbix-server state=restarted enabled=yes
+
+- name: restart apache2
+  service: name=apache2 state=restarted enabled=yes

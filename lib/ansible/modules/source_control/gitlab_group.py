@@ -1,31 +1,22 @@
 #!/usr/bin/python
 # (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exists in Gitlab, it will be created.
+   - When the group does not exist in Gitlab, it will be created.
    - When the group does exists and state=absent, the group will be deleted.
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
@@ -39,25 +30,18 @@ options:
     validate_certs:
         description:
             - When using https if SSL certificate needs to be verified.
-        required: false
         default: true
         aliases:
             - verify_ssl
     login_user:
         description:
             - Gitlab user name.
-        required: false
-        default: null
     login_password:
         description:
             - Gitlab password for login_user
-        required: false
-        default: null
     login_token:
         description:
             - Gitlab token for logging in.
-        required: false
-        default: null
     name:
         description:
             - Name of the group you want to create.
@@ -66,13 +50,10 @@ options:
         description:
             - The path of the group you want to create, this will be server_url/group_path
             - If not supplied, the group_name will be used.
-        required: false
-        default: null
     state:
         description:
             - create or delete group.
             - Possible values are present and absent.
-        required: false
         default: "present"
         choices: ["present", "absent"]
 '''
@@ -107,8 +88,9 @@ try:
 except:
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+
 
 class GitLabGroup(object):
     def __init__(self, module, git):
@@ -164,7 +146,8 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing requried gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or "
+                             "install with: pip install pyapi-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -191,13 +174,20 @@ def main():
     # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url)
+            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+    except Exception as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
+
+    # Check if user is authorized or not before proceeding to any operations
+    # if not, exit from here
+    auth_msg = git.currentuser().get('message', None)
+    if auth_msg is not None and auth_msg == '401 Unauthorized':
+        module.fail_json(msg='User unauthorized',
+                         details="User is not allowed to access Gitlab server "
+                                 "using login_token. Please check login_token")
 
     # Validate if group exists and take action based on "state"
     group = GitLabGroup(module, git)
@@ -209,15 +199,13 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
     else:
         if state == "absent":
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+            module.exit_json(changed=False, result="Group deleted or does not exist")
         else:
             if group_exists:
                 module.exit_json(changed=False)
             else:
                 if group.createGroup(group_name, group_path):
                     module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)
-
-
 
 
 if __name__ == '__main__':

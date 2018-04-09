@@ -1,0 +1,50 @@
+---
+
+- name: setup - remove login
+  ios_banner:
+    banner: login
+    state: absent
+    provider: "{{ cli }}"
+
+
+- name: Set login
+  ios_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'banner login @\nthis is my login banner\nthat has a multiline\nstring\n@' in result.commands"
+
+- name: Set login again (idempotent)
+  ios_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"

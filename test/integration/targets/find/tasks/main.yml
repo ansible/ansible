@@ -1,0 +1,97 @@
+# Test code for the find module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/test_find
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## find
+##
+
+- name: make some directories
+  file:
+      path: "{{ output_dir_test }}/{{ item }}"
+      state: directory
+  with_items:
+      - a/b/c/d
+      - e/f/g/h
+
+- name: make some files
+  copy:
+      dest: "{{ output_dir_test }}/{{ item }}"
+      content: 'data'
+  with_items:
+      - a/1.txt
+      - a/b/2.jpg
+      - a/b/c/3
+      - a/b/c/d/4.xml
+      - e/5.json
+      - e/f/6.swp
+      - e/f/g/7.img
+      - e/f/g/h/8.ogg
+
+- name: find the directories
+  find:
+      paths: "{{ output_dir_test }}"
+      file_type: directory
+      recurse: yes
+  register: find_test0
+- debug: var=find_test0
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test0.changed is defined'
+          - 'find_test0.examined is defined'
+          - 'find_test0.files is defined'
+          - 'find_test0.matched is defined'
+          - 'find_test0.msg is defined'
+          - 'find_test0.matched == 8'
+          - 'find_test0.files | length == 8'
+
+- name: find the xml and img files
+  find:
+      paths: "{{ output_dir_test }}"
+      file_type: file
+      patterns: "*.xml,*.img"
+      recurse: yes
+  register: find_test1
+- debug: var=find_test1
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test1.matched == 2'
+          - 'find_test1.files | length == 2'
+
+- name: find the xml file
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+  register: find_test2
+- debug: var=find_test2
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test2.matched == 1'
+          - 'find_test2.files[0].pw_name is defined'
+          - 'find_test2.files[0].gr_name is defined'

@@ -1,0 +1,16 @@
+- name: Clean slate
+  import_tasks: clean.yml
+
+- name: Test in normal mode
+  import_tasks: tests.yml
+  vars:
+    in_check_mode: no
+
+- name: Clean slate
+  import_tasks: clean.yml
+
+- name: Test in check-mode
+  import_tasks: tests.yml
+  vars:
+    in_check_mode: yes
+  check_mode: yes

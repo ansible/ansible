@@ -1,30 +1,15 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,8 +52,8 @@ options:
 requirements:
     - boto3
 extends_documentation_fragment:
-    - aws
-
+  - aws
+  - ec2
 '''
 
 EXAMPLES = '''
@@ -154,16 +139,29 @@ name:
     sample: dev
 '''
 
+import re
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec,
+                                      get_aws_connection_info)
+
 
 class AWSConnection:
     """
     Create the connection object and client objects as required.
     """
 
-    def __init__(self, ansible_obj, resources, boto3=True):
+    def __init__(self, ansible_obj, resources, boto3_=True):
 
         try:
-            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3)
+            self.region, self.endpoint, aws_connect_kwargs = get_aws_connection_info(ansible_obj, boto3=boto3_)
 
             self.resource_client = dict()
             if not resources:
@@ -237,7 +235,7 @@ def validate_params(module, aws):
     function_name = module.params['function_name']
 
     # validate function name
-    if not re.search('^[\w\-:]+$', function_name):
+    if not re.search(r'^[\w\-:]+$', function_name):
         module.fail_json(
             msg='Function name {0} is invalid. Names must contain only alphanumeric characters and hyphens.'.format(function_name)
         )
@@ -380,10 +378,6 @@ def main():
 
     module.exit_json(**camel_dict_to_snake_dict(results))
 
-
-# ansible import module(s) kept at ~eof as recommended
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

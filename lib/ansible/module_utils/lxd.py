@@ -27,19 +27,23 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import socket
+import ssl
+
+from ansible.module_utils.urls import generic_urlparse
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.six.moves import http_client
+from ansible.module_utils._text import to_text
+
+# httplib/http.client connection using unix domain socket
+HTTPConnection = http_client.HTTPConnection
+HTTPSConnection = http_client.HTTPSConnection
+
 try:
     import json
 except ImportError:
     import simplejson as json
 
-# httplib/http.client connection using unix domain socket
-import socket
-import ssl
-try:
-    from httplib import HTTPConnection, HTTPSConnection
-except ImportError:
-    # Python 3
-    from http.client import HTTPConnection, HTTPSConnection
 
 class UnixHTTPConnection(HTTPConnection):
     def __init__(self, path):
@@ -51,17 +55,12 @@ class UnixHTTPConnection(HTTPConnection):
         sock.connect(self.path)
         self.sock = sock
 
-from ansible.module_utils.urls import generic_urlparse
-try:
-    from urlparse import urlparse
-except ImportError:
-    # Python 3
-    from url.parse import urlparse
 
 class LXDClientException(Exception):
     def __init__(self, msg, **kwargs):
         self.msg = msg
         self.kwargs = kwargs
+
 
 class LXDClient(object):
     def __init__(self, url, key_file=None, cert_file=None, debug=False):
@@ -110,7 +109,9 @@ class LXDClient(object):
             body = json.dumps(body_json)
             self.connection.request(method, url, body=body)
             resp = self.connection.getresponse()
-            resp_json = json.loads(resp.read())
+            resp_data = resp.read()
+            resp_data = to_text(resp_data, errors='surrogate_or_strict')
+            resp_json = json.loads(resp_data)
             self.logs.append({
                 'type': 'sent request',
                 'request': {'method': method, 'url': url, 'json': body_json, 'timeout': timeout},
