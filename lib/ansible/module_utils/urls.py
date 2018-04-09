@@ -941,7 +941,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     # user defined headers now, which may override things we've set above
     if headers:
         if not isinstance(headers, dict):
-            raise ValueError("headers provided to fetch_url() must be a dict")
+            raise ValueError("headers provided to open_url() must be a dict")
         for header in headers:
             request.add_header(header, headers[header])
 
