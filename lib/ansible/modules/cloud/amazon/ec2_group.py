@@ -402,9 +402,9 @@ def rule_from_group_permission(perm):
                 yield Rule(
                     ports_from_permission(perm),
                     perm['IpProtocol'],
-                    r[target_subkey],
-                    target_type,
-                    r.get('Description')
+                    pair['GroupId'],
+                    'group',
+                    pair.get('Description')
                 )
     except Exception as e:
         raise Exception("Oh no, failed on %s" % perm)
@@ -920,7 +920,7 @@ def main():
                 changed |= target_group_created
 
                 if rule['proto'] in ('all', '-1', -1):
-                    rule['proto'] = -1
+                    rule['proto'] = '-1'
                     rule['from_port'] = None
                     rule['to_port'] = None
 

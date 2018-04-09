@@ -42,6 +42,7 @@
           Name: "{{ resource_prefix }}-vpc"
           Description: "Created by ansible-test"
       register: vpc_result
+    - include: ./egress_tests.yml
 
     # ============================================================
     - name: test state=absent (CHECK MODE)
