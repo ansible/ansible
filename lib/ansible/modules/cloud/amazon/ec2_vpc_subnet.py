@@ -373,14 +373,6 @@ def ensure_map_public(conn, module, subnet, map_public, check_mode, start_time):
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
 
-    if module.params['wait']:
-        if map_public:
-            handle_waiter(conn, module, 'subnet_has_map_public',
-                          {'SubnetIds': [subnet['id']]}, start_time)
-        else:
-            handle_waiter(conn, module, 'subnet_no_map_public',
-                          {'SubnetIds': [subnet['id']]}, start_time)
-
 
 def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, check_mode, start_time):
     if check_mode:
@@ -389,14 +381,6 @@ def ensure_assign_ipv6_on_create(conn, module, subnet, assign_instances_ipv6, ch
         conn.modify_subnet_attribute(SubnetId=subnet['id'], AssignIpv6AddressOnCreation={'Value': assign_instances_ipv6})
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg="Couldn't modify subnet attribute")
-
-    if module.params['wait']:
-        if assign_instances_ipv6:
-            handle_waiter(conn, module, 'subnet_has_assign_ipv6',
-                          {'SubnetIds': [subnet['id']]}, start_time)
-        else:
-            handle_waiter(conn, module, 'subnet_no_assign_ipv6',
-                          {'SubnetIds': [subnet['id']]}, start_time)
 
 
 def disassociate_ipv6_cidr(conn, module, subnet, start_time):
@@ -523,11 +507,45 @@ def ensure_subnet_present(conn, module):
             changed = True
 
     subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
+    if not module.check_mode and module.params['wait']:
+        # GET calls are not monotonic for map_public_ip_on_launch and assign_ipv6_address_on_creation
+        # so we only wait for those if necessary just before returning the subnet
+        subnet = ensure_final_subnet(conn, module, subnet, start_time)
 
     return {
         'changed': changed,
         'subnet': subnet
     }
+
+
+def ensure_final_subnet(conn, module, subnet, start_time):
+    for rewait in range(0, 10):
+        map_public_correct = False
+        assign_ipv6_correct = False
+
+        if module.params['map_public'] == subnet['map_public_ip_on_launch']:
+            map_public_correct = True
+        else:
+            if module.params['map_public']:
+                handle_waiter(conn, module, 'subnet_has_map_public', {'SubnetIds': [subnet['id']]}, start_time)
+            else:
+                handle_waiter(conn, module, 'subnet_no_map_public', {'SubnetIds': [subnet['id']]}, start_time)
+
+        if module.params['assign_instances_ipv6'] == subnet.get('assign_ipv6_address_on_creation'):
+            assign_ipv6_correct = True
+        else:
+            if module.params['assign_instances_ipv6']:
+                handle_waiter(conn, module, 'subnet_has_assign_ipv6', {'SubnetIds': [subnet['id']]}, start_time)
+            else:
+                handle_waiter(conn, module, 'subnet_no_assign_ipv6', {'SubnetIds': [subnet['id']]}, start_time)
+
+        if map_public_correct and assign_ipv6_correct:
+            break
+
+        time.sleep(3)
+        subnet = get_matching_subnet(conn, module, module.params['vpc_id'], module.params['cidr'])
+
+    return subnet
 
 
 def ensure_subnet_absent(conn, module):
