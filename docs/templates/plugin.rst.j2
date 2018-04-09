@@ -1,6 +1,11 @@
 :source: @{ source }@
 
+{% if plugin_type == 'module' %}
+.. _@{ module }@:
+{% else %}
 .. _@{ plugin_type }@_@{ module }@:
+{% endif %}
+
 {% for alias in aliases %}
 .. _@{ alias }@:
 {% endfor %}
