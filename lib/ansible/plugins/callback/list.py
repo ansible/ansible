@@ -64,7 +64,7 @@ class CallbackModule(CallbackBase):
         self._current['play']['tasks'].append(task)
 
     def v2_playbook_on_task_start(self, task, is_conditional):
-        name = to_text(task).strip().replace('TASK:','-') or '- task #%d' % (len(self._current['play']['tasks']) + 1)
+        name = to_text(task).strip().replace('TASK:', '-') or '- task #%d' % (len(self._current['play']['tasks']) + 1)
         task = {'name': name, 'tags': ', '.join(task.tags), 'path': task.get_path()}
         self._current['play']['tasks'].append(task)
 
