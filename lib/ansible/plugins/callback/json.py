@@ -109,6 +109,7 @@ class CallbackModule(CallbackBase):
         task_result = result._result.copy()
         task_result.update(on_info)
         task_result['action'] = task.action
+        task_result['tags'] = task.tags
         self.results[-1]['tasks'][-1]['hosts'][host.name] = task_result
 
     def __getattribute__(self, name):
