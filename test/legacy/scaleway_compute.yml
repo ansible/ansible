@@ -1,0 +1,396 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway_compute.yml
+
+- name: Test compute instance lifecyle on a Scaleway account
+  hosts: localhost
+  gather_facts: no
+  environment:
+    SCW_API_KEY: "{{ lookup('env', 'SCW_API_KEY') }}"
+
+  tasks:
+
+  - name: Create a server (Check)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+
+    register: server_creation_check_task
+
+  - debug: var=server_creation_check_task
+
+  - assert:
+      that:
+        - server_creation_check_task is success
+        - server_creation_check_task is changed
+
+  - name: Create a server
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+
+    register: server_creation_task
+
+  - debug: var=server_creation_task
+
+  - assert:
+      that:
+        - server_creation_task is success
+        - server_creation_task is changed
+
+  - name: Create a server (Confirmation)
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+
+    register: server_creation_confirmation_task
+
+  - debug: var=server_creation_confirmation_task
+
+  - assert:
+      that:
+        - server_creation_confirmation_task is success
+        - server_creation_confirmation_task is not changed
+
+  - name: Patch server tags (Check)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      tags:
+        - test
+        - www
+    register: server_patching_check_task
+
+  - debug: var=server_patching_check_task
+
+  - assert:
+      that:
+        - server_patching_check_task is success
+        - server_patching_check_task is changed
+
+  - name: Patch server tags
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_patching_task
+
+  - debug: var=server_patching_task
+
+  - assert:
+      that:
+        - server_patching_task is success
+        - server_patching_task is changed
+
+  - name: Patch server tags (Confirmation)
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_patching_confirmation_task
+
+  - debug: var=server_patching_confirmation_task
+
+  - assert:
+      that:
+        - server_patching_confirmation_task is success
+        - server_patching_confirmation_task is not changed
+
+  - name: Run it (Check mode)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: running
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      tags:
+        - test
+        - www
+    register: server_run_check_task
+
+  - debug: var=server_run_check_task
+
+  - assert:
+      that:
+        - server_run_check_task is success
+        - server_run_check_task is changed
+
+  - name: Run it
+    scaleway_compute:
+      name: foobar
+      state: running
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_run_task
+
+  - debug: var=server_run_task
+
+  - assert:
+      that:
+        - server_run_task is success
+        - server_run_task is changed
+
+  - name: Run it
+    scaleway_compute:
+      name: foobar
+      state: running
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_run_confirmation_task
+
+  - debug: var=server_run_confirmation_task
+
+  - assert:
+      that:
+        - server_run_confirmation_task is success
+        - server_run_confirmation_task is not changed
+
+  - name: Reboot it (Check mode)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: restarted
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      tags:
+        - test
+        - www
+    register: server_reboot_check_task
+
+  - debug: var=server_reboot_check_task
+
+  - assert:
+      that:
+        - server_reboot_check_task is success
+        - server_reboot_check_task is changed
+
+  - name: Reboot it
+    scaleway_compute:
+      name: foobar
+      state: restarted
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_reboot_task
+
+  - debug: var=server_reboot_task
+
+  - assert:
+      that:
+        - server_reboot_task is success
+        - server_reboot_task is changed
+
+  - name: Stop it (Check mode)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: stopped
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      tags:
+        - test
+        - www
+    register: server_stop_check_task
+
+  - debug: var=server_stop_check_task
+
+  - assert:
+      that:
+        - server_stop_check_task is success
+        - server_stop_check_task is changed
+
+  - name: Stop it
+    scaleway_compute:
+      name: foobar
+      state: stopped
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_stop_task
+
+  - debug: var=server_stop_task
+
+  - assert:
+      that:
+        - server_stop_task is success
+        - server_stop_task is changed
+
+  - name: Stop it (Confirmation)
+    scaleway_compute:
+      name: foobar
+      state: stopped
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_stop_confirmation_task
+
+  - debug: var=server_stop_confirmation_task
+
+  - assert:
+      that:
+        - server_stop_confirmation_task is success
+        - server_stop_confirmation_task is not changed
+
+  - name: Destroy it (Check mode)
+    check_mode: yes
+    scaleway_compute:
+      name: foobar
+      state: absent
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      tags:
+        - test
+        - www
+    register: server_destroy_check_task
+
+  - debug: var=server_destroy_check_task
+
+  - assert:
+      that:
+        - server_destroy_check_task is success
+        - server_destroy_check_task is changed
+
+  - name: Destroy it
+    scaleway_compute:
+      name: foobar
+      state: absent
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_destroy_task
+
+  - debug: var=server_destroy_task
+
+  - assert:
+      that:
+        - server_destroy_task is success
+        - server_destroy_task is changed
+
+  - name: Destroy it (Confirmation)
+    scaleway_compute:
+      name: foobar
+      state: absent
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+      wait: true
+      tags:
+        - test
+        - www
+    register: server_destroy_confirmation_task
+
+  - debug: var=server_destroy_confirmation_task
+
+  - assert:
+      that:
+        - server_destroy_confirmation_task is success
+        - server_destroy_confirmation_task is not changed
+
+  - name: Testing for unauthorized organization
+    ignore_errors: yes
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+      organization: this-organization-does-not-exists
+      region: ams1
+      commercial_type: VC1S
+    register: unauthorized_organization_task
+
+  - debug: var=unauthorized_organization_task
+
+  - assert:
+      that:
+        - unauthorized_organization_task is not success
+        - unauthorized_organization_task is not changed
+
+  - name: Testing for unexisting image
+    ignore_errors: yes
+    scaleway_compute:
+      name: foobar
+      state: present
+      image: this-image-does-not-exists
+      organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+      region: ams1
+      commercial_type: VC1S
+    register: unexisting_image_check
+
+  - debug: var=unexisting_image_check
+
+  - assert:
+      that:
+        - unexisting_image_check is not success
+        - unexisting_image_check is not changed
