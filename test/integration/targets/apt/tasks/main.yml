@@ -16,8 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - block:
-  - include: 'apt.yml'
-
   - block:
       - include: 'repo.yml'
     always:
@@ -27,6 +25,8 @@
       - file:
           name: "{{ repodir }}"
           state: absent
+
+  - include: 'apt.yml'
 
   - include: 'apt-multiarch.yml'
     when:
