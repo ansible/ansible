@@ -532,7 +532,7 @@ def main():
                 action='fence',
                 action_condition=lambda h: h.status == hoststate.DOWN,
                 wait_condition=lambda h: h.status in [hoststate.UP, hoststate.MAINTENANCE],
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='start',
             )
         elif state == 'stopped':
@@ -553,7 +553,7 @@ def main():
             ret = hosts_module.action(
                 action='fence',
                 wait_condition=lambda h: h.status == hoststate.UP,
-                fail_condition=failed_state,
+                fail_condition=hosts_module.failed_state_after_reinstall,
                 fence_type='restart',
             )
         elif state == 'reinstalled':
