@@ -233,7 +233,11 @@ class TaskExecutor:
         elif self._task.loop:
             items = templar.template(self._task.loop)
             if not isinstance(items, list):
-                raise AnsibleError("Invalid data passed to 'loop' it requires a list, got this instead: %s" % items)
+                raise AnsibleError(
+                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
+                    " Hint: If you passed a list/dict of just one element,"
+                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
+                )
 
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
