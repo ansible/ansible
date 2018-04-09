@@ -9,6 +9,7 @@ import socket
 
 from ansible.module_utils.six import StringIO
 from ansible.module_utils.six.moves.http_cookiejar import Cookie
+from ansible.module_utils.six.moves.http_client import HTTPMessage
 from ansible.module_utils.urls import fetch_url, urllib_error, ConnectionError, NoSSLError, httplib
 
 import pytest
@@ -94,6 +95,15 @@ def test_fetch_url_params(open_url_mock, fake_ansible_module):
 def test_fetch_url_cookies(mocker, fake_ansible_module):
     def make_cookies(*args, **kwargs):
         cookies = kwargs['cookies']
+        r = MagicMock()
+        try:
+            r.headers = HTTPMessage()
+            add_header = r.headers.add_header
+        except TypeError:
+            # PY2
+            r.headers = HTTPMessage(StringIO())
+            add_header = r.headers.addheader
+        r.info.return_value = r.headers
         for name, value in (('Foo', 'bar'), ('Baz', 'qux')):
             cookie = Cookie(
                 version=0,
@@ -114,14 +124,18 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
                 rest=None
             )
             cookies.set_cookie(cookie)
+            add_header('Set-Cookie', '%s=%s' % (name, value))
 
-        return MagicMock()
+        return r
 
     mocker = mocker.patch('ansible.module_utils.urls.open_url', new=make_cookies)
 
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
     assert info['cookies'] == {'Baz': 'qux', 'Foo': 'bar'}
+    assert info['cookies_string'] == 'Baz=qux; Foo=bar'
+    # The key here has a `-` as opposed to what we see in the `uri` module that converts to `_`
+    assert info['set-cookie'] == 'Foo=bar, Baz=qux'
 
 
 def test_fetch_url_nossl(open_url_mock, fake_ansible_module, mocker):

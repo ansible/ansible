@@ -1049,17 +1049,20 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies)
-        info.update(r.info())
+        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
         # Don't be lossy, append header values for duplciate headers
         try:
             # Py3
             _h = {}
             for k, v in r.headers.items():
-                if k in _h:
-                    _h[k] = ', '.join((_h[k], v))
+                # The same as above, lower case keys to match py2 behavior, and create more consistent results
+                _k = k.lower()
+                if _k in _h:
+                    _h[_k] = ', '.join((_h[_k], v))
                 else:
-                    _h[k] = v
+                    _h[_k] = v
             info.update(_h)
         except AttributeError:
             # In Py2 there is nothing that needs done, py2 does this for us
