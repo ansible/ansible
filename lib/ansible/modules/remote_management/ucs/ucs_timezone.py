@@ -94,7 +94,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
 
-def main():
+def run_module():
     argument_spec = ucs_argument_spec
     argument_spec.update(
         timezone=dict(type='str'),
@@ -161,6 +161,10 @@ def main():
     if err:
         module.fail_json(**ucs.result)
     module.exit_json(**ucs.result)
+
+
+def main():
+    run_module()
 
 
 if __name__ == '__main__':
