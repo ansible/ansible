@@ -48,7 +48,7 @@
   - assert:
       that:
         - 'result.failed == True'
-        - '"action is compare but all of the following are missing: comparison_results_file" in result.msg'
+        - '"action is compare but the following are missing: comparison_results_file" in result.msg'
 
   when: snapshot_run
 
