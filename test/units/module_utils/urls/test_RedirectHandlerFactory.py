@@ -128,3 +128,11 @@ def test_redir_validate_certs(urllib_req, request_body, mocker):
     inst.redirect_request(urllib_req, request_body, 301, '301 Moved Permanently', {}, 'https://docs.ansible.com/')
 
     assert opener_mock.add_handler.call_count == 1
+
+
+def test_redir_http_error_308_urllib2(urllib_req, request_body):
+    handler = RedirectHandlerFactory('urllib2', False)
+    inst = handler()
+
+    with pytest.raises(urllib_error.HTTPError):
+        inst.redirect_request(urllib_req, request_body, 308, '308 Permanent Redirect', {}, 'https://docs.ansible.com/')
