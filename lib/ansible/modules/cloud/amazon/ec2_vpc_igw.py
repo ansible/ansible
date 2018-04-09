@@ -101,7 +101,7 @@ except ImportError:
     pass  # Handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (AWSRetry, boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict,
                                       ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict)
 from ansible.module_utils.six import string_types
 
