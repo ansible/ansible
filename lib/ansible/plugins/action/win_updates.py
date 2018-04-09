@@ -186,6 +186,12 @@ class ActionModule(ActionBase):
         new_module_args.pop('reboot_timeout', None)
         result = self._run_win_updates(new_module_args, task_vars)
 
+        # if the module failed to run at all then changed won't be populated
+        # so we just return the result as is
+        # https://github.com/ansible/ansible/issues/38232
+        if result['failed']:
+            return result
+
         changed = result['changed']
         updates = result.get('updates', dict())
         filtered_updates = result.get('filtered_updates', dict())
@@ -235,6 +241,8 @@ class ActionModule(ActionBase):
                 result.pop('msg', None)
                 # rerun the win_updates module after the reboot is complete
                 result = self._run_win_updates(new_module_args, task_vars)
+                if result['failed']:
+                    return result
 
                 result_updates = result.get('updates', dict())
                 result_filtered_updates = result.get('filtered_updates', dict())
