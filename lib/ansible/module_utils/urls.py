@@ -51,6 +51,9 @@ except ImportError:
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+
+from ansible.module_utils.six import PY3
+
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -1052,21 +1055,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
-        # Don't be lossy, append header values for duplciate headers
-        try:
-            # Py3
-            _h = {}
-            for k, v in r.headers.items():
+        # Don't be lossy, append header values for duplicate headers
+        # In Py2 there is nothing that needs done, py2 does this for us
+        if PY3:
+            temp_headers = {}
+            for name, value in r.headers.items():
                 # The same as above, lower case keys to match py2 behavior, and create more consistent results
-                _k = k.lower()
-                if _k in _h:
-                    _h[_k] = ', '.join((_h[_k], v))
+                name = name.lower()
+                if name in temp_headers:
+                    temp_headers[name] = ', '.join((temp_headers[name], value))
                 else:
-                    _h[_k] = v
-            info.update(_h)
-        except AttributeError:
-            # In Py2 there is nothing that needs done, py2 does this for us
-            pass
+                    temp_headers[name] = value
+            info.update(temp_headers)
 
         # parse the cookies into a nice dictionary
         cookie_list = []
