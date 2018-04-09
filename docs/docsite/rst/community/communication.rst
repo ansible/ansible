@@ -4,6 +4,11 @@ Communicating
 
 .. contents:: Topics
 
+Code of Conduct
+===============
+
+Please read and understand the :ref:`code_of_conduct`.
+
 Mailing List Information
 ========================
 
