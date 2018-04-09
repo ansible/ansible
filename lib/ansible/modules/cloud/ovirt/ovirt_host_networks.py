@@ -170,12 +170,15 @@ def get_bond_options(opt_str):
         We need to maintain this type strings, for the __compare_options method,
         for easier comparision.
         """
-        return [
-            'Active-Backup',
-            'Load balance (balance-xor)',
-            None,
-            'Dynamic link aggregation (802.3ad)',
-        ][mode_number]
+        modes = [
+        'Active-Backup',
+        'Load balance (balance-xor)',
+        None,
+        'Dynamic link aggregation (802.3ad)',
+        ]
+        if (not 0 < mode_number <= mode_number-1):
+            return None
+        return modes[mode_number-1]
     
     opt_dict = {}
     for item in opt_str.split():
@@ -195,7 +198,7 @@ def get_bond_options(opt_str):
     options.append(
         otypes.Option(
             name='mode',
-            type=get_type_name(mode_number - 1),
+            type=get_type_name(mode_number),
             value=str(mode_number)
         )
     )
