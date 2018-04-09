@@ -852,7 +852,10 @@ class Request:
         self.follow_redirects = follow_redirects
         self.client_cert = client_cert
         self.client_key = client_key
-        self.cookies = cookies or cookiejar.CookieJar()
+        if isinstance(cookies, cookiejar.CookieJar):
+            self.cookies = cookies
+        else:
+            self.cookies = cookiejar.CookieJar()
 
     def _fallback(self, value, fallback):
         if value is None:
@@ -860,7 +863,7 @@ class Request:
         return value
 
     def open(self, method, url, data=None, headers=None, use_proxy=None,
-             force=False, last_mod_time=None, timeout=None, validate_certs=None,
+             force=None, last_mod_time=None, timeout=None, validate_certs=None,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None):
@@ -911,6 +914,7 @@ class Request:
         use_proxy = self._fallback(use_proxy, self.use_proxy)
         force = self._fallback(force, self.force)
         timeout = self._fallback(timeout, self.timeout)
+        validate_certs = self._fallback(validate_certs, self.validate_certs)
         url_username = self._fallback(url_username, self.url_username)
         url_password = self._fallback(url_password, self.url_password)
         http_agent = self._fallback(http_agent, self.http_agent)
@@ -928,9 +932,6 @@ class Request:
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
             username = url_username
-
-            if headers is None:
-                headers = {}
 
             if username:
                 password = url_password
