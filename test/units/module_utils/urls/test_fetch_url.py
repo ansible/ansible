@@ -133,8 +133,11 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
     assert info['cookies'] == {'Baz': 'qux', 'Foo': 'bar'}
+    # Python sorts cookies in order of most specific (ie. longest) path first
+    # items with the same path are reversed from response order
     assert info['cookies_string'] == 'Baz=qux; Foo=bar'
     # The key here has a `-` as opposed to what we see in the `uri` module that converts to `_`
+    # Note: this is response order, which differs from cookies_string
     assert info['set-cookie'] == 'Foo=bar, Baz=qux'
 
 
