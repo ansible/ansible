@@ -94,6 +94,7 @@ EXAMPLES = '''
     host: 68.170.147.165
 
 - name: Ensure HSRP is configured with following params on a SVI
+        with clear text authentication
   nxos_hsrp:
     group: 10
     vip: 10.1.1.1
@@ -103,6 +104,30 @@ EXAMPLES = '''
     host: 68.170.147.165
     auth_type: text
     auth_string: CISCO
+
+- name: Ensure HSRP is configured with md5 authentication and clear
+        authentication string
+  nxos_hsrp:
+    group: 10
+    vip: 10.1.1.1
+    priority: 150
+    interface: vlan10
+    preempt: enabled
+    host: 68.170.147.165
+    auth_type: md5
+    auth_string: "0 1234"
+
+- name: Ensure HSRP is configured with md5 authentication and hidden
+        authentication string
+  nxos_hsrp:
+    group: 10
+    vip: 10.1.1.1
+    priority: 150
+    interface: vlan10
+    preempt: enabled
+    host: 68.170.147.165
+    auth_type: md5
+    auth_string: "7 1234"
 
 - name: Remove HSRP config for given interface, group, and VIP
   nxos_hsrp:
