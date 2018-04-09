@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright (c) 2016, 2018 Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -46,7 +46,7 @@ options:
         description:
             - "Dictionary describing network bond:"
             - "C(name) - Bond name."
-            - "C(mode) - Bonding mode."
+            - "C(options) - Bonding options."
             - "C(interfaces) - List of interfaces to create a bond."
     interface:
         description:
@@ -84,7 +84,7 @@ EXAMPLES = '''
     name: myhost
     bond:
       name: bond0
-      mode: 2
+      options: mode=1 miimon=100
       interfaces:
         - eth1
         - eth2
@@ -160,15 +160,9 @@ from ansible.module_utils.ovirt import (
 )
 
 
-def get_mode_type(mode_number):
-    """
-    Adaptive transmit load balancing (balance-tlb): mode=1 miimon=100
-    Dynamic link aggregation (802.3ad): mode=2 miimon=100
-    Load balance (balance-xor): mode=3 miimon=100
-    Active-Backup: mode=4 miimon=100 xmit_hash_policy=2
-    """
+def get_bond_options(opt_str):
     options = []
-    if mode_number is None:
+    if opt_str is None:
         return options
 
     def get_type_name(mode_number):
@@ -182,26 +176,35 @@ def get_mode_type(mode_number):
             None,
             'Dynamic link aggregation (802.3ad)',
         ][mode_number]
+    
+    opt_dict = {}
+    for item in opt_str.split():
+        opt, value = opt.split('=')
+        opt_dict[opt] = value
+
+    try:
+        mode_number = opt_dict.pop('mode')
+    except KeyError:
+        raise Exception('Bond mode must be specified.')
 
     try:
         mode_number = int(mode_number)
-        if mode_number >= 1 and mode_number <= 4:
-            if mode_number == 4:
-                options.append(otypes.Option(name='xmit_hash_policy', value='2'))
-
-            options.append(otypes.Option(name='miimon', value='100'))
-            options.append(
-                otypes.Option(
-                    name='mode',
-                    type=get_type_name(mode_number - 1),
-                    value=str(mode_number)
-                )
-            )
-        else:
-            options.append(otypes.Option(name='mode', value=str(mode_number)))
     except ValueError:
-        raise Exception("Bond mode must be a number.")
+        raise Exception('Bond mode must be a number.')
 
+    options.append(
+        otypes.Option(
+            name='mode',
+            type=get_type_name(mode_number - 1),
+            value=str(mode_number)
+        )
+    )
+
+    options.extend(
+        [otypes.Option(name=opt, value=value)
+         for opt, value in opt_dict.iteritems()
+        ]
+    )
     return options
 
 
@@ -250,7 +253,7 @@ class HostNetworksModule(BaseModule):
 
         # Check if bond configuration should be updated:
         if bond:
-            update = self.__compare_options(get_mode_type(bond.get('mode')), getattr(nic.bonding, 'options', []))
+            update = self.__compare_options(get_bond_options(bond.get('options')), getattr(nic.bonding, 'options', []))
             update = update or not equal(
                 sorted(bond.get('interfaces')) if bond.get('interfaces') else None,
                 sorted(get_link_name(self._connection, s) for s in nic.bonding.slaves)
@@ -369,7 +372,7 @@ def main():
                     otypes.HostNic(
                         name=bond.get('name'),
                         bonding=otypes.Bonding(
-                            options=get_mode_type(bond.get('mode')),
+                            options=get_bond_options(bond.get('options')),
                             slaves=[
                                 otypes.HostNic(name=i) for i in bond.get('interfaces', [])
                             ],
