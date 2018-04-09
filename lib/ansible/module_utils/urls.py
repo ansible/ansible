@@ -839,6 +839,8 @@ class Request:
         """
 
         self.headers = headers or {}
+        if not isinstance(self.headers, dict):
+            raise ValueError("headers must be a dict")
         self.use_proxy = use_proxy
         self.force = force
         self.timeout = timeout
@@ -902,6 +904,8 @@ class Request:
 
         if headers is None:
             headers = {}
+        elif not isinstance(headers, dict):
+            raise ValueError("headers must be a dict")
         headers = dict(self.headers, **headers)
 
         use_proxy = self._fallback(use_proxy, self.use_proxy)
@@ -1030,11 +1034,8 @@ class Request:
             request.add_header('If-Modified-Since', tstamp)
 
         # user defined headers now, which may override things we've set above
-        if headers:
-            if not isinstance(headers, dict):
-                raise ValueError("headers must be a dict")
-            for header in headers:
-                request.add_header(header, headers[header])
+        for header in headers:
+            request.add_header(header, headers[header])
 
         urlopen_args = [request, None]
         if sys.version_info >= (2, 6, 0):
