@@ -27,14 +27,12 @@ options:
     description:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: false
-    default: None
   tags:
     description:
       - A dict of tags to apply to the internet gateway.
         This is independent of the name value, note if you pass a 'Name' key it would override the Name of IGW if it's different.
     aliases: [ 'resource_tags' ]
     required: false
-    default: None
   state:
     description:
       - Create or terminate the IGW.
@@ -45,7 +43,6 @@ options:
       - The name to be given to IGW.
     required: false
     version_added: "2.6"
-    default: None
 requirements:
     - boto3
     - botocore
