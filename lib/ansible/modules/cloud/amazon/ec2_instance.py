@@ -162,7 +162,7 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Terminate every running instance in a region. Use with caution.
+# Terminate every running instance in a region. Use with EXTREME caution.
 - ec2_instance:
     state: absent
     filters:
@@ -173,6 +173,19 @@ EXAMPLES = '''
     state: restarted
     instance_ids:
       - i-12345678
+
+# start an instance with a public IP address
+- ec2_instance:
+    name: "public-compute-instance"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: c5.large
+    security_group: default
+    network:
+      assign_public_ip: true
+    image_id: ami-123456
+    tags:
+      Environment: Testing
 
 # start an instance and have it begin a Tower callback on boot
 - ec2_instance:
