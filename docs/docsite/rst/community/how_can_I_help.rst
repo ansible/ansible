@@ -3,7 +3,9 @@ How To Help
 
 .. contents:: Topics
 
-There are many ways to help the Ansible project.
+Thanks for being interested in helping the Ansible project! 
+
+There are many ways to help the Ansible project...but first, please read and understand the :ref:`code_of_conduct`.
 
 Become a power user
 -------------------
