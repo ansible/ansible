@@ -28,6 +28,15 @@
         selfsigned_digest: sha256
       register: selfsigned_certificate_idempotence
 
+    - name: Generate selfsigned certificate (check mode)
+      openssl_certificate:
+        path: '{{ output_dir }}/cert.pem'
+        csr_path: '{{ output_dir }}/csr.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+      check_mode: yes
+
     - name: Check selfsigned certificate
       openssl_certificate:
         path: '{{ output_dir }}/cert.pem'
