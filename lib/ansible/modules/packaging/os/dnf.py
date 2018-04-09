@@ -295,21 +295,75 @@ def _mark_package_install(module, base, pkg_spec):
         module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
-__modularity_available = False
+_modularity_available = False
 try:
     from dnf.module.exceptions import NoModuleException
-    __modularity_available = True
+    _modularity_available = True
 except:
     pass
-# __modularity = False
-__modularity = __modularity_available
+# _modularity = False
+_modularity = _modularity_available
+
+# FIXME: This is because the DNF API seem to just abort inside hawkey with
+#        various input. Including things like installed modules passed to
+#        install. This is all bad.
+import fnmatch
+def _mod_match_profiles(prefix, profiles, ui):
+    if fnmatch.fnmatch(prefix, ui):
+        return True
+    for prof in profiles:
+        data = prefix + "/" + prof
+        if fnmatch.fnmatch(data, ui):
+            return True
+    return False
+
+def _mod_match(mod, ui):
+    data = mod.name
+    if _mod_match_profiles(data, mod.profiles, ui):
+        return True
+    data = mod.name + ":" + mod.stream
+    if _mod_match_profiles(data, mod.profiles, ui):
+        return True
+    data = mod.name + ":" + mod.stream + ":" + str(mod.version)
+    if _mod_match_profiles(data, mod.profiles, ui):
+        return True
+
+    return False
+def _mod_available(base, ui):
+    amods = base.repo_module_dict.list_module_version_all()
+    for amod in amods:
+        if _mod_match(amod, ui):
+            return True
+    return False
+def _mod_enabled(base, ui):
+    emods = base.repo_module_dict.list_module_version_enabled()
+    for emod in emods:
+        if _mod_match(emod, ui):
+            return True
+    return False
+def _mod_installed(base, ui):
+    imods = base.repo_module_dict.list_module_version_installed()
+    for imod in imods:
+        if _mod_match(imod, ui):
+            return imod
+    return None
+def _mod_upgrade(base, ui):
+    amods = base.repo_module_dict.list_module_version_all()
+    for amod in amods:
+        if _mod_match(amod, ui):
+            imod = _mod_installed(base, amod.name + ":" + amod.stream)
+            if imod is None: # Shrug
+                continue
+            if amod.version > imod.version:
+                return True
+    return False
 
 def _parse_ui_spec(names):
     pkg_specs, mod_specs, grp_specs, filenames = [], [], [], []
     for name in names:
         if name.endswith(".rpm"):
             filenames.append(name)
-        elif __modularity and name.startswith("@"):
+        elif _modularity and name.startswith("@"):
             mod_specs.append(name[1:])
         elif name.startswith("@"):
             grp_specs.append(name[1:])
@@ -369,9 +423,15 @@ def ensure(module, base, state, names, autoremove):
             _install_remote_rpms(base, filenames)
 
             # Install modules.
-            if mod_specs:
+            for mod in mod_specs:
+                if _mod_installed(base, mod): # API seems to exist if installed
+                    continue
+                if not _mod_available(base, mod):
+                    failures.append((mod, "Can't find module"))
+                    continue
+
                 try:
-                    base.repo_module_dict.install(mod_specs)
+                    fmods = base.repo_module_dict.install([mod])
                 except dnf.exceptions.Error as e:
                     failures.append((mod, to_native(e)))
 
@@ -400,11 +460,23 @@ def ensure(module, base, state, names, autoremove):
             _install_remote_rpms(base, filenames)
 
             # Upgrade modules.
-            if mod_specs:
+            for mod in mod_specs:
+                if not _mod_installed(base, mod): # API doesn't install
+                    if not _mod_available(base, mod):
+                        failures.append((mod, "Can't find module"))
+                        continue
+                    try:
+                        fmods = base.repo_module_dict.install([mod])
+                    except dnf.exceptions.Error as e:
+                        failures.append((mod, to_native(e)))
+                        continue
+                if not _mod_upgrade(base, mod): # API seems to exist if not
+                    continue
+
                 try:
-                    skipped_grps, _, _ = base.repo_module_dict.upgrade(mod_specs, True)
+                    skipped_grps, _, _ = base.repo_module_dict.upgrade([mod], True)
                 except dnf.exceptions.Error as e:
-                    failures.append((mod_specs, to_native(e)))
+                    failures.append((mod, to_native(e)))
 
             for group in groups:
                 try:
@@ -438,14 +510,19 @@ def ensure(module, base, state, names, autoremove):
                 module.exit_json(msg="Nothing to do")
             if module.check_mode:
                 module.exit_json(changed=True)
+            changed = False
             for mod in mod_specs:
+                if _mod_enabled(base, mod):
+                    continue
+                if not _mod_available(base, mod):
+                    failures.append((mod, "Can't find module"))
+                    continue
                 try:
                     base.repo_module_dict.enable(mod, True)
+                    changed = True
                 except dnf.exceptions.Error as e:
                     failures.append((mod, to_native(e)))
-            response = {'changed': True, 'results': []}
-            # response = {'changed': True, 'failures': [skipped_grps]}
-            # FIXME: Work out enabled modules
+            response = {'changed': changed, 'results': []}
             module.exit_json(**response)
 
         elif state == 'disable':
@@ -454,13 +531,16 @@ def ensure(module, base, state, names, autoremove):
                 module.exit_json(msg="Nothing to do")
             if module.check_mode:
                 module.exit_json(changed=True)
+            changed = False
             for mod in mod_specs:
+                if not _mod_enabled(base, mod):
+                    continue
                 try:
                     base.repo_module_dict.disable(mod,True)
+                    changed = True
                 except dnf.exceptions.Error as e:
                     failures.append((mod_specs, to_native(e)))
-            response = {'changed': True, 'results': []}
-            # FIXME: Work out enabled modules
+            response = {'changed': changed, 'results': []}
             module.exit_json(**response)
 
         else:
@@ -473,11 +553,14 @@ def ensure(module, base, state, names, autoremove):
                     msg="Cannot remove paths -- please specify package name.")
 
             # Remove modules.
-            if mod_specs:
+            for mod in mod_specs:
+                if not _mod_installed(base, mod):
+                    continue
+
                 try:
-                    skipped_grps = base.repo_module_dict.remove(mod_specs)
+                    fmods = base.repo_module_dict.remove([mod])
                 except dnf.exceptions.Error as e:
-                    failures.append((mod_specs, to_native(e)))
+                    failures.append((mod, to_native(e)))
 
             for group in groups:
                 try:
