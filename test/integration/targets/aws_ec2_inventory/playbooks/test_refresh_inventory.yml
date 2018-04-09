@@ -37,7 +37,7 @@
         that:
           - "'aws_ec2' in groups"
           - "groups.aws_ec2 | length == 1"
-          - "groups.aws_ec2.0 == 'Name_{{ resource_prefix }}'"
+          - "groups.aws_ec2.0 == '{{ resource_prefix }}'"
 
     - name: remove setup ec2 instance
       ec2:
