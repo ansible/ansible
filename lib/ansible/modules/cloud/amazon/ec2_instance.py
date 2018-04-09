@@ -171,26 +171,48 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Terminate every instance in a region. Use with caution.
-- ec2_instance_facts:
+# Terminate every running instance in a region. Use with EXTREME caution.
+- ec2_instance:
     state: absent
     filters:
       instance-state-name: running
 
-# Gather facts about all instances in AZ ap-southeast-2a
-- ec2_instance_facts:
-    filters:
-      availability-zone: ap-southeast-2a
-
-# Gather facts about a particular instance using ID
-- ec2_instance_facts:
+# restart a particular instance by its ID
+- ec2_instance:
+    state: restarted
     instance_ids:
       - i-12345678
 
-# Gather facts about any instance with a tag key Name and value Example
-- ec2_instance_facts:
-    filters:
-      "tag:Name": Example
+# start an instance with a public IP address
+- ec2_instance:
+    name: "public-compute-instance"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: c5.large
+    security_group: default
+    network:
+      assign_public_ip: true
+    image_id: ami-123456
+    tags:
+      Environment: Testing
+
+# start an instance and have it begin a Tower callback on boot
+- ec2_instance:
+    name: "tower-callback-test"
+    key_name: "prod-ssh-key"
+    vpc_subnet_id: subnet-5ca1ab1e
+    security_group: default
+    tower_callback:
+      # IP or hostname of tower server
+      tower_address: 1.2.3.4
+      job_template_id: 876
+      host_config_key: '[secret config key goes here]'
+    network:
+      assign_public_ip: true
+    image_id: ami-123456
+    cpu_credit_specification: unlimited
+    tags:
+      SomeThing: "A value"
 '''
 
 RETURN = '''
