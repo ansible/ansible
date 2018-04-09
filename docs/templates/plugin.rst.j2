@@ -345,10 +345,10 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 <td>@{ value.returned | html_ify }@</td>
                 <td>
                     {% if value.description is string %}
-                        <div>@{ value.description | html_ify |indent(4)}@</div>
+                        <div>@{ value.description | html_ify |indent(4) | trim}@</div>
                     {% else %}
                         {% for desc in value.description %}
-                            <div>@{ desc | html_ify |indent(4)}@</div>
+                            <div>@{ desc | html_ify |indent(4) | trim}@</div>
                         {% endfor %}
                     {% endif %}
                     <br/>
