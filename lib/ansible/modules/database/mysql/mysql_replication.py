@@ -140,57 +140,57 @@ def get_master_status(cursor):
     return masterstatus
 
 
-def get_slave_status(cursor,connection_name):
+def get_slave_status(cursor, connection_name):
     if connection_name:
-       cursor.execute("SHOW SLAVE \"%s\" STATUS" % connection_name)
+        cursor.execute("SHOW SLAVE \"%s\" STATUS" % connection_name)
     else:
-       cursor.execute("SHOW SLAVE STATUS")
+        cursor.execute("SHOW SLAVE STATUS")
     slavestatus = cursor.fetchone()
     return slavestatus
 
 
-def stop_slave(cursor,connection_name):
+def stop_slave(cursor, connection_name):
     try:
         if connection_name:
-           cursor.execute("STOP SLAVE \"%s\"" % connection_name)
+            cursor.execute("STOP SLAVE \"%s\"" % connection_name)
         else:
-           cursor.execute("STOP SLAVE")
+            cursor.execute("STOP SLAVE")
         stopped = True
     except:
         stopped = False
     return stopped
 
 
-def reset_slave(cursor,connection_name):
+def reset_slave(cursor, connection_name):
     try:
         if connection_name:
-          cursor.execute("RESET SLAVE \"%s\"" % connection_name)
+            cursor.execute("RESET SLAVE \"%s\"" % connection_name)
         else:
-          cursor.execute("RESET SLAVE")
+            cursor.execute("RESET SLAVE")
         reset = True
     except:
         reset = False
     return reset
 
 
-def reset_slave_all(cursor,connection_name):
+def reset_slave_all(cursor, connection_name):
     try:
         if connection_name:
-          cursor.execute("RESET SLAVE \"%s\" ALL" % connection_name)
+            cursor.execute("RESET SLAVE \"%s\" ALL" % connection_name)
         else:
-          cursor.execute("RESET SLAVE ALL")
+            cursor.execute("RESET SLAVE ALL")
         reset = True
     except:
         reset = False
     return reset
 
 
-def start_slave(cursor,connection_name):
+def start_slave(cursor, connection_name):
     try:
         if connection_name:
-          cursor.execute("START SLAVE \"%s\"" % connection_name)
+            cursor.execute("START SLAVE \"%s\"" % connection_name)
         else:
-          cursor.execute("START SLAVE")
+            cursor.execute("START SLAVE")
         started = True
     except:
         started = False
@@ -200,9 +200,9 @@ def start_slave(cursor,connection_name):
 def changemaster(cursor, chm, chm_params, connection_name):
     sql_param = ",".join(chm)
     if connection_name:
-      query = 'CHANGE MASTER \"%s\" TO %s' % (connection_name,sql_param)
+        query = 'CHANGE MASTER \"%s\" TO %s' % (connection_name,sql_param)
     else:
-      query = 'CHANGE MASTER TO %s' % sql_param
+        query = 'CHANGE MASTER TO %s' % sql_param
     cursor.execute(query, chm_params)
 
 
