@@ -330,7 +330,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             pass
 
         if item and self.has_tags(item.tags, self.tags):
-            result = [self.serialize_vm(self.get_vm(item.name))]
+            result = [self.serialize_vm(item)]
 
         return result
 
