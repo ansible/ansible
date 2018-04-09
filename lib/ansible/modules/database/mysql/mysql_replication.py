@@ -142,7 +142,7 @@ def get_master_status(cursor):
 
 def get_slave_status(cursor,connection_name):
     if connection_name:
-       cursor.execute("SHOW SLAVE \"%s\" STATUS" % connection_name) 
+       cursor.execute("SHOW SLAVE \"%s\" STATUS" % connection_name)
     else:
        cursor.execute("SHOW SLAVE STATUS")
     slavestatus = cursor.fetchone()
@@ -153,7 +153,7 @@ def stop_slave(cursor,connection_name):
     try:
         if connection_name:
            cursor.execute("STOP SLAVE \"%s\"" % connection_name)
-        else: 
+        else:
            cursor.execute("STOP SLAVE")
         stopped = True
     except:
