@@ -426,6 +426,13 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         # may have been stored in the info as 'body'
         content = info.pop('body', '')
 
+    if src:
+        # Try to close the open file handle
+        try:
+            data.close()
+        except Exception:
+            pass
+
     r['redirected'] = redirected or info['url'] != url
     r.update(redir_info)
     r.update(info)
