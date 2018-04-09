@@ -645,11 +645,11 @@ def main():
     _ensure_dnf(module)
 
     if params['modularity'] is not None:
-        global __modularity
-        if __modularity_available and params['modularity']:
-            __modularity = True
+        global _modularity
+        if _modularity_available and params['modularity']:
+            _modularity = True
         else:
-            __modularity = False
+            _modularity = False
 
     # Check if autoremove is called correctly
     if params['autoremove'] is not None:
