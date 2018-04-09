@@ -28,7 +28,9 @@ options:
   resource_group:
     description:
       - Name of the resource group containing the virtual machines.
-    required: true
+  name:
+    description:
+      - Name of the virtual machine.
   tags:
     description:
       - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -45,6 +47,11 @@ EXAMPLES = '''
   - name: Get facts for all virtual machines of a resource group
     azure_rm_virtualmachine_facts:
       resource_group: Testing
+
+  - name: Get facts by name
+    azure_rm_virtualmachine_facts:
+      resource_group: Testing
+      name: vm
 
   - name: Get facts by tags
     azure_rm_virtualmachine_facts:
@@ -278,7 +285,8 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group=dict(type='str', required=True),
+            resource_group=dict(type='str'),
+            name=dict(type='str'),
             tags=dict(type='list'),
             auth_source=dict(type='str', choices=['auto', 'cli', 'env', 'credential_file', 'msi'], default='auto'),
             cloud_environment=dict(type='str', default='AzureCloud')
@@ -290,6 +298,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         )
 
         self.resource_group = None
+        self.name = None
         self.tags = None
 
         super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec,
@@ -301,9 +310,29 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        self.results['ansible_facts']['azure_virtualmachines'] = self.list_items()
+        if self.name and not self.resource_group:
+            self.fail("Parameter error: resource group required when filtering by name.")
+        if self.name:
+            self.results['ansible_facts']['azure_virtualmachines'] = self.get_item()
+        else:
+            self.results['ansible_facts']['azure_virtualmachines'] = self.list_items()
 
         return self.results
+
+    def get_item(self):
+        self.log('Get properties for {0}'.format(self.name))
+        item = None
+        result = []
+
+        try:
+            item = self.compute_client.virtual_machines.get(self.resource_group, self.name)
+        except CloudError:
+            pass
+
+        if item and self.has_tags(item.tags, self.tags):
+            result = [self.serialize_vm(self.get_vm(item.name))]
+
+        return result
 
     def list_items(self):
         self.log('List all items')
