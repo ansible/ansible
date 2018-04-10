@@ -115,6 +115,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type
@@ -269,12 +270,22 @@ class Connection(ConnectionBase):
         os.environ["KRB5CCNAME"] = krb5ccname
         krb5env = dict(KRB5CCNAME=krb5ccname)
 
+        # stores various flags to call with kinit, we currently only use this
+        # to set -f so we can get a forward-able ticket (cred delegation)
+        kinit_flags = []
+        if boolean(self.get_option('_extras').get('ansible_winrm_kerberos_delegation', False)):
+            kinit_flags.append('-f')
+
+        kinit_cmdline = [self._kinit_cmd]
+        kinit_cmdline.extend(kinit_flags)
+        kinit_cmdline.append(principal)
+
         # pexpect runs the process in its own pty so it can correctly send
         # the password as input even on MacOS which blocks subprocess from
         # doing so. Unfortunately it is not available on the built in Python
         # so we can only use it if someone has installed it
         if HAS_PEXPECT:
-            kinit_cmdline = "%s %s" % (self._kinit_cmd, principal)
+            kinit_cmdline = " ".join(kinit_cmdline)
             password = to_text(password, encoding='utf-8',
                                errors='surrogate_or_strict')
 
@@ -283,11 +294,10 @@ class Connection(ConnectionBase):
             events = {
                 ".*:": password + "\n"
             }
-            # technically this is the stdout but to match subprocess we wil call
-            # it stderr
+            # technically this is the stdout but to match subprocess we will
+            # call it stderr
             stderr, rc = pexpect.run(kinit_cmdline, withexitstatus=True, events=events, env=krb5env, timeout=60)
         else:
-            kinit_cmdline = [self._kinit_cmd, principal]
             password = to_bytes(password, encoding='utf-8',
                                 errors='surrogate_or_strict')
 
