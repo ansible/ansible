@@ -93,7 +93,7 @@ GNU General Public License v3.0
 See `COPYING <COPYING>`_ to see the full text.
 
 .. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
-   :target: https://pypi.python.org/pypi/ansible
+   :target: https://pypi.org/project/ansible
 .. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
    :target: http://docs.ansible.com/ansible
 .. |Build Status| image:: https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel
