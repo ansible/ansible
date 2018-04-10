@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - when managing Kerberos tickets in Ansible, get a forwardable ticket if delegation is set (https://github.com/ansible/ansible/pull/37815)
