@@ -15,3 +15,5 @@ bugfixes:
 - nxos_acl - Fix nxos_acl (https://github.com/ansible/ansible/pull/38283)
 - nxos_static_route - Fix nxos_static_route (https://github.com/ansible/ansible/pull/37614)
 - nxos_acl_interface test - Fix nxos_acl_interface test (https://github.com/ansible/ansible/pull/38230)
+- nxos_igmp - Fix nxos_igmp (https://github.com/ansible/ansible/pull/38496)
+- nxos_hsrp - Fix nxos_hsrp (https://github.com/ansible/ansible/pull/38410)
