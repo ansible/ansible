@@ -71,6 +71,7 @@ options:
   active:
     description:
       - Set true for enabling API
+    type: bool
   user_ips:
     description:
       - Array of new IPs from which access to API will be available.
@@ -80,12 +81,13 @@ options:
   change_api_key:
     description:
       - Changes the API key.
+    type: bool
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
