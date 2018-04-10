@@ -171,7 +171,8 @@ class PullCLI(CLI):
         if self.options.clean:
             repo_opts += ' force=yes'
 
-        adhoc_args = ['-i', 'localhost,', '-m', self.options.module_name, '-a', repo_opts, 'localhost', '-c', 'local']
+        # none takes place of $0
+        adhoc_args = [None, '-i', 'localhost,', '-m', self.options.module_name, '-a', repo_opts, 'localhost', '-c', 'local']
 
         for ev in self.options.extra_vars:
             adhoc_args.extend(['-e', ev])
@@ -293,7 +294,8 @@ class PullCLI(CLI):
             cmd += ' -C'
 
         # inventory options
-        cmd += getattr(self.options, 'inventory', '')
+        for source in getattr(self.options, 'inventory', []):
+            cmd += '-i %s' % source
 
         os.chdir(self.options.dest)
 
