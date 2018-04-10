@@ -23,12 +23,10 @@ options:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpnConnections.html) for possible filters.
     required: false
-    default: None
   vpn_connection_ids:
     description:
       - Get details of a specific VPN connections using vpn connection ID/IDs. This value should be provided as a list.
     required: false
-    default: None
 extends_documentation_fragment:
     - aws
     - ec2
