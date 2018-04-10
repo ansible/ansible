@@ -101,43 +101,43 @@ from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
-def find_org_id(data, name):
-    ''' Find an organization's ID based on the provided name '''
-    for i in data:
-        if i['name'] == name:
-            return i['id']
+# def find_org_id(data, name):
+#     ''' Find an organization's ID based on the provided name '''
+#     for i in data:
+#         if i['name'] == name:
+#             return i['id']
 
-def meraki_request(module, result, url, method, headers, payload):
-    try:
-        resp, info = fetch_url(module, url,
-                               data=json.dumps(payload),
-                               headers=headers,
-                               method=method,
-                               use_proxy=meraki.params['use_proxy'],
-                               force=False,
-                               )
-    except Exception as e:
-        module.fail_json(msg=str(e), **debug_result)
+# def meraki_request(module, result, url, method, headers, payload):
+#     try:
+#         resp, info = fetch_url(module, url,
+#                                data=json.dumps(payload),
+#                                headers=headers,
+#                                method=method,
+#                                use_proxy=meraki.params['use_proxy'],
+#                                force=False,
+#                                )
+#     except Exception as e:
+#         module.fail_json(msg=str(e), **debug_result)
 
-    # module.fail_json(msg=info['status'])
-    data = resp.read()
-    if meraki.params['output_level'] == 'debug':
-        debug_result['status'] = info['status']
-        debug_result['resp_headers'] = resp.headers
-        debug_result['response'] = data
-    response = json.loads(to_native(data))
+#     # module.fail_json(msg=info['status'])
+#     data = resp.read()
+#     if meraki.params['output_level'] == 'debug':
+#         debug_result['status'] = info['status']
+#         debug_result['resp_headers'] = resp.headers
+#         debug_result['response'] = data
+#     response = json.loads(to_native(data))
 
-    if info['status'] >= 200 and info['status'] <= 299:
-        try:
-            result['message'] = response
-            if method == 'POST' or method == 'PUT':
-                if info['status'] == 201:
-                    result['changed'] = True
-        except:
-            module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
-    else:
-        module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
-    return response
+#     if info['status'] >= 200 and info['status'] <= 299:
+#         try:
+#             result['message'] = response
+#             if method == 'POST' or method == 'PUT':
+#                 if info['status'] == 201:
+#                     result['changed'] = True
+#         except:
+#             module.fail_json(msg="Meraki dashboard didn't return JSON compatible data")
+#     else:
+#         module.fail_json(msg='{0}: {1} '.format(info['status'], info['body']), **result)
+#     return response
 
 def main():
 
@@ -177,15 +177,24 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,
                            )
-    meraki.params['follow_redirects'] = 'all'
-    # module.required_if=[
-    #                        ['state', 'present', ['name']],
-    #                        ['clone', ['name']],
-    #                        ['vpn_PublicIP', ['name']],
-    #                    ]
     meraki = MerakiModule(module)
-    meraki.function = 'organizations'
 
+    meraki.function = 'organizations'
+    meraki.params['follow_redirects'] = 'all'
+    meraki.required_if=[
+                           ['state', 'present', ['name']],
+                           # ['clone', ['name']],
+                           # ['vpn_PublicIP', ['name']],
+                       ]
+
+    create_urls = {'organizations': '/organizations',
+                   }
+
+    update_urls = {'organizations': '/organizations/replace_org_id',
+                   }
+
+    meraki.url_catalog['create'] = create_urls
+    meraki.url_catalog['update'] = update_urls
 
     try:
         meraki.params['auth_key'] = os.environ['MERAKI_KEY']
@@ -216,31 +225,43 @@ def main():
     headers = {'Content-Type': 'application/json',
                'X-Cisco-Meraki-API-Key': meraki.params['auth_key'],
                }
+    method = None
 
     if meraki.params['output_level'] == 'debug':
-        debug_result=dict(url=url,
-                          method=method,
-                          headers=headers,
-                          payload=payload,
-                          )
-        if meraki.params['state']:
-            debug_result['state'] = meraki.params['state']
+      debug_result=dict(url=url,
+                        method=method,
+                        headers=headers,
+                        payload=payload,
+                        )
+      if meraki.params['state']:
+          debug_result['state'] = meraki.params['state']
 
     org_id = None
 
     if meraki.params['state'] == 'query':
       if meraki.params['name'] is None:  # Query all organizations, no matter what
         orgs = meraki.get_orgs()
-      elif meraki.params['name'] is not None:
-        module.warn('If there are multiple organizations with the same name, only the first matching result will be processed')
+        meraki.result['organization'] = orgs
+      elif meraki.params['name'] is not None:  # Query by organization name
+        module.warn('All matching organizations will be returned, even if there are duplicate named organizations')
         orgs = meraki.get_orgs()
         for o in orgs:
-          if org['name'] == meraki.params['name']:
-            meraki.result.update(dict(organization=o))
-
+          if o['name'] == meraki.params['name']:
+            meraki.result['organization'] = o
+    elif meraki.params['state'] == 'present':
+      if meraki.params['org_id'] is None and meraki.params['name'] is not None:  # Create new organization
+        payload = {'name': meraki.params['name']}
+        meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('create'), payload=json.dumps(payload)))
+      elif meraki.params['org_id'] is not None and meraki.params['name'] is not None:  # Update an existing organization
+        # meraki.fail_json(msg='update code triggered')
+        payload = {'name': meraki.params['name'],
+                   'id': meraki.params['org_id'],
+                   }
+        # meraki.fail_json(msg=meraki.construct_path('update', org_id=meraki.params['org_id']), payload=payload)
+        meraki.result['response'] = json.loads(meraki.request(meraki.construct_path('update', org_id=meraki.params['org_id']), payload=json.dumps(payload), method='PUT'))
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
-    module.exit_json(**result)
+    meraki.exit_json(**result)
 
 
 if __name__ == '__main__':

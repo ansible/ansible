@@ -114,6 +114,7 @@ class MerakiModule(object):
         self.url_catalog = {'get_all': self.get_urls,
                             'get_one': self.get_one_urls,
                             'create': None,
+                            'update': None,
                             'delete': None,
                             'Misc': None,
                             }
@@ -130,7 +131,6 @@ class MerakiModule(object):
         if self.params['state'] == 'absent':
             if self.params['org_name'] or self.params['org_id']:
                 module.fail_json('State cannot be absent if specifying org_name or org_id.')
-
         self.modifiable_methods = ['POST', 'PUT', 'DELETE']
 
     def define_protocol(self):
@@ -148,7 +148,10 @@ class MerakiModule(object):
             self.method = 'DELETE'
         elif self.params['state'] == 'present':
             if self.function == 'organizations':
-                self.method = 'POST'
+                if self.params['org_id'] is not None:
+                    self.method = 'PUT'
+                else:
+                    self.method = 'POST'
             elif self.is_new() is True:
                 self.method = 'POST'
             elif self.is_update_required() is True:
@@ -185,9 +188,7 @@ class MerakiModule(object):
         r = self.get_existing(self.path)
         for i in r:
             if self.module.params['name'] == i['name']:
-                # self.fail_json(msg='False')
                 return False
-        # self.fail_json(msg='True')
         return True
 
     def get_existing(self, path):
@@ -218,7 +219,7 @@ class MerakiModule(object):
 
     def get_orgs(self):
         ''' Downloads all organizations '''
-        return json.loads(self.request('GET', '/organizations'))
+        return json.loads(self.request('/organizations', method='GET'))
         # return self.response_json(self.request('GET', '/organizations'))
 
     def is_org(self, org_id):
@@ -261,7 +262,7 @@ class MerakiModule(object):
         return self.response_json(self.request('GET', path))
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
-        ''' Returne network id from lookup or existing data '''
+        ''' Return network id from lookup or existing data '''
         if data is not None:
             return net['id']
         else:
@@ -270,20 +271,23 @@ class MerakiModule(object):
                 return net['id']
 
     def construct_path(self, action, function=None, org_id=None, net_id=None):
+        built_path = None
         if function is None:
             built_path = self.url_catalog[action][self.function]
         else:
             self.function = function
             built_path = self.url_catalog[action][function]
-
-        if 'replace_org_id' in built_path and org_id is None:
-            return built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
-        elif 'replace_net_id' in built_path and net_id is None:
-            return built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
-        elif 'replace_org_id' in built_path and org_id is not None:
-            return built_path.replace('replace_org_id', str(org_id))
-        elif 'replace_net_id' in built_path and net_id is not None:
-            return built_path.replace('replace_net_id', str(net_id))
+        if 'replace_org_id' in built_path:
+            if org_id is None:
+                return built_path.replace('replace_org_id', self.get_org_id(self.module.params['org_name']))
+            else:
+                return built_path.replace('replace_org_id', str(org_id))
+        elif 'replace_net_id' in built_path:
+            if net_id is None:
+                return built_path.replace('replace_net_id', self.get_net_id(self.module.params['net_name']))
+            else:
+                    return built_path.replace('replace_net_id', str(net_id))
+        return built_path
 
     def create_object(self, payload):
         create_path = self.construct_path('create')
@@ -293,7 +297,7 @@ class MerakiModule(object):
         delete_path = self.construct_path('delete')
         return self.response_json(self.request('DELETE', delete_path, payload=payload))
 
-    def request(self, method, path, payload=None):
+    def request(self, path, method=None, payload=None):
         ''' Generic HTTP method for Meraki requests '''
         self.path = path
         self.define_protocol()
@@ -301,8 +305,6 @@ class MerakiModule(object):
             return
 
         self.url = '{0}://{1}/api/v0/{2}'.format(self.params['protocol'], self.params['host'], self.path.lstrip('/'))
-        # if 'ssid' in self.url:
-        #     self.fail_json(msg='URL debugging', data=self.url)
 
         if payload is None:
             resp, info = fetch_url(self.module, self.url,
@@ -333,7 +335,9 @@ class MerakiModule(object):
                 self.fail_json(msg='Dashboard API error %(code)s: %(text)s' % self.error)
             except KeyError:
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-        if self.status >= 201 and self.status <= 299 and method in self.modifiable_methods:
+        if self.status >= 201 and self.status <= 299 and method == 'POST':
+            self.result['changed'] = True
+        if self.status == 200 and method == 'PUT':
             self.result['changed'] = True
         response = to_native(resp.read())
         return response
