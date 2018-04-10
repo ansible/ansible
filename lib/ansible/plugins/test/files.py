@@ -19,15 +19,20 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
-from ansible import errors
+from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount, expanduser, expandvars
 
 
 class TestModule(object):
     ''' Ansible file jinja2 tests '''
 
     def tests(self):
-        return {
+        def w(func):
+            def wrapper(*args):
+                expanded_args = [expanduser(expandvars(a)) for a in args]
+                return func(*expanded_args)
+            return wrapper
+
+        tests = {
             # file testing
             'is_dir': isdir,
             'directory': isdir,
@@ -46,3 +51,5 @@ class TestModule(object):
             'is_mount': ismount,
             'mount': ismount,
         }
+
+        return {k: w(v) for k, v in tests.items()}
