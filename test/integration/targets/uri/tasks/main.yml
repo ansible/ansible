@@ -459,13 +459,28 @@
 - name: Test JSON POST with src
   uri:
     url: "https://{{ httpbin_host}}/post"
-    src: "{{ role_path }}/files/pass0.json"
+    src: pass0.json
     method: POST
     return_content: true
     body_format: json
   register: result
 
 - name: Validate POST with src works
+  assert:
+    that:
+      - result.json.json[0] == 'JSON Test Pattern pass1'
+
+- name: Test JSON POST with src and remote_src=True
+  uri:
+    url: "https://{{ httpbin_host}}/post"
+    src: "{{ role_path }}/files/pass0.json"
+    remote_src: true
+    method: POST
+    return_content: true
+    body_format: json
+  register: result
+
+- name: Validate POST with src  and remote_src=True works
   assert:
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'

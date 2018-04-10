@@ -136,6 +136,15 @@ options:
   src:
     description:
       - Path to file to be submitted to the remote server. Cannot be used with I(body).
+        If C(remote_src) is 'no', the module will look for the source file in the
+        I(files) directory and be copied to the target machine before execution.
+    version_added: '2.6'
+  remote_src:
+    description:
+      - If C(no), the module will search for src on originating/master machine, if C(yes) the
+        module will use the C(src) path on the remote/target machine.
+    type: bool
+    default: 'no'
     version_added: '2.6'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
@@ -211,11 +220,18 @@ EXAMPLES = r'''
     force_basic_auth: yes
     status_code: 201
 
-- name: POST from contents of file
+- name: POST from contents of local file
+  uri:
+    url: "https://httpbin.org/post"
+    method: POST
+    src: file.json
+
+- name: POST from contents of remote file
   uri:
     url: "https://httpbin.org/post"
     method: POST
     src: /path/to/my/file.json
+    remote_src: true
 '''
 
 RETURN = r'''
