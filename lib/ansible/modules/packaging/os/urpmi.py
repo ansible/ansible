@@ -22,10 +22,12 @@ description:
   - Manages packages with I(urpmi) (such as for Mageia or Mandriva)
 version_added: "1.3.4"
 options:
-  pkg:
+  name:
     description:
-      - Name of package to install, upgrade or remove.
+      - A list of package names to install, upgrade or remove.
     required: yes
+    version_added: "2.6"
+    aliases: [ package, pkg ]
   state:
     description:
       - Indicates the desired package state.
@@ -82,20 +84,19 @@ EXAMPLES = '''
     update_cache: yes
 '''
 
+
 import os
 import shlex
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
 
-URPMI_PATH = '/usr/sbin/urpmi'
-URPME_PATH = '/usr/sbin/urpme'
-
 
 def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q %s %s" % (name, root_option(root))
+    rpm_path = module.get_bin_path("rpm", True)
+    cmd = "%s -q %s %s" % (rpm_path, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
@@ -106,13 +107,16 @@ def query_package(module, name, root):
 def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q --provides %s %s" % (name, root_option(root))
+    rpm_path = module.get_bin_path("rpm", True)
+    cmd = "%s -q --whatprovides %s %s" % (rpm_path, name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
 
 def update_package_db(module):
-    cmd = "urpmi.update -a -q"
+
+    urpmiupdate_path = module.get_bin_path("urpmi.update", True)
+    cmd = "%s -a -q" % (urpmiupdate_path,)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
@@ -127,7 +131,8 @@ def remove_packages(module, packages, root):
         if not query_package(module, package, root):
             continue
 
-        cmd = "%s --auto %s %s" % (URPME_PATH, root_option(root), package)
+        urpme_path = module.get_bin_path("urpme", True)
+        cmd = "%s --auto %s %s" % (urpme_path, root_option(root), package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -160,17 +165,20 @@ def install_packages(module, pkgspec, root, force=True, no_recommends=True):
         else:
             force_yes = ''
 
-        cmd = ("%s --auto %s --quiet %s %s %s" % (URPMI_PATH, force_yes, no_recommends_yes, root_option(root), packages))
+        urpmi_path = module.get_bin_path("urpmi", True)
+        cmd = ("%s --auto %s --quiet %s %s %s" % (urpmi_path, force_yes,
+                                                  no_recommends_yes,
+                                                  root_option(root),
+                                                  packages))
 
         rc, out, err = module.run_command(cmd)
 
-        installed = True
-        for packages in pkgspec:
+        for package in pkgspec:
             if not query_package_provides(module, package, root):
-                installed = False
+                module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
 
         # urpmi always have 0 for exit code if --force is used
-        if rc or not installed:
+        if rc:
             module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
@@ -188,17 +196,15 @@ def root_option(root):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='installed', choices=['absent', 'installed', 'present', 'removed']),
+            state=dict(type='str', default='installed',
+                       choices=['absent', 'installed', 'present', 'removed']),
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
             force=dict(type='bool', default=True),
             no_recommends=dict(type='bool', default=True, aliases=['no-recommends']),
-            package=dict(type='str', required=True, aliases=['name', 'pkg']),
+            name=dict(type='list', required=True, aliases=['package', 'pkg']),
             root=dict(type='str', aliases=['installroot']),
         ),
     )
-
-    if not os.path.exists(URPMI_PATH):
-        module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
 
     p = module.params
 
@@ -209,7 +215,7 @@ def main():
     if p['update_cache']:
         update_package_db(module)
 
-    packages = p['package'].split(',')
+    packages = p['package']
 
     if p['state'] in ['installed', 'present']:
         install_packages(module, packages, root, force_yes, no_recommends_yes)
