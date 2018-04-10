@@ -1,4 +1,4 @@
-|PyPI version| |Build Status|
+|PyPI version| |Docs badge| |Build Status|
 
 *******
 Ansible
@@ -100,5 +100,7 @@ See `COPYING <COPYING>`_ to see the full text.
 
 .. |PyPI version| image:: https://img.shields.io/pypi/v/ansible.svg
    :target: https://pypi.python.org/pypi/ansible
+.. |Docs badge| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg
+   :target: http://docs.ansible.com/ansible
 .. |Build Status| image:: https://api.shippable.com/projects/573f79d02a8192902e20e34b/badge?branch=devel
    :target: https://app.shippable.com/projects/573f79d02a8192902e20e34b
