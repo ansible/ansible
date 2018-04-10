@@ -34,7 +34,7 @@
     package:
       name: ocfs2-tools
       state: present
-    when: ansible_distribution == 'Debian'
+    when: ansible_os_family == 'Debian'
   when: ansible_system == 'Linux'
 
 - block:
