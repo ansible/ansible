@@ -486,6 +486,7 @@ files:
   $modules/network/panos/panos_address.py: itdependsnetworks ivanbojer jtschichold
   $modules/network/protocol/: $team_networking
   $modules/network/routing/: $team_networking
+  $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/vyos/: Qalthos samdoran
@@ -849,6 +850,9 @@ files:
   $module_utils/network/onyx:
     maintainers: $team_onyx
     labels: networking
+  $module_utils/network/slxos:
+    maintainers: $team_extreme
+    labels: networking
   $module_utils/openstack.py:
     maintainers: $team_openstack
     labels:
@@ -949,6 +953,9 @@ files:
   lib/ansible/plugins/cliconf/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/cliconf/slxos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/connection/lxd.py:
     maintainers: mattclay
   lib/ansible/plugins/connection/netconf.py:
@@ -1039,6 +1046,9 @@ files:
   lib/ansible/plugins/terminal/onyx.py:
     maintainers: $team_onyx
     labels: networking
+  lib/ansible/plugins/terminal/slxos.py:
+    maintainers: $team_extreme
+    labels: networking
   lib/ansible/plugins/terminal/sros.py:
     maintainers: $team_networking
     labels: networking
@@ -1117,6 +1127,7 @@ macros:
   team_cloudstack: resmo dpassante
   team_cumulus: isharacomix jrrivers privateip
   team_cyberark_conjur: jvanderhoof ryanprior
+  team_extreme: bigmstone LindsayHill
   team_ipa: Nosmoht akasurde
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
