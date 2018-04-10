@@ -160,9 +160,8 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict,
-                                      ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ec2_argument_spec,
+                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict)
 
 
 def date_handler(obj):
@@ -177,8 +176,10 @@ def list_vpn_connections(connection, module):
 
     try:
         result = json.loads(json.dumps(connection.describe_vpn_connections(**params), default=date_handler))
-    except Exception as e:
-        module.fail_json(msg=str(e.message))
+    except ValueError as e:
+        module.fail_json_aws(e, msg="Cannot validate JSON data")
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Could not describe customer gateways")
     snaked_vpn_connections = [camel_dict_to_snake_dict(vpn_connection) for vpn_connection in result['VpnConnections']]
     if snaked_vpn_connections:
         for vpn_connection in snaked_vpn_connections:
@@ -200,9 +201,7 @@ def main():
                               mutually_exclusive=[['vpn_connection_ids', 'filters']],
                               supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     list_vpn_connections(connection, module)
 
