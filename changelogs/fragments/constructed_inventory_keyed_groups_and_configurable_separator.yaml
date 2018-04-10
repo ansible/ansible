@@ -1,0 +1,5 @@
+bugfixes:
+  - Improve keyed groups for complex inventory
+  - Made separator configurable
+  - Fixed some exception types
+  - Better error messages
