@@ -122,7 +122,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 # if no other errors happened and you want to force displaying stderr, do so now
                 if err and self.get_option('always_show_stderr'):
-                    self.display.error(msg=err)
+                    self.display.error(msg=to_text(err))
 
             processed = self._cache[cache_key]
             if not isinstance(processed, Mapping):
