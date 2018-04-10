@@ -238,7 +238,9 @@ class ActionModule(ActionBase):
             else:
                 self.included_files.append(filename)
                 if not self.overwrite:
-                    data = { var:data[var] for var in data if var not in self.task_vars }
+                    for var in data.keys():
+                        if var in self.task_vars:
+                            del data[var]
                 results.update(data)
 
         return failed, err_msg, results
