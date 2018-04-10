@@ -257,10 +257,10 @@ def contentfilter(fsname, pattern):
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
     """
-    prog = re.compile(pattern)
-
     if pattern is None:
         return True
+
+    prog = re.compile(pattern)
 
     try:
         with open(fsname) as f:
