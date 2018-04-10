@@ -131,6 +131,7 @@ class HashiVault:
         # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
         #
         self.auth_method = kwargs.get('auth_method')
+        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
         if self.auth_method and self.auth_method != 'token':
             try:
                 self.client = hvac.Client(url=self.url, verify=self.verify)
