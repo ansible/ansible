@@ -1719,6 +1719,8 @@ class PyVmomiHelper(PyVmomi):
         # next priority, cluster given, take the root of the pool
         elif self.params['cluster']:
             cluster = self.cache.get_cluster(self.params['cluster'])
+            if cluster is None:
+                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
             resource_pool = cluster.resourcePool
         # fallback, pick any RP
         else:
