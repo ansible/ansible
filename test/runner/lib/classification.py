@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import time
 
 from lib.target import (
@@ -288,6 +289,46 @@ class PathMapper(object):
             if ext == '.py':
                 return minimal  # already expanded using get_dependent_paths
 
+        if path.startswith('lib/ansible/plugins/action/'):
+            if ext == '.py':
+                if name.startswith('net_'):
+                    network_target = 'network/.*_%s' % name[4:]
+
+                    if any(re.search(r'^%s$' % network_target, alias) for alias in self.integration_targets_by_alias):
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    return {
+                        'network-integration': self.integration_all_target,
+                        'units': 'all',
+                    }
+
+                if self.prefixes.get(name) == 'network':
+                    network_platform = name
+                elif name.endswith('_config') and self.prefixes.get(name[:-7]) == 'network':
+                    network_platform = name[:-7]
+                elif name.endswith('_template') and self.prefixes.get(name[:-9]) == 'network':
+                    network_platform = name[:-9]
+                else:
+                    network_platform = None
+
+                if network_platform:
+                    network_target = 'network/%s/' % network_platform
+
+                    if network_target in self.integration_targets_by_alias:
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    display.warning('Integration tests for "%s" not found.' % network_target, unique=True)
+
+                    return {
+                        'units': 'all',
+                    }
+
         if path.startswith('lib/ansible/plugins/connection/'):
             if name == '__init__':
                 return {
@@ -348,7 +389,7 @@ class PathMapper(object):
                             'units': 'all',
                         }
 
-                    display.warning('Integration tests for "%s" not found.' % network_target)
+                    display.warning('Integration tests for "%s" not found.' % network_target, unique=True)
 
                     return {
                         'units': 'all',
