@@ -258,6 +258,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn = ssh.Connection(pc, new_stdin)
         conn._build_command = MagicMock()
         conn._bare_run = MagicMock()
+        conn._load_name = 'ssh'
 
         conn._build_command.return_value = 'some command to run'
         conn._bare_run.return_value = (0, '', '')
@@ -331,6 +332,7 @@ def mock_run_env(request, mocker):
     conn._send_initial_data = MagicMock()
     conn._examine_output = MagicMock()
     conn._terminate_process = MagicMock()
+    conn._load_name = 'ssh'
     conn.sshpass_pipe = [MagicMock(), MagicMock()]
 
     request.cls.pc = pc
@@ -372,6 +374,7 @@ class TestSSHConnectionRun(object):
         self.mock_popen_res.stderr.read.side_effect = [b"my_stderr"]
         self.mock_selector.select.side_effect = [
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+        self.conn._build_command.return_value = 'sftp'
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []]

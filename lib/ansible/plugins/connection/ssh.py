@@ -74,7 +74,7 @@ DOCUMENTATION = '''
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
-          version_added: "2.7"
+          version_added: "2.6"
       scp_executable:
           default: scp
           description:
@@ -82,7 +82,7 @@ DOCUMENTATION = '''
           env: [{name: ANSIBLE_SCP_EXECUTABLE}]
           ini:
           - {key: scp_executable, section: ssh_connection}
-          version_added: "2.7"
+          version_added: "2.6"
       scp_extra_args:
           description: Extra exclusive to the 'scp' CLI
           vars:
