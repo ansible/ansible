@@ -26,12 +26,18 @@ Engine improvements
   - Test coverage
   - Performance Testing
 
+- `Module defaults <https://github.com/ansible/ansible/pull/22648>`_
+
 Core Modules
 ------------
 - Adopt-a-module Campaign
 
   - Review current status of all Core Modules
-  - Reduce backlog of open issues against these modules
+  - Reduce backlog of open issues against these modules:
+
+    - file
+    - copy
+
 
 Cloud Modules
 -------------
