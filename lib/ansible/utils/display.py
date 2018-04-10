@@ -35,7 +35,7 @@ from termios import TIOCGWINSZ
 from distutils.version import LooseVersion
 
 from ansible import constants as C
-from ansible.release import __version__
+from ansible.release import __version__ as CURRENT_VERSION
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.utils.color import stringc
@@ -210,9 +210,9 @@ class Display:
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
-        if not removed and version and LooseVersion(version) >= LooseVersion(__version__):
+        if not removed and version and LooseVersion(version) >= LooseVersion(CURRENT_VERSION):
             # not deprecated anymore, its now an error
-            raise AnsibleError("[REMOVED]: %s.\nThis feature's deprecation cycle has ended, please update your playbooks." % msg)
+            raise AnsibleError("[REMOVED]: %s.\nThis feature's was removed in %s, please update your playbooks." % (msg, version))
 
         if C.DEPRECATION_WARNINGS:
             if removed:
