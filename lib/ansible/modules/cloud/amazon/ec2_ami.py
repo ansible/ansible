@@ -656,7 +656,7 @@ def main():
         virtualization_type=dict(default='hvm'),
         root_device_name=dict(),
         delete_snapshot=dict(default=False, type='bool'),
-        name=dict(),
+        name=dict(default=''),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(default=900, type='int'),
         description=dict(default=''),
