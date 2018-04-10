@@ -1,0 +1,2 @@
+bugfixes:
+    - dont require property for older callbacks to load https://github.com/ansible/ansible/pull/38281
