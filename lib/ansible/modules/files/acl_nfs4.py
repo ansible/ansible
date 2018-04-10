@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Author: Victor Hahn Castell <info@victor-hahn.de>
-# Copyright (c) 2018 Nexinto GmbH
+# Copyright (c) 2018 Nexinto GmbH and contributors
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# This module is based on the acl module which deals with POSIX ACLs and
+# This module is derived from the acl module which deals with POSIX ACLs and
 # tries to provide a compatible interface as much as possible.
 
 from __future__ import absolute_import, division, print_function
@@ -352,9 +352,9 @@ def main():
 
         while True:  # NFSv4 ACL entries may have duplicates
             get_lines = run_acl(module, get_command)
-            if entry in get_lines:
+            if acl_contains(get_lines, entry):
                 changed = True
-                if not modules.check_mode:  # perform change except in check mode
+                if not module.check_mode:  # perform change except in check mode
                     run_acl(module, set_command)
                 else:                       # just report changed in check mode
                     break
