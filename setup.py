@@ -189,6 +189,7 @@ setup(
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
     install_requires=install_requirements,
+    python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     package_dir={'': 'lib'},
     packages=find_packages('lib'),
     package_data={
@@ -215,6 +216,9 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: System :: Installation/Setup',
         'Topic :: System :: Systems Administration',
         'Topic :: Utilities',
